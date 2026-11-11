@@ -1045,6 +1045,33 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .gv-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 0 16px; border-radius: 14px; background: var(--card); font-size: 16px; font-weight: 750; color: var(--accent); text-align: left; }
 .gv-toggle svg { width: 16px; height: 16px; flex: none; transform: rotate(90deg); transition: transform .15s ease; }
 .gv-toggle[aria-expanded="true"] svg { transform: rotate(-90deg); }
+/* full box score, Real-app style */
+.bx-pl.real { gap: 4px; }
+.bx-tabs2 { display: grid; grid-template-columns: 1fr 1fr; margin: -2px -2px 8px; border-bottom: 1px solid var(--hair); }
+.bx-tabs2 button { height: 44px; font-size: 16px; font-weight: 800; letter-spacing: .03em; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.bx-tabs2 button[aria-pressed="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.bxt { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: start; padding: 8px 0 14px; border-bottom: 1px solid var(--hair); }
+.bxt-r { min-width: 0; }
+.bxt-nm { display: block; font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.bxp-sec, .bxp-grp { display: block; margin: 14px 0 2px; font-size: 17px; font-weight: 800; color: var(--muted); }
+.bxp { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; }
+.bxp + .bxp { border-top: 1px solid var(--hair); }
+.bxp-face { position: relative; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; }
+.bxp-face i { font-style: normal; font-size: 17px; font-weight: 800; color: #fff; opacity: .9; }
+.bxp-face img { position: absolute; left: 50%; bottom: 0; width: 72px; transform: translateX(-50%); }
+.bxp-r { min-width: 0; }
+.bxp-nm { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 15px; color: var(--muted); }
+.bxp-n { font-weight: 700; color: var(--head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bxp-p { flex: none; }
+.bxp-s { flex: none; display: inline-grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: var(--raise); font-size: 11px; font-weight: 800; color: var(--head); }
+.bxp-cells { display: flex; gap: 18px; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px 0 1px; }
+.bxp-cells::-webkit-scrollbar { display: none; }
+.bxp-c { flex: none; display: grid; align-content: start; min-width: 30px; }
+.bxp-c b { font-size: 24px; font-weight: 800; font-stretch: 85%; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bxp-c b.up { color: var(--accent); } .bxp-c b.down { color: var(--live); }
+.bxp-c i { font-style: normal; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--dim); }
+.bxp-c em { font-style: normal; font-size: 15px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+.bxt-cells .bxp-c b { font-size: 22px; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 .dock-back { pointer-events: auto; height: 58px; display: inline-flex; align-items: center; gap: 6px; padding: 0 18px 0 13px; border-radius: 18px; font-size: 16px; font-weight: 750; color: var(--ink); background: var(--glass); border: 1px solid var(--glass-line); -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); box-shadow: 0 10px 30px var(--shadow); }
@@ -2052,7 +2079,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
         ((ro && ro.roster) || []).forEach(function (p) {
           if (!p.starter && !p.subbedIn) return;
           var m = {}; (p.stats || []).forEach(function (s) { m[s.name] = s.displayValue; });
-          rows.push({ n: bxName(p.athlete), p: (p.position || {}).abbreviation || "", st: p.starter ? 1 : 0, s: BX_SOCCER.map(function (c2) { return m[c2[0]] != null ? String(m[c2[0]]) : "0"; }) });
+          rows.push({ n: bxName(p.athlete), id: String((p.athlete || {}).id || ""), p: (p.position || {}).abbreviation || "", st: p.starter ? 1 : 0, s: BX_SOCCER.map(function (c2) { return m[c2[0]] != null ? String(m[c2[0]]) : "0"; }) });
         });
         if (rows.length && out.state !== "pre") t.groups.push({ k: "lineup", cols: BX_SOCCER.map(function (c2) { return c2[1]; }), rows: rows });
       } else if (out.state === "in" || out.state === "post") {
@@ -2060,7 +2087,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
         ((bp && bp.statistics) || []).forEach(function (grp) {
           var rows2 = (grp.athletes || []).map(function (a) {
             var ath = a.athlete || {}, ss = (a.stats || []).map(function (v) { return String(v); });
-            var r = { n: bxName(ath), p: (ath.position || {}).abbreviation || "", st: a.starter ? 1 : 0, s: ss };
+            var r = { n: bxName(ath), id: String(ath.id || ""), p: (ath.position || {}).abbreviation || "", st: a.starter ? 1 : 0, s: ss };
             if (a.didNotPlay) r.dnp = a.reason || "DNP"; else if (!ss.length) r.dnp = "";
             return r;
           });
@@ -2077,7 +2104,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
           var rows3 = (grp.leaders || []).slice(0, BX_SEASON_MAX).map(function (a) {
             var m = {}, ath = a.athlete || {};
             (a.statistics || []).forEach(function (cat) { (cat.stats || []).forEach(function (s) { if (!(s.name in m)) m[s.name] = s.displayValue; }); });
-            return { n: bxName(ath), p: (ath.position || {}).abbreviation || "", s: spec.map(function (c2) { var ks = c2[0].split("|"); for (var i = 0; i < ks.length; i++) if (m[ks[i]] != null) return String(m[ks[i]]); return "–"; }) };
+            return { n: bxName(ath), id: String(ath.id || ""), p: (ath.position || {}).abbreviation || "", s: spec.map(function (c2) { var ks = c2[0].split("|"); for (var i = 0; i < ks.length; i++) if (m[ks[i]] != null) return String(m[ks[i]]); return "–"; }) };
           });
           if (rows3.length) t.groups.push({ k: grp.name, cols: spec.map(function (c2) { return c2[1]; }), rows: rows3 });
         });
@@ -2240,6 +2267,86 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     return wrap;
   }
   // one team at a time, with a two-button switch; starts on your team when one of them is yours
+
+  // ---- the full box score, drawn like the Real app: a team summary, then one row per player with big numbers ----
+  var BX_HEAD = { nba: "nba", wnba: "wnba", nhl: "nhl", nfl: "nfl", mlb: "mlb", ncaam: "mens-college-basketball", ncaaw: "womens-college-basketball", ncaaf: "college-football", mls: "soccer", epl: "soccer", ucl: "soccer", uel: "soccer", laliga: "soccer", seriea: "soccer", bundesliga: "soccer", ligue1: "soccer", facup: "soccer" };
+  var BX_LEAD = { bball: ["MIN", "PTS", "REB", "AST", "STL", "BLK", "+/-", "FG", "3PT", "FT", "TO", "PF", "OREB", "DREB"], game: ["GP", "MIN", "PTS", "REB", "AST", "FG%", "3P%", "FT%", "STL", "BLK", "TO"] };
+  function bxFace(g, r, team) {
+    var f = el("span", "bxp-face"), tc = (teamByName && teamByName(team.name)) || null, c1 = (tc && tc.c1) || "#2a3442";
+    f.style.background = c1;
+    var ini = String(r.n || "").replace(/[^A-Za-z. ]/g, "").split(/[ .]+/).filter(Boolean); f.appendChild(el("i", null, ((ini[0] || "")[0] || "") + ((ini[ini.length - 1] || "")[0] || "")));
+    var dir = BX_HEAD[g.league];
+    if (r.id && dir && dir !== "soccer") {
+      var im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.decoding = "async";
+      im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + r.id + ".png&w=120&h=88";
+      im.onerror = function () { im.remove(); }; f.appendChild(im);
+    }
+    return f;
+  }
+  function bxCells(cols, idx, vals, plusCol) {
+    var row = el("div", "bxp-cells");
+    idx.forEach(function (i) {
+      var v = vals[i]; v = v != null && v !== "" ? String(v) : "–";
+      var c = el("span", "bxp-c"), n = el("b", null, v);
+      if (i === plusCol) { var x = parseFloat(v); if (x > 0) n.className = "up"; else if (x < 0) n.className = "down"; }
+      c.appendChild(n); c.appendChild(el("i", null, cols[i])); row.appendChild(c);
+    });
+    return row;
+  }
+  function bxOrder(sport, gr) {
+    var cols = gr.cols || [], drop = BX_DROP[sport] || [];
+    var leadList = (BX_ORDER[sport] || {})[gr.k] || BX_LEAD[sport === "bball" && gr.k !== "game" ? "bball" : gr.k] || [];
+    var lead = leadList.map(function (c) { return cols.indexOf(c); }).filter(function (i) { return i !== -1; });
+    return lead.concat(cols.map(function (c, i) { return i; }).filter(function (i) { return drop.indexOf(cols[i]) === -1 && lead.indexOf(i) === -1; }));
+  }
+  function bxTeamCard(g, t, sport) {
+    var m = {}; (t.stats || []).forEach(function (s) { m[s[0]] = s; });
+    var cells = [];
+    function pair(made, pct, lab) { var a = m[made], b = m[pct]; if (a) cells.push([String(a[2]).replace("-", "/"), lab, b ? b[2] + "%" : ""]); }
+    if (sport === "bball") {
+      pair("fieldGoalsMade-fieldGoalsAttempted", "fieldGoalPct", "FG");
+      pair("threePointFieldGoalsMade-threePointFieldGoalsAttempted", "threePointFieldGoalPct", "3FG");
+      pair("freeThrowsMade-freeThrowsAttempted", "freeThrowPct", "FT");
+      [["totalTurnovers", "TO"], ["turnovers", "TO"], ["totalRebounds", "REB"], ["assists", "AST"], ["steals", "STL"], ["blocks", "BLK"]].forEach(function (k) { if (m[k[0]] && !cells.some(function (c) { return c[1] === k[1]; })) cells.push([m[k[0]][2], k[1], ""]); });
+    } else {
+      (BX_KEY_STATS[sport] || []).forEach(function (k) { if (m[k] && cells.length < 7) cells.push([m[k][2], m[k][1], ""]); });
+      if (!cells.length) (t.stats || []).slice(0, 6).forEach(function (s) { cells.push([s[2], s[1], ""]); });
+    }
+    if (!cells.length) return null;
+    var card = el("div", "bxt");
+    card.appendChild(badgeFor(t.abbr || "", t.name || ""));
+    var right = el("div", "bxt-r"); right.appendChild(el("span", "bxt-nm", t.name || t.abbr || ""));
+    var row = el("div", "bxp-cells bxt-cells");
+    cells.forEach(function (c) { var x = el("span", "bxp-c"); x.appendChild(el("b", null, String(c[0]))); x.appendChild(el("i", null, c[1])); if (c[2]) x.appendChild(el("em", null, c[2])); row.appendChild(x); });
+    right.appendChild(row); card.appendChild(right);
+    return card;
+  }
+  function bxRows(g, gr, sport, live, team) {
+    var cols = gr.cols || [], idx = bxOrder(sport, gr), plus = cols.indexOf("+/-");
+    var played = gr.rows.filter(function (r) { return !("dnp" in r); }), out = gr.rows.filter(function (r) { return "dnp" in r; });
+    var wrap = el("div", "bxp-list");
+    var split = sport === "bball" && gr.k !== "game" && played.some(function (r) { return r.st; }) && played.some(function (r) { return !r.st; });
+    var parts = split ? [["Starters", played.filter(function (r) { return r.st; })], ["Bench", played.filter(function (r) { return !r.st; })]] : [[null, played]];
+    parts.forEach(function (pt) {
+      if (pt[0]) wrap.appendChild(el("b", "bxp-sec", pt[0]));
+      pt[1].forEach(function (r) {
+        var row = el("div", "bxp");
+        row.appendChild(bxFace(g, r, team));
+        var right = el("div", "bxp-r"), nm = el("div", "bxp-nm");
+        nm.appendChild(el("span", "bxp-n", r.n));
+        if (r.p) nm.appendChild(el("span", "bxp-p", "· " + r.p));
+        if (r.st && !split && sport !== "bball") nm.appendChild(el("span", "bxp-s", "S"));
+        right.appendChild(nm);
+        right.appendChild(bxCells(cols, idx, r.s, plus));
+        row.appendChild(right); wrap.appendChild(row);
+      });
+    });
+    if (!played.length) wrap.appendChild(el("p", "bx-dnp", live ? "Nobody has played yet." : "No stats."));
+    var dnp = out.filter(function (r) { return r.dnp; }), notIn = out.filter(function (r) { return !r.dnp; });
+    if (dnp.length) wrap.appendChild(el("p", "bx-dnp", "Did not play: " + dnp.map(function (r) { return r.n + (r.dnp && r.dnp !== "DNP" ? " (" + r.dnp.toLowerCase() + ")" : ""); }).join(", ")));
+    if (notIn.length) wrap.appendChild(el("p", "bx-dnp", (live ? "Not in yet: " : "Did not play: ") + notIn.map(function (r) { return r.n; }).join(", ")));
+    return wrap;
+  }
   function bxPlayers(g, b, compact, season) {
     state.bxSide = state.bxSide || {};
     var side = state.bxSide[g.id]; if (side == null) side = isFav(g.home) && !isFav(g.away) ? 1 : 0;
@@ -2254,9 +2361,13 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     wrap.appendChild(seg);
     var t = b.teams[side] || b.teams[0], groups = (t.groups || []).filter(function (gr) { return !compact || (BX_COMPACT[sport] || {})[gr.k]; });
     if (!groups.length) { wrap.appendChild(el("p", "bx-dnp", season ? "No season stats for this team yet." : "No player stats yet.")); return wrap; }
+    if (!compact) {
+      wrap.classList.add("real"); seg.className = "bx-tabs2";
+      if (!season) { var tcard = bxTeamCard(g, t, sport); if (tcard) wrap.appendChild(tcard); }
+    }
     groups.forEach(function (gr) {
-      if (groups.length > 1) wrap.appendChild(el("b", "bx-gh", BX_GROUP[gr.k] || gr.k));
-      wrap.appendChild(bxTable(g, gr, compact, sport, b.state === "in"));
+      if (groups.length > 1) wrap.appendChild(el("b", compact ? "bx-gh" : "bxp-grp", BX_GROUP[gr.k] || gr.k));
+      wrap.appendChild(compact ? bxTable(g, gr, compact, sport, b.state === "in") : bxRows(g, gr, sport, b.state === "in", t));
     });
     return wrap;
   }
