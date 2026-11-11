@@ -27,6 +27,7 @@ PATHS = {
     "nhl": ["hockey/nhl"], "mlb": ["baseball/mlb"], "mls": ["soccer/usa.1"], "epl": ["soccer/eng.1"],
     "ucl": ["soccer/uefa.champions"], "uel": ["soccer/uefa.europa"], "laliga": ["soccer/esp.1"], "seriea": ["soccer/ita.1"],
     "bundesliga": ["soccer/ger.1"], "ligue1": ["soccer/fra.1"], "facup": ["soccer/eng.fa"],
+    "intl": ["soccer/fifa.friendly", "soccer/uefa.nations", "soccer/concacaf.nations.league", "soccer/uefa.euroq", "soccer/fifa.worldq.uefa", "soccer/fifa.worldq.conmebol", "soccer/fifa.worldq.concacaf", "soccer/concacaf.gold", "soccer/conmebol.america", "soccer/fifa.world"],
 }
 def base(lg): return PATHS[lg][0].split("&")[0]
 SPORT = {"nba": "bb", "wnba": "bb", "ncaam": "bb", "ncaaw": "bb", "nfl": "fb", "ncaaf": "fb", "nhl": "hk", "mlb": "base"}
@@ -81,11 +82,23 @@ LG_OPTS = {
     "nba": ["national", "top", "winning", "all"], "nhl": ["national", "top", "winning", "all"], "wnba": ["national", "top", "winning", "all"],
     "mlb": ["national", "winning", "all"],
     "epl": ["bigsix", "top", "national", "all"],
-    "ucl": ["bigsix", "national", "all"], "uel": ["bigsix", "national", "all"], "facup": ["bigsix", "national", "all"],
+    "ucl": ["bigclubs", "english", "knockout", "bigsix", "national", "all"], "uel": ["bigclubs", "english", "knockout", "bigsix", "national", "all"], "facup": ["bigsix", "national", "all"],
     "mls": ["top", "national", "all"], "laliga": ["top", "national", "all"], "seriea": ["top", "national", "all"], "bundesliga": ["top", "national", "all"], "ligue1": ["top", "national", "all"],
-    "intl": ["national", "all"],
+    "intl": ["usa", "bignations", "competitive", "national", "all"],
 }
-CHOICES = {"ranked": ["both", "top10", "any"], "bigsix": ["both", "any"]}
+CHOICES = {"ranked": ["both", "top10", "any"], "bigsix": ["both", "any"], "bigclubs": ["both", "any"], "bignations": ["both", "any"]}
+BIG_CLUBS = ["real madrid", "barcelona", "atletico madrid", "atlético madrid", "bayern", "dortmund", "paris saint-germain", "manchester city", "manchester united", "liverpool", "arsenal", "chelsea", "tottenham", "internazionale", "inter milan", "ac milan", "juventus", "napoli"]
+ENGLISH = ["arsenal", "aston villa", "bournemouth", "brentford", "brighton", "burnley", "chelsea", "crystal palace", "everton", "fulham", "ipswich", "leeds", "leicester", "liverpool", "manchester city", "manchester united", "newcastle", "nottingham forest", "southampton", "sunderland", "tottenham", "west ham", "wolverhampton"]
+BIG_NATIONS = ["argentina", "brazil", "france", "england", "spain", "germany", "portugal", "netherlands", "italy", "belgium", "croatia", "uruguay", "united states", "mexico"]
+def in_list(lst, name): n = str(name or "").lower(); return any(c in n for c in lst)
+def is_usa(name): return bool(re.match(r"^(united states|usa)\b", str(name or "").strip(), re.I))
+def is_knockout(g):
+    st, n = str(g.get("stage") or ""), str(g.get("note") or "")
+    return bool((st and not re.search(r"league|group|regular", st, re.I)) or re.search(r"\bleg\b|round of|quarter|semi|final|playoff|knockout", n, re.I))
+def is_competitive(g):
+    c = str(g.get("comp") or g.get("leagueLabel") or "") + " " + str(g.get("note") or "")
+    return bool(c.strip()) and not re.search(r"friendl", c, re.I) and bool(re.search(r"world cup|qualif|nations league|gold cup|copa|euro|afcon|asian cup|olympic", c, re.I))
+def event_key(g): return str(g.get("note") or "").split(" - ")[0].strip().lower()
 TOP_N = {"nba": 4, "nhl": 4, "wnba": 4, "epl": 6, "mls": 4, "laliga": 4, "seriea": 4, "bundesliga": 4, "ligue1": 4}
 BIG_SIX = ["arsenal", "chelsea", "liverpool", "manchester city", "manchester united", "tottenham"]
 NFL_DIV = {}
@@ -101,6 +114,9 @@ def norm_rules(r):
     o = {"favorites": True, "events": True, "after": 0, "max": 0, "by": {}}
     if isinstance(r.get("favorites"), bool): o["favorites"] = r["favorites"]
     if isinstance(r.get("events"), bool): o["events"] = r["events"]
+    o["eventMode"] = "pick" if r.get("eventMode") == "pick" else "all"
+    o["eventsOn"] = [str(x).lower() for x in (r.get("eventsOn") or []) if isinstance(x, str)]
+    o["eventsOff"] = [str(x).lower() for x in (r.get("eventsOff") or []) if isinstance(x, str)]
     if r.get("after") in (0, 17, 18, 19, 20): o["after"] = r["after"]
     if r.get("max") in (0, 4, 6, 8, 10): o["max"] = r["max"]
     def put(k, key, v):
@@ -162,6 +178,16 @@ def match(key, g, v):
     if key == "bigsix":
         a = any(c in str(g.get("away", "")).lower() for c in BIG_SIX); h = any(c in str(g.get("home", "")).lower() for c in BIG_SIX)
         return 76 if v == "both" and a and h else 46 if v == "any" and (a or h) else None
+    if key == "bigclubs":
+        a, h = in_list(BIG_CLUBS, g.get("away")), in_list(BIG_CLUBS, g.get("home"))
+        return 78 if v == "both" and a and h else 48 if v == "any" and (a or h) else None
+    if key == "english": return 50 if in_list(ENGLISH, g.get("away")) or in_list(ENGLISH, g.get("home")) else None
+    if key == "knockout": return 68 if is_knockout(g) else None
+    if key == "usa": return 72 if is_usa(g.get("away")) or is_usa(g.get("home")) else None
+    if key == "bignations":
+        a, h = in_list(BIG_NATIONS, g.get("away")), in_list(BIG_NATIONS, g.get("home"))
+        return 74 if v == "both" and a and h else 47 if v == "any" and (a or h) else None
+    if key == "competitive": return 58 if is_competitive(g) else None
     if key == "top":
         n = TOP_N.get(g.get("league"), 4); a, h = stand_no(g, "away"), stand_no(g, "home")
         return 70 if a and h and a <= n and h <= n else None
@@ -187,7 +213,9 @@ def compute_slate(games, rules, teams, lineup):
                 m = match(key, g, b[key])
                 if m is not None: hits.append(m)
         note = g.get("note") or ""
-        if r["events"] and EVENT_RX.search(note) and not re.search(r"group (play|stage)", note, re.I): hits.append(60)
+        if r["events"] and EVENT_RX.search(note) and not re.search(r"group (play|stage)", note, re.I):
+            ek = event_key(g)
+            if (ek in r["eventsOn"]) if r["eventMode"] == "pick" else (ek not in r["eventsOff"]): hits.append(60)
         if not hits or g["id"] in removed: continue
         t = parse(g.get("start"))
         if not fav and r["after"] and t and ct_hour(t) < r["after"]: continue

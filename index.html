@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111150925";
+<script>window.SLATE_BUILD = "20261111151631";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1337,6 +1337,17 @@ nav.dock.menu-open .dock-back { display: none; }
 .ch-tg.shut .ch-tgb svg { transform: rotate(90deg); }
 .ch-tg.shut { margin-bottom: 0; }
 .tv-all { display: block; margin: 6px 0 -10px auto; }
+.evpick { margin-top: 12px; display: grid; gap: 10px; }
+.ev-seg { max-width: 300px; } .ev-seg button { white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+.ev-hint, .ev-none { margin: 0; color: var(--dim); font-size: 13px; }
+.ev-list { display: grid; gap: 6px; }
+.ev { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: none; color: var(--muted); font: inherit; text-align: left; }
+.ev svg { width: 16px; height: 16px; flex: none; }
+.ev.on { border-color: var(--accent); color: var(--ink); }
+.ev.on svg { color: var(--accent); }
+.ev-tx { display: grid; gap: 1px; min-width: 0; }
+.ev-tx b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-tx span { font-size: 12px; color: var(--dim); }
 </style>
 </head>
 <body>
@@ -1852,7 +1863,8 @@ nav.dock.menu-open .dock-back { display: none; }
     nba: ["basketball/nba"], wnba: ["basketball/wnba"], ncaam: ["basketball/mens-college-basketball&groups=50&limit=500"],
     ncaaw: ["basketball/womens-college-basketball&groups=50&limit=500"], nhl: ["hockey/nhl"], mlb: ["baseball/mlb"],
     mls: ["soccer/usa.1"], epl: ["soccer/eng.1"], ucl: ["soccer/uefa.champions"], uel: ["soccer/uefa.europa"], laliga: ["soccer/esp.1"],
-    seriea: ["soccer/ita.1"], bundesliga: ["soccer/ger.1"], ligue1: ["soccer/fra.1"], facup: ["soccer/eng.fa"]
+    seriea: ["soccer/ita.1"], bundesliga: ["soccer/ger.1"], ligue1: ["soccer/fra.1"], facup: ["soccer/eng.fa"],
+    intl: ["soccer/fifa.friendly", "soccer/uefa.nations", "soccer/concacaf.nations.league", "soccer/uefa.euroq", "soccer/fifa.worldq.uefa", "soccer/fifa.worldq.conmebol", "soccer/fifa.worldq.concacaf", "soccer/concacaf.gold", "soccer/conmebol.america", "soccer/fifa.world"]
   };
   function etDate(ms) { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms)).replace(/-/g, ""); }
   var livePolling = false;
@@ -2000,6 +2012,14 @@ nav.dock.menu-open .dock-back { display: none; }
   var RULE_DEFAULTS = { v: 2, favorites: true, events: true, after: 0, max: 0, by: { ncaaf: { ranked: "both" }, ncaam: { ranked: "both" } } };
   var EVENT_RX = /(classic|tournament|invitational|showcase|challenge|rivalry|cup|bowl|final|playoff|championship|derby|world series|battle|clash|tip-off|tipoff|opener)/i;
   function isEvent(g) { return !!(g.note && EVENT_RX.test(g.note) && !/group (play|stage)/i.test(g.note)); }
+  // which events count: every one (minus any switched off), or only the ones DJ picked
+  function eventKey(g) { return String(g.note || "").split(" - ")[0].trim(); }
+  function eventOn(g) {
+    if (!isEvent(g)) return false;
+    var r = state.rules || RULE_DEFAULTS, k = eventKey(g).toLowerCase();
+    if (r.eventMode === "pick") return (r.eventsOn || []).some(function (x) { return x.toLowerCase() === k; });
+    return !(r.eventsOff || []).some(function (x) { return x.toLowerCase() === k; });
+  }
   var SOCCER = { mls: 1, epl: 1, ucl: 1, uel: 1, facup: 1, laliga: 1, seriea: 1, bundesliga: 1, ligue1: 1, intl: 1 };
   var LG_OPTS = {
     ncaaf: ["ranked", "national", "all"], ncaam: ["ranked", "national", "all"], ncaaw: ["ranked", "national", "all"],
@@ -2007,11 +2027,19 @@ nav.dock.menu-open .dock-back { display: none; }
     nba: ["national", "top", "winning", "all"], nhl: ["national", "top", "winning", "all"], wnba: ["national", "top", "winning", "all"],
     mlb: ["national", "winning", "all"],
     epl: ["bigsix", "top", "national", "all"],
-    ucl: ["bigsix", "national", "all"], uel: ["bigsix", "national", "all"], facup: ["bigsix", "national", "all"],
+    ucl: ["bigclubs", "english", "knockout", "bigsix", "national", "all"], uel: ["bigclubs", "english", "knockout", "bigsix", "national", "all"], facup: ["bigsix", "national", "all"],
     mls: ["top", "national", "all"], laliga: ["top", "national", "all"], seriea: ["top", "national", "all"], bundesliga: ["top", "national", "all"], ligue1: ["top", "national", "all"],
-    intl: ["national", "all"]
+    intl: ["usa", "bignations", "competitive", "national", "all"]
   };
-  var CHOICES = { ranked: ["both", "top10", "any"], bigsix: ["both", "any"] };
+  var CHOICES = { ranked: ["both", "top10", "any"], bigsix: ["both", "any"], bigclubs: ["both", "any"], bignations: ["both", "any"] };
+  // Europe's giants, English clubs and the big footballing nations (matched on ESPN's full names)
+  var BIG_CLUBS = ["real madrid", "barcelona", "atletico madrid", "atlético madrid", "bayern", "dortmund", "paris saint-germain", "manchester city", "manchester united", "liverpool", "arsenal", "chelsea", "tottenham", "internazionale", "inter milan", "ac milan", "juventus", "napoli"];
+  var ENGLISH = ["arsenal", "aston villa", "bournemouth", "brentford", "brighton", "burnley", "chelsea", "crystal palace", "everton", "fulham", "ipswich", "leeds", "leicester", "liverpool", "manchester city", "manchester united", "newcastle", "nottingham forest", "southampton", "sunderland", "tottenham", "west ham", "wolverhampton"];
+  var BIG_NATIONS = ["argentina", "brazil", "france", "england", "spain", "germany", "portugal", "netherlands", "italy", "belgium", "croatia", "uruguay", "united states", "mexico"];
+  function inList(list, name) { name = String(name || "").toLowerCase(); return list.some(function (c) { return name.indexOf(c) !== -1; }); }
+  function isUSA(name) { return /^(united states|usa)\b/i.test(String(name || "").trim()); }
+  function isKnockout(g) { var st = String(g.stage || ""), n = String(g.note || ""); return (st && !/league|group|regular/i.test(st)) || /\bleg\b|round of|quarter|semi|final|playoff|knockout/i.test(n); }
+  function isCompetitive(g) { var c = String(g.comp || g.leagueLabel || "") + " " + String(g.note || ""); return !!c.trim() && !/friendl/i.test(c) && /world cup|qualif|nations league|gold cup|copa|euro|afcon|asian cup|olympic/i.test(c); }
   var TOP_N = { nba: 4, nhl: 4, wnba: 4, epl: 6, mls: 4, laliga: 4, seriea: 4, bundesliga: 4, ligue1: 4 };
   // channels that are national for a league even though they stream (Prime Video NBA, Peacock NBA, CNBC Premier League…)
   var NAT_EXTRA = { nba: ["prime video", "peacock"], wnba: ["prime video", "ion"], mlb: ["apple tv", "netflix", "peacock"], epl: ["cnbc"], ncaam: ["peacock"], ncaaf: ["peacock", "prime video"] };
@@ -2033,6 +2061,9 @@ nav.dock.menu-open .dock-back { display: none; }
     var o = { v: 2, favorites: true, events: true, after: 0, max: 0, by: {} };
     if (typeof r.favorites === "boolean") o.favorites = r.favorites;
     if (typeof r.events === "boolean") o.events = r.events;
+    o.eventMode = r.eventMode === "pick" ? "pick" : "all";
+    o.eventsOn = Array.isArray(r.eventsOn) ? r.eventsOn.filter(function (x) { return typeof x === "string"; }).slice(0, 200) : [];
+    o.eventsOff = Array.isArray(r.eventsOff) ? r.eventsOff.filter(function (x) { return typeof x === "string"; }).slice(0, 200) : [];
     if ([0, 17, 18, 19, 20].indexOf(Number(r.after)) !== -1) o.after = Number(r.after);
     if ([0, 4, 6, 8, 10].indexOf(Number(r.max)) !== -1) o.max = Number(r.max);
     function put(k, key, v) { if (!LG_OPTS[k] || LG_OPTS[k].indexOf(key) === -1) return; (o.by[k] = o.by[k] || {})[key] = v; }
@@ -2073,6 +2104,12 @@ nav.dock.menu-open .dock-back { display: none; }
       return both ? ["Ranked", 80 - (ra + rh) / 4] : v === "top10" ? ["Top 10", 62] : ["Ranked", 35];
     },
     bigsix: function (g, v) { var a = bigSix(g.away), h = bigSix(g.home); return v === "both" ? (a && h ? ["Big Six", 76] : null) : v === "any" && (a || h) ? ["Big Six", 46] : null; },
+    bigclubs: function (g, v) { var a = inList(BIG_CLUBS, g.away), h = inList(BIG_CLUBS, g.home); return v === "both" ? (a && h ? ["Giants", 78] : null) : v === "any" && (a || h) ? ["Big club", 48] : null; },
+    english: function (g) { return inList(ENGLISH, g.away) || inList(ENGLISH, g.home) ? ["English club", 50] : null; },
+    knockout: function (g) { return isKnockout(g) ? ["Knockout", 68] : null; },
+    usa: function (g) { return isUSA(g.away) || isUSA(g.home) ? ["USA", 72] : null; },
+    bignations: function (g, v) { var a = inList(BIG_NATIONS, g.away), h = inList(BIG_NATIONS, g.home); return v === "both" ? (a && h ? ["Heavyweights", 74] : null) : v === "any" && (a || h) ? ["Big nation", 47] : null; },
+    competitive: function (g) { return isCompetitive(g) ? ["Competitive", 58] : null; },
     top: function (g) { var n = TOP_N[g.league] || 4, a = standNo(g, "away"), h = standNo(g, "home"); return a && h && a <= n && h <= n ? [topLabel(g.league), 70] : null; },
     prime: function (g) { return hourCT(g.start) >= 19 ? ["Prime time", 66] : null; },
     division: function (g) { var a = NFL_DIV[abbr(g, "away")], h = NFL_DIV[abbr(g, "home")]; return a && a === h ? ["Division", 56] : null; },
@@ -2091,7 +2128,7 @@ nav.dock.menu-open .dock-back { display: none; }
     if (fav) hits.push(["Your team", 100]);
     var b = lgRules(g.league);
     (LG_OPTS[g.league] || []).forEach(function (key) { if (!b[key]) return; var m = MATCH[key](g, b[key]); if (m) hits.push(m); });
-    if (r.events && isEvent(g)) hits.push(["Event", 60]);
+    if (r.events && eventOn(g)) hits.push(["Event", 60]);
     hits.sort(function (a, c) { return c[1] - a[1]; });
     var seen = {}, why = [];
     hits.forEach(function (h) { if (!seen[h[0]]) { seen[h[0]] = 1; why.push(h[0]); } });
@@ -4262,6 +4299,12 @@ nav.dock.menu-open .dock-back { display: none; }
     switch (key) {
       case "ranked": return { t: "Ranked matchups", p: "AP Top 25 teams.", c: [["both", "Both teams ranked"], ["top10", "A top-10 team"], ["any", "Any ranked team"]] };
       case "bigsix": return { t: "Big Six", p: k === "epl" ? "Arsenal, Chelsea, Liverpool, Man City, Man United and Spurs." : "Premier League Big Six clubs: Arsenal, Chelsea, Liverpool, Man City, Man United, Spurs.", c: [["both", "Big Six clash"], ["any", "Any Big Six club"]] };
+      case "bigclubs": return { t: "Europe's giants", p: "Real Madrid, Barcelona, Bayern, PSG, Man City, Liverpool, Arsenal, Inter, Juventus and the like.", c: [["both", "Giants meet"], ["any", "Any giant"]] };
+      case "english": return { t: "English clubs", p: "Any game with a Premier League club." };
+      case "knockout": return { t: "Knockout rounds", p: "Playoffs, round of 16, quarterfinals, semifinals and the final." };
+      case "usa": return { t: "USA", p: "Every U.S. national team game." };
+      case "bignations": return { t: "Big nations", p: "Argentina, Brazil, France, England, Spain, Germany, Portugal and other heavyweights.", c: [["both", "Heavyweight clash"], ["any", "Any big nation"]] };
+      case "competitive": return { t: "Games that count", p: "World Cup and qualifiers, Nations League, Gold Cup, Copa América and the Euros. No friendlies." };
       case "top": return { t: soc ? "Top of the table" : "Top teams", p: soc ? "Both clubs in the top " + n + " of the table." : "Both teams in the top " + n + " of their conference." };
       case "prime": return { t: "Prime time", p: "Kickoff at 7 PM or later: Thursday, Sunday and Monday night." };
       case "division": return { t: "Division games", p: "Both teams from the same division." };
@@ -4274,19 +4317,23 @@ nav.dock.menu-open .dock-back { display: none; }
   function optShort(k, key, v) {
     if (key === "ranked") return v === "both" ? "Both ranked" : v === "top10" ? "Top-10 team" : "Any ranked team";
     if (key === "bigsix") return v === "both" ? "Big Six clash" : "Any Big Six club";
+    if (key === "bigclubs") return v === "both" ? "Giants meet" : "Any giant";
+    if (key === "bignations") return v === "both" ? "Heavyweight clash" : "Any big nation";
     if (key === "top") return SOCCER[k] ? "Top of the table" : "Top " + (TOP_N[k] || 4) + " teams";
-    return { prime: "Prime time", division: "Division games", winning: "Winning teams", national: "National TV", all: "Every game" }[key] || key;
+    return { prime: "Prime time", division: "Division games", winning: "Winning teams", national: "National TV", all: "Every game", english: "English clubs", knockout: "Knockouts", usa: "USA", competitive: "Games that count" }[key] || key;
   }
   function optPhrase(k, key, v) {
     if (key === "ranked") return v === "both" ? "with two ranked teams" : v === "top10" ? "with a top-10 team" : "with a ranked team";
     if (key === "bigsix") return v === "both" ? "between Big Six clubs" : "with a Big Six club";
+    if (key === "bigclubs") return v === "both" ? "between Europe's giants" : "with one of Europe's giants";
+    if (key === "bignations") return v === "both" ? "between big nations" : "with a big nation";
     if (key === "top") return SOCCER[k] ? "between top-" + (TOP_N[k] || 4) + " clubs" : "between top-" + (TOP_N[k] || 4) + " teams";
-    return { prime: "in prime time", division: "between division rivals", winning: "between winning teams", national: "on national TV" }[key] || "";
+    return { prime: "in prime time", division: "between division rivals", winning: "between winning teams", national: "on national TV", english: "with an English club", knockout: "in the knockout rounds", usa: "with the USA", competitive: "that count" }[key] || "";
   }
   function rulesSentence() {
     var r = state.rules, parts = [], groups = {}, order = [];
     if (r.favorites) parts.push("your teams");
-    if (r.events) parts.push("big events");
+    if (r.events) parts.push(r.eventMode === "pick" ? "the events you picked" : "big events");
     var every = [];
     ORDER.forEach(function (k) {
       var b = (r.by || {})[k]; if (!b) return;
@@ -4385,6 +4432,34 @@ nav.dock.menu-open .dock-back { display: none; }
     card.appendChild(body);
     return card;
   }
+  // Big events: every event, or only picked ones; each event on this day listed with its games
+  function eventPicker() {
+    var r = state.rules, box = el("div", "evpick"), evs = {}, order = [];
+    games().forEach(function (g) { if (!isEvent(g)) return; var k = eventKey(g); if (!evs[k]) { evs[k] = []; order.push(k); } evs[k].push(g); });
+    var seg = el("div", "seg seg2 ev-seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Which events");
+    [["all", "All events"], ["pick", "Just my picks"]].forEach(function (o) {
+      var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", (r.eventMode || "all") === o[0] ? "true" : "false");
+      b.addEventListener("click", function () { r.eventMode = o[0]; rulesChanged(); }); seg.appendChild(b);
+    });
+    box.appendChild(seg);
+    if (!order.length) { box.appendChild(el("p", "ev-none", "No events " + whenWord() + ".")); return box; }
+    box.appendChild(el("p", "ev-hint", r.eventMode === "pick" ? "Tap an event to add it. Picks carry over to other days." : "Tap an event to leave it out. New events are in until you leave them out."));
+    var list = el("div", "ev-list");
+    order.forEach(function (k) {
+      var on = eventOn(evs[k][0]), b = el("button", "ev" + (on ? " on" : "")); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.appendChild(icon(on ? "check" : "plus"));
+      var tx = el("span", "ev-tx"); tx.appendChild(el("b", null, k));
+      tx.appendChild(el("span", null, evs[k].length + (evs[k].length === 1 ? " game · " : " games · ") + info(evs[k][0]).tag)); b.appendChild(tx);
+      b.addEventListener("click", function () {
+        var lk = k.toLowerCase(), key = r.eventMode === "pick" ? "eventsOn" : "eventsOff", arr = (r[key] || []).filter(function (x) { return x.toLowerCase() !== lk; });
+        if (arr.length === (r[key] || []).length) arr.push(k);
+        r[key] = arr; rulesChanged();
+      });
+      list.appendChild(b);
+    });
+    box.appendChild(list);
+    return box;
+  }
   function renderRules() {
     var body = $("rules-body"); body.textContent = "";
     if (!state.rules) state.rules = normRules();
@@ -4404,11 +4479,8 @@ nav.dock.menu-open .dock-back { display: none; }
     // every league
     var h1 = el("div", "sec"); h1.appendChild(el("h2", null, "Every league")); body.appendChild(h1);
     var p1 = el("div", "rpanel");
-    var teams = el("div", "rchips");
-    state.teams.forEach(function (t) { teams.appendChild(el("span", null, t)); });
-    var et = el("button", "rlink", state.teams.length ? "Edit teams" : "Pick your teams"); et.type = "button"; et.addEventListener("click", function () { openSub("settings"); }); teams.appendChild(et);
-    p1.appendChild(ruleRow("favorites", "My teams", "Every game your starred teams play, at any hour.", r.favorites, countMatching(hasFav), function (v) { r.favorites = v; rulesChanged(); }, teams));
-    p1.appendChild(ruleRow("events", "Big events", "Classics, tournaments, rivalries and finals.", r.events, countMatching(isEvent), function (v) { r.events = v; rulesChanged(); }));
+    p1.appendChild(ruleRow("favorites", "My teams", "Every game your starred teams play, at any hour.", r.favorites, countMatching(hasFav), function (v) { r.favorites = v; rulesChanged(); }));
+    p1.appendChild(ruleRow("events", "Big events", "Classics, tournaments, rivalries and finals.", r.events, countMatching(eventOn), function (v) { r.events = v; rulesChanged(); }, eventPicker()));
     body.appendChild(p1);
 
     // by league
