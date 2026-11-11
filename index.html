@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111150307";
+<script>window.SLATE_BUILD = "20261111150816";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1331,6 +1331,12 @@ nav.dock.menu-open .dock-back { display: none; }
 .tab-mv svg { width: 16px; height: 16px; }
 .tab-up svg { transform: rotate(-90deg); } .tab-down svg { transform: rotate(90deg); }
 .tab-mv:disabled { opacity: .25; }
+.ch-tgb { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
+.ch-tgb h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ch-tgb svg { width: 14px; height: 14px; flex: none; color: var(--dim); transform: rotate(-90deg); transition: transform .2s ease; }
+.ch-tg.shut .ch-tgb svg { transform: rotate(90deg); }
+.ch-tg.shut { margin-bottom: 0; }
+.tv-all { display: block; margin: 6px 0 -10px auto; }
 </style>
 </head>
 <body>
@@ -4497,15 +4503,27 @@ nav.dock.menu-open .dock-back { display: none; }
       body.appendChild(el("div", "notice", state.tvFilter === "national" ? "No national TV games on this day." : state.tvFilter === "streaming" ? "No streaming-only games on this day." : "No channel listings for this day."));
       return;
     }
+    // each channel opens and closes; the choice is remembered
+    var saveC = function () { try { localStorage.setItem("slate-collapsed", JSON.stringify(COLLAPSED)); } catch (e) {} keepScroll(renderTV); };
+    if (names.length > 1) {
+      var allShut = names.every(function (n) { return COLLAPSED["tv:" + n]; });
+      var ta = el("button", "rlink tv-all", allShut ? "Open all channels" : "Close all channels"); ta.type = "button";
+      ta.addEventListener("click", function () { names.forEach(function (n) { if (allShut) delete COLLAPSED["tv:" + n]; else COLLAPSED["tv:" + n] = 1; }); saveC(); });
+      body.appendChild(ta);
+    }
     names.forEach(function (n) {
-      var list = groups[n].sort(byStart);
-      var h = el("div", "ch-head");
-      h.appendChild(el("h2", null, n));
-      h.appendChild(el("span", "kind", list.length + (list.length === 1 ? " game" : " games")));
+      var list = groups[n].sort(byStart), ck = "tv:" + n, shut = !!COLLAPSED[ck];
+      var h = el("div", "ch-head ch-tg" + (shut ? " shut" : ""));
+      var tg = el("button", "ch-tgb"); tg.type = "button"; tg.setAttribute("aria-expanded", shut ? "false" : "true");
+      tg.appendChild(el("h2", null, n));
+      tg.appendChild(el("span", "kind", list.length + (list.length === 1 ? " game" : " games")));
+      tg.appendChild(icon("more"));
+      tg.addEventListener("click", function () { if (COLLAPSED[ck]) delete COLLAPSED[ck]; else COLLAPSED[ck] = 1; saveC(); });
+      h.appendChild(tg);
       var wl = watchLink(n, "chwatch", "Watch");
       if (wl) h.appendChild(wl);
       body.appendChild(h);
-      var box = el("div", "glist"); list.forEach(function (g) { box.appendChild(gameRow(g, "tv")); }); body.appendChild(box);
+      var box = el("div", "glist"); if (!shut) list.forEach(function (g) { box.appendChild(gameRow(g, "tv")); }); body.appendChild(box);
     });
   }
 
