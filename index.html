@@ -72,7 +72,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111093211";
+<script>window.SLATE_BUILD = "20261111093536";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2050,6 +2050,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var b = state.backTo; if (!b || b.view === state.view) return false;
     setView(b.view);
     if (isDuo) $("pane-r").scrollTop = b.y || 0; else window.scrollTo(0, b.y || 0);
+    repinDock(); setTimeout(repinDock, 350);
     return true;
   }
   function renderBack() {
@@ -3986,7 +3987,21 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
 
   // ---------- actions ----------
-  function setView(v) { state.backTo = null; if (isDuo && v === "lineup") v = "games"; if (v === "rules" && state.view !== "rules") state.rulesMain = null; state.view = v; state.menuOpen = false; render(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
+  // iOS can leave a fixed element where it was when a page swaps for a shorter one and the scroll jumps
+  // (All games → back to the slate): take the dock out and put it back so it re-pins to the screen corner,
+  // and keep it on the visible screen if the visible area and the layout disagree
+  function repinDock() {
+    var d = document.querySelector("nav.dock"); if (!d) return;
+    requestAnimationFrame(function () {
+      d.style.display = "none"; void d.offsetHeight; d.style.display = "";
+      var vv = window.visualViewport;
+      if (vv) { var off = (window.innerHeight - vv.height - vv.offsetTop); d.style.transform = off > 1 ? "translateY(" + (-off) + "px)" : ""; }
+    });
+  }
+  if (window.visualViewport) { window.visualViewport.addEventListener("resize", repinDock); }
+  window.addEventListener("pageshow", repinDock);
+  var repinT = null; window.addEventListener("scroll", function () { clearTimeout(repinT); repinT = setTimeout(repinDock, 120); }, { passive: true });
+  function setView(v) { state.backTo = null; if (isDuo && v === "lineup") v = "games"; if (v === "rules" && state.view !== "rules") state.rulesMain = null; state.view = v; state.menuOpen = false; render(); repinDock(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
   var slideDir = "";
   function setDate(iso) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || iso === state.date) { slideDir = ""; return; }
