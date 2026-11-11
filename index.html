@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111134827";
+<script>window.SLATE_BUILD = "20261111135249";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1259,23 +1259,32 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-top { align-items: center; }
 .rk-idle { opacity: .8; } .rk-idle .rk-foot { color: var(--dim); font-weight: 650; }
 .tm-tbl th .pstar { width: 26px; height: 26px; margin: 0 4px 0 -4px; vertical-align: middle; }
-.tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: 1fr; gap: 10px; margin-bottom: 18px; }
 .tcard { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tcard.on { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 .tcard.live { border-color: var(--live); }
 .tc-top { display: grid; gap: 8px; justify-items: start; }
 .tc-nm { display: grid; gap: 2px; min-width: 0; width: 100%; }
-.tc-nm b { font-size: 16.5px; line-height: 1.2; font-weight: 800; color: var(--head); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.tc-nm span { font-size: 12.5px; font-weight: 650; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-nm b { font-size: 16px; line-height: 1.2; height: 2.4em; font-weight: 800; color: var(--head); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tc-nm span { font-size: 12.5px; line-height: 1.3; height: 1.3em; font-weight: 650; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tc-nm .tc-st { color: var(--dim); }
-.tc-lines { display: grid; gap: 4px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+.tc-lines { display: grid; gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
 .tc-line { display: flex; align-items: baseline; gap: 6px; font-size: 13px; font-weight: 650; color: var(--ink); line-height: 1.3; min-width: 0; }
-.tc-line span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.tc-r1 { height: 2.6em; } .tc-r1 span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tc-r2 { height: 1.3em; color: var(--sub); } .tc-r2 span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-r2 .rk-wl { flex: none; }
 .tc-today { color: var(--accent); font-weight: 750; }
 .tcard.live .tc-today { color: var(--live); }
-.tc-last { color: var(--sub); }
-.tc-last .rk-wl { flex: none; }
 .tc-dim { color: var(--dim); }
+.tm-pick { display: flex !important; align-items: center; gap: 12px; padding: 12px 2px; }
+.tm-pick .tx { flex: 1; min-width: 0; display: grid; }
+.tm-pick .tb-star, .tm-pick svg.tb-star { width: 16px; height: 16px; color: var(--accent); flex: none; }
+.tm-pick .chev { flex: none; }
+#view-teams .sec .rlink { margin-left: auto; }
+.tord { display: grid; gap: 0; margin-bottom: 18px; }
+.tord .trow { display: flex; align-items: center; gap: 12px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+.tord .tx { flex: 1; min-width: 0; display: grid; }
+.tord .ford-b { width: 40px; height: 40px; }
 .tb-pills { margin: 8px 0 4px; padding-left: 0; }
 .mi[hidden] { display: none !important; }
 #view-teams .field { width: 100%; box-sizing: border-box; margin: 0 0 4px; }
@@ -3263,23 +3272,25 @@ nav.dock.menu-open .dock-back { display: none; }
     var team = (d && d.team) || {}, sub = [(LEAGUES[t.lg] || {}).tag || ""];
     if (team.recordSummary) sub.push(team.recordSummary);
     nm.appendChild(el("span", null, sub.filter(Boolean).join(" · ")));
-    if (team.standingSummary) nm.appendChild(el("span", "tc-st", team.standingSummary.replace(/ (Division|Conference)$/, "")));
+    nm.appendChild(el("span", "tc-st", team.standingSummary ? team.standingSummary.replace(/ (Division|Conference)$/, "").replace("English Premier League", "Premier League") : "\u00a0"));
     top.appendChild(nm);
     c.appendChild(top);
-    var lines = el("div", "tc-lines");
+    // two fixed rows on every tile: what's next (or today's game), then the last result
+    var lines = el("div", "tc-lines"), r1 = el("div", "tc-line tc-r1"), r2 = el("div", "tc-line tc-r2");
     if (today) {
       var st = status(today), sc = state.showScores ? scoreOf(today) : null, side = today.away && teamMatch(today.away, t.name, t.lg) ? "away" : "home", other = side === "away" ? "home" : "away";
-      var tl = el("div", "tc-line tc-today");
-      if (st.kind === "live" && sc) { tl.appendChild(el("i", "rk-dot")); tl.appendChild(el("span", null, "Live · " + short(today, side) + " " + (side === "away" ? sc.a : sc.h) + ", " + short(today, other) + " " + (side === "away" ? sc.h : sc.a) + (sc.detail ? " · " + sc.detail : ""))); }
-      else if (st.kind === "over" && sc) tl.appendChild(el("span", null, "Final · " + short(today, "away") + " " + sc.a + ", " + short(today, "home") + " " + sc.h));
-      else tl.appendChild(el("span", null, "Tonight " + timeText(today.moved || today.start) + " " + (side === "away" ? "@ " : "vs ") + short(today, other) + ((today.tv || []).length ? " · " + (NET_SHORT[today.tv[0]] || today.tv[0]) : "")));
-      lines.appendChild(tl);
+      r1.classList.add("tc-today");
+      if (st.kind === "live" && sc) { r1.appendChild(el("i", "rk-dot")); r1.appendChild(el("span", null, short(today, side) + " " + (side === "away" ? sc.a : sc.h) + ", " + short(today, other) + " " + (side === "away" ? sc.h : sc.a) + (sc.detail ? " · " + sc.detail : ""))); }
+      else if (st.kind === "over" && sc) r1.appendChild(el("span", null, "Final · " + short(today, "away") + " " + sc.a + ", " + short(today, "home") + " " + sc.h));
+      else r1.appendChild(el("span", null, "Tonight " + timeText(today.moved || today.start) + " " + (side === "away" ? "@ " : "vs ") + short(today, other) + ((today.tv || []).length ? " · " + (NET_SHORT[today.tv[0]] || today.tv[0]) : "")));
     } else if (d && e) {
-      var nx = tmGameLine(d.next, e.id, false); if (nx) lines.appendChild(el("div", "tc-line", "Next · " + nx.t));
-    }
-    if (d && e) { var ls = tmGameLine(d.last, e.id, true); if (ls) { var ll = el("div", "tc-line tc-last"); ll.appendChild(el("b", "rk-wl " + ls.k.toLowerCase(), ls.k === "W" || ls.k === "L" || ls.k === "T" ? ls.k : "")); ll.appendChild(el("span", null, "Last · " + ls.t.replace(/^[WLT] /, ""))); lines.appendChild(ll); } }
-    if (!d && !lite.err) lines.appendChild(el("div", "tc-line tc-dim", "Loading…"));
-    else if (!lines.childNodes.length) lines.appendChild(el("div", "tc-line tc-dim", "No games scheduled"));
+      var nx = tmGameLine(d.next, e.id, false);
+      r1.appendChild(el("span", nx ? null : "tc-dim", nx ? nx.t : "No games scheduled"));
+    } else r1.appendChild(el("span", "tc-dim", lite.err ? "Schedule unavailable" : "Loading…"));
+    var ls = d && e ? tmGameLine(d.last, e.id, true) : null;
+    if (ls) { r2.appendChild(el("b", "rk-wl " + ls.k.toLowerCase(), ls.k)); r2.appendChild(el("span", null, ls.t.replace(/^[WLT] /, ""))); }
+    else r2.appendChild(el("span", "tc-dim", "\u00a0"));
+    lines.appendChild(r1); lines.appendChild(r2);
     c.appendChild(lines);
     c.addEventListener("click", function () { openTeam(t.name, t.lg); });
     return c;
@@ -3289,12 +3300,32 @@ nav.dock.menu-open .dock-back { display: none; }
     var body = $("teams-body"); if (!body) return; body.textContent = "";
     if (state.view !== "teams") return;
     var mine = myTeamList();
-    // today's games first (by start), then the rest in your order
     var playing = {}; games().forEach(function (g) { mine.forEach(function (t) { if (g.league === t.lg && (teamMatch(g.away, t.name, t.lg) || teamMatch(g.home, t.name, t.lg))) playing[tmKey(t)] = new Date(g.moved || g.start).getTime(); }); });
-    mine = mine.map(function (t, i) { return [playing[tmKey(t)] || 9e15 + i, t]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
-    var h = el("div", "sec"); h.appendChild(el("h2", null, "My teams")); if (mine.length) h.appendChild(el("span", "count", Object.keys(playing).length ? Object.keys(playing).length + " playing today" : mine.length + " teams")); body.appendChild(h);
+    // your own order when you've set one; otherwise teams playing today first
+    var ord = state.teamOrder || [];
+    mine = mine.map(function (t, i) { var j = ord.indexOf(tmKey(t)); return [ord.length ? (j === -1 ? 1e3 + i : j) : (playing[tmKey(t)] || 9e15 + i), t]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
+    var h = el("div", "sec"); h.appendChild(el("h2", null, "My teams"));
+    if (mine.length > 1) { var eb = el("button", "rlink", state.teamEdit ? "Done" : "Edit order"); eb.type = "button"; eb.addEventListener("click", function () { state.teamEdit = !state.teamEdit; keepScroll(renderTeams); }); h.appendChild(eb); }
+    body.appendChild(h);
     if (!mine.length) body.appendChild(el("p", "hint", "Star a team on any game, or find one below. Each gets a page with its schedule, stats, stories and Claude's take."));
-    var grid = el("div", "tcards"); mine.forEach(function (t) { grid.appendChild(teamCard(t)); }); body.appendChild(grid);
+    if (state.teamEdit) {
+      var box = el("div", "tord");
+      mine.forEach(function (t, i) {
+        var r = el("div", "trow"); r.appendChild(t.known ? teamBadge(t.known) : badgeFor(t.name.slice(0, 3).toUpperCase(), t.name));
+        var tx = el("span", "tx"); tx.appendChild(el("span", "n", t.name)); tx.appendChild(el("span", "lg", (LEAGUES[t.lg] || {}).name || "")); r.appendChild(tx);
+        [["up", -1, "‹"], ["down", 1, "›"]].forEach(function (m) {
+          var b = el("button", "x ford-b ford-" + m[0], m[2]); b.type = "button"; b.setAttribute("aria-label", "Move " + t.name + " " + m[0]);
+          b.disabled = (m[1] < 0 && i === 0) || (m[1] > 0 && i === mine.length - 1);
+          b.addEventListener("click", function () { var keys = mine.map(tmKey), j = i + m[1], x = keys[i]; keys[i] = keys[j]; keys[j] = x; state.teamOrder = keys; saveSettings(); keepScroll(renderTeams); });
+          r.appendChild(b);
+        });
+        box.appendChild(r);
+      });
+      if ((state.teamOrder || []).length) { var rs = el("button", "rlink", "Reset: teams playing today first"); rs.type = "button"; rs.addEventListener("click", function () { state.teamOrder = []; saveSettings(); keepScroll(renderTeams); }); box.appendChild(rs); }
+      body.appendChild(box);
+    } else {
+      var grid = el("div", "tcards"); mine.forEach(function (t) { grid.appendChild(teamCard(t)); }); body.appendChild(grid);
+    }
     // find any team: search, or browse a league
     var h2 = el("div", "sec"); h2.appendChild(el("h2", null, "Find a team")); body.appendChild(h2);
     var f = el("input", "field"); f.type = "search"; f.placeholder = "Search, e.g. Chiefs or Kansas"; f.value = state.teamQ || ""; f.setAttribute("aria-label", "Search a team");
@@ -3306,7 +3337,7 @@ nav.dock.menu-open .dock-back { display: none; }
     function row(t) {
       var lg = lgOfKnown(t), r = el("button", "trow tm-pick"); r.type = "button";
       r.appendChild(teamBadge(t)); var tx = el("span", "tx"); tx.appendChild(el("span", "n", t.name)); tx.appendChild(el("span", "lg", t.lg)); r.appendChild(tx);
-      if (lg && isFav(t.name, lg)) r.appendChild(starIcon(true));
+      if (lg && isFav(t.name, lg)) { var sv = starIcon(true); sv.setAttribute("class", "tb-star"); r.appendChild(sv); }
       r.appendChild(el("span", "chev", "›"));
       r.addEventListener("click", function () { if (lg) openTeam(t.name, lg); });
       return r;
@@ -4972,7 +5003,7 @@ nav.dock.menu-open .dock-back { display: none; }
     if (!db || !state.settingsLoaded) return;
     if (setWriter.busy) { setWriter.dirty = true; return; }
     setWriter.busy = true; setWriter.dirty = false;
-    db.collection("data/users/" + uid).doc("settings").set({ teams: state.teams.slice(), look: state.look, accent: state.accent, textSize: state.textSize, textSizeWide: state.textSizeWide || "", device: state.device || "", navPos: state.navPos, watchVia: state.watchVia, foldNudge: Number(state.foldNudge) || 0, rules: clone(state.rules || RULE_DEFAULTS), tickerLeague: state.tickerLeague || "", showScores: !!state.showScores, hiddenLeagues: (state.hiddenLeagues || []).slice(), gamesOrder: (state.gamesOrder || []).slice(), players: (state.players || []).slice(), pvStyle: state.pvStyle || "para" }).then(function () {
+    db.collection("data/users/" + uid).doc("settings").set({ teams: state.teams.slice(), look: state.look, accent: state.accent, textSize: state.textSize, textSizeWide: state.textSizeWide || "", device: state.device || "", navPos: state.navPos, watchVia: state.watchVia, foldNudge: Number(state.foldNudge) || 0, rules: clone(state.rules || RULE_DEFAULTS), tickerLeague: state.tickerLeague || "", showScores: !!state.showScores, hiddenLeagues: (state.hiddenLeagues || []).slice(), gamesOrder: (state.gamesOrder || []).slice(), players: (state.players || []).slice(), teamOrder: (state.teamOrder || []).slice(), pvStyle: state.pvStyle || "para" }).then(function () {
       setWriter.busy = false; if (setWriter.dirty) saveSettings();
     }, function () { setWriter.busy = false; toast("Couldn't save settings."); });
     saveNotify();
@@ -5307,6 +5338,7 @@ nav.dock.menu-open .dock-back { display: none; }
               if (Array.isArray(d.hiddenLeagues)) state.hiddenLeagues = d.hiddenLeagues.slice();
               if (Array.isArray(d.gamesOrder)) state.gamesOrder = d.gamesOrder.slice();
               if (Array.isArray(d.players)) state.players = d.players.slice();
+              if (Array.isArray(d.teamOrder)) state.teamOrder = d.teamOrder.slice();
               if (d.pvStyle === "bullets" || d.pvStyle === "para") state.pvStyle = d.pvStyle;
               applyLook(); applyLayout();
             }
