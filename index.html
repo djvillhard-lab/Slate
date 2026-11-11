@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111113849";
+<script>window.SLATE_BUILD = "20261111114504";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2328,6 +2328,25 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
                 pitching: [["gamesPlayed", "GP"], ["wins", "W"], ["losses", "L"], ["ERA", "ERA"], ["innings", "IP"], ["strikeouts", "K"], ["WHIP", "WHIP"], ["saves", "SV"]] }
   };
   var BX_SEASON_MAX = 15;
+  BX_SEASON.soccer = { outfield: [["appearances", "APP"], ["totalGoals", "G"], ["goalAssists", "A"], ["totalShots", "SH"], ["shotsOnTarget", "SOT"], ["foulsSuffered", "FS"], ["yellowCards", "YC"], ["redCards", "RC"]],
+                       keepers: [["appearances", "APP"], ["saves", "SV"], ["goalsConceded", "GA"], ["yellowCards", "YC"]] };
+  // ESPN has no season stats endpoint for soccer, but its squad list carries each player's season numbers: reshape it like the others
+  function soccerSeason(roster) {
+    var out = [], gk = [];
+    ((roster || {}).athletes || []).forEach(function (a) {
+      var st = []; (((a.statistics || {}).splits || {}).categories || []).forEach(function (c) { (c.stats || []).forEach(function (x) { st.push({ name: x.name, displayValue: x.displayValue, value: x.value }); }); });
+      var v = {}; st.forEach(function (x) { v[x.name] = Number(x.value) || 0; });
+      if (!v.appearances) return;
+      var row = { athlete: a, statistics: [{ stats: st }], _s: (v.totalGoals || 0) * 3 + (v.goalAssists || 0) * 2 + (v.appearances || 0) * 0.1 };
+      ((a.position || {}).abbreviation === "G" ? gk : out).push(row);
+    });
+    out.sort(function (x, y) { return y._s - x._s; }); gk.sort(function (x, y) { return y._s - x._s; });
+    return { results: [{ name: "outfield", leaders: out }, { name: "keepers", leaders: gk }] };
+  }
+  function seasonFetch(lg, id) {
+    return BX_SPORT[lg] === "soccer" ? rkFetch(bxApi(lg, "teams/" + id + "/roster")).then(function (r) { return r ? soccerSeason(r) : null; })
+      : rkFetch(bxApi(lg, "teams/" + id + "/athletes/statistics"));
+  }
   function bxName(a) { a = a || {}; return a.shortName || a.displayName || ""; }
   function bxLabel(x) { var l = x.label || x.displayName || x.abbreviation || x.name || ""; if (/^[A-Z][A-Z ]{3,}$/.test(l)) l = l.charAt(0) + l.slice(1).toLowerCase(); return l; }
   // ESPN's game summary (plus, before the start, each team's season stats) → the small shape saved in box/<date>.
@@ -2429,7 +2448,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
         var cp = ((sum.header || {}).competitions || [])[0] || {}, stt = ((cp.status || {}).type || {}).state;
         if (stt !== "pre" || !BX_SEASON[BX_SPORT[lg]]) return [sum, null];
         var ids = (cp.competitors || []).map(function (c) { return String((c.team || {}).id || ""); });
-        return Promise.all(ids.map(function (id) { return rkFetch(bxApi(lg, "teams/" + id + "/athletes/statistics")); })).then(function (rs) {
+        return Promise.all(ids.map(function (id) { return seasonFetch(lg, id); })).then(function (rs) {
           var m = {}; ids.forEach(function (id, i) { if (rs[i]) m[id] = rs[i]; }); return [sum, m];
         });
       });
@@ -2988,7 +3007,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       var hit = m[tmKeyName(t.name)]; if (!hit) throw new Error("not found");
       var e = { id: hit[0], abbr: hit[1] };
       cur.espn = e; tmWatch(t.lg + "-" + String(e.abbr || "").toLowerCase());
-      return Promise.all([Promise.resolve(null), rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule")), rkFetch(bxApi(t.lg, "teams/" + e.id + "/athletes/statistics")), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
+      return Promise.all([Promise.resolve(null), rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule")), seasonFetch(t.lg, e.id), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
     }).then(function (r) {
       if (!r[1]) throw new Error("no data");
       r[0] = { team: (r[1] || {}).team || {} };
@@ -3543,8 +3562,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var quiet = ORDER.filter(function (k) { return !present[k] && hid.indexOf(k) === -1; });
     var opts = [];
     if (gs.some(hasFav)) opts.push(["fav", "★"]);
-    var nLive = gs.filter(function (g) { return status(g).kind === "live"; }).length;
-    if (nLive) opts.push(["live", "LIVE " + nLive]);
+
     keys.forEach(function (k) { var g0 = gs.filter(function (x) { return x.league === k; })[0]; opts.push([k, info(g0).tag]); });
     opts.push(["all", "ALL"]);
     quiet.forEach(function (k) { opts.push([k, LEAGUES[k].tag, true]); });
@@ -3611,6 +3629,24 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     $("search").hidden = !state.showSearch && !state.q;
     if (!games().length) { if (isDuo) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
     var list = gamesFiltered();
+    if (state.date === todayInHome()) {
+      var gl = state.gamesLive == null ? (function () { try { return localStorage.getItem("slate-games-live") === "1"; } catch (e) { return false; } })() : state.gamesLive;
+      state.gamesLive = gl;
+      var nLv = list.filter(function (g) { return status(g).kind === "live"; }).length;
+      var lo = el("div", "lo-row"), lb = el("button", "lo-btn" + (gl ? " on" : "")); lb.type = "button";
+      lb.setAttribute("aria-pressed", gl ? "true" : "false"); lb.setAttribute("aria-label", "Show only live games");
+      lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live")); lb.appendChild(el("b", null, String(nLv)));
+      lb.addEventListener("click", function () { state.gamesLive = !state.gamesLive; try { localStorage.setItem("slate-games-live", state.gamesLive ? "1" : "0"); } catch (e) {} keepScroll(renderGames); });
+      lo.appendChild(lb); body.appendChild(lo);
+      if (gl) {
+        var before = list.length; list = list.filter(function (g) { return status(g).kind === "live"; });
+        if (!list.length && before) {
+          var nl = el("div", "notice lo-none"); nl.appendChild(el("span", null, "None of these " + before + " games are live right now."));
+          var sa = el("button", "pv-get", "Show all"); sa.type = "button"; sa.addEventListener("click", function () { state.gamesLive = false; try { localStorage.setItem("slate-games-live", "0"); } catch (e) {} keepScroll(renderGames); });
+          nl.appendChild(sa); body.appendChild(nl); return;
+        }
+      }
+    }
     if (!list.length) {
       var lgName = LEAGUES[state.league] ? LEAGUES[state.league].name : "";
       var none = lgName && !state.q && !games().some(function (g) { return g.league === state.league; });
@@ -4207,7 +4243,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function renderFilterOrder() {
     var box = $("filter-order"); if (!box) return; box.textContent = "";
     var hid = state.hiddenLeagues || [];
-    var keys = ["fav", "live"].concat(ORDER.filter(function (k) { return hid.indexOf(k) === -1; })).concat(["all"]);
+    var keys = ["fav"].concat(ORDER.filter(function (k) { return hid.indexOf(k) === -1; })).concat(["all"]);
     var ord = state.gamesOrder || [];
     keys = keys.map(function (k, i) { var j = ord.indexOf(k); return [j === -1 ? 1e3 + i : j, k]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
     keys.forEach(function (k, i) {
@@ -4817,8 +4853,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (!target || !target.closest || state.menuOpen) return null;
       if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip, .bs-pills")) return null;
       if (isDuo && target.closest("#pane-l")) return "day";
-      if (state.backTo && state.backTo.view !== state.view) return "back";
       if (state.view === "games" && target.closest("#view-games, #games-body") && !target.closest(".tray")) return "league";
+      if (state.backTo && state.backTo.view !== state.view) return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
     document.addEventListener("touchstart", function (e) {

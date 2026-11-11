@@ -298,6 +298,12 @@ def summary_facts(g, ev):
     if pr.get("homeTeam"): f["projection"] = {"home": pr["homeTeam"].get("gameProjection"), "away": (pr.get("awayTeam") or {}).get("gameProjection")}
     v = (s.get("gameInfo") or {}).get("venue") or {}
     if v.get("fullName"): f["venue"] = v["fullName"] + (", " + v.get("address", {}).get("city", "") if v.get("address", {}).get("city") else "")
+    if lg not in SPORT:  # soccer
+        sq = {}
+        for tid, side in ids.items():
+            top, hurt = squad(lg, tid); sq[side] = top
+            for h in hurt: f.setdefault("injuries", []).append(f"{abbr(g, side)}: {h}")
+        f["squad"] = sq
     teams_ids = set(ids)
     news = []
     for a in (s.get("news") or {}).get("articles", [])[:8]:
@@ -306,6 +312,21 @@ def summary_facts(g, ev):
         if cats & teams_ids and url.startswith("https"): news.append({"title": a.get("headline"), "source": "ESPN", "url": url, "at": a.get("published")})
     if news: f["espnNews"] = news[:4]
     return f
+
+# soccer: ESPN's game data is thin, but its squad list carries each player's season numbers and injuries
+def squad(lg, tid):
+    d = get(f"https://site.api.espn.com/apis/site/v2/sports/{base(lg)}/teams/{tid}/roster")
+    top, hurt = [], []
+    for a in d.get("athletes", []):
+        v = {x.get("name"): x.get("value") or 0 for c in ((a.get("statistics") or {}).get("splits") or {}).get("categories", []) for x in c.get("stats", [])}
+        if v.get("appearances"):
+            top.append((v.get("totalGoals", 0) * 3 + v.get("goalAssists", 0) * 2, {"name": a.get("displayName"), "pos": (a.get("position") or {}).get("abbreviation"),
+                        "apps": int(v.get("appearances", 0)), "goals": int(v.get("totalGoals", 0)), "assists": int(v.get("goalAssists", 0)),
+                        "shots": int(v.get("totalShots", 0)), "saves": int(v.get("saves", 0)) or None}))
+        for inj in a.get("injuries") or []:
+            hurt.append(f"{a.get('displayName')} {str(inj.get('status') or 'injured').lower()}")
+    top.sort(key=lambda x: -x[0])
+    return [t[1] for t in top[:5]], hurt[:4]
 
 # ---------- change detection ----------
 def fnum(x):
@@ -453,8 +474,9 @@ def team_facts(t):
         elif st == "pre":
             row["tv"] = [n for bc in c.get("broadcasts", []) for n in ([bc.get("media", {}).get("shortName")] if bc.get("media") else bc.get("names", [])) if n][:2]; nxt.append(row)
     rec = ((info.get("record") or {}).get("items") or [{}])[0].get("summary")
+    sq_top, sq_hurt = squad(lg, tid) if lg not in SPORT else ([], [])
     return {"name": t["name"], "league": lg, "abbr": t["abbr"], "record": rec, "standing": info.get("standingSummary"),
-            "recent": done[-6:], "upcoming": nxt[:3],
+            "recent": done[-6:], "upcoming": nxt[:3], **({"squad": sq_top, "injuries": sq_hurt} if lg not in SPORT else {}),
             "news": [{"title": a.get("headline"), "url": ((a.get("links") or {}).get("web") or {}).get("href"), "at": a.get("published")}
                      for a in news if ((a.get("links") or {}).get("web") or {}).get("href", "").startswith("https")][:6]}
 
