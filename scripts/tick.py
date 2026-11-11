@@ -460,6 +460,10 @@ def team_facts(t):
     lg, tid = t["league"], t["id"]; b = base(lg)
     info = get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/teams/{tid}").get("team", {})
     sch = get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/teams/{tid}/schedule").get("events", [])
+    if lg not in SPORT:  # soccer lists upcoming fixtures separately
+        seen = {e.get("id") for e in sch}
+        sch += [e for e in get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/teams/{tid}/schedule?fixture=true").get("events", []) if e.get("id") not in seen]
+    sch.sort(key=lambda e: e.get("date") or "")
     news = get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/news?team={tid}&limit=8").get("articles", [])
     done, nxt = [], []
     for e in sch:

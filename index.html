@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111114504";
+<script>window.SLATE_BUILD = "20261111115009";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3007,7 +3007,14 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       var hit = m[tmKeyName(t.name)]; if (!hit) throw new Error("not found");
       var e = { id: hit[0], abbr: hit[1] };
       cur.espn = e; tmWatch(t.lg + "-" + String(e.abbr || "").toLowerCase());
-      return Promise.all([Promise.resolve(null), rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule")), seasonFetch(t.lg, e.id), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
+      // soccer schedules list results and upcoming fixtures separately
+      var sch = rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule"));
+      if (BX_SPORT[t.lg] === "soccer") sch = Promise.all([sch, rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule?fixture=true"))]).then(function (two) {
+        var a = two[0] || two[1]; if (!a) return null; var seen = {}, evs = [];
+        [two[0], two[1]].forEach(function (x) { ((x || {}).events || []).forEach(function (ev) { if (!seen[ev.id]) { seen[ev.id] = 1; evs.push(ev); } }); });
+        return { team: (two[0] || {}).team || (two[1] || {}).team, events: evs };
+      });
+      return Promise.all([Promise.resolve(null), sch, seasonFetch(t.lg, e.id), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
     }).then(function (r) {
       if (!r[1]) throw new Error("no data");
       r[0] = { team: (r[1] || {}).team || {} };
