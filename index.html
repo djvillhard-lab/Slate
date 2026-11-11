@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111154016";
+<script>window.SLATE_BUILD = "20261111154332";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1366,7 +1366,11 @@ nav.dock.menu-open .dock-back { display: none; }
 .sugg-rt { display: grid; gap: 2px; } .sugg-rt .sugg-why { margin: 0; }
 .sugg-bt { display: flex; align-items: center; gap: 14px; }
 .sugg-on { border: 0; border-radius: 10px; padding: 8px 14px; background: var(--accent-fill); color: var(--on-accent); font: inherit; font-weight: 800; }
-.ev-sport { margin: 10px 0 0; font-size: 12px; font-weight: 800; color: var(--dim); }
+.ev-sport { display: flex; align-items: center; gap: 8px; width: 100%; margin: 0; padding: 12px 0; background: none; border: 0; border-bottom: 1px solid var(--line); color: var(--ink); font: inherit; text-align: left; }
+.ev-sport b { font-weight: 800; } .ev-sport span { margin-left: auto; color: var(--dim); font-size: 13px; }
+.ev-sport svg { width: 13px; height: 13px; flex: none; color: var(--dim); transform: rotate(90deg); transition: transform .2s; }
+.ev-sport.open svg { transform: rotate(-90deg); }
+.ev-grp { padding-left: 10px; }
 .ev-grp { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .ev-gh { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; background: none; border: 0; color: var(--ink); font: inherit; text-align: left; }
 .ev-gh svg { width: 13px; height: 13px; flex: none; color: var(--dim); transform: rotate(90deg); transition: transform .2s; }
@@ -4636,7 +4640,17 @@ nav.dock.menu-open .dock-back { display: none; }
     var lastSp = "";
     order.forEach(function (gid) {
       var sp = gid.split(":")[0];
-      if (sp !== lastSp) { lastSp = sp; box.appendChild(el("p", "ev-sport", EV_SPORT[sp] || "Other")); }
+      if (sp !== lastSp) {
+        lastSp = sp;
+        var mine = order.filter(function (x) { return x.split(":")[0] === sp; }), nOnG = mine.filter(evGroupOn).length, sOpen = !!(state.evSportOpen && state.evSportOpen[sp]);
+        var sh = el("button", "ev-sport" + (sOpen ? " open" : "")); sh.type = "button"; sh.setAttribute("aria-expanded", sOpen ? "true" : "false");
+        sh.appendChild(el("b", null, EV_SPORT[sp] || "Other"));
+        sh.appendChild(el("span", null, mine.length === 1 ? (nOnG ? "On" : "Off") : nOnG === mine.length ? "All " + mine.length + " groups on" : nOnG ? nOnG + " of " + mine.length + " groups on" : "All off"));
+        sh.appendChild(icon("more"));
+        sh.addEventListener("click", function () { state.evSportOpen = state.evSportOpen || {}; state.evSportOpen[sp] = !sOpen; keepScroll(renderRules); });
+        box.appendChild(sh);
+      }
+      if (!(state.evSportOpen && state.evSportOpen[sp])) return;
       var list = groups[gid], on = evGroupOn(gid), nOn = list.filter(function (e) { return evNameOn(e.name, gid); }).length;
       var open = !!(state.evOpenG && state.evOpenG[gid]);
       var row = el("div", "ev-grp" + (open ? " open" : ""));
