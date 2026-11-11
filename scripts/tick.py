@@ -99,6 +99,28 @@ def is_competitive(g):
     c = str(g.get("comp") or g.get("leagueLabel") or "") + " " + str(g.get("note") or "")
     return bool(c.strip()) and not re.search(r"friendl", c, re.I) and bool(re.search(r"world cup|qualif|nations league|gold cup|copa|euro|afcon|asian cup|olympic", c, re.I))
 def event_key(g): return str(g.get("note") or "").split(" - ")[0].strip().lower()
+SOCCER_LGS = {"mls", "epl", "ucl", "uel", "facup", "laliga", "seriea", "bundesliga", "ligue1", "intl"}
+CONF_RX = re.compile(r"\b(acc|sec|big ten|big 12|big east|pac-12|a-10|atlantic 10|aac|american athletic|mountain west|wcc|west coast|mvc|missouri valley|mac|sun belt|c-usa|conference usa|horizon|summit|big sky|big west|caa|coastal athletic|colonial|ivy|patriot|swac|meac|ohio valley|asun|southland|southern|northeast|america east|maac|wac)\b.*\b(tournament|championship)", re.I)
+def ev_group(name, lg):  # same groups as the app's Big events picker
+    n = str(name or "").lower()
+    sp = "soccer" if lg in SOCCER_LGS else lg if lg in ("ncaaf", "ncaam", "ncaaw", "nfl", "nba", "nhl", "mlb", "wnba") else "other"
+    c = "other"
+    if sp == "ncaaf": c = "cfp" if re.search(r"playoff|national championship", n) else "bowls" if "bowl" in n else "confchamp" if "championship" in n else "classics"
+    elif sp in ("ncaam", "ncaaw"):
+        c = "ncaa" if re.search(r"ncaa|march madness|final four|basketball championship|\bnit\b|crown", n) else "conftourn" if CONF_RX.search(n) else \
+            "challenges" if re.search(r"challenge|battle|series|showdown", n) and re.search(r"(acc|sec|big|pac|east|ten|12|american|mountain|west)", n) else "mte"
+    elif sp == "nfl": c = "sb" if "super bowl" in n else "playoffs" if re.search(r"playoff|wild card|divisional|championship", n) else "other"
+    elif sp == "nba": c = "cup" if "cup" in n else "playoffs" if re.search(r"play-in|playoff|finals|conference", n) else "other"
+    elif sp == "nhl": c = "outdoor" if re.search(r"winter classic|stadium series|heritage|global series|outdoor", n) else "playoffs" if re.search(r"playoff|stanley cup|final", n) else "other"
+    elif sp in ("mlb", "wnba"): c = "playoffs" if re.search(r"world series|playoff|wild card|division series|championship series|finals", n) else "other"
+    elif sp == "soccer": c = "finals" if "final" in n else "cups"
+    return sp + ":" + c
+def event_on(r, g):
+    k = event_key(g)
+    if k in r["eventsOn"]: return True
+    if k in r["eventsOff"]: return False
+    gid = ev_group(k, g.get("league"))
+    return r["eventGroups"][gid] if gid in r["eventGroups"] else r["eventMode"] != "pick"
 TOP_N = {"nba": 4, "nhl": 4, "wnba": 4, "epl": 6, "mls": 4, "laliga": 4, "seriea": 4, "bundesliga": 4, "ligue1": 4}
 BIG_SIX = ["arsenal", "chelsea", "liverpool", "manchester city", "manchester united", "tottenham"]
 NFL_DIV = {}
@@ -117,6 +139,7 @@ def norm_rules(r):
     o["eventMode"] = "pick" if r.get("eventMode") == "pick" else "all"
     o["eventsOn"] = [str(x).lower() for x in (r.get("eventsOn") or []) if isinstance(x, str)]
     o["eventsOff"] = [str(x).lower() for x in (r.get("eventsOff") or []) if isinstance(x, str)]
+    o["eventGroups"] = {str(k): bool(v) for k, v in (r.get("eventGroups") or {}).items()} if isinstance(r.get("eventGroups"), dict) else {}
     if r.get("after") in (0, 17, 18, 19, 20): o["after"] = r["after"]
     if r.get("max") in (0, 4, 6, 8, 10): o["max"] = r["max"]
     def put(k, key, v):
@@ -214,8 +237,7 @@ def compute_slate(games, rules, teams, lineup):
                 if m is not None: hits.append(m)
         note = g.get("note") or ""
         if r["events"] and EVENT_RX.search(note) and not re.search(r"group (play|stage)", note, re.I):
-            ek = event_key(g)
-            if (ek in r["eventsOn"]) if r["eventMode"] == "pick" else (ek not in r["eventsOff"]): hits.append(60)
+            if event_on(r, g): hits.append(60)
         if not hits or g["id"] in removed: continue
         t = parse(g.get("start"))
         if not fav and r["after"] and t and ct_hour(t) < r["after"]: continue

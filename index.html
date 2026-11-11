@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111153001";
+<script>window.SLATE_BUILD = "20261111153754";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -861,7 +861,8 @@ html.iphone main.wrap { padding-left: 16px; padding-right: 16px; }
 
 @keyframes slideL { from { opacity: 0; transform: translate3d(36%,0,0); } to { opacity: 1; transform: none; } }
 @keyframes slideR { from { opacity: 0; transform: translate3d(-36%,0,0); } to { opacity: 1; transform: none; } }
-main section.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); } main section.slide-r { animation: slideR .3s cubic-bezier(.2,.8,.2,1); }
+.sl-l { animation: slideL .22s cubic-bezier(.2,.8,.2,1); } .sl-r { animation: slideR .22s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { .sl-l, .sl-r { animation: none; } }
 #lineup-body.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); }
 #lineup-body.slide-r { animation: slideR .3s cubic-bezier(.2,.8,.2,1); }
 @media (prefers-reduced-motion: reduce) { #lineup-body.slide-l, #lineup-body.slide-r, #games-body.slide-l, #games-body.slide-r, #best-body.slide-l, #best-body.slide-r, main section.slide-l, main section.slide-r { animation: none; } }
@@ -1365,6 +1366,14 @@ nav.dock.menu-open .dock-back { display: none; }
 .sugg-rt { display: grid; gap: 2px; } .sugg-rt .sugg-why { margin: 0; }
 .sugg-bt { display: flex; align-items: center; gap: 14px; }
 .sugg-on { border: 0; border-radius: 10px; padding: 8px 14px; background: var(--accent-fill); color: var(--on-accent); font: inherit; font-weight: 800; }
+.ev-sport { margin: 10px 0 0; font-size: 12px; font-weight: 800; color: var(--dim); }
+.ev-grp { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.ev-gh { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; background: none; border: 0; color: var(--ink); font: inherit; text-align: left; }
+.ev-gh svg { width: 13px; height: 13px; flex: none; color: var(--dim); transform: rotate(90deg); transition: transform .2s; }
+.ev-grp.open .ev-gh svg { transform: rotate(-90deg); }
+.ev-grp .switch { margin-top: 0; }
+.ev-gh .ev-tx b { white-space: normal; }
+.ev-grp .ev-list { grid-column: 1 / -1; }
 </style>
 </head>
 <body>
@@ -2031,12 +2040,37 @@ nav.dock.menu-open .dock-back { display: none; }
   function isEvent(g) { return !!(g.note && EVENT_RX.test(g.note) && !/group (play|stage)/i.test(g.note)); }
   // which events count: every one (minus any switched off), or only the ones DJ picked
   function eventKey(g) { return String(g.note || "").split(" - ")[0].trim(); }
-  function eventOn(g) {
-    if (!isEvent(g)) return false;
-    var r = state.rules || RULE_DEFAULTS, k = eventKey(g).toLowerCase();
-    if (r.eventMode === "pick") return (r.eventsOn || []).some(function (x) { return x.toLowerCase() === k; });
-    return !(r.eventsOff || []).some(function (x) { return x.toLowerCase() === k; });
+  // events sorted into groups you can switch on whole (Bowl games, Conference championships…), with single events overridable
+  var CONF_RX = /\b(acc|sec|big ten|big 12|big east|pac-12|a-10|atlantic 10|aac|american athletic|mountain west|wcc|west coast|mvc|missouri valley|mac|sun belt|c-usa|conference usa|horizon|summit|big sky|big west|caa|coastal athletic|colonial|ivy|patriot|swac|meac|ohio valley|asun|southland|southern|northeast|america east|maac|wac)\b.*\b(tournament|championship)/i;
+  var EV_SPORT = { ncaaf: "College football", ncaam: "Men's college hoops", ncaaw: "Women's college hoops", nfl: "NFL", nba: "NBA", nhl: "NHL", mlb: "MLB", wnba: "WNBA", soccer: "Soccer" };
+  var EV_CAT = {
+    "ncaaf:cfp": "College Football Playoff", "ncaaf:bowls": "Bowl games", "ncaaf:confchamp": "Conference championships", "ncaaf:classics": "Rivalries and classics",
+    "ncaam:ncaa": "NCAA Tournament and postseason", "ncaam:conftourn": "Conference tournaments", "ncaam:challenges": "Conference challenges", "ncaam:mte": "Holiday tournaments and classics",
+    "ncaaw:ncaa": "NCAA Tournament and postseason", "ncaaw:conftourn": "Conference tournaments", "ncaaw:challenges": "Conference challenges", "ncaaw:mte": "Holiday tournaments and classics",
+    "nfl:sb": "Super Bowl", "nfl:playoffs": "Playoffs", "nfl:other": "Special games", "nba:cup": "NBA Cup", "nba:playoffs": "Play-in and playoffs", "nba:other": "Special games",
+    "nhl:outdoor": "Outdoor and special games", "nhl:playoffs": "Playoffs", "nhl:other": "Special games", "mlb:playoffs": "Postseason", "mlb:other": "Special games",
+    "wnba:playoffs": "Playoffs", "wnba:other": "Special games", "soccer:finals": "Finals", "soccer:cups": "Cup ties and derbies"
+  };
+  function evSport(lg) { return SOCCER[lg] ? "soccer" : EV_SPORT[lg] ? lg : "other"; }
+  function evGroup(name, lg) {
+    var n = String(name || "").toLowerCase(), sp = evSport(lg), c = "other";
+    if (sp === "ncaaf") c = /playoff|national championship/.test(n) ? "cfp" : /bowl/.test(n) ? "bowls" : /championship/.test(n) ? "confchamp" : "classics";
+    else if (sp === "ncaam" || sp === "ncaaw") c = /ncaa|march madness|final four|basketball championship|\bnit\b|crown/.test(n) ? "ncaa" : CONF_RX.test(n) ? "conftourn" : /challenge|battle|series|showdown/.test(n) && /(acc|sec|big|pac|east|ten|12|american|mountain|west)/.test(n) ? "challenges" : "mte";
+    else if (sp === "nfl") c = /super bowl/.test(n) ? "sb" : /playoff|wild card|divisional|championship/.test(n) ? "playoffs" : "other";
+    else if (sp === "nba") c = /cup/.test(n) ? "cup" : /play-in|playoff|finals|conference/.test(n) ? "playoffs" : "other";
+    else if (sp === "nhl") c = /winter classic|stadium series|heritage|global series|outdoor/.test(n) ? "outdoor" : /playoff|stanley cup|final/.test(n) ? "playoffs" : "other";
+    else if (sp === "mlb" || sp === "wnba") c = /world series|playoff|wild card|division series|championship series|finals/.test(n) ? "playoffs" : "other";
+    else if (sp === "soccer") c = /final/.test(n) ? "finals" : "cups";
+    return sp + ":" + c;
   }
+  function evGroupOn(gid) { var r = state.rules || RULE_DEFAULTS, m = r.eventGroups || {}; return gid in m ? !!m[gid] : r.eventMode !== "pick"; }
+  function evNameOn(name, gid) {
+    var r = state.rules || RULE_DEFAULTS, k = String(name).toLowerCase();
+    if ((r.eventsOn || []).some(function (x) { return x.toLowerCase() === k; })) return true;
+    if ((r.eventsOff || []).some(function (x) { return x.toLowerCase() === k; })) return false;
+    return evGroupOn(gid);
+  }
+  function eventOn(g) { return isEvent(g) && evNameOn(eventKey(g), evGroup(eventKey(g), g.league)); }
   var SOCCER = { mls: 1, epl: 1, ucl: 1, uel: 1, facup: 1, laliga: 1, seriea: 1, bundesliga: 1, ligue1: 1, intl: 1 };
   var LG_OPTS = {
     ncaaf: ["ranked", "national", "all"], ncaam: ["ranked", "national", "all"], ncaaw: ["ranked", "national", "all"],
@@ -2079,6 +2113,7 @@ nav.dock.menu-open .dock-back { display: none; }
     if (typeof r.favorites === "boolean") o.favorites = r.favorites;
     if (typeof r.events === "boolean") o.events = r.events;
     o.eventMode = r.eventMode === "pick" ? "pick" : "all";
+    o.eventGroups = {}; if (r.eventGroups && typeof r.eventGroups === "object") Object.keys(r.eventGroups).forEach(function (k) { o.eventGroups[k] = !!r.eventGroups[k]; });
     o.eventsOn = Array.isArray(r.eventsOn) ? r.eventsOn.filter(function (x) { return typeof x === "string"; }).slice(0, 200) : [];
     o.eventsOff = Array.isArray(r.eventsOff) ? r.eventsOff.filter(function (x) { return typeof x === "string"; }).slice(0, 200) : [];
     if ([0, 17, 18, 19, 20].indexOf(Number(r.after)) !== -1) o.after = Number(r.after);
@@ -3146,7 +3181,7 @@ nav.dock.menu-open .dock-back { display: none; }
   function rkPick(k, dir) {
     if (state.bestLeague === k) return;
     state.bestLeague = k; state.bestAuto = false; state.bestConf = "all";
-    var b = $("best-body"); if (b && dir && !REDUCED) { b.classList.remove("slide-l", "slide-r"); void b.offsetWidth; b.classList.add(dir === "l" ? "slide-l" : "slide-r"); }
+    if (dir) slideIn($("best-body"), dir);
     renderBest(); rkPoll(true); window.scrollTo(0, 0);
     var on = document.querySelector(".rk-strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" });
   }
@@ -4042,7 +4077,7 @@ nav.dock.menu-open .dock-back { display: none; }
   function pickFilter(k, dir) {
     if (state.league === k) return;
     state.league = k; state.conf = "all"; state.leagueAuto = false;
-    var b = $("games-body"); if (b && dir && !REDUCED) { b.classList.remove("slide-l", "slide-r"); void b.offsetWidth; b.classList.add(dir === "l" ? "slide-l" : "slide-r"); }
+    if (dir) slideIn($("games-body"), dir);
     render();
     var on = document.querySelector("#strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center", behavior: REDUCED ? "auto" : "smooth" });
     window.scrollTo(0, 0);
@@ -4466,7 +4501,7 @@ nav.dock.menu-open .dock-back { display: none; }
   function rulesSentence() {
     var r = state.rules, parts = [], groups = {}, order = [];
     if (r.favorites) parts.push("your teams");
-    if (r.events) parts.push(r.eventMode === "pick" ? "the events you picked" : "big events");
+    if (r.events) parts.push("the big events you picked");
     var every = [];
     ORDER.forEach(function (k) {
       var b = (r.by || {})[k]; if (!b) return;
@@ -4581,65 +4616,57 @@ nav.dock.menu-open .dock-back { display: none; }
     Object.keys(day).forEach(function (k) { add(k, [day[k][0].league], state.date, day[k].length); });
     return Object.keys(out).map(function (k) { return out[k]; }).sort(function (a, b) { return a.first < b.first ? -1 : a.first > b.first ? 1 : a.name.localeCompare(b.name); });
   }
-  function evIsOn(name) {
-    var r = state.rules || RULE_DEFAULTS, k = name.toLowerCase();
-    if (r.eventMode === "pick") return (r.eventsOn || []).some(function (x) { return x.toLowerCase() === k; });
-    return !(r.eventsOff || []).some(function (x) { return x.toLowerCase() === k; });
-  }
   function eventPicker() {
     loadEvCat();
     var r = state.rules, box = el("div", "evpick");
-    var seg = el("div", "seg seg2 ev-seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Which events");
-    [["all", "All events"], ["pick", "Just my picks"]].forEach(function (o) {
-      var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", (r.eventMode || "all") === o[0] ? "true" : "false");
-      b.addEventListener("click", function () { r.eventMode = o[0]; rulesChanged(); }); seg.appendChild(b);
-    });
-    box.appendChild(seg);
-    var pick = r.eventMode === "pick", picked = pick ? (r.eventsOn || []) : (r.eventsOff || []);
-    box.appendChild(el("p", "ev-hint", pick ? (picked.length ? picked.length + (picked.length === 1 ? " event picked. " : " events picked. ") : "Nothing picked yet. ") + "Picks carry over to every day and next season." : "Every event counts" + (picked.length ? " except " + picked.length + " you left out" : "") + ". Tap one below to leave it out."));
-    var det = el("details", "ev-det"); if (state.evOpen) det.open = true;
-    det.addEventListener("toggle", function () { state.evOpen = det.open; });
     var all = EVCAT ? eventList() : [];
-    det.appendChild(el("summary", null, EVCAT ? "Choose events (" + all.length + " coming up)" : "Loading upcoming events…"));
-    var tools = el("div", "ev-tools");
-    var q = el("input", "field ev-q"); q.type = "search"; q.placeholder = "Search events, e.g. Maui or Bowl"; q.value = state.evQ || ""; q.setAttribute("aria-label", "Search events");
-    tools.appendChild(q);
-    var lgs = []; all.forEach(function (e) { e.lg.forEach(function (l) { if (lgs.indexOf(l) === -1) lgs.push(l); }); });
-    lgs.sort(function (a, b) { return ORDER.indexOf(a) - ORDER.indexOf(b); });
-    var chips = el("div", "ev-chips");
-    [["", "All"]].concat(lgs.map(function (l) { return [l, (LEAGUES[l] || {}).tag || l.toUpperCase()]; })).forEach(function (o) {
-      var c = el("button", null, o[1]); c.type = "button"; c.setAttribute("aria-pressed", (state.evLg || "") === o[0] ? "true" : "false");
-      c.addEventListener("click", function () { state.evLg = o[0]; state.evMore = false; keepScroll(renderRules); }); chips.appendChild(c);
-    });
-    if (lgs.length > 1) tools.appendChild(chips);
-    det.appendChild(tools);
-    var list = el("div", "ev-list");
-    function draw() {
-      list.textContent = "";
-      var qq = (q.value || "").trim().toLowerCase(); state.evQ = q.value;
-      var rows = all.filter(function (e) { return (!state.evLg || e.lg.indexOf(state.evLg) !== -1) && (!qq || e.name.toLowerCase().indexOf(qq) !== -1); });
-      // your picks (or the ones left out) first, then by date
-      var top = function (e) { return pick ? (evIsOn(e.name) ? 0 : 1) : (evIsOn(e.name) ? 1 : 0); };
-      rows = rows.map(function (e, i) { return [top(e), i, e]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (x) { return x[2]; });
-      var lim = state.evMore || qq ? rows.length : 30;
-      rows.slice(0, lim).forEach(function (e) {
-        var on = evIsOn(e.name), b = el("button", "ev" + (on ? " on" : "")); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
-        b.appendChild(icon(on ? "check" : "plus"));
-        var tx = el("span", "ev-tx"); tx.appendChild(el("b", null, e.name));
-        var when = e.first === todayInHome() ? "Today" : fmtDate(e.first, { month: "short", day: "numeric" });
-        tx.appendChild(el("span", null, when + " · " + e.lg.map(function (l) { return (LEAGUES[l] || {}).tag || l.toUpperCase(); }).join(", ") + (e.n ? " · " + e.n + (e.n === 1 ? " game" : " games") : ""))); b.appendChild(tx);
-        b.addEventListener("click", function () {
-          var lk = e.name.toLowerCase(), key = pick ? "eventsOn" : "eventsOff", arr = (r[key] || []).filter(function (x) { return x.toLowerCase() !== lk; });
-          if (arr.length === (r[key] || []).length) arr.push(e.name);
-          r[key] = arr; rulesChanged();
+    // one row per group (by sport), each with its events inside
+    var groups = {}, order = [];
+    all.forEach(function (e) { e.lg.forEach(function (l) { var gid = evGroup(e.name, l); if (!groups[gid]) { groups[gid] = []; order.push(gid); } if (groups[gid].indexOf(e) === -1) groups[gid].push(e); }); });
+    var SP = ["ncaaf", "ncaam", "ncaaw", "nfl", "nba", "nhl", "mlb", "wnba", "soccer", "other"];
+    order.sort(function (a2, b2) { var sa = SP.indexOf(a2.split(":")[0]), sb = SP.indexOf(b2.split(":")[0]); return sa - sb || (groups[a2][0].first < groups[b2][0].first ? -1 : 1); });
+    box.appendChild(el("p", "ev-hint", EVCAT ? "Switch on the kinds of events you want. New ones in that group join your slate automatically; open a group to include or skip single events." : "Loading upcoming events…"));
+    var lastSp = "";
+    order.forEach(function (gid) {
+      var sp = gid.split(":")[0];
+      if (sp !== lastSp) { lastSp = sp; box.appendChild(el("p", "ev-sport", EV_SPORT[sp] || "Other")); }
+      var list = groups[gid], on = evGroupOn(gid), nOn = list.filter(function (e) { return evNameOn(e.name, gid); }).length;
+      var open = !!(state.evOpenG && state.evOpenG[gid]);
+      var row = el("div", "ev-grp" + (open ? " open" : ""));
+      var hd = el("button", "ev-gh"); hd.type = "button"; hd.setAttribute("aria-expanded", open ? "true" : "false");
+      var tx = el("span", "ev-tx"); tx.appendChild(el("b", null, EV_CAT[gid] || "Other events"));
+      var nx = list[0], when = nx.first === todayInHome() ? "today" : fmtDate(nx.first, { month: "short", day: "numeric" });
+      tx.appendChild(el("span", null, list.length + (list.length === 1 ? " event" : " events") + (nOn && nOn < list.length ? " · " + nOn + " on" : "") + " · next " + when));
+      hd.appendChild(tx); hd.appendChild(icon("more"));
+      hd.addEventListener("click", function () { state.evOpenG = state.evOpenG || {}; state.evOpenG[gid] = !open; keepScroll(renderRules); });
+      row.appendChild(hd);
+      row.appendChild(switchEl(on, EV_CAT[gid] || "Other events", function (v) {
+        r.eventGroups = r.eventGroups || {}; r.eventGroups[gid] = v;
+        var names = list.map(function (e) { return e.name.toLowerCase(); });
+        r.eventsOn = (r.eventsOn || []).filter(function (x) { return names.indexOf(x.toLowerCase()) === -1; });
+        r.eventsOff = (r.eventsOff || []).filter(function (x) { return names.indexOf(x.toLowerCase()) === -1; });
+        rulesChanged();
+      }));
+      if (open) {
+        var inner = el("div", "ev-list");
+        list.forEach(function (e) {
+          var eo = evNameOn(e.name, gid), b = el("button", "ev" + (eo ? " on" : "")); b.type = "button"; b.setAttribute("aria-pressed", eo ? "true" : "false");
+          b.appendChild(icon(eo ? "check" : "plus"));
+          var t2 = el("span", "ev-tx"); t2.appendChild(el("b", null, e.name));
+          t2.appendChild(el("span", null, (e.first === todayInHome() ? "Today" : fmtDate(e.first, { month: "short", day: "numeric" })) + (e.n ? " · " + e.n + (e.n === 1 ? " game" : " games") : ""))); b.appendChild(t2);
+          b.addEventListener("click", function () {
+            var lk = e.name.toLowerCase();
+            r.eventsOn = (r.eventsOn || []).filter(function (x) { return x.toLowerCase() !== lk; });
+            r.eventsOff = (r.eventsOff || []).filter(function (x) { return x.toLowerCase() !== lk; });
+            var want = !eo; if (want !== evGroupOn(gid)) (want ? r.eventsOn : r.eventsOff).push(e.name);
+            rulesChanged();
+          });
+          inner.appendChild(b);
         });
-        list.appendChild(b);
-      });
-      if (!rows.length) list.appendChild(el("p", "ev-none", EVCAT ? "No events match." : "Loading…"));
-      if (rows.length > lim) { var mb = el("button", "rlink", "Show all " + rows.length); mb.type = "button"; mb.addEventListener("click", function () { state.evMore = true; draw(); }); list.appendChild(mb); }
-    }
-    q.addEventListener("input", draw);
-    draw(); det.appendChild(list); box.appendChild(det);
+        row.appendChild(inner);
+      }
+      box.appendChild(row);
+    });
     return box;
   }
   function renderRules() {
@@ -5197,12 +5224,19 @@ nav.dock.menu-open .dock-back { display: none; }
   var repinT = null; window.addEventListener("scroll", function () { clearTimeout(repinT); repinT = setTimeout(repinDock, 120); }, { passive: true });
   function setView(v) { state.backTo = null; if (isDuo && v === "lineup") v = "games"; if (v === "rules" && state.view !== "rules") state.rulesMain = null; state.view = v; state.menuOpen = false; render(); repinDock(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
   var slideDir = "";
+  // swipes move only what changes: pickers, day switchers, Live buttons and the ticker stay put
+  var SW_STATIC = ".rk-strip, .rk-sub, .rk-day, .lo-row, .ticker, .strip, .substrip, .tb-pills";
+  function slideKids(body) { return body ? Array.prototype.filter.call(body.children, function (c) { return !(c.matches && c.matches(SW_STATIC)); }) : []; }
+  function slideIn(body, dir) {
+    if (!body || REDUCED) return;
+    slideKids(body).forEach(function (c) { c.classList.remove("sl-l", "sl-r"); void c.offsetWidth; c.classList.add(dir === "l" ? "sl-l" : "sl-r"); });
+  }
   function setDate(iso) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || iso === state.date) { slideDir = ""; return; }
     var dir = slideDir || (iso > state.date ? "l" : "r"); slideDir = "";
     state.date = iso; state.openId = null; if (db) subscribe(); else render();
     if (isDuo) $("pane-l").scrollTop = 0; else if (state.view === "lineup") window.scrollTo(0, 0);
-    var lb = $("lineup-body"); lb.classList.remove("slide-l", "slide-r"); void lb.offsetWidth; lb.classList.add("slide-" + dir);
+    slideIn($("lineup-body"), dir);
   }
   function isPastDay() { return state.date < todayInHome(); }
   function toggle(id) {
@@ -5530,18 +5564,18 @@ nav.dock.menu-open .dock-back { display: none; }
     // the page follows the finger, then slides out and the next one slides in
     var drag = null, locked = false;
     function dragTarget() {
-      if (mode === "day") return $("lineup-body");
-      if (mode === "league") return $("games-body");
-      if (mode === "rk") return $("best-body");
-      if (mode === "back") return $("view-" + state.view);
-      return null;
+      if (mode === "day") return slideKids($("lineup-body"));
+      if (mode === "league") return slideKids($("games-body"));
+      if (mode === "rk") return slideKids($("best-body"));
+      if (mode === "back") { var v = $("view-" + state.view); return v ? [v] : []; }
+      return [];
     }
-    function clearDrag(el2) { if (!el2) return; el2.style.transition = ""; el2.style.transform = ""; el2.style.opacity = ""; el2.style.willChange = ""; }
-    function snapBack(el2) {
-      if (!el2) return;
-      el2.style.transition = "transform .24s cubic-bezier(.2,.8,.2,1), opacity .24s";
-      el2.style.transform = ""; el2.style.opacity = "";
-      setTimeout(function () { clearDrag(el2); }, 260);
+    function each(list, fn) { (list || []).forEach(fn); }
+    function clearDrag(list) { each(list, function (el2) { el2.style.transition = ""; el2.style.transform = ""; el2.style.opacity = ""; el2.style.willChange = ""; }); }
+    function snapBack(list) {
+      if (!list) return;
+      each(list, function (el2) { el2.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s"; el2.style.transform = ""; el2.style.opacity = ""; });
+      setTimeout(function () { clearDrag(list); }, 200);
     }
     function where() { return [state.view, state.date, state.league, state.bestLeague].join("|"); }
     document.addEventListener("touchmove", function (e) {
@@ -5551,10 +5585,11 @@ nav.dock.menu-open .dock-back { display: none; }
         if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { x0 = null; return; }
         if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
         if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { x0 = null; return; }
-        locked = true; drag = dragTarget(); if (drag) { drag.style.transition = "none"; drag.style.willChange = "transform, opacity"; }
+        locked = true; drag = dragTarget(); each(drag, function (el2) { el2.style.transition = "none"; el2.style.willChange = "transform, opacity"; });
       }
       if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { snapBack(drag); drag = null; x0 = null; locked = false; return; }
-      if (drag) { var m = dx * 0.6; drag.style.transform = "translate3d(" + m + "px,0,0)"; drag.style.opacity = String(1 - Math.min(Math.abs(dx) / 700, 0.3)); }
+      var m = dx * 0.7, op = String(1 - Math.min(Math.abs(dx) / 700, 0.3));
+      each(drag, function (el2) { el2.style.transform = "translate3d(" + m + "px,0,0)"; el2.style.opacity = op; });
     }, { passive: true });
     document.addEventListener("touchend", function (e) {
       if (x0 === null) { if (drag) snapBack(drag); drag = null; locked = false; return; }
@@ -5569,14 +5604,14 @@ nav.dock.menu-open .dock-back { display: none; }
         else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
         else { slideDir = dir; setDate(shiftDate(state.date, dx < 0 ? 1 : -1)); }
       }
-      if (!d || REDUCED) { act(); return; }
-      d.style.transition = "transform .16s cubic-bezier(.4,0,1,1), opacity .16s";
-      d.style.transform = "translate3d(" + (dx < 0 ? -42 : 42) + "%,0,0)"; d.style.opacity = "0";
+      if (!d || !d.length || REDUCED) { act(); return; }
+      each(d, function (el2) { el2.style.transition = "transform .11s cubic-bezier(.4,0,1,1), opacity .11s"; el2.style.transform = "translate3d(" + (dx < 0 ? -40 : 40) + "%,0,0)"; el2.style.opacity = "0"; });
       setTimeout(function () {
-        clearDrag(d); act();
-        if (where() === before) { d.classList.remove("slide-l", "slide-r"); void d.offsetWidth; d.classList.add(dir === "l" ? "slide-r" : "slide-l"); return; }   // nothing further that way: come back
-        if (mode === "back") { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("slide-l", "slide-r"); void nv.offsetWidth; nv.classList.add("slide-r"); setTimeout(function () { nv.classList.remove("slide-r"); }, 400); } }
-      }, 160);
+        var stay = where() === before; act();
+        if (where() === before) { clearDrag(d); each(d, function (el2) { el2.classList.remove("sl-l", "sl-r"); void el2.offsetWidth; el2.classList.add(dir === "l" ? "sl-r" : "sl-l"); }); return; }   // nothing further that way: come back
+        clearDrag(d);
+        if (mode === "back") { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("sl-l", "sl-r"); void nv.offsetWidth; nv.classList.add("sl-r"); setTimeout(function () { nv.classList.remove("sl-r"); }, 300); } }
+      }, 110);
     }, { passive: true });
     document.addEventListener("touchcancel", function () { x0 = null; if (drag) snapBack(drag); drag = null; locked = false; }, { passive: true });
   })();
