@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111164124";
+<script>window.SLATE_BUILD = "20261111164324";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2618,7 +2618,13 @@ html .menu-pop { bottom: 56px !important; }
     return { results: [{ name: "outfield", leaders: out }, { name: "keepers", leaders: gk }] };
   }
   function seasonFetch(lg, id) {
-    return BX_SPORT[lg] === "soccer" ? rkFetch(bxApi(lg, "teams/" + id + "/roster")).then(function (r) { return r ? soccerSeason(r) : null; })
+    // during the MLS playoffs ESPN's roster defaults to the (empty) playoff stats: ask for the season by year when that happens
+    var hasStats = function (r) { return !!r && (r.athletes || []).some(function (a) { return a.statistics && a.statistics.splits; }); };
+    return BX_SPORT[lg] === "soccer" ? rkFetch(bxApi(lg, "teams/" + id + "/roster")).then(function (r) {
+      if (hasStats(r)) return soccerSeason(r);
+      var y = new Date().getFullYear();
+      return rkFetch(bxApi(lg, "teams/" + id + "/roster?season=" + y)).then(function (r2) { return hasStats(r2) ? r2 : rkFetch(bxApi(lg, "teams/" + id + "/roster?season=" + (y - 1))); }).then(function (r3) { return r3 ? soccerSeason(r3) : (r ? soccerSeason(r) : null); });
+    })
       : rkFetch(bxApi(lg, "teams/" + id + "/athletes/statistics"));
   }
   function bxName(a) { a = a || {}; return a.shortName || a.displayName || ""; }
@@ -3423,7 +3429,7 @@ html .menu-pop { bottom: 56px !important; }
       if (BX_SPORT[t.lg] === "soccer") sch = Promise.all([sch, rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule?fixture=true"))]).then(function (two) {
         var a = two[0] || two[1]; if (!a) return null; var seen = {}, evs = [];
         [two[0], two[1]].forEach(function (x) { ((x || {}).events || []).forEach(function (ev) { if (!seen[ev.id]) { seen[ev.id] = 1; evs.push(ev); } }); });
-        return { team: (two[0] || {}).team || (two[1] || {}).team, events: evs };
+        return leagueGames(t.lg, e.id).then(function (more) { more.forEach(function (ev) { if (!seen[ev.id]) { seen[ev.id] = 1; evs.push(ev); } }); return { team: (two[0] || {}).team || (two[1] || {}).team, events: evs }; });
       });
       return Promise.all([Promise.resolve(null), sch, seasonFetch(t.lg, e.id), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
     }).then(function (r) {
@@ -3471,6 +3477,15 @@ html .menu-pop { bottom: 56px !important; }
       return team;
     });
   }
+  // knockout games (MLS playoffs, cups) are on the league scoreboard but not in the team's schedule: add this month's and next month's
+  function leagueGames(lg, teamId) {
+    if (BX_SPORT[lg] !== "soccer") return Promise.resolve([]);
+    var d = new Date(), m1 = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0"), d2 = new Date(d.getFullYear(), d.getMonth() + 1, 1), m2 = d2.getFullYear() + String(d2.getMonth() + 1).padStart(2, "0");
+    return Promise.all([m1, m2].map(function (m) { return rkFetch(bxApi(lg, "scoreboard?dates=" + m)); })).then(function (rs) {
+      var out = []; rs.forEach(function (j) { ((j || {}).events || []).forEach(function (e) { var cs = ((e.competitions || [])[0] || {}).competitors || []; if (cs.some(function (c) { return String((c.team || {}).id) === String(teamId); })) out.push(e); }); });
+      return out;
+    }, function () { return []; });
+  }
   function tmLite(t) {
     var k = tmKey(t), cur = tm.lite[k];
     if (cur && (cur.busy || Date.now() - cur.at < 10 * 60000)) return cur;
@@ -3479,7 +3494,7 @@ html .menu-pop { bottom: 56px !important; }
       var hit = m[tmKeyName(t.name)]; if (!hit) throw new Error("not found");
       cur.espn = { id: hit[0], abbr: hit[1] }; tmWatch(t.lg + "-" + String(hit[1] || "").toLowerCase());
       var u = bxApi(t.lg, "teams/" + hit[0] + "/schedule"), ps = [rkFetch(u)];
-      if (BX_SPORT[t.lg] === "soccer") ps.push(rkFetch(u + "?fixture=true"));
+      if (BX_SPORT[t.lg] === "soccer") { ps.push(rkFetch(u + "?fixture=true")); ps.push(leagueGames(t.lg, hit[0]).then(function (evs) { return { events: evs }; })); }
       return Promise.all(ps);
     }).then(function (rs) {
       var team = ((rs[0] || rs[1] || {}).team) || {}, evs = [], seen = {};

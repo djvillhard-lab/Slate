@@ -529,6 +529,12 @@ def team_facts(t):
     if lg not in SPORT:  # soccer lists upcoming fixtures separately
         seen = {e.get("id") for e in sch}
         sch += [e for e in get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/teams/{tid}/schedule?fixture=true").get("events", []) if e.get("id") not in seen]
+        # knockout games (MLS playoffs, cups) are only on the league scoreboard
+        d0 = now_utc().astimezone(CT); d1 = (d0.replace(day=1) + datetime.timedelta(days=32))
+        for m in (d0.strftime("%Y%m"), d1.strftime("%Y%m")):
+            for e in get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/scoreboard?dates={m}").get("events", []):
+                cs = (e.get("competitions") or [{}])[0].get("competitors", [])
+                if e.get("id") not in seen and any(str(x.get("team", {}).get("id")) == str(tid) for x in cs): seen.add(e.get("id")); sch.append(e)
     sch.sort(key=lambda e: e.get("date") or "")
     news = get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/news?team={tid}&limit=8").get("articles", [])
     done, nxt = [], []
