@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111162656";
+<script>window.SLATE_BUILD = "20261111162815";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1431,6 +1431,8 @@ nav.dock { display: flex; flex-direction: column; align-items: flex-end; gap: 10
 .dd-date em { font-style: normal; font-size: 10px; font-weight: 700; color: var(--dim); }
 .dd-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; }
 nav.dock.menu-open .dock-day { display: none; }
+@keyframes spin360 { to { transform: rotate(360deg); } }
+#btn-refresh.spin svg { animation: spin360 .8s linear infinite; }
 </style>
 </head>
 <body>
@@ -5280,11 +5282,15 @@ nav.dock.menu-open .dock-day { display: none; }
     if (window.SLATE_SELF && !state.isOwner && window.slateAskPass) { var pb = el("button", "foot-refresh", "Enter passcode"); pb.type = "button"; pb.addEventListener("click", window.slateAskPass); f.appendChild(pb); }
   }
   // Reload the page: picks up the newest version of the app and the latest games, scores and previews.
+  // Refresh in place: the page stays where it is and everything on it catches up in the background
   function refreshApp() {
     state.menuOpen = false;
-    toast("Refreshing…");
-    // self-hosted: a fresh address skips the phone's 10-minute cached copy of the page
-    setTimeout(function () { try { if (window.SLATE_SELF) location.replace(location.pathname + "?v=" + Date.now()); else location.reload(); } catch (e) { pullFresh(); } }, 250);
+    var btns = [$("btn-refresh")].filter(Boolean); btns.forEach(function (b) { b.classList.add("spin"); });
+    try { pullFresh(); } catch (e) {}
+    try { LIVE_AT = {}; livePoll(); } catch (e) {}
+    try { if (state.view === "best") rkPoll(true); } catch (e) {}
+    try { [state.openId, state.view === "game" ? state.gameId : null].forEach(function (id) { if (!id || !bx.live[id]) return; bx.live[id].at = 0; var g = games().filter(function (x) { return x.id === id; })[0]; if (g) bxFetch(g); }); } catch (e) {}
+    setTimeout(function () { btns.forEach(function (b) { b.classList.remove("spin"); }); state.liveAt = new Date().toISOString(); keepScroll(renderFoot); toast("Up to date"); }, 1400);
   }
   // Rebuilding a view empties it for a moment, which lets the browser snap the page to the top. Hold the scroll spot.
   function keepScroll(fn) {
