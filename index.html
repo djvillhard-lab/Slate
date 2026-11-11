@@ -1081,10 +1081,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .gv-tt i { font-style: normal; font-size: 13px; font-weight: 600; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gv-sec-in { display: grid; gap: 10px; }
 .gv-sec-in > * { margin: 0; }
-.lo-row { display: flex; justify-content: flex-end; margin: -4px 0 12px; }
-.lo-btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--hair); font-size: 15px; font-weight: 750; color: var(--head); }
-.lo-btn .lo-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dim); }
-.lo-btn b { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; display: inline-grid; place-items: center; background: var(--raise); font-size: 13px; font-weight: 800; color: var(--muted); }
+.lo-row { display: flex; justify-content: flex-end; margin: -6px 0 8px; }
+.lo-btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--hair); font-size: 13.5px; font-weight: 750; color: var(--head); }
+.lo-btn .lo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+.lo-btn b { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; display: inline-grid; place-items: center; background: var(--raise); font-size: 11.5px; font-weight: 800; color: var(--muted); }
 .lo-btn.on { background: var(--live); border-color: var(--live); color: #fff; }
 .lo-btn.on .lo-dot { background: #fff; }
 .lo-btn.on b { background: rgba(255,255,255,.22); color: #fff; }
@@ -3107,8 +3107,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
       if (state.date === todayInHome() && lg.length) {
         var nLive = lg.filter(function (g) { return status(g).kind === "live"; }).length;
         var lo = el("div", "lo-row"), lb = el("button", "lo-btn" + (liveOnly() ? " on" : "")); lb.type = "button";
-        lb.setAttribute("aria-pressed", liveOnly() ? "true" : "false");
-        lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, liveOnly() ? "Live only" : "Live only"));
+        lb.setAttribute("aria-pressed", liveOnly() ? "true" : "false"); lb.setAttribute("aria-label", "Show only live games");
+        lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live"));
         lb.appendChild(el("b", null, String(nLive)));
         lb.addEventListener("click", function () { setLiveOnly(!liveOnly()); keepScroll(renderLineup); });
         lo.appendChild(lb); body.appendChild(lo);
