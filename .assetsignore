@@ -1,0 +1,6 @@
+worker
+scripts
+.github
+wrangler.jsonc
+README.md
+.git

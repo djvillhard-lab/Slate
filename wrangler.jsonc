@@ -1,0 +1,9 @@
+{
+  // Slate on Cloudflare: the app's files, plus /api/summary (on-demand Claude summaries, written in the background)
+  "name": "slate",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "workflows": [{ "name": "slate-summary", "binding": "SUMMARY", "class_name": "SummaryWorkflow" }],
+  "observability": { "enabled": true }
+}

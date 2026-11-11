@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111170420";
+<script>window.SLATE_BUILD = "20261111171203";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1455,6 +1455,18 @@ html .menu-pop { bottom: 56px !important; }
 .dd-date { overflow: hidden; }
 .dd-input { min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; font-size: 16px; }
 .dd-arrow { position: relative; z-index: 1; }
+/* Claude on demand */
+.cl-ctl { margin-top: 10px; display: grid; gap: 8px; justify-items: start; }
+.cl-go { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 12px; background: var(--accent-fill); color: var(--on-accent); font: inherit; font-weight: 800; font-size: 15px; border: 0; }
+.cl-go svg { width: 17px; height: 17px; }
+.cl-busy { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: 14px; font-weight: 600; }
+.cl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: clpulse 1s ease-in-out infinite; }
+@keyframes clpulse { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
+.cl-re { font-size: 14px; }
+.cl-confirm { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--ink); }
+.cl-confirm button { height: 34px; padding: 0 14px; border-radius: 10px; font: inherit; font-weight: 800; border: 1px solid var(--line); background: var(--raise); color: var(--ink); }
+.cl-confirm .cl-yes { background: var(--accent-fill); color: var(--on-accent); border-color: transparent; }
+.cl-err { color: var(--live); }
 </style>
 </head>
 <body>
@@ -2526,12 +2538,75 @@ html .menu-pop { bottom: 56px !important; }
     if (rc) { var ra = new Date(rc.at || pv.updatedAt); return "Recap by Claude" + (rc.final ? " · final" : !isNaN(ra) ? " · " + ra.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : ""); }
     var t = new Date(pv.updatedAt); return isNaN(t) ? "" : "Preview by Claude · updated " + t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   }
+  // ---------- Claude on demand: one tap starts a summary in the background (Cloudflare → Claude → Supabase) ----------
+  var CL_ASK = {};   // just-tapped requests, until the saved "writing" marker shows up
+  function slatePass() { try { return localStorage.getItem("slate-pass") || ""; } catch (e) { return ""; } }
+  function clWriting(doc, k) {
+    var w = doc && doc.writing, mine = CL_ASK[k];
+    if (w && w.error && !(mine && mine > Date.parse(w.at || 0))) return { error: w.error };
+    var at = Math.max(w && !w.error ? Date.parse(w.at) || 0 : 0, mine || 0);
+    return at && Date.now() - at < 6 * 60000 ? { busy: true } : null;
+  }
+  function trimEspn(sum, g, kind) {
+    var f = {}, hd = sum.header || {}, cp = (hd.competitions || [])[0] || {};
+    try {
+      var gi = sum.gameInfo || {}; if (gi.venue) f.venue = (gi.venue.fullName || "") + ((gi.venue.address || {}).city ? ", " + gi.venue.address.city : "");
+      f.teams = (cp.competitors || []).map(function (c) { return { side: c.homeAway, name: (c.team || {}).displayName, abbr: (c.team || {}).abbreviation, record: ((c.record || [])[0] || {}).summary, score: c.score, winner: c.winner }; });
+      f.status = ((cp.status || {}).type || {}).detail;
+      f.injuries = (sum.injuries || []).map(function (t) { return { team: (t.team || {}).abbreviation, out: (t.injuries || []).slice(0, 8).map(function (i) { return ((i.athlete || {}).displayName || "") + " (" + (i.status || "") + ")"; }) }; });
+      f.leaders = (sum.leaders || []).map(function (t) { return { team: (t.team || {}).abbreviation, cats: (t.leaders || []).slice(0, 4).map(function (c) { var l = (c.leaders || [])[0] || {}; return (c.displayName || c.name) + ": " + ((l.athlete || {}).displayName || "") + " " + (l.displayValue || ""); }) }; });
+      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, games: (t.events || []).map(function (e) { return (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
+      if ((sum.seasonseries || [])[0]) f.series = sum.seasonseries[0].summary || sum.seasonseries[0].description;
+      if (kind === "recap") {
+        f.lines = (cp.competitors || []).map(function (c) { return { team: (c.team || {}).abbreviation, by: (c.linescores || []).map(function (l) { return l.displayValue || l.value; }) }; });
+        f.teamStats = ((sum.boxscore || {}).teams || []).map(function (t) { return { team: (t.team || {}).abbreviation, stats: (t.statistics || []).slice(0, 14).map(function (x) { return (x.label || x.name) + " " + x.displayValue; }) }; });
+        var qr = quickRecap(g); if (qr) f.quick = qr.text;
+        if ((sum.article || {}).headline) f.espnArticle = sum.article.headline + ". " + String(sum.article.description || "").slice(0, 300);
+      }
+    } catch (e) {}
+    return f;
+  }
+  function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; return o; }
+  function claudeAsk(kind, g, team) {
+    var pass = slatePass(); if (!pass) { toast("Enter your passcode first (bottom of the page)"); return; }
+    var k = kind === "team" ? "t:" + team.key : "g:" + state.date + ":" + g.id; CL_ASK[k] = Date.now(); keepScroll(render);
+    var factsP = kind === "team" ? Promise.resolve(team.facts)
+      : (bxBase(g.league) ? bxFindEvent(g).then(function (ev) { return ev ? rkFetch(bxApi(g.league, "summary?event=" + ev)) : null; }).then(function (sum) { return sum ? trimEspn(sum, g, kind) : {}; }, function () { return {}; }) : Promise.resolve({}));
+    factsP.then(function (facts) {
+      var body = { pass: pass, kind: kind, facts: facts };
+      if (kind === "team") body.key = team.key; else { body.date = state.date; body.id = g.id; body.game = clGame(g); }
+      return fetch("/api/summary", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { return [r.status, j]; }, function () { return [r.status, {}]; }); });
+    }).then(function (res) {
+      if (res[0] >= 300) { delete CL_ASK[k]; keepScroll(render); toast((res[1] && res[1].error) || "Couldn't start Claude. Try again."); return; }
+      toast("Claude is writing it. Keep browsing; it appears here in about a minute.");
+    }, function () { delete CL_ASK[k]; keepScroll(render); toast("Couldn't reach Slate's server. Try again."); });
+  }
+  // the one control: Write … / Claude is writing… / Regenerate (asks first)
+  function claudeCtl(kind, doc, has, ask, label) {
+    var k = kind, box = el("div", "cl-ctl"), w = clWriting(doc, ask.k);
+    if (w && w.busy) { var sp = el("span", "cl-busy"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Claude is writing this… usually under a minute")); box.appendChild(sp); return box; }
+    if (w && w.error) box.appendChild(el("p", "pv-none cl-err", "Last try didn't finish: " + w.error));
+    if (!has) { var b = el("button", "cl-go"); b.type = "button"; b.appendChild(icon("sparkle")); b.appendChild(el("span", null, label)); b.addEventListener("click", function (e) { e.stopPropagation(); ask.go(); }); box.appendChild(b); return box; }
+    var confirmOpen = state.clConfirm === ask.k;
+    if (!confirmOpen) { var rg = el("button", "rlink cl-re", "Regenerate"); rg.type = "button"; rg.addEventListener("click", function (e) { e.stopPropagation(); state.clConfirm = ask.k; keepScroll(render); }); box.appendChild(rg); return box; }
+    var cf = el("div", "cl-confirm"); cf.appendChild(el("span", null, "Rewrite this summary?"));
+    var y = el("button", "cl-yes", "Yes"); y.type = "button"; y.addEventListener("click", function (e) { e.stopPropagation(); state.clConfirm = null; ask.go(); });
+    var n = el("button", "cl-no", "No"); n.type = "button"; n.addEventListener("click", function (e) { e.stopPropagation(); state.clConfirm = null; keepScroll(render); });
+    cf.appendChild(y); cf.appendChild(n); box.appendChild(cf); return box;
+  }
+  function gameClaudeCtl(g) {
+    if (g.custom || isPastDay() && status(g).kind !== "over") return null;
+    var pv = (state.previews || {})[g.id], over = status(g).kind === "over", kind = over ? "recap" : "preview";
+    var has = over ? !!(pv && pv.recap && pv.recap.text) : !!(pv && pv.summary);
+    return claudeCtl(kind, pv, has, { k: "g:" + state.date + ":" + g.id, go: function () { claudeAsk(kind, g); } }, over ? "Write Claude's recap" : "Write Claude's preview");
+  }
   function previewBlock(g, inTray) {
     var pv = (state.previews || {})[g.id], box = el("div", "pv");
-    if (!pv) {
-      var past = isPastDay(), lr = (state.loadReq || {}), asked = (lr.previews || []).indexOf(g.id) !== -1 && lr.previewDate === state.date;
-      box.appendChild(el("p", "pv-none", past ? "No preview was saved for this game." : inLineup(g.id) ? "No preview yet. Your slate's previews are written at :55 each hour." : "No preview yet. Request one and it's written at the next :55 run."));
-      var ctl = !past && !inLineup(g.id) ? previewAsk(g, "gv-act") : null; if (ctl) box.appendChild(ctl);
+    if (!pv || !(pv.summary || (pv.recap && pv.recap.text))) {
+      var qr0 = quickRecap(g);
+      if (qr0 && recapShown(g)) { var rb0 = el("div", "pv-recap"); rb0.appendChild(el("b", "pv-h", "Box score recap")); rb0.appendChild(readNode(qr0.text, qr0.bullets, "pv-sum", true)); box.appendChild(rb0); }
+      else box.appendChild(el("p", "pv-none", "No Claude summary for this game yet."));
+      var ctl = gameClaudeCtl(g); if (ctl) box.appendChild(ctl);
       return box;
     }
     var o = inTray ? (pv.odds || {}) : {};
@@ -2547,12 +2622,12 @@ html .menu-pop { bottom: 56px !important; }
     if (rc) {
       if (rcOpen) {
         var rb = el("div", "pv-recap"); rb.appendChild(el("b", "pv-h", rc.quick ? "Box score recap" : "Recap")); rb.appendChild(readNode(rc.text, rc.bullets, "pv-sum", rc.quick));
-        if (rc.quick) rb.appendChild(el("p", "pv-none pv-soon", "The written recap arrives at :55."));
+
         box.appendChild(rb);
       } else box.appendChild(recapGate(g));
     } else if (pv.summary) {
       box.appendChild(readNode(pv.summary, pv.bullets, "pv-sum"));
-      if (recapPending(g, pv)) box.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives at :55."));
+
     }
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }).slice(0, 4) : [];
     var wl = stars.length ? stars : Array.isArray(pv.watch) ? pv.watch.filter(function (w) { return w && w.name; }).slice(0, 4) : [];
@@ -2580,6 +2655,7 @@ html .menu-pop { bottom: 56px !important; }
       box.appendChild(ul);
     }
     var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at", by));
+    var cl = gameClaudeCtl(g); if (cl) box.appendChild(cl);
     return box;
   }
   function gvCard(title, cls) { var c = el("section", "gv-card" + (cls ? " " + cls : "")); if (title) c.appendChild(el("h3", "gv-h", title)); return c; }
@@ -3735,12 +3811,20 @@ html .menu-pop { bottom: 56px !important; }
     if (doc && doc.summary) {
       cc.appendChild(readNode(doc.summary, doc.bullets, "gv-sum"));
       if (doc.at) cc.appendChild(el("p", "pv-at", "Written " + new Date(doc.at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })));
-    } else if (fav) cc.appendChild(el("p", "pv-none", "Your teams get a summary each morning and after every game. The first one arrives at :55."));
-    if (!fav && skey && window.SLATE_SELF) {
-      var asked = teamAsked(skey), rq = el("div", "gv-acts");
-      if (asked) { rq.appendChild(el("span", "pv-none", (doc && doc.summary ? "Update requested" : "Requested") + " · arrives at :55")); var cx = el("button", "rlink", "Cancel"); cx.type = "button"; cx.addEventListener("click", function () { requestTeam(skey, false); }); rq.appendChild(cx); }
-      else { var gb = el("button", "pv-get", doc && doc.summary ? "Get a fresh summary" : "Get a Claude summary"); gb.type = "button"; gb.addEventListener("click", function () { requestTeam(skey, true); }); rq.appendChild(gb); }
-      cc.appendChild(rq);
+    } else cc.appendChild(el("p", "pv-none", "No Claude summary for this team yet."));
+    if (skey && window.SLATE_SELF) {
+      var tf = function () {
+        var o = { name: t.name, league: (LEAGUES[t.lg] || {}).name || t.lg };
+        if (d && d.info) { o.record = d.info.recordSummary; o.standing = d.info.standingSummary; }
+        if (d && d.sched) {
+          var now = Date.now(), done = [], up = [];
+          d.sched.forEach(function (ev) { var c = (ev.competitions || [])[0] || {}, st = ((c.status || {}).type || {}).state, me = null, op = null; (c.competitors || []).forEach(function (x) { if (String((x.team || {}).id) === String(e.id)) me = x; else op = x; }); if (!me || !op) return; var sv = function (x) { return x.score && typeof x.score === "object" ? x.score.displayValue : x.score; }; var row = { date: ev.date, opp: (op.team || {}).displayName, home: me.homeAway === "home" }; if (st === "post") { row.score = sv(me) + "-" + sv(op); row.result = me.winner ? "W" : op.winner ? "L" : "T"; done.push(row); } else if (new Date(ev.date).getTime() > now - 6 * 3600000) up.push(row); });
+          o.recent = done.slice(-6); o.upcoming = up.slice(0, 3);
+        }
+        if (d && d.news) o.espnNews = d.news.slice(0, 5).map(function (a) { return a.headline; });
+        return o;
+      };
+      cc.appendChild(claudeCtl("team", doc, !!(doc && doc.summary), { k: "t:" + skey, go: function () { claudeAsk("team", null, { key: skey, facts: tf() }); } }, "Write Claude's take"));
     }
     body.appendChild(cc);
     if (!d) {
@@ -3815,7 +3899,6 @@ html .menu-pop { bottom: 56px !important; }
       sb.setAttribute("aria-label", onS ? "Remove from your slate" : "Add to your slate");
       sb.addEventListener("click", function () { toggle(g.id); keepScroll(renderGame); });
       acts.appendChild(sb);
-      if (!pv && !onS) { var pa = previewAsk(g, "gv-act"); if (pa) acts.appendChild(pa); }
       hd.appendChild(acts);
     }
     body.appendChild(hd);
@@ -3843,7 +3926,7 @@ html .menu-pop { bottom: 56px !important; }
     }
     // order: preview first, then player stats, then team stats
     var rcx = pv && recapOf(pv), qrx = !rcx && pv && quickRecap(g);
-    section("pv", rcx || qrx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : qrx ? "Box score recap for now" : pv && pv.summary ? "Quick read, deep dive, players" : "", function (box) {
+    section("pv", rcx || qrx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : qrx ? "Box score recap for now" : pv && pv.summary ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
       previewSections(g, pv, box);
       // standings or the poll, with tonight's two teams marked
       var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
@@ -3857,6 +3940,7 @@ html .menu-pop { bottom: 56px !important; }
       if (ath.length) box.appendChild(linkList("From The Athletic", ath.slice(0, 5)));
 
       if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
+      if (pv && (pv.summary || (pv.recap && pv.recap.text))) { var gcl = gameClaudeCtl(g); if (gcl) box.appendChild(gcl); }
     });
     if (sport) {
       section("box", started ? "Box score" : "Player stats", started ? (kind === "live" ? "Live" : "Final") : "This season", function (box) {
@@ -3881,7 +3965,7 @@ html .menu-pop { bottom: 56px !important; }
   }
   // the matchup page's preview sections (odds, quick read or recap, deep dive, players, form, headlines)
   function previewSections(g, pv, body) {
-    if (!pv) { var np = gvCard(null); np.appendChild(previewBlock(g)); body.appendChild(np); return; }
+    if (!pv || !(pv.summary || (pv.recap && pv.recap.text))) { var np = gvCard(null); np.appendChild(previewBlock(g)); body.appendChild(np); return; }
     // the betting line sits at the top of the matchup page, so it isn't repeated here
     var o = {};
     if (o.spread || o.total || (o.ml && o.ml.away != null)) {
@@ -3895,12 +3979,11 @@ html .menu-pop { bottom: 56px !important; }
     var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
     if (rc) {
       var rq = gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap");
-      if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); if (rc.quick) rq.appendChild(el("p", "pv-none pv-soon", "The written recap arrives at :55.")); }
+      if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); }
       else rq.appendChild(recapGate(g));
       body.appendChild(rq);
     } else if (pv.summary) {
       var q = gvCard("The quick read"); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
-      if (recapPending(g, pv)) q.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives at :55."));
       body.appendChild(q);
     }
     var long = Array.isArray(pv.long) ? pv.long.filter(Boolean) : [];
