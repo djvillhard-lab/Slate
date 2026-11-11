@@ -2,7 +2,7 @@
 <html lang="en" data-look="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#121821">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111160952";
+<script>window.SLATE_BUILD = "20261111161806";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1384,6 +1384,35 @@ nav.dock.menu-open .dock-back { display: none; }
 .title.has-brand { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; }
 .title.has-brand > svg.brand { display: block; grid-row: 1 / span 2; width: 36px !important; height: 46px !important; max-width: none; }
 .title.has-brand .t, .title.has-brand .d { grid-column: 2; }
+/* slate page header: title gets the full width; the small buttons sit at the end of the date row */
+.title .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.title .d { flex-wrap: nowrap; white-space: nowrap; }
+.title .d .today-btn { height: 24px !important; width: auto !important; padding: 0 9px; margin-left: 6px; border-radius: 999px; font-size: 13px !important; font-weight: 800; }
+.toprow.lineup-top { position: relative; }
+.toprow.lineup-top > .title { padding-right: 0; }
+.toprow.lineup-top > .pillgroup { position: absolute; right: 10px; top: 12px; bottom: 8px; height: auto; padding: 0; gap: 2px 0; border: 0; background: none; display: grid; grid-template-columns: 32px 32px; align-content: space-between; }
+.toprow.lineup-top > .title .t, .toprow.lineup-top > .title .d { padding-right: 66px; }
+.toprow.lineup-top > .pillgroup button { width: 32px !important; height: 32px !important; border-radius: 9px; color: var(--muted); }
+.toprow.lineup-top > .pillgroup svg { width: 18px !important; height: 18px !important; }
+/* menu: a compact column of pills rising from the button, right-aligned for the thumb */
+.menu-pop { width: auto !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; display: flex !important; flex-direction: column; align-items: flex-end; gap: 8px !important; bottom: 70px !important; animation: none !important; }
+.menu-pop .mi { height: 42px !important; padding: 0 14px 0 12px !important; gap: 9px !important; font-size: 14px !important; border-radius: 999px !important; background: var(--card); border: 1px solid var(--line); box-shadow: 0 6px 18px var(--shadow); white-space: nowrap; animation: miUp .18s cubic-bezier(.2,.8,.2,1) both; }
+.menu-pop .mi svg { width: 18px !important; height: 18px !important; }
+.menu-pop .mi[aria-current="page"] { background: var(--nav-sel); border-color: var(--accent); }
+.menu-pop .mi .dot { margin-left: 2px; min-width: 20px; height: 20px; font-size: 11px; }
+.menu-pop .mi:nth-last-child(1) { animation-delay: 0s; } .menu-pop .mi:nth-last-child(2) { animation-delay: .02s; } .menu-pop .mi:nth-last-child(3) { animation-delay: .04s; } .menu-pop .mi:nth-last-child(4) { animation-delay: .06s; } .menu-pop .mi:nth-last-child(5) { animation-delay: .08s; } .menu-pop .mi:nth-last-child(6) { animation-delay: .1s; }
+@keyframes miUp { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .menu-pop .mi { animation: none; } }
+/* no zooming: no double-tap zoom, and text fields are 16px so iOS doesn't zoom in when you type */
+html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+input, select, textarea { font-size: 16px !important; }
+/* Player rankings: the day picker floats bottom-right beside the menu button, where the right thumb rests */
+#best-body .rk-day { position: fixed; right: 82px; bottom: 12px; z-index: 12; display: flex; align-items: center; gap: 0; height: 58px; margin: 0; padding: 0 4px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px var(--shadow); }
+#best-body .rk-day .rk-arrow { width: 44px; height: 50px; border-radius: 14px; font-size: 26px; color: var(--ink); }
+#best-body .rk-day .rk-arrow:disabled { opacity: .25; }
+#best-body .rk-day .rk-date { order: 0; display: grid; justify-items: center; gap: 0; height: 50px; min-width: 76px; padding: 0 4px; align-content: center; }
+#best-body .rk-day .rk-date b { font-size: 16px; color: var(--accent); line-height: 1.1; }
+#best-body .rk-day .rk-date em { margin: 0; font-size: 11px; line-height: 1.2; }
 </style>
 </head>
 <body>
@@ -1433,6 +1462,8 @@ nav.dock.menu-open .dock-back { display: none; }
         </div>
       </div>
       <div class="pillgroup">
+        <button id="btn-refresh" type="button" aria-label="Refresh" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button>
+        <button id="btn-settings" type="button" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
         <button id="btn-rules" type="button" aria-label="Slate rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg></button>
         <button id="btn-find" type="button" aria-label="Search games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button>
         <button id="btn-add" type="button" aria-label="Add a game by hand">
@@ -1644,14 +1675,6 @@ nav.dock.menu-open .dock-back { display: none; }
     <button class="mi" id="nav-tv" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6v1.5h3V21H7v-1.5h3V18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
       <span>On TV</span>
-    </button>
-    <button class="mi" id="nav-settings" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.3 2h3.4l.5 2.6c.6.2 1.2.5 1.7.9l2.5-.9 1.7 2.9-2 1.7a7 7 0 0 1 0 1.9l2 1.7-1.7 2.9-2.5-.9c-.5.4-1.1.7-1.7.9l-.5 2.6h-3.4l-.5-2.6a7 7 0 0 1-1.7-.9l-2.5.9-1.7-2.9 2-1.7a7 7 0 0 1 0-1.9l-2-1.7 1.7-2.9 2.5.9c.5-.4 1.1-.7 1.7-.9zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" transform="translate(0 1)"/></svg>
-      <span>Settings</span>
-    </button>
-    <button class="mi" id="nav-refresh" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>
-      <span>Refresh</span>
     </button>
   </div>
   <button class="fab" id="menu-fab" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-pop">
@@ -3220,8 +3243,8 @@ nav.dock.menu-open .dock-back { display: none; }
     prev.addEventListener("click", function () { rkSetDate(shiftDate(rk.date, -1)); });
     var lab = el("label", "rk-date");
     var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yesterday" : fmtDate(day, { weekday: "short" });
-    lab.appendChild(el("b", null, "Top of " + fmtDate(day, { month: "short", day: "numeric", year: "numeric" })));
-    lab.appendChild(el("span", "rk-caret", "▾")); lab.appendChild(el("em", null, dl));
+    lab.appendChild(el("b", null, fmtDate(day, { month: "short", day: "numeric" })));
+    lab.appendChild(el("em", null, dl));
     var inp = document.createElement("input"); inp.type = "date"; inp.className = "rk-input"; inp.max = today; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
     inp.addEventListener("change", function () { if (inp.value) rkSetDate(inp.value); });
     lab.appendChild(inp);
@@ -5096,6 +5119,9 @@ nav.dock.menu-open .dock-back { display: none; }
     $("l-title-t").textContent = slateTitle;
     var tl = $("title"); if (tl) tl.classList.toggle("has-brand", v === "lineup");
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
+    $("btn-refresh").hidden = v !== "lineup"; $("btn-settings").hidden = v !== "lineup";
+    $("toprow-r").classList.toggle("lineup-top", v === "lineup");
+    fitTitle($("title-t")); fitTitle($("l-title-t"));
     var pg = $("btn-copy").parentNode; pg.hidden = v !== "lineup" && v !== "games";
     $("title-d").hidden = isDuo || v !== "lineup";
     var away = Math.round((new Date(state.date + "T12:00:00") - new Date(today + "T12:00:00")) / 86400000);
@@ -5175,7 +5201,7 @@ nav.dock.menu-open .dock-back { display: none; }
     cal.appendChild(ci); cal.classList.add("dpick"); ds.appendChild(cal);
     ds.hidden = v !== "games" && v !== "tv";
 
-    ["lineup", "rules", "games", "tv", "settings"].forEach(function (k) { var b = $("nav-" + k); if (v === k || (k === "settings" && v === "notify")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    ["lineup", "rules", "games", "tv", "settings"].forEach(function (k) { var b = $("nav-" + k); if (!b) return; if (v === k || (k === "settings" && v === "notify")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     $("menu-pop").hidden = !state.menuOpen; $("menu-scrim").hidden = !state.menuOpen; $("menu-fab").setAttribute("aria-expanded", state.menuOpen ? "true" : "false");
     $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-teams").hidden = v !== "teams"; $("view-tabs").hidden = v !== "tabs"; $("view-team").hidden = v !== "team";
     var cnt = lineupGames().length, nc = $("nav-count"); nc.textContent = String(cnt); nc.hidden = !cnt;
@@ -5252,7 +5278,15 @@ nav.dock.menu-open .dock-back { display: none; }
   });
   var repinT = null; window.addEventListener("scroll", function () { clearTimeout(repinT); repinT = setTimeout(repinDock, 120); }, { passive: true });
   function setView(v) { state.backTo = null; if (isDuo && v === "lineup") v = "games"; if (v === "rules" && state.view !== "rules") state.rulesMain = null; state.view = v; state.menuOpen = false; render(); repinDock(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (n) { document.addEventListener(n, function (e) { e.preventDefault(); }, { passive: false }); });
+  document.addEventListener("touchmove", function (e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
   var slideDir = "";
+  // long titles ("Yesterday's Slate") shrink to stay on one line
+  function fitTitle(t) {
+    if (!t) return; t.style.fontSize = "";
+    var go = function () { var fs = parseFloat(getComputedStyle(t).fontSize) || 28, n = 0; while (t.scrollWidth > t.clientWidth + 1 && fs > 17 && n++ < 14) { fs -= 1; t.style.fontSize = fs + "px"; } };
+    go(); requestAnimationFrame(go);
+  }
   // swipes move only what changes: pickers, day switchers, Live buttons and the ticker stay put
   var SW_STATIC = ".rk-strip, .rk-sub, .rk-day, .lo-row, .ticker, .strip, .substrip, .tb-pills";
   function slideKids(body) { return body ? Array.prototype.filter.call(body.children, function (c) { return !(c.matches && c.matches(SW_STATIC)); }) : []; }
@@ -5500,8 +5534,8 @@ nav.dock.menu-open .dock-back { display: none; }
   $("nav-games").addEventListener("click", function () { menuGo("games"); });
   $("nav-teams").addEventListener("click", function () { menuGo("teams"); });
   $("nav-best").addEventListener("click", function () { rk.date = null; menuGo("best"); rkPoll(true); });
-  $("nav-settings").addEventListener("click", function () { menuGo("settings"); });
-  $("nav-refresh").addEventListener("click", refreshApp);
+  $("btn-settings").addEventListener("click", function () { openSub("settings"); });
+  $("btn-refresh").addEventListener("click", refreshApp);
   $("nav-tv").addEventListener("click", function () { menuGo("tv"); });
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
   $("open-rules").addEventListener("click", function () { openSub("rules"); });
