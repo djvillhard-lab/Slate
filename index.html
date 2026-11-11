@@ -1826,6 +1826,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     var tv = (g.tv || []).filter(Boolean);
     if (mode === "lineup") {
       if (!tv.length) side.appendChild(el("span", "net", "Local TV"));
+      // at most two channels on the card, ones you can tap to watch first; the matchup page lists them all
+      var linked = tv.filter(function (n) { return !!watchLink(n, "net", n); });
+      var shown = linked.concat(tv.filter(function (n) { return linked.indexOf(n) === -1; })).slice(0, 2);
+      tv = tv.filter(function (n) { return shown.indexOf(n) !== -1; }).sort(function (a, b) { return shown.indexOf(a) - shown.indexOf(b); });
       tv.forEach(function (n) {
         var a = watchLink(n, "net", n) || el("span", "net", n);
         a.addEventListener("click", function (e) { e.stopPropagation(); });
