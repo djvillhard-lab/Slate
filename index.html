@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111175116";
+<script>window.SLATE_BUILD = "20261111175452";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1268,6 +1268,17 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .pstar { margin-left: 8px; width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 50%; background: transparent; border: 0; color: var(--dim); flex: none; }
 .pstar svg { width: 18px; height: 18px; } .pstar.on { color: var(--accent); }
 .rk-top { align-items: center; }
+.fp-h { margin-top: 18px; }
+.fp-list { display: grid; }
+.fp-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 2px; border-top: 1px solid var(--hair); }
+.fp-face { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; }
+.fp-face i { font-style: normal; font-size: 13px; font-weight: 800; color: #fff; opacity: .9; }
+.fp-face img { position: absolute; left: 50%; bottom: 0; width: 56px; transform: translateX(-50%); }
+.fp-mid { min-width: 0; display: grid; gap: 2px; }
+.fp-nm { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.fp-nm b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-nm span { font-size: 12px; color: var(--dim); font-weight: 700; flex: none; }
+.fp-next { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rk-idle { opacity: .8; } .rk-idle .rk-foot { color: var(--dim); font-weight: 650; }
 .tm-tbl th .pstar { width: 26px; height: 26px; margin: 0 4px 0 -4px; vertical-align: middle; }
 .tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: 1fr; gap: 10px; margin-bottom: 18px; }
@@ -1473,16 +1484,17 @@ html .menu-pop { bottom: 56px !important; }
 .cl-err { color: var(--live); }
 /* notes: a small card that wraps instead of a one-line pill that cut off */
 .toast, html.corner .toast, html.corner.roomy .toast, html.duo .toast {
-  left: 12px !important; right: auto !important; transform: none !important;
-  bottom: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 62px) !important;
-  width: max-content; max-width: min(340px, calc(100vw - 96px));
-  white-space: normal !important; line-height: 1.35; text-align: left;
-  padding: 12px 14px !important; border-radius: 14px !important; gap: 12px !important;
+  left: 0 !important; right: 0 !important; margin: 0 auto; transform: none !important;
+  bottom: calc(max(8px, env(safe-area-inset-bottom, 0px)) + 4px) !important;
+  width: max-content; max-width: min(300px, calc(100vw - 150px));
+  white-space: normal !important; line-height: 1.3; text-align: center; justify-content: center;
+  padding: 6px 12px !important; border-radius: 999px !important; gap: 8px !important;
   background: var(--card) !important; color: var(--ink) !important; border: 1px solid var(--line);
-  border-left: 4px solid var(--accent); font-size: 14px !important; font-weight: 650 !important;
-  box-shadow: 0 12px 32px var(--shadow);
+  font-size: 12px !important; font-weight: 650 !important;
+  box-shadow: 0 6px 18px var(--shadow);
 }
-html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max-width: min(340px, calc(50vw - 96px)); }
+html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width: min(300px, calc(50vw - 150px)); }
+.toast button { font-size: 12px; padding: 2px 6px; }
 .toast #toast-msg { min-width: 0; }
 .toast button { flex: none; align-self: center; }
 .toast.pop { animation: toastIn .2s cubic-bezier(.2,.8,.2,1); }
@@ -3313,10 +3325,23 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
     if (!force && cur && (cur.final || Date.now() - cur.at < 55000)) return;
     rk.busyK["fav|" + day] = true;
     var lgs = {}; favs.forEach(function (p) { if (RK_PATH[p.lg]) (lgs[p.lg] = lgs[p.lg] || []).push(p); });
-    var rows = [], status = {}, anyLive = false;
+    var rows = [], status = {}, nexts = {}, anyLive = false;
     Promise.all(Object.keys(lgs).map(function (lg) {
-      return Promise.all([rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 0))), rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 1)))]).then(function (sbs) {
-        var evs = [];
+      return Promise.all([rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 0))), rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 1))),
+        rkFetch(rkUrl(lg, "scoreboard", "limit=500&dates=" + rkEtDay(day, 1) + "-" + rkEtDay(day, 21)))]).then(function (sbs) {
+        var evs = [], ahead = sbs.pop();
+        // the next game for each player after this day, so a night off still says when they play next
+        lgs[lg].forEach(function (p) {
+          var best = null;
+          ((ahead && ahead.events) || []).forEach(function (e) {
+            if (rkCentral(new Date(e.date).getTime()) <= day) return;
+            var cs = ((e.competitions || [])[0] || {}).competitors || [], me = null, op = null;
+            cs.forEach(function (c) { var t = c.team || {}; if (t.displayName === p.teamName || t.abbreviation === p.team) me = c; else op = c; });
+            if (!me || (best && Date.parse(best.start) <= Date.parse(e.date))) return;
+            best = { start: e.date, home: me.homeAway === "home", opp: op ? (op.team || {}).abbreviation || (op.team || {}).shortDisplayName || "" : "" };
+          });
+          if (best) nexts[p.lg + "|" + p.id] = best;
+        });
         sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { if (rkCentral(new Date(e.date).getTime()) !== day) return; var names = ((e.competitions || [])[0] || {}).competitors || [];
           var mine = lgs[lg].filter(function (p) { return names.some(function (c) { var t = c.team || {}; return t.displayName === p.teamName || t.abbreviation === p.team; }); });
           if (mine.length && !evs.some(function (x) { return x.e.id === e.id; })) evs.push({ e: e, mine: mine }); }); });
@@ -3333,7 +3358,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
       });
     })).then(function () {
       rows.sort(function (a, b) { return b.score - a.score; });
-      rk.fav[day] = { rows: rows, status: status, at: Date.now(), final: !anyLive && day < todayInHome() };
+      rk.fav[day] = { rows: rows, status: status, next: nexts, at: Date.now(), final: !anyLive && day < todayInHome() };
       rk.busyK["fav|" + day] = false; if (state.view === "best") keepScroll(renderBest);
     }, function () { rk.busyK["fav|" + day] = false; });
   }
@@ -3380,6 +3405,35 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
     });
     if (extra.length) w.appendChild(el("span", "rk-more", extra.join(" · ")));
     return w;
+  }
+  function fpWhen(iso, day) {
+    var d = rkCentral(Date.parse(iso)), t = timeText(iso);
+    if (d === day) return t;
+    if (d === shiftDate(day, 1)) return "Tomorrow " + t;
+    var f = new Intl.DateTimeFormat("en-US", { timeZone: HOME_TZ, weekday: "short", month: "short", day: "numeric" }).format(new Date(iso));
+    return f + " · " + t;
+  }
+  // a starred player without a line tonight: small face, name, and when they play next
+  function favIdleRow(p, fd, day) {
+    var k = p.lg + "|" + p.id, st = fd.status[k], nx = (fd.next || {})[k];
+    var row = el("div", "fp-row"), face = el("span", "fp-face"), tc = typeof teamByName === "function" ? teamByName(p.teamName) : null;
+    face.style.background = (tc && tc.c1) || "#2a3442";
+    var ini = String(p.name || "").split(" "); face.appendChild(el("i", null, ((ini[0] || "")[0] || "") + ((ini[ini.length - 1] || "")[0] || "")));
+    var dir = BX_HEAD[p.lg];
+    if (dir) { var im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + p.id + ".png&w=96&h=70"; im.onerror = function () { im.remove(); }; face.appendChild(im); }
+    row.appendChild(face);
+    var mid = el("div", "fp-mid"), nm = el("div", "fp-nm");
+    nm.appendChild(el("b", null, p.name)); nm.appendChild(el("span", null, p.team || (LEAGUES[p.lg] || {}).tag || ""));
+    mid.appendChild(nm);
+    var when;
+    if (st && st.state === "pre") when = "Tonight " + timeText(st.start);
+    else if (st) when = "Sat out" + (nx ? " · next " + fpWhen(nx.start, day) + " " + (nx.home ? "vs " : "@ ") + nx.opp : "");
+    else if (nx) when = "Next: " + fpWhen(nx.start, day) + " " + (nx.home ? "vs " : "@ ") + nx.opp;
+    else when = "No game in the next 3 weeks";
+    mid.appendChild(el("div", "fp-next", when));
+    row.appendChild(mid);
+    row.appendChild(playerStar(p));
+    return row;
   }
   function bestRow(r, rank, lgx) {
     var lg = lgx || r.lg || state.bestLeague;
@@ -3490,15 +3544,20 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
       list = el("div", "bs-list");
       var rows = fd.rows.filter(keep), shown = {};
       rows.forEach(function (r) { shown[r.lg + "|" + r.id] = 1; list.appendChild(bestRow(r, 0)); });
-      if (!lv) favs.forEach(function (p) {
-        if (shown[p.lg + "|" + p.id]) return;
-        var st = fd.status[p.lg + "|" + p.id], rr = el("div", "rk-row rk-idle");
-        var mid = el("div", "rk-mid"), top = el("div", "rk-top"), nm = el("span", "rk-nm"); nm.appendChild(el("b", null, p.name)); nm.appendChild(el("span", null, " · " + (p.team || (LEAGUES[p.lg] || {}).tag || "")));
-        top.appendChild(nm); top.appendChild(playerStar(p)); mid.appendChild(top);
-        mid.appendChild(el("div", "rk-foot", !st ? "No game " + (day === today ? "today" : "that day") : st.state === "pre" ? "Plays at " + timeText(st.start) : "Didn't play"));
-        rr.appendChild(mid); list.appendChild(rr);
-      });
+      if (!rows.length) list.appendChild(el("p", "pv-none", "None of your players " + (day === today ? "have played yet today." : "played that day.")));
       body.appendChild(list);
+      var idle = lv ? [] : favs.filter(function (p) { return !shown[p.lg + "|" + p.id]; });
+      if (idle.length) {
+        var tonight = idle.filter(function (p) { var st = fd.status[p.lg + "|" + p.id]; return st && st.state === "pre"; });
+        var off = idle.filter(function (p) { return tonight.indexOf(p) === -1; });
+        [[tonight, day === today ? "Playing later" : "Later that day"], [off, day === today ? "Off today" : "Off that day"]].forEach(function (grp) {
+          if (!grp[0].length) return;
+          var h = el("div", "sec fp-h"); h.appendChild(el("h2", null, grp[1])); h.appendChild(el("span", "count", String(grp[0].length))); body.appendChild(h);
+          var ul = el("div", "fp-list");
+          grp[0].forEach(function (p) { ul.appendChild(favIdleRow(p, fd, day)); });
+          body.appendChild(ul);
+        });
+      }
     } else if (lgSel === "all") {
       ks.forEach(function (k) {
         var dk = rkData(k), name = (LEAGUES[k] || {}).name || k, ck = "rk:" + name, shut = !!COLLAPSED[ck];
