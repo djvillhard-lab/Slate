@@ -512,6 +512,34 @@ def team_work(docs, now, sett, load, todo, out_facts):
             f["basis"] = {"last": last}
             todo.append({"kind": "team", "key": key, "why": why}); out_facts["team:" + key] = f
 
+# ---------- The Athletic: its public RSS feeds, by league (the app shows them next to ESPN's headlines) ----------
+ATHLETIC = {"nba": "nba", "nfl": "nfl", "mlb": "mlb", "nhl": "nhl", "ncaaf": "college-football", "ncaam": "college-basketball",
+            "ncaaw": "womens-college-basketball", "wnba": "wnba", "epl": "premier-league", "mls": "mls", "soccer": "football"}
+def rss(url):
+    import xml.etree.ElementTree as ET, html
+    try:
+        raw = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (slate)"}), timeout=20).read()
+        root = ET.fromstring(raw)
+    except Exception:
+        return []
+    out = []
+    for it in root.iter("item"):
+        t = (it.findtext("title") or "").strip(); l = (it.findtext("link") or "").strip()
+        d = re.sub(r"<[^>]+>", "", html.unescape(it.findtext("description") or "")).strip()
+        if t and l.startswith("https"): out.append({"title": html.unescape(t), "url": l, "source": "The Athletic", "at": it.findtext("pubDate") or "", "desc": d[:240]})
+    return out
+
+def athletic_work(now):
+    have = sb_get(["news/athletic"]).get("news/athletic") or {}
+    at = parse(have.get("updatedAt"))
+    if at and (now - at).total_seconds() < 30 * 60: return
+    doc = {"updatedAt": iso(now), "leagues": {}}
+    for lg, slug in ATHLETIC.items():
+        items = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
+        if items: doc["leagues"][lg] = items[:40]
+    if doc["leagues"]: sb_put("news/athletic", doc)
+    print("athletic feeds:", {k: len(v) for k, v in doc["leagues"].items()})
+
 # ---------- main ----------
 def main():
     if not KEY: sys.exit("SUPABASE_SECRET is not set")
@@ -661,6 +689,9 @@ def main():
     if {k: v for k, v in old_work.items() if k != "updatedAt"} != {k: v for k, v in work.items() if k != "updatedAt"} or not old_work or \
             (now - (parse(old_work.get("updatedAt")) or now)).total_seconds() > 1800:
         sb_put(f"work/{D}", work)
+
+    try: athletic_work(now)
+    except Exception as e: print("athletic failed", e)
 
     # ---- 6. player rankings
     days = []

@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111115009";
+<script>window.SLATE_BUILD = "20261111123805";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1251,6 +1251,14 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .tm-pick .chev { color: var(--dim); font-size: 22px; }
 .tm-link { cursor: pointer; }
 #view-teams .field { width: 100%; box-sizing: border-box; margin: 4px 0 8px; }
+.rk-strip { margin: 0 -16px 10px; }
+.rk-sub { margin: -4px 0 10px; }
+#best-body.slide-l { animation: slideL .22s ease-out; } #best-body.slide-r { animation: slideR .22s ease-out; }
+.pstar { margin-left: 8px; width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 50%; background: transparent; border: 0; color: var(--dim); flex: none; }
+.pstar svg { width: 18px; height: 18px; } .pstar.on { color: var(--accent); }
+.rk-top { align-items: center; }
+.rk-idle { opacity: .8; } .rk-idle .rk-foot { color: var(--dim); font-weight: 650; }
+.tm-tbl th .pstar { width: 26px; height: 26px; margin: 0 4px 0 -4px; vertical-align: middle; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 /* iOS drags fixed, blurred buttons along while a page scrolls: solid backgrounds keep them pinned to the corner */
@@ -1694,7 +1702,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function setPref(path, v) { var ks = path.split("."), o = state.notify; for (var i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; }
   function fmtHour(h) { h = Number(h); return (h % 12 === 0 ? 12 : h % 12) + " " + (h < 12 ? "AM" : "PM"); }
   var state = {
-    date: todayInHome(), view: "lineup", openId: null, crawlPaused: false, tickerLeague: "", league: "", conf: "all", gamesOrder: [], pvStyle: "para", q: "", showSearch: false, textSize: "m", textSizeWide: "", device: "", navPos: "auto", watchVia: "apps", foldNudge: 0, tvFilter: "all",
+    date: todayInHome(), view: "lineup", openId: null, crawlPaused: false, tickerLeague: "", league: "", conf: "all", gamesOrder: [], pvStyle: "para", players: [], bestConf: "all", q: "", showSearch: false, textSize: "m", textSizeWide: "", device: "", navPos: "auto", watchVia: "apps", foldNudge: 0, tvFilter: "all",
     notify: clone(NOTIFY_DEFAULTS), notifyLoaded: false,
     autoAdd: true, showScores: true, hiddenLeagues: [], scores: {}, scoresAt: null, lineupAutoDone: false,
     slate: null, slateStatus: "loading", lineup: { ids: [], added: [], removed: [], custom: [] }, lineupLoaded: false,
@@ -2735,7 +2743,22 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   var RK_TOP = 25;
   var RK_PATH = { nba: "basketball/nba", wnba: "basketball/wnba", ncaam: "basketball/mens-college-basketball&groups=50&limit=500", ncaaw: "basketball/womens-college-basketball&groups=50&limit=500", nhl: "hockey/nhl", nfl: "football/nfl", ncaaf: "football/college-football&groups=80&limit=500", mlb: "baseball/mlb" };
   var RK_KIND = { nba: "bball", wnba: "bball", ncaam: "bball", ncaaw: "bball", nhl: "hockey", nfl: "football", ncaaf: "football", mlb: "baseball" };
-  var rk = { date: null, doc: null, docDate: null, unsub: null, live: {}, sum: {}, timer: null, busy: false };
+  var rk = { date: null, doc: null, docDate: null, unsub: null, live: {}, sum: {}, timer: null, busy: false, busyK: {}, fav: {}, sb: {} };
+  // favorite players: starred from the rankings or a team page, saved with the settings
+  function isFavPlayer(id, lg) { return !!id && (state.players || []).some(function (p) { return String(p.id) === String(id) && p.lg === lg; }); }
+  function toggleFavPlayer(p) {
+    var list = (state.players || []).slice(), i = -1;
+    list.forEach(function (x, j) { if (String(x.id) === String(p.id) && x.lg === p.lg) i = j; });
+    if (i !== -1) { list.splice(i, 1); toast("Removed " + p.name); } else { list.push({ id: String(p.id), name: p.name, lg: p.lg, team: p.team || "", teamName: p.teamName || "" }); toast("★ Added " + p.name); }
+    state.players = list; rk.fav = {}; saveSettings(); render();
+  }
+  function playerStar(p) {
+    var on = isFavPlayer(p.id, p.lg), b = el("button", "pstar" + (on ? " on" : "")); b.type = "button";
+    b.appendChild(starIcon(on)); b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.setAttribute("aria-label", (on ? "Remove " : "Add ") + p.name + (on ? " from" : " to") + " my players");
+    b.addEventListener("click", function (e) { e.stopPropagation(); toggleFavPlayer(p); });
+    return b;
+  }
   function rkUrl(lg, kind, q) { var p = RK_PATH[lg].split("&"); return "https://site.api.espn.com/apis/site/v2/sports/" + p[0] + "/" + kind + "?" + q + (kind === "scoreboard" && p.length > 1 ? "&" + p.slice(1).join("&") : ""); }
   function rkCentral(ms) { return new Intl.DateTimeFormat("en-CA", { timeZone: HOME_TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms)); }
   function rkNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
@@ -2814,13 +2837,21 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function rkEtDay(iso, add) { return shiftDate(iso, add).replace(/-/g, ""); }
   // self-hosted page only: rebuild the chosen day's rankings straight from ESPN (finished games come from the saved list when it has them)
   function rkPoll(force) {
-    if (!window.SLATE_SELF || state.view !== "best" || document.hidden || rk.busy) return;
-    var day = rk.date, lg = state.bestLeague; if (!day || !lg || !RK_PATH[lg]) return;
+    if (!window.SLATE_SELF || state.view !== "best" || document.hidden) return;
+    var lg = state.bestLeague;
+    if (lg === "fav") return rkFavPoll(force);
+    if (lg === "all") { rkLeagues(rk.date).forEach(function (k) { rkPollL(k, force); }); return; }
+    rkPollL(lg, force);
+  }
+  function rkPollL(lg, force) {
+    if (!window.SLATE_SELF || document.hidden) return;
+    var day = rk.date; if (!day || !lg || !RK_PATH[lg]) return;
     if (!rk.loaded || rk.docDate !== day) return;
     if (rk.doc && rk.doc.final && day < todayInHome() && rk.doc.events) return;
     var key = day + "|" + lg, cur = rk.live[key];
+    if (rk.busyK[key]) return;
     if (!force && cur && (cur.final || Date.now() - cur.at < 55000)) return;
-    rk.busy = true;
+    rk.busyK[key] = true;
     Promise.all([rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 0))), rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 1)))]).then(function (sbs) {
       var evs = {};
       sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { var s = (e.status || {}).type || {}; if ((s.state === "in" || s.state === "post") && rkCentral(new Date(e.date).getTime()) === day) evs[e.id] = e; }); });
@@ -2843,7 +2874,39 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
         var nLive = Object.keys(evs).filter(function (id) { return ((evs[id].status || {}).type || {}).state === "in"; }).length;
         rk.live[key] = { rows: out.slice(0, RK_TOP), games: Object.keys(evs).length, live: nLive, final: !nLive && day < todayInHome(), at: Date.now() };
       });
-    }).then(function () { rk.busy = false; if (state.view === "best") keepScroll(renderBest); }, function () { rk.busy = false; });
+    }).then(function () { rk.busyK[key] = false; if (state.view === "best") keepScroll(renderBest); }, function () { rk.busyK[key] = false; });
+  }
+  // how DJ's starred players did: only the games their teams played, every player line (not just the top 25)
+  function rkFavPoll(force) {
+    var day = rk.date, favs = state.players || []; if (!day || !favs.length) return;
+    var cur = rk.fav[day];
+    if (rk.busyK["fav|" + day]) return;
+    if (!force && cur && (cur.final || Date.now() - cur.at < 55000)) return;
+    rk.busyK["fav|" + day] = true;
+    var lgs = {}; favs.forEach(function (p) { if (RK_PATH[p.lg]) (lgs[p.lg] = lgs[p.lg] || []).push(p); });
+    var rows = [], status = {}, anyLive = false;
+    Promise.all(Object.keys(lgs).map(function (lg) {
+      return Promise.all([rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 0))), rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 1)))]).then(function (sbs) {
+        var evs = [];
+        sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { if (rkCentral(new Date(e.date).getTime()) !== day) return; var names = ((e.competitions || [])[0] || {}).competitors || [];
+          var mine = lgs[lg].filter(function (p) { return names.some(function (c) { var t = c.team || {}; return t.displayName === p.teamName || t.abbreviation === p.team; }); });
+          if (mine.length && !evs.some(function (x) { return x.e.id === e.id; })) evs.push({ e: e, mine: mine }); }); });
+        return Promise.all(evs.map(function (x) {
+          var st = ((x.e.status || {}).type || {}).state; x.mine.forEach(function (p) { status[p.lg + "|" + p.id] = { state: st, start: x.e.date }; });
+          if (st === "in") anyLive = true;
+          if (st !== "in" && st !== "post") return null;
+          var cached = st === "post" && rk.sum[lg + x.e.id];
+          return (cached ? Promise.resolve(cached) : rkFetch(rkUrl(lg, "summary", "event=" + x.e.id)).then(function (s) { if (s && st === "post") rk.sum[lg + x.e.id] = s; return s; })).then(function (s) {
+            if (!s) return; var ids = {}; x.mine.forEach(function (p) { ids[String(p.id)] = 1; });
+            rkGameRows(lg, x.e, s).forEach(function (r) { if (ids[String(r.id)]) { r.lg = lg; rows.push(r); } });
+          });
+        }));
+      });
+    })).then(function () {
+      rows.sort(function (a, b) { return b.score - a.score; });
+      rk.fav[day] = { rows: rows, status: status, at: Date.now(), final: !anyLive && day < todayInHome() };
+      rk.busyK["fav|" + day] = false; if (state.view === "best") keepScroll(renderBest);
+    }, function () { rk.busyK["fav|" + day] = false; });
   }
   if (window.SLATE_SELF) {
     setInterval(function () { rkPoll(false); }, 15000);
@@ -2871,8 +2934,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     if (iso > today) iso = today;
     rk.date = iso; rkSub(); keepScroll(renderBest); rkPoll(true);
   }
-  function rkData() {
-    var lg = state.bestLeague, live = rk.live[rk.date + "|" + lg];
+  function rkData(lgx) {
+    var lg = lgx || state.bestLeague, live = rk.live[rk.date + "|" + lg];
     if (window.SLATE_SELF && live) return { rows: live.rows, games: live.games, live: live.live, at: live.at, src: "live" };
     var d = rk.docDate === rk.date ? rk.doc : null;
     if (d && d.leagues && d.leagues[lg]) return { rows: d.leagues[lg], games: (d.games || {})[lg], live: (d.live || {})[lg] || 0, at: new Date(d.updatedAt).getTime(), src: "saved" };
@@ -2889,12 +2952,13 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     if (extra.length) w.appendChild(el("span", "rk-more", extra.join(" · ")));
     return w;
   }
-  function bestRow(r, rank) {
-    var row = el("div", "rk-row" + (isFav(r.teamName, state.bestLeague) ? " fav" : ""));
+  function bestRow(r, rank, lgx) {
+    var lg = lgx || r.lg || state.bestLeague;
+    var row = el("div", "rk-row" + (isFav(r.teamName, lg) || isFavPlayer(r.id, lg) ? " fav" : ""));
     var face = el("span", "rk-face"), tc = typeof teamByName === "function" ? teamByName(r.teamName) : null;
     face.style.background = (r.color && /^#[0-9a-f]{6}$/i.test(r.color) ? r.color : (tc && tc.c1) || "#2a3442");
     var ini = String(r.name || "").split(" "); face.appendChild(el("i", null, ((ini[0] || "")[0] || "") + ((ini[ini.length - 1] || "")[0] || "")));
-    var dir = BX_HEAD[state.bestLeague];
+    var dir = BX_HEAD[lg];
     if (r.id && dir) { var im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + r.id + ".png&w=140&h=102"; im.onerror = function () { im.remove(); }; face.appendChild(im); }
     var wrapF = el("span", "rk-fw"); wrapF.appendChild(face);
     var mark = badgeFor(r.team || "", r.teamName || "", r.color); mark.classList.add("rk-mark"); wrapF.appendChild(mark);
@@ -2903,7 +2967,10 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var top = el("div", "rk-top"), nm = el("span", "rk-nm");
     var parts = String(r.name || "").split(" "), shortN = parts.length > 1 ? parts[0][0] + ". " + parts.slice(1).join(" ") : r.name;
     nm.appendChild(el("b", null, shortN)); if (r.pos) nm.appendChild(el("span", null, " · " + r.pos));
-    top.appendChild(nm); top.appendChild(el("span", "rk-rank" + (rank <= 3 ? " top" : ""), "#" + rank));
+    top.appendChild(nm);
+    if (rank) top.appendChild(el("span", "rk-rank" + (rank <= 3 ? " top" : ""), "#" + rank));
+    else if (lgx === undefined && r.lg) top.appendChild(el("span", "rk-rank", (LEAGUES[r.lg] || {}).tag || ""));
+    if (r.id) top.appendChild(playerStar({ id: r.id, name: r.name, lg: lg, team: r.team, teamName: r.teamName }));
     mid.appendChild(top);
     mid.appendChild(rkStats(r.line));
     var ft = el("div", "rk-foot");
@@ -2917,6 +2984,37 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     mid.appendChild(ft);
     row.appendChild(mid);
     return row;
+  }
+  function rkLeagues(day) {
+    var d = rk.docDate === day ? rk.doc : null, have = d && d.leagues || {};
+    var ks = BEST_ORDER.filter(function (k) { return (Array.isArray(have[k]) && have[k].length) || (rk.live[day + "|" + k] && rk.live[day + "|" + k].games); });
+    if (window.SLATE_SELF) {
+      var playing = {}; if (day === state.date) games().forEach(function (g) { if (RK_KIND[g.league]) playing[g.league] = 1; });
+      BEST_ORDER.forEach(function (k) { if (playing[k] && ks.indexOf(k) === -1) ks.push(k); });
+      ks.sort(function (a, b) { return BEST_ORDER.indexOf(a) - BEST_ORDER.indexOf(b); });
+    }
+    return ks;
+  }
+  function rkOpts(ks) {
+    var opts = [];
+    if ((state.players || []).length) opts.push(["fav", "★"]);
+    ks.forEach(function (k) { opts.push([k, (LEAGUES[k] || {}).tag || k.toUpperCase()]); });
+    if (ks.length > 1) opts.push(["all", "ALL"]);
+    var ord = state.gamesOrder || [];
+    if (ord.length) opts = opts.map(function (o, i) { var j = ord.indexOf(o[0]); return [j === -1 ? 1e3 + i : j, o]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
+    return opts;
+  }
+  function rkPick(k, dir) {
+    if (state.bestLeague === k) return;
+    state.bestLeague = k; state.bestAuto = false; state.bestConf = "all";
+    var b = $("best-body"); if (b && dir && !REDUCED) { b.classList.remove("slide-l", "slide-r"); void b.offsetWidth; b.classList.add(dir === "l" ? "slide-l" : "slide-r"); }
+    renderBest(); rkPoll(true); window.scrollTo(0, 0);
+    var on = document.querySelector(".rk-strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" });
+  }
+  function rkSwipe(step) {
+    var opts = rkOpts(rkLeagues(rk.date)), i = -1;
+    opts.forEach(function (o, j) { if (o[0] === state.bestLeague) i = j; });
+    var n = opts[i + step]; if (n) rkPick(n[0], step > 0 ? "l" : "r");
   }
   function renderBest() {
     var body = $("best-body"); if (!body) return; body.textContent = "";
@@ -2938,36 +3036,87 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     nxt.addEventListener("click", function () { rkSetDate(shiftDate(rk.date, 1)); });
     dn.appendChild(prev); dn.appendChild(lab); dn.appendChild(nxt);
     body.appendChild(dn);
-    // leagues
-    var d = rk.docDate === day ? rk.doc : null, have = d && d.leagues || {};
-    var ks = BEST_ORDER.filter(function (k) { return (Array.isArray(have[k]) && have[k].length) || (rk.live[day + "|" + k] && rk.live[day + "|" + k].games); });
-    if (window.SLATE_SELF) {
-      var playing = {}; if (day === state.date) games().forEach(function (g) { if (RK_KIND[g.league]) playing[g.league] = 1; });
-      BEST_ORDER.forEach(function (k) { if (playing[k] && ks.indexOf(k) === -1) ks.push(k); });
-      if (!ks.length) ks = BEST_ORDER.slice();
-      ks.sort(function (a, b) { return BEST_ORDER.indexOf(a) - BEST_ORDER.indexOf(b); });
-    }
-    if (!ks.length) {
+    var ks = rkLeagues(day), favs = state.players || [];
+    if (!ks.length && !favs.length) {
       body.appendChild(el("div", "notice", !rk.loaded ? "Loading rankings…" : day === today ? "No rankings yet today. They fill in once games start." : "No rankings saved for this day."));
       return;
     }
-    if (ks.indexOf(state.bestLeague) === -1) state.bestLeague = ks[0];
-    var pills = el("div", "bs-pills");
-    ks.forEach(function (k) {
-      var b = el("button", "bs-pill" + (k === state.bestLeague ? " on" : ""), (LEAGUES[k] || {}).name || k.toUpperCase()); b.type = "button";
-      b.addEventListener("click", function () { state.bestLeague = k; keepScroll(renderBest); rkPoll(true); });
-      pills.appendChild(b);
+    // the same filters as All games: your players, the leagues, then All, in your order; swipe between them
+    var opts = rkOpts(ks);
+    if (state.bestAuto !== false || !opts.some(function (o) { return o[0] === state.bestLeague; })) { state.bestLeague = opts[0][0]; state.bestAuto = true; }
+    var strip = el("div", "strip rk-strip");
+    opts.forEach(function (o) {
+      var b2 = el("button", "lg-tab", o[1]); b2.type = "button"; b2.setAttribute("aria-pressed", state.bestLeague === o[0] ? "true" : "false");
+      if (o[0] === "fav") b2.setAttribute("aria-label", "My players");
+      b2.addEventListener("click", function () { rkPick(o[0]); });
+      strip.appendChild(b2);
     });
-    body.appendChild(pills);
-    var data = rkData();
-    if (!data || !data.rows.length) {
-      var busy = window.SLATE_SELF && !rk.live[day + "|" + state.bestLeague];
-      body.appendChild(el("div", "notice", busy ? "Pulling box scores…" : day === today ? "No " + ((LEAGUES[state.bestLeague] || {}).name || "") + " games have started yet." : "No " + ((LEAGUES[state.bestLeague] || {}).name || "") + " games that day."));
-      return;
+    body.appendChild(strip);
+    var lgSel = state.bestLeague;
+    // inside a college league: ranked teams only
+    var ranks = {};
+    games().forEach(function (g) { if (g.awayRank) ranks[g.away] = g.awayRank; if (g.homeRank) ranks[g.home] = g.homeRank; });
+    if (LEAGUES[lgSel] && LEAGUES[lgSel].college && day === state.date && Object.keys(ranks).length) {
+      var sub = el("div", "substrip rk-sub");
+      [["all", "All"], ["t25", "Ranked teams"]].forEach(function (o) {
+        var b3 = el("button", "cf-tab", o[1]); b3.type = "button"; b3.setAttribute("aria-pressed", (state.bestConf || "all") === o[0] ? "true" : "false");
+        b3.addEventListener("click", function () { state.bestConf = o[0]; keepScroll(renderBest); });
+        sub.appendChild(b3);
+      });
+      body.appendChild(sub);
+    } else state.bestConf = "all";
+    // Live: only players whose games are still going
+    var lv = !!state.bestLive;
+    if (day === today) {
+      var lo = el("div", "lo-row"), lb = el("button", "lo-btn" + (lv ? " on" : "")); lb.type = "button";
+      lb.setAttribute("aria-pressed", lv ? "true" : "false"); lb.setAttribute("aria-label", "Show only players in live games");
+      lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live"));
+      lb.addEventListener("click", function () { state.bestLive = !state.bestLive; keepScroll(renderBest); });
+      lo.appendChild(lb); body.appendChild(lo);
+    } else lv = false;
+    function keep(r) { if (lv && !r.live) return false; if (state.bestConf === "t25" && !ranks[r.teamName]) return false; return true; }
+    var list, data = null;
+    if (lgSel === "fav") {
+      var fd = rk.fav[day];
+      if (!favs.length) { body.appendChild(el("div", "notice", "Star a player in the rankings or on a team page and their night shows up here.")); return; }
+      if (!fd) { body.appendChild(el("div", "notice", "Finding your players' games…")); rkFavPoll(true); return; }
+      list = el("div", "bs-list");
+      var rows = fd.rows.filter(keep), shown = {};
+      rows.forEach(function (r) { shown[r.lg + "|" + r.id] = 1; list.appendChild(bestRow(r, 0)); });
+      if (!lv) favs.forEach(function (p) {
+        if (shown[p.lg + "|" + p.id]) return;
+        var st = fd.status[p.lg + "|" + p.id], rr = el("div", "rk-row rk-idle");
+        var mid = el("div", "rk-mid"), top = el("div", "rk-top"), nm = el("span", "rk-nm"); nm.appendChild(el("b", null, p.name)); nm.appendChild(el("span", null, " · " + (p.team || (LEAGUES[p.lg] || {}).tag || "")));
+        top.appendChild(nm); top.appendChild(playerStar(p)); mid.appendChild(top);
+        mid.appendChild(el("div", "rk-foot", !st ? "No game " + (day === today ? "today" : "that day") : st.state === "pre" ? "Plays at " + timeText(st.start) : "Didn't play"));
+        rr.appendChild(mid); list.appendChild(rr);
+      });
+      body.appendChild(list);
+    } else if (lgSel === "all") {
+      ks.forEach(function (k) {
+        var dk = rkData(k), name = (LEAGUES[k] || {}).name || k, ck = "rk:" + name, shut = !!COLLAPSED[ck];
+        var rs = dk ? dk.rows.filter(keep).slice(0, 10) : [];
+        var sec = el("button", "sec sec-tg" + (shut ? " shut" : "")); sec.type = "button"; sec.setAttribute("aria-expanded", shut ? "false" : "true");
+        sec.appendChild(el("h2", null, name)); sec.appendChild(el("span", "count", dk ? (dk.live ? dk.live + " live" : dk.games + (dk.games === 1 ? " game" : " games")) : "Loading…")); sec.appendChild(icon("more"));
+        sec.addEventListener("click", function () { if (COLLAPSED[ck]) delete COLLAPSED[ck]; else COLLAPSED[ck] = 1; try { localStorage.setItem("slate-collapsed", JSON.stringify(COLLAPSED)); } catch (e) {} keepScroll(renderBest); });
+        body.appendChild(sec);
+        var bl = el("div", "glist bs-list");
+        if (!shut) { if (rs.length) rs.forEach(function (r, i) { bl.appendChild(bestRow(r, i + 1, k)); }); else bl.appendChild(el("p", "pv-none", dk ? (lv ? "No one live right now." : "No ranked players.") : "Pulling box scores…")); }
+        body.appendChild(bl);
+      });
+    } else {
+      data = rkData();
+      var rows2 = data ? data.rows.filter(keep) : [];
+      if (!rows2.length) {
+        var busy = window.SLATE_SELF && !rk.live[day + "|" + lgSel];
+        body.appendChild(el("div", "notice", lv ? "No one is playing live in this league right now." : busy ? "Pulling box scores…" : day === today ? "No " + ((LEAGUES[lgSel] || {}).name || "") + " games have started yet." : "No " + ((LEAGUES[lgSel] || {}).name || "") + " games that day."));
+        return;
+      }
+      list = el("div", "bs-list");
+      rows2.slice(0, RK_TOP).forEach(function (r, i) { list.appendChild(bestRow(r, i + 1, lgSel)); });
+      body.appendChild(list);
     }
-    var list = el("div", "bs-list");
-    data.rows.slice(0, RK_TOP).forEach(function (r, i) { list.appendChild(bestRow(r, i + 1)); });
-    body.appendChild(list);
+    if (!data) { body.appendChild(el("p", "bs-foot", "Star any player to follow them under ★. Ranked by box score: basketball Game Score, hockey points, shots and goalie saves, football yards and touchdowns, baseball hits and pitching.")); return; }
     var bits = [];
     if (data.games) bits.push("From " + data.games + " " + (data.games === 1 ? "game" : "games") + (data.live ? ", " + data.live + " still going" : ""));
     if (data.src === "live" && data.live) bits.push("Updates every minute");
@@ -3085,7 +3234,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     }
     return r;
   }
-  function tmStats(lg, results) {
+  function tmStats(lg, results, teamInfo) {
     var spec = BX_SEASON[BX_SPORT[lg]]; if (!spec) return null;
     var wrap = el("div");
     (results || []).forEach(function (grp) {
@@ -3096,7 +3245,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       rows.forEach(function (a) {
         var m = {}, ath = a.athlete || {};
         (a.statistics || []).forEach(function (cat) { (cat.stats || []).forEach(function (x) { if (!(x.name in m)) m[x.name] = x.displayValue; }); });
-        var tr = el("tr"); tr.appendChild(el("th", null, bxName(ath)));
+        var tr = el("tr"), nth = el("th"); if (ath.id && teamInfo) nth.appendChild(playerStar({ id: ath.id, name: ath.displayName || bxName(ath), lg: lg, team: teamInfo.abbr, teamName: teamInfo.name }));
+        nth.appendChild(document.createTextNode(bxName(ath))); tr.appendChild(nth);
         sp.forEach(function (c2) { var ks = c2[0].split("|"), v = "–"; for (var i = 0; i < ks.length; i++) if (m[ks[i]] != null) { v = m[ks[i]]; break; } tr.appendChild(el("td", null, String(v))); });
         tb.appendChild(tr);
       });
@@ -3152,11 +3302,29 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     if (!next.length && !done.length) sc.appendChild(el("p", "pv-none", "No games on the schedule right now."));
     body.appendChild(sc);
     // player stats
-    var ps = tmStats(t.lg, d.stats);
+    var ps = tmStats(t.lg, d.stats, { abbr: (e && e.abbr) || "", name: (d.info && d.info.displayName) || t.name });
     if (ps) { var pc = gvCard("Player stats", "tm-stats"); pc.appendChild(ps); pc.appendChild(el("p", "pv-at", "This season, per game where it applies")); body.appendChild(pc); }
     // news
     var news = d.news.map(function (a) { return { title: a.headline, url: ((a.links || {}).web || {}).href || "", source: "ESPN" }; }).filter(function (h) { return h.title && /^https:\/\//.test(h.url); });
-    if (news.length) body.appendChild(linkList("News", news.slice(0, 6)));
+    var nick = (d.info && (d.info.name || d.info.shortDisplayName)) || t.name.split(" ").slice(-1)[0];
+    var loc = d.info && d.info.location, words = LEAGUES[t.lg] && LEAGUES[t.lg].college ? [loc || t.name.split(" ")[0]] : [nick];
+    var ath = athFor(t.lg, words, true);
+    if (ath.length) body.appendChild(linkList("From The Athletic", ath.slice(0, 6)));
+    if (news.length) body.appendChild(linkList("ESPN", news.slice(0, 6)));
+  }
+  // The Athletic's headlines, kept by the GitHub script from its public league feeds
+  var ATH = null;
+  function athWatch() {
+    if (ATH || !db) return; ATH = { leagues: {} };
+    db.doc("news/athletic").onSnapshot(function (snap) { ATH = snap.exists ? snap.data() : { leagues: {} }; if (state.view === "game" || state.view === "team") keepScroll(render); }, function () {});
+  }
+  var ATH_SOCCER = { ucl: 1, uel: 1, facup: 1, laliga: 1, seriea: 1, bundesliga: 1, ligue1: 1, intl: 1 };
+  function athFor(lg, words, onlyMatches) {
+    athWatch(); if (!ATH) return [];
+    var L = ATH.leagues || {}, list = L[lg] || (ATH_SOCCER[lg] || SOCCER[lg] ? L.soccer : null) || [];
+    var ws = words.filter(Boolean).map(function (w) { return new RegExp("\\b" + String(w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i"); });
+    var hit = list.filter(function (it) { var t = (it.title || "") + " " + (it.desc || ""); return ws.some(function (r) { return r.test(t); }); });
+    return hit.length || onlyMatches ? hit : list.slice(0, 4);
   }
   function renderGame() {
     var body = $("game-body"); if (!body) return; body.textContent = "";
@@ -3224,6 +3392,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       show.forEach(function (gr) { box.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
       if (Array.isArray(lg.poll) && lg.poll.length) box.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
       var ln2 = Array.isArray(lg.news) ? lg.news.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
+      var ath = athFor(g.league, [short(g, "away"), short(g, "home")]);
+      if (ath.length) box.appendChild(linkList("From The Athletic", ath.slice(0, 5)));
       if (ln2.length) box.appendChild(linkList("Around " + (L.college ? L.name : "the " + L.name), ln2.slice(0, 6)));
       if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
     });
@@ -4691,7 +4861,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     if (!db || !state.settingsLoaded) return;
     if (setWriter.busy) { setWriter.dirty = true; return; }
     setWriter.busy = true; setWriter.dirty = false;
-    db.collection("data/users/" + uid).doc("settings").set({ teams: state.teams.slice(), look: state.look, accent: state.accent, textSize: state.textSize, textSizeWide: state.textSizeWide || "", device: state.device || "", navPos: state.navPos, watchVia: state.watchVia, foldNudge: Number(state.foldNudge) || 0, rules: clone(state.rules || RULE_DEFAULTS), tickerLeague: state.tickerLeague || "", showScores: !!state.showScores, hiddenLeagues: (state.hiddenLeagues || []).slice(), gamesOrder: (state.gamesOrder || []).slice(), pvStyle: state.pvStyle || "para" }).then(function () {
+    db.collection("data/users/" + uid).doc("settings").set({ teams: state.teams.slice(), look: state.look, accent: state.accent, textSize: state.textSize, textSizeWide: state.textSizeWide || "", device: state.device || "", navPos: state.navPos, watchVia: state.watchVia, foldNudge: Number(state.foldNudge) || 0, rules: clone(state.rules || RULE_DEFAULTS), tickerLeague: state.tickerLeague || "", showScores: !!state.showScores, hiddenLeagues: (state.hiddenLeagues || []).slice(), gamesOrder: (state.gamesOrder || []).slice(), players: (state.players || []).slice(), pvStyle: state.pvStyle || "para" }).then(function () {
       setWriter.busy = false; if (setWriter.dirty) saveSettings();
     }, function () { setWriter.busy = false; toast("Couldn't save settings."); });
     saveNotify();
@@ -4861,6 +5031,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip, .bs-pills")) return null;
       if (isDuo && target.closest("#pane-l")) return "day";
       if (state.view === "games" && target.closest("#view-games, #games-body") && !target.closest(".tray")) return "league";
+      if (state.view === "best" && target.closest("#view-best") && !target.closest(".rk-day")) return "rk";
       if (state.backTo && state.backTo.view !== state.view) return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
@@ -4870,7 +5041,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
       mode = swipeMode(e.target); if (!mode) return;
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
-      scroller = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip"); sx0 = scroller ? scroller.scrollLeft : 0;
+      scroller = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub"); sx0 = scroller ? scroller.scrollLeft : 0;
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     }, { passive: true });
     document.addEventListener("touchend", function (e) {
@@ -4879,6 +5050,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) return;
       if (mode === "back") { goBack(); return; }
       if (mode === "league") { swipeFilter(dx < 0 ? 1 : -1); return; }
+      if (mode === "rk") { rkSwipe(dx < 0 ? 1 : -1); return; }
       slideDir = dx < 0 ? "l" : "r";
       setDate(shiftDate(state.date, dx < 0 ? 1 : -1));
     }, { passive: true });
@@ -5020,6 +5192,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
               if (typeof d.showScores === "boolean") state.showScores = d.showScores;
               if (Array.isArray(d.hiddenLeagues)) state.hiddenLeagues = d.hiddenLeagues.slice();
               if (Array.isArray(d.gamesOrder)) state.gamesOrder = d.gamesOrder.slice();
+              if (Array.isArray(d.players)) state.players = d.players.slice();
               if (d.pvStyle === "bullets" || d.pvStyle === "para") state.pvStyle = d.pvStyle;
               applyLook(); applyLayout();
             }
