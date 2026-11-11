@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111112730";
+<script>window.SLATE_BUILD = "20261111113849";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2972,15 +2972,12 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   }
   function openTeam(name, lg) { state.team = { name: name, lg: lg }; tmLoad(state.team); openSub("team"); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
   function tmKey(t) { return t.lg + "|" + String(t.name).toLowerCase(); }
+  // ESPN team ids, kept in Supabase by the GitHub script (ESPN's own team list doesn't allow web pages to read it)
+  var tmIds = null;
+  function tmKeyName(x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
   function tmIndex(lg) {
-    if (tm.idx[lg]) return Promise.resolve(tm.idx[lg]);
-    try { var c = JSON.parse(localStorage.getItem("slate-tidx-" + lg) || "null"); if (c && Date.now() - c.at < 7 * 864e5) { tm.idx[lg] = c.m; return Promise.resolve(c.m); } } catch (e) {}
-    return rkFetch(bxApi(lg, "teams?limit=1000")).then(function (d) {
-      var m = {}, L = ((((d || {}).sports || [])[0] || {}).leagues || [])[0] || {};
-      (L.teams || []).forEach(function (x) { var t = x.team || {}; m[normT(t.displayName)] = { id: t.id, abbr: t.abbreviation, name: t.displayName }; });
-      if (Object.keys(m).length) { tm.idx[lg] = m; try { localStorage.setItem("slate-tidx-" + lg, JSON.stringify({ at: Date.now(), m: m })); } catch (e) {} }
-      return m;
-    });
+    var p = tmIds ? Promise.resolve(tmIds) : db ? db.doc("code/teamids").get().then(function (s2) { tmIds = s2.exists ? s2.data() : {}; return tmIds; }) : Promise.resolve({});
+    return p.then(function (all) { return all[lg] || {}; });
   }
   function tmLoad(t, force) {
     if (!t || !BX_SPORT[t.lg]) return;
@@ -2988,11 +2985,15 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     if (cur && (cur.busy || (!force && Date.now() - cur.at < 5 * 60000))) return;
     cur = tm.data[k] = { busy: true, at: Date.now(), d: cur && cur.d };
     tmIndex(t.lg).then(function (m) {
-      var e = m[normT(t.name)]; if (!e) throw new Error("not found");
+      var hit = m[tmKeyName(t.name)]; if (!hit) throw new Error("not found");
+      var e = { id: hit[0], abbr: hit[1] };
       cur.espn = e; tmWatch(t.lg + "-" + String(e.abbr || "").toLowerCase());
-      return Promise.all([rkFetch(bxApi(t.lg, "teams/" + e.id)), rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule")), rkFetch(bxApi(t.lg, "teams/" + e.id + "/athletes/statistics")), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
+      return Promise.all([Promise.resolve(null), rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule")), rkFetch(bxApi(t.lg, "teams/" + e.id + "/athletes/statistics")), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
     }).then(function (r) {
-      cur.busy = false; cur.at = Date.now(); cur.d = { info: (r[0] || {}).team || {}, sched: (r[1] || {}).events || [], stats: (r[2] || {}).results || [], news: (r[3] || {}).articles || [] };
+      if (!r[1]) throw new Error("no data");
+      r[0] = { team: (r[1] || {}).team || {} };
+      var sched = ((r[1] || {}).events || []).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+      cur.busy = false; cur.err = false; cur.at = Date.now(); cur.d = { info: (r[0] || {}).team || {}, sched: sched, stats: (r[2] || {}).results || [], news: (r[3] || {}).articles || [] };
       if (state.view === "team") keepScroll(renderTeam);
     }, function () { cur.busy = false; cur.err = true; if (state.view === "team") keepScroll(renderTeam); });
   }
@@ -3085,7 +3086,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var hd = el("div", "gv-head tm-head"), top = el("div", "tm-top");
     top.appendChild(known ? teamBadge(known) : badgeFor((e && e.abbr) || t.name.slice(0, 3).toUpperCase(), t.name));
     var nm = el("div", "tm-nm"); nm.appendChild(el("b", null, t.name));
-    var sub = [(LEAGUES[t.lg] || {}).name]; if (d && d.info) { var rec = (((d.info.record || {}).items || [])[0] || {}).summary; if (rec) sub.push(rec); if (d.info.standingSummary) sub.push(d.info.standingSummary); }
+    var sub = [(LEAGUES[t.lg] || {}).name]; if (d && d.info) { var rec = d.info.recordSummary || (((d.info.record || {}).items || [])[0] || {}).summary; if (rec) sub.push(rec); if (d.info.standingSummary) sub.push(d.info.standingSummary); }
     nm.appendChild(el("span", null, sub.filter(Boolean).join(" · "))); top.appendChild(nm);
     var fav = isFav(t.name, t.lg), st = el("button", "star" + (fav ? " on" : "")); st.type = "button"; st.appendChild(icon(fav ? "star" : "star-o"));
     st.setAttribute("aria-label", fav ? "Remove from my teams" : "Add to my teams"); st.addEventListener("click", function () { toggleFav(t.name, t.lg); });
@@ -3110,7 +3111,12 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       cc.appendChild(rq);
     }
     body.appendChild(cc);
-    if (!d) { body.appendChild(el("div", "notice", cur.err ? "Couldn't reach ESPN for this team. Pull down to try again." : "Loading the schedule, stats and news…")); return; }
+    if (!d) {
+      var nb = el("div", "notice", cur.err ? "Couldn't load this team from ESPN." : "Loading the schedule, stats and news…");
+      if (cur.err || (cur.at && Date.now() - cur.at > 12000)) { var rt = el("button", "pv-get", "Try again"); rt.type = "button"; rt.addEventListener("click", function () { tm.data[k] = null; tmIds = null; tmLoad(t, true); keepScroll(renderTeam); }); nb.appendChild(el("br")); nb.appendChild(rt); }
+      else setTimeout(function () { if (state.view === "team" && !(tm.data[k] || {}).d) keepScroll(renderTeam); }, 12500);
+      body.appendChild(nb); return;
+    }
     // schedule
     var done = [], next = [];
     d.sched.forEach(function (ev) { var st2 = ((((ev.competitions || [])[0] || {}).status || {}).type || {}).state; (st2 === "pre" ? next : done).push(ev); });
@@ -3536,7 +3542,9 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     Object.keys(present).forEach(function (k) { if (keys.indexOf(k) === -1) keys.push(k); });
     var quiet = ORDER.filter(function (k) { return !present[k] && hid.indexOf(k) === -1; });
     var opts = [];
-    if (gs.some(hasFav)) opts.push(["fav", "★ Mine"]);
+    if (gs.some(hasFav)) opts.push(["fav", "★"]);
+    var nLive = gs.filter(function (g) { return status(g).kind === "live"; }).length;
+    if (nLive) opts.push(["live", "LIVE " + nLive]);
     keys.forEach(function (k) { var g0 = gs.filter(function (x) { return x.league === k; })[0]; opts.push([k, info(g0).tag]); });
     opts.push(["all", "ALL"]);
     quiet.forEach(function (k) { opts.push([k, LEAGUES[k].tag, true]); });
@@ -3565,8 +3573,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function subOpts(lg, lgGames) {
     var o = [["all", "All"]];
     if (LEAGUES[lg] && LEAGUES[lg].college) {
-      if (lgGames.some(function (g) { return g.awayRank || g.homeRank; })) o.unshift(["t25", "Ranked"]);
-      if (lgGames.some(function (g) { return g.awayRank && g.homeRank; })) o.splice(1, 0, ["t25b", "Both ranked"]);
+      if (lgGames.some(function (g) { return g.awayRank || g.homeRank; })) o.push(["t25", "Ranked"]);
+      if (lgGames.some(function (g) { return g.awayRank && g.homeRank; })) o.push(["t25b", "Both ranked"]);
       return o;
     }
     if (lgGames.some(natFor)) o.push(["nat", "National TV"]);
@@ -3579,7 +3587,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var q = state.q.trim().toLowerCase();
     return visibleGames().filter(function (g) {
       if (state.league === "fav" && !hasFav(g)) return false;
-      if (state.league !== "all" && state.league !== "fav" && g.league !== state.league) return false;
+      if (state.league === "live" && status(g).kind !== "live") return false;
+      if (state.league !== "all" && state.league !== "fav" && state.league !== "live" && g.league !== state.league) return false;
       if (info(g).college && state.league === g.league && state.conf !== "all") {
         if (state.conf === "t25") { if (!g.awayRank && !g.homeRank) return false; }
         else if (state.conf === "t25b") { if (!g.awayRank || !g.homeRank) return false; }
@@ -3619,7 +3628,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   // league sections open and close (remembered on this phone); a single-league view is always open
   var COLLAPSED = (function () { try { return JSON.parse(localStorage.getItem("slate-collapsed") || "{}") || {}; } catch (e) { return {}; } })();
   function section(body, title, list) {
-    var many = state.league === "all" || (state.league !== "fav" && title === "My teams");
+    var many = state.league === "all" || state.league === "live" || (state.league !== "fav" && title === "My teams");
     var shut = many && !!COLLAPSED[title];
     var sec = el(many ? "button" : "div", "sec" + (many ? " sec-tg" : "") + (shut ? " shut" : ""));
     if (many) { sec.type = "button"; sec.setAttribute("aria-expanded", shut ? "false" : "true"); }
@@ -4198,16 +4207,16 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function renderFilterOrder() {
     var box = $("filter-order"); if (!box) return; box.textContent = "";
     var hid = state.hiddenLeagues || [];
-    var keys = ["fav"].concat(ORDER.filter(function (k) { return hid.indexOf(k) === -1; })).concat(["all"]);
+    var keys = ["fav", "live"].concat(ORDER.filter(function (k) { return hid.indexOf(k) === -1; })).concat(["all"]);
     var ord = state.gamesOrder || [];
     keys = keys.map(function (k, i) { var j = ord.indexOf(k); return [j === -1 ? 1e3 + i : j, k]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
     keys.forEach(function (k, i) {
       var r = el("div", "trow ford");
       r.appendChild(el("span", "ford-n", String(i + 1)));
-      var tx = el("span", "tx"); tx.appendChild(el("span", "n", k === "fav" ? "★ My teams" : k === "all" ? "All games" : LEAGUES[k].name)); r.appendChild(tx);
+      var tx = el("span", "tx"); tx.appendChild(el("span", "n", k === "fav" ? "★ My teams" : k === "live" ? "Live now" : k === "all" ? "All games" : LEAGUES[k].name)); r.appendChild(tx);
       [["up", -1, "‹"], ["down", 1, "›"]].forEach(function (m) {
         var b = el("button", "x ford-b ford-" + m[0], m[2]); b.type = "button";
-        b.setAttribute("aria-label", "Move " + (k === "fav" ? "My teams" : k === "all" ? "All games" : LEAGUES[k].name) + " " + m[0]);
+        b.setAttribute("aria-label", "Move " + (k === "fav" ? "My teams" : k === "live" ? "Live now" : k === "all" ? "All games" : LEAGUES[k].name) + " " + m[0]);
         b.disabled = (m[1] < 0 && i === 0) || (m[1] > 0 && i === keys.length - 1);
         b.addEventListener("click", function () {
           var nk = keys.slice(), j = i + m[1], t = nk[i]; nk[i] = nk[j]; nk[j] = t;

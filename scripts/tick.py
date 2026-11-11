@@ -607,6 +607,15 @@ def main():
         if lg_patch: body["leagues"] = lg_patch
         sb_put(f"previews/{D}", body, merge=True)
 
+    # ESPN team ids for the app's team pages (ESPN's team list can't be read from a web page directly)
+    ids_doc = sb_get(["code/teamids"]).get("code/teamids") or {}
+    at = parse(ids_doc.get("at"))
+    if not at or (now - at).total_seconds() > 3 * 86400:
+        allids = {"at": iso(now)}
+        for lg in PATHS:
+            idx = team_index(lg)
+            if idx: allids[lg] = {k: [v["id"], v["abbr"]] for k, v in idx.items()}
+        if len(allids) > 5: sb_put("code/teamids", allids)
     # team summaries: checked once an hour (and right away when DJ asks for one)
     old_w = docs.get(f"work/{D}") or {}
     if now.minute < 10 or (load.get("teams") and not any(t.get("kind") == "team" for t in old_w.get("todo", []))):
