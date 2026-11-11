@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111162512";
+<script>window.SLATE_BUILD = "20261111162656";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2384,9 +2384,13 @@ nav.dock.menu-open .dock-day { display: none; }
     var sec = $("view-" + v); if (sec && !REDUCED) { sec.classList.remove("push-in"); void sec.offsetWidth; sec.classList.add("push-in"); setTimeout(function () { sec.classList.remove("push-in"); }, 320); }
   }
   // day picker for Player rankings and All games: a vertical pill above Back, by the right thumb (later day on top)
+  // On TV: All / National TV / Streaming, by tap or swipe
+  var TV_TABS = ["all", "national", "streaming"];
+  function tvPick(k, dir) { if (state.tvFilter === k) return; var i0 = TV_TABS.indexOf(state.tvFilter); state.tvFilter = k; render(); slideIn($("tv-body"), dir || (TV_TABS.indexOf(k) > i0 ? "l" : "r")); }
+  function tvSwipe(step) { var i = TV_TABS.indexOf(state.tvFilter), n = TV_TABS[i + step]; if (n) tvPick(n, step > 0 ? "l" : "r"); }
   function renderDockDay() {
     var dn = $("dock-day"); if (!dn) return;
-    var v = state.view, on = (v === "best" || v === "games") && !state.menuOpen;
+    var v = state.view, on = (v === "best" || v === "games" || v === "tv") && !state.menuOpen;
     dn.hidden = !on; if (!on) return;
     dn.textContent = "";
     var today = todayInHome(), rkMode = v === "best", day = rkMode ? (rk.date || today) : state.date;
@@ -3406,6 +3410,7 @@ nav.dock.menu-open .dock-day { display: none; }
       r[0] = { team: (r[1] || {}).team || {} };
       var sched = ((r[1] || {}).events || []).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
       cur.busy = false; cur.err = false; cur.at = Date.now(); cur.d = { info: (r[0] || {}).team || {}, sched: sched, stats: (r[2] || {}).results || [], news: (r[3] || {}).articles || [] };
+      fillRecord(t.lg, cur.d.info).then(function () { if (state.view === "team") keepScroll(renderTeam); });
       if (state.view === "team") keepScroll(renderTeam);
     }, function () { cur.busy = false; cur.err = true; if (state.view === "team") keepScroll(renderTeam); });
   }
@@ -3424,6 +3429,27 @@ nav.dock.menu-open .dock-day { display: none; }
   }
   // ---- Teams list: your teams as cards (what's on today, last result, next game, Claude's first line), then browse any league ----
   tm.lite = {};
+  // some leagues (MLS) leave the record out of the schedule feed: fill it from the league standings
+  var STAND = {};
+  function ordinal(n) { n = Number(n); var s2 = ["th", "st", "nd", "rd"], v = n % 100; return n + (s2[(v - 20) % 10] || s2[v] || s2[0]); }
+  function fillRecord(lg, team) {
+    if (!team || !team.id || (team.recordSummary && team.standingSummary)) return Promise.resolve(team);
+    var base = bxBase(lg); if (!base) return Promise.resolve(team);
+    var p = STAND[lg] || (STAND[lg] = fetch("https://site.api.espn.com/apis/v2/sports/" + base + "/standings").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }));
+    return p.then(function (d) {
+      if (!d) return team;
+      (function walk(n, grp) {
+        (n.children || []).forEach(function (c) { walk(c, c.name || grp); });
+        (((n.standings || {}).entries) || []).forEach(function (e) {
+          if (String((e.team || {}).id) !== String(team.id)) return;
+          var st = {}; (e.stats || []).forEach(function (x) { st[x.name] = x; });
+          if (!team.recordSummary && st.overall) team.recordSummary = st.overall.summary || st.overall.displayValue;
+          var rank = st.rank ? st.rank.displayValue : (e.note || {}).rank; if (!team.standingSummary && rank) team.standingSummary = ordinal(rank) + (grp ? " in " + grp : "");
+        });
+      })(d, d.name || "");
+      return team;
+    });
+  }
   function tmLite(t) {
     var k = tmKey(t), cur = tm.lite[k];
     if (cur && (cur.busy || Date.now() - cur.at < 10 * 60000)) return cur;
@@ -3442,6 +3468,7 @@ nav.dock.menu-open .dock-day { display: none; }
       evs.forEach(function (e) { var st = ((((e.competitions || [])[0] || {}).status || {}).type || {}).state; if (st === "post") last = e; else if (!next && st !== "post") next = e; });
       cur.d = { team: team, last: last, next: next }; cur.busy = false; cur.at = Date.now();
       if (state.view === "teams") keepScroll(renderTeams);
+      fillRecord(t.lg, team).then(function () { if (state.view === "teams") keepScroll(renderTeams); });
     }, function () { cur.busy = false; cur.err = true; });
     return cur;
   }
@@ -5203,7 +5230,7 @@ nav.dock.menu-open .dock-day { display: none; }
       [["all", "All"], ["national", "National TV"], ["streaming", "Streaming"]].forEach(function (o) {
         var b = el("button", "cf-tab", o[1]); b.type = "button";
         b.setAttribute("aria-pressed", state.tvFilter === o[0] ? "true" : "false");
-        b.addEventListener("click", function () { state.tvFilter = o[0]; render(); });
+        b.addEventListener("click", function () { tvPick(o[0]); });
         ss.appendChild(b);
       });
     }
@@ -5641,6 +5668,7 @@ nav.dock.menu-open .dock-day { display: none; }
       if (isDuo && target.closest("#pane-l")) return "day";
       if (state.view === "games" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#strip", t) || target.closest("#view-games"))) return "league";
       if (state.view === "best" && !target.closest(".rk-day, nav.dock, .menu-pop") && (belowStrip(".rk-strip", t) || target.closest("#view-best"))) return "rk";
+      if (state.view === "tv" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#substrip", t) || target.closest("#view-tv"))) return "tv";
       if (state.view !== homeView() && state.view !== "lineup") return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
@@ -5659,6 +5687,7 @@ nav.dock.menu-open .dock-day { display: none; }
       if (mode === "day") return slideKids($("lineup-body"));
       if (mode === "league") return slideKids($("games-body"));
       if (mode === "rk") return slideKids($("best-body"));
+      if (mode === "tv") return slideKids($("tv-body"));
       if (mode === "back") { var v = $("view-" + state.view); return v ? [v] : []; }
       return [];
     }
@@ -5669,7 +5698,7 @@ nav.dock.menu-open .dock-day { display: none; }
       each(list, function (el2) { el2.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s"; el2.style.transform = ""; el2.style.opacity = ""; });
       setTimeout(function () { clearDrag(list); }, 200);
     }
-    function where() { return [state.view, state.date, state.league, state.bestLeague].join("|"); }
+    function where() { return [state.view, state.date, state.league, state.bestLeague, state.tvFilter].join("|"); }
     document.addEventListener("touchmove", function (e) {
       if (x0 === null || REDUCED) return;
       var t = e.touches[0], dx = t.clientX - x0, dy = t.clientY - y0;
@@ -5694,6 +5723,7 @@ nav.dock.menu-open .dock-day { display: none; }
         if (mode === "back") goBack();
         else if (mode === "league") swipeFilter(dx < 0 ? 1 : -1);
         else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
+        else if (mode === "tv") tvSwipe(dx < 0 ? 1 : -1);
         else { slideDir = dir; setDate(shiftDate(state.date, dx < 0 ? 1 : -1)); }
       }
       if (!d || !d.length || REDUCED) { act(); return; }
