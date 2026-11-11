@@ -1089,6 +1089,12 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .lo-btn.on .lo-dot { background: #fff; }
 .lo-btn.on b { background: rgba(255,255,255,.22); color: #fff; }
 .lo-none { display: grid; gap: 12px; justify-items: start; }
+.odds-strip { display: grid; gap: 6px; margin: 4px 0 0; }
+.gv-oddsbar { margin: 0 0 12px; }
+.wp { display: flex; gap: 4px; height: 34px; border-radius: 12px; overflow: hidden; }
+.wp span { display: flex; align-items: center; padding: 0 12px; font-size: 14.5px; font-weight: 800; color: #fff; background: var(--raise); white-space: nowrap; min-width: 0; }
+.wp .wp-h { justify-content: flex-end; }
+.wp-note { margin: 0 2px; font-size: 12px; color: var(--dim); }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); will-change: transform; }
 /* iOS keeps a fixed, blurred button where it was while a page scrolls; its own layer keeps it pinned to the corner */
@@ -2082,6 +2088,9 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
   function bxNorm(lg, sum, seasons) {
     var sport = BX_SPORT[lg] || "", head = sum.header || {}, comp = (head.competitions || [])[0] || {}, st = (comp.status || {}).type || {};
     var out = { v: 1, ev: String(head.id || ""), state: st.state || "", detail: st.shortDetail || st.detail || "", teams: [] };
+    var pk = (sum.pickcenter || [])[0];
+    if (pk) out.odds = { provider: (pk.provider || {}).name || "", spread: pk.details || "", total: pk.overUnder != null ? pk.overUnder : "", ml: { away: (pk.awayTeamOdds || {}).moneyLine, home: (pk.homeTeamOdds || {}).moneyLine } };
+    var wpl = sum.winprobability || []; if (wpl.length && wpl[wpl.length - 1].homeWinPercentage != null) out.wp = Number(wpl[wpl.length - 1].homeWinPercentage);
     var box = sum.boxscore || {};
     var cs = (comp.competitors || []).slice().sort(function (a, b) { return (a.homeAway === "home" ? 1 : 0) - (b.homeAway === "home" ? 1 : 0); });
     cs.forEach(function (c) {
@@ -2396,6 +2405,35 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     if (b.state === "post") return "Final box score from ESPN";
     return window.SLATE_SELF ? "Live from ESPN" + (tm ? " · updated " + tm : "") : "Box score as of " + (tm || "the last refresh") + " · refreshes hourly";
   }
+  // the line (from the preview or ESPN), plus the live win chance while a game is on
+  function oddsStrip(g, b) {
+    var pv = (state.previews || {})[g.id] || {}, o = (pv.odds && (pv.odds.spread || pv.odds.total)) ? pv.odds : (b && b.odds) || null;
+    var wp = b && b.state === "in" && typeof b.wp === "number" ? b.wp : null;
+    if (!o && wp == null) return null;
+    var w = el("div", "odds-strip");
+    if (wp != null && state.showScores) {
+      var hp = Math.round(wp * 100), ap = 100 - hp, bar = el("div", "wp");
+      var pct = function (x, raw) { return raw >= 0.995 ? ">99%" : raw <= 0.005 ? "<1%" : x + "%"; };
+      var a = el("span", "wp-a", abbr(g, "away") + " " + pct(ap, 1 - wp)), h = el("span", "wp-h", abbr(g, "home") + " " + pct(hp, wp));
+      a.style.flexGrow = Math.max(ap, 18); h.style.flexGrow = Math.max(hp, 18);
+      var ac = badgeColor(g, "away"), hc = badgeColor(g, "home"); if (ac) a.style.background = ac; if (hc) h.style.background = hc;
+      bar.appendChild(a); bar.appendChild(h); w.appendChild(bar);
+      w.appendChild(el("p", "wp-note", "Live win chance · ESPN"));
+    }
+    if (o) {
+      var od = el("div", "pv-odds");
+      if (o.spread) od.appendChild(el("span", null, o.spread));
+      if (o.total !== "" && o.total != null) od.appendChild(el("span", null, "O/U " + o.total));
+      if (o.ml && o.ml.away != null && o.ml.home != null) od.appendChild(el("span", null, abbr(g, "away") + " " + fmtOdds(o.ml.away) + " · " + abbr(g, "home") + " " + fmtOdds(o.ml.home)));
+      od.appendChild(el("i", null, (status(g).kind === "upcoming" ? "" : "Pregame line · ") + (o.provider || "")));
+      w.appendChild(od);
+    }
+    return w;
+  }
+  function badgeColor(g, sd) {
+    var c = g[sd + "Color"]; if (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c)) return c;
+    var t = typeof teamByName === "function" ? teamByName(g[sd]) : null; return t && t.c1 ? t.c1 : "";
+  }
   function boxShown(g) { return state.showScores || !!(state.boxOpen || {})[g.id]; }
   function boxGate(g) {
     var w = el("div", "pv-gate"); w.appendChild(el("span", null, "Scores are hidden, and the box score shows them."));
@@ -2415,13 +2453,14 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     var box = el("div", "pv bx");
     if (!boxShown(g)) box.appendChild(boxGate(g));
     else {
-      var ts = bxTeamStats(g, b, true);
-      if (ts) box.appendChild(ts);
       box.appendChild(bxPlayers(g, b, true, false));
+      var ts = bxTeamStats(g, b, true);
+      if (ts) { box.appendChild(el("b", "pv-h", "Team stats")); box.appendChild(ts); }
     }
+    var os = oddsStrip(g, b); if (os) box.appendChild(os);
     if (!isDuo) {
       var more = el("button", "pv-get pv-more"); more.type = "button";
-      more.appendChild(document.createTextNode("Full box score")); more.appendChild(icon("more"));
+      more.appendChild(document.createTextNode("Full box score, preview and more")); more.appendChild(icon("more"));
       more.addEventListener("click", function (e) { e.stopPropagation(); openMatchup(g); });
       box.appendChild(more);
     }
@@ -2701,6 +2740,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
         box.appendChild(tc);
       });
     }
+    var ostrip = oddsStrip(g, b); if (ostrip) { ostrip.classList.add("gv-oddsbar"); body.appendChild(ostrip); }
     var rcx = pv && recapOf(pv);
     section("pv", rcx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : pv && pv.odds && pv.odds.spread ? pv.odds.spread + (pv.odds.total ? " · O/U " + pv.odds.total : "") : "", function (box) {
       previewSections(g, pv, box);
