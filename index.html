@@ -907,6 +907,22 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .bs-opp { color: var(--dim); font-weight: 600; }
 .bs-foot { margin: 10px 2px 0; font-size: 12.5px; color: var(--dim); }
 .s-moved { font-size: 12.5px; font-weight: 700; color: var(--live); }
+.bx-scroll { overflow-x: auto; margin: 0 -2px; -webkit-overflow-scrolling: touch; }
+.bx-t { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.bx-t th { font-size: 11.5px; font-weight: 700; color: var(--dim); text-align: right; padding: 4px 7px; white-space: nowrap; }
+.bx-t td { text-align: right; padding: 7px 7px; white-space: nowrap; border-top: 1px solid var(--hair); color: var(--head); }
+.bx-t .bx-nm { text-align: left; position: sticky; left: 0; background: var(--card); padding-left: 2px; max-width: 132px; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: var(--ink); }
+.bx-t .bx-nm i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--dim); margin-left: 5px; }
+.bx-t tr.bx-lastst td { border-bottom: 2px solid var(--line); }
+.bx-line td, .bx-line th { text-align: center; } .bx-line .bx-tot { font-weight: 800; color: var(--ink); }
+.bx-ts { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--hair); font-variant-numeric: tabular-nums; }
+.bx-tsh { border-top: 0; padding-top: 0; } .bx-tsh b:last-child, .bx-ts .bx-v:last-child { text-align: right; }
+.bx-ts .bx-l { font-size: 12.5px; color: var(--muted); text-align: center; }
+.bx-v { font-size: 15px; font-weight: 600; color: var(--muted); } .bx-v.lead { color: var(--ink); font-weight: 800; }
+.bx-grp { margin: 12px 0 2px; font-size: 12.5px; font-weight: 800; color: var(--muted); }
+.bx-tabs { margin-bottom: 6px; }
+.fab-back { position: absolute; right: 68px; bottom: 0; }
+.fab-back[hidden] { display: none; }
 .rk-day { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 6px; margin: 0 0 12px; }
 .rk-arrow { height: 44px; border-radius: 12px; background: var(--raise); color: var(--head); font-size: 24px; font-weight: 700; }
 .rk-arrow:disabled { opacity: .35; }
@@ -1261,6 +1277,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
       <span>Refresh</span>
     </button>
   </div>
+  <button class="fab fab-back" id="back-fab" type="button" aria-label="Back" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
   <button class="fab" id="menu-fab" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-pop">
     <svg class="ic-open" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
     <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
@@ -2159,16 +2176,147 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     bits.push("Ranked by box score: basketball Game Score, hockey points, shots and goalie saves, football yards and touchdowns, baseball hits and pitching");
     body.appendChild(el("p", "bs-foot", bits.join(". ") + "."));
   }
+  // ---------- box score (self-hosted page: straight from ESPN, every 30 seconds while the game is on) ----------
+  var BX = { ev: {}, data: {}, at: {}, busy: false };
+  var BX_COLS = {
+    basketball: ["MIN", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "TO", "PF", "+/-"],
+    forwards: ["G", "A", "+/-", "S", "HT", "BS", "TOI"], defenses: ["G", "A", "+/-", "S", "HT", "BS", "TOI"], goalies: ["SA", "SV", "GA", "SV%", "TOI"],
+    passing: ["C/ATT", "YDS", "TD", "INT", "QBR"], rushing: ["CAR", "YDS", "AVG", "TD", "LONG"], receiving: ["REC", "YDS", "AVG", "TD", "LONG"],
+    defensive: ["TOT", "SOLO", "SACKS", "TFL", "PD"], interceptions: ["INT", "YDS", "TD"], fumbles: ["FUM", "LOST"], kicking: ["FG", "XP", "PTS"], punting: ["NO", "AVG"],
+    kickReturns: ["NO", "YDS", "AVG"], puntReturns: ["NO", "YDS", "AVG"],
+    batting: ["AB", "R", "H", "RBI", "HR", "BB", "K", "AVG"], pitching: ["IP", "H", "R", "ER", "BB", "K", "PC"]
+  };
+  var BX_NAMES = { forwards: "Forwards", defenses: "Defense", goalies: "Goalies", passing: "Passing", rushing: "Rushing", receiving: "Receiving", defensive: "Defense", interceptions: "Interceptions", fumbles: "Fumbles", kicking: "Kicking", punting: "Punting", kickReturns: "Kick returns", puntReturns: "Punt returns", batting: "Batting", pitching: "Pitching" };
+  function bxPath(g) { var u = ESPN_URLS[g.league]; return u ? u[0].split("&")[0] : null; }
+  function bxLoad(g, force) {
+    if (!window.SLATE_SELF || BX.busy) return;
+    var p = bxPath(g); if (!p) return;
+    var d = BX.data[g.id], st = status(g).kind;
+    if (!force && d && (d.final || Date.now() - (BX.at[g.id] || 0) < 25000)) return;
+    BX.busy = true;
+    var findEv = BX.ev[g.id] ? Promise.resolve(BX.ev[g.id]) : (function () {
+      var t = new Date(g.moved || g.start).getTime(), days = [etDate(t), etDate(t - 86400000)];
+      var extra = ESPN_URLS[g.league][0].split("&").slice(1).join("&");
+      return Promise.all(days.map(function (dd) { return fetch("https://site.api.espn.com/apis/site/v2/sports/" + p + "/scoreboard?dates=" + dd + (extra ? "&" + extra : "")).then(function (r) { return r.ok ? r.json() : null; }, function () { return null; }); })).then(function (js) {
+        var n = function (x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }, hit = null;
+        js.forEach(function (j) { ((j && j.events) || []).forEach(function (e) {
+          var c = e.competitions && e.competitions[0]; if (!c || hit) return;
+          if (Math.abs(new Date(e.date) - t) > 6 * 3600000) return;
+          var A = null, H = null; (c.competitors || []).forEach(function (k) { if (k.homeAway === "home") H = k; else A = k; });
+          var ok = function (k, sd) { return k && (n(k.team.displayName) === n(g[sd]) || (g[sd + "Abbr"] && n(k.team.abbreviation) === n(g[sd + "Abbr"]))); };
+          if (ok(A, "away") && ok(H, "home")) hit = e.id;
+        }); });
+        if (hit) BX.ev[g.id] = hit; return hit;
+      });
+    })();
+    findEv.then(function (id) {
+      if (!id) return null;
+      return fetch("https://site.api.espn.com/apis/site/v2/sports/" + p + "/summary?event=" + id, { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; });
+    }).then(function (j) {
+      BX.busy = false; if (!j) return;
+      var c = j.header && j.header.competitions && j.header.competitions[0], s = c && c.status && c.status.type || {};
+      BX.data[g.id] = { j: j, final: s.state === "post" }; BX.at[g.id] = Date.now();
+      if (state.view === "game" && state.gameId === g.id) keepScroll(renderGame);
+    }, function () { BX.busy = false; });
+  }
+  if (window.SLATE_SELF) setInterval(function () {
+    if (document.hidden || state.view !== "game" || !state.gameId) return;
+    var g = games().filter(function (x) { return x.id === state.gameId; })[0];
+    if (g && status(g).kind === "live") bxLoad(g, false);
+  }, 30000);
+  function boxScore(g) {
+    var kind = status(g).kind; if (kind !== "live" && kind !== "over") return null;
+    if (!window.SLATE_SELF) return null;
+    var d = BX.data[g.id];
+    if (!d) { bxLoad(g, true); var w = gvCard("Box score"); w.appendChild(el("p", "pv-none", "Loading the box score…")); return w; }
+    if (!state.showScores && !(state.recapOpen || {})[g.id]) {
+      var gate = gvCard("Box score"), gw = el("div", "pv-gate"); gw.appendChild(el("span", null, "Scores are hidden."));
+      var gb = el("button", "pv-get", "Show box score"); gb.type = "button";
+      gb.addEventListener("click", function () { state.recapOpen = state.recapOpen || {}; state.recapOpen[g.id] = true; keepScroll(renderGame); });
+      gw.appendChild(gb); gate.appendChild(gw); return gate;
+    }
+    var j = d.j, frag = document.createDocumentFragment();
+    var comp = j.header && j.header.competitions && j.header.competitions[0];
+    var cs = comp ? (comp.competitors || []).slice().sort(function (a, b) { return a.homeAway === "away" ? -1 : 1; }) : [];
+    // line score
+    if (cs.length === 2 && cs[0].linescores && cs[0].linescores.length) {
+      var lc = gvCard("Score by period", "bx"), n = Math.max(cs[0].linescores.length, cs[1].linescores.length);
+      var tb = el("div", "bx-scroll"), t = el("table", "bx-t bx-line"), hr = el("tr");
+      hr.appendChild(el("th", "bx-nm", ""));
+      var lgk = g.league, per = function (i) { if (/^(nhl)$/.test(lgk)) return i < 3 ? String(i + 1) : i === 3 ? "OT" : "SO"; if (/^(nba|wnba|nfl|ncaaf)$/.test(lgk)) return i < 4 ? String(i + 1) : "OT" + (i > 4 ? i - 3 : ""); if (/^ncaa[mw]$/.test(lgk)) return lgk === "ncaaw" ? (i < 4 ? String(i + 1) : "OT") : (i < 2 ? String(i + 1) : "OT"); return String(i + 1); };
+      for (var i = 0; i < n; i++) hr.appendChild(el("th", null, per(i)));
+      hr.appendChild(el("th", "bx-tot", "T")); t.appendChild(hr);
+      cs.forEach(function (k) {
+        var tr = el("tr"); tr.appendChild(el("td", "bx-nm", (k.team && k.team.abbreviation) || ""));
+        for (var q = 0; q < n; q++) { var ls = k.linescores[q]; tr.appendChild(el("td", null, ls ? String(ls.displayValue != null ? ls.displayValue : ls.value) : "")); }
+        tr.appendChild(el("td", "bx-tot", String(k.score != null ? k.score : ""))); t.appendChild(tr);
+      });
+      tb.appendChild(t); lc.appendChild(tb); frag.appendChild(lc);
+    }
+    var box = j.boxscore || {};
+    // team stats, side by side
+    var tm = (box.teams || []).slice().sort(function (a, b) { return a.homeAway === "away" ? -1 : b.homeAway === "away" ? 1 : 0; });
+    if (tm.length === 2 && (tm[0].statistics || []).length) {
+      var sc = gvCard("Team stats", "bx"), hd = el("div", "bx-ts bx-tsh");
+      hd.appendChild(el("b", null, tm[0].team.abbreviation)); hd.appendChild(el("span", null, "")); hd.appendChild(el("b", null, tm[1].team.abbreviation)); sc.appendChild(hd);
+      var byName = {}; (tm[1].statistics || []).forEach(function (s) { byName[s.name || s.label] = s; });
+      (tm[0].statistics || []).filter(function (s) { return s.label && s.displayValue != null && !/shootout/i.test(s.label); }).slice(0, 16).forEach(function (s) {
+        var o = byName[s.name || s.label] || {}, r = el("div", "bx-ts");
+        var a = parseFloat(s.displayValue), b = parseFloat(o.displayValue);
+        var lower = /turnover|giveaway|penalt|foul|fumbles lost|interceptions thrown|sacks-yards lost/i.test(s.label);
+        var aw = !isNaN(a) && !isNaN(b) && a !== b && ((a > b) !== lower), hw = !isNaN(a) && !isNaN(b) && a !== b && !aw;
+        r.appendChild(el("span", "bx-v" + (aw ? " lead" : ""), String(s.displayValue))); r.appendChild(el("span", "bx-l", s.label)); r.appendChild(el("span", "bx-v" + (hw ? " lead" : ""), String(o.displayValue != null ? o.displayValue : "–")));
+        sc.appendChild(r);
+      });
+      frag.appendChild(sc);
+    }
+    // players, one team at a time
+    var pl = (box.players || []).slice();
+    if (pl.length) {
+      var pc = gvCard("Box score", "bx");
+      state.bxSide = state.bxSide || {};
+      var side = state.bxSide[g.id] || 0; if (side >= pl.length) side = 0;
+      var tabs = el("div", "bs-pills bx-tabs");
+      pl.forEach(function (p, ix) {
+        var b = el("button", "bs-pill" + (ix === side ? " on" : ""), (p.team && (p.team.shortDisplayName || p.team.abbreviation)) || "Team"); b.type = "button";
+        b.addEventListener("click", function () { state.bxSide[g.id] = ix; keepScroll(renderGame); });
+        tabs.appendChild(b);
+      });
+      pc.appendChild(tabs);
+      var team = pl[side];
+      (team.statistics || []).forEach(function (grp) {
+        var ath = (grp.athletes || []).filter(function (a) { return a.stats && a.stats.length && !a.didNotPlay; });
+        if (!ath.length) return;
+        var labels = grp.labels || [], want = BX_COLS[grp.name] || (RK_KIND[g.league] === "bball" ? BX_COLS.basketball : null);
+        var cols = (want ? want.filter(function (l) { return labels.indexOf(l) !== -1; }) : labels.slice(0, 7));
+        if (!cols.length) cols = labels.slice(0, 7);
+        var title = BX_NAMES[grp.name] || (grp.name && grp.name !== "undefined" ? grp.name.charAt(0).toUpperCase() + grp.name.slice(1) : "");
+        if (title && (team.statistics || []).length > 1) pc.appendChild(el("p", "bx-grp", title));
+        var wrap = el("div", "bx-scroll"), t2 = el("table", "bx-t"), h2 = el("tr");
+        h2.appendChild(el("th", "bx-nm", "Player")); cols.forEach(function (c) { h2.appendChild(el("th", null, c)); }); t2.appendChild(h2);
+        ath.forEach(function (a, ix) {
+          var tr = el("tr" , a.starter && RK_KIND[g.league] === "bball" && ath[ix + 1] && !ath[ix + 1].starter ? "bx-lastst" : null);
+          var nm = el("td", "bx-nm"); nm.appendChild(el("span", null, (a.athlete && (a.athlete.shortName || a.athlete.displayName)) || ""));
+          var pos = a.athlete && a.athlete.position && a.athlete.position.abbreviation; if (pos) nm.appendChild(el("i", null, pos));
+          tr.appendChild(nm);
+          cols.forEach(function (c) { var k = labels.indexOf(c); tr.appendChild(el("td", null, k === -1 ? "" : String(a.stats[k]))); });
+          t2.appendChild(tr);
+        });
+        wrap.appendChild(t2); pc.appendChild(wrap);
+      });
+      frag.appendChild(pc);
+    }
+    if (!frag.childNodes.length) return null;
+    var outer = el("div", "bx-all"); outer.appendChild(frag);
+    var u = BX.at[g.id]; if (u) outer.appendChild(el("p", "pv-at gv-at", (d.final ? "Final box score" : "Live · updates every 30 seconds") + " · ESPN"));
+    return outer;
+  }
   function renderGame() {
     var body = $("game-body"); if (!body) return; body.textContent = "";
     if (state.view !== "game") return;
     var g = games().filter(function (x) { return x.id === state.gameId; })[0];
     if (!g) { if (!isDuo) { state.view = "lineup"; setTimeout(render, 0); return; } body.appendChild(el("div", "notice", "Pick a game on your slate to read its full preview here.")); return; }
     var pv = (state.previews || {})[g.id] || null, lg = (state.previewLeagues || {})[g.league] || {}, L = info(g);
-    if (!isDuo) {
-      var bk = el("button", "gv-back"); bk.type = "button"; bk.appendChild(icon("back")); bk.appendChild(document.createTextNode("Slate"));
-      bk.setAttribute("aria-label", "Back to the slate"); bk.addEventListener("click", backToSlate); body.appendChild(bk);
-    }
 
     // the matchup
     var hd = el("div", "gv-head");
@@ -2180,6 +2328,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     ["away", "home"].forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x) meta.push(abbr(g, sd) + " " + x); });
     if (meta.length) hd.appendChild(el("p", "gv-meta", meta.join(" · ")));
     body.appendChild(hd);
+    var bxs = boxScore(g); if (bxs) body.appendChild(bxs);
 
     if (!pv) {
       var np = gvCard(null); np.appendChild(previewBlock(g)); body.appendChild(np);
@@ -3084,6 +3233,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     $("day-input").value = state.date; $("l-day-input").value = state.date;
     $("day-today").hidden = state.date === today; $("l-day-today").hidden = state.date === today;
     $("nav-lineup").hidden = isDuo;
+    $("back-fab").hidden = !canGoBack() || state.menuOpen;
 
     // league strip (games)
     var sp = $("strip"); sp.textContent = "";
@@ -3215,6 +3365,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
   function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
 
   // ---------- actions ----------
+  // back: the button by the menu (bottom right, thumb side) and a swipe to the right
+  function homeView() { return isDuo ? "games" : "lineup"; }
+  function canGoBack() { return state.view !== homeView(); }
+  function goBack() { if (state.view === "game" && !isDuo) { backToSlate(); return; } if (state.view === "notify") { setView("settings"); return; } setView(homeView()); }
   function setView(v) { if (isDuo && v === "lineup") v = "games"; if (v === "rules" && state.view !== "rules") state.rulesMain = null; state.view = v; state.menuOpen = false; render(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
   var slideDir = "";
   function setDate(iso) {
@@ -3435,6 +3589,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
   // ---------- wiring ----------
   $("nav-lineup").addEventListener("click", function () { setView("lineup"); });
   $("nav-games").addEventListener("click", function () { setView("games"); });
+  $("back-fab").addEventListener("click", goBack);
   $("nav-best").addEventListener("click", function () { rk.date = null; setView("best"); rkPoll(true); });
   $("nav-settings").addEventListener("click", function () { setView("settings"); });
   $("nav-refresh").addEventListener("click", refreshApp);
@@ -3494,9 +3649,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     var x0 = null, y0 = 0, t0 = 0;
     function onSlate(target) {
       if (!target || !target.closest) return false;
-      if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip")) return false;
-      if (isDuo) return !!target.closest("#pane-l");
-      return (state.view === "lineup" || state.view === "game") && !state.menuOpen;
+      if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip, .bx-scroll, .bs-pills, .rk-day")) return false;
+      if (state.menuOpen) return false;
+      if (isDuo) return !!target.closest("#pane-l") || (canGoBack() && !!target.closest("#pane-r"));
+      return true;
     }
     document.addEventListener("touchstart", function (e) {
       x0 = null; if (e.touches.length !== 1) return;
@@ -3507,7 +3663,9 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     document.addEventListener("touchend", function (e) {
       if (x0 === null) return; var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
       if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.7 || Date.now() - t0 > 900) return;
-      if (!isDuo && state.view === "game") { if (dx > 0) backToSlate(); return; }
+      var onLeft = isDuo && e.target && e.target.closest && e.target.closest("#pane-l");
+      if (!onLeft && canGoBack()) { if (dx > 0) goBack(); return; }
+      if (!isDuo && state.view !== "lineup") return;
       slideDir = dx < 0 ? "l" : "r";
       setDate(shiftDate(state.date, dx < 0 ? 1 : -1));
     }, { passive: true });
