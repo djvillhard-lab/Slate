@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111150816";
+<script>window.SLATE_BUILD = "20261111150925";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3150,15 +3150,7 @@ nav.dock.menu-open .dock-back { display: none; }
       });
       body.appendChild(sub);
     } else state.bestConf = "all";
-    // Live: only players whose games are still going
-    var lv = !!state.bestLive;
-    if (day === today) {
-      var lo = el("div", "lo-row"), lb = el("button", "lo-btn" + (lv ? " on" : "")); lb.type = "button";
-      lb.setAttribute("aria-pressed", lv ? "true" : "false"); lb.setAttribute("aria-label", "Show only players in live games");
-      lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live"));
-      lb.addEventListener("click", function () { state.bestLive = !state.bestLive; keepScroll(renderBest); });
-      lo.appendChild(lb); body.appendChild(lo);
-    } else lv = false;
+    var lv = false;
     function keep(r) { if (lv && !r.live) return false; if (state.bestConf === "t25" && !ranks[r.teamName]) return false; return true; }
     var list, data = null;
     if (lgSel === "fav") {
