@@ -3,7 +3,7 @@ name: Slate tick
 # plus the list of previews Claude needs to write. Free on GitHub, every 10 minutes.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "3,13,23,33,43,53 * * * *"
   workflow_dispatch:
   push:
     paths: ["scripts/**", ".github/workflows/tick.yml"]
