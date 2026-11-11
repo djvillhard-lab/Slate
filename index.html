@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111153754";
+<script>window.SLATE_BUILD = "20261111154016";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1374,6 +1374,7 @@ nav.dock.menu-open .dock-back { display: none; }
 .ev-grp .switch { margin-top: 0; }
 .ev-gh .ev-tx b { white-space: normal; }
 .ev-grp .ev-list { grid-column: 1 / -1; }
+.tray-loc { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -2889,8 +2890,15 @@ nav.dock.menu-open .dock-back { display: none; }
     b.addEventListener("click", function (e) { e.stopPropagation(); state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true; keepScroll(render); });
     w.appendChild(b); return w;
   }
+  // where the game is played, once ESPN's game details have loaded
+  function venueLine(g, cls) {
+    var vn = !g.custom && bx.live[g.id] && bx.live[g.id].venue; if (!vn) return null;
+    var lc = el("p", cls || "gv-meta gv-loc"); lc.appendChild(icon("pin"));
+    lc.appendChild(document.createTextNode(vn.name + (vn.place ? ", " + vn.place : "") + (g.neutral ? " (neutral site)" : ""))); return lc;
+  }
   // the slate tray: a live or finished game shows its box score where the preview was
-  function trayBlock(g) {
+  function trayBlock(g) { var tb = trayBlock0(g), vl = venueLine(g, "gv-loc tray-loc"); if (tb && vl) tb.insertBefore(vl, tb.firstChild); return tb; }
+  function trayBlock0(g) {
     var kind = status(g).kind, started = kind === "live" || kind === "over", b = boxFor(g);
     if (started) bxNeed(g);
     if (!BX_SPORT[g.league] || !boxLive(b)) {
@@ -3669,8 +3677,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var meta = [];
     sideOrder(g).forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x) meta.push(abbr(g, sd) + " " + x); });
     if (meta.length) hd.appendChild(el("p", "gv-meta", meta.join(" · ")));
-    var vn = !g.custom && bx.live[g.id] && bx.live[g.id].venue;
-    if (vn) { var lc = el("p", "gv-meta gv-loc"); lc.appendChild(icon("pin")); lc.appendChild(document.createTextNode(vn.name + (vn.place ? ", " + vn.place : "") + (g.neutral ? " (neutral site)" : ""))); hd.appendChild(lc); }
+    var lc = venueLine(g); if (lc) hd.appendChild(lc);
     if (!g.custom && !isPastDay()) {
       var acts = el("div", "gv-acts"), onS = inLineup(g.id);
       var sb = el("button", "gv-act" + (onS ? " on" : "")); sb.type = "button";
