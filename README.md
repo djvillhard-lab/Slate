@@ -4,7 +4,7 @@
 
 Slate builds tonight's watch list for you. It picks the games you care about from your own rules, tells you where to watch each one, and has a short read ready on every matchup before tip-off. When the games start, it follows them live. When they end, it tells you what happened.
 
-It's a Home Screen app for iPhone, made for one person's taste in sports: St. Louis teams, Manchester United, the Celtics, Dayton and Clemson hoops, and whatever big games are on that night.
+It's a Home Screen app for iPhone (open https://slate.djvillhard.workers.dev in Safari, then Share → Add to Home Screen), made for one person's taste in sports: St. Louis teams, Manchester United, the Celtics, Dayton and Clemson hoops, and whatever big games are on that night.
 
 ---
 
@@ -92,7 +92,7 @@ Slate has four parts. Each one does a single job.
    └────────────────────────────────────────────────────┘
 ```
 
-### 1. The app (this repo, on GitHub Pages)
+### 1. The app (this repo, hosted on Cloudflare)
 `index.html` is the whole app: one self-contained page you add to the Home Screen. It reads everything from Supabase and gets live updates as documents change. It talks to ESPN directly for the things that change by the second: live scores, box scores, win chances and team pages. `sw.js` keeps a copy of the app on the phone so it opens instantly and offline. `version.json` lets an open app notice a new version and reload onto it.
 
 ### 2. Supabase (the data)
@@ -128,6 +128,6 @@ It runs from `.github/workflows/tick.yml` and needs one repository secret, `SUPA
 - **Alerts (hourly):** reads your slate and scores, and pushes reminders, finals, upset watch and the morning brief to your phone.
 
 ### Updating the app
-`index.html` is built from the app's source plus a small layer (`supabase.js` and a shim) that connects it to Supabase. After a change, the new `index.html` and `version.json` are pushed here. GitHub Pages publishes them within a minute or two, and open apps reload onto the new version by themselves.
+`index.html` is built from the app's source plus a small layer (`supabase.js` and a shim) that connects it to Supabase. After a change, the new `index.html` and `version.json` are pushed here. Cloudflare picks up each push and publishes it to https://slate.djvillhard.workers.dev within about a minute, and open apps reload onto the new version by themselves. Settings → **Update now** forces it if a phone is holding an old copy. (GitHub Pages was the old host; it stopped publishing reliably, so it is no longer used.)
 
 > GitHub pauses scheduled scripts after 60 days with no changes to the repo. Any push restarts the clock.
