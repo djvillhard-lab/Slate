@@ -906,6 +906,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .bs-wl.w { color: var(--head); } .bs-wl.l { color: var(--muted); }
 .bs-opp { color: var(--dim); font-weight: 600; }
 .bs-foot { margin: 10px 2px 0; font-size: 12.5px; color: var(--dim); }
+.s-moved { font-size: 12.5px; font-weight: 700; color: var(--live); }
 .rk-day { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 6px; margin: 0 0 12px; }
 .rk-arrow { height: 44px; border-radius: 12px; background: var(--raise); color: var(--head); font-size: 24px; font-weight: 700; }
 .rk-arrow:disabled { opacity: .35; }
@@ -1494,7 +1495,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
   function timeText(iso) { var d = new Date(iso); return isNaN(d) ? "TBD" : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); }
   function info(g) { var L = LEAGUES[g.league] || {}; return { tag: L.tag || (g.leagueLabel || g.league || "").toUpperCase().slice(0, 5), name: g.leagueLabel || L.name || "Other", hrs: L.hrs || 2.5, college: !!L.college }; }
   // ---------- live scores (self-hosted page only: it can reach ESPN directly) ----------
-  var LIVE = {}, LIVE_DATE = null;
+  var LIVE = {}, LIVE_DATE = null, LIVE_START = {};
   function scoreRaw(id) { if (LIVE_DATE === state.date && LIVE[id]) return LIVE[id]; return state.scores && state.scores[id]; }
   var ESPN_URLS = {
     nfl: ["football/nfl"], ncaaf: ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
@@ -1511,7 +1512,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     list.forEach(function (g) {
       var t = new Date(g.start).getTime(); if (isNaN(t) || !ESPN_URLS[g.league]) return;
       var s = scoreRaw(g.id);
-      if (t <= now + 120000 && now < t + 8 * 3600000 && !(s && s.state === "post")) { need[g.league] = need[g.league] || {}; need[g.league][etDate(t)] = 1; }
+      if (t <= now + 3 * 3600000 && now < t + 8 * 3600000 && !(s && s.state === "post")) { need[g.league] = need[g.league] || {}; need[g.league][etDate(t)] = 1; }
     });
     var reqs = [];
     Object.keys(need).forEach(function (lg) { Object.keys(need[lg]).forEach(function (d) { ESPN_URLS[lg].forEach(function (u) {
@@ -1522,7 +1523,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     livePolling = true; var forDate = state.date;
     Promise.all(reqs.map(function (r) { return fetch(r.url, { cache: "no-store" }).then(function (x) { return x.ok ? x.json() : null; }).then(function (j) { return { lg: r.lg, j: j }; }, function () { return { lg: r.lg, j: null }; }); })).then(function (res) {
       livePolling = false; if (forDate !== state.date) return;
-      if (LIVE_DATE !== forDate) { LIVE = {}; LIVE_DATE = forDate; }
+      if (LIVE_DATE !== forDate) { LIVE = {}; LIVE_START = {}; LIVE_DATE = forDate; }
       var changed = false, norm = function (x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]/g, ""); };
       res.forEach(function (r) {
         var evs = r.j && r.j.events || [];
@@ -1531,12 +1532,14 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
           var t = new Date(g.start).getTime();
           for (var i = 0; i < evs.length; i++) {
             var e = evs[i], c = e.competitions && e.competitions[0]; if (!c) continue;
-            if (Math.abs(new Date(e.date).getTime() - t) > 3 * 3600000) continue;
+            if (Math.abs(new Date(e.date).getTime() - new Date(g.moved || g.start).getTime()) > 3 * 3600000) continue;
             var A = null, H = null; (c.competitors || []).forEach(function (k) { if (k.homeAway === "home") H = k; else A = k; });
             if (!A || !H) continue;
             var ok = function (k, side) { var tm = k.team || {}; return norm(tm.displayName) === norm(g[side]) || (!!g[side + "Abbr"] && norm(tm.abbreviation) === norm(g[side + "Abbr"])); };
             if (!(ok(A, "away") && ok(H, "home"))) continue;
             var st = (c.status || e.status || {}).type || {};
+            var es = new Date(e.date).toISOString().replace(".000Z", "Z");
+            if (st.state === "pre") { if (Math.abs(new Date(e.date) - new Date(g.moved || g.start)) >= 60000) { if (LIVE_START[g.id] !== es) { LIVE_START[g.id] = es; changed = true; } } else if (LIVE_START[g.id]) { delete LIVE_START[g.id]; changed = true; } break; }
             if (st.state !== "in" && st.state !== "post") break;
             var v = { a: Number(A.score), h: Number(H.score), state: st.state, detail: st.shortDetail || st.detail || "", live: true };
             var old = LIVE[g.id];
@@ -1576,7 +1579,12 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     function take(list) { (Array.isArray(list) ? list : []).forEach(function (g) { if (!g || !g.id || !g.home) return; var k2 = (g.league + "|" + g.away + "|" + g.home + "|" + String(g.start).slice(0, 13)).toLowerCase(); if (seen[g.id] || seen[k2]) return; seen[g.id] = 1; seen[k2] = 1; out.push(g); }); }
     if (state.slate) take(state.slate.games);
     SLATE_PARTS.forEach(function (k) { var p = (state.slateParts || {})[k]; if (p) take(p.games); });
-    return out;
+    // start times move (a delay, an earlier game running long): ESPN's current time wins over the loaded one
+    return out.map(function (g) {
+      var fix = (LIVE_DATE === state.date && LIVE_START[g.id]) || (state.scores && state.scores[g.id] && state.scores[g.id].start);
+      if (!fix || fix === g.start || isNaN(new Date(fix))) return g;
+      var c = {}; Object.keys(g).forEach(function (k) { c[k] = g[k]; }); c.start = fix; c.moved = g.start; return c;
+    });
   }
   function byStart(a, b) { return (new Date(a.start) - new Date(b.start)) || String(a.id).localeCompare(String(b.id)); }
   function inLineup(id) { return !!state.slateSet[id]; }
@@ -1823,6 +1831,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
       if (st.kind === "upcoming") { var u = until(st.ms); side.appendChild(el("span", "s-cd", u.h < 24 ? "in " + (u.h ? u.h + "h " : "") + u.m + "m" : timeText(g.start))); }
       else side.appendChild(el("span", "s-cd", timeText(g.start)));
     } else side.appendChild(el("span", "s-time", timeText(g.start)));
+    if (g.moved && st.kind === "upcoming") side.appendChild(el("span", "s-moved", "Was " + timeText(g.moved)));
     var tv = (g.tv || []).filter(Boolean);
     if (mode === "lineup") {
       if (!tv.length) side.appendChild(el("span", "net", "Local TV"));
