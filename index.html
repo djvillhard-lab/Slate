@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111162002";
+<script>window.SLATE_BUILD = "20261111162237";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2368,18 +2368,22 @@ header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z,
     setView(v); state.backTo = { view: isDuo && from === "lineup" ? "games" : from, y: y }; renderBack();
     var sec = $("view-" + v); if (sec && !REDUCED) { sec.classList.remove("push-in"); void sec.offsetWidth; sec.classList.add("push-in"); setTimeout(function () { sec.classList.remove("push-in"); }, 320); }
   }
+  // Back always returns to tonight's slate (unfolded, the slate is on the left, so the right side returns to All games)
+  function homeView() { return isDuo ? "games" : "lineup"; }
   function goBack() {
-    var b = state.backTo; if (!b || b.view === state.view) return false;
-    setView(b.view);
-    if (isDuo) $("pane-r").scrollTop = b.y || 0; else window.scrollTo(0, b.y || 0);
-    repinDock(); setTimeout(repinDock, 350);
+    var home = homeView(); if (state.view === home && state.date === todayInHome()) return false;
+    state.backTo = null;
+    if (state.view !== home) setView(home);
+    if (state.date !== todayInHome()) { slideDir = "r"; setDate(todayInHome()); }
+    if (isDuo) { $("pane-r").scrollTop = 0; $("pane-l").scrollTop = 0; } else window.scrollTo(0, 0);
+    renderBack(); repinDock(); setTimeout(repinDock, 350);
     return true;
   }
   function renderBack() {
     var bt = $("dock-back"); if (!bt) return;
-    var b = state.backTo && state.backTo.view !== state.view ? state.backTo : null, nm = b ? VIEW_NAMES[b.view] || "Back" : "";
-    bt.hidden = !b; var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
-    if (b) { $("dock-back-t").textContent = nm; bt.setAttribute("aria-label", "Back to " + nm); }
+    var show = state.view !== homeView();
+    bt.hidden = !show; var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
+    if (show) { $("dock-back-t").textContent = "Tonight's Slate"; bt.setAttribute("aria-label", "Back to tonight's slate"); }
   }
   // after the final: a recap (written once, frozen an hour after the game ends) takes the quick read's place
   function recapOf(pv) { return pv && pv.recap && pv.recap.text ? pv.recap : null; }
@@ -5616,7 +5620,7 @@ header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z,
       if (isDuo && target.closest("#pane-l")) return "day";
       if (state.view === "games" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#strip", t) || target.closest("#view-games"))) return "league";
       if (state.view === "best" && !target.closest(".rk-day, nav.dock, .menu-pop") && (belowStrip(".rk-strip", t) || target.closest("#view-best"))) return "rk";
-      if (state.backTo && state.backTo.view !== state.view) return "back";
+      if (state.view !== homeView() && state.view !== "lineup") return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
     document.addEventListener("touchstart", function (e) {
