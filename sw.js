@@ -1,6 +1,6 @@
 /* Slate: opens instantly from the phone's copy of the app, then updates in the background.
    A link with ?v=<build> (what the update check opens) always comes from the network. */
-var SHELL = "slate-shell-v1";
+var SHELL = "slate-shell-v2";
 self.addEventListener("install", function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(SHELL).then(function (c) { return c.addAll(["./", "supabase.js", "icon.png"]); }).catch(function () {}));
@@ -9,7 +9,8 @@ self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== SHELL; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
 });
 function fresh(req, key) {
-  return fetch(req, { cache: "no-store" }).then(function (r) {
+  // a plain URL fetch: some browsers refuse to copy a page navigation into a new request
+  return fetch(req.mode === "navigate" ? req.url : req, { cache: "no-store", credentials: "same-origin" }).then(function (r) {
     if (r && r.ok) { var copy = r.clone(); caches.open(SHELL).then(function (c) { c.put(key, copy); }); }
     return r;
   });

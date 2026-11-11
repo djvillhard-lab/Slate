@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111142115";
+<script>window.SLATE_BUILD = "20261111142517";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -106,11 +106,19 @@
     if (Date.now() - last < 60000) return; last = Date.now();
     fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
       if (!v || !v.build || v.build === window.SLATE_BUILD) return;
-      // already tried this version once this session (GitHub still publishing): don't loop
-      try { if (sessionStorage.getItem("slate-tried") === v.build) return; sessionStorage.setItem("slate-tried", v.build); } catch (e) {}
+      // tried this version in the last 2 minutes (GitHub still publishing): don't loop, but try again later
+      try { var tr = JSON.parse(localStorage.getItem("slate-tried") || "{}"); if (tr.b === v.build && Date.now() - tr.at < 120000) return; localStorage.setItem("slate-tried", JSON.stringify({ b: v.build, at: Date.now() })); } catch (e) {}
       location.replace(location.pathname + "?v=" + v.build);
     }, function () {});
   }
+  // Settings > Update now: drop the phone's saved copy and load straight from GitHub
+  window.slateForceUpdate = function () {
+    var go = function () { location.replace(location.pathname + "?v=" + Date.now()); };
+    var p = [];
+    try { if (window.caches) p.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })); } catch (e) {}
+    try { if (navigator.serviceWorker) p.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.update().catch(function () {}); })); })); } catch (e) {}
+    Promise.all(p).then(go, go); setTimeout(go, 2500);
+  };
   setTimeout(check, 1500);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
   window.addEventListener("pageshow", function (e) { if (e.persisted) { last = 0; check(); } });
@@ -1539,6 +1547,10 @@ nav.dock.menu-open .dock-back { display: none; }
         <li>Name it <strong>Lineup</strong>. It opens like an app.</li>
       </ol>
       <p>Stay signed in to Claude in Safari so your games and picks load.</p>
+    </div>
+    <div class="optrow" id="ver-row">
+      <div><b>App version</b><span id="ver-text"></span></div>
+      <button type="button" class="outline quiet" id="ver-btn">Update now</button>
     </div>
   </section>
 
@@ -5101,6 +5113,11 @@ nav.dock.menu-open .dock-back { display: none; }
   $("nav-tv").addEventListener("click", function () { menuGo("tv"); });
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
   $("open-rules").addEventListener("click", function () { openSub("rules"); });
+  (function () {
+    var b = window.SLATE_BUILD || "", t = $("ver-text");
+    if (t) t.textContent = b ? "Built " + new Date(b.slice(0, 4) + "-" + b.slice(4, 6) + "-" + b.slice(6, 8) + "T" + b.slice(8, 10) + ":" + b.slice(10, 12) + ":00").toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + ". Tap to load the newest version." : "Tap to load the newest version.";
+    $("ver-btn").addEventListener("click", function () { if (window.slateForceUpdate) window.slateForceUpdate(); else location.reload(); });
+  })();
   $("dock-back").addEventListener("click", function () { state.menuOpen = false; goBack(); });
   Array.prototype.forEach.call(document.querySelectorAll("#view-notify .seg[data-pref]"), function (sg) {
     Array.prototype.forEach.call(sg.children, function (b) {
