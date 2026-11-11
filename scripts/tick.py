@@ -644,8 +644,10 @@ def main():
         if len(allids) > 5: sb_put("code/teamids", allids)
     # team summaries: checked once an hour (and right away when DJ asks for one)
     old_w = docs.get(f"work/{D}") or {}
-    if now.minute < 10 or (load.get("teams") and not any(t.get("kind") == "team" for t in old_w.get("todo", []))):
-        team_work(docs, now, sett, load, todo, work_facts)
+    t_at = parse(old_w.get("teamsAt"))
+    teams_at = old_w.get("teamsAt")
+    if not t_at or (now - t_at).total_seconds() > 55 * 60 or (load.get("teams") and not any(t.get("kind") == "team" for t in old_w.get("todo", []))):
+        team_work(docs, now, sett, load, todo, work_facts); teams_at = iso(now)
     else:  # keep the team items from the last hourly check until they're written
         for t in old_w.get("todo", []):
             if t.get("kind") == "team":
@@ -653,7 +655,7 @@ def main():
                 f0 = (old_w.get("facts") or {}).get("team:" + t["key"]) or {}
                 if (d0.get("basis") or {}).get("last") != (f0.get("basis") or {}).get("last") or not d0.get("summary") or "requested" in t["why"] and t["key"] in (load.get("teams") or []):
                     todo.append(t); work_facts["team:" + t["key"]] = f0
-    work = {"date": D, "updatedAt": iso(now), "slate": slate, "requested": requested, "myTeams": mine,
+    work = {"date": D, "updatedAt": iso(now), "teamsAt": teams_at, "slate": slate, "requested": requested, "myTeams": mine,
             "loadDates": load.get("dates") or [], "todo": todo, "facts": work_facts}
     old_work = docs.get(f"work/{D}") or {}
     if {k: v for k, v in old_work.items() if k != "updatedAt"} != {k: v for k, v in work.items() if k != "updatedAt"} or not old_work or \
