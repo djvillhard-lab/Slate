@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111144906";
+<script>window.SLATE_BUILD = "20261111150307";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1317,6 +1317,20 @@ nav.dock { flex-direction: column; align-items: flex-end; gap: 10px; }
 nav.dock.menu-open .dock-back { display: none; }
 .gv-loc { display: flex; align-items: center; gap: 6px; }
 .gv-loc svg { width: 15px; height: 15px; flex: none; opacity: .8; }
+.lg-edit { margin-left: auto; display: grid; place-items: center; padding: 0 2px 8px; color: var(--muted); }
+.lg-edit svg { width: 20px; height: 20px; }
+.tabs-hint { margin: 4px 0 12px; }
+.tabs-list { border-top: 1px solid var(--line); }
+.tabrow { display: grid; grid-template-columns: 1fr auto 40px 40px; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.tabrow .tn { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.tabrow .tn b { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tabrow .tg { color: var(--dim); font-size: 12px; font-weight: 700; }
+.tabrow.off .tn { opacity: .45; }
+.tabrow .switch { margin-top: 0; }
+.tab-mv { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 12px; background: var(--raise); color: var(--ink); }
+.tab-mv svg { width: 16px; height: 16px; }
+.tab-up svg { transform: rotate(-90deg); } .tab-down svg { transform: rotate(90deg); }
+.tab-mv:disabled { opacity: .25; }
 </style>
 </head>
 <body>
@@ -1394,6 +1408,7 @@ nav.dock.menu-open .dock-back { display: none; }
   <section id="view-game" aria-label="Matchup" hidden><div id="game-body"></div></section>
   <section id="view-best" aria-label="Player rankings" hidden><div id="best-body"></div></section>
   <section id="view-teams" aria-label="Teams" hidden><div id="teams-body"></div></section>
+  <section id="view-tabs" aria-label="Edit All games tabs" hidden><div id="tabs-body"></div></section>
   <section id="view-team" aria-label="Team" hidden><div id="team-body"></div></section>
 
   <section id="view-notify" aria-label="Notifications" hidden>
@@ -1504,14 +1519,6 @@ nav.dock.menu-open .dock-back { display: none; }
       <div><b>Quick reads</b><span>Short previews as a paragraph or as bullet points.</span></div>
       <div class="seg seg2" id="pvstyle-seg" role="group" aria-label="Quick read style"><button type="button" data-v="para">Paragraph</button><button type="button" data-v="bullets">Bullets</button></div>
     </div>
-
-    <div class="sec"><h2>Leagues</h2><span class="count">Tap to hide</span></div>
-    <p class="hint">Hidden leagues drop out of Games and On TV. Your teams' games always show.</p>
-    <div class="lgchips" id="lg-chips" role="group" aria-label="Leagues shown"></div>
-
-    <div class="sec"><h2>All games filters</h2><span class="count">Order</span></div>
-    <p class="hint">The order of the filters across the top of All games. Swipe sideways on the list to move between them.</p>
-    <div class="rows" id="filter-order"></div>
 
     <div class="sec"><h2>Text size</h2></div>
     <p class="hint duo-only">Set it separately for the cover screen and the big screen.</p>
@@ -1807,8 +1814,8 @@ nav.dock.menu-open .dock-back { display: none; }
       else { s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "1.8"); s.setAttribute("stroke-linejoin", "round"); }
     } else {
       s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "3"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
-      var D = { check: "M5 12.5l4.5 4.5L19 7.5", x: "M6.5 6.5l11 11M17.5 6.5l-11 11", back: "M15 5l-7 7 7 7", more: "M9 5l7 7-7 7", pin: "M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11zM12 12.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6z" };
-      if (kind === "pin") s.setAttribute("stroke-width", "1.9");
+      var D = { check: "M5 12.5l4.5 4.5L19 7.5", x: "M6.5 6.5l11 11M17.5 6.5l-11 11", back: "M15 5l-7 7 7 7", more: "M9 5l7 7-7 7", sliders: "M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5", pin: "M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11zM12 12.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6z" };
+      if (kind === "pin" || kind === "sliders") s.setAttribute("stroke-width", kind === "pin" ? "1.9" : "2.2");
       p.setAttribute("d", D[kind] || "M12 5v14M5 12h14");
     }
     s.appendChild(p); return s;
@@ -3328,6 +3335,43 @@ nav.dock.menu-open .dock-back { display: none; }
     return c;
   }
   var BROWSE = [["NFL", "NFL"], ["NBA", "NBA"], ["MLB", "MLB"], ["NHL", "NHL"], ["Premier League", "EPL"], ["MLS", "MLS"], ["College", "College"], ["WNBA", "WNBA"], ["La Liga", "LIGA"], ["Serie A", "SA"], ["Bundesliga", "BUN"], ["Ligue 1", "L1"]];
+  // All games tabs: their order, and which leagues show at all (hidden ones also drop out of On TV)
+  function tabName(k) { return k === "fav" ? "My teams" : k === "all" ? "All games" : LEAGUES[k].name; }
+  function renderTabs() {
+    var body = $("tabs-body"); if (!body) return; body.textContent = "";
+    if (state.view !== "tabs") return;
+    var hid = state.hiddenLeagues || [], ord = state.gamesOrder || [];
+    var keys = ["fav"].concat(ORDER).concat(["all"]);
+    keys = keys.map(function (k, i) { var j = ord.indexOf(k); return [j === -1 ? 1e3 + i : j, k]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
+    body.appendChild(el("p", "hint tabs-hint", "Arrange the tabs across the top of All games. Switch a league off to hide it there and in On TV; games your teams play always show."));
+    var list = el("div", "tabs-list");
+    keys.forEach(function (k, i) {
+      var off = hid.indexOf(k) !== -1, r = el("div", "tabrow" + (off ? " off" : ""));
+      var tx = el("span", "tn"); tx.appendChild(el("b", null, tabName(k)));
+      if (LEAGUES[k] && LEAGUES[k].tag !== LEAGUES[k].name) tx.appendChild(el("span", "tg", LEAGUES[k].tag));
+      r.appendChild(tx);
+      if (LEAGUES[k]) {
+        var sw = el("button", "switch"); sw.type = "button"; sw.setAttribute("role", "switch"); sw.setAttribute("aria-checked", off ? "false" : "true");
+        sw.setAttribute("aria-label", "Show " + tabName(k)); sw.appendChild(el("span", "knob"));
+        sw.addEventListener("click", function () { var h = (state.hiddenLeagues || []).slice(), j = h.indexOf(k); if (j === -1) h.push(k); else h.splice(j, 1); state.hiddenLeagues = h; saveSettings(); keepScroll(render); });
+        r.appendChild(sw);
+      } else r.appendChild(el("span"));
+      [["up", -1], ["down", 1]].forEach(function (m) {
+        var b = el("button", "tab-mv tab-" + m[0]); b.type = "button"; b.appendChild(icon("more"));
+        b.setAttribute("aria-label", "Move " + tabName(k) + " " + m[0]);
+        b.disabled = (m[1] < 0 && i === 0) || (m[1] > 0 && i === keys.length - 1);
+        b.addEventListener("click", function () { var nk = keys.slice(), j = i + m[1], t = nk[i]; nk[i] = nk[j]; nk[j] = t; state.gamesOrder = nk; saveSettings(); keepScroll(render); });
+        r.appendChild(b);
+      });
+      list.appendChild(r);
+    });
+    body.appendChild(list);
+    if (ord.length || hid.length) {
+      var rs = el("button", "rlink", "Reset to the default order"); rs.type = "button";
+      rs.addEventListener("click", function () { state.gamesOrder = []; saveSettings(); keepScroll(render); });
+      if (ord.length) body.appendChild(rs);
+    }
+  }
   function renderTeams() {
     var body = $("teams-body"); if (!body) return; body.textContent = "";
     if (state.view !== "teams") return;
@@ -4658,20 +4702,6 @@ nav.dock.menu-open .dock-back { display: none; }
     if (false) Array.prototype.forEach.call([], function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.autoAdd ? "true" : "false"); });
     Array.prototype.forEach.call($("score-seg").children, function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.showScores ? "true" : "false"); });
     Array.prototype.forEach.call($("pvstyle-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-v") === (state.pvStyle || "para") ? "true" : "false"); });
-    renderFilterOrder();
-    var lc = $("lg-chips"); lc.textContent = "";
-    ORDER.forEach(function (k) {
-      var shown = (state.hiddenLeagues || []).indexOf(k) === -1;
-      var b = el("button", "lgchip", LEAGUES[k].tag); b.type = "button";
-      b.setAttribute("aria-pressed", shown ? "true" : "false");
-      b.setAttribute("aria-label", LEAGUES[k].name + (shown ? ", shown" : ", hidden"));
-      b.addEventListener("click", function () {
-        var h = (state.hiddenLeagues || []).slice(), i = h.indexOf(k);
-        if (i === -1) h.push(k); else h.splice(i, 1);
-        state.hiddenLeagues = h; saveSettings(); render();
-      });
-      lc.appendChild(b);
-    });
     var sw = $("swatches"); sw.textContent = "";
     Object.keys(ACCENTS).forEach(function (k) {
       var a = ACCENTS[k], b = el("button", "sw"); b.type = "button";
@@ -4742,7 +4772,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var dl = dayLabel(state.date), named = /^(today|yesterday|tomorrow)$/.test(dl);
     var shortDate = fmtDate(state.date, { weekday: "short" }) + ", " + fmtDate(state.date, { month: "short", day: "numeric" });
     var slateTitle = state.date === today ? "Tonight's Slate" : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
-    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "teams" ? "Teams" : v === "team" ? "Team" : slateTitle;
+    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
     var pg = $("btn-copy").parentNode; pg.hidden = v !== "lineup" && v !== "games";
@@ -4770,6 +4800,8 @@ nav.dock.menu-open .dock-back { display: none; }
       b.addEventListener("click", function () { pickFilter(o[0]); });
       sp.appendChild(b);
     });
+    var eb = el("button", "lg-tab lg-edit"); eb.type = "button"; eb.setAttribute("aria-label", "Edit tabs: order and which leagues show");
+    eb.appendChild(icon("sliders")); eb.addEventListener("click", function () { openSub("tabs"); }); sp.appendChild(eb);
     sp.hidden = v !== "games" || !gs.length;
 
     // conference sub-strip (college leagues)
@@ -4824,7 +4856,7 @@ nav.dock.menu-open .dock-back { display: none; }
 
     ["lineup", "rules", "games", "tv", "settings"].forEach(function (k) { var b = $("nav-" + k); if (v === k || (k === "settings" && v === "notify")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     $("menu-pop").hidden = !state.menuOpen; $("menu-scrim").hidden = !state.menuOpen; $("menu-fab").setAttribute("aria-expanded", state.menuOpen ? "true" : "false");
-    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-teams").hidden = v !== "teams"; $("view-team").hidden = v !== "team";
+    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-teams").hidden = v !== "teams"; $("view-tabs").hidden = v !== "tabs"; $("view-team").hidden = v !== "team";
     var cnt = lineupGames().length, nc = $("nav-count"); nc.textContent = String(cnt); nc.hidden = !cnt;
     $("view-lineup").hidden = !isDuo && v !== "lineup"; $("view-games").hidden = v !== "games"; $("view-tv").hidden = v !== "tv"; $("view-settings").hidden = v !== "settings"; $("view-notify").hidden = v !== "notify";
   }
@@ -4874,7 +4906,7 @@ nav.dock.menu-open .dock-back { display: none; }
     if (!max) return;
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(88, box.clientWidth * 0.27))) + "px");
   }
-  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderTeams(); renderTeam(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
+  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
 
   // ---------- actions ----------
   // iOS can leave a fixed element where it was when a page swaps for a shorter one and the scroll jumps
