@@ -424,7 +424,7 @@ def main():
     PREV = (datetime.date.fromisoformat(D) - datetime.timedelta(days=1)).isoformat()
     slate_paths = [f"slates/{D}", f"slates/{D}-ncaam", f"slates/{D}-ncaaw", f"slates/{D}-ncaaf"]
     docs = sb_get(slate_paths + [f"scores/{D}", f"previews/{D}", f"previews/{PREV}", f"scores/{PREV}", "prefs/notify", "prefs/load",
-                                 f"mine/lineup-{D}", f"work/{D}", f"standouts/{YEST}", f"standouts/{TODAY}", f"standouts/{D}"])
+                                 f"mine/lineup-{D}", f"mine/user-lineup-{D}", "mine/user-settings", f"work/{D}", f"standouts/{YEST}", f"standouts/{TODAY}", f"standouts/{D}"])
     games, seen = [], set()
     for p in slate_paths:
         for g in (docs.get(p) or {}).get("games") or []:
@@ -433,8 +433,11 @@ def main():
             if g["id"] in seen or k in seen: continue
             seen.add(g["id"]); seen.add(k); games.append(g)
     byid = {g["id"]: g for g in games}
-    notify = docs.get("prefs/notify") or {}; teams = notify.get("teams") or []
-    slate = compute_slate(games, notify.get("rules"), teams, docs.get(f"mine/lineup-{D}"))
+    # the app keeps its own copies (mine/user-...): those are what DJ sees, so they win
+    sett = docs.get("mine/user-settings") or docs.get("prefs/notify") or {}
+    teams = sett.get("teams") or []
+    lineup = docs.get(f"mine/user-lineup-{D}") or docs.get(f"mine/lineup-{D}")
+    slate = compute_slate(games, sett.get("rules"), teams, lineup)
     load = docs.get("prefs/load") or {}
     requested = [i for i in (load.get("previews") or []) if load.get("previewDate") == D and i in byid and i not in slate]
     mine = my_team_ids(games, teams)

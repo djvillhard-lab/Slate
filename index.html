@@ -27,10 +27,21 @@
   } catch (e) {}
   window.slateAskPass = function () { try { localStorage.removeItem("slate-view-only"); localStorage.removeItem("slate-pass"); } catch (e) {} location.reload(); };
   function mapPath(p) { var m = /^data\/users\/[^/]+\/(.+)$/.exec(p); return m ? "mine/user-" + m[1] : p; }
+  // keep the last copy of each document on the phone so the app opens instantly, then catch up from the network
+  var CK = "slate-doc:";
+  function cacheGet(path) { try { var v = localStorage.getItem(CK + path); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  function cachePut(path, row) {
+    var v = JSON.stringify(row ? { data: row.data, updated_at: row.updated_at } : { none: true });
+    try { localStorage.setItem(CK + path, v); }
+    catch (e) {  // full: drop the cached documents of other days and try once more
+      try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf(CK) === 0 && k !== CK + path) localStorage.removeItem(k); }); localStorage.setItem(CK + path, v); } catch (e2) {}
+    }
+  }
   function snap(row) { var d = row ? row.data : undefined; return { exists: !!row, data: function () { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }, metadata: { fromCache: false } }; }
   function fetchRow(path) {
     return sb.from("docs").select("data,updated_at").eq("path", path).maybeSingle().then(function (r) {
-      if (r.error) { var e = new Error(r.error.message); e.code = "unavailable"; throw e; } return r.data;
+      if (r.error) { var e = new Error(r.error.message); e.code = "unavailable"; throw e; }
+      cachePut(path, r.data); return r.data;
     });
   }
   var subs = {}; // path -> [{cb, err}]
@@ -47,7 +58,16 @@
   function doc(p) {
     var path = mapPath(p);
     return {
-      get: function () { return fetchRow(path).then(snap); },
+      get: function () {
+        // the network copy when it's quick; the phone's copy when the network is slow or down
+        var c = cacheGet(path), net = fetchRow(path).then(snap);
+        if (!c) return net;
+        var local = snap(c.none ? null : c);
+        return new Promise(function (res) {
+          var done = false, t = setTimeout(function () { if (!done) { done = true; res(local); } }, 1200);
+          net.then(function (s2) { if (!done) { done = true; clearTimeout(t); res(s2); } }, function () { if (!done) { done = true; clearTimeout(t); res(local); } });
+        });
+      },
       set: function (data) {
         if (!pass()) { var e0 = new Error("No passcode on this device"); e0.code = "permission-denied"; return Promise.reject(e0); }
         return sb.rpc("save_doc", { p_path: path, p_data: data, p_pass: pass(), p_merge: false }).then(function (r) {
@@ -57,7 +77,13 @@
       },
       onSnapshot: function (cb, err) {
         var s = { cb: cb, err: err }; (subs[path] = subs[path] || []).push(s);
-        fetchRow(path).then(function (row) { if ((subs[path] || []).indexOf(s) !== -1) cb(snap(row)); }, function (e) { if (err) err(e); });
+        var c = cacheGet(path), shown = null;
+        if (c) { shown = c.none ? "none" : c.updated_at; Promise.resolve().then(function () { if ((subs[path] || []).indexOf(s) !== -1) cb(snap(c.none ? null : c)); }); }
+        fetchRow(path).then(function (row) {
+          if ((subs[path] || []).indexOf(s) === -1) return;
+          if (shown !== null && shown === (row ? row.updated_at : "none")) return;  // the cached copy was already current
+          cb(snap(row));
+        }, function (e) { if (!c && err) err(e); });
         return function () { var l = subs[path] || []; var i = l.indexOf(s); if (i !== -1) l.splice(i, 1); };
       }
     };
@@ -72,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111095338";
+<script>window.SLATE_BUILD = "20261111110441";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -89,6 +115,7 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
   window.addEventListener("pageshow", function (e) { if (e.persisted) { last = 0; check(); } });
 })();</script>
+<script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});</script>
 <title>Tonight&#39;s Lineup</title>
 <style>
 /* Archivo (SIL Open Font License 1.1), latin subset with width + weight axes, embedded so it works inside the Claude viewer */
@@ -1704,14 +1731,24 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   };
   function etDate(ms) { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms)).replace(/-/g, ""); }
   var livePolling = false;
+  var LIVE_AT = {};
   function livePoll() {
     if (!window.SLATE_SELF || livePolling || document.hidden || !state.date) return;
-    var now = Date.now(), need = {}, list = games();
+    if (LIVE_DATE !== state.date) LIVE_AT = {};
+    // how often each league is checked: every 30 seconds while a slate game is live or about to start,
+    // every 2 minutes while any other game is live, every 5 minutes otherwise (start-time changes)
+    var now = Date.now(), need = {}, list = games(), every = {}, slate = state.slateSet || {};
     list.forEach(function (g) {
-      var t = new Date(g.start).getTime(); if (isNaN(t) || !ESPN_URLS[g.league]) return;
+      var t = new Date(g.moved || g.start).getTime(); if (isNaN(t) || !ESPN_URLS[g.league]) return;
       var s = scoreRaw(g.id);
-      if (t <= now + 3 * 3600000 && now < t + 8 * 3600000 && !(s && s.state === "post")) { need[g.league] = need[g.league] || {}; need[g.league][etDate(t)] = 1; }
+      if (t <= now + 3 * 3600000 && now < t + 8 * 3600000 && !(s && s.state === "post")) {
+        var live = (s && s.state === "in") || (t <= now && now < t + 4 * 3600000);
+        var gap = (slate[g.id] || hasFav(g)) && (live || t - now < 10 * 60000) ? 30000 : live ? 120000 : 300000;
+        every[g.league] = Math.min(every[g.league] || 1e9, gap);
+        need[g.league] = need[g.league] || {}; need[g.league][etDate(t)] = 1;
+      }
     });
+    Object.keys(need).forEach(function (lg) { if (now - (LIVE_AT[lg] || 0) < every[lg] - 2000) delete need[lg]; else LIVE_AT[lg] = now; });
     var reqs = [];
     Object.keys(need).forEach(function (lg) { Object.keys(need[lg]).forEach(function (d) { ESPN_URLS[lg].forEach(function (u) {
       var parts = u.split("&"), url = "https://site.api.espn.com/apis/site/v2/sports/" + parts[0] + "/scoreboard?dates=" + d + (parts.length > 1 ? "&" + parts.slice(1).join("&") : "");
@@ -1752,7 +1789,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   }
   if (window.SLATE_SELF) {
     setInterval(livePoll, 30000);
-    document.addEventListener("visibilitychange", function () { if (!document.hidden) livePoll(); });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) { LIVE_AT = {}; livePoll(); } });
   }
   function scoreOf(g) { var s = scoreRaw(g.id); return s && (s.state === "in" || s.state === "post") ? s : null; }
   function scoreDetail(g) { var s = scoreOf(g); if (!s) return ""; return s.state === "post" ? (s.detail || "Final") : (s.detail || "In progress"); }
@@ -2096,6 +2133,55 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     b.addEventListener("click", function (e) { e.stopPropagation(); state.recapOpen = state.recapOpen || {}; state.recapOpen[g.id] = true; keepScroll(render); });
     w.appendChild(b); return w;
   }
+  // the moment a game ends: a recap straight from the box score, until Claude's written one arrives
+  function quickRecap(g) {
+    if (!window.SLATE_SELF || status(g).kind !== "over") return null;
+    var sc = scoreOf(g); if (!sc || sc.state !== "post") return null;
+    var b = boxFor(g); if (!b || b.state !== "post") { bxNeed(g); }
+    var a = Number(sc.a), h = Number(sc.h), an = short(g, "away"), hn = short(g, "home");
+    var text = a === h ? "Final: " + an + " " + a + ", " + hn + " " + h + " (tied)."
+      : "Final: " + (a > h ? an + " " + a + ", " + hn + " " + h : hn + " " + h + ", " + an + " " + a) + ".";
+    if (sc.detail && /OT|SO|\/\d|extra/i.test(sc.detail)) text = text.replace(/\.$/, " (" + sc.detail.replace(/^Final\/?/i, "") + ").").replace(" ().", ".");
+    var stars = [];
+    if (b && b.state === "post") {
+      var sport = BX_SPORT[g.league] || "", win = a > h ? "away" : h > a ? "home" : "";
+      b.teams.forEach(function (t) {
+        var best = null;
+        function ci(grp, l) { for (var i = 0; i < grp.cols.length; i++) if (String(grp.cols[i]).toUpperCase() === l) return i; return -1; }
+        function n(r, i) { var v = i < 0 ? "" : String(r.s[i] || ""); return parseFloat(v) || 0; }
+        function v(r, i) { return i < 0 ? "" : String(r.s[i] || ""); }
+        t.groups.forEach(function (grp, gi) {
+          (grp.rows || []).forEach(function (r) {
+            if (r.dnp != null || !r.s || !r.s.length) return;
+            var sc2 = 0, line = "";
+            if (sport === "bball") {
+              var P = ci(grp, "PTS"), R = ci(grp, "REB"), A = ci(grp, "AST"); if (P < 0) return;
+              sc2 = n(r, P) + 0.5 * n(r, R) + 0.7 * n(r, A); line = v(r, P) + " pts" + (R >= 0 ? ", " + v(r, R) + " reb" : "") + (A >= 0 ? ", " + v(r, A) + " ast" : "");
+            } else if (sport === "hockey") {
+              var G = ci(grp, "G"), A2 = ci(grp, "A"), SV = ci(grp, "SV");
+              if (G >= 0) { sc2 = n(r, G) * 2 + n(r, A2); if (!sc2) return; line = v(r, G) + " G, " + (A2 >= 0 ? v(r, A2) : "0") + " A"; }
+              else if (SV >= 0) { sc2 = n(r, SV) / 12; line = v(r, SV) + " saves"; }
+            } else if (sport === "football") {
+              var Y = ci(grp, "YDS"), TD = ci(grp, "TD"), k = String(grp.k || "").toLowerCase(); if (Y < 0) return;
+              var kind = k.indexOf("pass") === 0 ? "pass" : k.indexOf("rush") === 0 ? "rush" : k.indexOf("rec") === 0 ? "rec" : ""; if (!kind) return;
+              sc2 = n(r, Y) / (kind === "pass" ? 2.5 : 1) + n(r, TD) * 20; line = v(r, Y) + " " + kind + " yds" + (n(r, TD) ? ", " + v(r, TD) + " TD" : "");
+            } else if (sport === "baseball") {
+              var H = ci(grp, "H"), RBI = ci(grp, "RBI"), HR = ci(grp, "HR"), IP = ci(grp, "IP"), ER = ci(grp, "ER"), K = ci(grp, "K");
+              if (IP >= 0) { sc2 = n(r, IP) * 1.2 + n(r, K) * 0.5 - n(r, ER); line = v(r, IP) + " IP, " + v(r, ER) + " ER, " + v(r, K) + " K"; }
+              else if (RBI >= 0) { sc2 = n(r, H) + n(r, RBI) * 1.5 + n(r, HR) * 2; if (!sc2) return; line = v(r, H) + " H" + (n(r, HR) ? ", " + v(r, HR) + " HR" : "") + (n(r, RBI) ? ", " + v(r, RBI) + " RBI" : ""); }
+            } else if (sport === "soccer") {
+              var G3 = ci(grp, "G"), A3 = ci(grp, "A"); sc2 = n(r, G3) * 2 + n(r, A3); if (!sc2) return;
+              line = (n(r, G3) ? v(r, G3) + (n(r, G3) > 1 ? " goals" : " goal") : "") + (n(r, A3) ? (n(r, G3) ? ", " : "") + v(r, A3) + (n(r, A3) > 1 ? " assists" : " assist") : "");
+            }
+            if (line && (!best || sc2 > best.sc)) best = { sc: sc2, name: r.n, team: t.abbr, line: line, win: t.side === win };
+          });
+        });
+        if (best) stars.push(best);
+      });
+      stars.sort(function (x, y) { return (y.win ? 1 : 0) - (x.win ? 1 : 0) || y.sc - x.sc; });
+    }
+    return { text: text, stars: stars, quick: true };
+  }
   function recapPending(g, pv) {
     if (recapOf(pv) || status(g).kind !== "over") return false;
     var t = new Date(g.start).getTime(); return !isNaN(t) && Date.now() - t < 14 * 3600e3;
@@ -2122,13 +2208,16 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (o.provider) od.appendChild(el("i", null, o.provider));
       box.appendChild(od);
     }
-    var rc = recapOf(pv), rcOpen = rc && recapShown(g);
+    var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
     if (rc) {
-      if (rcOpen) { var rb = el("div", "pv-recap"); rb.appendChild(el("b", "pv-h", "Recap")); rb.appendChild(el("p", "pv-sum", rc.text)); box.appendChild(rb); }
-      else box.appendChild(recapGate(g));
+      if (rcOpen) {
+        var rb = el("div", "pv-recap"); rb.appendChild(el("b", "pv-h", rc.quick ? "Box score recap" : "Recap")); rb.appendChild(el("p", "pv-sum", rc.text));
+        if (rc.quick) rb.appendChild(el("p", "pv-none pv-soon", "The written recap arrives at :55."));
+        box.appendChild(rb);
+      } else box.appendChild(recapGate(g));
     } else if (pv.summary) {
       box.appendChild(el("p", "pv-sum", pv.summary));
-      if (recapPending(g, pv)) box.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives with the next hourly refresh."));
+      if (recapPending(g, pv)) box.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives at :55."));
     }
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }).slice(0, 4) : [];
     var wl = stars.length ? stars : Array.isArray(pv.watch) ? pv.watch.filter(function (w) { return w && w.name; }).slice(0, 4) : [];
@@ -2879,8 +2968,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
         box.appendChild(tc);
       });
     }
-    var rcx = pv && recapOf(pv);
-    section("pv", rcx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : pv && pv.odds && pv.odds.spread ? pv.odds.spread + (pv.odds.total ? " · O/U " + pv.odds.total : "") : "", function (box) {
+    var rcx = pv && recapOf(pv), qrx = !rcx && pv && quickRecap(g);
+    section("pv", rcx || qrx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : qrx ? "Box score recap for now" : pv && pv.odds && pv.odds.spread ? pv.odds.spread + (pv.odds.total ? " · O/U " + pv.odds.total : "") : "", function (box) {
       previewSections(g, pv, box);
       // standings or the poll, with tonight's two teams marked
       var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
@@ -2907,14 +2996,15 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (o.provider) od.appendChild(el("i", null, o.provider));
       body.appendChild(od);
     }
-    var rc = recapOf(pv), rcOpen = rc && recapShown(g);
+    var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
     if (rc) {
-      var rq = gvCard("Recap", "gv-recap");
-      if (rcOpen) rq.appendChild(el("p", "gv-sum", rc.text)); else rq.appendChild(recapGate(g));
+      var rq = gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap");
+      if (rcOpen) { rq.appendChild(el("p", "gv-sum", rc.text)); if (rc.quick) rq.appendChild(el("p", "pv-none pv-soon", "The written recap arrives at :55.")); }
+      else rq.appendChild(recapGate(g));
       body.appendChild(rq);
     } else if (pv.summary) {
       var q = gvCard("The quick read"); q.appendChild(el("p", "gv-sum", pv.summary));
-      if (recapPending(g, pv)) q.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives with the next hourly refresh."));
+      if (recapPending(g, pv)) q.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives at :55."));
       body.appendChild(q);
     }
     var long = Array.isArray(pv.long) ? pv.long.filter(Boolean) : [];
@@ -4028,7 +4118,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       var d = new Date(last), sameDay = new Intl.DateTimeFormat("en-CA", { timeZone: HOME_TZ }).format(d) === new Intl.DateTimeFormat("en-CA", { timeZone: HOME_TZ }).format(new Date());
       t = "Last refresh " + (sameDay ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ", ") + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) + " · " + t;
     }
-    if (window.SLATE_SELF) t = "Live scores every 30 seconds. " + t;
+    if (window.SLATE_SELF) t = "Live scores every 30 seconds during your games. " + t;
     var f = $("foot"); f.textContent = "";
     f.appendChild(el("span", null, t + " "));
     var rb = el("button", "foot-refresh", "Refresh"); rb.type = "button";
