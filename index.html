@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111162815";
+<script>window.SLATE_BUILD = "20261111163518";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1433,6 +1433,20 @@ nav.dock { display: flex; flex-direction: column; align-items: flex-end; gap: 10
 nav.dock.menu-open .dock-day { display: none; }
 @keyframes spin360 { to { transform: rotate(360deg); } }
 #btn-refresh.spin svg { animation: spin360 .8s linear infinite; }
+/* folded: one slim row at the bottom-right instead of a tall stack: [‹ date ›] [Back] [Menu] */
+html:not(.duo) nav.dock { flex-direction: row; align-items: center; gap: 6px; }
+html:not(.duo) nav.dock .fab, html:not(.duo) nav.dock .dock-back { width: 46px; height: 46px; border-radius: 14px; }
+html:not(.duo) nav.dock .fab svg { width: 19px; height: 19px; }
+html:not(.duo) nav.dock .dock-back svg { width: 20px; height: 20px; }
+html:not(.duo) .dock-day { width: auto; height: 46px; display: flex; align-items: center; padding: 0 2px; border-radius: 14px; }
+html:not(.duo) .dd-arrow { width: 34px; height: 42px; border-radius: 11px; }
+html:not(.duo) .dd-arrow svg { transform: none; width: 16px; height: 16px; }
+html:not(.duo) .dd-arrow:first-child { order: 3; }
+html:not(.duo) .dd-prev { order: 1; } html:not(.duo) .dd-prev svg { transform: rotate(180deg); }
+html:not(.duo) .dd-date { order: 2; grid-template-columns: auto auto; column-gap: 3px; align-items: baseline; padding: 0 2px; min-width: 58px; }
+html:not(.duo) .dd-date b { font-size: 11px; } html:not(.duo) .dd-date b.dd-n { font-size: 17px; }
+html:not(.duo) .dd-date em { grid-column: 1 / -1; font-size: 9.5px; }
+html:not(.duo) .menu-pop { bottom: 56px !important; }
 </style>
 </head>
 <body>
