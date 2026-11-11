@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111134515";
+<script>window.SLATE_BUILD = "20261111134743";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1259,25 +1259,23 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-top { align-items: center; }
 .rk-idle { opacity: .8; } .rk-idle .rk-foot { color: var(--dim); font-weight: 650; }
 .tm-tbl th .pstar { width: 26px; height: 26px; margin: 0 4px 0 -4px; vertical-align: middle; }
-.tcards { display: grid; gap: 10px; margin-bottom: 18px; }
-html.duo .tcards, html.wide .tcards { grid-template-columns: 1fr 1fr; }
-.tcard { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 14px 12px; display: grid; gap: 10px; }
+.tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.tcard { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tcard.on { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 .tcard.live { border-color: var(--live); }
-.tc-top { display: flex; align-items: center; gap: 12px; }
-.tc-nm { display: grid; gap: 2px; flex: 1; min-width: 0; }
-.tc-nm b { font-size: 18px; font-weight: 800; color: var(--head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tc-nm span { font-size: 13px; font-weight: 650; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tcard .chev { color: var(--dim); font-size: 22px; }
-.tc-lines { display: grid; gap: 5px; }
-.tc-line { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 650; color: var(--ink); }
-.tc-line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-top { display: grid; gap: 8px; justify-items: start; }
+.tc-nm { display: grid; gap: 2px; min-width: 0; width: 100%; }
+.tc-nm b { font-size: 16.5px; line-height: 1.2; font-weight: 800; color: var(--head); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tc-nm span { font-size: 12.5px; font-weight: 650; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-nm .tc-st { color: var(--dim); }
+.tc-lines { display: grid; gap: 4px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+.tc-line { display: flex; align-items: baseline; gap: 6px; font-size: 13px; font-weight: 650; color: var(--ink); line-height: 1.3; min-width: 0; }
+.tc-line span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .tc-today { color: var(--accent); font-weight: 750; }
 .tcard.live .tc-today { color: var(--live); }
 .tc-last { color: var(--sub); }
-.tc-last .rk-wl { min-width: 18px; }
+.tc-last .rk-wl { flex: none; }
 .tc-dim { color: var(--dim); }
-.tc-take { margin: 2px 0 0; font-size: 13.5px; line-height: 1.4; color: var(--sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tb-pills { margin: 8px 0 4px; padding-left: 0; }
 #view-teams .field { width: 100%; box-sizing: border-box; margin: 0 0 4px; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
@@ -3259,9 +3257,11 @@ nav.dock.menu-open .dock-back { display: none; }
     top.appendChild(t.known ? teamBadge(t.known) : badgeFor(t.name.slice(0, 3).toUpperCase(), t.name));
     var nm = el("div", "tc-nm"); nm.appendChild(el("b", null, t.name));
     var team = (d && d.team) || {}, sub = [(LEAGUES[t.lg] || {}).tag || ""];
-    if (team.recordSummary) sub.push(team.recordSummary); if (team.standingSummary) sub.push(team.standingSummary);
-    nm.appendChild(el("span", null, sub.filter(Boolean).join(" · "))); top.appendChild(nm);
-    top.appendChild(el("span", "chev", "›")); c.appendChild(top);
+    if (team.recordSummary) sub.push(team.recordSummary);
+    nm.appendChild(el("span", null, sub.filter(Boolean).join(" · ")));
+    if (team.standingSummary) nm.appendChild(el("span", "tc-st", team.standingSummary.replace(/ (Division|Conference)$/, "")));
+    top.appendChild(nm);
+    c.appendChild(top);
     var lines = el("div", "tc-lines");
     if (today) {
       var st = status(today), sc = state.showScores ? scoreOf(today) : null, side = today.away && teamMatch(today.away, t.name, t.lg) ? "away" : "home", other = side === "away" ? "home" : "away";
@@ -3274,8 +3274,8 @@ nav.dock.menu-open .dock-back { display: none; }
       var nx = tmGameLine(d.next, e.id, false); if (nx) lines.appendChild(el("div", "tc-line", "Next · " + nx.t));
     }
     if (d && e) { var ls = tmGameLine(d.last, e.id, true); if (ls) { var ll = el("div", "tc-line tc-last"); ll.appendChild(el("b", "rk-wl " + ls.k.toLowerCase(), ls.k === "W" || ls.k === "L" || ls.k === "T" ? ls.k : "")); ll.appendChild(el("span", null, "Last · " + ls.t.replace(/^[WLT] /, ""))); lines.appendChild(ll); } }
-    if (doc && doc.summary) { var fs = (String(doc.summary).replace(/\b(St|Jr|Sr|Mr|Dr|No|vs|Mt|Ft|U\.S)\./g, "$1\u0001").match(/^.*?[a-z0-9)%][.!?](?=\s|$)/) || [doc.summary])[0].replace(/\u0001/g, "."); lines.appendChild(el("p", "tc-take", fs)); }
-    else if (!d && !lite.err) lines.appendChild(el("div", "tc-line tc-dim", "Loading…"));
+    if (!d && !lite.err) lines.appendChild(el("div", "tc-line tc-dim", "Loading…"));
+    else if (!lines.childNodes.length) lines.appendChild(el("div", "tc-line tc-dim", "No games scheduled"));
     c.appendChild(lines);
     c.addEventListener("click", function () { openTeam(t.name, t.lg); });
     return c;
