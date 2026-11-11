@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111163713";
+<script>window.SLATE_BUILD = "20261111164124";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1433,20 +1433,24 @@ nav.dock { display: flex; flex-direction: column; align-items: flex-end; gap: 10
 nav.dock.menu-open .dock-day { display: none; }
 @keyframes spin360 { to { transform: rotate(360deg); } }
 #btn-refresh.spin svg { animation: spin360 .8s linear infinite; }
-/* folded: one slim row at the bottom-right instead of a tall stack: [‹ date ›] [Back] [Menu] */
-html:not(.duo) nav.dock { flex-direction: row; align-items: center; gap: 6px; }
-html:not(.duo) nav.dock .fab, html:not(.duo) nav.dock .dock-back { width: 46px; height: 46px; border-radius: 14px; }
-html:not(.duo) nav.dock .fab svg { width: 19px; height: 19px; }
-html:not(.duo) nav.dock .dock-back svg { width: 20px; height: 20px; }
-html:not(.duo) .dock-day { width: auto; height: 46px; display: flex; align-items: center; padding: 0 2px; border-radius: 14px; }
-html:not(.duo) .dd-arrow { width: 34px; height: 42px; border-radius: 11px; }
-html:not(.duo) .dd-arrow svg { transform: none; width: 16px; height: 16px; }
-html:not(.duo) .dd-arrow:first-child { order: 3; }
-html:not(.duo) .dd-prev { order: 1; } html:not(.duo) .dd-prev svg { transform: rotate(180deg); }
-html:not(.duo) .dd-date { order: 2; grid-template-columns: auto auto; column-gap: 3px; align-items: baseline; padding: 0 2px; min-width: 58px; }
-html:not(.duo) .dd-date b { font-size: 11px; } html:not(.duo) .dd-date b.dd-n { font-size: 17px; }
-html:not(.duo) .dd-date em { grid-column: 1 / -1; font-size: 9.5px; }
-html:not(.duo) .menu-pop { bottom: 56px !important; }
+/* bottom-right controls, folded and unfolded: Back above the menu button, the day picker beside it */
+html nav.dock { display: grid; grid-template-columns: auto auto; grid-template-areas: ". back" "day fab"; align-items: center; justify-items: end; gap: 8px 6px; }
+html nav.dock .dock-back { grid-area: back; }
+html nav.dock .fab { grid-area: fab; }
+html nav.dock .dock-day { grid-area: day; }
+html nav.dock .fab, html nav.dock .dock-back { width: 46px; height: 46px; border-radius: 14px; }
+html nav.dock .fab svg { width: 19px; height: 19px; }
+html nav.dock .dock-back svg { width: 20px; height: 20px; }
+html .dock-day { width: auto; height: 46px; display: flex; align-items: center; padding: 0 2px; border-radius: 14px; }
+html .dd-arrow { width: 34px; height: 42px; border-radius: 11px; }
+html .dd-arrow svg { transform: none; width: 16px; height: 16px; }
+html .dd-arrow:first-child { order: 3; }
+html .dd-prev { order: 1; } html .dd-prev svg { transform: rotate(180deg); }
+html .dd-date { order: 2; grid-template-columns: auto auto; column-gap: 3px; align-items: baseline; padding: 0 2px; min-width: 58px; }
+html .dd-date b { font-size: 11px; } html .dd-date b.dd-n { font-size: 17px; }
+html .dd-date em { grid-column: 1 / -1; font-size: 9.5px; }
+html .menu-pop { bottom: 56px !important; }
+.dd-arrow.dd-end { opacity: .3; }
 </style>
 </head>
 <body>
@@ -2411,8 +2415,9 @@ html:not(.duo) .menu-pop { bottom: 56px !important; }
     dn.textContent = "";
     var today = todayInHome(), rkMode = v === "best", day = rkMode ? (rk.date || today) : state.date;
     var go = function (iso) { if (rkMode) rkSetDate(iso); else { slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
-    var nxt = el("button", "dd-arrow"); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.disabled = rkMode && day >= today; nxt.appendChild(icon("more"));
-    nxt.addEventListener("click", function () { go(shiftDate(day, 1)); });
+    var atEnd = rkMode && day >= today;
+    var nxt = el("button", "dd-arrow" + (atEnd ? " dd-end" : "")); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.appendChild(icon("more"));
+    nxt.addEventListener("click", function () { if (atEnd) { toast("Rankings go up to today"); return; } go(shiftDate(day, 1)); });
     var lab = el("label", "dd-date");
     var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yest." : day === shiftDate(today, 1) ? "Tmrw" : fmtDate(day, { weekday: "short" });
     lab.appendChild(el("b", null, fmtDate(day, { month: "short" }))); lab.appendChild(el("b", "dd-n", fmtDate(day, { day: "numeric" }))); lab.appendChild(el("em", null, dl));
@@ -5700,6 +5705,9 @@ html:not(.duo) .menu-pop { bottom: 56px !important; }
       mode = swipeMode(e.target, t); if (!mode) return;
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
       scroller = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub"); sx0 = scroller ? scroller.scrollLeft : 0;
+      // inside a box score or stats table that scrolls sideways, the finger scrolls the table, never the page
+      var wide = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, .bx-ts, .bxp, .bx");
+      if (wide && (wide.scrollWidth > wide.clientWidth + 2 || (scroller && scroller.scrollWidth > scroller.clientWidth + 2))) { x0 = null; return; }
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     }, { passive: true });
     // the page follows the finger, then slides out and the next one slides in
