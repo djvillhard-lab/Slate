@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111144351";
+<script>window.SLATE_BUILD = "20261111144906";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1315,6 +1315,8 @@ nav.dock { flex-direction: column; align-items: flex-end; gap: 10px; }
 .dock-back #dock-back-t { display: none; }
 .dock-back svg { width: 24px; height: 24px; }
 nav.dock.menu-open .dock-back { display: none; }
+.gv-loc { display: flex; align-items: center; gap: 6px; }
+.gv-loc svg { width: 15px; height: 15px; flex: none; opacity: .8; }
 </style>
 </head>
 <body>
@@ -1805,7 +1807,8 @@ nav.dock.menu-open .dock-back { display: none; }
       else { s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "1.8"); s.setAttribute("stroke-linejoin", "round"); }
     } else {
       s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "3"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
-      var D = { check: "M5 12.5l4.5 4.5L19 7.5", x: "M6.5 6.5l11 11M17.5 6.5l-11 11", back: "M15 5l-7 7 7 7", more: "M9 5l7 7-7 7" };
+      var D = { check: "M5 12.5l4.5 4.5L19 7.5", x: "M6.5 6.5l11 11M17.5 6.5l-11 11", back: "M15 5l-7 7 7 7", more: "M9 5l7 7-7 7", pin: "M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11zM12 12.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6z" };
+      if (kind === "pin") s.setAttribute("stroke-width", "1.9");
       p.setAttribute("d", D[kind] || "M12 5v14M5 12h14");
     }
     s.appendChild(p); return s;
@@ -1816,7 +1819,20 @@ nav.dock.menu-open .dock-back { display: none; }
   function timeText(iso) { var d = new Date(iso); return isNaN(d) ? "TBD" : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); }
   function info(g) { var L = LEAGUES[g.league] || {}; return { tag: L.tag || (g.leagueLabel || g.league || "").toUpperCase().slice(0, 5), name: g.leagueLabel || L.name || "Other", hrs: L.hrs || 2.5, college: !!L.college }; }
   // ---------- live scores (self-hosted page only: it can reach ESPN directly) ----------
-  var LIVE = {}, LIVE_DATE = null, LIVE_START = {};
+  var LIVE = {}, LIVE_DATE = null, LIVE_START = {}, LIVE_FLIP = {};
+  // ESPN's home team is always shown as home. When ESPN lists a neutral-site game the other way round from
+  // the loaded slate, the game is turned round (and its live scores come in ESPN's order).
+  function flipKnown(id) { var k = state.date + "|" + id; if (k in LIVE_FLIP) return LIVE_FLIP[k]; var s = state.scores && state.scores[id]; return !!(s && s.flip); }
+  function flipGame(g) {
+    var c = {}; Object.keys(g).forEach(function (k) { if (!/^(away|home)/.test(k)) c[k] = g[k]; });
+    ["away", "home"].forEach(function (s) { if (!g[s + "Abbr"]) g = Object.assign({}, g, (function () { var o = {}; o[s + "Abbr"] = abbr(g, s); return o; })()); });
+    Object.keys(g).forEach(function (k) { var m = /^(away|home)(.*)$/.exec(k); if (m) c[(m[1] === "away" ? "home" : "away") + m[2]] = g[k]; });
+    c._flip = true; return c;
+  }
+  function noteFlip(g, swapped) { var k = state.date + "|" + g.id, want = swapped ? !g._flip : !!g._flip; if (LIVE_FLIP[k] === want) return false; LIVE_FLIP[k] = want; return true; }
+  // soccer is shown home team first ("Arsenal vs Chelsea"); everything else away @ home
+  function sideOrder(g) { return SOCCER[g.league] ? ["home", "away"] : ["away", "home"]; }
+  function sep(g) { return SOCCER[g.league] || g.neutral ? " vs " : " @ "; }
   function scoreRaw(id) { if (LIVE_DATE === state.date && LIVE[id]) return LIVE[id]; return state.scores && state.scores[id]; }
   var ESPN_URLS = {
     nfl: ["football/nfl"], ncaaf: ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
@@ -1867,8 +1883,10 @@ nav.dock.menu-open .dock-back { display: none; }
             var A = null, H = null; (c.competitors || []).forEach(function (k) { if (k.homeAway === "home") H = k; else A = k; });
             if (!A || !H) continue;
             var ok = function (k, side) { var tm = k.team || {}; return norm(tm.displayName) === norm(g[side]) || (!!g[side + "Abbr"] && norm(tm.abbreviation) === norm(g[side + "Abbr"])); };
-            // neutral sites: ESPN sometimes lists the two teams the other way round
-            if (!(ok(A, "away") && ok(H, "home"))) { if (ok(H, "away") && ok(A, "home")) { var sw = A; A = H; H = sw; } else continue; }
+            // neutral sites: ESPN sometimes lists the two teams the other way round; ESPN's order wins
+            if (ok(A, "away") && ok(H, "home")) { if (noteFlip(g, false)) changed = true; }
+            else if (ok(H, "away") && ok(A, "home")) { if (noteFlip(g, true)) changed = true; }
+            else continue;
             var st = (c.status || e.status || {}).type || {};
             var es = new Date(e.date).toISOString().replace(".000Z", "Z");
             if (st.state === "pre") { if (Math.abs(new Date(e.date) - new Date(g.moved || g.start)) >= 60000) { if (LIVE_START[g.id] !== es) { LIVE_START[g.id] = es; changed = true; } } else if (LIVE_START[g.id]) { delete LIVE_START[g.id]; changed = true; } break; }
@@ -1927,6 +1945,7 @@ nav.dock.menu-open .dock-back { display: none; }
     SLATE_PARTS.forEach(function (k) { var p = (state.slateParts || {})[k]; if (p) take(p.games); });
     // start times move (a delay, an earlier game running long): ESPN's current time wins over the loaded one
     return out.map(function (g) {
+      if (flipKnown(g.id)) g = flipGame(g);
       var fix = (LIVE_DATE === state.date && LIVE_START[g.id]) || (state.scores && state.scores[g.id] && state.scores[g.id].start);
       if (!fix || fix === g.start || isNaN(new Date(fix))) return g;
       var c = {}; Object.keys(g).forEach(function (k) { c[k] = g[k]; }); c.start = fix; c.moved = g.start; return c;
@@ -2128,7 +2147,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var hid = state.hiddenLeagues || [];
     return games().filter(function (g) { return hid.indexOf(g.league) === -1 || hasFav(g); });
   }
-  function matchupShort(g) { return g.custom ? g.home : abbr(g, "away") + (g.neutral ? " vs " : " @ ") + abbr(g, "home"); }
+  function matchupShort(g) { var o = sideOrder(g); return g.custom ? g.home : abbr(g, o[0]) + sep(g) + abbr(g, o[1]); }
 
   var SPORT = { nba: "bb", wnba: "bb", ncaam: "bb", ncaaw: "bb", nfl: "fb", ncaaf: "fb", nhl: "hk", mlb: "base" };
   var SPORT_PATH = {
@@ -2311,7 +2330,7 @@ nav.dock.menu-open .dock-back { display: none; }
       var od = el("div", "pv-odds");
       if (o.spread) od.appendChild(el("span", null, o.spread));
       if (o.total) od.appendChild(el("span", null, "O/U " + o.total));
-      if (o.ml && o.ml.away != null && o.ml.home != null) od.appendChild(el("span", null, abbr(g, "away") + " " + fmtOdds(o.ml.away) + " · " + abbr(g, "home") + " " + fmtOdds(o.ml.home)));
+      if (o.ml && o.ml.away != null && o.ml.home != null) od.appendChild(el("span", null, mlText(g, o)));
       if (o.provider) od.appendChild(el("i", null, o.provider));
       box.appendChild(od);
     }
@@ -2481,7 +2500,8 @@ nav.dock.menu-open .dock-back { display: none; }
         if (Math.abs(new Date(e.date).getTime() - t) > 3 * 3600000) continue;
         var A = null, H = null; (cp.competitors || []).forEach(function (k) { if (k.homeAway === "home") H = k; else A = k; });
         var ok = function (k, side) { var tm = (k && k.team) || {}; return norm(tm.displayName) === norm(g[side]) || (!!g[side + "Abbr"] && norm(tm.abbreviation) === norm(g[side + "Abbr"])); };
-        if (A && H && ok(A, "away") && ok(H, "home")) return e.id;
+        if (A && H && ok(A, "away") && ok(H, "home")) { noteFlip(g, false); return e.id; }
+        if (A && H && ok(H, "away") && ok(A, "home")) { if (noteFlip(g, true)) setTimeout(render, 0); return e.id; }
       }
       return null;
     });
@@ -2495,6 +2515,7 @@ nav.dock.menu-open .dock-back { display: none; }
       cur.ev = ev;
       return rkFetch(bxApi(lg, "summary?event=" + ev)).then(function (sum) {
         if (!sum) throw new Error("no summary");
+        var vn = (sum.gameInfo || {}).venue; if (vn && vn.fullName) { var ad = vn.address || {}; cur.venue = { name: vn.fullName, place: [ad.city, ad.state || ad.country].filter(Boolean).join(", ") }; }
         var cp = ((sum.header || {}).competitions || [])[0] || {}, stt = ((cp.status || {}).type || {}).state;
         if (stt !== "pre" || !BX_SEASON[BX_SPORT[lg]]) return [sum, null];
         var ids = (cp.competitors || []).map(function (c) { return String((c.team || {}).id || ""); });
@@ -2555,6 +2576,7 @@ nav.dock.menu-open .dock-back { display: none; }
   function bxNum(v) { var n = parseFloat(String(v == null ? "" : v).replace(/,/g, "")); return isNaN(n) ? -1 : n; }
   function bxTeamStats(g, b, compact) {
     var A = b.teams[0], H = b.teams[1]; if (!A || !H) return null;
+    if (SOCCER[g.league]) { var swp = A; A = H; H = swp; }
     var hm = {}; (H.stats || []).forEach(function (s) { hm[s[0]] = s; });
     var rows = (A.stats || []).filter(function (s) { return hm[s[0]]; });
     if (compact) {
@@ -2563,7 +2585,7 @@ nav.dock.menu-open .dock-back { display: none; }
     }
     if (!rows.length) return null;
     var w = el("div", "bx-ts"), hd = el("div", "bx-tr bx-th");
-    hd.appendChild(el("b", null, A.abbr || abbr(g, "away"))); hd.appendChild(el("span")); hd.appendChild(el("b", null, H.abbr || abbr(g, "home"))); w.appendChild(hd);
+    hd.appendChild(el("b", null, A.abbr || abbr(g, sideOrder(g)[0]))); hd.appendChild(el("span")); hd.appendChild(el("b", null, H.abbr || abbr(g, sideOrder(g)[1]))); w.appendChild(hd);
     rows.forEach(function (s) {
       var r = el("div", "bx-tr");
       r.appendChild(el("span", "bx-v", s[2])); r.appendChild(el("span", "bx-l", s[1])); r.appendChild(el("span", "bx-v", hm[s[0]][2]));
@@ -2722,6 +2744,14 @@ nav.dock.menu-open .dock-back { display: none; }
     return window.SLATE_SELF ? "Live from ESPN" + (tm ? " · updated " + tm : "") : "Box score as of " + (tm || "the last refresh") + " · refreshes hourly";
   }
   // the line (from the preview or ESPN), plus the live win chance while a game is on
+  // moneylines in the team order shown; a line saved before ESPN turned a neutral-site game round is put right
+  // by checking it against the spread's favorite
+  function mlText(g, o) {
+    var ml = { away: Number(o.ml.away), home: Number(o.ml.home) }, m = /^([A-Za-z0-9&.']+)\s*-\d/.exec(o.spread || "");
+    if (m) { var f = m[1].toUpperCase(), fs = abbr(g, "away") === f ? "away" : abbr(g, "home") === f ? "home" : null;
+      if (fs && ml[fs] > 0 && ml[fs === "away" ? "home" : "away"] < 0) { var t = ml.away; ml.away = ml.home; ml.home = t; } }
+    return sideOrder(g).map(function (sd) { return abbr(g, sd) + " " + fmtOdds(ml[sd]); }).join(" · ");
+  }
   function oddsStrip(g, b) {
     var pv = (state.previews || {})[g.id] || {}, o = (pv.odds && (pv.odds.spread || pv.odds.total)) ? pv.odds : (b && b.odds) || null;
     var wp = b && b.state === "in" && typeof b.wp === "number" ? b.wp : null;
@@ -2740,7 +2770,7 @@ nav.dock.menu-open .dock-back { display: none; }
       var od = el("div", "pv-odds");
       if (o.spread) od.appendChild(el("span", null, o.spread));
       if (o.total !== "" && o.total != null) od.appendChild(el("span", null, "O/U " + o.total));
-      if (o.ml && o.ml.away != null && o.ml.home != null) od.appendChild(el("span", null, abbr(g, "away") + " " + fmtOdds(o.ml.away) + " · " + abbr(g, "home") + " " + fmtOdds(o.ml.home)));
+      if (o.ml && o.ml.away != null && o.ml.home != null) od.appendChild(el("span", null, mlText(g, o)));
       od.appendChild(el("i", null, (status(g).kind === "upcoming" ? "" : "Pregame line · ") + (o.provider || "")));
       w.appendChild(od);
     }
@@ -3283,7 +3313,7 @@ nav.dock.menu-open .dock-back { display: none; }
       var st = status(today), sc = state.showScores ? scoreOf(today) : null, side = today.away && teamMatch(today.away, t.name, t.lg) ? "away" : "home", other = side === "away" ? "home" : "away";
       r1.classList.add("tc-today");
       if (st.kind === "live" && sc) { r1.appendChild(el("i", "rk-dot")); r1.appendChild(el("span", null, short(today, side) + " " + (side === "away" ? sc.a : sc.h) + ", " + short(today, other) + " " + (side === "away" ? sc.h : sc.a) + (sc.detail ? " · " + sc.detail : ""))); }
-      else if (st.kind === "over" && sc) r1.appendChild(el("span", null, "Final · " + short(today, "away") + " " + sc.a + ", " + short(today, "home") + " " + sc.h));
+      else if (st.kind === "over" && sc) r1.appendChild(el("span", null, "Final · " + sideOrder(today).map(function (sd) { return short(today, sd) + " " + (sd === "away" ? sc.a : sc.h); }).join(", ")));
       else r1.appendChild(el("span", null, "Tonight " + timeText(today.moved || today.start) + " " + (side === "away" ? "@ " : "vs ") + short(today, other) + ((today.tv || []).length ? " · " + (NET_SHORT[today.tv[0]] || today.tv[0]) : "")));
     } else if (d && e) {
       var nx = tmGameLine(d.next, e.id, false);
@@ -3498,16 +3528,18 @@ nav.dock.menu-open .dock-back { display: none; }
     var hd = el("div", "gv-head");
     var ln = leagueLine(g, true); hd.appendChild(ln);
     var row = el("div", "gv-match"), teams = el("div", "gv-teams");
-    teams.appendChild(teamLine(g, "away")); teams.appendChild(teamLine(g, "home"));
-    if (!g.custom && BX_SPORT[g.league]) ["away", "home"].forEach(function (s2, i2) {
+    sideOrder(g).forEach(function (s2) { teams.appendChild(teamLine(g, s2)); });
+    if (!g.custom && BX_SPORT[g.league]) sideOrder(g).forEach(function (s2, i2) {
       var ln2 = teams.children[i2]; if (!ln2) return;
       ln2.classList.add("tm-link"); ln2.setAttribute("role", "button"); ln2.setAttribute("tabindex", "0"); ln2.setAttribute("aria-label", "Open the " + g[s2] + " team page");
       ln2.addEventListener("click", function (ev) { ev.stopPropagation(); openTeam(g[s2], g.league); });
     });
     row.appendChild(teams); row.appendChild(statusSide(g, "lineup")); hd.appendChild(row);
     var meta = [];
-    ["away", "home"].forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x) meta.push(abbr(g, sd) + " " + x); });
+    sideOrder(g).forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x) meta.push(abbr(g, sd) + " " + x); });
     if (meta.length) hd.appendChild(el("p", "gv-meta", meta.join(" · ")));
+    var vn = !g.custom && bx.live[g.id] && bx.live[g.id].venue;
+    if (vn) { var lc = el("p", "gv-meta gv-loc"); lc.appendChild(icon("pin")); lc.appendChild(document.createTextNode(vn.name + (vn.place ? ", " + vn.place : "") + (g.neutral ? " (neutral site)" : ""))); hd.appendChild(lc); }
     if (!g.custom && !isPastDay()) {
       var acts = el("div", "gv-acts"), onS = inLineup(g.id);
       var sb = el("button", "gv-act" + (onS ? " on" : "")); sb.type = "button";
@@ -3588,7 +3620,7 @@ nav.dock.menu-open .dock-back { display: none; }
       var od = el("div", "pv-odds gv-odds");
       if (o.spread) od.appendChild(el("span", null, o.spread));
       if (o.total) od.appendChild(el("span", null, "O/U " + o.total));
-      if (o.ml && o.ml.away != null && o.ml.home != null) od.appendChild(el("span", null, abbr(g, "away") + " " + fmtOdds(o.ml.away) + " · " + abbr(g, "home") + " " + fmtOdds(o.ml.home)));
+      if (o.ml && o.ml.away != null && o.ml.home != null) od.appendChild(el("span", null, mlText(g, o)));
       if (o.provider) od.appendChild(el("i", null, o.provider));
       body.appendChild(od);
     }
@@ -3622,7 +3654,7 @@ nav.dock.menu-open .dock-back { display: none; }
     }
     if ((pv.last5 && (pv.last5.away || pv.last5.home)) || pv.series || pv.injuries) {
       var fc = gvCard("Form and health");
-      if (pv.last5) ["away", "home"].forEach(function (sd) {
+      if (pv.last5) sideOrder(g).forEach(function (sd) {
         if (!pv.last5[sd]) return;
         var r = el("div", "gv-form"); r.appendChild(el("b", null, short(g, sd))); r.appendChild(el("span", "gv-dim", "Last 5")); r.appendChild(formDots(pv.last5[sd])); fc.appendChild(r);
       });
@@ -3708,7 +3740,7 @@ nav.dock.menu-open .dock-back { display: none; }
     if (g.custom) {
       var cr = el("span", "tm"); var cb = badgeFor("+", "custom"); cb.style.background = "var(--raise)"; cb.style.color = "var(--ink)"; cb.style.setProperty("--ring", "transparent"); cr.appendChild(cb);
       var cw = el("span", "nmw"); cw.appendChild(el("span", "nm", g.home)); cr.appendChild(cw); cr.appendChild(el("span")); main.appendChild(cr);
-    } else { main.appendChild(teamLine(g, "away")); main.appendChild(teamLine(g, "home")); }
+    } else { sideOrder(g).forEach(function (s2) { main.appendChild(teamLine(g, s2)); }); }
     var trayMode = mode === "lineup" || (mode === "games" && !g.custom);
     if (trayMode) {
       var wide = !isDuo || mode === "games";
@@ -3728,7 +3760,7 @@ nav.dock.menu-open .dock-back { display: none; }
           fm.addEventListener("click", function (e) { e.stopPropagation(); openMatchup(g); });
           tray.appendChild(fm);
         }
-        if (!g.custom) ["away", "home"].forEach(function (s) {
+        if (!g.custom) sideOrder(g).forEach(function (s) {
           var fav = isFav(g[s], g.league), b = el("button", fav ? "on" : null); b.type = "button";
           b.appendChild(starIcon(fav)); b.appendChild(document.createTextNode(short(g, s)));
           b.setAttribute("aria-label", (fav ? "Remove " : "Add ") + g[s] + (fav ? " from" : " to") + " my teams");
@@ -3809,12 +3841,11 @@ nav.dock.menu-open .dock-back { display: none; }
     var it = el("span", "ci"), sc = state.showScores ? scoreOf(g) : null, st = status(g);
     if (g.custom) { it.appendChild(el("b", null, g.home)); it.appendChild(el("span", "st", timeText(g.start))); return it; }
     if (sc) {
-      var aw = Number(sc.a), hm = Number(sc.h), post = sc.state === "post";
-      it.appendChild(el("b", post && aw < hm ? "lose" : null, abbr(g, "away"))); it.appendChild(el("span", "n" + (post && aw < hm ? " lose" : ""), String(sc.a)));
-      it.appendChild(el("b", post && hm < aw ? "lose" : null, abbr(g, "home"))); it.appendChild(el("span", "n" + (post && hm < aw ? " lose" : ""), String(sc.h)));
+      var post = sc.state === "post", pts = { away: Number(sc.a), home: Number(sc.h) };
+      sideOrder(g).forEach(function (sd) { var lose = post && pts[sd] < pts[sd === "away" ? "home" : "away"]; it.appendChild(el("b", lose ? "lose" : null, abbr(g, sd))); it.appendChild(el("span", "n" + (lose ? " lose" : ""), String(pts[sd]))); });
       it.appendChild(el("span", "st" + (post ? "" : " live"), post ? "Final" : (sc.detail || "Live")));
     } else {
-      it.appendChild(el("b", null, abbr(g, "away") + (g.neutral ? " vs " : " @ ") + abbr(g, "home")));
+      it.appendChild(el("b", null, matchupShort(g)));
       it.appendChild(el("span", "st" + (st.kind === "live" ? " live" : ""), st.kind === "live" ? "Live" : st.kind === "over" ? "Final" : timeText(g.start)));
       var tv = (g.tv || []).filter(Boolean); if (tv.length && st.kind === "upcoming") it.appendChild(el("span", "st", tv[0]));
     }
@@ -3825,15 +3856,14 @@ nav.dock.menu-open .dock-back { display: none; }
   function tickItem(g) {
     var mine = inLineup(g.id), it = el("span", "ci" + (mine ? " mine" : "")), sc = state.showScores ? scoreOf(g) : null, st = status(g);
     if (sc) {
-      var aw = Number(sc.a), hm = Number(sc.h), post = sc.state === "post";
-      it.appendChild(el("b", post && aw < hm ? "lose" : null, abbr(g, "away"))); it.appendChild(el("span", "n" + (post && aw < hm ? " lose" : ""), String(sc.a)));
-      it.appendChild(el("b", post && hm < aw ? "lose" : null, abbr(g, "home"))); it.appendChild(el("span", "n" + (post && hm < aw ? " lose" : ""), String(sc.h)));
+      var post = sc.state === "post", pts = { away: Number(sc.a), home: Number(sc.h) };
+      sideOrder(g).forEach(function (sd) { var lose = post && pts[sd] < pts[sd === "away" ? "home" : "away"]; it.appendChild(el("b", lose ? "lose" : null, abbr(g, sd))); it.appendChild(el("span", "n" + (lose ? " lose" : ""), String(pts[sd]))); });
       it.appendChild(el("span", "st" + (post ? "" : " live"), post ? "Final" : (sc.detail || "Live")));
     } else {
-      it.appendChild(el("b", null, abbr(g, "away") + (g.neutral ? " vs " : " @ ") + abbr(g, "home")));
+      it.appendChild(el("b", null, matchupShort(g)));
       it.appendChild(el("span", "st" + (st.kind === "live" ? " live" : ""), st.kind === "live" ? "Live" : st.kind === "over" ? "Final" : timeText(g.start)));
     }
-    it.setAttribute("aria-label", g.away + " at " + g.home + (sc ? ", " + sc.a + " to " + sc.h : ", " + timeText(g.start)) + (mine ? ", on your slate" : ""));
+    it.setAttribute("aria-label", (SOCCER[g.league] ? g.home + " versus " + g.away : g.away + " at " + g.home) + (sc ? ", " + sc.a + " to " + sc.h : ", " + timeText(g.start)) + (mine ? ", on your slate" : ""));
     return it;
   }
   // only games in progress while any are going; otherwise every game of the day
@@ -3878,7 +3908,7 @@ nav.dock.menu-open .dock-back { display: none; }
     b.setAttribute("aria-pressed", on ? "true" : "false");
     b.setAttribute("aria-label", (on ? "Remove " : "Add ") + g.away + (g.neutral ? " versus " : " at ") + g.home + ", " + timeText(g.start) + (on ? ", from lineup" : ", to lineup"));
     var sides = el("span", "sides"); sides.style.display = "grid";
-    sides.appendChild(side(g, "away", "span")); sides.appendChild(side(g, "home", "span"));
+    sideOrder(g).forEach(function (s2) { sides.appendChild(side(g, s2, "span")); });
     b.appendChild(sides);
     var col = el("span", "info"); col.style.display = "grid";
     var det = state.showScores ? scoreDetail(g) : "";
@@ -4032,7 +4062,7 @@ nav.dock.menu-open .dock-back { display: none; }
       var sm = el("span", "small"); sm.appendChild(el("span", "ex", "Added by you")); w.appendChild(sm); sd.appendChild(w);
       r.appendChild(sd); r.appendChild(el("span")); teams.appendChild(r);
     } else {
-      ["away", "home"].forEach(function (s) {
+      sideOrder(g).forEach(function (s) {
         var r = el("div", "lrow");
         r.appendChild(side(g, s, "div"));
         var fav = isFav(g[s], g.league);
@@ -4384,16 +4414,16 @@ nav.dock.menu-open .dock-back { display: none; }
     ct.appendChild(el("b", null, tt[0]));
     var cdet = state.showScores ? scoreDetail(g) : "";
     var csc = state.showScores ? scoreOf(g) : null;
-    if (csc) { ct.firstChild.textContent = csc.a + "-" + csc.h; ct.appendChild(el("i", csc.state === "in" ? "live" : null, cdet.toUpperCase())); }
+    if (csc) { ct.firstChild.textContent = SOCCER[g.league] ? csc.h + "-" + csc.a : csc.a + "-" + csc.h; ct.appendChild(el("i", csc.state === "in" ? "live" : null, cdet.toUpperCase())); }
     else ct.appendChild(st.kind === "live" ? el("i", "live", "ON NOW") : el("i", null, (tt[1] || "")));
     b.appendChild(ct);
     var cm = el("span", "cm");
-    ["away", "home"].forEach(function (s) {
+    sideOrder(g).forEach(function (s, si) {
       var line = el("span", "tl" + (isFav(g[s], g.league) ? " fav" : ""));
       var d = el("span", "dot"); var c = hexOk(g[s + "Color"]) ? g[s + "Color"] : colors(g[s])[0];
       d.style.background = c; d.style.setProperty("--ring", hexOk(g[s + "Alt"]) ? g[s + "Alt"] : "transparent");
       line.appendChild(d);
-      if (s === "home") line.appendChild(el("span", "rk", g.neutral ? "vs" : "@"));
+      if (si === 1) line.appendChild(el("span", "rk", sep(g).trim()));
       if (g[s + "Rank"]) line.appendChild(el("span", "rk", String(g[s + "Rank"])));
       line.appendChild(el("span", "tn", short(g, s)));
       cm.appendChild(line);
@@ -4922,7 +4952,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var lines = [(state.date === todayInHome() ? "Tonight" : fmtDate(state.date, { weekday: "short", month: "short", day: "numeric" })) + "'s slate:"];
     lineupGames().forEach(function (g) {
       function nm(s) { return (g[s + "Rank"] ? "#" + g[s + "Rank"] + " " : "") + g[s] + (g[s + "Record"] ? " (" + g[s + "Record"] + ")" : ""); }
-      lines.push(timeText(g.start) + " · " + (g.custom ? g.home : nm("away") + (g.neutral ? " vs " : " @ ") + nm("home")) + " · " + ((g.tv && g.tv.length) ? g.tv.join(" / ") : "local TV"));
+      lines.push(timeText(g.start) + " · " + (g.custom ? g.home : nm(sideOrder(g)[0]) + sep(g) + nm(sideOrder(g)[1])) + " · " + ((g.tv && g.tv.length) ? g.tv.join(" / ") : "local TV"));
     });
     return lines.join("\n");
   }

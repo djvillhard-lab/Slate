@@ -218,6 +218,15 @@ def scoreboard_events(lg, day):  # day: Central date; ESPN dates are Eastern, so
 
 def norm(s): return re.sub(r"[^a-z0-9]", "", str(s or "").lower())
 
+def flip_game(g):
+    for sd in ("away", "home"): g[sd + "Abbr"] = abbr(g, sd)
+    sw = {}
+    for k, v in g.items():
+        if k.startswith("away"): sw["home" + k[4:]] = v
+        elif k.startswith("home"): sw["away" + k[4:]] = v
+    for k in [k for k in g if k.startswith("away") or k.startswith("home")]: del g[k]
+    g.update(sw); g["flip"] = not g.get("flip")
+
 def find_event(g, events):
     gt = parse(g.get("start")); best = None
     for ev in events:
@@ -226,16 +235,16 @@ def find_event(g, events):
         def same(side, espn_side):
             t = cs[espn_side].get("team", {})
             return norm(t.get("displayName")) == norm(g.get(side)) or (abbr(g, side) and t.get("abbreviation", "").upper() == abbr(g, side))
-        flip = False
         if not (same("away", "away") and same("home", "home")):
-            # neutral sites: ESPN sometimes lists the two teams the other way round
-            if same("away", "home") and same("home", "away"): flip = True
-            else: continue
+            # neutral sites: ESPN sometimes lists the teams the other way round. ESPN's home team is the one
+            # shown as home, so turn this game round (in memory) and mark it; the app does the same.
+            if not (same("away", "home") and same("home", "away")): continue
+            et = parse(ev.get("date"))
+            if gt and et and abs((et - gt).total_seconds()) > 3 * 3600: continue
+            flip_game(g)
+            return ev
         et = parse(ev.get("date"))
         if gt and et and abs((et - gt).total_seconds()) > 3 * 3600: continue
-        if flip:
-            ev = json.loads(json.dumps(ev))
-            for c in ev["competitions"][0]["competitors"]: c["homeAway"] = "home" if c.get("homeAway") == "away" else "away"
         best = ev; break
     return best
 
@@ -588,9 +597,12 @@ def main():
         st, det = ev_state(ev); state[g["id"]] = st
         if st in ("in", "post"):
             a, h = ev_scores(ev); sc[g["id"]] = {"a": a, "h": h, "state": st, "detail": det}
+            if g.get("flip"): sc[g["id"]]["flip"] = True
         elif st == "pre":
-            et, gt = parse(ev.get("date")), parse(g.get("start"))
-            if et and gt and abs((et - gt).total_seconds()) >= 60: sc[g["id"]] = {"state": "pre", "start": iso(et)}
+            et, gt = parse(ev.get("date")), parse(g.get("start")); e = {"state": "pre"}
+            if et and gt and abs((et - gt).total_seconds()) >= 60: e["start"] = iso(et)
+            if g.get("flip"): e["flip"] = True
+            if len(e) > 1: sc[g["id"]] = e
             elif g["id"] in sc and sc[g["id"]].get("state") == "pre": sc.pop(g["id"])
     if sc != old_scores or f"scores/{D}" not in docs:
         sb_put(f"scores/{D}", {"date": D, "updatedAt": iso(now), "games": sc})
