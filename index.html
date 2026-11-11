@@ -3177,7 +3177,8 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
   function refreshApp() {
     state.menuOpen = false;
     toast("Refreshing…");
-    setTimeout(function () { try { location.reload(); } catch (e) { pullFresh(); } }, 250);
+    // self-hosted: a fresh address skips the phone's 10-minute cached copy of the page
+    setTimeout(function () { try { if (window.SLATE_SELF) location.replace(location.pathname + "?v=" + Date.now()); else location.reload(); } catch (e) { pullFresh(); } }, 250);
   }
   // Rebuilding a view empties it for a moment, which lets the browser snap the page to the top. Hold the scroll spot.
   function keepScroll(fn) {
