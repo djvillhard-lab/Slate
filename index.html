@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111164324";
+<script>window.SLATE_BUILD = "20261111165345";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1451,6 +1451,10 @@ html .dd-date b { font-size: 11px; } html .dd-date b.dd-n { font-size: 17px; }
 html .dd-date em { grid-column: 1 / -1; font-size: 9.5px; }
 html .menu-pop { bottom: 56px !important; }
 .dd-arrow.dd-end { opacity: .3; }
+/* iOS gives date inputs a minimum width, so the invisible one spilled over the arrows: keep it inside the date */
+.dd-date { overflow: hidden; }
+.dd-input { min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; font-size: 16px; }
+.dd-arrow { position: relative; z-index: 1; }
 </style>
 </head>
 <body>
