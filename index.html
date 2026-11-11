@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111175452";
+<script>window.SLATE_BUILD = "20261111175726";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2648,7 +2648,6 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       return fetch("/api/summary", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { return [r.status, j]; }, function () { return [r.status, {}]; }); });
     }).then(function (res) {
       if (res[0] >= 300) { delete CL_ASK[k]; keepScroll(render); toast((res[1] && res[1].error) || "Couldn't start Claude. Try again."); return; }
-      toast("Claude is writing it. Keep browsing; it appears here in about a minute.");
     }, function () { delete CL_ASK[k]; keepScroll(render); toast("Couldn't reach Slate's server. Try again."); });
   }
   // the one control: Write … / Claude is writing… / Regenerate (asks first)
