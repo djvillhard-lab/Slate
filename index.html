@@ -72,7 +72,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111093944";
+<script>window.SLATE_BUILD = "20261111095338";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1184,6 +1184,12 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .full-mu svg { width: 16px !important; height: 16px !important; }
 .g.panel.lp { transform: scale(.98); transition: transform .09s ease; }
 .g-main { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.csp { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.csp-c { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 9px; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--sub); font: inherit; font-size: 12.5px; font-weight: 650; }
+.csp-c svg { width: 13px; height: 13px; }
+.csp-c.on { color: var(--ink); border-color: var(--accent); }
+.csp-c.on svg { color: var(--accent); }
+.trow.col, .tres-row.col { align-items: flex-start; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 /* iOS drags fixed, blurred buttons along while a page scrolls: solid backgrounds keep them pinned to the corner */
@@ -1761,9 +1767,23 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     return { kind: "over" };
   }
   function until(ms) { var m = Math.max(1, Math.round(ms / 60000)); return { h: Math.floor(m / 60), m: m % 60 }; }
-  function teamMatch(name, t) { name = (name || "").toLowerCase(); t = (t || "").toLowerCase().trim(); return !!t && (name === t || name.indexOf(t) !== -1); }
-  function isFav(name) { return !!name && state.teams.some(function (t) { return teamMatch(name, t); }); }
-  function hasFav(g) { return isFav(g.away) || isFav(g.home); }
+  // college favorites are per sport: "Dayton Flyers (Men's basketball)". A bare college name still means every sport.
+  var COL_SPORT = { ncaam: "Men's basketball", ncaaw: "Women's basketball", ncaaf: "Football" };
+  var COL_KEYS = ["ncaam", "ncaaw", "ncaaf"];
+  function parseTeam(t) {
+    var m = /^(.*?)\s*\((Men's basketball|Women's basketball|Football)\)$/.exec(String(t || "").trim());
+    if (!m) return { name: String(t || "").trim(), lg: "" };
+    var lg = ""; COL_KEYS.forEach(function (k) { if (COL_SPORT[k] === m[2]) lg = k; });
+    return { name: m[1], lg: lg };
+  }
+  function colEntry(name, lg) { return COL_SPORT[lg] ? name + " (" + COL_SPORT[lg] + ")" : name; }
+  function teamMatch(name, t, lg) {
+    var p = parseTeam(t); name = (name || "").toLowerCase(); var tn = p.name.toLowerCase();
+    if (!tn || !(name === tn || name.indexOf(tn) !== -1)) return false;
+    return !(p.lg && lg && p.lg !== lg);
+  }
+  function isFav(name, lg) { return !!name && state.teams.some(function (t) { return teamMatch(name, t, lg); }); }
+  function hasFav(g) { return isFav(g.away, g.league) || isFav(g.home, g.league); }
   // a day's games: the main document plus the big college leagues, which load as their own documents (slates/D-ncaam etc.)
   var SLATE_PARTS = ["ncaam", "ncaaw", "ncaaf"];
   function games() {
@@ -1945,7 +1965,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 
   // ---------- team block: record big, name (rank) · conference/standing small ----------
   function who(g, side, tag) {
-    var w = el(tag, "who" + (isFav(g[side]) ? " fav" : ""));
+    var w = el(tag, "who" + (isFav(g[side], g.league) ? " fav" : ""));
     var big = el("span", "big");
     var rk = g[side + "Rank"];
     if (rk) big.appendChild(el("span", "rk", String(rk)));
@@ -2004,12 +2024,12 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function teamLine(g, s) {
     var sc = state.showScores ? scoreOf(g) : null;
     var mine = sc ? Number(s === "away" ? sc.a : sc.h) : 0, other = sc ? Number(s === "away" ? sc.h : sc.a) : 0;
-    var row = el("span", "tm" + (sc && sc.state === "post" && mine < other ? " lose" : "") + (isFav(g[s]) ? " fav" : ""));
+    var row = el("span", "tm" + (sc && sc.state === "post" && mine < other ? " lose" : "") + (isFav(g[s], g.league) ? " fav" : ""));
     row.appendChild(badgeFor(abbr(g, s), g[s], g[s + "Color"], g[s + "Alt"]));
     var w = el("span", "nmw");
     if (g[s + "Rank"]) w.appendChild(el("span", "rk", String(g[s + "Rank"])));
     w.appendChild(el("span", "nm", short(g, s)));
-    if (isFav(g[s])) { var f = starIcon(true); f.setAttribute("class", "fv"); f.setAttribute("aria-label", "One of your teams"); w.appendChild(f); }
+    if (isFav(g[s], g.league)) { var f = starIcon(true); f.setAttribute("class", "fv"); f.setAttribute("aria-label", "One of your teams"); w.appendChild(f); }
     if (g[s + "Record"]) w.appendChild(el("span", "rec", g[s + "Record"]));
     row.appendChild(w);
     row.appendChild(sc ? el("span", "sc", String(s === "away" ? sc.a : sc.h)) : el("span"));
@@ -2458,7 +2478,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   }
   function bxPlayers(g, b, compact, season) {
     state.bxSide = state.bxSide || {};
-    var side = state.bxSide[g.id]; if (side == null) side = isFav(g.home) && !isFav(g.away) ? 1 : 0;
+    var side = state.bxSide[g.id]; if (side == null) side = isFav(g.home, g.league) && !isFav(g.away, g.league) ? 1 : 0;
     var sport = BX_SPORT[g.league] || "", wrap = el("div", "bx-pl"), seg = el("div", "bx-seg");
     seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Pick a team");
     b.teams.forEach(function (t, i) {
@@ -2705,7 +2725,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     return w;
   }
   function bestRow(r, rank) {
-    var row = el("div", "rk-row" + (isFav(r.teamName) ? " fav" : ""));
+    var row = el("div", "rk-row" + (isFav(r.teamName, state.bestLeague) ? " fav" : ""));
     var face = el("span", "rk-face"), tc = typeof teamByName === "function" ? teamByName(r.teamName) : null;
     face.style.background = (r.color && /^#[0-9a-f]{6}$/i.test(r.color) ? r.color : (tc && tc.c1) || "#2a3442");
     var ini = String(r.name || "").split(" "); face.appendChild(el("i", null, ((ini[0] || "")[0] || "") + ((ini[ini.length - 1] || "")[0] || "")));
@@ -3033,10 +3053,10 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
           tray.appendChild(fm);
         }
         if (!g.custom) ["away", "home"].forEach(function (s) {
-          var fav = isFav(g[s]), b = el("button", fav ? "on" : null); b.type = "button";
+          var fav = isFav(g[s], g.league), b = el("button", fav ? "on" : null); b.type = "button";
           b.appendChild(starIcon(fav)); b.appendChild(document.createTextNode(short(g, s)));
           b.setAttribute("aria-label", (fav ? "Remove " : "Add ") + g[s] + (fav ? " from" : " to") + " my teams");
-          b.addEventListener("click", function (e) { e.stopPropagation(); toggleFav(g[s]); });
+          b.addEventListener("click", function (e) { e.stopPropagation(); toggleFav(g[s], g.league); });
           tray.appendChild(b);
         });
         var rm = el("button", "rm"); rm.type = "button"; rm.appendChild(icon("x")); rm.appendChild(document.createTextNode("Remove"));
@@ -3242,12 +3262,12 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       ["away", "home"].forEach(function (s) {
         var r = el("div", "lrow");
         r.appendChild(side(g, s, "div"));
-        var fav = isFav(g[s]);
+        var fav = isFav(g[s], g.league);
         var st = el("button", "star" + (fav ? " on" : "")); st.type = "button";
         st.setAttribute("aria-pressed", fav ? "true" : "false");
         st.setAttribute("aria-label", (fav ? "Remove " : "Add ") + g[s] + (fav ? " from" : " to") + " my teams");
         st.appendChild(icon(fav ? "star" : "star-o"));
-        st.addEventListener("click", function () { toggleFav(g[s]); });
+        st.addEventListener("click", function () { toggleFav(g[s], g.league); });
         r.appendChild(st);
         teams.appendChild(r);
       });
@@ -3596,7 +3616,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     b.appendChild(ct);
     var cm = el("span", "cm");
     ["away", "home"].forEach(function (s) {
-      var line = el("span", "tl" + (isFav(g[s]) ? " fav" : ""));
+      var line = el("span", "tl" + (isFav(g[s], g.league) ? " fav" : ""));
       var d = el("span", "dot"); var c = hexOk(g[s + "Color"]) ? g[s + "Color"] : colors(g[s])[0];
       d.style.background = c; d.style.setProperty("--ring", hexOk(g[s + "Alt"]) ? g[s + "Alt"] : "transparent");
       line.appendChild(d);
@@ -3700,7 +3720,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     });
     return TEAM_IDX;
   }
-  function teamByName(name) { var k = String(name || "").toLowerCase(); return teamIndex().filter(function (t) { return t.name.toLowerCase() === k; })[0] || null; }
+  function teamByName(name) { var k = parseTeam(name).name.toLowerCase(); return teamIndex().filter(function (t) { return t.name.toLowerCase() === k; })[0] || null; }
   function hasTeam(name) { var k = String(name || "").toLowerCase(); return state.teams.some(function (t) { return t.toLowerCase() === k; }); }
   function teamSearch(raw) {
     var q = normT(raw); if (!q) return [];
@@ -3732,6 +3752,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var res = teamSearch(q);
     if (!res.length) { box.appendChild(el("p", "tres-none", "No team matches \u201c" + q.trim() + "\u201d. Try the city or the nickname.")); return; }
     res.forEach(function (t) {
+      if (t.lg === "College") { box.appendChild(colPickRow(t, true)); return; }
       var on = hasTeam(t.name), b = el("button", "tres-row" + (on ? " on" : "")); b.type = "button";
       b.setAttribute("role", "listitem");
       b.setAttribute("aria-label", t.name + ", " + t.lg + (on ? ". In your teams. Tap to remove" : ". Tap to add"));
@@ -3745,12 +3766,56 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       box.appendChild(b);
     });
   }
+  // which sports of a college team are picked: a bare entry counts as all three
+  function colSports(name) {
+    var k = name.toLowerCase(), on = {};
+    state.teams.forEach(function (t) { var p = parseTeam(t); if (p.name.toLowerCase() !== k) return; if (p.lg) on[p.lg] = 1; else COL_KEYS.forEach(function (x) { on[x] = 1; }); });
+    return on;
+  }
+  function setColSport(name, lg, want) {
+    var on = colSports(name); if (want) on[lg] = 1; else delete on[lg];
+    var k = name.toLowerCase(), at = -1;
+    state.teams = state.teams.filter(function (t, i) { var hit = parseTeam(t).name.toLowerCase() === k; if (hit && at < 0) at = i; return !hit; });
+    var add = COL_KEYS.filter(function (x) { return on[x]; }).map(function (x) { return colEntry(name, x); });
+    if (at < 0) at = state.teams.length;
+    Array.prototype.splice.apply(state.teams, [at, 0].concat(add));
+    saveSettings(); render();
+    if (!$("team-results").hidden) renderTeamResults();
+    toast((want ? "★ Added " : "Removed ") + name + " " + COL_SPORT[lg].toLowerCase());
+  }
+  function colPickRow(t, inSearch) {
+    var on = colSports(t.name), any = Object.keys(on).length;
+    var r = el("div", (inSearch ? "tres-row col" : "trow col") + (any ? " on" : ""));
+    if (inSearch) r.setAttribute("role", "listitem");
+    r.appendChild(teamBadge(t));
+    var tx = el("span", "tx"); tx.appendChild(el("span", "n", t.name));
+    var chips = el("span", "csp");
+    COL_KEYS.forEach(function (k) {
+      var c = el("button", "csp-c" + (on[k] ? " on" : "")); c.type = "button";
+      c.setAttribute("aria-pressed", on[k] ? "true" : "false");
+      c.setAttribute("aria-label", t.name + " " + COL_SPORT[k]);
+      c.appendChild(starIcon(!!on[k])); c.appendChild(document.createTextNode({ ncaam: "Men's hoops", ncaaw: "Women's hoops", ncaaf: "Football" }[k]));
+      c.addEventListener("click", function (e) { e.stopPropagation(); setColSport(t.name, k, !on[k]); });
+      chips.appendChild(c);
+    });
+    tx.appendChild(chips); r.appendChild(tx);
+    if (!inSearch) {
+      var x = el("button", "x", "×"); x.type = "button"; x.setAttribute("aria-label", "Remove " + t.name);
+      x.addEventListener("click", function () { var k2 = t.name.toLowerCase(); state.teams = state.teams.filter(function (q) { return parseTeam(q).name.toLowerCase() !== k2; }); saveSettings(); render(); });
+      r.appendChild(x);
+    }
+    return r;
+  }
   function renderSettings() {
     var rows = $("team-rows"); rows.textContent = "";
-    $("teams-count").textContent = state.teams.length ? state.teams.length + (state.teams.length === 1 ? " team" : " teams") : "";
+    var nT = {}; state.teams.forEach(function (t) { nT[parseTeam(t).name.toLowerCase()] = 1; }); nT = Object.keys(nT).length;
+    $("teams-count").textContent = nT ? nT + (nT === 1 ? " team" : " teams") : "";
     if (!state.teams.length) { var e = el("div", "trow"); e.appendChild(el("span")); e.appendChild(el("span", "n", "No teams yet")); rows.appendChild(e); }
+    var shownCol = {};
     state.teams.forEach(function (t, i) {
-      var r = el("div", "trow"), known = teamByName(t);
+      var known = teamByName(t);
+      if (known && known.lg === "College") { var ck = known.name.toLowerCase(); if (!shownCol[ck]) { shownCol[ck] = 1; rows.appendChild(colPickRow(known, false)); } return; }
+      var r = el("div", "trow");
       var ab = /^st\.? louis/i.test(t) ? "STL" : /^manchester united$/i.test(t) ? "MUN" : t.split(" ").filter(Boolean).map(function (w) { return w[0]; }).join("").slice(0, 3).toUpperCase();
       r.appendChild(known ? teamBadge(known) : badgeFor(ab, t));
       var tn = el("span", "tx"); tn.appendChild(el("span", "n", t)); if (known) tn.appendChild(el("span", "lg", known.lg)); r.appendChild(tn);
@@ -4052,10 +4117,19 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       render(); saveLineup();
     } else toggle(g.id);
   }
-  function toggleFav(name) {
-    var before = state.teams.slice();
-    if (isFav(name)) { state.teams = state.teams.filter(function (t) { return !teamMatch(name, t); }); toast("Removed from my teams", function () { state.teams = before; saveSettings(); render(); }); }
-    else { state.teams.push(name); toast("★ Added to my teams"); }
+  function toggleFav(name, lg) {
+    var before = state.teams.slice(), col = !!COL_SPORT[lg];
+    if (isFav(name, lg)) {
+      var out = [];
+      state.teams.forEach(function (t) {
+        if (!teamMatch(name, t, lg)) { out.push(t); return; }
+        var p = parseTeam(t);
+        // an all-sports college pick loses just this sport and keeps the others
+        if (col && !p.lg) COL_KEYS.forEach(function (k) { if (k !== lg) out.push(colEntry(p.name, k)); });
+      });
+      state.teams = out;
+      toast(col ? "Removed " + name + " " + COL_SPORT[lg].toLowerCase() : "Removed from my teams", function () { state.teams = before; saveSettings(); render(); });
+    } else { state.teams.push(col ? colEntry(name, lg) : name); toast("★ Added " + (col ? name + " " + COL_SPORT[lg].toLowerCase() : "to my teams")); }
     saveSettings(); render();
   }
   function lineupText() {
