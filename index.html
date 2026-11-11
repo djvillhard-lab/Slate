@@ -72,7 +72,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261110213536";
+<script>window.SLATE_BUILD = "20261111090738";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1164,6 +1164,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .bxp-c em { font-size: 12.5px; margin-top: 0; }
 .gv-toggle { min-height: 52px; }
 .gv-tt b { font-size: 16px; }
+.gp-pv { display: inline-flex; width: fit-content; justify-self: start; align-self: flex-start; align-items: center; margin-top: 8px; height: 28px; padding: 0 11px; border-radius: 999px; font-size: 13px; font-weight: 750; }
+.gp-pv.get { background: var(--raise); color: var(--accent); border: 1px solid var(--hair); }
+.gp-pv.go { background: none; color: var(--accent); padding-left: 0; }
+.gp-pv.wait { background: none; color: var(--dim); padding-left: 0; font-weight: 600; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); will-change: transform; }
 /* iOS keeps a fixed, blurred button where it was while a page scrolls; its own layer keeps it pinned to the corner */
@@ -2935,7 +2939,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     if (ids.indexOf(id) === -1) ids.push(id);
     var body = clone(L); body.previews = ids.slice(-12); body.previewDate = state.date; body.requestedAt = new Date().toISOString();
     if (!Array.isArray(body.dates)) body.dates = [];
-    state.loadReq = body; keepScroll(renderLineup);
+    state.loadReq = body; keepScroll(renderLineup); if (state.view === "games") keepScroll(renderGames);
     db.doc("prefs/load").set(body).then(function () { toast("Preview requested"); }, function () { state.loadReq = L; keepScroll(renderLineup); toast("Couldn't ask for the preview. Try again."); });
   }
   function gameRow(g, mode, opts) {
@@ -2958,6 +2962,17 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
       var cr = el("span", "tm"); var cb = badgeFor("+", "custom"); cb.style.background = "var(--raise)"; cb.style.color = "var(--ink)"; cb.style.setProperty("--ring", "transparent"); cr.appendChild(cb);
       var cw = el("span", "nmw"); cw.appendChild(el("span", "nm", g.home)); cr.appendChild(cw); cr.appendChild(el("span")); main.appendChild(cr);
     } else { main.appendChild(teamLine(g, "away")); main.appendChild(teamLine(g, "home")); }
+    // All games: read a game's preview, or ask for one (slate games get theirs automatically)
+    if (mode === "games" && !g.custom) {
+      var pvx = (state.previews || {})[g.id], lrq = state.loadReq || {}, isToday = state.date === todayInHome();
+      var asked = isToday && lrq.previewDate === state.date && ((lrq.previews || []).indexOf(g.id) !== -1 || (lrq.previewLoading || []).indexOf(g.id) !== -1);
+      var pill = null;
+      if (pvx && (pvx.summary || pvx.recap)) { pill = el("span", "gp-pv go", recapOf(pvx) ? "Recap ›" : "Preview ›"); pill.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); openMatchup(g); }); }
+      else if (asked) pill = el("span", "gp-pv wait", "Requested · arrives at :55");
+      else if (on && isToday) pill = el("span", "gp-pv wait", "Preview coming at :55");
+      else if (isToday && st.kind !== "over" && state.isOwner && db) { pill = el("span", "gp-pv get", "Get preview"); pill.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); requestPreview(g.id); }); }
+      if (pill) { pill.setAttribute("role", "button"); pill.tabIndex = 0; main.appendChild(pill); }
+    }
     if (mode === "lineup") {
       var open = state.openId === g.id;
       main.setAttribute("role", "button"); main.tabIndex = 0;
