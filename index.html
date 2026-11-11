@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111172649";
+<script>window.SLATE_BUILD = "20261111174557";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1457,8 +1457,12 @@ html .menu-pop { bottom: 56px !important; }
 .dd-arrow { position: relative; z-index: 1; }
 /* Claude on demand */
 .cl-ctl { margin-top: 10px; display: grid; gap: 8px; justify-items: start; }
-.cl-go { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 12px; background: var(--accent-fill); color: var(--on-accent); font: inherit; font-weight: 800; font-size: 15px; border: 0; }
-.cl-go svg { width: 17px; height: 17px; }
+.cl-ctl { justify-items: stretch !important; }
+.cl-ctl button.cl-go { display: flex !important; align-items: center; gap: 10px; width: 100%; height: 50px !important; padding: 0 16px !important; border-radius: 14px !important; background: color-mix(in srgb, var(--accent-fill) 14%, var(--card)) !important; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent) !important; color: var(--ink) !important; font: inherit; font-size: 15px !important; font-weight: 800 !important; text-align: left; }
+.cl-ctl button.cl-go svg { width: 18px !important; height: 18px !important; color: var(--accent) !important; flex: none; }
+.cl-ctl .cl-l { flex: 1; min-width: 0; }
+.cl-ctl .cl-t { flex: none; font-size: 12px; font-weight: 600; color: var(--dim); }
+.cl-ctl .cl-busy { justify-self: start; }
 .cl-busy { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: 14px; font-weight: 600; }
 .cl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: clpulse 1s ease-in-out infinite; }
 @keyframes clpulse { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
@@ -2588,7 +2592,7 @@ html .menu-pop { bottom: 56px !important; }
     var k = kind, box = el("div", "cl-ctl"), w = clWriting(doc, ask.k);
     if (w && w.busy) { var sp = el("span", "cl-busy"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Claude is writing this… usually under a minute")); box.appendChild(sp); return box; }
     if (w && w.error) box.appendChild(el("p", "pv-none cl-err", "Last try didn't finish: " + w.error));
-    if (!has) { var b = el("button", "cl-go"); b.type = "button"; b.appendChild(icon("sparkle")); b.appendChild(el("span", null, label)); b.addEventListener("click", function (e) { e.stopPropagation(); ask.go(); }); box.appendChild(b); return box; }
+    if (!has) { var b = el("button", "cl-go"); b.type = "button"; b.appendChild(icon("sparkle")); b.appendChild(el("span", "cl-l", label)); b.appendChild(el("span", "cl-t", "about a minute")); b.addEventListener("click", function (e) { e.stopPropagation(); ask.go(); }); box.appendChild(b); return box; }
     var confirmOpen = state.clConfirm === ask.k;
     if (!confirmOpen) { var rg = el("button", "rlink cl-re", "Regenerate"); rg.type = "button"; rg.addEventListener("click", function (e) { e.stopPropagation(); state.clConfirm = ask.k; keepScroll(render); }); box.appendChild(rg); return box; }
     var cf = el("div", "cl-confirm"); cf.appendChild(el("span", null, "Rewrite this summary?"));
@@ -2607,7 +2611,7 @@ html .menu-pop { bottom: 56px !important; }
     if (!pv || !(pv.summary || (pv.recap && pv.recap.text))) {
       var qr0 = quickRecap(g);
       if (qr0 && recapShown(g)) { var rb0 = el("div", "pv-recap"); rb0.appendChild(el("b", "pv-h", "Box score recap")); rb0.appendChild(readNode(qr0.text, qr0.bullets, "pv-sum", true)); box.appendChild(rb0); }
-      else box.appendChild(el("p", "pv-none", "No Claude summary for this game yet."));
+
       var ctl = gameClaudeCtl(g); if (ctl) box.appendChild(ctl);
       return box;
     }
