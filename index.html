@@ -72,7 +72,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111092825";
+<script>window.SLATE_BUILD = "20261111093211";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1178,9 +1178,9 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .pv-cancel { color: var(--live); font-weight: 800; padding: 4px 2px; }
 .add.tap { cursor: pointer; padding: 10px; margin: -10px -10px -10px 0; border-radius: 12px; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
-nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); will-change: transform; }
-/* iOS keeps a fixed, blurred button where it was while a page scrolls; its own layer keeps it pinned to the corner */
-.fab, .dock-back { -webkit-transform: translateZ(0); transform: translateZ(0); }
+nav.dock { display: flex; align-items: flex-end; gap: 10px; }
+/* iOS drags fixed, blurred buttons along while a page scrolls: solid backgrounds keep them pinned to the corner */
+.fab, .dock-back, .menu-pop { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: var(--card) !important; border-color: var(--line) !important; }
 .dock-back { pointer-events: auto; height: 58px; display: inline-flex; align-items: center; gap: 6px; padding: 0 18px 0 13px; border-radius: 18px; font-size: 16px; font-weight: 750; color: var(--ink); background: var(--glass); border: 1px solid var(--glass-line); -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); box-shadow: 0 10px 30px var(--shadow); }
 .dock-back[hidden] { display: none; }
 .dock-back svg { width: 19px; height: 19px; color: var(--accent); }
@@ -2525,7 +2525,10 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     var kind = status(g).kind, started = kind === "live" || kind === "over", b = boxFor(g);
     if (started) bxNeed(g);
     if (!BX_SPORT[g.league] || !boxLive(b)) {
+      if (!started) bxNeed(g);
       var pvb = previewBlock(g, true);
+      var pvo = ((state.previews || {})[g.id] || {}).odds;
+      if (!(pvo && (pvo.spread || pvo.total))) { var os0 = oddsStrip(g, b); if (os0) pvb.insertBefore(os0, pvb.firstChild); }
       if (started && BX_SPORT[g.league]) pvb.insertBefore(el("p", "pv-none bx-wait", window.SLATE_SELF ? "Loading the box score…" : "The box score arrives with the next hourly refresh."), pvb.firstChild);
       return pvb;
     }
@@ -2825,7 +2828,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     var ostrip = oddsStrip(g, b); if (ostrip) { ostrip.classList.add("gv-oddsbar"); body.appendChild(ostrip); }
     var live = boxLive(b), season = !live && b && b.state === "pre" && b.season;
     state.gvSec = state.gvSec || {};
-    var open = state.gvSec[g.id] || (state.gvSec[g.id] = { box: started, team: false, pv: !started });
+    var open = state.gvSec[g.id] || (state.gvSec[g.id] = { box: started, team: false, pv: false });
     function section(key, title, sub, fill) {
       var on = !!open[key], wrap = el("div", "gv-sec" + (on ? " open" : ""));
       var tg = el("button", "gv-toggle"); tg.type = "button"; tg.setAttribute("aria-expanded", on ? "true" : "false");
