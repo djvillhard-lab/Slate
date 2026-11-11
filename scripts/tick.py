@@ -486,7 +486,7 @@ def main():
             elif not r: todo.append({"date": day, "id": i, "why": ["recap"]})
     recap_pass(D, pv_doc, patch, focus, state)
     # last night's late finishers (after the run that covered that date stopped)
-    prev_doc = docs.get(f"previews/{PREV}") or {}; prev_patch = {}
+    prev_doc = docs.get(f"previews/{PREV}") or {}; prev_patch = {}; prev_games = {}
     prev_scores = (docs.get(f"scores/{PREV}") or {}).get("games") or {}
     prev_ids = [i for i, e in (prev_doc.get("games") or {}).items() if not e.get("recap") or not e["recap"].get("final")]
     if prev_ids:
@@ -502,7 +502,12 @@ def main():
         if why: todo.append({"date": D, "id": i, "why": why}); work_facts[i] = facts[i]
     for t in todo:
         if t["why"] == ["recap"]: work_facts.setdefault(t["id"], {"event": (evs.get(t["id"]) or {}).get("id"), "league": byid.get(t["id"], {}).get("league")})
-    for i in work_facts: work_facts[i]["basis"] = basis_of(work_facts[i]) if "odds" in work_facts[i] or "injuries" in work_facts[i] else None
+    KEEP = ("league", "start", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord",
+            "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "note", "neutral")
+    for i in work_facts:
+        if "odds" in work_facts[i] or "injuries" in work_facts[i]: work_facts[i]["basis"] = basis_of(work_facts[i])
+        g = byid.get(i) or (prev_games.get(i) if i in prev_games else None)
+        if g: work_facts[i]["game"] = {k: g[k] for k in KEEP if g.get(k) not in (None, "", [])}
 
     # ---- 5. league extras (standings, poll, news) every 3 hours per league
     lg_patch = {}
