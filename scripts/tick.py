@@ -318,7 +318,8 @@ def spread_num(s):
 
 def basis_of(facts):
     o = facts.get("odds") or {}
-    return {"spread": o.get("spread"), "total": o.get("total"), "ml": o.get("ml"), "injuries": sorted(facts.get("injuries") or []), "start": facts.get("start")}
+    # v: the writing rules the words follow (2 = no betting lines in the text); older words get rewritten once
+    return {"v": 2, "spread": o.get("spread"), "total": o.get("total"), "ml": o.get("ml"), "injuries": sorted(facts.get("injuries") or []), "start": facts.get("start")}
 
 def line_moved(lg, old, new):
     sp = SPORT.get(lg) or "soccer"
@@ -348,6 +349,7 @@ def why_rewrite(g, entry, facts, now, start, state):
     why = []
     if not entry.get("summary") or not entry.get("long") or not entry.get("watch"): return ["new preview"]
     b = entry.get("basis")
+    if b and b.get("v") != 2: return ["new preview"]
     if b:
         nb = basis_of(facts)
         mv = line_moved(g["league"], b, nb)
