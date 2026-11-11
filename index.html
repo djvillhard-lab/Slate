@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111174753";
+<script>window.SLATE_BUILD = "20261111174857";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2568,8 +2568,16 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
   // ---------- Claude on demand: one tap starts a summary in the background (Cloudflare → Claude → Supabase) ----------
   var CL_ASK = {};   // just-tapped requests, until the saved "writing" marker shows up
   function slatePass() { try { return localStorage.getItem("slate-pass") || ""; } catch (e) { return ""; } }
+  var CL_SEEN = {};
   function clWriting(doc, k) {
     var w = doc && doc.writing, mine = CL_ASK[k];
+    // the server marks the item while it writes and clears the mark when the summary is saved:
+    // once the mark has come and gone (or the saved summary is newer than the tap), it's done
+    if (w && !w.error && mine) CL_SEEN[k] = true;
+    if (mine && !w) {
+      var saved = Date.parse((doc && (doc.at || doc.updatedAt || (doc.recap || {}).at)) || 0) || 0;
+      if (CL_SEEN[k] || saved > mine - 5000) { delete CL_ASK[k]; delete CL_SEEN[k]; mine = 0; }
+    }
     if (w && w.error && !(mine && mine > Date.parse(w.at || 0))) return { error: w.error };
     var at = Math.max(w && !w.error ? Date.parse(w.at) || 0 : 0, mine || 0);
     return at && Date.now() - at < 6 * 60000 ? { busy: true } : null;
