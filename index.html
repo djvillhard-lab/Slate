@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111162237";
+<script>window.SLATE_BUILD = "20261111162512";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1417,6 +1417,20 @@ input, select, textarea { font-size: 16px !important; }
 /* headers: a little more room from the top edge, and always pinned while scrolling */
 header.top { position: -webkit-sticky; position: sticky; top: 0; }
 header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z, 1)); }
+/* the dock stacks bottom-up: day picker (rankings) above Back above the menu button */
+nav.dock { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.dock-day { pointer-events: auto; width: 58px; display: grid; justify-items: center; padding: 4px 0; border-radius: 18px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px var(--shadow); }
+.dock-day[hidden] { display: none; }
+.dd-arrow { width: 52px; height: 42px; display: grid; place-items: center; border-radius: 14px; color: var(--ink); }
+.dd-arrow svg { width: 18px; height: 18px; transform: rotate(-90deg); }
+.dd-prev svg { transform: rotate(90deg); }
+.dd-arrow:disabled { opacity: .25; }
+.dd-date { position: relative; display: grid; justify-items: center; gap: 0; padding: 4px 0 6px; cursor: pointer; line-height: 1.05; }
+.dd-date b { font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .02em; }
+.dd-date b.dd-n { font-size: 22px; color: var(--ink); text-transform: none; }
+.dd-date em { font-style: normal; font-size: 10px; font-weight: 700; color: var(--dim); }
+.dd-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; }
+nav.dock.menu-open .dock-day { display: none; }
 </style>
 </head>
 <body>
@@ -1657,6 +1671,7 @@ header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z,
 </main>
 
 <nav class="dock" aria-label="Main">
+  <div class="dock-day" id="dock-day" hidden></div>
   <button class="dock-back" id="dock-back" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span id="dock-back-t">Back</span></button>
   <div class="menu-pop" id="menu-pop" role="menu" aria-label="Menu" hidden>
     <button class="mi" id="nav-lineup" type="button" role="menuitem">
@@ -2368,6 +2383,26 @@ header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z,
     setView(v); state.backTo = { view: isDuo && from === "lineup" ? "games" : from, y: y }; renderBack();
     var sec = $("view-" + v); if (sec && !REDUCED) { sec.classList.remove("push-in"); void sec.offsetWidth; sec.classList.add("push-in"); setTimeout(function () { sec.classList.remove("push-in"); }, 320); }
   }
+  // day picker for Player rankings and All games: a vertical pill above Back, by the right thumb (later day on top)
+  function renderDockDay() {
+    var dn = $("dock-day"); if (!dn) return;
+    var v = state.view, on = (v === "best" || v === "games") && !state.menuOpen;
+    dn.hidden = !on; if (!on) return;
+    dn.textContent = "";
+    var today = todayInHome(), rkMode = v === "best", day = rkMode ? (rk.date || today) : state.date;
+    var go = function (iso) { if (rkMode) rkSetDate(iso); else { slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
+    var nxt = el("button", "dd-arrow"); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.disabled = rkMode && day >= today; nxt.appendChild(icon("more"));
+    nxt.addEventListener("click", function () { go(shiftDate(day, 1)); });
+    var lab = el("label", "dd-date");
+    var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yest." : day === shiftDate(today, 1) ? "Tmrw" : fmtDate(day, { weekday: "short" });
+    lab.appendChild(el("b", null, fmtDate(day, { month: "short" }))); lab.appendChild(el("b", "dd-n", fmtDate(day, { day: "numeric" }))); lab.appendChild(el("em", null, dl));
+    var inp = document.createElement("input"); inp.type = "date"; inp.className = "dd-input"; if (rkMode) inp.max = today; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
+    inp.addEventListener("change", function () { if (inp.value) go(inp.value); });
+    lab.appendChild(inp);
+    var prev = el("button", "dd-arrow dd-prev"); prev.type = "button"; prev.setAttribute("aria-label", "Previous day"); prev.appendChild(icon("more"));
+    prev.addEventListener("click", function () { go(shiftDate(day, -1)); });
+    dn.appendChild(nxt); dn.appendChild(lab); dn.appendChild(prev);
+  }
   // Back always returns to tonight's slate (unfolded, the slate is on the left, so the right side returns to All games)
   function homeView() { return isDuo ? "games" : "lineup"; }
   function goBack() {
@@ -2382,7 +2417,7 @@ header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z,
   function renderBack() {
     var bt = $("dock-back"); if (!bt) return;
     var show = state.view !== homeView();
-    bt.hidden = !show; var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
+    bt.hidden = !show; renderDockDay(); var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
     if (show) { $("dock-back-t").textContent = "Tonight's Slate"; bt.setAttribute("aria-label", "Back to tonight's slate"); }
   }
   // after the final: a recap (written once, frozen an hour after the game ends) takes the quick read's place
@@ -3245,21 +3280,7 @@ header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z,
     if (state.view !== "best") return;
     if (!rk.date) { rk.date = rkDefaultDate(); rkSub(); }
     var today = todayInHome(), day = rk.date;
-    // day picker
-    var dn = el("div", "rk-day");
-    var prev = el("button", "rk-arrow", "‹"); prev.type = "button"; prev.setAttribute("aria-label", "Previous day");
-    prev.addEventListener("click", function () { rkSetDate(shiftDate(rk.date, -1)); });
-    var lab = el("label", "rk-date");
-    var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yesterday" : fmtDate(day, { weekday: "short" });
-    lab.appendChild(el("b", null, fmtDate(day, { month: "short", day: "numeric" })));
-    lab.appendChild(el("em", null, dl));
-    var inp = document.createElement("input"); inp.type = "date"; inp.className = "rk-input"; inp.max = today; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
-    inp.addEventListener("change", function () { if (inp.value) rkSetDate(inp.value); });
-    lab.appendChild(inp);
-    var nxt = el("button", "rk-arrow", "›"); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.disabled = day >= today;
-    nxt.addEventListener("click", function () { rkSetDate(shiftDate(rk.date, 1)); });
-    dn.appendChild(prev); dn.appendChild(lab); dn.appendChild(nxt);
-    body.appendChild(dn);
+    renderDockDay();
     var ks = rkLeagues(day), favs = state.players || [];
     if (!ks.length && !favs.length) {
       body.appendChild(el("div", "notice", !rk.loaded ? "Loading rankings…" : day === today ? "No rankings yet today. They fill in once games start." : "No rankings saved for this day."));
