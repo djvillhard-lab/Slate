@@ -223,12 +223,19 @@ def find_event(g, events):
     for ev in events:
         comp = (ev.get("competitions") or [{}])[0]; cs = {c.get("homeAway"): c for c in comp.get("competitors", [])}
         if "home" not in cs or "away" not in cs: continue
-        def same(side):
-            t = cs[side].get("team", {})
+        def same(side, espn_side):
+            t = cs[espn_side].get("team", {})
             return norm(t.get("displayName")) == norm(g.get(side)) or (abbr(g, side) and t.get("abbreviation", "").upper() == abbr(g, side))
-        if not (same("away") and same("home")): continue
+        flip = False
+        if not (same("away", "away") and same("home", "home")):
+            # neutral sites: ESPN sometimes lists the two teams the other way round
+            if same("away", "home") and same("home", "away"): flip = True
+            else: continue
         et = parse(ev.get("date"))
         if gt and et and abs((et - gt).total_seconds()) > 3 * 3600: continue
+        if flip:
+            ev = json.loads(json.dumps(ev))
+            for c in ev["competitions"][0]["competitors"]: c["homeAway"] = "home" if c.get("homeAway") == "away" else "away"
         best = ev; break
     return best
 

@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111142517";
+<script>window.SLATE_BUILD = "20261111144351";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1867,7 +1867,8 @@ nav.dock.menu-open .dock-back { display: none; }
             var A = null, H = null; (c.competitors || []).forEach(function (k) { if (k.homeAway === "home") H = k; else A = k; });
             if (!A || !H) continue;
             var ok = function (k, side) { var tm = k.team || {}; return norm(tm.displayName) === norm(g[side]) || (!!g[side + "Abbr"] && norm(tm.abbreviation) === norm(g[side + "Abbr"])); };
-            if (!(ok(A, "away") && ok(H, "home"))) continue;
+            // neutral sites: ESPN sometimes lists the two teams the other way round
+            if (!(ok(A, "away") && ok(H, "home"))) { if (ok(H, "away") && ok(A, "home")) { var sw = A; A = H; H = sw; } else continue; }
             var st = (c.status || e.status || {}).type || {};
             var es = new Date(e.date).toISOString().replace(".000Z", "Z");
             if (st.state === "pre") { if (Math.abs(new Date(e.date) - new Date(g.moved || g.start)) >= 60000) { if (LIVE_START[g.id] !== es) { LIVE_START[g.id] = es; changed = true; } } else if (LIVE_START[g.id]) { delete LIVE_START[g.id]; changed = true; } break; }
