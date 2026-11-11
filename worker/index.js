@@ -25,6 +25,9 @@ function target(p) {
   return { path: "previews/" + p.date, patch: (x) => ({ games: { [p.id]: x } }) };
 }
 
+// the Anthropic key may be saved as ANTHROPIC_API_KEY or as dj-api-key
+const apiKey = (env) => env.ANTHROPIC_API_KEY || env["dj-api-key"] || env.DJ_API_KEY || "";
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -32,7 +35,7 @@ export default {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       if (!p || !["preview", "recap", "team"].includes(p.kind)) return json({ error: "bad kind" }, 400);
       if (p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
-      if (!env.ANTHROPIC_API_KEY || !env.SUPABASE_SECRET) return json({ error: "Summaries aren't set up yet (missing keys in Cloudflare)." }, 503);
+      if (!apiKey(env) || !env.SUPABASE_SECRET) return json({ error: "Summaries aren't set up yet (missing keys in Cloudflare)." }, 503);
       // the passcode is checked by Supabase itself: only the right one can write prefs/
       const chk = await rpc(env, "save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString(), via: "summary" }, p_pass: String(p.pass || ""), p_merge: false }, PUB);
       if (!chk.ok || /not allowed|error/i.test(chk.text)) return json({ error: "Wrong passcode" }, 403);
@@ -91,7 +94,7 @@ Watch: 2-4 players, never one who is out. Headlines: only The Athletic stories a
 async function askClaude(env, text) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    headers: { "x-api-key": apiKey(env), "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({ model: MODEL, max_tokens: 3000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }], messages: [{ role: "user", content: text }] })
   });
   const body = await r.json().catch(() => ({}));
