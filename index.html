@@ -1042,7 +1042,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .g.panel.over > :not(.tray) { opacity: .55; }
 /* right thumb: the slate's open-the-big-view button sits on the right */
 .tray .pv-more { justify-self: end; }
-.gv-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 0 16px; border-radius: 14px; background: var(--card); font-size: 16px; font-weight: 750; color: var(--accent); text-align: left; }
+.gv-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 60px; padding: 0 16px; border-radius: 14px; background: var(--card); font-size: 16px; font-weight: 750; color: var(--accent); text-align: left; }
 .gv-toggle svg { width: 16px; height: 16px; flex: none; transform: rotate(90deg); transition: transform .15s ease; }
 .gv-toggle[aria-expanded="true"] svg { transform: rotate(-90deg); }
 /* full box score, Real-app style */
@@ -1073,6 +1073,14 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .bxp-c i { font-style: normal; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--dim); }
 .bxp-c em { font-style: normal; font-size: 15px; font-weight: 600; color: var(--muted); margin-top: 2px; }
 .bxt-cells .bxp-c b { font-size: 22px; }
+.gv-sec { display: grid; gap: 10px; margin: 0 0 10px; }
+.gv-sec .gv-toggle { color: var(--ink); }
+.gv-sec.open .gv-toggle { color: var(--accent); }
+.gv-tt { display: grid; gap: 1px; min-width: 0; }
+.gv-tt b { font-size: 17px; font-weight: 800; }
+.gv-tt i { font-style: normal; font-size: 13px; font-weight: 600; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gv-sec-in { display: grid; gap: 10px; }
+.gv-sec-in > * { margin: 0; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); will-change: transform; }
 /* iOS keeps a fixed, blurred button where it was while a page scrolls; its own layer keeps it pinned to the corner */
@@ -2649,47 +2657,56 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     if (meta.length) hd.appendChild(el("p", "gv-meta", meta.join(" · ")));
     body.appendChild(hd);
 
-    // a live or finished game leads with its box score; the preview waits behind a button
-    var kind = status(g).kind, started = kind === "live" || kind === "over", sport = BX_SPORT[g.league] || "", b = sport ? boxFor(g) : null, showPv = true;
+    // three sections that open and close: box score, team stats, preview (or recap)
+    var kind = status(g).kind, started = kind === "live" || kind === "over", sport = BX_SPORT[g.league] || "", b = sport ? boxFor(g) : null;
     bxNeed(g);
-    if (boxLive(b)) {
-      var bc = gvCard("Box score", "gv-box");
-      bc.appendChild(boxShown(g) ? bxPlayers(g, b, false, false) : boxGate(g));
-      bc.appendChild(el("p", "pv-at bx-at", bxStamp(b)));
-      body.appendChild(bc);
-      var tsx = boxShown(g) ? bxTeamStats(g, b, false) : null;
-      if (tsx) { var tc = gvCard("Team stats", "gv-box"); tc.appendChild(tsx); body.appendChild(tc); }
-      showPv = false;
-      if (pv) {
-        var rc0 = recapOf(pv), open = !!(state.pvOpen || {})[g.id], what = rc0 ? "recap" : "preview";
-        var tg = el("button", "gv-toggle"); tg.type = "button"; tg.setAttribute("aria-expanded", open ? "true" : "false");
-        tg.appendChild(el("span", null, (open ? "Hide the " : "Read the ") + what)); tg.appendChild(icon("more"));
-        tg.addEventListener("click", function () { state.pvOpen = state.pvOpen || {}; state.pvOpen[g.id] = !open; keepScroll(renderGame); });
-        body.appendChild(tg);
-        showPv = open;
-      }
-    } else if (started && sport) {
-      var wn = gvCard(null); wn.appendChild(el("p", "pv-none", window.SLATE_SELF ? "Loading the box score…" : "The box score arrives with the next hourly refresh.")); body.appendChild(wn);
+    var live = boxLive(b), season = !live && b && b.state === "pre" && b.season;
+    state.gvSec = state.gvSec || {};
+    var open = state.gvSec[g.id] || (state.gvSec[g.id] = { box: started, team: false, pv: !started });
+    function section(key, title, sub, fill) {
+      var on = !!open[key], wrap = el("div", "gv-sec" + (on ? " open" : ""));
+      var tg = el("button", "gv-toggle"); tg.type = "button"; tg.setAttribute("aria-expanded", on ? "true" : "false");
+      var tx = el("span", "gv-tt"); tx.appendChild(el("b", null, title)); if (sub) tx.appendChild(el("i", null, sub));
+      tg.appendChild(tx); tg.appendChild(icon("more"));
+      tg.addEventListener("click", function () { open[key] = !open[key]; keepScroll(renderGame); });
+      wrap.appendChild(tg);
+      if (on) { var inner = el("div", "gv-sec-in"); fill(inner); wrap.appendChild(inner); }
+      body.appendChild(wrap);
     }
-    if (showPv) previewSections(g, pv, body);
-    // before the start: both teams' season numbers and their players' season averages
-    if (!boxLive(b) && b && b.state === "pre" && b.season) {
-      var sts = bxTeamStats(g, b, false);
-      if (sts) { var tc2 = gvCard("Team stats · this season", "gv-box"); tc2.appendChild(sts); body.appendChild(tc2); }
-      var sc2 = gvCard("Player stats · this season", "gv-box"); sc2.appendChild(bxPlayers(g, b, false, true)); sc2.appendChild(el("p", "pv-at bx-at", bxStamp(b))); body.appendChild(sc2);
-    } else if (!started && sport && BX_SEASON[sport]) {
-      var sn = gvCard("Team and player stats", "gv-box"); sn.appendChild(el("p", "pv-none", window.SLATE_SELF ? "Loading this season's stats…" : "This season's team and player stats arrive with the next hourly refresh.")); body.appendChild(sn);
+    if (sport) {
+      section("box", started ? "Box score" : "Player stats", started ? (kind === "live" ? "Live" : "Final") : "This season", function (box) {
+        if (live) {
+          var bc = gvCard(null, "gv-box");
+          bc.appendChild(boxShown(g) ? bxPlayers(g, b, false, false) : boxGate(g));
+          bc.appendChild(el("p", "pv-at bx-at", bxStamp(b))); box.appendChild(bc);
+        } else if (season) {
+          var sc2 = gvCard(null, "gv-box"); sc2.appendChild(bxPlayers(g, b, false, true)); sc2.appendChild(el("p", "pv-at bx-at", bxStamp(b))); box.appendChild(sc2);
+        } else {
+          var wn = gvCard(null); wn.appendChild(el("p", "pv-none", window.SLATE_SELF ? (started ? "Loading the box score…" : "Loading this season's stats…") : started ? "The box score arrives with the next hourly refresh." : "This season's stats arrive with the next hourly refresh.")); box.appendChild(wn);
+        }
+      });
+      section("team", "Team stats", started ? "Tonight" : "This season", function (box) {
+        var ts = (live && boxShown(g)) || season ? bxTeamStats(g, b, false) : null;
+        var tc = gvCard(null, "gv-box");
+        if (ts) tc.appendChild(ts);
+        else tc.appendChild(live ? boxGate(g) : el("p", "pv-none", window.SLATE_SELF ? "Loading team stats…" : "Team stats arrive with the next hourly refresh."));
+        box.appendChild(tc);
+      });
     }
-    // standings or the poll, with tonight's two teams marked
-    var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
-    var groups = Array.isArray(lg.standings) ? lg.standings : [];
-    var show = groups.filter(function (gr) { return (gr.rows || []).some(function (r) { return marks.indexOf(String(r.abbr || "").toUpperCase()) !== -1; }); });
-    if (!show.length && groups.length) show = groups.slice(0, 1);
-    show.forEach(function (gr) { body.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
-    if (Array.isArray(lg.poll) && lg.poll.length) body.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
-    var ln2 = Array.isArray(lg.news) ? lg.news.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
-    if (ln2.length) body.appendChild(linkList("Around " + (L.college ? L.name : "the " + L.name), ln2.slice(0, 6)));
-    if (pv && showPv) { var by = byLine(pv); if (by) body.appendChild(el("p", "pv-at gv-at", by)); }
+    var rcx = pv && recapOf(pv);
+    section("pv", rcx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : pv && pv.odds && pv.odds.spread ? pv.odds.spread + (pv.odds.total ? " · O/U " + pv.odds.total : "") : "", function (box) {
+      previewSections(g, pv, box);
+      // standings or the poll, with tonight's two teams marked
+      var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
+      var groups = Array.isArray(lg.standings) ? lg.standings : [];
+      var show = groups.filter(function (gr) { return (gr.rows || []).some(function (r) { return marks.indexOf(String(r.abbr || "").toUpperCase()) !== -1; }); });
+      if (!show.length && groups.length) show = groups.slice(0, 1);
+      show.forEach(function (gr) { box.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
+      if (Array.isArray(lg.poll) && lg.poll.length) box.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
+      var ln2 = Array.isArray(lg.news) ? lg.news.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
+      if (ln2.length) box.appendChild(linkList("Around " + (L.college ? L.name : "the " + L.name), ln2.slice(0, 6)));
+      if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
+    });
   }
   // the matchup page's preview sections (odds, quick read or recap, deep dive, players, form, headlines)
   function previewSections(g, pv, body) {
