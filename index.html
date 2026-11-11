@@ -2360,8 +2360,11 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     it.setAttribute("aria-label", g.away + " at " + g.home + (sc ? ", " + sc.a + " to " + sc.h : ", " + timeText(g.start)) + (mine ? ", on your slate" : ""));
     return it;
   }
+  // only games in progress while any are going; otherwise every game of the day
   function ticker() {
     var gs = games(); if (!gs.length) return null;
+    var live = gs.filter(function (g) { return status(g).kind === "live"; });
+    if (live.length) gs = live;
     var by = {}; gs.forEach(function (g) { (by[g.league] = by[g.league] || []).push(g); });
     var keys = ORDER.filter(function (k) { return by[k]; }); Object.keys(by).forEach(function (k) { if (keys.indexOf(k) === -1) keys.push(k); });
     var items = [];
