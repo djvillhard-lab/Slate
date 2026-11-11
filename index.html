@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111125107";
+<script>window.SLATE_BUILD = "20261111125603";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3331,9 +3331,13 @@ nav.dock.menu-open .dock-back { display: none; }
   function athFor(lg, words, onlyMatches) {
     athWatch(); if (!ATH) return [];
     var L = ATH.leagues || {}, list = L[lg] || (ATH_SOCCER[lg] || SOCCER[lg] ? L.soccer : null) || [];
-    var ws = words.filter(Boolean).map(function (w) { return new RegExp("\\b" + String(w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i"); });
-    var hit = list.filter(function (it) { var t = (it.title || "") + " " + (it.desc || ""); return ws.some(function (r) { return r.test(t); }); });
-    return hit.length || onlyMatches ? hit : list.slice(0, 4);
+    // names match as written (capitalized), so "Blues" the team doesn't match "the blues"
+    var ws = words.filter(Boolean).map(function (w) { return new RegExp("(^|[^A-Za-z])" + String(w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![A-Za-z])"); });
+    var scored = list.map(function (it) { var t = (it.title || "") + " " + (it.desc || ""), n = ws.filter(function (r) { return r.test(t); }).length, inTitle = ws.some(function (r) { return r.test(it.title || ""); }); return [n * 2 + (inTitle ? 1 : 0), it]; })
+      .filter(function (x) { return x[0] > 0; });
+    // a matchup: stories about both teams first, then either; a team: only stories about it
+    scored.sort(function (a, b) { return b[0] - a[0]; });
+    return scored.map(function (x) { return x[1]; });
   }
   function renderGame() {
     var body = $("game-body"); if (!body) return; body.textContent = "";
