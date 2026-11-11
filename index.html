@@ -17,6 +17,15 @@
   var sb = window.supabase.createClient(C.url, C.key, { auth: { persistSession: false } });
   try { var m = /[#&]pass=([^&]+)/.exec(location.hash); if (m) { localStorage.setItem("slate-pass", decodeURIComponent(m[1])); history.replaceState(null, "", location.pathname + location.search); } } catch (e) {}
   function pass() { try { return localStorage.getItem("slate-pass") || ""; } catch (e) { return ""; } }
+  // Home Screen apps on iPhone keep their own storage, so ask here when there's no passcode yet.
+  // Cancel = view only (asked again only after "Enter passcode" in the footer).
+  try {
+    if (!pass() && !localStorage.getItem("slate-view-only")) {
+      var typed = window.prompt("Enter your Slate passcode so your changes save.\n\nTap Cancel to just view.");
+      if (typed && typed.trim()) localStorage.setItem("slate-pass", typed.trim()); else localStorage.setItem("slate-view-only", "1");
+    }
+  } catch (e) {}
+  window.slateAskPass = function () { try { localStorage.removeItem("slate-view-only"); localStorage.removeItem("slate-pass"); } catch (e) {} location.reload(); };
   function mapPath(p) { var m = /^data\/users\/[^/]+\/(.+)$/.exec(p); return m ? "mine/user-" + m[1] : p; }
   function snap(row) { var d = row ? row.data : undefined; return { exists: !!row, data: function () { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }, metadata: { fromCache: false } }; }
   function fetchRow(path) {
@@ -52,6 +61,11 @@
         return function () { var l = subs[path] || []; var i = l.indexOf(s); if (i !== -1) l.splice(i, 1); };
       }
     };
+  }
+  if (pass()) {
+    sb.rpc("save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString() }, p_pass: pass(), p_merge: false }).then(function (r) {
+      if (r.error && /not allowed/.test(r.error.message)) { try { localStorage.removeItem("slate-pass"); } catch (e) {} alert("That passcode didn't work. Try again."); location.reload(); }
+    });
   }
   var db = { doc: doc, collection: function (c) { return { doc: function (id) { return doc(c + "/" + id); } }; } };
   var user = { id: function () { return Promise.resolve("dj"); }, isOwner: function () { return Promise.resolve(!!pass()); } };
@@ -3153,6 +3167,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
     f.appendChild(el("span", null, t + " "));
     var rb = el("button", "foot-refresh", "Refresh"); rb.type = "button";
     rb.addEventListener("click", refreshApp); f.appendChild(rb);
+    if (window.SLATE_SELF && !state.isOwner && window.slateAskPass) { var pb = el("button", "foot-refresh", "Enter passcode"); pb.type = "button"; pb.addEventListener("click", window.slateAskPass); f.appendChild(pb); }
   }
   // Reload the page: picks up the newest version of the app and the latest games, scores and previews.
   function refreshApp() {
