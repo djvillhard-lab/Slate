@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111124454";
+<script>window.SLATE_BUILD = "20261111125107";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2308,7 +2308,7 @@ nav.dock.menu-open .dock-back { display: none; }
       box.appendChild(wb);
     }
     if (pv.injuries) { var inj = el("p", "pv-inj"); inj.appendChild(el("b", null, "Injuries ")); inj.appendChild(document.createTextNode(pv.injuries)); box.appendChild(inj); }
-    var hl = Array.isArray(pv.headlines) ? pv.headlines.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }).slice(0, 4) : [];
+    var hl = Array.isArray(pv.headlines) ? pv.headlines.filter(function (h) { return h && h.title && /^https:\/\/(www\.)?(nytimes\.com\/athletic|theathletic\.com)/.test(h.url || ""); }).slice(0, 4) : [];
     if (hl.length) {
       var ul = el("ul", "pv-hl");
       hl.forEach(function (h) {
@@ -3319,7 +3319,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var loc = d.info && d.info.location, words = LEAGUES[t.lg] && LEAGUES[t.lg].college ? [loc || t.name.split(" ")[0]] : [nick];
     var ath = athFor(t.lg, words, true);
     if (ath.length) body.appendChild(linkList("From The Athletic", ath.slice(0, 6)));
-    if (news.length) body.appendChild(linkList("ESPN", news.slice(0, 6)));
+
   }
   // The Athletic's headlines, kept by the GitHub script from its public league feeds
   var ATH = null;
@@ -3403,7 +3403,7 @@ nav.dock.menu-open .dock-back { display: none; }
       var ln2 = Array.isArray(lg.news) ? lg.news.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
       var ath = athFor(g.league, [short(g, "away"), short(g, "home")]);
       if (ath.length) box.appendChild(linkList("From The Athletic", ath.slice(0, 5)));
-      if (ln2.length) box.appendChild(linkList("Around " + (L.college ? L.name : "the " + L.name), ln2.slice(0, 6)));
+
       if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
     });
     if (sport) {
@@ -3478,7 +3478,7 @@ nav.dock.menu-open .dock-back { display: none; }
       if (pv.injuries) { var ij = el("p", "gv-line"); ij.appendChild(el("b", null, "Injuries ")); ij.appendChild(document.createTextNode(pv.injuries)); fc.appendChild(ij); }
       body.appendChild(fc);
     }
-    var hl = Array.isArray(pv.headlines) ? pv.headlines.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
+    var hl = Array.isArray(pv.headlines) ? pv.headlines.filter(function (h) { return h && h.title && /^https:\/\/(www\.)?(nytimes\.com\/athletic|theathletic\.com)/.test(h.url || ""); }) : [];
     if (hl.length) body.appendChild(linkList("Headlines", hl));
   }
   function linkList(title, items) {
@@ -3536,15 +3536,13 @@ nav.dock.menu-open .dock-back { display: none; }
   function gameRow(g, mode, opts) {
     opts = opts || {};
     var on = inLineup(g.id), st = status(g), pick = mode !== "lineup", closed = pick && isPastDay(), openTray = null;
-    var row = el(pick && !closed ? "button" : "div", "g panel" + (st.kind === "over" && state.date >= todayInHome() ? " over" : "") + (pick ? " gpick" : ""));
+    var row = el(pick && !closed && mode !== "games" ? "button" : "div", "g panel" + (st.kind === "over" && state.date >= todayInHome() ? " over" : "") + (pick ? " gpick" : ""));
     var label = g.custom ? g.home : g.away + (g.neutral ? " versus " : " at ") + g.home;
     if (pick && !closed) {
       row.type = "button";
       row.setAttribute("aria-pressed", on ? "true" : "false");
       if (mode === "games" && !g.custom) {
-        row.removeAttribute("aria-pressed");
-        row.setAttribute("aria-label", label + ", " + timeText(g.start) + ". Open stats and preview");
-        row.addEventListener("click", function () { openMatchup(g); });
+        row.removeAttribute("aria-pressed"); row.removeAttribute("type");
       } else {
         row.setAttribute("aria-label", (on ? "Remove " : "Add ") + label + ", " + timeText(g.start) + (on ? ", from slate" : ", to slate"));
         row.addEventListener("click", function () { toggle(g.id); });
@@ -3559,24 +3557,16 @@ nav.dock.menu-open .dock-back { display: none; }
       var cr = el("span", "tm"); var cb = badgeFor("+", "custom"); cb.style.background = "var(--raise)"; cb.style.color = "var(--ink)"; cb.style.setProperty("--ring", "transparent"); cr.appendChild(cb);
       var cw = el("span", "nmw"); cw.appendChild(el("span", "nm", g.home)); cr.appendChild(cw); cr.appendChild(el("span")); main.appendChild(cr);
     } else { main.appendChild(teamLine(g, "away")); main.appendChild(teamLine(g, "home")); }
-    // All games: read a game's preview, or ask for one (slate games get theirs automatically)
-    if (mode === "games" && !g.custom) {
-      var pvx = (state.previews || {})[g.id], lrq = state.loadReq || {}, isToday = state.date === todayInHome();
-      var asked = isToday && lrq.previewDate === state.date && ((lrq.previews || []).indexOf(g.id) !== -1 || (lrq.previewLoading || []).indexOf(g.id) !== -1);
-      var pill = null;
-      if (pvx && (pvx.summary || pvx.recap)) pill = el("span", "gp-pv go", recapOf(pvx) ? "Recap ›" : "Preview ›");
-      else if (on && isToday) pill = el("span", "gp-pv wait", "Preview coming at :55");
-      else pill = previewAsk(g);
-      if (pill) main.appendChild(pill);
-    }
-    if (mode === "lineup") {
+    var trayMode = mode === "lineup" || (mode === "games" && !g.custom);
+    if (trayMode) {
+      var wide = !isDuo || mode === "games";
       var open = state.openId === g.id;
       main.setAttribute("role", "button"); main.tabIndex = 0;
       main.setAttribute("aria-expanded", open ? "true" : "false");
       main.setAttribute("aria-label", label + ", " + timeText(g.start) + ". Show options");
       function makeTray() {
         var tray = el("div", "tray");
-        if (!g.custom && !isDuo) {
+        if (!g.custom && wide) {
           tray.appendChild(trayBlock(g));
           // the way into the big matchup page, always in the same spot
           var fm = el("button", "full-mu"); fm.type = "button";
@@ -3593,24 +3583,26 @@ nav.dock.menu-open .dock-back { display: none; }
           b.addEventListener("click", function (e) { e.stopPropagation(); toggleFav(g[s], g.league); });
           tray.appendChild(b);
         });
-        var rm = el("button", "rm"); rm.type = "button"; rm.appendChild(icon("x")); rm.appendChild(document.createTextNode("Remove"));
-        rm.setAttribute("aria-label", "Remove " + label + " from the slate");
-        rm.addEventListener("click", function (e) { e.stopPropagation(); state.openId = null; removeGame(g); });
-        tray.appendChild(rm);
+        if (mode === "lineup") {
+          var rm = el("button", "rm"); rm.type = "button"; rm.appendChild(icon("x")); rm.appendChild(document.createTextNode("Remove"));
+          rm.setAttribute("aria-label", "Remove " + label + " from the slate");
+          rm.addEventListener("click", function (e) { e.stopPropagation(); state.openId = null; removeGame(g); });
+          tray.appendChild(rm);
+        }
         return tray;
       }
       // open or close this game's options in place: nothing else on the page is rebuilt, so the page stays put
       var flip = function (e) {
         if (e.target.closest && e.target.closest(".net, .tray")) return;
         var opening = state.openId !== g.id;
-        Array.prototype.forEach.call(document.querySelectorAll("#lineup-body .tray"), function (t) {
+        Array.prototype.forEach.call(document.querySelectorAll("#lineup-body .tray, #games-body .tray"), function (t) {
           var m = t.parentNode && t.parentNode.querySelector(".g-main"); if (m) m.setAttribute("aria-expanded", "false");
           slideClose(t, function () { t.remove(); });
         });
         state.openId = opening ? g.id : null;
         if (opening) { var nt = makeTray(); row.appendChild(nt); slideOpen(nt); }
         main.setAttribute("aria-expanded", opening ? "true" : "false");
-        if (isDuo && !g.custom) {
+        if (isDuo && !g.custom && mode === "lineup") {
           state.gameId = g.id;
           Array.prototype.forEach.call(document.querySelectorAll("#lineup-body .g.picked"), function (r) { r.classList.remove("picked"); });
           row.classList.add("picked");
@@ -3618,7 +3610,7 @@ nav.dock.menu-open .dock-back { display: none; }
         }
       };
       var lpT = null, lpFired = false, lpX = 0, lpY = 0;
-      if (!g.custom && !isDuo) {
+      if (!g.custom && wide) {
         main.addEventListener("touchstart", function (e) {
           if (e.touches.length !== 1 || (e.target.closest && e.target.closest(".net, .tray"))) return;
           lpFired = false; lpX = e.touches[0].clientX; lpY = e.touches[0].clientY;
@@ -3706,14 +3698,23 @@ nav.dock.menu-open .dock-back { display: none; }
     });
     return crawl(items);
   }
+  var TICK = { t0: 0, dur: 0 };
   function crawl(items) {
     var box = el("div", "crawl" + (state.crawlPaused ? " paused" : "")), track = el("div", "crawl-track");
     box.setAttribute("role", "marquee"); box.setAttribute("aria-label", "Every game today, by league. Tap to pause.");
     for (var k = 0; k < 2; k++) items.forEach(function (it) { var c = k ? it.cloneNode(true) : it; if (k) c.setAttribute("aria-hidden", "true"); track.appendChild(c); });
     box.appendChild(track);
     box.addEventListener("click", function () { state.crawlPaused = !state.crawlPaused; box.classList.toggle("paused", state.crawlPaused); });
-    // steady reading speed whatever the length
-    requestAnimationFrame(function () { var w = track.scrollWidth / 2; if (w) track.style.setProperty("--dur", Math.max(20, Math.round(w / 38)) + "s"); });
+    // the page redraws often (new scores, previews…): pick the crawl up exactly where the last one was, at a steady reading speed
+    function place(dur) { var now = performance.now(); track.style.setProperty("--dur", dur + "s"); track.style.animationDelay = (-(((now - TICK.t0) / 1000) % dur)) + "s"; }
+    if (TICK.dur) place(TICK.dur); else track.style.visibility = "hidden";
+    requestAnimationFrame(function () {
+      var w = track.scrollWidth / 2; if (!w) return;
+      var dur = Math.max(20, Math.round(w / 38)), now = performance.now();
+      if (!TICK.dur) TICK.t0 = now;
+      else if (Math.abs(dur - TICK.dur) >= 1) { var frac = (((now - TICK.t0) / 1000) % TICK.dur) / TICK.dur; TICK.t0 = now - frac * dur * 1000; }
+      TICK.dur = dur; place(dur); track.style.visibility = "";
+    });
     return box;
   }
 
