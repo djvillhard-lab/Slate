@@ -72,7 +72,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111093536";
+<script>window.SLATE_BUILD = "20261111093944";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1177,6 +1177,13 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .gp-pv.asked { padding-left: 0; background: none; }
 .pv-cancel { color: var(--live); font-weight: 800; padding: 4px 2px; }
 .add.tap { cursor: pointer; padding: 10px; margin: -10px -10px -10px 0; border-radius: 12px; }
+.full-mu { flex-basis: 100%; display: flex !important; align-items: center; justify-content: space-between; gap: 10px; height: auto !important; min-height: 52px; padding: 8px 14px !important; margin: 2px 0; width: 100%; box-sizing: border-box; border-radius: 12px !important; background: var(--accent-fill) !important; color: var(--bg) !important; text-align: left; }
+.full-mu .fm-t { display: grid; gap: 1px; }
+.full-mu b { font-size: 16px; font-weight: 800; }
+.full-mu i { font-style: normal; font-size: 12.5px; font-weight: 650; opacity: .8; }
+.full-mu svg { width: 16px !important; height: 16px !important; }
+.g.panel.lp { transform: scale(.98); transition: transform .09s ease; }
+.g-main { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 /* iOS drags fixed, blurred buttons along while a page scrolls: solid backgrounds keep them pinned to the corner */
@@ -2103,12 +2110,6 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       box.appendChild(el("p", "pv-sum", pv.summary));
       if (recapPending(g, pv)) box.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives with the next hourly refresh."));
     }
-    if (inTray && !isDuo) {
-      var more = el("button", "pv-get pv-more"); more.type = "button";
-      more.appendChild(document.createTextNode(rc ? "Read the full recap" : "Read the full preview")); more.appendChild(icon("more"));
-      more.addEventListener("click", function (e) { e.stopPropagation(); openMatchup(g); });
-      box.appendChild(more);
-    }
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }).slice(0, 4) : [];
     var wl = stars.length ? stars : Array.isArray(pv.watch) ? pv.watch.filter(function (w) { return w && w.name; }).slice(0, 4) : [];
     if (wl.length) {
@@ -2540,12 +2541,6 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       box.appendChild(bxPlayers(g, b, true, false));
       var ts = bxTeamStats(g, b, true);
       if (ts) { box.appendChild(el("b", "pv-h", "Team stats")); box.appendChild(ts); }
-    }
-    if (!isDuo) {
-      var more = el("button", "pv-get pv-more"); more.type = "button";
-      more.appendChild(document.createTextNode("Full box score, preview and more")); more.appendChild(icon("more"));
-      more.addEventListener("click", function (e) { e.stopPropagation(); openMatchup(g); });
-      box.appendChild(more);
     }
     box.appendChild(el("p", "pv-at", bxStamp(b)));
     return box;
@@ -3027,7 +3022,16 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       main.setAttribute("aria-label", label + ", " + timeText(g.start) + ". Show options");
       function makeTray() {
         var tray = el("div", "tray");
-        if (!g.custom && !isDuo) tray.appendChild(trayBlock(g));
+        if (!g.custom && !isDuo) {
+          tray.appendChild(trayBlock(g));
+          // the way into the big matchup page, always in the same spot
+          var fm = el("button", "full-mu"); fm.type = "button";
+          var fmt = el("span", "fm-t"); fmt.appendChild(el("b", null, "Full matchup"));
+          var stx = status(g).kind; fmt.appendChild(el("i", null, stx === "upcoming" ? "Odds, season stats and preview" : "Box score, team stats, recap and preview"));
+          fm.appendChild(fmt); fm.appendChild(icon("more"));
+          fm.addEventListener("click", function (e) { e.stopPropagation(); openMatchup(g); });
+          tray.appendChild(fm);
+        }
         if (!g.custom) ["away", "home"].forEach(function (s) {
           var fav = isFav(g[s]), b = el("button", fav ? "on" : null); b.type = "button";
           b.appendChild(starIcon(fav)); b.appendChild(document.createTextNode(short(g, s)));
@@ -3059,7 +3063,19 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
           if (state.view !== "game") openSub("game"); else { renderGame(); $("pane-r").scrollTop = 0; }
         }
       };
-      main.addEventListener("click", flip);
+      var lpT = null, lpFired = false, lpX = 0, lpY = 0;
+      if (!g.custom && !isDuo) {
+        main.addEventListener("touchstart", function (e) {
+          if (e.touches.length !== 1 || (e.target.closest && e.target.closest(".net, .tray"))) return;
+          lpFired = false; lpX = e.touches[0].clientX; lpY = e.touches[0].clientY;
+          clearTimeout(lpT); lpT = setTimeout(function () { lpFired = true; row.classList.add("lp"); setTimeout(function () { row.classList.remove("lp"); openMatchup(g); }, 90); }, 450);
+        }, { passive: true });
+        main.addEventListener("touchmove", function (e) { var t = e.touches[0]; if (Math.abs(t.clientX - lpX) > 10 || Math.abs(t.clientY - lpY) > 10) clearTimeout(lpT); }, { passive: true });
+        main.addEventListener("touchend", function () { clearTimeout(lpT); }, { passive: true });
+        main.addEventListener("touchcancel", function () { clearTimeout(lpT); }, { passive: true });
+        main.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      }
+      main.addEventListener("click", function (e) { if (lpFired) { lpFired = false; e.preventDefault(); return; } flip(e); });
       main.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(e); } });
       if (open) openTray = makeTray();
     }
