@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111141502";
+<script>window.SLATE_BUILD = "20261111142115";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1480,6 +1480,11 @@ nav.dock.menu-open .dock-back { display: none; }
     </div>
     <p class="hint" id="device-hint"></p>
 
+    <div class="sec"><h2>Look</h2></div>
+    <div class="themes" id="theme-grid" role="group" aria-label="Theme"></div>
+    <p class="hint acc-h">Accent color</p>
+    <div class="swatches" id="swatches" role="group" aria-label="Accent color"></div>
+
     <div class="sec"><h2>Slate</h2></div>
     <div class="optrow">
       <div><b>Scores</b><span>Updated about once an hour during game time. Hide them to avoid spoilers.</span></div>
@@ -1641,31 +1646,21 @@ nav.dock.menu-open .dock-back { display: none; }
   var PALETTE = [["#5E1A26", "#D9A441"], ["#16295A", "#C8102E"], ["#1C4A30", "#D7D7D7"], ["#38276A", "#F2B632"], ["#0E3A58", "#8FCDEB"], ["#5A2D0C", "#F28C28"], ["#262626", "#C9A227"], ["#6E1B1B", "#EDEDED"], ["#113B37", "#57C1B0"], ["#33336E", "#E04E39"]];
   var ACCENTS = {
     green: { name: "Green", text: "#45A85E", fill: "#3E9E5A", deep: "#24603A", on: "#0C0C0C" },
-    blue: { name: "Blue", text: "#5B93FF", fill: "#3B7BF0", deep: "#1F4FA8", on: "#FFFFFF" },
-    red: { name: "Red", text: "#EF5A5F", fill: "#D63E44", deep: "#8E2328", on: "#FFFFFF" },
-    gold: { name: "Gold", text: "#E5AE2F", fill: "#D69A1A", deep: "#7A5A12", on: "#111111" },
-    purple: { name: "Purple", text: "#A38BFF", fill: "#8A68F5", deep: "#4F3A9A", on: "#FFFFFF" },
-    teal: { name: "Teal", text: "#33C2B1", fill: "#24A596", deep: "#156A60", on: "#071512" },
-    orange: { name: "Orange", text: "#F5873C", fill: "#E36C1F", deep: "#8C4212", on: "#111111" },
-    lime: { name: "Lime", text: "#B6F25B", fill: "#9BDB3C", deep: "#4E7A16", on: "#0B1A12" },
-    amber: { name: "Amber", text: "#FFB000", fill: "#FFB000", deep: "#8A5E00", on: "#000000" },
-    pink: { name: "Pink", text: "#FF5CB8", fill: "#F2309E", deep: "#8F1660", on: "#FFFFFF" },
-    royal: { name: "Royal", text: "#3B82F6", fill: "#2A6FE8", deep: "#1D4FA8", on: "#FFFFFF" },
-    scarlet: { name: "Scarlet", text: "#FF5247", fill: "#DA291C", deep: "#8E1A12", on: "#FFFFFF" }
+    teal: { name: "Teal", text: "#3CCFBE", fill: "#26B3A3", deep: "#156A60", on: "#06201C" },
+    sky: { name: "Sky", text: "#5CB8F5", fill: "#3AA2E8", deep: "#1C5F8F", on: "#06192A" },
+    coral: { name: "Coral", text: "#FF8A70", fill: "#F2704F", deep: "#93402A", on: "#1E0C06" },
+    gold: { name: "Gold", text: "#E9B949", fill: "#DCA72E", deep: "#7A5A12", on: "#1A1203" },
+    silver: { name: "Silver", text: "#C9D3DF", fill: "#B8C3D1", deep: "#4F5B6B", on: "#11161D" }
   };
-  // Whole-page themes: background, panels, text and a matching accent. [name, base look, accent, vars]
+  // Whole-page themes, all built off Midnight: background, panels, text and a matching accent. [name, base look, accent, vars]
   // vars: bg, card, raise, line, hair, ink, muted, dim, head, nav-sel, glass, glass-line
   var THEMES = {
     dark: ["Midnight", "dark", "green", ["#121821", "#1A2230", "#232D3C", "#2B3647", "rgba(148,163,184,.13)", "#ECF1F7", "#95A2B4", "#687689", "#CAD3DF", "#273244", "rgba(28,37,51,.78)", "rgba(255,255,255,.10)"]],
-    black: ["Black", "black", "green", ["#000000", "#111114", "#1A1A1E", "#26262B", "rgba(255,255,255,.10)", "#F2F2F2", "#9B9BA3", "#66666E", "#CFCFD6", "#24242A", "rgba(22,22,26,.8)", "rgba(255,255,255,.10)"]],
-    light: ["Light", "light", "green", ["#EEF1F5", "#FFFFFF", "#E6EAF0", "#D3DAE4", "rgba(15,23,42,.09)", "#0F172A", "#55627A", "#8A94A6", "#334155", "#DCE3EC", "rgba(255,255,255,.78)", "rgba(15,23,42,.08)"]],
-    turf: ["Turf", "dark", "lime", ["#0B1A12", "#12261A", "#1A3324", "#24402F", "rgba(160,220,180,.12)", "#F1F7F2", "#9DB8A6", "#6C8A76", "#D2E4D7", "#1C3828", "rgba(15,34,23,.82)", "rgba(220,255,230,.10)"]],
-    hardwood: ["Hardwood", "dark", "orange", ["#1C130D", "#271B12", "#33241A", "#433021", "rgba(240,200,160,.12)", "#FBF1E7", "#C4A88F", "#8E735C", "#E8D5C2", "#3A291D", "rgba(39,27,18,.84)", "rgba(255,230,200,.10)"]],
-    ice: ["Ice", "light", "royal", ["#E3EEF7", "#FFFFFF", "#D6E5F1", "#BFD3E4", "rgba(20,60,100,.10)", "#0B2135", "#4D6B85", "#8AA3B8", "#23425E", "#CFE0EE", "rgba(255,255,255,.82)", "rgba(11,33,53,.08)"]],
-    scoreboard: ["Scoreboard", "black", "amber", ["#000000", "#0F0C07", "#1B160D", "#2B2316", "rgba(255,190,80,.14)", "#FFE9B8", "#C9A86A", "#8A7448", "#FFD98A", "#241D10", "rgba(20,16,8,.86)", "rgba(255,200,100,.12)"]],
-    neon: ["Neon", "dark", "pink", ["#120B24", "#1C1336", "#271C47", "#35285E", "rgba(200,170,255,.14)", "#F5F0FF", "#B4A6D8", "#7D6FA6", "#DCD2F7", "#2C2050", "rgba(28,19,54,.84)", "rgba(230,210,255,.12)"]],
-    stl: ["St. Louis", "dark", "gold", ["#061A40", "#0B2457", "#12306C", "#1E4182", "rgba(150,190,255,.15)", "#F2F6FF", "#A9BCE0", "#7088B8", "#D6E2FA", "#153573", "rgba(11,36,87,.84)", "rgba(200,220,255,.12)"]],
-    trafford: ["Old Trafford", "dark", "scarlet", ["#120708", "#200B0D", "#2E1013", "#41181B", "rgba(255,170,170,.12)", "#FFF2F0", "#D6A5A2", "#9A6A68", "#F4D3D0", "#3A1215", "rgba(32,11,13,.86)", "rgba(255,210,205,.10)"]]
+    graphite: ["Graphite", "dark", "teal", ["#141619", "#1C1F23", "#252930", "#2F343C", "rgba(200,205,215,.11)", "#EEF0F3", "#9AA1AC", "#6B727D", "#CDD2D9", "#2A2F37", "rgba(28,31,35,.80)", "rgba(255,255,255,.09)"]],
+    harbor: ["Harbor", "dark", "sky", ["#0C1A22", "#12242F", "#1A2F3C", "#23394A", "rgba(140,200,230,.12)", "#EAF4F9", "#8FAABA", "#617D8E", "#C6DCE8", "#1D3445", "rgba(18,36,47,.82)", "rgba(200,235,255,.10)"]],
+    dusk: ["Dusk", "dark", "coral", ["#16141E", "#1E1B29", "#282435", "#332E44", "rgba(190,180,230,.12)", "#F1EFF7", "#A39DB8", "#716B87", "#D5D0E6", "#2C2740", "rgba(30,27,41,.82)", "rgba(235,225,255,.10)"]],
+    carbon: ["Carbon", "dark", "gold", ["#07090D", "#0F1319", "#171C24", "#212833", "rgba(160,180,210,.10)", "#EDF1F6", "#8E9AAB", "#5F6A7A", "#C8D1DD", "#1A212B", "rgba(15,19,25,.85)", "rgba(255,255,255,.08)"]],
+    storm: ["Storm", "dark", "silver", ["#161B22", "#1F262F", "#29313C", "#343D4A", "rgba(170,185,205,.12)", "#F0F3F7", "#A0ABB9", "#6F7A89", "#D0D7E0", "#2D3642", "rgba(31,38,47,.82)", "rgba(255,255,255,.10)"]]
   };
   var THEME_VARS = ["--bg", "--card", "--raise", "--line", "--hair", "--ink", "--muted", "--dim", "--head", "--nav-sel", "--glass", "--glass-line"];
 
@@ -1763,9 +1758,9 @@ nav.dock.menu-open .dock-back { display: none; }
   }
   function applyLook() {
     var root = document.documentElement;
-    state.look = "dark";
+    if (!THEMES[state.look]) state.look = "dark";
     var th = THEMES[state.look];
-    state.accent = "green";
+    if (!ACCENTS[state.accent]) state.accent = THEMES[state.look][2];
     root.setAttribute("data-look", th[1]); root.setAttribute("data-theme", state.look);
     THEME_VARS.forEach(function (v, i) { root.style.setProperty(v, th[3][i]); });
     var a = ACCENTS[state.accent];
@@ -4602,6 +4597,19 @@ nav.dock.menu-open .dock-back { display: none; }
     var dm = deviceMode();
     Array.prototype.forEach.call($("device-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-device") === dm ? "true" : "false"); });
     $("device-hint").textContent = dm === "duo" ? "Opened up and sideways, the screen splits on the crease: your slate on the left, games on the right." : "One page that fits a regular iPhone. Turn the phone sideways and it stays one page.";
+    var tg = $("theme-grid"); tg.textContent = "";
+    Object.keys(THEMES).forEach(function (k) {
+      var t = THEMES[k], v = t[3], acc = ACCENTS[t[2]], b = el("button", "theme"); b.type = "button";
+      b.setAttribute("aria-pressed", state.look === k ? "true" : "false"); b.setAttribute("aria-label", t[0] + " theme");
+      var mini = el("span", "th-mini"); mini.style.background = v[0];
+      var c1 = el("span", "th-card"); c1.style.background = v[1];
+      var ln = el("span", "th-line"); ln.style.background = v[5]; c1.appendChild(ln);
+      var ln2 = el("span", "th-line s"); ln2.style.background = v[6]; c1.appendChild(ln2);
+      var dot = el("span", "th-dot"); dot.style.background = acc.fill; c1.appendChild(dot);
+      mini.appendChild(c1); b.appendChild(mini); b.appendChild(el("span", "th-name", t[0]));
+      b.addEventListener("click", function () { state.look = k; state.accent = t[2]; applyLook(); saveSettings(); render(); });
+      tg.appendChild(b);
+    });
     Array.prototype.forEach.call($("size-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === state.textSize ? "true" : "false"); });
     Array.prototype.forEach.call($("size-seg-wide").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === (state.textSizeWide || state.textSize) ? "true" : "false"); });
     if (false) Array.prototype.forEach.call([], function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.autoAdd ? "true" : "false"); });
@@ -4620,6 +4628,15 @@ nav.dock.menu-open .dock-back { display: none; }
         state.hiddenLeagues = h; saveSettings(); render();
       });
       lc.appendChild(b);
+    });
+    var sw = $("swatches"); sw.textContent = "";
+    Object.keys(ACCENTS).forEach(function (k) {
+      var a = ACCENTS[k], b = el("button", "sw"); b.type = "button";
+      b.style.background = a.fill; b.style.color = a.on;
+      b.setAttribute("aria-label", a.name + " accent"); b.setAttribute("aria-pressed", state.accent === k ? "true" : "false");
+      if (state.accent === k) b.appendChild(icon("check"));
+      b.addEventListener("click", function () { state.accent = k; applyLook(); saveSettings(); render(); });
+      sw.appendChild(b);
     });
   }
 
