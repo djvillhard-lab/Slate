@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111135755";
+<script>window.SLATE_BUILD = "20261111141502";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1279,8 +1279,13 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .tc-dim { color: var(--dim); }
 .tm-pick { display: flex !important; align-items: center; gap: 12px; padding: 12px 2px; }
 .tm-pick .tx { flex: 1; min-width: 0; display: grid; }
-.tm-pick .tb-star, .tm-pick svg.tb-star { width: 16px; height: 16px; color: var(--accent); flex: none; }
-.tm-pick .chev { flex: none; }
+.tm-pick { padding: 4px 0 !important; gap: 4px !important; }
+.tm-go { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px 2px; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
+.tm-go .tx { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.tm-go .csp { margin-top: 6px; }
+.tm-fav { flex: none; width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 0; color: var(--dim); }
+.tm-fav svg { width: 22px; height: 22px; }
+.tm-fav.on { color: var(--accent); }
 #view-teams .sec .rlink { margin-left: auto; }
 .tord { display: grid; gap: 0; margin-bottom: 18px; }
 .tord .trow { display: flex; align-items: center; gap: 12px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
@@ -1468,26 +1473,12 @@ nav.dock.menu-open .dock-back { display: none; }
     <button class="navrow" id="open-notify" type="button">
       <span><b>Notifications</b><span id="nt-summary"></span></span><span class="chev">›</span>
     </button>
-    <div class="sec"><h2>My teams</h2><span class="count" id="teams-count"></span></div>
-    <form class="tsearch" id="team-form" autocomplete="off" role="search">
-      <input class="field" id="team-input" type="search" placeholder="Search teams, e.g. Blues or Chiefs" aria-label="Search teams to add" maxlength="60" enterkeyhint="done" aria-controls="team-results">
-      <div class="tres" id="team-results" role="list" hidden></div>
-    </form>
-    <p class="hint">Tap a team to add it. You can also star a team on any game in your slate.</p>
-    <div class="rows" id="team-rows"></div>
-
     <div class="sec"><h2>Phone</h2></div>
     <div class="seg seg2" id="device-seg" role="group" aria-label="Phone">
       <button type="button" data-device="duo">iPhone Duo</button>
       <button type="button" data-device="iphone">iPhone</button>
     </div>
     <p class="hint" id="device-hint"></p>
-    <p class="hint" id="screen-diag" style="font-size:12px;opacity:.7"></p>
-
-    <div class="sec"><h2>Look</h2></div>
-    <div class="themes" id="theme-grid" role="group" aria-label="Theme"></div>
-    <p class="hint acc-h">Accent</p>
-    <div class="swatches" id="swatches" role="group" aria-label="Accent color"></div>
 
     <div class="sec"><h2>Slate</h2></div>
     <div class="optrow">
@@ -1772,9 +1763,9 @@ nav.dock.menu-open .dock-back { display: none; }
   }
   function applyLook() {
     var root = document.documentElement;
-    if (!THEMES[state.look]) state.look = "dark";
+    state.look = "dark";
     var th = THEMES[state.look];
-    if (!ACCENTS[state.accent]) state.accent = "green";
+    state.accent = "green";
     root.setAttribute("data-look", th[1]); root.setAttribute("data-theme", state.look);
     THEME_VARS.forEach(function (v, i) { root.style.setProperty(v, th[3][i]); });
     var a = ACCENTS[state.accent];
@@ -3338,11 +3329,30 @@ nav.dock.menu-open .dock-back { display: none; }
     body.appendChild(pills);
     var res = el("div", "rows tb-res");
     function row(t) {
-      var lg = lgOfKnown(t), r = el("button", "trow tm-pick"); r.type = "button";
-      r.appendChild(teamBadge(t)); var tx = el("span", "tx"); tx.appendChild(el("span", "n", t.name)); tx.appendChild(el("span", "lg", t.lg)); r.appendChild(tx);
-      if (lg && isFav(t.name, lg)) { var sv = starIcon(true); sv.setAttribute("class", "tb-star"); r.appendChild(sv); }
-      r.appendChild(el("span", "chev", "›"));
-      r.addEventListener("click", function () { if (lg) openTeam(t.name, lg); });
+      var lg = lgOfKnown(t), col = t.lg === "College", r = el("div", "trow tm-pick");
+      var go = el("button", "tm-go"); go.type = "button"; go.setAttribute("aria-label", "Open " + t.name);
+      go.appendChild(teamBadge(t)); var tx = el("span", "tx"); tx.appendChild(el("span", "n", t.name));
+      if (!col) tx.appendChild(el("span", "lg", t.lg));
+      else {
+        var chips = el("span", "csp");
+        COL_KEYS.forEach(function (k) {
+          var on = isFav(t.name, k), c = el("button", "csp-c" + (on ? " on" : "")); c.type = "button";
+          c.setAttribute("aria-pressed", on ? "true" : "false"); c.setAttribute("aria-label", (on ? "Unstar " : "Star ") + t.name + " " + COL_SPORT[k]);
+          c.appendChild(starIcon(on)); c.appendChild(document.createTextNode({ ncaam: "Men's hoops", ncaaw: "Women's hoops", ncaaf: "Football" }[k]));
+          c.addEventListener("click", function (e) { e.stopPropagation(); toggleFav(t.name, k); });
+          chips.appendChild(c);
+        });
+        tx.appendChild(chips);
+      }
+      go.appendChild(tx);
+      go.addEventListener("click", function () { if (lg) openTeam(t.name, lg); });
+      r.appendChild(go);
+      if (!col && lg) {
+        var on = isFav(t.name, lg), sb = el("button", "tm-fav" + (on ? " on" : "")); sb.type = "button";
+        sb.setAttribute("aria-pressed", on ? "true" : "false"); sb.setAttribute("aria-label", (on ? "Remove " : "Add ") + t.name + (on ? " from" : " to") + " my teams");
+        sb.appendChild(starIcon(on)); sb.addEventListener("click", function (e) { e.stopPropagation(); toggleFav(t.name, lg); });
+        r.appendChild(sb);
+      }
       return r;
     }
     function list() {
@@ -4535,7 +4545,7 @@ nav.dock.menu-open .dock-back { display: none; }
     if (at < 0) at = state.teams.length;
     Array.prototype.splice.apply(state.teams, [at, 0].concat(add));
     saveSettings(); render();
-    if (!$("team-results").hidden) renderTeamResults();
+    if ($("team-results") && !$("team-results").hidden) renderTeamResults();
     toast((want ? "★ Added " : "Removed ") + name + " " + COL_SPORT[lg].toLowerCase());
   }
   function colPickRow(t, inSearch) {
@@ -4588,45 +4598,10 @@ nav.dock.menu-open .dock-back { display: none; }
     if ((state.gamesOrder || []).length) box.appendChild(rs);
   }
   function renderSettings() {
-    var rows = $("team-rows"); rows.textContent = "";
-    var nT = {}; state.teams.forEach(function (t) { nT[parseTeam(t).name.toLowerCase()] = 1; }); nT = Object.keys(nT).length;
-    $("teams-count").textContent = nT ? nT + (nT === 1 ? " team" : " teams") : "";
-    if (!state.teams.length) { var e = el("div", "trow"); e.appendChild(el("span")); e.appendChild(el("span", "n", "No teams yet")); rows.appendChild(e); }
-    var shownCol = {};
-    state.teams.forEach(function (t, i) {
-      var known = teamByName(t);
-      if (known && known.lg === "College") { var ck = known.name.toLowerCase(); if (!shownCol[ck]) { shownCol[ck] = 1; rows.appendChild(colPickRow(known, false)); } return; }
-      var r = el("div", "trow");
-      var ab = /^st\.? louis/i.test(t) ? "STL" : /^manchester united$/i.test(t) ? "MUN" : t.split(" ").filter(Boolean).map(function (w) { return w[0]; }).join("").slice(0, 3).toUpperCase();
-      r.appendChild(known ? teamBadge(known) : badgeFor(ab, t));
-      var tn = el("span", "tx"); tn.appendChild(el("span", "n", t)); if (known) tn.appendChild(el("span", "lg", known.lg)); r.appendChild(tn);
-      var x = el("button", "x", "×"); x.type = "button"; x.setAttribute("aria-label", "Remove " + t);
-      x.addEventListener("click", function () { state.teams.splice(i, 1); saveSettings(); render(); });
-      r.appendChild(x); rows.appendChild(r);
-    });
     var fn = Number(state.foldNudge) || 0; $("fold-val").textContent = fn ? (fn > 0 ? "+" : "") + fn + " pt" : "Auto";
-    try {
-      var probe = document.createElement("div"); probe.style.cssText = "position:fixed;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)";
-      document.body.appendChild(probe); var cs = getComputedStyle(probe);
-      $("screen-diag").textContent = "Screen check: window " + innerWidth + "×" + innerHeight + ", screen " + screen.width + "×" + screen.height + ", edges T" + parseInt(cs.paddingTop) + " R" + parseInt(cs.paddingRight) + " B" + parseInt(cs.paddingBottom) + " L" + parseInt(cs.paddingLeft) + (navigator.standalone ? ", Home Screen app" : ", Safari");
-      probe.remove();
-    } catch (e) {}
     var dm = deviceMode();
     Array.prototype.forEach.call($("device-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-device") === dm ? "true" : "false"); });
     $("device-hint").textContent = dm === "duo" ? "Opened up and sideways, the screen splits on the crease: your slate on the left, games on the right." : "One page that fits a regular iPhone. Turn the phone sideways and it stays one page.";
-    var tg = $("theme-grid"); tg.textContent = "";
-    Object.keys(THEMES).forEach(function (k) {
-      var t = THEMES[k], v = t[3], acc = ACCENTS[t[2]], b = el("button", "theme"); b.type = "button";
-      b.setAttribute("aria-pressed", state.look === k ? "true" : "false"); b.setAttribute("aria-label", t[0] + " theme");
-      var mini = el("span", "th-mini"); mini.style.background = v[0];
-      var c1 = el("span", "th-card"); c1.style.background = v[1];
-      var ln = el("span", "th-line"); ln.style.background = v[5]; c1.appendChild(ln);
-      var ln2 = el("span", "th-line s"); ln2.style.background = v[6]; c1.appendChild(ln2);
-      var dot = el("span", "th-dot"); dot.style.background = acc.fill; c1.appendChild(dot);
-      mini.appendChild(c1); b.appendChild(mini); b.appendChild(el("span", "th-name", t[0]));
-      b.addEventListener("click", function () { state.look = k; state.accent = t[2]; applyLook(); saveSettings(); render(); });
-      tg.appendChild(b);
-    });
     Array.prototype.forEach.call($("size-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === state.textSize ? "true" : "false"); });
     Array.prototype.forEach.call($("size-seg-wide").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === (state.textSizeWide || state.textSize) ? "true" : "false"); });
     if (false) Array.prototype.forEach.call([], function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.autoAdd ? "true" : "false"); });
@@ -4645,15 +4620,6 @@ nav.dock.menu-open .dock-back { display: none; }
         state.hiddenLeagues = h; saveSettings(); render();
       });
       lc.appendChild(b);
-    });
-    var sw = $("swatches"); sw.textContent = "";
-    Object.keys(ACCENTS).forEach(function (k) {
-      var a = ACCENTS[k], b = el("button", "sw"); b.type = "button";
-      b.style.background = a.fill; b.style.color = a.on;
-      b.setAttribute("aria-label", a.name + " accent"); b.setAttribute("aria-pressed", state.accent === k ? "true" : "false");
-      if (state.accent === k) b.appendChild(icon("check"));
-      b.addEventListener("click", function () { state.accent = k; applyLook(); saveSettings(); render(); });
-      sw.appendChild(b);
     });
   }
 
@@ -5233,24 +5199,6 @@ nav.dock.menu-open .dock-back { display: none; }
     $("sheet-add").classList.remove("open");
     toast("Added to slate"); state.view = "lineup"; render(); saveLineup();
   });
-  // team search: pick a real team from the list (every pro team in the leagues the app covers, plus Division I college)
-  $("team-input").addEventListener("input", renderTeamResults);
-  // lift the search to the top of the screen so its results aren't under the keyboard
-  $("team-input").addEventListener("focus", function () {
-    var form = $("team-form");
-    setTimeout(function () {
-      var hd = document.querySelector("#pane-r > header.top");
-      form.style.scrollMarginTop = ((hd ? hd.getBoundingClientRect().height : 0) + 12) + "px";
-      try { form.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) { form.scrollIntoView(); }
-    }, 300);
-  });
-  $("team-input").addEventListener("keydown", function (e) { if (e.key === "Escape") { this.value = ""; renderTeamResults(); } });
-  $("team-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var top = teamSearch($("team-input").value)[0];
-    if (top && !hasTeam(top.name)) pickTeam(top); else if (top) toast(top.name + " is already in your teams");
-  });
-
   // ---------- layout: open sideways = two panes with the menu along the bottom of the right pane;
   //            everything else (cover screen, open and upright) = compact menu in the bottom-right corner ----------
   var mqSplit = window.matchMedia("(min-width: 700px) and (min-height: 480px) and (orientation: landscape)");
