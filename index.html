@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111151631";
+<script>window.SLATE_BUILD = "20261111153001";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -859,11 +859,13 @@ html.iphone main.wrap { padding-left: 16px; padding-right: 16px; }
 .day.cal.on { color: var(--accent); }
 .day.cal .w { font-size: 12px; }
 
-@keyframes slideL { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
-@keyframes slideR { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
-#lineup-body.slide-l { animation: slideL .22s ease-out; }
-#lineup-body.slide-r { animation: slideR .22s ease-out; }
-@media (prefers-reduced-motion: reduce) { #lineup-body.slide-l, #lineup-body.slide-r { animation: none; } }
+@keyframes slideL { from { opacity: 0; transform: translate3d(36%,0,0); } to { opacity: 1; transform: none; } }
+@keyframes slideR { from { opacity: 0; transform: translate3d(-36%,0,0); } to { opacity: 1; transform: none; } }
+main section.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); } main section.slide-r { animation: slideR .3s cubic-bezier(.2,.8,.2,1); }
+#lineup-body.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); }
+#lineup-body.slide-r { animation: slideR .3s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { #lineup-body.slide-l, #lineup-body.slide-r, #games-body.slide-l, #games-body.slide-r, #best-body.slide-l, #best-body.slide-r, main section.slide-l, main section.slide-r { animation: none; } }
+#main-wrap, #pane-l { overflow-x: clip; }
 
 /* matchup preview inside an opened slate game */
 .tray { align-items: center; }
@@ -1234,7 +1236,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .ford-b { font-size: 20px; }
 .ford-up { transform: rotate(90deg); } .ford-down { transform: rotate(90deg); }
 .ford-b:disabled { opacity: .3; }
-#games-body.slide-l { animation: slideL .22s ease-out; } #games-body.slide-r { animation: slideR .22s ease-out; }
+#games-body.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); } #games-body.slide-r { animation: slideR .3s cubic-bezier(.2,.8,.2,1); }
 .pv-bul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; }
 .pv-bul li { line-height: 1.4; }
 .tm-head { padding-bottom: 14px; margin-bottom: 12px; }
@@ -1261,7 +1263,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 #view-teams .field { width: 100%; box-sizing: border-box; margin: 4px 0 8px; }
 .rk-strip { margin: 0 -16px 10px; }
 .rk-sub { margin: -4px 0 10px; }
-#best-body.slide-l { animation: slideL .22s ease-out; } #best-body.slide-r { animation: slideR .22s ease-out; }
+#best-body.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); } #best-body.slide-r { animation: slideR .3s cubic-bezier(.2,.8,.2,1); }
 .pstar { margin-left: 8px; width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 50%; background: transparent; border: 0; color: var(--dim); flex: none; }
 .pstar svg { width: 18px; height: 18px; } .pstar.on { color: var(--accent); }
 .rk-top { align-items: center; }
@@ -1340,6 +1342,11 @@ nav.dock.menu-open .dock-back { display: none; }
 .evpick { margin-top: 12px; display: grid; gap: 10px; }
 .ev-seg { max-width: 300px; } .ev-seg button { white-space: nowrap; padding-left: 8px; padding-right: 8px; }
 .ev-hint, .ev-none { margin: 0; color: var(--dim); font-size: 13px; }
+.ev-det summary { cursor: pointer; font-weight: 700; color: var(--accent); padding: 4px 0; }
+.ev-tools { display: grid; gap: 8px; margin: 8px 0; }
+.ev-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.ev-chips button { flex: none; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; }
+.ev-chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .ev-list { display: grid; gap: 6px; }
 .ev { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: none; color: var(--muted); font: inherit; text-align: left; }
 .ev svg { width: 16px; height: 16px; flex: none; }
@@ -1348,6 +1355,16 @@ nav.dock.menu-open .dock-back { display: none; }
 .ev-tx { display: grid; gap: 1px; min-width: 0; }
 .ev-tx b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ev-tx span { font-size: 12px; color: var(--dim); }
+.sugg { margin: 8px 0 18px; }
+.sugg-g { margin-bottom: 10px; }
+.sugg-why { display: flex; align-items: center; gap: 6px; margin: 6px 4px 0; color: var(--muted); font-size: 13px; }
+.sugg-why svg { width: 15px; height: 15px; flex: none; color: var(--accent); }
+.sugg-why > span { flex: 1; min-width: 0; }
+.sugg-x { flex: none; background: none; border: 0; color: var(--dim); font: inherit; font-size: 13px; font-weight: 700; padding: 4px 2px; }
+.sugg-r { display: grid; gap: 10px; padding: 14px; margin-bottom: 10px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+.sugg-rt { display: grid; gap: 2px; } .sugg-rt .sugg-why { margin: 0; }
+.sugg-bt { display: flex; align-items: center; gap: 14px; }
+.sugg-on { border: 0; border-radius: 10px; padding: 8px 14px; background: var(--accent-fill); color: var(--on-accent); font: inherit; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -1831,8 +1848,8 @@ nav.dock.menu-open .dock-back { display: none; }
       else { s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "1.8"); s.setAttribute("stroke-linejoin", "round"); }
     } else {
       s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "3"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
-      var D = { check: "M5 12.5l4.5 4.5L19 7.5", x: "M6.5 6.5l11 11M17.5 6.5l-11 11", back: "M15 5l-7 7 7 7", more: "M9 5l7 7-7 7", sliders: "M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5", pin: "M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11zM12 12.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6z" };
-      if (kind === "pin" || kind === "sliders") s.setAttribute("stroke-width", kind === "pin" ? "1.9" : "2.2");
+      var D = { check: "M5 12.5l4.5 4.5L19 7.5", x: "M6.5 6.5l11 11M17.5 6.5l-11 11", back: "M15 5l-7 7 7 7", more: "M9 5l7 7-7 7", sliders: "M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5", sparkle: "M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9zM18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z", pin: "M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11zM12 12.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6z" };
+      if (kind === "pin" || kind === "sliders" || kind === "sparkle") s.setAttribute("stroke-width", kind === "sliders" ? "2.2" : "1.9");
       p.setAttribute("d", D[kind] || "M12 5v14M5 12h14");
     }
     s.appendChild(p); return s;
@@ -2266,7 +2283,7 @@ nav.dock.menu-open .dock-back { display: none; }
   var PREVIEWS_LIVE = true;   // an hourly scheduled run writes and refreshes previews for the slate
   function fmtOdds(n) { n = Number(n); return isNaN(n) ? "" : (n > 0 ? "+" : "") + n; }
   // phone: the full matchup page opens over the slate; Back returns to the same spot
-  function openMatchup(g) { state.gameId = g.id; openSub("game"); }
+  function openMatchup(g) { state.gameId = g.id; if (!inLineup(g.id)) logAct("open", g); openSub("game"); }
   function backToSlate() { if (!goBack()) setView("lineup"); }
   // ---------- going back, one-handed: a Back button beside the menu in the bottom-right corner, or a sideways swipe ----------
   var VIEW_NAMES = { lineup: "Slate", games: "All games", tv: "On TV", rules: "Rules", settings: "Settings", best: "Rankings", game: "Matchup", notify: "Alerts", teams: "Teams", team: "Team" };
@@ -4250,6 +4267,7 @@ nav.dock.menu-open .dock-back { display: none; }
       body.appendChild(wrap);
     }
     if (loading) return;
+    var sg = suggestionBlock("slate"); if (sg) body.appendChild(sg);
     // two actions in one panel, like the rest of the slate; Share lives in the header, Clear is a quiet link
     var acts = el("div", "slate-acts"), row = el("div", "sa-row");
     function act(label, path, fn) {
@@ -4265,6 +4283,121 @@ nav.dock.menu-open .dock-back { display: none; }
     if (lg.length) { var cl = el("button", "sa-clear", "Clear slate"); cl.type = "button"; cl.addEventListener("click", clearLineup); acts.appendChild(cl); }
     if (!acts.childNodes.length) return;
     body.appendChild(acts);
+  }
+
+  // ---------- learning: a private log of what DJ adds, removes and checks, and suggestions from it ----------
+  var ACT = { log: [], loaded: false, timer: null, pending: [] };
+  var ACT_KEYS = ["id", "league", "start", "away", "home", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "awayAbbr", "homeAbbr", "tv", "note", "stage", "comp", "neutral"];
+  function actLoad() {
+    if (!db || !uid || ACT.loaded) return;
+    db.collection("data/users/" + uid).doc("activity").get().then(function (sn) {
+      var d = sn.exists ? sn.data() : null; ACT.log = ((d && d.log) || []).concat(ACT.pending); ACT.pending = []; ACT.loaded = true; keepScroll(render);
+    }, function () { ACT.loaded = true; });
+  }
+  function actSave() {
+    clearTimeout(ACT.timer);
+    ACT.timer = setTimeout(function () {
+      if (!db || !uid || !ACT.loaded) return;
+      var cut = Date.now() - 120 * 86400000;
+      ACT.log = ACT.log.filter(function (e) { return Date.parse(e.t) > cut; }).slice(-400);
+      db.collection("data/users/" + uid).doc("activity").set({ v: 1, log: ACT.log }).then(null, function () {});
+    }, 2500);
+  }
+  function logAct(a, g, extra) {
+    if (!g || g.custom || !uid) return;
+    var e = { a: a, t: new Date().toISOString(), d: state.date };
+    ACT_KEYS.forEach(function (k) { if (g[k] != null && g[k] !== "") e[k] = Array.isArray(g[k]) ? g[k].slice(0, 3) : g[k]; });
+    if (extra) Object.keys(extra).forEach(function (k) { e[k] = extra[k]; });
+    (ACT.loaded ? ACT.log : ACT.pending).push(e); actSave();
+  }
+  function actRecent(days) { var cut = Date.now() - days * 86400000; return ACT.log.filter(function (e) { return Date.parse(e.t) > cut; }); }
+  function uniq(list) { var seen = {}; return list.filter(function (e) { var k = e.d + "|" + e.id; if (seen[k]) return false; seen[k] = 1; return true; }); }
+  // games worth suggesting today, each with the one reason that fits best
+  function gameSuggestions() {
+    if (!ACT.loaded || isPastDay()) return [];
+    var rec = actRecent(60), adds = uniq(rec.filter(function (e) { return e.a === "add"; })), opens = rec.filter(function (e) { return e.a === "open"; });
+    var rems = uniq(rec.filter(function (e) { return e.a === "remove"; })), skips = {};
+    rec.forEach(function (e) { if (e.a === "skip") skips[e.d + "|" + e.id] = 1; });
+    if (!adds.length && opens.length < 3) return [];
+    var removed = {}; (state.lineup.removed || []).forEach(function (id) { removed[id] = 1; });
+    var out = [];
+    games().forEach(function (g) {
+      if (g.custom || inLineup(g.id) || removed[g.id] || skips[state.date + "|" + g.id]) return;
+      var k = status(g).kind; if (k === "over" || k === "tbd") return;
+      var score = 0, why = [], veto = false, tag = info(g).tag;
+      var has = function (e, t) { return e.league === g.league && (e.away === t || e.home === t); };
+      ["away", "home"].forEach(function (sd) {
+        var t = g[sd]; if (!t) return;
+        var nA = adds.filter(function (e) { return has(e, t); }).length, nO = opens.filter(function (e) { return has(e, t); }).length, nR = rems.filter(function (e) { return has(e, t); }).length;
+        if (nR >= 2 && nR >= nA) veto = true;
+        if (nA >= 2) { score += 3 * nA; why.push([3 * nA, "You've added " + short(g, sd) + " games " + nA + " times."]); }
+        else if (nO >= 3) { score += 1.5 * nO; why.push([1.5 * nO, "You keep opening " + short(g, sd) + " matchups."]); }
+      });
+      if (LEAGUES[g.league] && LEAGUES[g.league].college) {
+        var cs = []; [g.awayConf, g.homeConf].forEach(function (c) { if (c && cs.indexOf(c) === -1) cs.push(c); });
+        cs.forEach(function (c) { var n = adds.filter(function (e) { return e.league === g.league && (e.awayConf === c || e.homeConf === c); }).length; if (n >= 3) { score += 2 * n; why.push([2 * n, "You've added " + n + " " + c + " " + tag + " games by hand."]); } });
+      }
+      var tv = (g.tv || [])[0];
+      if (tv) { var nt = adds.filter(function (e) { return e.league === g.league && (e.tv || [])[0] === tv; }).length; if (nt >= 3) { score += 1.5 * nt; why.push([1.5 * nt, "You often add " + tag + " games on " + (NET_SHORT[tv] || tv) + "."]); } }
+      var nl = adds.filter(function (e) { return e.league === g.league; }).length;
+      if (nl >= 4) { score += nl; why.push([nl, "You've added " + nl + " " + tag + " games by hand lately."]); }
+      var late = hourCT(g.start) >= 21, nLate = rems.filter(function (e) { return e.league === g.league && hourCT(e.start) >= 21; }).length;
+      if (late && nLate >= 3) score -= 6;
+      if (veto || score < 6 || !why.length) return;
+      why.sort(function (a, b) { return b[0] - a[0]; });
+      out.push({ g: g, score: score, why: why[0][1] });
+    });
+    out.sort(function (a, b) { return b.score - a.score; });
+    return out.slice(0, 3);
+  }
+  // a rule that would have picked most of the games DJ keeps adding by hand
+  function ruleSuggestions() {
+    if (!ACT.loaded) return [];
+    var rec = actRecent(30), adds = uniq(rec.filter(function (e) { return e.a === "add"; })), skipped = {};
+    rec.concat(actRecent(365).filter(function (e) { return e.a === "skiprule"; })).forEach(function (e) { if (e.a === "skiprule") skipped[e.k] = 1; });
+    var by = {}; adds.forEach(function (e) { (by[e.league] = by[e.league] || []).push(e); });
+    var out = [];
+    Object.keys(by).forEach(function (lg) {
+      var list = by[lg], b = lgRules(lg); if (list.length < 3 || b.all) return;
+      var best = null;
+      (LG_OPTS[lg] || []).forEach(function (key) {
+        if (key === "all" || b[key]) return;
+        (CHOICES[key] || [true]).forEach(function (v) {
+          if (skipped[lg + ":" + key]) return;
+          var n = list.filter(function (e) { try { return !!MATCH[key](e, v); } catch (x) { return false; } }).length;
+          if (n >= 3 && n / list.length >= 0.6 && (!best || n > best.n)) best = { lg: lg, key: key, v: v, n: n, m: list.length };
+        });
+      });
+      if (best) out.push(best);
+    });
+    return out.map(function (s2) {
+      s2.title = "Add " + (LEAGUES[s2.lg] || {}).name + ": " + optShort(s2.lg, s2.key, s2.v);
+      s2.why = s2.n + " of the " + s2.m + " " + ((LEAGUES[s2.lg] || {}).tag || "") + " games you added by hand were " + (optPhrase(s2.lg, s2.key, s2.v) || "this kind") + ".";
+      return s2;
+    });
+  }
+  function suggestionBlock(where) {
+    var gs = where === "slate" ? gameSuggestions() : [], rs = ruleSuggestions();
+    if (!gs.length && !rs.length) return null;
+    var w = el("div", "sugg");
+    var h = el("div", "sec"); h.appendChild(el("h2", null, where === "slate" ? "Suggested for you" : "Suggested rules")); w.appendChild(h);
+    gs.forEach(function (s2) {
+      var c = el("div", "sugg-g");
+      c.appendChild(gameRow(s2.g, "games"));
+      var wy = el("div", "sugg-why"); wy.appendChild(icon("sparkle")); wy.appendChild(el("span", null, s2.why));
+      var x = el("button", "sugg-x", "Not for me"); x.type = "button";
+      x.addEventListener("click", function () { logAct("skip", s2.g); keepScroll(render); });
+      wy.appendChild(x); c.appendChild(wy); w.appendChild(c);
+    });
+    rs.forEach(function (s2) {
+      var c = el("div", "sugg-r");
+      var tx = el("div", "sugg-rt"); tx.appendChild(el("b", null, s2.title)); var wy = el("span", "sugg-why"); wy.appendChild(icon("sparkle")); wy.appendChild(el("span", null, s2.why)); tx.appendChild(wy); c.appendChild(tx);
+      var bt = el("div", "sugg-bt");
+      var on = el("button", "sugg-on", "Turn on"); on.type = "button"; on.addEventListener("click", function () { setLg(s2.lg, s2.key, s2.v); toast("Rule on: " + s2.title.replace(/^Add /, "")); });
+      var no = el("button", "sugg-x", "No thanks"); no.type = "button"; no.addEventListener("click", function () { ACT.log.push({ a: "skiprule", k: s2.lg + ":" + s2.key, t: new Date().toISOString() }); actSave(); keepScroll(render); });
+      bt.appendChild(on); bt.appendChild(no); c.appendChild(bt); w.appendChild(c);
+    });
+    return w;
   }
 
   // ---------- slate rules ----------
@@ -4432,32 +4565,81 @@ nav.dock.menu-open .dock-back { display: none; }
     card.appendChild(body);
     return card;
   }
-  // Big events: every event, or only picked ones; each event on this day listed with its games
+  // Big events: every event, or only the ones DJ picks from the full list of upcoming events (built daily by the script)
+  var EVCAT = null, evCatAsked = false;
+  function loadEvCat() {
+    if (evCatAsked || !db) return; evCatAsked = true;
+    try { db.doc("events/catalog").get().then(function (sn) { EVCAT = sn.exists ? (sn.data() || {}).events || {} : {}; if (state.view === "rules") keepScroll(renderRules); }, function () { EVCAT = {}; }); } catch (e) { EVCAT = {}; }
+  }
+  function eventList() {
+    var today = todayInHome(), out = {}, add = function (name, lg, first, n) {
+      var k = name.toLowerCase(), e = out[k] || (out[k] = { name: name, lg: [], first: first, n: 0 });
+      lg.forEach(function (l) { if (e.lg.indexOf(l) === -1) e.lg.push(l); }); if (first < e.first) e.first = first; e.n = Math.max(e.n, n);
+    };
+    Object.keys(EVCAT || {}).forEach(function (k) { var e = EVCAT[k]; if ((e.first || "") >= today || (e.dates || []).some(function (d) { return d >= today; })) add(e.name, e.lg || [], e.first || today, e.n || 0); });
+    var day = {}; games().forEach(function (g) { if (isEvent(g)) { var k = eventKey(g); (day[k] = day[k] || []).push(g); } });
+    Object.keys(day).forEach(function (k) { add(k, [day[k][0].league], state.date, day[k].length); });
+    return Object.keys(out).map(function (k) { return out[k]; }).sort(function (a, b) { return a.first < b.first ? -1 : a.first > b.first ? 1 : a.name.localeCompare(b.name); });
+  }
+  function evIsOn(name) {
+    var r = state.rules || RULE_DEFAULTS, k = name.toLowerCase();
+    if (r.eventMode === "pick") return (r.eventsOn || []).some(function (x) { return x.toLowerCase() === k; });
+    return !(r.eventsOff || []).some(function (x) { return x.toLowerCase() === k; });
+  }
   function eventPicker() {
-    var r = state.rules, box = el("div", "evpick"), evs = {}, order = [];
-    games().forEach(function (g) { if (!isEvent(g)) return; var k = eventKey(g); if (!evs[k]) { evs[k] = []; order.push(k); } evs[k].push(g); });
+    loadEvCat();
+    var r = state.rules, box = el("div", "evpick");
     var seg = el("div", "seg seg2 ev-seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Which events");
     [["all", "All events"], ["pick", "Just my picks"]].forEach(function (o) {
       var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", (r.eventMode || "all") === o[0] ? "true" : "false");
       b.addEventListener("click", function () { r.eventMode = o[0]; rulesChanged(); }); seg.appendChild(b);
     });
     box.appendChild(seg);
-    if (!order.length) { box.appendChild(el("p", "ev-none", "No events " + whenWord() + ".")); return box; }
-    box.appendChild(el("p", "ev-hint", r.eventMode === "pick" ? "Tap an event to add it. Picks carry over to other days." : "Tap an event to leave it out. New events are in until you leave them out."));
-    var list = el("div", "ev-list");
-    order.forEach(function (k) {
-      var on = eventOn(evs[k][0]), b = el("button", "ev" + (on ? " on" : "")); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
-      b.appendChild(icon(on ? "check" : "plus"));
-      var tx = el("span", "ev-tx"); tx.appendChild(el("b", null, k));
-      tx.appendChild(el("span", null, evs[k].length + (evs[k].length === 1 ? " game · " : " games · ") + info(evs[k][0]).tag)); b.appendChild(tx);
-      b.addEventListener("click", function () {
-        var lk = k.toLowerCase(), key = r.eventMode === "pick" ? "eventsOn" : "eventsOff", arr = (r[key] || []).filter(function (x) { return x.toLowerCase() !== lk; });
-        if (arr.length === (r[key] || []).length) arr.push(k);
-        r[key] = arr; rulesChanged();
-      });
-      list.appendChild(b);
+    var pick = r.eventMode === "pick", picked = pick ? (r.eventsOn || []) : (r.eventsOff || []);
+    box.appendChild(el("p", "ev-hint", pick ? (picked.length ? picked.length + (picked.length === 1 ? " event picked. " : " events picked. ") : "Nothing picked yet. ") + "Picks carry over to every day and next season." : "Every event counts" + (picked.length ? " except " + picked.length + " you left out" : "") + ". Tap one below to leave it out."));
+    var det = el("details", "ev-det"); if (state.evOpen) det.open = true;
+    det.addEventListener("toggle", function () { state.evOpen = det.open; });
+    var all = EVCAT ? eventList() : [];
+    det.appendChild(el("summary", null, EVCAT ? "Choose events (" + all.length + " coming up)" : "Loading upcoming events…"));
+    var tools = el("div", "ev-tools");
+    var q = el("input", "field ev-q"); q.type = "search"; q.placeholder = "Search events, e.g. Maui or Bowl"; q.value = state.evQ || ""; q.setAttribute("aria-label", "Search events");
+    tools.appendChild(q);
+    var lgs = []; all.forEach(function (e) { e.lg.forEach(function (l) { if (lgs.indexOf(l) === -1) lgs.push(l); }); });
+    lgs.sort(function (a, b) { return ORDER.indexOf(a) - ORDER.indexOf(b); });
+    var chips = el("div", "ev-chips");
+    [["", "All"]].concat(lgs.map(function (l) { return [l, (LEAGUES[l] || {}).tag || l.toUpperCase()]; })).forEach(function (o) {
+      var c = el("button", null, o[1]); c.type = "button"; c.setAttribute("aria-pressed", (state.evLg || "") === o[0] ? "true" : "false");
+      c.addEventListener("click", function () { state.evLg = o[0]; state.evMore = false; keepScroll(renderRules); }); chips.appendChild(c);
     });
-    box.appendChild(list);
+    if (lgs.length > 1) tools.appendChild(chips);
+    det.appendChild(tools);
+    var list = el("div", "ev-list");
+    function draw() {
+      list.textContent = "";
+      var qq = (q.value || "").trim().toLowerCase(); state.evQ = q.value;
+      var rows = all.filter(function (e) { return (!state.evLg || e.lg.indexOf(state.evLg) !== -1) && (!qq || e.name.toLowerCase().indexOf(qq) !== -1); });
+      // your picks (or the ones left out) first, then by date
+      var top = function (e) { return pick ? (evIsOn(e.name) ? 0 : 1) : (evIsOn(e.name) ? 1 : 0); };
+      rows = rows.map(function (e, i) { return [top(e), i, e]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (x) { return x[2]; });
+      var lim = state.evMore || qq ? rows.length : 30;
+      rows.slice(0, lim).forEach(function (e) {
+        var on = evIsOn(e.name), b = el("button", "ev" + (on ? " on" : "")); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
+        b.appendChild(icon(on ? "check" : "plus"));
+        var tx = el("span", "ev-tx"); tx.appendChild(el("b", null, e.name));
+        var when = e.first === todayInHome() ? "Today" : fmtDate(e.first, { month: "short", day: "numeric" });
+        tx.appendChild(el("span", null, when + " · " + e.lg.map(function (l) { return (LEAGUES[l] || {}).tag || l.toUpperCase(); }).join(", ") + (e.n ? " · " + e.n + (e.n === 1 ? " game" : " games") : ""))); b.appendChild(tx);
+        b.addEventListener("click", function () {
+          var lk = e.name.toLowerCase(), key = pick ? "eventsOn" : "eventsOff", arr = (r[key] || []).filter(function (x) { return x.toLowerCase() !== lk; });
+          if (arr.length === (r[key] || []).length) arr.push(e.name);
+          r[key] = arr; rulesChanged();
+        });
+        list.appendChild(b);
+      });
+      if (!rows.length) list.appendChild(el("p", "ev-none", EVCAT ? "No events match." : "Loading…"));
+      if (rows.length > lim) { var mb = el("button", "rlink", "Show all " + rows.length); mb.type = "button"; mb.addEventListener("click", function () { state.evMore = true; draw(); }); list.appendChild(mb); }
+    }
+    q.addEventListener("input", draw);
+    draw(); det.appendChild(list); box.appendChild(det);
     return box;
   }
   function renderRules() {
@@ -4475,6 +4657,7 @@ nav.dock.menu-open .dock-back { display: none; }
     if (ed2.any) { var eb = el("div", "editbar"); eb.appendChild(el("span", null, editsText(ed2))); eb.appendChild(resetButton()); top.appendChild(eb); }
     else top.appendChild(el("p", "rsum-note", "Your slate updates on its own when you change a rule."));
     body.appendChild(top);
+    var sgr = suggestionBlock("rules"); if (sgr) body.appendChild(sgr);
 
     // every league
     var h1 = el("div", "sec"); h1.appendChild(el("h2", null, "Every league")); body.appendChild(h1);
@@ -5027,14 +5210,15 @@ nav.dock.menu-open .dock-back { display: none; }
     if (!inLineup(id) && isPastDay()) { toast("That day is over, so its slate is closed"); return; }
     var L = state.lineup, before = { added: L.added.slice(), removed: L.removed.slice() };
     function undo() { L.added = before.added; L.removed = before.removed; computeSlate(); render(); saveLineup(); }
+    var gx = games().filter(function (x) { return x.id === id; })[0];
     if (inLineup(id)) {
       L.added = L.added.filter(function (x) { return x !== id; });
-      if (state.ruleMatch[id] && L.removed.indexOf(id) === -1) L.removed.push(id);
+      if (state.ruleMatch[id] && L.removed.indexOf(id) === -1) { L.removed.push(id); logAct("remove", gx); }
       computeSlate(); toast("Removed from slate", undo);
     } else {
       L.removed = L.removed.filter(function (x) { return x !== id; });
       computeSlate();
-      if (!inLineup(id)) { L.added.push(id); computeSlate(); }
+      if (!inLineup(id)) { L.added.push(id); computeSlate(); logAct("add", gx); }
       toast("Added to slate");
     }
     render(); saveLineup();
@@ -5343,17 +5527,58 @@ nav.dock.menu-open .dock-back { display: none; }
       scroller = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub"); sx0 = scroller ? scroller.scrollLeft : 0;
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     }, { passive: true });
-    document.addEventListener("touchend", function (e) {
-      if (x0 === null) return; var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
-      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.7 || Date.now() - t0 > 900) return;
-      if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) return;
-      if (mode === "back") { goBack(); return; }
-      if (mode === "league") { swipeFilter(dx < 0 ? 1 : -1); return; }
-      if (mode === "rk") { rkSwipe(dx < 0 ? 1 : -1); return; }
-      slideDir = dx < 0 ? "l" : "r";
-      setDate(shiftDate(state.date, dx < 0 ? 1 : -1));
+    // the page follows the finger, then slides out and the next one slides in
+    var drag = null, locked = false;
+    function dragTarget() {
+      if (mode === "day") return $("lineup-body");
+      if (mode === "league") return $("games-body");
+      if (mode === "rk") return $("best-body");
+      if (mode === "back") return $("view-" + state.view);
+      return null;
+    }
+    function clearDrag(el2) { if (!el2) return; el2.style.transition = ""; el2.style.transform = ""; el2.style.opacity = ""; el2.style.willChange = ""; }
+    function snapBack(el2) {
+      if (!el2) return;
+      el2.style.transition = "transform .24s cubic-bezier(.2,.8,.2,1), opacity .24s";
+      el2.style.transform = ""; el2.style.opacity = "";
+      setTimeout(function () { clearDrag(el2); }, 260);
+    }
+    function where() { return [state.view, state.date, state.league, state.bestLeague].join("|"); }
+    document.addEventListener("touchmove", function (e) {
+      if (x0 === null || REDUCED) return;
+      var t = e.touches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      if (!locked) {
+        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { x0 = null; return; }
+        if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+        if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { x0 = null; return; }
+        locked = true; drag = dragTarget(); if (drag) { drag.style.transition = "none"; drag.style.willChange = "transform, opacity"; }
+      }
+      if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { snapBack(drag); drag = null; x0 = null; locked = false; return; }
+      if (drag) { var m = dx * 0.6; drag.style.transform = "translate3d(" + m + "px,0,0)"; drag.style.opacity = String(1 - Math.min(Math.abs(dx) / 700, 0.3)); }
     }, { passive: true });
-    document.addEventListener("touchcancel", function () { x0 = null; }, { passive: true });
+    document.addEventListener("touchend", function (e) {
+      if (x0 === null) { if (drag) snapBack(drag); drag = null; locked = false; return; }
+      var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0, ms = Date.now() - t0; x0 = null;
+      var d = drag; drag = null; locked = false;
+      var fast = Math.abs(dx) >= 35 && Math.abs(dx) / Math.max(ms, 1) > 0.45;
+      if ((Math.abs(dx) < 60 && !fast) || Math.abs(dy) > Math.abs(dx) * 0.7 || ms > 1200 || (scroller && Math.abs(scroller.scrollLeft - sx0) > 2)) { snapBack(d); return; }
+      var dir = dx < 0 ? "l" : "r", before = where();
+      function act() {
+        if (mode === "back") goBack();
+        else if (mode === "league") swipeFilter(dx < 0 ? 1 : -1);
+        else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
+        else { slideDir = dir; setDate(shiftDate(state.date, dx < 0 ? 1 : -1)); }
+      }
+      if (!d || REDUCED) { act(); return; }
+      d.style.transition = "transform .16s cubic-bezier(.4,0,1,1), opacity .16s";
+      d.style.transform = "translate3d(" + (dx < 0 ? -42 : 42) + "%,0,0)"; d.style.opacity = "0";
+      setTimeout(function () {
+        clearDrag(d); act();
+        if (where() === before) { d.classList.remove("slide-l", "slide-r"); void d.offsetWidth; d.classList.add(dir === "l" ? "slide-r" : "slide-l"); return; }   // nothing further that way: come back
+        if (mode === "back") { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("slide-l", "slide-r"); void nv.offsetWidth; nv.classList.add("slide-r"); setTimeout(function () { nv.classList.remove("slide-r"); }, 400); } }
+      }, 160);
+    }, { passive: true });
+    document.addEventListener("touchcancel", function () { x0 = null; if (drag) snapBack(drag); drag = null; locked = false; }, { passive: true });
   })();
   $("day-next").addEventListener("click", function () { slideDir = "l"; setDate(shiftDate(state.date, 1)); });
   $("btn-copy").addEventListener("click", copyLineup);
@@ -5456,6 +5681,7 @@ nav.dock.menu-open .dock-back { display: none; }
         var id = r[0]; uid = id || null; state.isOwner = !!r[1];
         if (!state.isOwner) state.teams = [];
         if (uid) {
+          actLoad();
           db.collection("data/users/" + uid).doc("settings").get().then(function (snap) {
             var d = snap.exists ? snap.data() : null;
             if (d) {

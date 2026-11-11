@@ -584,6 +584,50 @@ def athletic_work(now):
     if doc["leagues"]: sb_put("news/athletic", doc)
     print("athletic feeds:", {k: len(v) for k, v in doc["leagues"].items()})
 
+# ---------- upcoming events catalog (Big events picker) ----------
+CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
+             "ncaaf": ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
+             "nfl": ["football/nfl"], "nba": ["basketball/nba"], "nhl": ["hockey/nhl"], "mlb": ["baseball/mlb"],
+             "ucl": ["soccer/uefa.champions"], "uel": ["soccer/uefa.europa"], "facup": ["soccer/eng.fa"]}
+
+def event_catalog(now):
+    have = sb_get(["events/catalog"]).get("events/catalog") or {}
+    at = parse(have.get("updatedAt"))
+    if at and (now - at).total_seconds() < 20 * 3600: return
+    today = now.astimezone(CT).date()
+    urls = []
+    for lg, paths in CAT_PATHS.items():
+        for p in paths:
+            path, _, extra = p.partition("&")
+            for i in range(0, 46):   # every day for the next 45 days
+                d = today + datetime.timedelta(days=i)
+                urls.append((lg, f"https://site.api.espn.com/apis/site/v2/sports/{path}/scoreboard?dates={d.strftime('%Y%m%d')}" + ("&" + extra if extra else "")))
+            for m in range(2, 6):    # then whole months further out (bowls, conference tournaments, March)
+                y, mo = today.year + (today.month + m - 1) // 12, (today.month + m - 1) % 12 + 1
+                urls.append((lg, f"https://site.api.espn.com/apis/site/v2/sports/{path}/scoreboard?dates={y}{mo:02d}" + ("&" + extra if extra else "")))
+    with cf.ThreadPoolExecutor(12) as ex: res = list(ex.map(lambda u: (u[0], get(u[1], tries=2)), urls))
+    cat = dict((have.get("events") or {}))
+    seen = 0
+    for lg, j in res:
+        for ev in (j or {}).get("events", []):
+            d = (parse(ev.get("date")) or now).astimezone(CT).date().isoformat()
+            if d < today.isoformat(): continue
+            for n in ((ev.get("competitions") or [{}])[0].get("notes") or []):
+                name = str(n.get("headline") or "").split(" - ")[0].strip()
+                if not name or not EVENT_RX.search(name) or re.search(r"group (play|stage)|flex game", name, re.I): continue
+                k = name.lower(); e = cat.get(k) or {"name": name, "lg": [], "first": d, "last": d, "n": 0, "dates": []}
+                if lg not in e["lg"]: e["lg"].append(lg)
+                if e.get("seenRun") != iso(now): e["dates"] = [x for x in e.get("dates", []) if x < today.isoformat()]; e["seenRun"] = iso(now)
+                if d not in e["dates"]: e["dates"].append(d)
+                e["dates"] = sorted(e["dates"])[-40:]; up = [x for x in e["dates"] if x >= today.isoformat()]
+                e["first"] = up[0] if up else e["first"]; e["last"] = max(e["last"], d); e["n"] = len(up); e["name"] = name
+                cat[k] = e; seen += 1
+    cutoff = (today - datetime.timedelta(days=400)).isoformat()
+    cat = {k: v for k, v in cat.items() if v.get("last", "") >= cutoff}
+    for v in cat.values(): v.pop("seenRun", None)
+    sb_put("events/catalog", {"updatedAt": iso(now), "events": cat})
+    print("event catalog:", len(cat), "events,", seen, "games with notes")
+
 # ---------- main ----------
 def main():
     if not KEY: sys.exit("SUPABASE_SECRET is not set")
@@ -739,6 +783,8 @@ def main():
 
     try: athletic_work(now)
     except Exception as e: print("athletic failed", e)
+    try: event_catalog(now)
+    except Exception as e: print("event catalog failed", e)
 
     # ---- 6. player rankings
     days = []
