@@ -72,6 +72,20 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
+<script>window.SLATE_BUILD = "20261110212712";
+(function () {
+  // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
+  var last = 0;
+  function check() {
+    if (Date.now() - last < 60000) return; last = Date.now();
+    fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      if (v && v.build && v.build !== window.SLATE_BUILD) location.replace(location.pathname + "?v=" + v.build);
+    }, function () {});
+  }
+  setTimeout(check, 1500);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+  window.addEventListener("pageshow", function (e) { if (e.persisted) { last = 0; check(); } });
+})();</script>
 <title>Tonight&#39;s Lineup</title>
 <style>
 /* Archivo (SIL Open Font License 1.1), latin subset with width + weight axes, embedded so it works inside the Claude viewer */
