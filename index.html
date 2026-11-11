@@ -72,7 +72,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111090738";
+<script>window.SLATE_BUILD = "20261111092825";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1168,6 +1168,15 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .gp-pv.get { background: var(--raise); color: var(--accent); border: 1px solid var(--hair); }
 .gp-pv.go { background: none; color: var(--accent); padding-left: 0; }
 .gp-pv.wait { background: none; color: var(--dim); padding-left: 0; font-weight: 600; }
+.gv-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.gv-act { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 13px; border-radius: 10px; background: var(--raise); font-size: 14px; font-weight: 750; color: var(--accent); cursor: pointer; }
+.gv-act svg { width: 15px; height: 15px; }
+.gv-act.on { color: var(--head); }
+.gv-act.wait { color: var(--dim); background: none; padding-left: 2px; }
+.gv-act.asked, .gp-pv.asked { color: var(--muted); gap: 10px; font-weight: 650; }
+.gp-pv.asked { padding-left: 0; background: none; }
+.pv-cancel { color: var(--live); font-weight: 800; padding: 4px 2px; }
+.add.tap { cursor: pointer; padding: 10px; margin: -10px -10px -10px 0; border-radius: 12px; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); will-change: transform; }
 /* iOS keeps a fixed, blurred button where it was while a page scrolls; its own layer keeps it pinned to the corner */
@@ -2072,12 +2081,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     var pv = (state.previews || {})[g.id], box = el("div", "pv");
     if (!pv) {
       var past = isPastDay(), lr = (state.loadReq || {}), asked = (lr.previews || []).indexOf(g.id) !== -1 && lr.previewDate === state.date;
-      box.appendChild(el("p", "pv-none", past ? "No preview was saved for this game." : asked ? "Preview requested. It arrives within the hour." : PREVIEWS_LIVE ? "No preview yet. Previews for your slate refresh every hour." : "No preview for this game yet."));
-      if (PREVIEWS_LIVE && !past && !asked && state.isOwner && db) {
-        var rq = el("button", "pv-get", "Get the preview"); rq.type = "button";
-        rq.addEventListener("click", function (e) { e.stopPropagation(); requestPreview(g.id); });
-        box.appendChild(rq);
-      }
+      box.appendChild(el("p", "pv-none", past ? "No preview was saved for this game." : inLineup(g.id) ? "No preview yet. Your slate's previews are written at :55 each hour." : "No preview yet. Request one and it's written at the next :55 run."));
+      var ctl = !past && !inLineup(g.id) ? previewAsk(g, "gv-act") : null; if (ctl) box.appendChild(ctl);
       return box;
     }
     var o = pv.odds || {};
@@ -2525,13 +2530,13 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
       return pvb;
     }
     var box = el("div", "pv bx");
+    var os = oddsStrip(g, b); if (os) box.appendChild(os);
     if (!boxShown(g)) box.appendChild(boxGate(g));
     else {
       box.appendChild(bxPlayers(g, b, true, false));
       var ts = bxTeamStats(g, b, true);
       if (ts) { box.appendChild(el("b", "pv-h", "Team stats")); box.appendChild(ts); }
     }
-    var os = oddsStrip(g, b); if (os) box.appendChild(os);
     if (!isDuo) {
       var more = el("button", "pv-get pv-more"); more.type = "button";
       more.appendChild(document.createTextNode("Full box score, preview and more")); more.appendChild(icon("more"));
@@ -2802,11 +2807,22 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     var meta = [];
     ["away", "home"].forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x) meta.push(abbr(g, sd) + " " + x); });
     if (meta.length) hd.appendChild(el("p", "gv-meta", meta.join(" · ")));
+    if (!g.custom && !isPastDay()) {
+      var acts = el("div", "gv-acts"), onS = inLineup(g.id);
+      var sb = el("button", "gv-act" + (onS ? " on" : "")); sb.type = "button";
+      sb.appendChild(icon(onS ? "check" : "plus")); sb.appendChild(document.createTextNode(onS ? "On your slate" : "Add to slate"));
+      sb.setAttribute("aria-label", onS ? "Remove from your slate" : "Add to your slate");
+      sb.addEventListener("click", function () { toggle(g.id); keepScroll(renderGame); });
+      acts.appendChild(sb);
+      if (!pv && !onS) { var pa = previewAsk(g, "gv-act"); if (pa) acts.appendChild(pa); }
+      hd.appendChild(acts);
+    }
     body.appendChild(hd);
 
     // three sections that open and close: box score, team stats, preview (or recap)
     var kind = status(g).kind, started = kind === "live" || kind === "over", sport = BX_SPORT[g.league] || "", b = sport ? boxFor(g) : null;
     bxNeed(g);
+    var ostrip = oddsStrip(g, b); if (ostrip) { ostrip.classList.add("gv-oddsbar"); body.appendChild(ostrip); }
     var live = boxLive(b), season = !live && b && b.state === "pre" && b.season;
     state.gvSec = state.gvSec || {};
     var open = state.gvSec[g.id] || (state.gvSec[g.id] = { box: started, team: false, pv: !started });
@@ -2844,7 +2860,6 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
         box.appendChild(tc);
       });
     }
-    var ostrip = oddsStrip(g, b); if (ostrip) { ostrip.classList.add("gv-oddsbar"); body.appendChild(ostrip); }
     var rcx = pv && recapOf(pv);
     section("pv", rcx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : pv && pv.odds && pv.odds.spread ? pv.odds.spread + (pv.odds.total ? " · O/U " + pv.odds.total : "") : "", function (box) {
       previewSections(g, pv, box);
@@ -2939,8 +2954,31 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     if (ids.indexOf(id) === -1) ids.push(id);
     var body = clone(L); body.previews = ids.slice(-12); body.previewDate = state.date; body.requestedAt = new Date().toISOString();
     if (!Array.isArray(body.dates)) body.dates = [];
-    state.loadReq = body; keepScroll(renderLineup); if (state.view === "games") keepScroll(renderGames);
+    state.loadReq = body; keepScroll(render);
     db.doc("prefs/load").set(body).then(function () { toast("Preview requested"); }, function () { state.loadReq = L; keepScroll(renderLineup); toast("Couldn't ask for the preview. Try again."); });
+  }
+  function previewAsked(id) { var L = state.loadReq || {}; return L.previewDate === state.date && (L.previews || []).indexOf(id) !== -1; }
+  function previewWorking(id) { var L = state.loadReq || {}; return L.previewDate === state.date && (L.previewLoading || []).indexOf(id) !== -1; }
+  function cancelPreview(id) {
+    var L = state.loadReq || {}, body = clone(L);
+    body.previews = (L.previews || []).filter(function (x) { return x !== id; });
+    state.loadReq = body; keepScroll(render);
+    db.doc("prefs/load").set(body).then(function () { toast("Request canceled"); }, function () { state.loadReq = L; keepScroll(render); toast("Couldn't cancel. Try again."); });
+  }
+  function previewAsk(g, cls) {
+    // a small control: Get preview / Requested · Cancel / Writing it now
+    if (!state.isOwner || !db || state.date !== todayInHome() || status(g).kind === "over") return null;
+    if (previewWorking(g.id)) return el("span", (cls || "gp-pv") + " wait", "Writing the preview now");
+    if (previewAsked(g.id)) {
+      var w = el("span", (cls || "gp-pv") + " asked");
+      w.appendChild(el("span", null, "Requested · arrives at :55"));
+      var c = el("span", "pv-cancel", "Cancel"); c.setAttribute("role", "button"); c.tabIndex = 0;
+      c.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); cancelPreview(g.id); });
+      w.appendChild(c); return w;
+    }
+    var b = el("span", (cls || "gp-pv") + " get", "Get preview"); b.setAttribute("role", "button"); b.tabIndex = 0;
+    b.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); requestPreview(g.id); });
+    return b;
   }
   function gameRow(g, mode, opts) {
     opts = opts || {};
@@ -2950,8 +2988,14 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     if (pick && !closed) {
       row.type = "button";
       row.setAttribute("aria-pressed", on ? "true" : "false");
-      row.setAttribute("aria-label", (on ? "Remove " : "Add ") + label + ", " + timeText(g.start) + (on ? ", from slate" : ", to slate"));
-      row.addEventListener("click", function () { toggle(g.id); });
+      if (mode === "games" && !g.custom) {
+        row.removeAttribute("aria-pressed");
+        row.setAttribute("aria-label", label + ", " + timeText(g.start) + ". Open stats and preview");
+        row.addEventListener("click", function () { openMatchup(g); });
+      } else {
+        row.setAttribute("aria-label", (on ? "Remove " : "Add ") + label + ", " + timeText(g.start) + (on ? ", from slate" : ", to slate"));
+        row.addEventListener("click", function () { toggle(g.id); });
+      }
     }
     var main = el(pick ? "span" : "div", "g-main");
     if (opts.league || mode === "lineup" || mode === "tv") {
@@ -2967,11 +3011,10 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
       var pvx = (state.previews || {})[g.id], lrq = state.loadReq || {}, isToday = state.date === todayInHome();
       var asked = isToday && lrq.previewDate === state.date && ((lrq.previews || []).indexOf(g.id) !== -1 || (lrq.previewLoading || []).indexOf(g.id) !== -1);
       var pill = null;
-      if (pvx && (pvx.summary || pvx.recap)) { pill = el("span", "gp-pv go", recapOf(pvx) ? "Recap ›" : "Preview ›"); pill.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); openMatchup(g); }); }
-      else if (asked) pill = el("span", "gp-pv wait", "Requested · arrives at :55");
+      if (pvx && (pvx.summary || pvx.recap)) pill = el("span", "gp-pv go", recapOf(pvx) ? "Recap ›" : "Preview ›");
       else if (on && isToday) pill = el("span", "gp-pv wait", "Preview coming at :55");
-      else if (isToday && st.kind !== "over" && state.isOwner && db) { pill = el("span", "gp-pv get", "Get preview"); pill.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); requestPreview(g.id); }); }
-      if (pill) { pill.setAttribute("role", "button"); pill.tabIndex = 0; main.appendChild(pill); }
+      else pill = previewAsk(g);
+      if (pill) main.appendChild(pill);
     }
     if (mode === "lineup") {
       var open = state.openId === g.id;
@@ -3030,7 +3073,16 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
         row.appendChild(tg);
       }
     }
-    if (pick) { var p = el("span", "add" + (on ? " on" : "")); if (on || !closed) p.appendChild(icon(on ? "check" : "plus")); row.appendChild(p); }
+    if (pick) {
+      var p = el("span", "add" + (on ? " on" : "")); if (on || !closed) p.appendChild(icon(on ? "check" : "plus"));
+      if (mode === "games" && !g.custom && !closed) {
+        p.classList.add("tap"); p.setAttribute("role", "button"); p.tabIndex = 0;
+        p.setAttribute("aria-label", (on ? "Remove " : "Add ") + label + (on ? " from" : " to") + " your slate");
+        var tog = function (e) { e.stopPropagation(); e.preventDefault(); toggle(g.id); };
+        p.addEventListener("click", tog); p.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") tog(e); });
+      }
+      row.appendChild(p);
+    }
     return row;
   }
 
