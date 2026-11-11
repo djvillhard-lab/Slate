@@ -72,7 +72,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261110212839";
+<script>window.SLATE_BUILD = "20261110213536";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1141,6 +1141,29 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
 .rk-live { color: var(--live); font-weight: 700; }
 .rk-wl { font-weight: 800; } .rk-wl.w { color: var(--accent); } .rk-wl.l { color: var(--live); }
+/* motion: pages slide in from the right; chevrons turn */
+@keyframes pushIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+.push-in { animation: pushIn .28s cubic-bezier(.2,.8,.2,1); }
+.gv-toggle svg, .g-main .chev { transition: transform .2s ease; }
+/* compact box score */
+.bx-tabs2 button { height: 38px; font-size: 14.5px; }
+.bxt { grid-template-columns: 34px minmax(0, 1fr); gap: 10px; padding: 4px 0 10px; }
+.bxt .badge, .bxt > :first-child { transform: scale(.8); transform-origin: 0 0; }
+.bxt-nm { font-size: 12.5px; margin-bottom: 2px; }
+.bxt-cells .bxp-c b { font-size: 18px; }
+.bxp-sec, .bxp-grp { margin: 10px 0 0; font-size: 14px; }
+.bxp { grid-template-columns: 38px minmax(0, 1fr); gap: 10px; padding: 6px 0; }
+.bxp-face { width: 38px; height: 38px; }
+.bxp-face i { font-size: 13px; }
+.bxp-face img { width: 54px; }
+.bxp-nm { font-size: 13.5px; }
+.bxp-cells { gap: 14px; }
+.bxp-c { min-width: 24px; }
+.bxp-c b { font-size: 18px; }
+.bxp-c i { font-size: 10px; }
+.bxp-c em { font-size: 12.5px; margin-top: 0; }
+.gv-toggle { min-height: 52px; }
+.gv-tt b { font-size: 16px; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); will-change: transform; }
 /* iOS keeps a fixed, blurred button where it was while a page scrolls; its own layer keeps it pinned to the corner */
@@ -2008,6 +2031,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
   function openSub(v) {
     var from = state.view, y = paneY(); if (from === v) return;
     setView(v); state.backTo = { view: isDuo && from === "lineup" ? "games" : from, y: y }; renderBack();
+    var sec = $("view-" + v); if (sec && !REDUCED) { sec.classList.remove("push-in"); void sec.offsetWidth; sec.classList.add("push-in"); setTimeout(function () { sec.classList.remove("push-in"); }, 320); }
   }
   function goBack() {
     var b = state.backTo; if (!b || b.view === state.view) return false;
@@ -2787,9 +2811,13 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
       var tg = el("button", "gv-toggle"); tg.type = "button"; tg.setAttribute("aria-expanded", on ? "true" : "false");
       var tx = el("span", "gv-tt"); tx.appendChild(el("b", null, title)); if (sub) tx.appendChild(el("i", null, sub));
       tg.appendChild(tx); tg.appendChild(icon("more"));
-      tg.addEventListener("click", function () { open[key] = !open[key]; keepScroll(renderGame); });
+      var inner = null;
+      tg.addEventListener("click", function () {
+        if (open[key] && inner) { tg.setAttribute("aria-expanded", "false"); wrap.classList.remove("open"); slideClose(inner, function () { open[key] = false; keepScroll(renderGame); }); return; }
+        open[key] = true; state.secAnim = g.id + "|" + key; keepScroll(renderGame);
+      });
       wrap.appendChild(tg);
-      if (on) { var inner = el("div", "gv-sec-in"); fill(inner); wrap.appendChild(inner); }
+      if (on) { inner = el("div", "gv-sec-in"); fill(inner); wrap.appendChild(inner); if (state.secAnim === g.id + "|" + key) { state.secAnim = null; slideOpen(inner); } }
       body.appendChild(wrap);
     }
     if (sport) {
@@ -2956,10 +2984,11 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
         if (e.target.closest && e.target.closest(".net, .tray")) return;
         var opening = state.openId !== g.id;
         Array.prototype.forEach.call(document.querySelectorAll("#lineup-body .tray"), function (t) {
-          var m = t.parentNode && t.parentNode.querySelector(".g-main"); t.remove(); if (m) m.setAttribute("aria-expanded", "false");
+          var m = t.parentNode && t.parentNode.querySelector(".g-main"); if (m) m.setAttribute("aria-expanded", "false");
+          slideClose(t, function () { t.remove(); });
         });
         state.openId = opening ? g.id : null;
-        if (opening) row.appendChild(makeTray());
+        if (opening) { var nt = makeTray(); row.appendChild(nt); slideOpen(nt); }
         main.setAttribute("aria-expanded", opening ? "true" : "false");
         if (isDuo && !g.custom) {
           state.gameId = g.id;
@@ -3165,6 +3194,21 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     if (up.length) return up[0];
     if (kinds.every(function (k) { return k.kind === "over"; })) return { kind: "over" };
     return { kind: "tbd" };
+  }
+  // smooth open and close for anything that drops down (respects Reduce Motion)
+  var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function slideOpen(node) {
+    if (REDUCED || !node) return;
+    var h = node.scrollHeight; node.style.overflow = "hidden"; node.style.height = "0px"; node.style.opacity = "0";
+    node.getBoundingClientRect();
+    node.style.transition = "height .24s cubic-bezier(.2,.8,.2,1), opacity .2s ease"; node.style.height = h + "px"; node.style.opacity = "1";
+    setTimeout(function () { node.style.height = ""; node.style.overflow = ""; node.style.transition = ""; node.style.opacity = ""; }, 260);
+  }
+  function slideClose(node, done) {
+    if (REDUCED || !node) { done(); return; }
+    node.style.overflow = "hidden"; node.style.height = node.scrollHeight + "px"; node.getBoundingClientRect();
+    node.style.transition = "height .2s cubic-bezier(.4,0,.2,1), opacity .15s ease"; node.style.height = "0px"; node.style.opacity = "0";
+    setTimeout(done, 210);
   }
   function liveOnly() { if (state.liveOnly == null) { try { state.liveOnly = localStorage.getItem("slate-live-only") === "1"; } catch (e) { state.liveOnly = false; } } return !!state.liveOnly; }
   function setLiveOnly(v) { state.liveOnly = !!v; try { localStorage.setItem("slate-live-only", v ? "1" : "0"); } catch (e) {} }
