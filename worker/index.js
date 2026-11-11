@@ -94,7 +94,7 @@ Watch: 2-4 players, never one who is out. Headlines: only The Athletic stories a
 async function askClaude(env, text) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "x-api-key": apiKey(env), "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
     body: JSON.stringify({ model: MODEL, max_tokens: 3000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }], messages: [{ role: "user", content: text }] })
   });
   const body = await r.json().catch(() => ({}));
