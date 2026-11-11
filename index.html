@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111135331";
+<script>window.SLATE_BUILD = "20261111135755";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1261,8 +1261,9 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .tm-tbl th .pstar { width: 26px; height: 26px; margin: 0 4px 0 -4px; vertical-align: middle; }
 .tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: 1fr; gap: 10px; margin-bottom: 18px; }
 .tcard { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.tcard.on { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-.tcard.live { border-color: var(--live); }
+.tcard { --tc: var(--line); border-color: color-mix(in srgb, var(--tc) 70%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--tc) 16%, var(--card)) 0, var(--card) 70%); }
+.tcard.on { border-width: 2px; padding: 11px; }
+.tcard.live { border-color: var(--live); border-width: 2px; padding: 11px; }
 .tc-top { display: grid; gap: 8px; justify-items: start; }
 .tc-nm { display: grid; gap: 2px; min-width: 0; width: 100%; }
 .tc-nm b { font-size: 16px; line-height: 1.2; height: 2.4em; font-weight: 800; color: var(--head); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -1481,6 +1482,7 @@ nav.dock.menu-open .dock-back { display: none; }
       <button type="button" data-device="iphone">iPhone</button>
     </div>
     <p class="hint" id="device-hint"></p>
+    <p class="hint" id="screen-diag" style="font-size:12px;opacity:.7"></p>
 
     <div class="sec"><h2>Look</h2></div>
     <div class="themes" id="theme-grid" role="group" aria-label="Theme"></div>
@@ -3266,6 +3268,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var lite = tmLite(t), d = lite.d, e = lite.espn, skey = e ? t.lg + "-" + String(e.abbr || "").toLowerCase() : null, doc = skey ? tm.docs[skey] : null;
     var today = games().filter(function (g) { return g.league === t.lg && (isFav(g.away, g.league) && teamMatch(g.away, t.name, t.lg) || isFav(g.home, g.league) && teamMatch(g.home, t.name, t.lg)); })[0];
     var c = el("button", "tcard" + (today && status(today).kind === "live" ? " live" : today ? " on" : "")); c.type = "button";
+    var tcol = (t.known && t.known.c1) || ""; if (/^#[0-9a-f]{6}$/i.test(tcol)) c.style.setProperty("--tc", tcol);
     var top = el("div", "tc-top");
     top.appendChild(t.known ? teamBadge(t.known) : badgeFor(t.name.slice(0, 3).toUpperCase(), t.name));
     var nm = el("div", "tc-nm"); nm.appendChild(el("b", null, t.name));
@@ -4602,6 +4605,12 @@ nav.dock.menu-open .dock-back { display: none; }
       r.appendChild(x); rows.appendChild(r);
     });
     var fn = Number(state.foldNudge) || 0; $("fold-val").textContent = fn ? (fn > 0 ? "+" : "") + fn + " pt" : "Auto";
+    try {
+      var probe = document.createElement("div"); probe.style.cssText = "position:fixed;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)";
+      document.body.appendChild(probe); var cs = getComputedStyle(probe);
+      $("screen-diag").textContent = "Screen check: window " + innerWidth + "×" + innerHeight + ", screen " + screen.width + "×" + screen.height + ", edges T" + parseInt(cs.paddingTop) + " R" + parseInt(cs.paddingRight) + " B" + parseInt(cs.paddingBottom) + " L" + parseInt(cs.paddingLeft) + (navigator.standalone ? ", Home Screen app" : ", Safari");
+      probe.remove();
+    } catch (e) {}
     var dm = deviceMode();
     Array.prototype.forEach.call($("device-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-device") === dm ? "true" : "false"); });
     $("device-hint").textContent = dm === "duo" ? "Opened up and sideways, the screen splits on the crease: your slate on the left, games on the right." : "One page that fits a regular iPhone. Turn the phone sideways and it stays one page.";
