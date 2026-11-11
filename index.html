@@ -1095,6 +1095,35 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .wp span { display: flex; align-items: center; padding: 0 12px; font-size: 14.5px; font-weight: 800; color: #fff; background: var(--raise); white-space: nowrap; min-width: 0; }
 .wp .wp-h { justify-content: flex-end; }
 .wp-note { margin: 0 2px; font-size: 12px; color: var(--dim); }
+/* player rankings, Real-app style */
+.rk-day { grid-template-columns: minmax(0, 1fr) 40px 40px; }
+.rk-day .rk-date { order: -1; justify-items: start; display: flex; align-items: baseline; gap: 6px; height: 44px; padding: 0 2px; background: none; }
+.rk-day .rk-date b { font-size: 19px; font-weight: 800; color: var(--accent); white-space: nowrap; }
+.rk-day .rk-date .rk-caret { font-size: 13px; color: var(--accent); }
+.rk-day .rk-date em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--dim); margin-left: 4px; }
+.rk-day .rk-arrow { height: 40px; border-radius: 12px; font-size: 22px; }
+.bs-list { background: none; border-radius: 0; }
+.rk-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 2px; border-top: 1px solid var(--hair); }
+.rk-fw { position: relative; width: 66px; height: 66px; }
+.rk-face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center; }
+.rk-face i { font-style: normal; font-size: 20px; font-weight: 800; color: #fff; opacity: .9; }
+.rk-face img { position: absolute; left: 50%; bottom: 0; width: 92px; transform: translateX(-50%); }
+.rk-mark { position: absolute; right: -8px; bottom: -4px; transform: scale(.62); transform-origin: 100% 100%; }
+.rk-mid { min-width: 0; display: grid; gap: 4px; }
+.rk-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rk-nm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15.5px; color: var(--muted); }
+.rk-nm b { font-weight: 600; color: var(--head); }
+.rk-row.fav .rk-nm b { color: var(--accent); }
+.rk-rank { flex: none; font-size: 15px; font-weight: 800; color: var(--muted); }
+.rk-rank.top { color: var(--ink); }
+.rk-stats { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 16px; row-gap: 2px; }
+.rk-st b { font-size: 30px; font-weight: 800; font-stretch: 85%; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
+.rk-st i { font-style: normal; font-size: 15px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+.rk-more { flex-basis: 100%; font-size: 13.5px; color: var(--muted); }
+.rk-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; color: var(--dim); }
+.rk-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
+.rk-live { color: var(--live); font-weight: 700; }
+.rk-wl { font-weight: 800; } .rk-wl.w { color: var(--accent); } .rk-wl.l { color: var(--live); }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); will-change: transform; }
 /* iOS keeps a fixed, blurred button where it was while a page scrolls; its own layer keeps it pinned to the corner */
@@ -2525,13 +2554,13 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
       var t = team.team || {}, tid = t.id, me = teams[tid];
       if (/^ncaa/.test(lg) && !(me && me.team && me.team.conferenceId)) return;
       var rs = result(tid);
-      var base = { team: t.abbreviation || "", teamName: t.displayName || "", color: t.color ? "#" + t.color : "", opp: rs[0], result: rs[1], ev: ev.id };
+      var base = { team: t.abbreviation || "", teamName: t.displayName || "", color: t.color ? "#" + t.color : "", opp: rs[0], result: rs[1], ev: ev.id, home: !!(me && me.homeAway === "home") };
       if (live) { base.live = true; base.detail = st.shortDetail || ""; }
-      function push(nm, pos, r) { if (!r) return; var o = {}; Object.keys(base).forEach(function (k) { o[k] = base[k]; }); o.name = nm; o.pos = pos; o.score = Math.round(r[0] * 10) / 10; o.line = r[1]; rows.push(o); }
+      function push(nm, pos, r, id) { if (!r) return; var o = {}; Object.keys(base).forEach(function (k) { o[k] = base[k]; }); o.name = nm; o.pos = pos; o.id = id || ""; o.score = Math.round(r[0] * 10) / 10; o.line = r[1]; rows.push(o); }
       if (kind === "football") {
         var per = {};
-        (team.statistics || []).forEach(function (grp) { (grp.athletes || []).forEach(function (a) { var nm = a.athlete.displayName; per[nm] = per[nm] || { pos: (a.athlete.position || {}).abbreviation || "", g: {} }; per[nm].g[grp.name] = rkZip(grp.labels, a.stats); }); });
-        Object.keys(per).forEach(function (nm) { push(nm, per[nm].pos, rkFootball(per[nm].g)); });
+        (team.statistics || []).forEach(function (grp) { (grp.athletes || []).forEach(function (a) { var nm = a.athlete.displayName; per[nm] = per[nm] || { pos: (a.athlete.position || {}).abbreviation || "", id: a.athlete.id, g: {} }; per[nm].g[grp.name] = rkZip(grp.labels, a.stats); }); });
+        Object.keys(per).forEach(function (nm) { push(nm, per[nm].pos, rkFootball(per[nm].g), per[nm].id); });
         return;
       }
       var seen = {};
@@ -2541,7 +2570,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
           var key = a.athlete.id + "|" + (grp.name === "goalies"); if (seen[key]) return; seen[key] = 1;
           var s = rkZip(grp.labels, a.stats), r = null;
           try { r = kind === "bball" ? rkBball(s) : kind === "hockey" ? rkHockey(grp.name, s, !live) : rkBaseball(grp.name, s); } catch (e) { r = null; }
-          push(a.athlete.displayName, (a.athlete.position || {}).abbreviation || "", r);
+          push(a.athlete.displayName, (a.athlete.position || {}).abbreviation || "", r, a.athlete.id);
         });
       });
     });
@@ -2615,19 +2644,44 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     if (d && d.leagues && d.leagues[lg]) return { rows: d.leagues[lg], games: (d.games || {})[lg], live: (d.live || {})[lg] || 0, at: new Date(d.updatedAt).getTime(), src: "saved" };
     return null;
   }
+  // a ranked performance, drawn like the Real app: face with team mark, big numbers with small units, where and when
+  function rkStats(line) {
+    var w = el("div", "rk-stats"), extra = [];
+    String(line || "").split(" · ").forEach(function (tok, i) {
+      var m = /^([+\-]?\.?\d[\d.,\/-]*)\s*(.*)$/.exec(tok.trim());
+      if (m && w.childNodes.length < 4) { var c = el("span", "rk-st"); c.appendChild(el("b", null, m[1])); if (m[2]) c.appendChild(el("i", null, m[2].toLowerCase())); w.appendChild(c); }
+      else extra.push(tok);
+    });
+    if (extra.length) w.appendChild(el("span", "rk-more", extra.join(" · ")));
+    return w;
+  }
   function bestRow(r, rank) {
-    var row = el("div", "bs-row" + (isFav(r.teamName) ? " fav" : ""));
-    row.appendChild(el("span", "bs-rk", String(rank)));
-    row.appendChild(badgeFor(r.team || "", r.teamName || "", r.color));
-    var mid = el("div", "bs-mid");
-    var nm = el("div", "bs-nm"); nm.appendChild(el("b", null, r.name)); if (r.pos) nm.appendChild(el("span", "bs-pos", r.pos)); mid.appendChild(nm);
-    mid.appendChild(el("div", "bs-line", r.line));
+    var row = el("div", "rk-row" + (isFav(r.teamName) ? " fav" : ""));
+    var face = el("span", "rk-face"), tc = typeof teamByName === "function" ? teamByName(r.teamName) : null;
+    face.style.background = (r.color && /^#[0-9a-f]{6}$/i.test(r.color) ? r.color : (tc && tc.c1) || "#2a3442");
+    var ini = String(r.name || "").split(" "); face.appendChild(el("i", null, ((ini[0] || "")[0] || "") + ((ini[ini.length - 1] || "")[0] || "")));
+    var dir = BX_HEAD[state.bestLeague];
+    if (r.id && dir) { var im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + r.id + ".png&w=140&h=102"; im.onerror = function () { im.remove(); }; face.appendChild(im); }
+    var wrapF = el("span", "rk-fw"); wrapF.appendChild(face);
+    var mark = badgeFor(r.team || "", r.teamName || "", r.color); mark.classList.add("rk-mark"); wrapF.appendChild(mark);
+    row.appendChild(wrapF);
+    var mid = el("div", "rk-mid");
+    var top = el("div", "rk-top"), nm = el("span", "rk-nm");
+    var parts = String(r.name || "").split(" "), shortN = parts.length > 1 ? parts[0][0] + ". " + parts.slice(1).join(" ") : r.name;
+    nm.appendChild(el("b", null, shortN)); if (r.pos) nm.appendChild(el("span", null, " · " + r.pos));
+    top.appendChild(nm); top.appendChild(el("span", "rk-rank" + (rank <= 3 ? " top" : ""), "#" + rank));
+    mid.appendChild(top);
+    mid.appendChild(rkStats(r.line));
+    var ft = el("div", "rk-foot");
+    if (r.live) { ft.appendChild(el("i", "rk-dot")); ft.appendChild(el("span", "rk-live", r.detail || "Live")); }
+    if (r.opp) ft.appendChild(el("span", null, (r.live ? " · " : "") + (r.home ? "vs " : "@ ") + r.opp));
+    if (r.result) {
+      var wl = /^[WLT] /.test(r.result) ? r.result.charAt(0) : "", sc = wl ? r.result.slice(2) : r.result;
+      if (wl) ft.appendChild(el("b", "rk-wl " + wl.toLowerCase(), wl));
+      ft.appendChild(el("span", "rk-sc", sc));
+    }
+    mid.appendChild(ft);
     row.appendChild(mid);
-    var res = el("div", "bs-res");
-    if (r.live) { res.appendChild(el("span", "bs-wl live", r.result || "")); res.appendChild(el("span", "bs-lv", r.detail || "Live")); }
-    else res.appendChild(el("span", "bs-wl " + (/^W/.test(r.result || "") ? "w" : "l"), r.result || ""));
-    if (r.opp) res.appendChild(el("span", "bs-opp", "vs " + r.opp));
-    row.appendChild(res);
     return row;
   }
   function renderBest() {
@@ -2640,8 +2694,9 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; -webkit-transform: t
     var prev = el("button", "rk-arrow", "‹"); prev.type = "button"; prev.setAttribute("aria-label", "Previous day");
     prev.addEventListener("click", function () { rkSetDate(shiftDate(rk.date, -1)); });
     var lab = el("label", "rk-date");
-    var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yesterday" : fmtDate(day, { weekday: "long" });
-    lab.appendChild(el("b", null, dl)); lab.appendChild(el("span", null, fmtDate(day, { month: "short", day: "numeric", year: day.slice(0, 4) !== today.slice(0, 4) ? "numeric" : undefined })));
+    var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yesterday" : fmtDate(day, { weekday: "short" });
+    lab.appendChild(el("b", null, "Top of " + fmtDate(day, { month: "short", day: "numeric", year: "numeric" })));
+    lab.appendChild(el("span", "rk-caret", "▾")); lab.appendChild(el("em", null, dl));
     var inp = document.createElement("input"); inp.type = "date"; inp.className = "rk-input"; inp.max = today; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
     inp.addEventListener("change", function () { if (inp.value) rkSetDate(inp.value); });
     lab.appendChild(inp);
