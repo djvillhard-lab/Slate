@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111124003";
+<script>window.SLATE_BUILD = "20261111124454";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -921,7 +921,7 @@ html.iphone main.wrap { padding-left: 16px; padding-right: 16px; }
 .trow .tx .n { font-size: 18px; font-weight: 400; }
 .tres-none { margin: 0; padding: 14px; font-size: 14px; color: var(--muted); }
 #lineup-body .g > .g-side, #games-body .g > .g-side { width: var(--side-w, auto); box-sizing: border-box; }
-.g > .g-side .net { max-width: 100%; white-space: normal; text-align: right; line-height: 1.15; }
+.g > .g-side .net { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; line-height: 1.15; }
 /* edge to edge: where the Claude iOS app lets the page run under its bars and the Duo's clock column,
    the background fills the whole screen, the slate itself runs to the edge, and only the header,
    the menu button and sheets keep clear of the system's insets (zoom-corrected, since they're scaled) */
@@ -1271,7 +1271,7 @@ nav.dock { flex-direction: column; align-items: flex-end; gap: 10px; }
 .dock-back { width: 58px; height: 58px; padding: 0; justify-content: center; gap: 0; }
 .dock-back #dock-back-t { display: none; }
 .dock-back svg { width: 24px; height: 24px; }
-nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
+nav.dock.menu-open .dock-back { display: none; }
 </style>
 </head>
 <body>
@@ -1675,6 +1675,8 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
     return opts;
   }
   // A link the viewer opens outside the page; with two choices, a button that opens the chooser sheet.
+  // card labels short enough to stay on one line next to the play arrow
+  var NET_SHORT = { "NBA League Pass": "League Pass", "NHL Network": "NHL Net", "MLB Network": "MLB Net", "NFL Network": "NFL Net", "SEC Network": "SECN", "ACC Network": "ACCN", "Prime Video": "Prime", "Golf Channel": "Golf", "ESPN Deportes": "ESPN Dep." };
   function watchLink(n, cls, label) {
     var opts = watchOptions(n);
     if (!opts.length) return null;
@@ -2151,7 +2153,8 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
       var shown = linked.concat(tv.filter(function (n) { return linked.indexOf(n) === -1; })).slice(0, 2);
       tv = tv.filter(function (n) { return shown.indexOf(n) !== -1; }).sort(function (a, b) { return shown.indexOf(a) - shown.indexOf(b); });
       tv.forEach(function (n) {
-        var a = watchLink(n, "net", n) || el("span", "net", n);
+        var lbl = NET_SHORT[n] || n;
+        var a = watchLink(n, "net", lbl) || el("span", "net", lbl);
         a.addEventListener("click", function (e) { e.stopPropagation(); });
         side.appendChild(a);
       });
@@ -2182,7 +2185,7 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
   function renderBack() {
     var bt = $("dock-back"); if (!bt) return;
     var b = state.backTo && state.backTo.view !== state.view ? state.backTo : null, nm = b ? VIEW_NAMES[b.view] || "Back" : "";
-    bt.hidden = !b;
+    bt.hidden = !b; var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
     if (b) { $("dock-back-t").textContent = nm; bt.setAttribute("aria-label", "Back to " + nm); }
   }
   // after the final: a recap (written once, frozen an hour after the game ends) takes the quick read's place
@@ -3824,7 +3827,7 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
       if (gl) {
         var before = list.length; list = list.filter(function (g) { return status(g).kind === "live"; });
         if (!list.length && before) {
-          var nl = el("div", "notice lo-none"); nl.appendChild(el("span", null, "None of these " + before + " games are live right now."));
+          var nl = el("div", "notice lo-none"); nl.appendChild(el("span", null, before === 1 ? "This game isn't live right now." : "None of these " + before + " games are live right now."));
           var sa = el("button", "pv-get", "Show all"); sa.type = "button"; sa.addEventListener("click", function () { state.gamesLive = false; try { localStorage.setItem("slate-games-live", "0"); } catch (e) {} keepScroll(renderGames); });
           nl.appendChild(sa); body.appendChild(nl); return;
         }
@@ -4564,6 +4567,7 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
   }
   function renderTop() {
     if (isDuo && state.view === "lineup") state.view = "games";
+    renderBack();
     var v = state.view, today = todayInHome();
     // title (lineup + settings)
     $("title").hidden = v === "games" && !isDuo;
@@ -4964,12 +4968,13 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
 
   // ---------- wiring ----------
   $("nav-lineup").addEventListener("click", function () { setView("lineup"); });
-  $("nav-games").addEventListener("click", function () { setView("games"); });
-  $("nav-teams").addEventListener("click", function () { setView("teams"); });
-  $("nav-best").addEventListener("click", function () { rk.date = null; setView("best"); rkPoll(true); });
-  $("nav-settings").addEventListener("click", function () { setView("settings"); });
+  function menuGo(v) { state.menuOpen = false; if (state.view === v) { render(); return; } if (state.view === "lineup" || isDuo) openSub(v); else { var from = state.backTo; openSub(v); if (from && from.view !== v) state.backTo = from; renderBack(); } }
+  $("nav-games").addEventListener("click", function () { menuGo("games"); });
+  $("nav-teams").addEventListener("click", function () { menuGo("teams"); });
+  $("nav-best").addEventListener("click", function () { rk.date = null; menuGo("best"); rkPoll(true); });
+  $("nav-settings").addEventListener("click", function () { menuGo("settings"); });
   $("nav-refresh").addEventListener("click", refreshApp);
-  $("nav-tv").addEventListener("click", function () { setView("tv"); });
+  $("nav-tv").addEventListener("click", function () { menuGo("tv"); });
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
   $("dock-back").addEventListener("click", function () { state.menuOpen = false; goBack(); });
   Array.prototype.forEach.call(document.querySelectorAll("#view-notify .seg[data-pref]"), function (sg) {
@@ -5012,7 +5017,7 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
     b.addEventListener("click", function () { state.textSizeWide = b.getAttribute("data-size"); applyLook(); saveSettings(); render(); });
   });
   });
-  $("nav-rules").addEventListener("click", function () { setView("rules"); });
+  $("nav-rules").addEventListener("click", function () { menuGo("rules"); });
   $("btn-rules").addEventListener("click", function () { openSub("rules"); });
   $("btn-find").addEventListener("click", function () { state.showSearch = !state.showSearch; render(); if (state.showSearch) setTimeout(function () { $("search").focus(); }, 50); });
   $("menu-fab").addEventListener("click", function () { state.menuOpen = !state.menuOpen; renderTop(); });
@@ -5032,12 +5037,13 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
   (function () {
     var x0 = null, y0 = 0, t0 = 0;
     var mode = null, scroller = null, sx0 = 0;
-    function swipeMode(target) {
+    function belowStrip(id, t) { var s2 = document.querySelector(id); if (!s2 || !t) return false; var r = s2.getBoundingClientRect(); return r.height > 0 && t.clientY > r.bottom; }
+    function swipeMode(target, t) {
       if (!target || !target.closest || state.menuOpen) return null;
       if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip, .bs-pills")) return null;
       if (isDuo && target.closest("#pane-l")) return "day";
-      if (state.view === "games" && target.closest("#view-games, #games-body") && !target.closest(".tray")) return "league";
-      if (state.view === "best" && target.closest("#view-best") && !target.closest(".rk-day")) return "rk";
+      if (state.view === "games" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#strip", t) || target.closest("#view-games"))) return "league";
+      if (state.view === "best" && !target.closest(".rk-day, nav.dock, .menu-pop") && (belowStrip(".rk-strip", t) || target.closest("#view-best"))) return "rk";
       if (state.backTo && state.backTo.view !== state.view) return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
@@ -5045,7 +5051,7 @@ nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
       x0 = null; if (e.touches.length !== 1) return;
       var t = e.touches[0];
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
-      mode = swipeMode(e.target); if (!mode) return;
+      mode = swipeMode(e.target, t); if (!mode) return;
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
       scroller = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub"); sx0 = scroller ? scroller.scrollLeft : 0;
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
