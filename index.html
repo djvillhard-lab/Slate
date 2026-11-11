@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111160406";
+<script>window.SLATE_BUILD = "20261111160840";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1379,6 +1379,11 @@ nav.dock.menu-open .dock-back { display: none; }
 .ev-gh .ev-tx b { white-space: normal; }
 .ev-grp .ev-list { grid-column: 1 / -1; }
 .tray-loc { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+/* the Slate mark beside the slate's title */
+.brand { display: none; }
+.title.has-brand { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; }
+.title.has-brand > svg.brand { display: block; grid-row: 1 / span 2; width: 36px !important; height: 46px !important; max-width: none; }
+.title.has-brand .t, .title.has-brand .d { grid-column: 2; }
 </style>
 </head>
 <body>
@@ -1388,7 +1393,8 @@ nav.dock.menu-open .dock-back { display: none; }
     <div class="top-inner">
       <div class="toprow">
         <span></span>
-        <div class="title">
+        <div class="title has-brand">
+          <svg class="brand" id="brand-l" viewBox="0 0 570 725" aria-hidden="true"><rect x="400" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.35"/><rect x="200" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.41"/><rect x="0" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.48"/><rect x="0" y="150" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.54"/><rect x="0" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.61"/><rect x="200" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.68"/><rect x="400" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.74"/><rect x="400" y="450" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.80"/><rect x="400" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.87"/><rect x="200" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.94"/><rect x="0" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="1.00"/></svg>
           <div class="t" id="l-title-t">Tonight's Slate</div>
           <div class="d">
             <button id="l-day-prev" type="button" aria-label="Previous day">‹</button>
@@ -1417,6 +1423,7 @@ nav.dock.menu-open .dock-back { display: none; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>
       </button>
       <div class="title" id="title">
+        <svg class="brand" id="brand-r" viewBox="0 0 570 725" aria-hidden="true"><rect x="400" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.35"/><rect x="200" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.41"/><rect x="0" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.48"/><rect x="0" y="150" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.54"/><rect x="0" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.61"/><rect x="200" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.68"/><rect x="400" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.74"/><rect x="400" y="450" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.80"/><rect x="400" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.87"/><rect x="200" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.94"/><rect x="0" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="1.00"/></svg>
         <div class="t" id="title-t">My Lineup</div>
         <div class="d" id="title-d">
           <button id="day-prev" type="button" aria-label="Previous day">‹</button>
@@ -5087,6 +5094,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var slateTitle = state.date === today ? "Tonight's Slate" : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
     $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
+    var tl = $("title"); if (tl) tl.classList.toggle("has-brand", v === "lineup");
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
     var pg = $("btn-copy").parentNode; pg.hidden = v !== "lineup" && v !== "games";
     $("title-d").hidden = isDuo || v !== "lineup";
