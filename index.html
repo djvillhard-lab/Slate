@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111134743";
+<script>window.SLATE_BUILD = "20261111134827";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -763,7 +763,7 @@ main.wrap, html.corner main.wrap, html.corner.roomy main.wrap, html.duo main.wra
 .build svg { width: 18px; height: 18px; }
 .bb-rules { font-size: 15px; font-weight: 700; color: var(--muted); padding: 8px 4px; }
 .rules-count .build { margin-left: auto; height: 38px; font-size: 14px; }
-#l-btn-add { display: none; }
+#l-btn-add { display: inline-grid; }
 
 /* ===== Slate rules: plain words, switches, counts ===== */
 .rsum { margin: 6px 0 4px; padding: 16px; border-radius: 14px; background: var(--card); }
@@ -1277,6 +1277,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .tc-last .rk-wl { flex: none; }
 .tc-dim { color: var(--dim); }
 .tb-pills { margin: 8px 0 4px; padding-left: 0; }
+.mi[hidden] { display: none !important; }
 #view-teams .field { width: 100%; box-sizing: border-box; margin: 0 0 4px; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; }
@@ -1451,6 +1452,9 @@ nav.dock.menu-open .dock-back { display: none; }
   </section>
 
   <section id="view-settings" aria-label="Settings" hidden>
+    <button class="navrow" id="open-rules" type="button">
+      <span><b>Slate rules</b><span id="rules-summary">What goes on your slate each day</span></span><span class="chev">›</span>
+    </button>
     <button class="navrow" id="open-notify" type="button">
       <span><b>Notifications</b><span id="nt-summary"></span></span><span class="chev">›</span>
     </button>
@@ -1541,7 +1545,7 @@ nav.dock.menu-open .dock-back { display: none; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5l1.8 1.8L8.5 5M3.5 13l1.8 1.8L8.5 11.5M11.5 6.8h9M11.5 13.3h9M11.5 19.3h9M4 19.3h3"/></svg>
       <span>Slate</span><i class="dot" id="nav-count" hidden></i>
     </button>
-    <button class="mi" id="nav-rules" type="button" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>Slate rules</span></button>
+    <button class="mi" id="nav-rules" type="button" role="menuitem" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>Slate rules</span></button>
     <button class="mi" id="nav-games" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2zm12 8H5v9h14v-9zM7 12h4v4H7v-4z"/></svg>
       <span>All games</span>
@@ -4674,7 +4678,7 @@ nav.dock.menu-open .dock-back { display: none; }
     var slateTitle = state.date === today ? "Tonight's Slate" : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
     $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "teams" ? "Teams" : v === "team" ? "Team" : slateTitle;
     $("l-title-t").textContent = slateTitle;
-    $("btn-rules").hidden = true; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
+    $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
     var pg = $("btn-copy").parentNode; pg.hidden = v !== "lineup" && v !== "games";
     $("title-d").hidden = isDuo || v !== "lineup";
     var away = Math.round((new Date(state.date + "T12:00:00") - new Date(today + "T12:00:00")) / 86400000);
@@ -5073,6 +5077,7 @@ nav.dock.menu-open .dock-back { display: none; }
   $("nav-refresh").addEventListener("click", refreshApp);
   $("nav-tv").addEventListener("click", function () { menuGo("tv"); });
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
+  $("open-rules").addEventListener("click", function () { openSub("rules"); });
   $("dock-back").addEventListener("click", function () { state.menuOpen = false; goBack(); });
   Array.prototype.forEach.call(document.querySelectorAll("#view-notify .seg[data-pref]"), function (sg) {
     Array.prototype.forEach.call(sg.children, function (b) {
