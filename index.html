@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111165345";
+<script>window.SLATE_BUILD = "20261111170420";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -5297,7 +5297,7 @@ html .menu-pop { bottom: 56px !important; }
     cal.appendChild(ci); cal.classList.add("dpick"); ds.appendChild(cal);
     ds.hidden = v !== "games" && v !== "tv";
 
-    ["lineup", "rules", "games", "tv", "settings"].forEach(function (k) { var b = $("nav-" + k); if (!b) return; if (v === k || (k === "settings" && v === "notify")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    ["lineup", "rules", "games", "best", "teams", "tv"].forEach(function (k) { var b = $("nav-" + k); if (!b) return; if (v === k || (k === "teams" && v === "team")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     $("menu-pop").hidden = !state.menuOpen; $("menu-scrim").hidden = !state.menuOpen; $("menu-fab").setAttribute("aria-expanded", state.menuOpen ? "true" : "false");
     $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-teams").hidden = v !== "teams"; $("view-tabs").hidden = v !== "tabs"; $("view-team").hidden = v !== "team";
     var cnt = lineupGames().length, nc = $("nav-count"); nc.textContent = String(cnt); nc.hidden = !cnt;
