@@ -1,6 +1,6 @@
 /* Slate: opens instantly from the phone's copy of the app, then updates in the background.
    A link with ?v=<build> (what the update check opens) always comes from the network. */
-var SHELL = "slate-shell-v9";
+var SHELL = "slate-shell-v10";
 self.addEventListener("install", function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(SHELL).then(function (c) { return c.addAll(["./", "supabase.js", "icon.png"]); }).catch(function () {}));
