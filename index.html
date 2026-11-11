@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111123805";
+<script>window.SLATE_BUILD = "20261111124003";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1266,6 +1266,12 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 .dock-back { pointer-events: auto; height: 58px; display: inline-flex; align-items: center; gap: 6px; padding: 0 18px 0 13px; border-radius: 18px; font-size: 16px; font-weight: 750; color: var(--ink); background: var(--glass); border: 1px solid var(--glass-line); -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); box-shadow: 0 10px 30px var(--shadow); }
 .dock-back[hidden] { display: none; }
 .dock-back svg { width: 19px; height: 19px; color: var(--accent); }
+/* Back: just the arrow, stacked right above the menu button */
+nav.dock { flex-direction: column; align-items: flex-end; gap: 10px; }
+.dock-back { width: 58px; height: 58px; padding: 0; justify-content: center; gap: 0; }
+.dock-back #dock-back-t { display: none; }
+.dock-back svg { width: 24px; height: 24px; }
+nav.dock:has(.fab[aria-expanded="true"]) .dock-back { display: none; }
 </style>
 </head>
 <body>
