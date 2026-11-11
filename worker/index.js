@@ -57,11 +57,12 @@ function prompt(p) {
   const game = p.game, facts = p.facts;
   if (p.kind === "team") return `Write a short summary of this team for a sports fan's app. Today is ${new Date().toDateString()}.
 Team facts (JSON): ${facts}
-Do one or two web searches for this team's news from the last 4 days (include "The Athletic" in one search).
+Do two or three web searches for this team's news and season story (recent news from the last 4 days, and one including "The Athletic").
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
 {"summary": "4-6 sentences, 80-120 words: how the team is playing (record, recent results, streaks, what's working or not), the storylines from the news (injuries, trades, coaching, a standout player), and what's next (the next one or two games, with day)",
  "bullets": ["3-5 short one-line points covering the same ground"],
+ "long": ["4-6 paragraphs, 350-550 words in all, going well beyond the summary: the season so far (how they got here, best and worst stretches), the key players with their numbers, injuries and roster moves, coaching and tactics, where they stand in the standings or rankings and what's at stake, and the schedule ahead with the games that matter most"],
  "headlines": [{"title": "...", "source": "The Athletic", "url": "https://www.nytimes.com/athletic/..."}]}
 Headlines: only The Athletic stories about this team from the last 2 weeks that your searches actually found, newest first, at most 4; [] if none.`;
   if (p.kind === "recap") return `Write a recap of this finished game for a sports fan's app.
@@ -95,7 +96,7 @@ async function askClaude(env, text) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-    body: JSON.stringify({ model: MODEL, max_tokens: 3000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }], messages: [{ role: "user", content: text }] })
+    body: JSON.stringify({ model: MODEL, max_tokens: 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }], messages: [{ role: "user", content: text }] })
   });
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error("Claude API " + r.status + ": " + ((body.error || {}).message || "").slice(0, 160));
@@ -117,7 +118,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
         if (p.kind === "team") {
           const g = JSON.parse(p.facts || "{}");
-          await putDoc(this.env, t.path, { key: p.key, name: g.name || "", league: g.league || "", summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), headlines: athletic(ans.headlines), at: now, by: "request", writing: null });
+          await putDoc(this.env, t.path, { key: p.key, name: g.name || "", league: g.league || "", summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 6), headlines: athletic(ans.headlines), at: now, by: "request", writing: null });
         } else if (p.kind === "recap") {
           await mergeDoc(this.env, t.path, t.patch({ recap: { text: String(ans.text || ""), bullets: strs(ans.bullets, 4), stars: (ans.stars || []).slice(0, 4), endedAt: now, at: now }, headlines: athletic(ans.headlines), writing: null, updatedAt: now }));
         } else {

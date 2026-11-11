@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111174857";
+<script>window.SLATE_BUILD = "20261111175116";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1488,6 +1488,15 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
 .toast.pop { animation: toastIn .2s cubic-bezier(.2,.8,.2,1); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .toast.pop { animation: none; } }
+.sty { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--raise); flex: none; }
+.sty button { width: 34px; height: 28px; display: grid; place-items: center; border-radius: 8px; color: var(--dim); background: none; border: 0; }
+.sty button svg { width: 16px; height: 16px; }
+.sty button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
+.gv-hrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.gv-hrow .gv-h { margin-bottom: 0; }
+.gv-hrow + * { margin-top: 10px; }
+.sty-tray { float: right; margin: -2px 0 4px 8px; }
+.tm-dd { margin: 16px 0 6px; font-size: 13px; font-weight: 800; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -2548,6 +2557,20 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
     return { text: text, stars: stars, quick: true };
   }
   // a quick read as a paragraph or as bullet points (Claude's own bullets when it wrote them, otherwise one per sentence)
+  // a small ¶ / • switch beside any summary: paragraph or bullets, saved for every page
+  function styleSwitch() {
+    var w = el("div", "sty"); w.setAttribute("role", "group"); w.setAttribute("aria-label", "Read as");
+    [["para", "Paragraph", "M4 6h16M4 10h16M4 14h16M4 18h10"], ["bullets", "Bullets", "M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"]].forEach(function (o) {
+      var b = el("button", null); b.type = "button"; b.setAttribute("aria-label", o[1]); b.setAttribute("aria-pressed", (state.pvStyle || "para") === o[0] ? "true" : "false");
+      var NS = "http://www.w3.org/2000/svg", sv = document.createElementNS(NS, "svg"), pa = document.createElementNS(NS, "path");
+      sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("fill", "none"); sv.setAttribute("stroke", "currentColor"); sv.setAttribute("stroke-width", o[0] === "bullets" ? "2.4" : "2.2"); sv.setAttribute("stroke-linecap", "round");
+      pa.setAttribute("d", o[2]); sv.appendChild(pa); b.appendChild(sv);
+      b.addEventListener("click", function (e) { e.stopPropagation(); if (state.pvStyle === o[0]) return; state.pvStyle = o[0]; saveSettings(); keepScroll(render); });
+      w.appendChild(b);
+    });
+    return w;
+  }
+  function withSwitch(card) { var h = card.querySelector(".gv-h"); if (h) { var row = el("div", "gv-hrow"); card.insertBefore(row, h); row.appendChild(h); row.appendChild(styleSwitch()); } else card.insertBefore(styleSwitch(), card.firstChild); return card; }
   function readNode(text, bullets, cls, plain) {
     if (state.pvStyle !== "bullets" || plain || !text) return el("p", cls, text || "");
     var items = Array.isArray(bullets) && bullets.length ? bullets
@@ -2661,6 +2684,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
         box.appendChild(rb);
       } else box.appendChild(recapGate(g));
     } else if (pv.summary) {
+      var sw0 = styleSwitch(); sw0.classList.add("sty-tray"); box.appendChild(sw0);
       box.appendChild(readNode(pv.summary, pv.bullets, "pv-sum"));
 
     }
@@ -3844,7 +3868,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
     var skey = e ? t.lg + "-" + String(e.abbr || "").toLowerCase() : null, doc = skey ? tm.docs[skey] : null;
     var cc = gvCard("Claude's take", "tm-claude");
     if (doc && doc.summary) {
+      withSwitch(cc);
       cc.appendChild(readNode(doc.summary, doc.bullets, "gv-sum"));
+      var tl = Array.isArray(doc.long) ? doc.long.filter(Boolean) : [];
+      if (tl.length) { var dh = el("h4", "tm-dd", "The longer read"); cc.appendChild(dh); tl.forEach(function (para) { cc.appendChild(el("p", "gv-p", para)); }); }
       if (doc.at) cc.appendChild(el("p", "pv-at", "Written " + new Date(doc.at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })));
     } else cc.appendChild(el("p", "pv-none", "No Claude summary for this team yet."));
     if (skey && window.SLATE_SELF) {
@@ -4013,18 +4040,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2 + 12px) !important; max
     }
     var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
     if (rc) {
-      var rq = gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap");
+      var rq = withSwitch(gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap"));
       if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); }
       else rq.appendChild(recapGate(g));
       body.appendChild(rq);
     } else if (pv.summary) {
-      var q = gvCard("The quick read"); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
+      var q = withSwitch(gvCard("The quick read")); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
       body.appendChild(q);
     }
     var long = Array.isArray(pv.long) ? pv.long.filter(Boolean) : [];
     var dd = gvCard(rc ? "Before the game" : "The deep dive");
     if (long.length) long.forEach(function (para) { dd.appendChild(el("p", "gv-p", para)); });
-    else if (!rc) dd.appendChild(el("p", "pv-none", "The longer read arrives with the next hourly refresh."));
+    else if (!rc) dd.appendChild(el("p", "pv-none", "Regenerate the preview to add the longer read."));
     if (long.length || !rc) body.appendChild(dd);
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }) : [];
     var wl = stars.length ? stars : Array.isArray(pv.watch) ? pv.watch.filter(function (w) { return w && w.name; }) : [];
