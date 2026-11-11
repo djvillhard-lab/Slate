@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111161806";
+<script>window.SLATE_BUILD = "20261111162002";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -866,7 +866,7 @@ html.iphone main.wrap { padding-left: 16px; padding-right: 16px; }
 #lineup-body.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); }
 #lineup-body.slide-r { animation: slideR .3s cubic-bezier(.2,.8,.2,1); }
 @media (prefers-reduced-motion: reduce) { #lineup-body.slide-l, #lineup-body.slide-r, #games-body.slide-l, #games-body.slide-r, #best-body.slide-l, #best-body.slide-r, main section.slide-l, main section.slide-r { animation: none; } }
-#main-wrap, #pane-l { overflow-x: clip; }
+#main-wrap { overflow-x: clip; } #pane-l { overflow-x: hidden; }
 
 /* matchup preview inside an opened slate game */
 .tray { align-items: center; }
@@ -1413,6 +1413,10 @@ input, select, textarea { font-size: 16px !important; }
 #best-body .rk-day .rk-date { order: 0; display: grid; justify-items: center; gap: 0; height: 50px; min-width: 76px; padding: 0 4px; align-content: center; }
 #best-body .rk-day .rk-date b { font-size: 16px; color: var(--accent); line-height: 1.1; }
 #best-body .rk-day .rk-date em { margin: 0; font-size: 11px; line-height: 1.2; }
+.menu-pop[hidden] { display: none !important; }
+/* headers: a little more room from the top edge, and always pinned while scrolling */
+header.top { position: -webkit-sticky; position: sticky; top: 0; }
+header.top { padding-top: calc((env(safe-area-inset-top, 0px) + 10px) / var(--z, 1)); }
 </style>
 </head>
 <body>
