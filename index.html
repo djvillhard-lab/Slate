@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111110441";
+<script>window.SLATE_BUILD = "20261111111357";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2199,7 +2199,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       var ctl = !past && !inLineup(g.id) ? previewAsk(g, "gv-act") : null; if (ctl) box.appendChild(ctl);
       return box;
     }
-    var o = pv.odds || {};
+    var o = inTray ? (pv.odds || {}) : {};
     if (o.spread || o.total || (o.ml && (o.ml.away != null || o.ml.home != null))) {
       var od = el("div", "pv-odds");
       if (o.spread) od.appendChild(el("span", null, o.spread));
@@ -2948,6 +2948,21 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (on) { inner = el("div", "gv-sec-in"); fill(inner); wrap.appendChild(inner); if (state.secAnim === g.id + "|" + key) { state.secAnim = null; slideOpen(inner); } }
       body.appendChild(wrap);
     }
+    // order: preview first, then player stats, then team stats
+    var rcx = pv && recapOf(pv), qrx = !rcx && pv && quickRecap(g);
+    section("pv", rcx || qrx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : qrx ? "Box score recap for now" : pv && pv.summary ? "Quick read, deep dive, players" : "", function (box) {
+      previewSections(g, pv, box);
+      // standings or the poll, with tonight's two teams marked
+      var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
+      var groups = Array.isArray(lg.standings) ? lg.standings : [];
+      var show = groups.filter(function (gr) { return (gr.rows || []).some(function (r) { return marks.indexOf(String(r.abbr || "").toUpperCase()) !== -1; }); });
+      if (!show.length && groups.length) show = groups.slice(0, 1);
+      show.forEach(function (gr) { box.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
+      if (Array.isArray(lg.poll) && lg.poll.length) box.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
+      var ln2 = Array.isArray(lg.news) ? lg.news.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
+      if (ln2.length) box.appendChild(linkList("Around " + (L.college ? L.name : "the " + L.name), ln2.slice(0, 6)));
+      if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
+    });
     if (sport) {
       section("box", started ? "Box score" : "Player stats", started ? (kind === "live" ? "Live" : "Final") : "This season", function (box) {
         if (live) {
@@ -2968,26 +2983,12 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
         box.appendChild(tc);
       });
     }
-    var rcx = pv && recapOf(pv), qrx = !rcx && pv && quickRecap(g);
-    section("pv", rcx || qrx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : qrx ? "Box score recap for now" : pv && pv.odds && pv.odds.spread ? pv.odds.spread + (pv.odds.total ? " · O/U " + pv.odds.total : "") : "", function (box) {
-      previewSections(g, pv, box);
-      // standings or the poll, with tonight's two teams marked
-      var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
-      var groups = Array.isArray(lg.standings) ? lg.standings : [];
-      var show = groups.filter(function (gr) { return (gr.rows || []).some(function (r) { return marks.indexOf(String(r.abbr || "").toUpperCase()) !== -1; }); });
-      if (!show.length && groups.length) show = groups.slice(0, 1);
-      show.forEach(function (gr) { box.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
-      if (Array.isArray(lg.poll) && lg.poll.length) box.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
-      var ln2 = Array.isArray(lg.news) ? lg.news.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
-      if (ln2.length) box.appendChild(linkList("Around " + (L.college ? L.name : "the " + L.name), ln2.slice(0, 6)));
-      if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
-    });
   }
   // the matchup page's preview sections (odds, quick read or recap, deep dive, players, form, headlines)
   function previewSections(g, pv, body) {
     if (!pv) { var np = gvCard(null); np.appendChild(previewBlock(g)); body.appendChild(np); return; }
-    // odds
-    var o = pv.odds || {};
+    // the betting line sits at the top of the matchup page, so it isn't repeated here
+    var o = {};
     if (o.spread || o.total || (o.ml && o.ml.away != null)) {
       var od = el("div", "pv-odds gv-odds");
       if (o.spread) od.appendChild(el("span", null, o.spread));
@@ -4166,11 +4167,18 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     requestAnimationFrame(function () {
       d.style.display = "none"; void d.offsetHeight; d.style.display = "";
       var vv = window.visualViewport;
-      if (vv) { var off = (window.innerHeight - vv.height - vv.offsetTop); d.style.transform = off > 1 ? "translateY(" + (-off) + "px)" : ""; }
+      // only nudge for a real on-screen keyboard or toolbar gap; a bad reading after the app wakes up must never push it off screen
+      var off = vv ? (window.innerHeight - vv.height - vv.offsetTop) : 0;
+      d.style.transform = off > 1 && off < 160 && !document.hidden ? "translateY(" + (-off) + "px)" : "";
     });
   }
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", repinDock); }
   window.addEventListener("pageshow", repinDock);
+  document.addEventListener("visibilitychange", function () {
+    var d = document.querySelector("nav.dock"); if (!d) return;
+    d.style.display = ""; d.style.transform = "";   // start clean every time the app comes back
+    if (!document.hidden) { repinDock(); setTimeout(repinDock, 400); }
+  });
   var repinT = null; window.addEventListener("scroll", function () { clearTimeout(repinT); repinT = setTimeout(repinDock, 120); }, { passive: true });
   function setView(v) { state.backTo = null; if (isDuo && v === "lineup") v = "games"; if (v === "rules" && state.view !== "rules") state.rulesMain = null; state.view = v; state.menuOpen = false; render(); repinDock(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
   var slideDir = "";

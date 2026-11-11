@@ -257,7 +257,7 @@ def summary_facts(g, ev):
     f = {"event": ev["id"], "start": ev.get("date")}
     pc = (s.get("pickcenter") or [None])[0] or ((comp.get("odds") or [None])[0])
     if pc:
-        o = {"provider": (pc.get("provider") or {}).get("name")}
+        o = {"provider": {"Draft Kings": "DraftKings", "Fan Duel": "FanDuel"}.get((pc.get("provider") or {}).get("name"), (pc.get("provider") or {}).get("name"))}
         det = pc.get("details"); sp = pc.get("spread")
         if SPORT.get(lg) in ("bb", "fb"):
             if det: o["spread"] = det
