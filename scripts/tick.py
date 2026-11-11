@@ -416,6 +416,76 @@ def league_news(lg):
         if len(out) >= 6: break
     return out
 
+# ---------- team pages: Claude's take on DJ's teams (daily and after each game) and on teams he asks about ----------
+PRO_ORDER = ["nfl", "nba", "mlb", "nhl", "mls", "epl", "wnba", "laliga", "seriea", "bundesliga", "ligue1", "ucl"]
+_TEAMS = {}
+def team_index(lg):
+    if lg not in _TEAMS:
+        d = get(f"https://site.api.espn.com/apis/site/v2/sports/{base(lg)}/teams?limit=1000")
+        idx = {}
+        for t in ((d.get("sports") or [{}])[0].get("leagues") or [{}])[0].get("teams", []):
+            t = t.get("team", {}); idx[norm(t.get("displayName"))] = {"id": t.get("id"), "abbr": t.get("abbreviation", ""), "name": t.get("displayName")}
+        _TEAMS[lg] = idx
+    return _TEAMS[lg]
+
+def resolve_team(entry):
+    name, lg = parse_team(entry)
+    for cand in ([lg] if lg else PRO_ORDER + ["ncaam"]):
+        t = team_index(cand).get(norm(name))
+        if t: return dict(t, league=cand, key=f"{cand}-{t['abbr'].lower()}")
+    return None
+
+def team_facts(t):
+    lg, tid = t["league"], t["id"]; b = base(lg)
+    info = get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/teams/{tid}").get("team", {})
+    sch = get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/teams/{tid}/schedule").get("events", [])
+    news = get(f"https://site.api.espn.com/apis/site/v2/sports/{b}/news?team={tid}&limit=8").get("articles", [])
+    done, nxt = [], []
+    for e in sch:
+        c = (e.get("competitions") or [{}])[0]; st = (c.get("status") or {}).get("type", {}).get("state")
+        me = next((x for x in c.get("competitors", []) if str(x.get("team", {}).get("id")) == str(tid)), None)
+        op = next((x for x in c.get("competitors", []) if x is not me), None)
+        if not me or not op: continue
+        sc = lambda x: (x.get("score") or {}).get("displayValue") if isinstance(x.get("score"), dict) else x.get("score")
+        row = {"event": e.get("id"), "date": e.get("date"), "opp": op.get("team", {}).get("displayName"), "home": me.get("homeAway") == "home"}
+        if st == "post":
+            row.update({"score": f"{sc(me)}-{sc(op)}", "result": "W" if me.get("winner") else "L" if op.get("winner") else "T"}); done.append(row)
+        elif st == "pre":
+            row["tv"] = [n for bc in c.get("broadcasts", []) for n in ([bc.get("media", {}).get("shortName")] if bc.get("media") else bc.get("names", [])) if n][:2]; nxt.append(row)
+    rec = ((info.get("record") or {}).get("items") or [{}])[0].get("summary")
+    return {"name": t["name"], "league": lg, "abbr": t["abbr"], "record": rec, "standing": info.get("standingSummary"),
+            "recent": done[-6:], "upcoming": nxt[:3],
+            "news": [{"title": a.get("headline"), "url": ((a.get("links") or {}).get("web") or {}).get("href"), "at": a.get("published")}
+                     for a in news if ((a.get("links") or {}).get("web") or {}).get("href", "").startswith("https")][:6]}
+
+def team_work(docs, now, sett, load, todo, out_facts):
+    want = {}
+    for entry in sett.get("teams") or []:
+        t = resolve_team(entry)
+        if t: want[t["key"]] = (t, "favorite")
+    for key in load.get("teams") or []:
+        if key in want: continue
+        lg, _, ab = key.partition("-")
+        if lg not in PATHS: continue
+        t = next((dict(v, league=lg, key=key) for v in team_index(lg).values() if v["abbr"].lower() == ab), None)
+        if t: want[key] = (t, "requested")
+    if not want: return
+    have = sb_get([f"teams/{k}" for k in want])
+    for key, (t, kind) in want.items():
+        f = team_facts(t)
+        doc = have.get(f"teams/{key}") or {}
+        last = (f["recent"][-1] or {}).get("event") if f["recent"] else None
+        why = []
+        if not doc.get("summary"): why.append("new")
+        elif kind == "favorite":
+            at = parse(doc.get("at"))
+            if (doc.get("basis") or {}).get("last") != last: why.append("game since")
+            elif not at or (now - at).total_seconds() > 20 * 3600: why.append("daily")
+        if kind == "requested" and "new" not in why: why.append("requested")
+        if why:
+            f["basis"] = {"last": last}
+            todo.append({"kind": "team", "key": key, "why": why}); out_facts["team:" + key] = f
+
 # ---------- main ----------
 def main():
     if not KEY: sys.exit("SUPABASE_SECRET is not set")
@@ -537,6 +607,17 @@ def main():
         if lg_patch: body["leagues"] = lg_patch
         sb_put(f"previews/{D}", body, merge=True)
 
+    # team summaries: checked once an hour (and right away when DJ asks for one)
+    old_w = docs.get(f"work/{D}") or {}
+    if now.minute < 10 or (load.get("teams") and not any(t.get("kind") == "team" for t in old_w.get("todo", []))):
+        team_work(docs, now, sett, load, todo, work_facts)
+    else:  # keep the team items from the last hourly check until they're written
+        for t in old_w.get("todo", []):
+            if t.get("kind") == "team":
+                d0 = sb_get([f"teams/{t['key']}"]).get(f"teams/{t['key']}") or {}
+                f0 = (old_w.get("facts") or {}).get("team:" + t["key"]) or {}
+                if (d0.get("basis") or {}).get("last") != (f0.get("basis") or {}).get("last") or not d0.get("summary") or "requested" in t["why"] and t["key"] in (load.get("teams") or []):
+                    todo.append(t); work_facts["team:" + t["key"]] = f0
     work = {"date": D, "updatedAt": iso(now), "slate": slate, "requested": requested, "myTeams": mine,
             "loadDates": load.get("dates") or [], "todo": todo, "facts": work_facts}
     old_work = docs.get(f"work/{D}") or {}
@@ -559,7 +640,7 @@ def main():
             if data.get("leagues"): sb_put(f"standouts/{d}", data)
         else: print("standouts failed", d, r.stderr[-300:])
 
-    print("todo:", [(t["id"], t["why"]) for t in todo])
+    print("todo:", [(t.get("id") or t.get("key"), t["why"]) for t in todo])
     print("writes:", WRITES or "none")
 
 if __name__ == "__main__":

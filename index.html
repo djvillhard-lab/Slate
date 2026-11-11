@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111111357";
+<script>window.SLATE_BUILD = "20261111112730";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1217,6 +1217,40 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .csp-c.on { color: var(--ink); border-color: var(--accent); }
 .csp-c.on svg { color: var(--accent); }
 .trow.col, .tres-row.col { align-items: flex-start; }
+.sec.sec-tg { width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding-right: 2px; }
+.sec.sec-tg svg { width: 16px; height: 16px; margin-left: auto; align-self: center; transform: rotate(-90deg); transition: transform .2s ease; color: var(--dim); }
+.sec.sec-tg.shut svg { transform: rotate(90deg); }
+.sec.sec-tg.shut + .glist { display: none; }
+.trow.ford { grid-template-columns: 28px 1fr 44px 44px; }
+.ford-n { color: var(--dim); font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; }
+.ford-b { font-size: 20px; }
+.ford-up { transform: rotate(90deg); } .ford-down { transform: rotate(90deg); }
+.ford-b:disabled { opacity: .3; }
+#games-body.slide-l { animation: slideL .22s ease-out; } #games-body.slide-r { animation: slideR .22s ease-out; }
+.pv-bul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+.pv-bul li { line-height: 1.4; }
+.tm-head { padding-bottom: 14px; margin-bottom: 12px; }
+#team-body .gv-card { margin-bottom: 12px; }
+.tm-top { display: flex; align-items: center; gap: 12px; }
+.tm-nm { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.tm-nm b { font-size: 22px; font-weight: 800; color: var(--head); }
+.tm-nm span { font-size: 13.5px; color: var(--sub); font-weight: 600; }
+.tm-head .csp { margin-top: 12px; }
+.tm-row { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.tm-d { color: var(--dim); font-weight: 650; font-size: 13px; }
+.tm-o { color: var(--ink); font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-r { font-weight: 750; font-variant-numeric: tabular-nums; color: var(--sub); font-size: 14px; }
+.tm-r.fw { color: var(--accent); } .tm-r.fl { color: var(--sub); }
+.tm-sched .pv-h { display: block; margin: 10px 0 2px; }
+.tm-tbl-w { overflow-x: auto; margin: 4px -4px 10px; }
+.tm-tbl { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tm-tbl th, .tm-tbl td { padding: 6px 8px; text-align: right; border-top: 1px solid var(--line); }
+.tm-tbl tr:first-child th { border-top: 0; color: var(--dim); font-weight: 700; font-size: 12px; }
+.tm-tbl th:first-child { text-align: left; position: sticky; left: 0; background: var(--card); color: var(--ink); font-weight: 650; }
+.tm-pick { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); color: inherit; font: inherit; text-align: left; }
+.tm-pick .chev { color: var(--dim); font-size: 22px; }
+.tm-link { cursor: pointer; }
+#view-teams .field { width: 100%; box-sizing: border-box; margin: 4px 0 8px; }
 /* Back sits beside the menu button in the bottom-right corner, where a right thumb rests */
 nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 /* iOS drags fixed, blurred buttons along while a page scrolls: solid backgrounds keep them pinned to the corner */
@@ -1300,6 +1334,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   <section id="view-rules" aria-label="Slate rules" hidden><div id="rules-body"></div></section>
   <section id="view-game" aria-label="Matchup" hidden><div id="game-body"></div></section>
   <section id="view-best" aria-label="Player rankings" hidden><div id="best-body"></div></section>
+  <section id="view-teams" aria-label="Teams" hidden><div id="teams-body"></div></section>
+  <section id="view-team" aria-label="Team" hidden><div id="team-body"></div></section>
 
   <section id="view-notify" aria-label="Notifications" hidden>
     <div class="optrow master">
@@ -1410,10 +1446,18 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       <div><b>Scores</b><span>Updated about once an hour during game time. Hide them to avoid spoilers.</span></div>
       <div class="seg seg2" id="score-seg" role="group" aria-label="Scores"><button type="button" data-v="on">Show</button><button type="button" data-v="off">Hide</button></div>
     </div>
+    <div class="optrow">
+      <div><b>Quick reads</b><span>Short previews as a paragraph or as bullet points.</span></div>
+      <div class="seg seg2" id="pvstyle-seg" role="group" aria-label="Quick read style"><button type="button" data-v="para">Paragraph</button><button type="button" data-v="bullets">Bullets</button></div>
+    </div>
 
     <div class="sec"><h2>Leagues</h2><span class="count">Tap to hide</span></div>
     <p class="hint">Hidden leagues drop out of Games and On TV. Your teams' games always show.</p>
     <div class="lgchips" id="lg-chips" role="group" aria-label="Leagues shown"></div>
+
+    <div class="sec"><h2>All games filters</h2><span class="count">Order</span></div>
+    <p class="hint">The order of the filters across the top of All games. Swipe sideways on the list to move between them.</p>
+    <div class="rows" id="filter-order"></div>
 
     <div class="sec"><h2>Text size</h2></div>
     <p class="hint duo-only">Set it separately for the cover screen and the big screen.</p>
@@ -1472,6 +1516,10 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     <button class="mi" id="nav-best" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15v3h3v3H8v-3h3v-3a5 5 0 0 1-2.7-3H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>
       <span>Player rankings</span>
+    </button>
+    <button class="mi" id="nav-teams" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3zm0 2.2 6 2.2V11c0 3.9-2.5 7.4-6 8.8-3.5-1.4-6-4.9-6-8.8V6.4l6-2.2z"/></svg>
+      <span>Teams</span>
     </button>
     <button class="mi" id="nav-tv" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6v1.5h3V21H7v-1.5h3V18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
@@ -1646,7 +1694,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function setPref(path, v) { var ks = path.split("."), o = state.notify; for (var i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; }
   function fmtHour(h) { h = Number(h); return (h % 12 === 0 ? 12 : h % 12) + " " + (h < 12 ? "AM" : "PM"); }
   var state = {
-    date: todayInHome(), view: "lineup", openId: null, crawlPaused: false, tickerLeague: "", league: "all", conf: "all", q: "", showSearch: false, textSize: "m", textSizeWide: "", device: "", navPos: "auto", watchVia: "apps", foldNudge: 0, tvFilter: "all",
+    date: todayInHome(), view: "lineup", openId: null, crawlPaused: false, tickerLeague: "", league: "", conf: "all", gamesOrder: [], pvStyle: "para", q: "", showSearch: false, textSize: "m", textSizeWide: "", device: "", navPos: "auto", watchVia: "apps", foldNudge: 0, tvFilter: "all",
     notify: clone(NOTIFY_DEFAULTS), notifyLoaded: false,
     autoAdd: true, showScores: true, hiddenLeagues: [], scores: {}, scoresAt: null, lineupAutoDone: false,
     slate: null, slateStatus: "loading", lineup: { ids: [], added: [], removed: [], custom: [] }, lineupLoaded: false,
@@ -2102,7 +2150,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   function openMatchup(g) { state.gameId = g.id; openSub("game"); }
   function backToSlate() { if (!goBack()) setView("lineup"); }
   // ---------- going back, one-handed: a Back button beside the menu in the bottom-right corner, or a sideways swipe ----------
-  var VIEW_NAMES = { lineup: "Slate", games: "All games", tv: "On TV", rules: "Rules", settings: "Settings", best: "Rankings", game: "Matchup", notify: "Alerts" };
+  var VIEW_NAMES = { lineup: "Slate", games: "All games", tv: "On TV", rules: "Rules", settings: "Settings", best: "Rankings", game: "Matchup", notify: "Alerts", teams: "Teams", team: "Team" };
   function paneY() { return isDuo ? $("pane-r").scrollTop : (window.scrollY || 0); }
   // open a page that Back returns from (the menu's own pages don't keep a Back)
   function openSub(v) {
@@ -2182,6 +2230,15 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     }
     return { text: text, stars: stars, quick: true };
   }
+  // a quick read as a paragraph or as bullet points (Claude's own bullets when it wrote them, otherwise one per sentence)
+  function readNode(text, bullets, cls, plain) {
+    if (state.pvStyle !== "bullets" || plain || !text) return el("p", cls, text || "");
+    var items = Array.isArray(bullets) && bullets.length ? bullets
+      : String(text).replace(/\b(St|Jr|Sr|Mr|Dr|No|vs|Mt|Ft|Ave|U\.S)\./g, "$1\u0001").replace(/([a-z0-9%)][.!?])\s+(?=[A-Z"\u201c])/g, "$1\n")
+          .split("\n").map(function (x) { return x.replace(/\u0001/g, ".").trim(); }).filter(Boolean);
+    if (items.length < 2) return el("p", cls, text);
+    var ul = el("ul", cls + " pv-bul"); items.forEach(function (t) { ul.appendChild(el("li", null, t)); }); return ul;
+  }
   function recapPending(g, pv) {
     if (recapOf(pv) || status(g).kind !== "over") return false;
     var t = new Date(g.start).getTime(); return !isNaN(t) && Date.now() - t < 14 * 3600e3;
@@ -2211,12 +2268,12 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
     if (rc) {
       if (rcOpen) {
-        var rb = el("div", "pv-recap"); rb.appendChild(el("b", "pv-h", rc.quick ? "Box score recap" : "Recap")); rb.appendChild(el("p", "pv-sum", rc.text));
+        var rb = el("div", "pv-recap"); rb.appendChild(el("b", "pv-h", rc.quick ? "Box score recap" : "Recap")); rb.appendChild(readNode(rc.text, rc.bullets, "pv-sum", rc.quick));
         if (rc.quick) rb.appendChild(el("p", "pv-none pv-soon", "The written recap arrives at :55."));
         box.appendChild(rb);
       } else box.appendChild(recapGate(g));
     } else if (pv.summary) {
-      box.appendChild(el("p", "pv-sum", pv.summary));
+      box.appendChild(readNode(pv.summary, pv.bullets, "pv-sum"));
       if (recapPending(g, pv)) box.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives at :55."));
     }
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }).slice(0, 4) : [];
@@ -2899,6 +2956,176 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     bits.push("Ranked by box score: basketball Game Score, hockey points, shots and goalie saves, football yards and touchdowns, baseball hits and pitching");
     body.appendChild(el("p", "bs-foot", bits.join(". ") + "."));
   }
+
+  // ---------- team pages: schedule, player stats, news, and Claude's take ----------
+  var TEAM_LGKEY = { "NFL": "nfl", "NBA": "nba", "MLB": "mlb", "NHL": "nhl", "Premier League": "epl", "MLS": "mls", "WNBA": "wnba", "La Liga": "laliga", "Serie A": "seriea", "Bundesliga": "bundesliga", "Ligue 1": "ligue1" };
+  var tm = { idx: {}, data: {}, docs: {}, subs: {} };
+  function lgOfKnown(known, lg) { return lg || (known ? (TEAM_LGKEY[known.lg] || (known.lg === "College" ? "ncaam" : "")) : ""); }
+  function myTeamList() {
+    var out = [], seen = {};
+    state.teams.forEach(function (t) {
+      var p = parseTeam(t), known = teamByName(p.name), lg = lgOfKnown(known, p.lg);
+      if (!lg) return; var k = lg + "|" + p.name.toLowerCase(); if (seen[k]) return; seen[k] = 1;
+      out.push({ name: p.name, lg: lg, known: known });
+    });
+    return out;
+  }
+  function openTeam(name, lg) { state.team = { name: name, lg: lg }; tmLoad(state.team); openSub("team"); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
+  function tmKey(t) { return t.lg + "|" + String(t.name).toLowerCase(); }
+  function tmIndex(lg) {
+    if (tm.idx[lg]) return Promise.resolve(tm.idx[lg]);
+    try { var c = JSON.parse(localStorage.getItem("slate-tidx-" + lg) || "null"); if (c && Date.now() - c.at < 7 * 864e5) { tm.idx[lg] = c.m; return Promise.resolve(c.m); } } catch (e) {}
+    return rkFetch(bxApi(lg, "teams?limit=1000")).then(function (d) {
+      var m = {}, L = ((((d || {}).sports || [])[0] || {}).leagues || [])[0] || {};
+      (L.teams || []).forEach(function (x) { var t = x.team || {}; m[normT(t.displayName)] = { id: t.id, abbr: t.abbreviation, name: t.displayName }; });
+      if (Object.keys(m).length) { tm.idx[lg] = m; try { localStorage.setItem("slate-tidx-" + lg, JSON.stringify({ at: Date.now(), m: m })); } catch (e) {} }
+      return m;
+    });
+  }
+  function tmLoad(t, force) {
+    if (!t || !BX_SPORT[t.lg]) return;
+    var k = tmKey(t), cur = tm.data[k];
+    if (cur && (cur.busy || (!force && Date.now() - cur.at < 5 * 60000))) return;
+    cur = tm.data[k] = { busy: true, at: Date.now(), d: cur && cur.d };
+    tmIndex(t.lg).then(function (m) {
+      var e = m[normT(t.name)]; if (!e) throw new Error("not found");
+      cur.espn = e; tmWatch(t.lg + "-" + String(e.abbr || "").toLowerCase());
+      return Promise.all([rkFetch(bxApi(t.lg, "teams/" + e.id)), rkFetch(bxApi(t.lg, "teams/" + e.id + "/schedule")), rkFetch(bxApi(t.lg, "teams/" + e.id + "/athletes/statistics")), rkFetch(bxApi(t.lg, "news?team=" + e.id + "&limit=8"))]);
+    }).then(function (r) {
+      cur.busy = false; cur.at = Date.now(); cur.d = { info: (r[0] || {}).team || {}, sched: (r[1] || {}).events || [], stats: (r[2] || {}).results || [], news: (r[3] || {}).articles || [] };
+      if (state.view === "team") keepScroll(renderTeam);
+    }, function () { cur.busy = false; cur.err = true; if (state.view === "team") keepScroll(renderTeam); });
+  }
+  // Claude's summaries live in teams/<league>-<abbr>
+  function tmWatch(skey) {
+    if (tm.subs[skey] || !db) return;
+    tm.subs[skey] = db.doc("teams/" + skey).onSnapshot(function (snap) { tm.docs[skey] = snap.exists ? snap.data() : null; if (state.view === "team") keepScroll(renderTeam); }, function () {});
+  }
+  function teamAsked(skey) { return ((state.loadReq || {}).teams || []).indexOf(skey) !== -1; }
+  function requestTeam(skey, on) {
+    var L = state.loadReq || {}, body = clone(L), ids = (L.teams || []).filter(function (x) { return x !== skey; });
+    if (on) ids.push(skey);
+    body.teams = ids.slice(-10); if (!Array.isArray(body.dates)) body.dates = []; body.requestedAt = new Date().toISOString();
+    state.loadReq = body; keepScroll(renderTeam);
+    db.doc("prefs/load").set(body).then(function () { toast(on ? "Summary requested" : "Request canceled"); }, function () { state.loadReq = L; keepScroll(renderTeam); toast("Couldn't save that. Try again."); });
+  }
+  function renderTeams() {
+    var body = $("teams-body"); if (!body) return; body.textContent = "";
+    if (state.view !== "teams") return;
+    var mine = myTeamList();
+    body.appendChild(el("div", "sec")).appendChild(el("h2", null, "My teams"));
+    var rows = el("div", "rows");
+    if (!mine.length) rows.appendChild(el("p", "hint", "Star a team to keep it here. Its page gets a Claude summary each morning and after every game."));
+    mine.forEach(function (t) {
+      var r = el("button", "trow tm-pick"); r.type = "button";
+      r.appendChild(t.known ? teamBadge(t.known) : badgeFor(t.name.slice(0, 3).toUpperCase(), t.name));
+      var tx = el("span", "tx"); tx.appendChild(el("span", "n", t.name)); tx.appendChild(el("span", "lg", (LEAGUES[t.lg] || {}).name || "")); r.appendChild(tx);
+      r.appendChild(el("span", "chev", "›"));
+      r.addEventListener("click", function () { openTeam(t.name, t.lg); });
+      rows.appendChild(r);
+    });
+    body.appendChild(rows);
+    body.appendChild(el("div", "sec")).appendChild(el("h2", null, "Any team"));
+    var f = el("input", "field"); f.type = "search"; f.placeholder = "Search a team, e.g. Chiefs or Kansas"; f.value = state.teamQ || ""; f.setAttribute("aria-label", "Search a team");
+    var res = el("div", "rows");
+    function list() {
+      res.textContent = ""; state.teamQ = f.value;
+      teamSearch(f.value).forEach(function (t) {
+        var lg = lgOfKnown(t), r = el("button", "trow tm-pick"); r.type = "button";
+        r.appendChild(teamBadge(t)); var tx = el("span", "tx"); tx.appendChild(el("span", "n", t.name)); tx.appendChild(el("span", "lg", t.lg)); r.appendChild(tx);
+        r.appendChild(el("span", "chev", "›"));
+        r.addEventListener("click", function () { if (lg) openTeam(t.name, lg); });
+        res.appendChild(r);
+      });
+    }
+    f.addEventListener("input", list); body.appendChild(f); body.appendChild(res); list();
+  }
+  function tmSchedRow(e, id) {
+    var c = (e.competitions || [])[0] || {}, cs = c.competitors || [], me = null, op = null;
+    cs.forEach(function (x) { if (String((x.team || {}).id) === String(id)) me = x; else op = x; });
+    if (!me || !op) return null;
+    var st = ((c.status || {}).type || {}).state, sv = function (x) { return x.score && typeof x.score === "object" ? x.score.displayValue : x.score; };
+    var r = el("div", "tm-row"), d = new Date(e.date);
+    r.appendChild(el("span", "tm-d", d.toLocaleDateString("en-US", { month: "short", day: "numeric" })));
+    r.appendChild(el("span", "tm-o", (me.homeAway === "home" ? "vs " : "@ ") + (((op.team || {}).shortDisplayName) || (op.team || {}).displayName || "")));
+    if (st === "post") {
+      var w = me.winner ? "W" : op.winner ? "L" : "T";
+      var rs = el("span", "tm-r " + (w === "W" ? "fw" : w === "L" ? "fl" : "")); rs.textContent = state.showScores ? w + " " + sv(me) + "-" + sv(op) : "Final"; r.appendChild(rs);
+    } else if (st === "in") r.appendChild(el("span", "tm-r", "Live"));
+    else {
+      var tv = []; (c.broadcasts || []).forEach(function (b) { var n = (b.media || {}).shortName || ((b.names || [])[0]); if (n && tv.indexOf(n) === -1) tv.push(n); });
+      r.appendChild(el("span", "tm-r", timeText(e.date) + (tv.length ? " · " + tv[0] : "")));
+    }
+    return r;
+  }
+  function tmStats(lg, results) {
+    var spec = BX_SEASON[BX_SPORT[lg]]; if (!spec) return null;
+    var wrap = el("div");
+    (results || []).forEach(function (grp) {
+      var sp = spec[grp.name]; if (!sp) return;
+      var rows = (grp.leaders || []).slice(0, 10); if (!rows.length) return;
+      var sc = el("div", "tm-tbl-w"), tb = el("table", "tm-tbl"), hr = el("tr");
+      hr.appendChild(el("th", null, "")); sp.forEach(function (c2) { hr.appendChild(el("th", null, c2[1])); }); tb.appendChild(hr);
+      rows.forEach(function (a) {
+        var m = {}, ath = a.athlete || {};
+        (a.statistics || []).forEach(function (cat) { (cat.stats || []).forEach(function (x) { if (!(x.name in m)) m[x.name] = x.displayValue; }); });
+        var tr = el("tr"); tr.appendChild(el("th", null, bxName(ath)));
+        sp.forEach(function (c2) { var ks = c2[0].split("|"), v = "–"; for (var i = 0; i < ks.length; i++) if (m[ks[i]] != null) { v = m[ks[i]]; break; } tr.appendChild(el("td", null, String(v))); });
+        tb.appendChild(tr);
+      });
+      sc.appendChild(tb); wrap.appendChild(sc);
+    });
+    return wrap.childNodes.length ? wrap : null;
+  }
+  function renderTeam() {
+    var body = $("team-body"); if (!body) return; body.textContent = "";
+    if (state.view !== "team" || !state.team) return;
+    var t = state.team, k = tmKey(t), cur = tm.data[k] || {}, d = cur.d, e = cur.espn, known = teamByName(t.name);
+    if (!cur.at) tmLoad(t);
+    var hd = el("div", "gv-head tm-head"), top = el("div", "tm-top");
+    top.appendChild(known ? teamBadge(known) : badgeFor((e && e.abbr) || t.name.slice(0, 3).toUpperCase(), t.name));
+    var nm = el("div", "tm-nm"); nm.appendChild(el("b", null, t.name));
+    var sub = [(LEAGUES[t.lg] || {}).name]; if (d && d.info) { var rec = (((d.info.record || {}).items || [])[0] || {}).summary; if (rec) sub.push(rec); if (d.info.standingSummary) sub.push(d.info.standingSummary); }
+    nm.appendChild(el("span", null, sub.filter(Boolean).join(" · "))); top.appendChild(nm);
+    var fav = isFav(t.name, t.lg), st = el("button", "star" + (fav ? " on" : "")); st.type = "button"; st.appendChild(icon(fav ? "star" : "star-o"));
+    st.setAttribute("aria-label", fav ? "Remove from my teams" : "Add to my teams"); st.addEventListener("click", function () { toggleFav(t.name, t.lg); });
+    top.appendChild(st); hd.appendChild(top);
+    if (known && known.lg === "College") {
+      var sw = el("div", "csp");
+      COL_KEYS.forEach(function (lk) { var b = el("button", "csp-c" + (lk === t.lg ? " on" : ""), { ncaam: "Men's hoops", ncaaw: "Women's hoops", ncaaf: "Football" }[lk]); b.type = "button"; b.addEventListener("click", function () { state.team = { name: t.name, lg: lk }; tmLoad(state.team); render(); }); sw.appendChild(b); });
+      hd.appendChild(sw);
+    }
+    body.appendChild(hd);
+    // Claude's take
+    var skey = e ? t.lg + "-" + String(e.abbr || "").toLowerCase() : null, doc = skey ? tm.docs[skey] : null;
+    var cc = gvCard("Claude's take", "tm-claude");
+    if (doc && doc.summary) {
+      cc.appendChild(readNode(doc.summary, doc.bullets, "gv-sum"));
+      if (doc.at) cc.appendChild(el("p", "pv-at", "Written " + new Date(doc.at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })));
+    } else if (fav) cc.appendChild(el("p", "pv-none", "Your teams get a summary each morning and after every game. The first one arrives at :55."));
+    if (!fav && skey && window.SLATE_SELF) {
+      var asked = teamAsked(skey), rq = el("div", "gv-acts");
+      if (asked) { rq.appendChild(el("span", "pv-none", (doc && doc.summary ? "Update requested" : "Requested") + " · arrives at :55")); var cx = el("button", "rlink", "Cancel"); cx.type = "button"; cx.addEventListener("click", function () { requestTeam(skey, false); }); rq.appendChild(cx); }
+      else { var gb = el("button", "pv-get", doc && doc.summary ? "Get a fresh summary" : "Get a Claude summary"); gb.type = "button"; gb.addEventListener("click", function () { requestTeam(skey, true); }); rq.appendChild(gb); }
+      cc.appendChild(rq);
+    }
+    body.appendChild(cc);
+    if (!d) { body.appendChild(el("div", "notice", cur.err ? "Couldn't reach ESPN for this team. Pull down to try again." : "Loading the schedule, stats and news…")); return; }
+    // schedule
+    var done = [], next = [];
+    d.sched.forEach(function (ev) { var st2 = ((((ev.competitions || [])[0] || {}).status || {}).type || {}).state; (st2 === "pre" ? next : done).push(ev); });
+    var sc = gvCard("Schedule", "tm-sched");
+    if (next.length) { sc.appendChild(el("b", "pv-h", "Next")); next.slice(0, 4).forEach(function (ev) { var r = tmSchedRow(ev, e.id); if (r) sc.appendChild(r); }); }
+    if (done.length) { sc.appendChild(el("b", "pv-h", "Recent")); done.slice(-5).reverse().forEach(function (ev) { var r = tmSchedRow(ev, e.id); if (r) sc.appendChild(r); }); }
+    if (!next.length && !done.length) sc.appendChild(el("p", "pv-none", "No games on the schedule right now."));
+    body.appendChild(sc);
+    // player stats
+    var ps = tmStats(t.lg, d.stats);
+    if (ps) { var pc = gvCard("Player stats", "tm-stats"); pc.appendChild(ps); pc.appendChild(el("p", "pv-at", "This season, per game where it applies")); body.appendChild(pc); }
+    // news
+    var news = d.news.map(function (a) { return { title: a.headline, url: ((a.links || {}).web || {}).href || "", source: "ESPN" }; }).filter(function (h) { return h.title && /^https:\/\//.test(h.url); });
+    if (news.length) body.appendChild(linkList("News", news.slice(0, 6)));
+  }
   function renderGame() {
     var body = $("game-body"); if (!body) return; body.textContent = "";
     if (state.view !== "game") return;
@@ -2911,6 +3138,11 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var ln = leagueLine(g, true); hd.appendChild(ln);
     var row = el("div", "gv-match"), teams = el("div", "gv-teams");
     teams.appendChild(teamLine(g, "away")); teams.appendChild(teamLine(g, "home"));
+    if (!g.custom && BX_SPORT[g.league]) ["away", "home"].forEach(function (s2, i2) {
+      var ln2 = teams.children[i2]; if (!ln2) return;
+      ln2.classList.add("tm-link"); ln2.setAttribute("role", "button"); ln2.setAttribute("tabindex", "0"); ln2.setAttribute("aria-label", "Open the " + g[s2] + " team page");
+      ln2.addEventListener("click", function (ev) { ev.stopPropagation(); openTeam(g[s2], g.league); });
+    });
     row.appendChild(teams); row.appendChild(statusSide(g, "lineup")); hd.appendChild(row);
     var meta = [];
     ["away", "home"].forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x) meta.push(abbr(g, sd) + " " + x); });
@@ -3000,11 +3232,11 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
     if (rc) {
       var rq = gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap");
-      if (rcOpen) { rq.appendChild(el("p", "gv-sum", rc.text)); if (rc.quick) rq.appendChild(el("p", "pv-none pv-soon", "The written recap arrives at :55.")); }
+      if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); if (rc.quick) rq.appendChild(el("p", "pv-none pv-soon", "The written recap arrives at :55.")); }
       else rq.appendChild(recapGate(g));
       body.appendChild(rq);
     } else if (pv.summary) {
-      var q = gvCard("The quick read"); q.appendChild(el("p", "gv-sum", pv.summary));
+      var q = gvCard("The quick read"); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
       if (recapPending(g, pv)) q.appendChild(el("p", "pv-none pv-soon", "Final. The recap arrives at :55."));
       body.appendChild(q);
     }
@@ -3296,14 +3528,67 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     b.addEventListener("click", function () { toggle(g.id); });
     return b;
   }
+  // All games filters: my teams, then the leagues playing today, then the quiet ones, then All, in DJ's order when he set one
+  function filterOpts(gs) {
+    var present = {}; gs.forEach(function (g) { present[g.league] = true; });
+    var hid = state.hiddenLeagues || [];
+    var keys = ORDER.filter(function (k) { return present[k]; });
+    Object.keys(present).forEach(function (k) { if (keys.indexOf(k) === -1) keys.push(k); });
+    var quiet = ORDER.filter(function (k) { return !present[k] && hid.indexOf(k) === -1; });
+    var opts = [];
+    if (gs.some(hasFav)) opts.push(["fav", "★ Mine"]);
+    keys.forEach(function (k) { var g0 = gs.filter(function (x) { return x.league === k; })[0]; opts.push([k, info(g0).tag]); });
+    opts.push(["all", "ALL"]);
+    quiet.forEach(function (k) { opts.push([k, LEAGUES[k].tag, true]); });
+    var ord = state.gamesOrder || [];
+    if (ord.length) {
+      opts = opts.map(function (o, i) { var j = ord.indexOf(o[0]); return [o[2] ? 2e3 + i : j === -1 ? 1e3 + i : j, o]; })
+        .sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
+    }
+    return opts;
+  }
+  function firstOpt(opts) { var o = opts.filter(function (x) { return !x[2]; })[0]; return o ? o[0] : "all"; }
+  function pickFilter(k, dir) {
+    if (state.league === k) return;
+    state.league = k; state.conf = "all"; state.leagueAuto = false;
+    var b = $("games-body"); if (b && dir && !REDUCED) { b.classList.remove("slide-l", "slide-r"); void b.offsetWidth; b.classList.add(dir === "l" ? "slide-l" : "slide-r"); }
+    render();
+    var on = document.querySelector("#strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center", behavior: REDUCED ? "auto" : "smooth" });
+    window.scrollTo(0, 0);
+  }
+  function swipeFilter(step) {
+    var opts = filterOpts(visibleGames()).filter(function (o) { return !o[2]; }), i = -1;
+    opts.forEach(function (o, j) { if (o[0] === state.league) i = j; });
+    var n = opts[i + step]; if (n) pickFilter(n[0], step > 0 ? "l" : "r");
+  }
+  // filters inside a league: ranked teams for college; national TV, top teams and winning teams for the rest
+  function subOpts(lg, lgGames) {
+    var o = [["all", "All"]];
+    if (LEAGUES[lg] && LEAGUES[lg].college) {
+      if (lgGames.some(function (g) { return g.awayRank || g.homeRank; })) o.unshift(["t25", "Ranked"]);
+      if (lgGames.some(function (g) { return g.awayRank && g.homeRank; })) o.splice(1, 0, ["t25b", "Both ranked"]);
+      return o;
+    }
+    if (lgGames.some(natFor)) o.push(["nat", "National TV"]);
+    if (lgGames.some(function (g) { return standNo(g, "away") && standNo(g, "home"); })) o.push(["top", SOCCER[lg] ? "Top of table" : "Top teams"]);
+    if (lgGames.some(function (g) { return winRec(g, "away") && winRec(g, "home"); })) o.push(["win", "Winning teams"]);
+    return o;
+  }
   function gamesFiltered() {
+    if (!state.league) state.league = firstOpt(filterOpts(visibleGames()));
     var q = state.q.trim().toLowerCase();
     return visibleGames().filter(function (g) {
       if (state.league === "fav" && !hasFav(g)) return false;
       if (state.league !== "all" && state.league !== "fav" && g.league !== state.league) return false;
       if (info(g).college && state.league === g.league && state.conf !== "all") {
         if (state.conf === "t25") { if (!g.awayRank && !g.homeRank) return false; }
+        else if (state.conf === "t25b") { if (!g.awayRank || !g.homeRank) return false; }
         else if (confOf(g, "away") !== state.conf && confOf(g, "home") !== state.conf) return false;
+      }
+      if (!info(g).college && state.league === g.league && state.conf !== "all") {
+        if (state.conf === "nat" && !natFor(g)) return false;
+        if (state.conf === "top" && !MATCH.top(g)) return false;
+        if (state.conf === "win" && !(winRec(g, "away") && winRec(g, "home"))) return false;
       }
       if (q) {
         var hay = [g.away, g.home, g.awayShort, g.homeShort, abbr(g, "away"), abbr(g, "home"), confOf(g, "away"), confOf(g, "home"), info(g).name, (g.tv || []).join(" "), g.note].join(" ").toLowerCase();
@@ -3331,12 +3616,25 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     Object.keys(groups).forEach(function (k) { if (order.indexOf(k) === -1) order.push(k); });
     order.forEach(function (k) { section(body, info(groups[k][0]).name, groups[k]); });
   }
+  // league sections open and close (remembered on this phone); a single-league view is always open
+  var COLLAPSED = (function () { try { return JSON.parse(localStorage.getItem("slate-collapsed") || "{}") || {}; } catch (e) { return {}; } })();
   function section(body, title, list) {
-    var sec = el("div", "sec"); sec.appendChild(el("h2", null, title));
+    var many = state.league === "all" || (state.league !== "fav" && title === "My teams");
+    var shut = many && !!COLLAPSED[title];
+    var sec = el(many ? "button" : "div", "sec" + (many ? " sec-tg" : "") + (shut ? " shut" : ""));
+    if (many) { sec.type = "button"; sec.setAttribute("aria-expanded", shut ? "false" : "true"); }
+    sec.appendChild(el("h2", null, title));
     sec.appendChild(el("span", "count", list.length + (list.length === 1 ? " game" : " games")));
+    if (many) sec.appendChild(icon("more"));
     body.appendChild(sec);
-    var mixed = title === "My teams" || state.league === "all";
-    var box = el("div", "glist"); list.forEach(function (g) { box.appendChild(gameRow(g, "games", { league: title === "My teams" })); }); body.appendChild(box);
+    var box = el("div", "glist");
+    if (!shut) list.forEach(function (g) { box.appendChild(gameRow(g, "games", { league: title === "My teams" })); });
+    body.appendChild(box);
+    if (many) sec.addEventListener("click", function () {
+      if (COLLAPSED[title]) delete COLLAPSED[title]; else COLLAPSED[title] = 1;
+      try { localStorage.setItem("slate-collapsed", JSON.stringify(COLLAPSED)); } catch (e) {}
+      keepScroll(renderGames);
+    });
   }
 
   // ---------- lineup view: timeline by start time ----------
@@ -3897,6 +4195,32 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     }
     return r;
   }
+  function renderFilterOrder() {
+    var box = $("filter-order"); if (!box) return; box.textContent = "";
+    var hid = state.hiddenLeagues || [];
+    var keys = ["fav"].concat(ORDER.filter(function (k) { return hid.indexOf(k) === -1; })).concat(["all"]);
+    var ord = state.gamesOrder || [];
+    keys = keys.map(function (k, i) { var j = ord.indexOf(k); return [j === -1 ? 1e3 + i : j, k]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
+    keys.forEach(function (k, i) {
+      var r = el("div", "trow ford");
+      r.appendChild(el("span", "ford-n", String(i + 1)));
+      var tx = el("span", "tx"); tx.appendChild(el("span", "n", k === "fav" ? "★ My teams" : k === "all" ? "All games" : LEAGUES[k].name)); r.appendChild(tx);
+      [["up", -1, "‹"], ["down", 1, "›"]].forEach(function (m) {
+        var b = el("button", "x ford-b ford-" + m[0], m[2]); b.type = "button";
+        b.setAttribute("aria-label", "Move " + (k === "fav" ? "My teams" : k === "all" ? "All games" : LEAGUES[k].name) + " " + m[0]);
+        b.disabled = (m[1] < 0 && i === 0) || (m[1] > 0 && i === keys.length - 1);
+        b.addEventListener("click", function () {
+          var nk = keys.slice(), j = i + m[1], t = nk[i]; nk[i] = nk[j]; nk[j] = t;
+          state.gamesOrder = nk; saveSettings(); renderFilterOrder(); renderTop && renderTop();
+        });
+        r.appendChild(b);
+      });
+      box.appendChild(r);
+    });
+    var rs = el("button", "rlink", "Reset to the default order"); rs.type = "button";
+    rs.addEventListener("click", function () { state.gamesOrder = []; saveSettings(); renderFilterOrder(); });
+    if ((state.gamesOrder || []).length) box.appendChild(rs);
+  }
   function renderSettings() {
     var rows = $("team-rows"); rows.textContent = "";
     var nT = {}; state.teams.forEach(function (t) { nT[parseTeam(t).name.toLowerCase()] = 1; }); nT = Object.keys(nT).length;
@@ -3935,6 +4259,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     Array.prototype.forEach.call($("size-seg-wide").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === (state.textSizeWide || state.textSize) ? "true" : "false"); });
     if (false) Array.prototype.forEach.call([], function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.autoAdd ? "true" : "false"); });
     Array.prototype.forEach.call($("score-seg").children, function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.showScores ? "true" : "false"); });
+    Array.prototype.forEach.call($("pvstyle-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-v") === (state.pvStyle || "para") ? "true" : "false"); });
+    renderFilterOrder();
     var lc = $("lg-chips"); lc.textContent = "";
     ORDER.forEach(function (k) {
       var shown = (state.hiddenLeagues || []).indexOf(k) === -1;
@@ -4017,7 +4343,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var dl = dayLabel(state.date), named = /^(today|yesterday|tomorrow)$/.test(dl);
     var shortDate = fmtDate(state.date, { weekday: "short" }) + ", " + fmtDate(state.date, { month: "short", day: "numeric" });
     var slateTitle = state.date === today ? "Tonight's Slate" : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
-    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : slateTitle;
+    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "teams" ? "Teams" : v === "team" ? "Team" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     $("btn-rules").hidden = true; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
     var pg = $("btn-copy").parentNode; pg.hidden = v !== "lineup" && v !== "games";
@@ -4034,37 +4360,30 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     var gs = visibleGames(), present = {};
     gs.forEach(function (g) { present[g.league] = true; });
     // every league is always there to pick: ones playing today first, the rest dimmed
-    var hid = state.hiddenLeagues || [];
-    var keys = ORDER.filter(function (k) { return present[k]; });
-    Object.keys(present).forEach(function (k) { if (keys.indexOf(k) === -1) keys.push(k); });
-    var quiet = ORDER.filter(function (k) { return !present[k] && hid.indexOf(k) === -1; });
-    var opts = [["all", "ALL"]];
-    if (gs.some(hasFav)) opts.push(["fav", "★"]);
-    keys.forEach(function (k) { var g0 = gs.filter(function (x) { return x.league === k; })[0]; opts.push([k, info(g0).tag]); });
-    quiet.forEach(function (k) { opts.push([k, LEAGUES[k].tag, true]); });
-    if (!opts.some(function (o) { return o[0] === state.league; })) state.league = "all";
+    var opts = filterOpts(gs);
+    // until DJ picks one, the filter follows the default (My teams when any play, otherwise the first league)
+    if (state.leagueAuto !== false || !opts.some(function (o) { return o[0] === state.league && !o[2]; })) { state.league = firstOpt(opts); state.leagueAuto = true; }
     opts.forEach(function (o) {
       var b = el("button", "lg-tab" + (o[2] ? " none" : ""), o[1]); b.type = "button";
       if (o[0] === "fav") b.setAttribute("aria-label", "My teams");
       else if (o[2]) b.setAttribute("aria-label", LEAGUES[o[0]].name + ", no games");
       b.setAttribute("aria-pressed", state.league === o[0] ? "true" : "false");
-      b.addEventListener("click", function () { if (state.league !== o[0]) { state.league = o[0]; state.conf = "all"; } render(); });
+      b.addEventListener("click", function () { pickFilter(o[0]); });
       sp.appendChild(b);
     });
     sp.hidden = v !== "games" || !gs.length;
 
     // conference sub-strip (college leagues)
     var ss = $("substrip"); ss.textContent = "";
-    var showConf = v === "games" && LEAGUES[state.league] && LEAGUES[state.league].college;
+    var showConf = v === "games" && !!LEAGUES[state.league];
     if (showConf) {
       var lgGames = gs.filter(function (g) { return g.league === state.league; });
       var counts = {};
-      lgGames.forEach(function (g) { [confOf(g, "away"), confOf(g, "home")].forEach(function (c) { if (c) counts[c] = (counts[c] || 0) + 1; }); });
+      if (LEAGUES[state.league].college) lgGames.forEach(function (g) { [confOf(g, "away"), confOf(g, "home")].forEach(function (c) { if (c) counts[c] = (counts[c] || 0) + 1; }); });
       var confs = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b); });
-      var copts = [];
-      if (lgGames.some(function (g) { return g.awayRank || g.homeRank; })) copts.push(["t25", "T25"]);
-      copts.push(["all", "All"]);
+      var copts = subOpts(state.league, lgGames);
       confs.forEach(function (c) { copts.push([c, c]); });
+      if (copts.length < 2) copts = [];
       if (!copts.some(function (o) { return o[0] === state.conf; })) state.conf = "all";
       copts.forEach(function (o) {
         var b = el("button", "cf-tab", o[1]); b.type = "button";
@@ -4106,7 +4425,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
 
     ["lineup", "rules", "games", "tv", "settings"].forEach(function (k) { var b = $("nav-" + k); if (v === k || (k === "settings" && v === "notify")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     $("menu-pop").hidden = !state.menuOpen; $("menu-scrim").hidden = !state.menuOpen; $("menu-fab").setAttribute("aria-expanded", state.menuOpen ? "true" : "false");
-    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best";
+    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-teams").hidden = v !== "teams"; $("view-team").hidden = v !== "team";
     var cnt = lineupGames().length, nc = $("nav-count"); nc.textContent = String(cnt); nc.hidden = !cnt;
     $("view-lineup").hidden = !isDuo && v !== "lineup"; $("view-games").hidden = v !== "games"; $("view-tv").hidden = v !== "tv"; $("view-settings").hidden = v !== "settings"; $("view-notify").hidden = v !== "notify";
   }
@@ -4156,7 +4475,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     if (!max) return;
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(88, box.clientWidth * 0.27))) + "px");
   }
-  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
+  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderTeams(); renderTeam(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
 
   // ---------- actions ----------
   // iOS can leave a fixed element where it was when a page swaps for a shorter one and the scroll jumps
@@ -4320,7 +4639,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
     if (!db || !state.settingsLoaded) return;
     if (setWriter.busy) { setWriter.dirty = true; return; }
     setWriter.busy = true; setWriter.dirty = false;
-    db.collection("data/users/" + uid).doc("settings").set({ teams: state.teams.slice(), look: state.look, accent: state.accent, textSize: state.textSize, textSizeWide: state.textSizeWide || "", device: state.device || "", navPos: state.navPos, watchVia: state.watchVia, foldNudge: Number(state.foldNudge) || 0, rules: clone(state.rules || RULE_DEFAULTS), tickerLeague: state.tickerLeague || "", showScores: !!state.showScores, hiddenLeagues: (state.hiddenLeagues || []).slice() }).then(function () {
+    db.collection("data/users/" + uid).doc("settings").set({ teams: state.teams.slice(), look: state.look, accent: state.accent, textSize: state.textSize, textSizeWide: state.textSizeWide || "", device: state.device || "", navPos: state.navPos, watchVia: state.watchVia, foldNudge: Number(state.foldNudge) || 0, rules: clone(state.rules || RULE_DEFAULTS), tickerLeague: state.tickerLeague || "", showScores: !!state.showScores, hiddenLeagues: (state.hiddenLeagues || []).slice(), gamesOrder: (state.gamesOrder || []).slice(), pvStyle: state.pvStyle || "para" }).then(function () {
       setWriter.busy = false; if (setWriter.dirty) saveSettings();
     }, function () { setWriter.busy = false; toast("Couldn't save settings."); });
     saveNotify();
@@ -4418,6 +4737,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
   // ---------- wiring ----------
   $("nav-lineup").addEventListener("click", function () { setView("lineup"); });
   $("nav-games").addEventListener("click", function () { setView("games"); });
+  $("nav-teams").addEventListener("click", function () { setView("teams"); });
   $("nav-best").addEventListener("click", function () { rk.date = null; setView("best"); rkPoll(true); });
   $("nav-settings").addEventListener("click", function () { setView("settings"); });
   $("nav-refresh").addEventListener("click", refreshApp);
@@ -4451,6 +4771,9 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       state.device = v; saveSettings(); applyLook(); applyLayout(true);
       toast(v === "duo" ? "Set up for iPhone Duo" : "Set up for iPhone");
     });
+  });
+  Array.prototype.forEach.call($("pvstyle-seg").children, function (b) {
+    b.addEventListener("click", function () { state.pvStyle = b.getAttribute("data-v"); saveSettings(); render(); });
   });
   Array.prototype.forEach.call($("score-seg").children, function (b) {
     b.addEventListener("click", function () { state.showScores = b.getAttribute("data-v") === "on"; saveSettings(); render(); });
@@ -4486,6 +4809,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip, .bs-pills")) return null;
       if (isDuo && target.closest("#pane-l")) return "day";
       if (state.backTo && state.backTo.view !== state.view) return "back";
+      if (state.view === "games" && target.closest("#view-games, #games-body") && !target.closest(".tray")) return "league";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
     document.addEventListener("touchstart", function (e) {
@@ -4494,7 +4818,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
       mode = swipeMode(e.target); if (!mode) return;
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
-      scroller = e.target.closest(".bx-scroll, .bxp-cells"); sx0 = scroller ? scroller.scrollLeft : 0;
+      scroller = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip"); sx0 = scroller ? scroller.scrollLeft : 0;
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     }, { passive: true });
     document.addEventListener("touchend", function (e) {
@@ -4502,6 +4826,7 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
       if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.7 || Date.now() - t0 > 900) return;
       if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) return;
       if (mode === "back") { goBack(); return; }
+      if (mode === "league") { swipeFilter(dx < 0 ? 1 : -1); return; }
       slideDir = dx < 0 ? "l" : "r";
       setDate(shiftDate(state.date, dx < 0 ? 1 : -1));
     }, { passive: true });
@@ -4642,6 +4967,8 @@ nav.dock { display: flex; align-items: flex-end; gap: 10px; }
               if (typeof d.tickerLeague === "string") state.tickerLeague = d.tickerLeague;
               if (typeof d.showScores === "boolean") state.showScores = d.showScores;
               if (Array.isArray(d.hiddenLeagues)) state.hiddenLeagues = d.hiddenLeagues.slice();
+              if (Array.isArray(d.gamesOrder)) state.gamesOrder = d.gamesOrder.slice();
+              if (d.pvStyle === "bullets" || d.pvStyle === "para") state.pvStyle = d.pvStyle;
               applyLook(); applyLayout();
             }
             state.settingsLoaded = true; maybeAutoAdd(); render();
