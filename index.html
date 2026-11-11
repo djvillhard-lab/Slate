@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111163518";
+<script>window.SLATE_BUILD = "20261111163713";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2382,7 +2382,7 @@ html:not(.duo) .menu-pop { bottom: 56px !important; }
         a.addEventListener("click", function (e) { e.stopPropagation(); });
         side.appendChild(a);
       });
-    } else if (mode === "games") side.appendChild(el("span", "net", tv.length ? tv.slice(0, 2).join(" / ") : "Local TV"));
+    } else if (mode === "games") side.appendChild(el("span", "net", tv.length ? tv.slice(0, 2).map(function (n) { return NET_SHORT[n] || n; }).join(" / ") : "Local TV"));
     return side;
   }
   var PREVIEWS_LIVE = true;   // an hourly scheduled run writes and refreshes previews for the slate
@@ -4159,7 +4159,7 @@ html:not(.duo) .menu-pop { bottom: 56px !important; }
     col.appendChild(el("span", "time", det || timeText(g.start)));
     if (det) col.lastChild.style.color = scoreOf(g).state === "in" ? "var(--accent)" : "var(--muted)";
     var tv = (g.tv || []).filter(Boolean);
-    col.appendChild(el("span", "net", tv.length ? tv.slice(0, 2).join(" / ") : "Local TV"));
+    col.appendChild(el("span", "net", tv.length ? tv.slice(0, 2).map(function (n) { return NET_SHORT[n] || n; }).join(" / ") : "Local TV"));
     col.appendChild(el("span", "sub", g.note && g.note.length <= 12 ? g.note : info(g).tag));
     b.appendChild(col);
     var p = el("span", "pick" + (on ? " on" : "")); p.appendChild(icon(on ? "check" : "plus")); b.appendChild(p);
@@ -5325,9 +5325,10 @@ html:not(.duo) .menu-pop { bottom: 56px !important; }
     if (!box) return;
     var sides = box.querySelectorAll(".g > .g-side"); box.style.removeProperty("--side-w");
     if (!sides.length) return;
-    var max = 0; Array.prototype.forEach.call(sides, function (x) { max = Math.max(max, x.getBoundingClientRect().width); });
+    // measure what each column needs (a clipped channel name reports its full width in scrollWidth)
+    var max = 0; Array.prototype.forEach.call(sides, function (x) { var w = x.getBoundingClientRect().width; Array.prototype.forEach.call(x.querySelectorAll(".net, .s-cd, .s-live, .s-final"), function (n) { w = Math.max(w, n.scrollWidth + (n.offsetLeft - x.offsetLeft > 0 ? 0 : 0) + 18); }); max = Math.max(max, w); });
     if (!max) return;
-    box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(88, box.clientWidth * 0.27))) + "px");
+    box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) + "px");
   }
   function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
 
