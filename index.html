@@ -72,14 +72,17 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261110212712";
+<script>window.SLATE_BUILD = "20261110212839";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
   function check() {
     if (Date.now() - last < 60000) return; last = Date.now();
     fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
-      if (v && v.build && v.build !== window.SLATE_BUILD) location.replace(location.pathname + "?v=" + v.build);
+      if (!v || !v.build || v.build === window.SLATE_BUILD) return;
+      // already tried this version once this session (GitHub still publishing): don't loop
+      try { if (sessionStorage.getItem("slate-tried") === v.build) return; sessionStorage.setItem("slate-tried", v.build); } catch (e) {}
+      location.replace(location.pathname + "?v=" + v.build);
     }, function () {});
   }
   setTimeout(check, 1500);
