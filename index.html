@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111175726";
+<script>window.SLATE_BUILD = "20261111175822";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1268,6 +1268,22 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .pstar { margin-left: 8px; width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 50%; background: transparent; border: 0; color: var(--dim); flex: none; }
 .pstar svg { width: 18px; height: 18px; } .pstar.on { color: var(--accent); }
 .rk-top { align-items: center; }
+/* compact ranking rows */
+.rk-row { grid-template-columns: 46px minmax(0, 1fr); gap: 10px; padding: 8px 2px; align-items: center; }
+.rk-fw { width: 44px; height: 44px; }
+.rk-face i { font-size: 14px; }
+.rk-face img { width: 62px; }
+.rk-mark { transform: scale(.45); right: -7px; bottom: -4px; }
+.rk-mid { gap: 1px; }
+.rk-nm { font-size: 14px; }
+.rk-rank { font-size: 13px; }
+.rk-top .pstar { transform: scale(.85); }
+.rk-stats { column-gap: 10px; row-gap: 0; }
+.rk-st b { font-size: 19px; line-height: 1.15; }
+.rk-st i { font-size: 12px; margin-left: 2px; }
+.rk-more { font-size: 12px; }
+.rk-foot { font-size: 12px; gap: 4px; }
+.rk-dot { width: 6px; height: 6px; }
 .fp-h { margin-top: 18px; }
 .fp-list { display: grid; }
 .fp-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 2px; border-top: 1px solid var(--hair); }
