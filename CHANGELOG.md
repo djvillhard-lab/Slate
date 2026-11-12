@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.15.0 (Nov 12, 2026)
+- Box Office never opens on an empty page. Today's league tabs only show leagues with a game underway or finished (soccer stays on the morning finishes). If nothing has started yet today, Box Office opens on yesterday instead, on a league that actually played.
+
 ## 2.14.1 (Nov 12, 2026)
 - Removed the estimated xG and the xG one-liners. Slate only shows expected goals when ESPN actually provides them (it currently doesn't for team totals), so the stat won't appear for now.
 
