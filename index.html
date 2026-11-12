@@ -134,8 +134,8 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_CHANGES = "# Slate release history\n\nVersion 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.\nFrom 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).\n\n## 2.10.2 (Nov 12, 2026)\n- Fixed Claude summaries showing raw <cite index=\u2026> tags (left over from its web searches). They're stripped before saving, and today's Belgium\u2013T\u00fcrkiye preview was cleaned up.\n\n## 2.10.1 (Nov 12, 2026)\n- Alerts show times in each person's own time zone (taken from their phone), so Drew sees Eastern times. Quiet hours, the brief time and alert days follow it too.\n\n## 2.10.0 (Nov 12, 2026)\n- Box Office: tap a top performer to open his game right beneath him, with the same quick look you get on the slate (score, box score, Claude's recap or preview, and Full matchup). Tap again to close.\n\n## 2.9.2 (Nov 12, 2026)\n- Notifications are two lines: the alert itself (like \"11:00 AM: Belgium @ T\u00fcrkiye on FS1\") with iPhone's \"from Slate\" under it, instead of a separate \"Starting soon\"/\"Final\" heading on top. The morning brief keeps its \"Today's games\" heading since it has several lines.\n\n## 2.9.1 (Nov 12, 2026)\n- Two-column Box Office cards fit cleanly: smaller photo without the team badge on it, name and team on one line (long names trim), the top three stats on one line, and the result underneath.\n\n## 2.9.0 (Nov 12, 2026)\n- Box Office shows the top 20 players every time (no more Show top 25 button).\n- Players sit in two columns when your text size leaves room (best first, reading left to right, row by row); bigger text sizes go back to one column. Same for over and underachievers.\n\n## 2.8.2 (Nov 12, 2026)\n- League view: Reorder sits level with the Live button (left side), and My teams moved up right under them.\n\n## 2.8.1 (Nov 12, 2026)\n- On the ALL tab, league sections now follow the same order as your All games tabs.\n\n## 2.8.0 (Nov 12, 2026)\n- All games opens on your teams (\u2605), with ALL as the second tab.\n- New filters under ALL: All, Best of each league (up to 3 standout games per league: your teams, ranked matchups, national TV, top teams, winning teams) and National TV.\n\n## 2.7.5 (Nov 12, 2026)\n- All games: slimmer header so the games get more room: smaller league tabs, filters and day picker, and less space around the search button.\n\n## 2.7.4 (Nov 12, 2026)\n- Quick box score under a game is more compact so the score and the players fit on screen together: slimmer win-chance bar (no caption), shorter team tabs, tighter team stats row, and no venue line once a game has started.\n\n## 2.7.3 (Nov 12, 2026)\n- All games: the Live button no longer tucks under the date bar.\n- The note at the bottom now says live scores update every 10 seconds (it still said 30, plus a confusing \"last refresh\" time).\n\n## 2.7.2 (Nov 12, 2026)\n- The main page reads \"Today's Slate\" until 5 PM, then \"Tonight's Slate\", every day.\n\n## 2.7.1 (Nov 12, 2026)\n- Reorder sits on the left, directly above the first section title, in League view only.\n\n## 2.7.0 (Nov 12, 2026)\n- The sort switch is back to just Time | League.\n- In League view, a small Reorder button sits right above the first section; it lists only the sections on that day's slate.\n- My teams is now a section you can move like any league (it starts at the top until you change it).\n\n## 2.6.9 (Nov 12, 2026)\n- The \u21c5 league-order button now always shows in the Time | League switch, so the buttons never shift. Tapping it from Time view switches to League and opens the order.\n\n## 2.6.8 (Nov 12, 2026)\n- League order moved off the top of the slate: in League view, a small \u21c5 button sits beside League in the bottom switch. Tap it to reorder leagues, then Done.\n\n## 2.6.7 (Nov 12, 2026)\n- The back-to-today arrow points toward today: right on a past day's slate, left on a future one.\n\n## 2.6.6 (Nov 12, 2026)\n- Slate's corner buttons are smaller and centered in the header, so they fit inside it.\n\n## 2.6.5 (Nov 12, 2026)\n- Menu button stays pinned to the bottom right on iOS 26: iOS 26 sometimes slides the visible screen while you scroll, which dragged the button along; it now follows the visible screen itself.\n\n## 2.6.4 (Nov 12, 2026)\n- Removed the scrolling ticker from the top of the slate.\n\n## 2.6.3 (Nov 12, 2026)\n- Slate's top buttons are back in the corner (no extra space), each now its own outlined tile so they read as four separate buttons.\n\n## 2.6.2 (Nov 12, 2026)\n- The four buttons at the top of the slate are now bigger, labeled buttons in their own row: Reset, Settings, Rules and Share.\n- Menu button watchdog: if the menu button ever drifts from the bottom while scrolling, the app snaps it back and records what the screen reported, so the cause can be tracked down.\n\n## 2.6.1 (Nov 12, 2026)\n- Swiping the slate to another day shows the back arrow; tap it to jump back to today.\n- The Time | League switch moved to the bottom, left of the menu button (where the date picker sits on other pages). Unfolded, it stays at the top of the slate.\n\n## 2.6.0 (Nov 12, 2026)\n- Slate can be sorted by League as well as Time (Time stays the default). League view puts My teams first, then each league, with game times inside each.\n- Each section in the League view collapses with a tap, and remembers it.\n- \"Order\" sets the league order for that view (with a reset back to the usual order).\n\n## 2.5.2 (Nov 12, 2026)\n- Games with no US channel listed now show no channel instead of \"Local TV\" (it was a guess, and usually wrong for international games). Same in the matchup view and the copied slate.\n\n## 2.5.1 (Nov 12, 2026)\n- Team colors: the explanation now pops up briefly when you pick it, instead of a line that always sits under the swatches.\n\n## 2.5.0 (Nov 12, 2026)\n- New accent option, Team colors (Drew's idea): the app's accent switches each day to the colors of your first team, in your Teams page order, that plays that day. If none play, it uses the theme's color. It's the last swatch under Settings > Look.\n- A phone that isn't signed in now asks for the passcode as soon as you change something, instead of showing \"Couldn't save settings\" and quietly showing DJ's slate.\n\n## 2.4.4 (Nov 12, 2026)\n- Fix for a phone that forgets whose profile it is (settings wouldn't save): it now checks with the server and reopens on the right profile.\n- Failed saves are recorded on the server so problems on a phone can be traced.\n\n## 2.4.3 (Nov 12, 2026)\n- Finished games get a proper closing line: past tense, the winner's story first, and nothing that only fits a live game (no \"triple-double watch\", runs or pace).\n\n## 2.4.2 (Nov 12, 2026)\n- Fixed Claude summaries failing with a \"Bad control character\" error (line breaks inside Claude's answer are now handled).\n- When a summary doesn't finish, the message is now in plain words instead of a technical error.\n\n## 2.4.1 (Nov 11, 2026)\n- Notifications settings: removed \"from Slate\" from the description.\n\n## 2.4.0 (Nov 11, 2026)\n- Alerts are close to instant: Slate's server checks live scores every minute and sends finals, reminders, live scores and upset alerts within about a minute.\n\n## 2.3.3 (Nov 11, 2026)\n- Faster live updates while the app is open: slate scores and the open game's box score every 10 seconds (was 30); other live games every minute (was 2).\n- Date picker: the month and the day are the same size.\n\n## 2.3.2 (Nov 11, 2026)\n- The refresh button at the top now resets the app: it reloads the newest version with fresh data, which fixes anything stuck.\n- Removed the Refresh link at the bottom of the slate (scores and games update on their own).\n\n## 2.3.1 (Nov 11, 2026)\n- Folding the phone no longer leaves the menu scrolling with the page: the app resets its zoom and size right after a fold.\n\n## 2.3.0 (Nov 11, 2026)\n- Release history is viewable in the app: Settings > What's new.\n\n## 2.2.3 (Nov 11, 2026)\n- Player headshots no longer show initials behind the photo. Initials appear only when a player has no photo.\n\n## 2.2.2 (Nov 11, 2026)\n- Box Office: the league tabs stay in place when you swipe between leagues. Long names like Premier League and Champions League no longer jump out of view.\n\n## 2.2.1 (Nov 11, 2026)\n- Quick box score (matchup dropdown on the slate): the picked team's stats show as a sideways-scrolling row under the team tabs, like the full box score.\n- Teams: more columns on a wide upright screen, and two columns on the right side when unfolded sideways.\n- Box Office: two columns of players on a wide upright screen.\n\n## 2.2.0 (Nov 11, 2026)\n- Box Office can be built for any past night and any league with a free \"Build this night's Box Office\" button (ready within about 10 minutes).\n- New Box Office leagues: NHL, women's college basketball (WCBB) and Champions League, plus MLB and WNBA during their seasons.\n\n## 2.1.1 (Nov 11, 2026)\n- Quick box score: team stats moved above the players.\n- Box Office: two-column layout when unfolded and held upright.\n\n## 2.1.0 (Nov 11, 2026)\n- Phone alerts come from Slate itself as push notifications, at no cost: reminders, finals, live scores, upset watch and the daily brief, with the same settings as before.\n- New \"This phone\" switch in Settings > Notifications to turn alerts on for each phone (works for your brother's phone too).\n- The hourly Claude alerts run is retired.\n\n## 2.0.0 (Nov 11, 2026): efficiency release\n- Claude only writes when you tap a button. Nothing that costs money runs on its own.\n- Live highlights under games are written by the app's own rules (free) instead of Claude.\n- Box Office: top performers and wild finishes are built free each morning; Claude's over and underachievers are written only when you tap.\n- Fewer web searches per Claude summary (preview 2, team 2, recap 1, Box Office 2), which lowers the cost of each summary.\n- The day slates (every game, today plus three days) are built by a free script instead of a daily Claude run, and \"Build slate\" requests go through the same free job.\n- The version number now shows in Settings.\n";</script>
-<script>window.SLATE_BUILD = "20261112111150";
+<script>window.SLATE_CHANGES = "# Slate release history\n\nVersion 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.\nFrom 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).\n\n## 2.11.0 (Nov 12, 2026)\n- Soccer gets its own match view, in the quick look and the full matchup:\n  - Lineups on a small pitch: formation, the starting XI by position with shirt numbers in team colours, goal and card markers, who came off and when, and the bench (with when subs came on). Shows before kickoff once lineups are announced (about an hour out).\n  - Match timeline: goals (with penalties and own goals), cards and substitutions with the minute; newest first while live. The quick look shows goals and cards, the full matchup adds subs.\n  - Team stats row with possession, shots, corners, fouls and saves; player stats underneath.\n- International matches (Nations League, friendlies, qualifiers) now get box scores too.\n- Quick looks opened from All games now refresh as the box score comes in.\n\n## 2.10.2 (Nov 12, 2026)\n- Fixed Claude summaries showing raw <cite index=\u2026> tags (left over from its web searches). They're stripped before saving, and today's Belgium\u2013T\u00fcrkiye preview was cleaned up.\n\n## 2.10.1 (Nov 12, 2026)\n- Alerts show times in each person's own time zone (taken from their phone), so Drew sees Eastern times. Quiet hours, the brief time and alert days follow it too.\n\n## 2.10.0 (Nov 12, 2026)\n- Box Office: tap a top performer to open his game right beneath him, with the same quick look you get on the slate (score, box score, Claude's recap or preview, and Full matchup). Tap again to close.\n\n## 2.9.2 (Nov 12, 2026)\n- Notifications are two lines: the alert itself (like \"11:00 AM: Belgium @ T\u00fcrkiye on FS1\") with iPhone's \"from Slate\" under it, instead of a separate \"Starting soon\"/\"Final\" heading on top. The morning brief keeps its \"Today's games\" heading since it has several lines.\n\n## 2.9.1 (Nov 12, 2026)\n- Two-column Box Office cards fit cleanly: smaller photo without the team badge on it, name and team on one line (long names trim), the top three stats on one line, and the result underneath.\n\n## 2.9.0 (Nov 12, 2026)\n- Box Office shows the top 20 players every time (no more Show top 25 button).\n- Players sit in two columns when your text size leaves room (best first, reading left to right, row by row); bigger text sizes go back to one column. Same for over and underachievers.\n\n## 2.8.2 (Nov 12, 2026)\n- League view: Reorder sits level with the Live button (left side), and My teams moved up right under them.\n\n## 2.8.1 (Nov 12, 2026)\n- On the ALL tab, league sections now follow the same order as your All games tabs.\n\n## 2.8.0 (Nov 12, 2026)\n- All games opens on your teams (\u2605), with ALL as the second tab.\n- New filters under ALL: All, Best of each league (up to 3 standout games per league: your teams, ranked matchups, national TV, top teams, winning teams) and National TV.\n\n## 2.7.5 (Nov 12, 2026)\n- All games: slimmer header so the games get more room: smaller league tabs, filters and day picker, and less space around the search button.\n\n## 2.7.4 (Nov 12, 2026)\n- Quick box score under a game is more compact so the score and the players fit on screen together: slimmer win-chance bar (no caption), shorter team tabs, tighter team stats row, and no venue line once a game has started.\n\n## 2.7.3 (Nov 12, 2026)\n- All games: the Live button no longer tucks under the date bar.\n- The note at the bottom now says live scores update every 10 seconds (it still said 30, plus a confusing \"last refresh\" time).\n\n## 2.7.2 (Nov 12, 2026)\n- The main page reads \"Today's Slate\" until 5 PM, then \"Tonight's Slate\", every day.\n\n## 2.7.1 (Nov 12, 2026)\n- Reorder sits on the left, directly above the first section title, in League view only.\n\n## 2.7.0 (Nov 12, 2026)\n- The sort switch is back to just Time | League.\n- In League view, a small Reorder button sits right above the first section; it lists only the sections on that day's slate.\n- My teams is now a section you can move like any league (it starts at the top until you change it).\n\n## 2.6.9 (Nov 12, 2026)\n- The \u21c5 league-order button now always shows in the Time | League switch, so the buttons never shift. Tapping it from Time view switches to League and opens the order.\n\n## 2.6.8 (Nov 12, 2026)\n- League order moved off the top of the slate: in League view, a small \u21c5 button sits beside League in the bottom switch. Tap it to reorder leagues, then Done.\n\n## 2.6.7 (Nov 12, 2026)\n- The back-to-today arrow points toward today: right on a past day's slate, left on a future one.\n\n## 2.6.6 (Nov 12, 2026)\n- Slate's corner buttons are smaller and centered in the header, so they fit inside it.\n\n## 2.6.5 (Nov 12, 2026)\n- Menu button stays pinned to the bottom right on iOS 26: iOS 26 sometimes slides the visible screen while you scroll, which dragged the button along; it now follows the visible screen itself.\n\n## 2.6.4 (Nov 12, 2026)\n- Removed the scrolling ticker from the top of the slate.\n\n## 2.6.3 (Nov 12, 2026)\n- Slate's top buttons are back in the corner (no extra space), each now its own outlined tile so they read as four separate buttons.\n\n## 2.6.2 (Nov 12, 2026)\n- The four buttons at the top of the slate are now bigger, labeled buttons in their own row: Reset, Settings, Rules and Share.\n- Menu button watchdog: if the menu button ever drifts from the bottom while scrolling, the app snaps it back and records what the screen reported, so the cause can be tracked down.\n\n## 2.6.1 (Nov 12, 2026)\n- Swiping the slate to another day shows the back arrow; tap it to jump back to today.\n- The Time | League switch moved to the bottom, left of the menu button (where the date picker sits on other pages). Unfolded, it stays at the top of the slate.\n\n## 2.6.0 (Nov 12, 2026)\n- Slate can be sorted by League as well as Time (Time stays the default). League view puts My teams first, then each league, with game times inside each.\n- Each section in the League view collapses with a tap, and remembers it.\n- \"Order\" sets the league order for that view (with a reset back to the usual order).\n\n## 2.5.2 (Nov 12, 2026)\n- Games with no US channel listed now show no channel instead of \"Local TV\" (it was a guess, and usually wrong for international games). Same in the matchup view and the copied slate.\n\n## 2.5.1 (Nov 12, 2026)\n- Team colors: the explanation now pops up briefly when you pick it, instead of a line that always sits under the swatches.\n\n## 2.5.0 (Nov 12, 2026)\n- New accent option, Team colors (Drew's idea): the app's accent switches each day to the colors of your first team, in your Teams page order, that plays that day. If none play, it uses the theme's color. It's the last swatch under Settings > Look.\n- A phone that isn't signed in now asks for the passcode as soon as you change something, instead of showing \"Couldn't save settings\" and quietly showing DJ's slate.\n\n## 2.4.4 (Nov 12, 2026)\n- Fix for a phone that forgets whose profile it is (settings wouldn't save): it now checks with the server and reopens on the right profile.\n- Failed saves are recorded on the server so problems on a phone can be traced.\n\n## 2.4.3 (Nov 12, 2026)\n- Finished games get a proper closing line: past tense, the winner's story first, and nothing that only fits a live game (no \"triple-double watch\", runs or pace).\n\n## 2.4.2 (Nov 12, 2026)\n- Fixed Claude summaries failing with a \"Bad control character\" error (line breaks inside Claude's answer are now handled).\n- When a summary doesn't finish, the message is now in plain words instead of a technical error.\n\n## 2.4.1 (Nov 11, 2026)\n- Notifications settings: removed \"from Slate\" from the description.\n\n## 2.4.0 (Nov 11, 2026)\n- Alerts are close to instant: Slate's server checks live scores every minute and sends finals, reminders, live scores and upset alerts within about a minute.\n\n## 2.3.3 (Nov 11, 2026)\n- Faster live updates while the app is open: slate scores and the open game's box score every 10 seconds (was 30); other live games every minute (was 2).\n- Date picker: the month and the day are the same size.\n\n## 2.3.2 (Nov 11, 2026)\n- The refresh button at the top now resets the app: it reloads the newest version with fresh data, which fixes anything stuck.\n- Removed the Refresh link at the bottom of the slate (scores and games update on their own).\n\n## 2.3.1 (Nov 11, 2026)\n- Folding the phone no longer leaves the menu scrolling with the page: the app resets its zoom and size right after a fold.\n\n## 2.3.0 (Nov 11, 2026)\n- Release history is viewable in the app: Settings > What's new.\n\n## 2.2.3 (Nov 11, 2026)\n- Player headshots no longer show initials behind the photo. Initials appear only when a player has no photo.\n\n## 2.2.2 (Nov 11, 2026)\n- Box Office: the league tabs stay in place when you swipe between leagues. Long names like Premier League and Champions League no longer jump out of view.\n\n## 2.2.1 (Nov 11, 2026)\n- Quick box score (matchup dropdown on the slate): the picked team's stats show as a sideways-scrolling row under the team tabs, like the full box score.\n- Teams: more columns on a wide upright screen, and two columns on the right side when unfolded sideways.\n- Box Office: two columns of players on a wide upright screen.\n\n## 2.2.0 (Nov 11, 2026)\n- Box Office can be built for any past night and any league with a free \"Build this night's Box Office\" button (ready within about 10 minutes).\n- New Box Office leagues: NHL, women's college basketball (WCBB) and Champions League, plus MLB and WNBA during their seasons.\n\n## 2.1.1 (Nov 11, 2026)\n- Quick box score: team stats moved above the players.\n- Box Office: two-column layout when unfolded and held upright.\n\n## 2.1.0 (Nov 11, 2026)\n- Phone alerts come from Slate itself as push notifications, at no cost: reminders, finals, live scores, upset watch and the daily brief, with the same settings as before.\n- New \"This phone\" switch in Settings > Notifications to turn alerts on for each phone (works for your brother's phone too).\n- The hourly Claude alerts run is retired.\n\n## 2.0.0 (Nov 11, 2026): efficiency release\n- Claude only writes when you tap a button. Nothing that costs money runs on its own.\n- Live highlights under games are written by the app's own rules (free) instead of Claude.\n- Box Office: top performers and wild finishes are built free each morning; Claude's over and underachievers are written only when you tap.\n- Fewer web searches per Claude summary (preview 2, team 2, recap 1, Box Office 2), which lowers the cost of each summary.\n- The day slates (every game, today plus three days) are built by a free script instead of a daily Claude run, and \"Build slate\" requests go through the same free job.\n- The version number now shows in Settings.\n";</script>
+<script>window.SLATE_BUILD = "20261112112447";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1379,6 +1379,36 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .fp-h { margin-top: 18px; }
 .tray-ts { margin: 2px 0 10px; }
 .mm-bi { display: inline-flex; }
+/* soccer: lineups pitch + timeline */
+.soc-lu { margin: 6px 0 12px; }
+.soc-lu-h { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 8px; }
+.soc-lu-h b { font-size: 13px; font-weight: 800; color: var(--muted); }
+.soc-form { font-size: 13px; font-weight: 800; color: var(--head); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.soc-pitch { position: relative; display: grid; gap: 12px; padding: 14px 6px 12px; border-radius: 14px; background: color-mix(in srgb, #2f8f4e 14%, var(--raise)); border: 1px solid var(--hair); overflow: hidden; }
+.soc-pitch::before { content: ""; position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; }
+.soc-pitch::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(255,255,255,.08); }
+.soc-line { position: relative; z-index: 1; display: flex; justify-content: space-evenly; gap: 4px; }
+.soc-p { position: relative; flex: 1 1 0; min-width: 0; display: grid; justify-items: center; gap: 3px; }
+.soc-n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.18); font-variant-numeric: tabular-nums; }
+.soc-nm { max-width: 100%; font-size: 11.5px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soc-p.off .soc-nm { color: var(--muted); }
+.soc-sub { font-size: 10px; font-weight: 700; color: var(--dim); margin-top: -2px; }
+.soc-tags { position: absolute; top: -4px; left: calc(50% + 10px); display: flex; gap: 2px; align-items: center; }
+.soc-ball { font-style: normal; font-size: 11px; line-height: 1; }
+.soc-card { display: inline-block; width: 8px; height: 11px; border-radius: 2px; }
+.soc-card.y { background: #f2c94c; } .soc-card.r { background: #e5484d; }
+.soc-bench { margin: 8px 2px 0; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
+.soc-bench b { color: var(--muted); } .soc-bench .on { color: var(--ink); }
+.soc-tl { margin: 2px 0 12px; }
+.soc-ev { display: grid; grid-template-columns: 38px 20px minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 6px 2px; border-top: 1px solid var(--hair); font-size: 14px; }
+.soc-min { font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.soc-ic { display: grid; place-items: center; font-size: 13px; color: var(--dim); }
+.soc-tx { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+.soc-tx i { font-style: normal; color: var(--muted); }
+.soc-goal .soc-tx b, .soc-pen .soc-tx b { color: var(--head); }
+.soc-tm { font-size: 12px; font-weight: 800; }
+.soc-more { margin: 4px 2px 0; font-size: 12px; color: var(--dim); }
+.soc-pre { margin-bottom: 10px; }
 .mm-tap { cursor: pointer; }
 .mm-open { background: var(--card); border-radius: 12px; }
 .mm-game { grid-column: 1 / -1; margin: 4px 0 10px; }
@@ -2944,7 +2974,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var pass = slatePass(); if (!pass) { toast("Enter your passcode first (bottom of the page)"); return; }
     var k = kind === "team" ? "t:" + team.key : "g:" + state.date + ":" + g.id; CL_ASK[k] = Date.now(); keepScroll(render);
     var factsP = kind === "team" ? Promise.resolve(team.facts)
-      : (bxBase(g.league) ? bxFindEvent(g).then(function (ev) { return ev ? rkFetch(bxApi(g.league, "summary?event=" + ev)) : null; }).then(function (sum) { return sum ? trimEspn(sum, g, kind) : {}; }, function () { return {}; }) : Promise.resolve({}));
+      : (bxBase(g.league) ? bxFindEvent(g).then(function (ev) { return ev ? rkFetch(bxSummaryUrl(g.league, ev)) : null; }).then(function (sum) { return sum ? trimEspn(sum, g, kind) : {}; }, function () { return {}; }) : Promise.resolve({}));
     factsP.then(function (facts) {
       var body = { pass: pass, kind: kind, facts: facts };
       if (kind === "team") body.key = team.key; else { body.date = state.date; body.id = g.id; body.game = clGame(g); }
@@ -3040,7 +3070,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // ---------- box scores, team stats and season stats (ESPN) ----------
   // On claude.ai the hourly run saves each slate game's box (or, before it starts, season stats) to box/<date>;
   // the self-hosted page reads ESPN directly and refreshes a live box every 30 seconds while it's on screen.
-  var BX_SPORT = { nba: "bball", wnba: "bball", ncaam: "bball", ncaaw: "bball", nhl: "hockey", nfl: "football", ncaaf: "football", mlb: "baseball", mls: "soccer", epl: "soccer", ucl: "soccer", uel: "soccer", laliga: "soccer", seriea: "soccer", bundesliga: "soccer", ligue1: "soccer", facup: "soccer" };
+  var BX_SPORT = { nba: "bball", wnba: "bball", ncaam: "bball", ncaaw: "bball", nhl: "hockey", nfl: "football", ncaaf: "football", mlb: "baseball", mls: "soccer", epl: "soccer", ucl: "soccer", uel: "soccer", laliga: "soccer", seriea: "soccer", bundesliga: "soccer", ligue1: "soccer", facup: "soccer" , intl: "soccer"};
   var BX_STAT_SKIP = { teamTurnovers: 1, totalTechnicalFouls: 1, avgTeamTurnovers: 1, shootoutGoals: 1, shotPct: 1, passPct: 1, crossPct: 1, longballPct: 1, tacklePct: 1, effectiveClearance: 1 };
   var BX_SOCCER = [["totalGoals", "G"], ["goalAssists", "A"], ["totalShots", "SH"], ["shotsOnTarget", "SOG"], ["foulsCommitted", "FC"], ["yellowCards", "YC"], ["redCards", "RC"]];
   var BX_SEASON = {
@@ -3105,6 +3135,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       });
       if (sport === "soccer") {
         var ro = (sum.rosters || []).filter(function (x) { return String((x.team || {}).id) === id; })[0], rows = [];
+        // lineups: the starting XI in its formation, and the bench (out about an hour before kickoff)
+        var ln = function (a) { a = a || {}; var nm = a.lastName || String(a.shortName || a.displayName || "").replace(/^[A-Z]\.\s*/, ""); return nm; };
+        var roster = (ro && ro.roster) || [];
+        if (roster.some(function (p) { return p.starter; })) {
+          t.form = (ro && ro.formation) || "";
+          t.xi = roster.filter(function (p) { return p.starter; }).map(function (p) { return { n: ln(p.athlete), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, off: p.subbedOut ? 1 : 0 }; });
+          t.bench = roster.filter(function (p) { return !p.starter; }).map(function (p) { return { n: ln(p.athlete), num: String(p.jersey || ""), on: p.subbedIn ? 1 : 0 }; });
+        }
         ((ro && ro.roster) || []).forEach(function (p) {
           if (!p.starter && !p.subbedIn) return;
           var m = {}; (p.stats || []).forEach(function (s) { m[s.name] = s.displayValue; });
@@ -3140,14 +3178,89 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       }
       out.teams.push(t);
     });
+    if (sport === "soccer") {  // the match timeline: goals, cards and substitutions
+      var KT = function (tx) { tx = String(tx || "").toLowerCase(); return /own goal/.test(tx) ? "og" : /penalty - scored/.test(tx) ? "pen" : /^goal/.test(tx) ? "goal" : /red card|second yellow/.test(tx) ? "rc" : /yellow card/.test(tx) ? "yc" : /substitution/.test(tx) ? "sub" : ""; };
+      var lnm = function (p) { var a = (p && p.athlete) || {}; return a.lastName || String(a.shortName || a.displayName || "").replace(/^[A-Z]\.\s*/, "").split(" ").slice(-1)[0]; };
+      out.ev = (sum.keyEvents || []).map(function (k) {
+        var kk = KT((k.type || {}).text); if (!kk) return null;
+        var ps = k.participants || [];
+        return { m: String((k.clock || {}).displayValue || "").replace(/'$/, "").replace(/'\+/, "+"), k: kk, tid: String((k.team || {}).id || ""), a: lnm(ps[0]), b: ps[1] ? lnm(ps[1]) : "" };
+      }).filter(Boolean);
+    }
     return out;
+  }
+  // ---- soccer: lineups on a little pitch, and the match timeline ----
+  var SOC_DEPTH = function (p) { p = String(p || "").toUpperCase(); return p === "G" || p === "GK" ? 0 : /^(CD|CB|RB|LB|D|WB|RWB|LWB|SW)/.test(p) ? 1 : /^DM/.test(p) ? 2 : /^AM/.test(p) ? 4 : /^(F|CF|ST|S|LW|RW|W)/.test(p) ? 5 : 3; };
+  var SOC_SIDE = function (p) { p = String(p || "").toUpperCase(); return /-L$|^L/.test(p) ? 0 : /-R$|^R/.test(p) ? 2 : 1; };
+  function socTeamColor(g, t) { var sd = t.side || "away", c = badgeColor(g, sd); return c || "var(--raise)"; }
+  function socLineup(g, t, b) {
+    if (!t || !t.xi || !t.xi.length) return null;
+    var wrap = el("div", "soc-lu"), hd = el("div", "soc-lu-h");
+    hd.appendChild(el("b", null, b && b.state === "pre" ? "Starting lineup" : "Lineup")); if (t.form) hd.appendChild(el("span", "soc-form", t.form));
+    wrap.appendChild(hd);
+    // marks from the timeline: goals, cards, subbed off
+    var marks = {}; ((b && b.ev) || []).forEach(function (e) { if (e.tid !== t.id) return; var m = marks[e.a] = marks[e.a] || { g: 0, yc: 0, rc: 0, off: "" };
+      if (e.k === "goal" || e.k === "pen") m.g++; else if (e.k === "yc") m.yc++; else if (e.k === "rc") m.rc++; else if (e.k === "sub" && e.b) { (marks[e.b] = marks[e.b] || { g: 0, yc: 0, rc: 0, off: "" }).off = e.m; (marks[e.a] = marks[e.a] || { g: 0, yc: 0, rc: 0, off: "" }).on = e.m; } });
+    var gk = t.xi.filter(function (p) { return SOC_DEPTH(p.p) === 0; }), out = t.xi.filter(function (p) { return SOC_DEPTH(p.p) !== 0; });
+    out.sort(function (a, b2) { return SOC_DEPTH(a.p) - SOC_DEPTH(b2.p) || a.fp - b2.fp; });
+    var shape = String(t.form || "").split("-").map(Number).filter(function (n) { return n > 0; }), lines = [], i = 0;
+    if (shape.reduce(function (a, n) { return a + n; }, 0) !== out.length) { shape = []; var byD = {}; out.forEach(function (p) { var d = SOC_DEPTH(p.p); (byD[d] = byD[d] || []).push(p); }); Object.keys(byD).sort().forEach(function (d) { lines.push(byD[d]); }); }
+    else shape.forEach(function (n) { lines.push(out.slice(i, i + n)); i += n; });
+    lines.unshift(gk);
+    var pitch = el("div", "soc-pitch"), col = socTeamColor(g, t);
+    lines.slice().reverse().forEach(function (ln) {  // attack at the top, keeper at the bottom
+      var row = el("div", "soc-line");
+      ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }).forEach(function (p) {
+        var c = el("div", "soc-p" + (p.off ? " off" : "")), dot = el("span", "soc-n", p.num || "");
+        dot.style.background = col; c.appendChild(dot);
+        var mk = marks[p.n] || {}, tags = el("span", "soc-tags");
+        for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
+        if (mk.yc) tags.appendChild(el("i", "soc-card y")); if (mk.rc) tags.appendChild(el("i", "soc-card r"));
+        if (tags.childNodes.length) c.appendChild(tags);
+        c.appendChild(el("span", "soc-nm", p.n)); if (mk.off) c.appendChild(el("span", "soc-sub", "↓ " + mk.off + "'"));
+        row.appendChild(c);
+      });
+      pitch.appendChild(row);
+    });
+    wrap.appendChild(pitch);
+    if ((t.bench || []).length) {
+      var bn = el("p", "soc-bench"), on = t.bench.filter(function (p) { return p.on; }), rest = t.bench.filter(function (p) { return !p.on; });
+      bn.appendChild(el("b", null, "Bench "));
+      on.concat(rest).forEach(function (p, j) { var sp = el("span", p.on ? "on" : null, p.n + (p.on && (marks[p.n] || {}).on ? " ↑" + marks[p.n].on + "'" : p.on ? " ↑" : "")); if (j) bn.appendChild(document.createTextNode(" · ")); bn.appendChild(sp); });
+      wrap.appendChild(bn);
+    }
+    return wrap;
+  }
+  function socTimeline(g, b, compact) {
+    var ev = (b && b.ev) || []; if (!ev.length) return null;
+    var list = compact ? ev.filter(function (e) { return e.k !== "sub"; }) : ev.slice();
+    if (!list.length) return null;
+    if (b.state === "in") list = list.slice().reverse();  // live: newest first
+    var byId = {}; (b.teams || []).forEach(function (t) { byId[t.id] = t; });
+    var w = el("div", "soc-tl"); w.appendChild(el("b", "pv-h", "Timeline"));
+    list.forEach(function (e) {
+      var t = byId[e.tid] || {}, r = el("div", "soc-ev soc-" + e.k);
+      r.appendChild(el("span", "soc-min", e.m + "'"));
+      var ic = el("span", "soc-ic");
+      if (e.k === "goal" || e.k === "pen" || e.k === "og") ic.textContent = "⚽"; else if (e.k === "yc" || e.k === "rc") ic.appendChild(el("i", "soc-card " + (e.k === "yc" ? "y" : "r"))); else ic.textContent = "⇄";
+      r.appendChild(ic);
+      var tx = el("span", "soc-tx");
+      tx.appendChild(el("b", null, e.a || ""));
+      if (e.k === "pen") tx.appendChild(el("i", null, " (pen)")); if (e.k === "og") tx.appendChild(el("i", null, " (own goal)"));
+      if (e.k === "sub" && e.b) tx.appendChild(el("i", null, " on for " + e.b));
+      r.appendChild(tx);
+      var ab = el("span", "soc-tm", t.abbr || ""); ab.style.color = "var(--muted)"; r.appendChild(ab);
+      w.appendChild(r);
+    });
+    if (compact && ev.some(function (e) { return e.k === "sub"; })) w.appendChild(el("p", "soc-more", "Subs in the full matchup."));
+    return w;
   }
 
   // ---- Live highlight: the one thing worth knowing about a live game right now.
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.10.2";
+  var SLATE_VERSION = "2.11.0";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -3298,6 +3411,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   function boxLive(b) { return !!b && (b.state === "in" || b.state === "post"); }
   function bxBase(lg) { var u = (ESPN_URLS[lg] || [])[0]; return u ? u.split("&")[0] : ""; }
+  function bxSummaryUrl(lg, ev) { return BX_SPORT[lg] === "soccer" ? "https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary?event=" + ev : bxApi(lg, "summary?event=" + ev); }
   function bxApi(lg, rest) { return "https://site.api.espn.com/apis/site/v2/sports/" + bxBase(lg) + "/" + rest; }
   // self-hosted only: find the game's ESPN event on that day's scoreboard (cached ten minutes)
   function bxFindEvent(g) {
@@ -3325,7 +3439,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) {
       if (!ev) throw new Error("no event");
       cur.ev = ev;
-      return rkFetch(bxApi(lg, "summary?event=" + ev)).then(function (sum) {
+      return rkFetch(bxSummaryUrl(lg, ev)).then(function (sum) {
         if (!sum) throw new Error("no summary");
         var vn = (sum.gameInfo || {}).venue; if (vn && vn.fullName) { var ad = vn.address || {}; cur.venue = { name: vn.fullName, place: [ad.city, ad.state || ad.country].filter(Boolean).join(", ") }; }
         var cp = ((sum.header || {}).competitions || [])[0] || {}, stt = ((cp.status || {}).type || {}).state;
@@ -3356,6 +3470,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var cur = bx.live[g.id]; if (cur && cur.hlNew) { cur.hlNew = false; if (inLineup(g.id) && (state.view === "lineup" || isDuo)) keepScroll(renderLineup); }
     if (state.view === "game" && state.gameId === g.id) keepScroll(renderGame);
     if (state.openId === g.id && document.querySelector("#lineup-body .tray")) keepScroll(renderLineup);
+    if (state.openId === g.id && document.querySelector("#games-body .tray")) keepScroll(renderGames);
     if (state.view === "moments" && mm.pick && state.openId === g.id) keepScroll(renderMoments);
   }
   if (window.SLATE_SELF) {
@@ -3457,7 +3572,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // one team at a time, with a two-button switch; starts on your team when one of them is yours
 
   // ---- the full box score, drawn like the Real app: a team summary, then one row per player with big numbers ----
-  var BX_HEAD = { nba: "nba", wnba: "wnba", nhl: "nhl", nfl: "nfl", mlb: "mlb", ncaam: "mens-college-basketball", ncaaw: "womens-college-basketball", ncaaf: "college-football", mls: "soccer", epl: "soccer", ucl: "soccer", uel: "soccer", laliga: "soccer", seriea: "soccer", bundesliga: "soccer", ligue1: "soccer", facup: "soccer" };
+  var BX_HEAD = { nba: "nba", wnba: "wnba", nhl: "nhl", nfl: "nfl", mlb: "mlb", ncaam: "mens-college-basketball", ncaaw: "womens-college-basketball", ncaaf: "college-football", mls: "soccer", epl: "soccer", ucl: "soccer", uel: "soccer", laliga: "soccer", seriea: "soccer", bundesliga: "soccer", ligue1: "soccer", facup: "soccer" , intl: "soccer"};
   var BX_LEAD = { bball: ["MIN", "PTS", "REB", "AST", "STL", "BLK", "+/-", "FG", "3PT", "FT", "TO", "PF", "OREB", "DREB"], game: ["GP", "MIN", "PTS", "REB", "AST", "FG%", "3P%", "FT%", "STL", "BLK", "TO"] };
   function bxFace(g, r, team) {
     var f = el("span", "bxp-face"), tc = (teamByName && teamByName(team.name)) || null, c1 = (tc && tc.c1) || "#2a3442";
@@ -3498,7 +3613,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       pair("freeThrowsMade-freeThrowsAttempted", "freeThrowPct", "FT");
       [["totalTurnovers", "TO"], ["turnovers", "TO"], ["totalRebounds", "REB"], ["assists", "AST"], ["steals", "STL"], ["blocks", "BLK"]].forEach(function (k) { if (m[k[0]] && !cells.some(function (c) { return c[1] === k[1]; })) cells.push([m[k[0]][2], k[1], ""]); });
     } else {
-      (BX_KEY_STATS[sport] || []).forEach(function (k) { if (m[k] && cells.length < 7) cells.push([m[k][2], m[k][1], ""]); });
+      (BX_KEY_STATS[sport] || []).forEach(function (k) { if (m[k] && cells.length < 7) cells.push([/possession/i.test(m[k][1]) && !/%/.test(m[k][2]) ? m[k][2] + "%" : m[k][2], m[k][1], ""]); });
       if (!cells.length) (t.stats || []).slice(0, 6).forEach(function (s) { cells.push([s[2], s[1], ""]); });
     }
     if (!cells.length) return null;
@@ -3568,10 +3683,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     });
     wrap.appendChild(seg);
     var t = b.teams[side] || b.teams[0], groups = (t.groups || []).filter(function (gr) { return !compact || (BX_COMPACT[sport] || {})[gr.k]; });
-    if (!groups.length) { wrap.appendChild(el("p", "bx-dnp", season ? "No season stats for this team yet." : "No player stats yet.")); return wrap; }
+    var socLu = sport === "soccer" ? socLineup(g, t, b) : null;
+    if (!groups.length) { if (socLu) wrap.appendChild(socLu); else wrap.appendChild(el("p", "bx-dnp", season ? "No season stats for this team yet." : "No player stats yet.")); return wrap; }
     if (!compact) wrap.classList.add("real");
     // the picked team's stats: one sideways-scrolling row under the team tabs (the quick look and the full box score alike)
     if (!season) { var tcard = bxTeamCard(g, t, sport); if (tcard) wrap.appendChild(tcard); }
+    if (socLu) wrap.appendChild(socLu);
     groups.forEach(function (gr) {
       if (groups.length > 1) wrap.appendChild(el("b", compact ? "bx-gh" : "bxp-grp", BX_GROUP[gr.k] || gr.k));
       wrap.appendChild(compact ? bxTable(g, gr, compact, sport, b.state === "in") : bxRows(g, gr, sport, b.state === "in", t));
@@ -3657,6 +3774,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (!BX_SPORT[g.league] || !boxLive(b)) {
       if (!started) bxNeed(g);
       var pvb = previewBlock(g, true);
+      if (BX_SPORT[g.league] === "soccer" && b && b.teams && b.teams.some(function (t) { return t.xi && t.xi.length; })) {
+        var lub = el("div", "soc-pre"); lub.appendChild(bxPlayers(g, { state: "pre", teams: b.teams.map(function (t) { return Object.assign({}, t, { groups: [] }); }), ev: b.ev }, true, true));
+        pvb.insertBefore(lub, pvb.firstChild);
+      }
       var pvo = ((state.previews || {})[g.id] || {}).odds;
       if (!(pvo && (pvo.spread || pvo.total))) { var os0 = oddsStrip(g, b); if (os0) pvb.insertBefore(os0, pvb.firstChild); }
       if (started && BX_SPORT[g.league]) pvb.insertBefore(el("p", "pv-none bx-wait", window.SLATE_SELF ? "Loading the box score…" : "The box score arrives with the next hourly refresh."), pvb.firstChild);
@@ -3666,6 +3787,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var os = oddsStrip(g, b); if (os) box.appendChild(os);
     if (!boxShown(g)) box.appendChild(boxGate(g));
     else {
+      if (BX_SPORT[g.league] === "soccer") { var stl = socTimeline(g, b, true); if (stl) box.appendChild(stl); }
       box.appendChild(bxPlayers(g, b, true, false));
     }
     box.appendChild(el("p", "pv-at", bxStamp(b)));
@@ -4775,6 +4897,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     function boxFill(box) {
       if (live) {
         var bc = gvCard(null, "gv-box");
+        if (BX_SPORT[g.league] === "soccer" && boxShown(g)) { var ftl = socTimeline(g, b, false); if (ftl) bc.appendChild(ftl); }
         bc.appendChild(boxShown(g) ? bxPlayers(g, b, false, false) : boxGate(g));
         bc.appendChild(el("p", "pv-at bx-at", bxStamp(b))); box.appendChild(bc);
       } else if (season) {

@@ -3,6 +3,14 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.11.0 (Nov 12, 2026)
+- Soccer gets its own match view, in the quick look and the full matchup:
+  - Lineups on a small pitch: formation, the starting XI by position with shirt numbers in team colours, goal and card markers, who came off and when, and the bench (with when subs came on). Shows before kickoff once lineups are announced (about an hour out).
+  - Match timeline: goals (with penalties and own goals), cards and substitutions with the minute; newest first while live. The quick look shows goals and cards, the full matchup adds subs.
+  - Team stats row with possession, shots, corners, fouls and saves; player stats underneath.
+- International matches (Nations League, friendlies, qualifiers) now get box scores too.
+- Quick looks opened from All games now refresh as the box score comes in.
+
 ## 2.10.2 (Nov 12, 2026)
 - Fixed Claude summaries showing raw <cite index=…> tags (left over from its web searches). They're stripped before saving, and today's Belgium–Türkiye preview was cleaned up.
 
