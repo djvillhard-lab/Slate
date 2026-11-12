@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111181503";
+<script>window.SLATE_BUILD = "20261111181754";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1331,6 +1331,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .fp-nm b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fp-nm span { font-size: 12px; color: var(--dim); font-weight: 700; flex: none; }
 .fp-next { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* keep wide box scores inside the page so they scroll sideways instead of being cut off */
+#game-body, #game-body > *, #game-body .gv-card, .bx-pl, .bx-pl > *, .bxp, .bxp-r { min-width: 0; max-width: 100%; }
+.bxp-cells { touch-action: pan-x pan-y; }
+.bx-inj b { color: var(--muted); font-weight: 800; }
 .rk-idle { opacity: .8; } .rk-idle .rk-foot { color: var(--dim); font-weight: 650; }
 .tm-tbl th .pstar { width: 26px; height: 26px; margin: 0 4px 0 -4px; vertical-align: middle; }
 .tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); grid-auto-rows: 1fr; gap: 10px; margin-bottom: 18px; }
@@ -2855,6 +2859,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     cs.forEach(function (c) {
       var tm = c.team || {}, id = String(tm.id || "");
       var t = { side: c.homeAway === "home" ? "home" : "away", id: id, abbr: tm.abbreviation || "", name: tm.displayName || "", stats: [], groups: [] };
+      var ij = (sum.injuries || []).filter(function (x) { return String((x.team || {}).id) === id; })[0];
+      t.inj = ((ij && ij.injuries) || []).map(function (i) { var d = i.details || {}; return { n: bxName(i.athlete), why: String(d.type || d.detail || "").toLowerCase(), s: String(i.status || "").toLowerCase() }; }).filter(function (i) { return i.n; });
       var bt = (box.teams || []).filter(function (x) { return String((x.team || {}).id) === id; })[0], seen = {};
       ((bt && bt.statistics) || []).forEach(function (x) {
         var k = x.name || x.label || "";
@@ -3050,9 +3056,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     }
     tb.appendChild(tbody); sc.appendChild(tb); wrap.appendChild(sc);
     if (!compact && out.length) {
-      var notIn = out.filter(function (r) { return !r.dnp; }), dnp = out.filter(function (r) { return r.dnp; });
-      if (dnp.length) wrap.appendChild(el("p", "bx-dnp", "Did not play: " + dnp.map(function (r) { return r.n + (r.dnp && r.dnp !== "DNP" ? " (" + r.dnp.toLowerCase() + ")" : ""); }).join(", ")));
-      if (notIn.length) wrap.appendChild(el("p", "bx-dnp", (live ? "Not in yet: " : "Did not play: ") + notIn.map(function (r) { return r.n; }).join(", ")));
+      bxBench(wrap, out, live);
     }
     return wrap;
   }
@@ -3111,6 +3115,20 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     right.appendChild(row); card.appendChild(right);
     return card;
   }
+  // players without a line: while the game is on, nobody is listed (a bench player isn't "coach's decision" yet);
+  // after the final, the ones who sat, minus the injured (they're in the Injuries line)
+  function bxBench(wrap, out, live, team) {
+    if (live || !out.length) return;
+    var hurt = {}; ((team && team.inj) || []).forEach(function (i) { hurt[i.n] = 1; });
+    var sat = out.filter(function (r) { return !hurt[r.n]; });
+    if (sat.length) wrap.appendChild(el("p", "bx-dnp", "Did not play: " + sat.map(function (r) { return r.n; }).join(", ")));
+  }
+  function bxInjuries(t) {
+    var l = (t && t.inj) || []; if (!l.length) return null;
+    var p = el("p", "bx-dnp bx-inj"); p.appendChild(el("b", null, "Injuries "));
+    p.appendChild(document.createTextNode(l.map(function (i) { var bits = [i.why, i.s].filter(Boolean); return i.n + (bits.length ? " (" + bits.join(", ") + ")" : ""); }).join(", ")));
+    return p;
+  }
   function bxRows(g, gr, sport, live, team) {
     var cols = gr.cols || [], idx = bxOrder(sport, gr), plus = cols.indexOf("+/-");
     var played = gr.rows.filter(function (r) { return !("dnp" in r); }), out = gr.rows.filter(function (r) { return "dnp" in r; });
@@ -3132,9 +3150,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       });
     });
     if (!played.length) wrap.appendChild(el("p", "bx-dnp", live ? "Nobody has played yet." : "No stats."));
-    var dnp = out.filter(function (r) { return r.dnp; }), notIn = out.filter(function (r) { return !r.dnp; });
-    if (dnp.length) wrap.appendChild(el("p", "bx-dnp", "Did not play: " + dnp.map(function (r) { return r.n + (r.dnp && r.dnp !== "DNP" ? " (" + r.dnp.toLowerCase() + ")" : ""); }).join(", ")));
-    if (notIn.length) wrap.appendChild(el("p", "bx-dnp", (live ? "Not in yet: " : "Did not play: ") + notIn.map(function (r) { return r.n; }).join(", ")));
+    bxBench(wrap, out, live, team);
     return wrap;
   }
   function bxPlayers(g, b, compact, season) {
@@ -3159,6 +3175,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (groups.length > 1) wrap.appendChild(el("b", compact ? "bx-gh" : "bxp-grp", BX_GROUP[gr.k] || gr.k));
       wrap.appendChild(compact ? bxTable(g, gr, compact, sport, b.state === "in") : bxRows(g, gr, sport, b.state === "in", t));
     });
+    if (!season) { var injL = bxInjuries(t); if (injL) wrap.appendChild(injL); }
     return wrap;
   }
   function bxStamp(b) {
