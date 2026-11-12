@@ -89,6 +89,47 @@ export async function sendPush(env, sub, msg) {
   return r.status;
 }
 
+// ---------- Apple push (the Slate iPhone app) ----------
+// Set in Cloudflare (Workers > slate > Settings > Variables and Secrets), never in the repo:
+//   APNS_KEY     the .p8 key file's text (-----BEGIN PRIVATE KEY----- ...)
+//   APNS_KEY_ID  the key's 10-character ID     APNS_TEAM_ID  the developer team ID
+// Until they exist, app subscriptions simply wait (web push keeps working).
+let APNS = null;
+async function apnsCreds(env) {
+  if (APNS && Date.now() - APNS.at < 10 * 60000) return APNS.key ? APNS : null;
+  const pem = String(env.APNS_KEY || ""), kid = String(env.APNS_KEY_ID || "").trim(), team = String(env.APNS_TEAM_ID || "").trim();
+  if (!pem || !kid || !team) { APNS = { at: Date.now(), key: null }; return null; }
+  const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  APNS = { at: Date.now(), key, kid, team, topic: String(env.APNS_TOPIC || "com.djvillhard.slate"), jwt: "", jwtAt: 0 };
+  return APNS;
+}
+async function apnsJwt(a) {
+  if (a.jwt && Date.now() - a.jwtAt < 40 * 60000) return a.jwt;  // Apple wants a fresh token at most every 20-60 minutes
+  const h = b64u(enc.encode(JSON.stringify({ alg: "ES256", kid: a.kid })));
+  const c = b64u(enc.encode(JSON.stringify({ iss: a.team, iat: Math.floor(Date.now() / 1000) })));
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, a.key, enc.encode(h + "." + c));
+  a.jwt = `${h}.${c}.${b64u(sig)}`; a.jwtAt = Date.now();
+  return a.jwt;
+}
+export async function apnsReady(env) { return !!(await apnsCreds(env)); }
+// same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
+export async function sendApns(env, sub, msg) {
+  const a = await apnsCreds(env); if (!a) return 0;
+  const host = sub.env === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
+  const title = String(msg.title || "").trim();
+  const payload = { aps: { alert: title ? { title, body: msg.body } : { body: msg.body }, sound: "default", "thread-id": String(msg.tag || "slate").split("-")[0] }, tag: msg.tag || "" };
+  const headers = { authorization: "bearer " + (await apnsJwt(a)), "apns-topic": a.topic, "apns-push-type": "alert", "apns-priority": "10", "apns-expiration": String(Math.floor(Date.now() / 1000) + 3600), "content-type": "application/json" };
+  if (msg.tag) headers["apns-collapse-id"] = String(msg.tag).slice(0, 64);
+  const r = await fetch(`${host}/3/device/${encodeURIComponent(sub.apns)}`, { method: "POST", headers, body: JSON.stringify(payload) });
+  if (r.status === 200) return 200;
+  let reason = ""; try { reason = (await r.json()).reason || ""; } catch (e) {}
+  console.log("apns", r.status, reason);
+  if (r.status === 410 || reason === "BadDeviceToken" || reason === "Unregistered" || reason === "DeviceTokenNotForTopic") return 410;
+  return r.status;
+}
+
 // ---------- alert rules (same as the old hourly run) ----------
 function merged(p) {
   const out = JSON.parse(JSON.stringify(DEFAULTS));
@@ -243,13 +284,15 @@ export async function runAlerts(env) {
       }
     }
     msgs = msgs.slice(0, 8);
-    const welcome = subs.some((s) => !s.welcomed);
+    const appReady = subs.some((s) => s.apns) ? await apnsReady(env) : false;
+    const welcome = subs.some((s) => !s.welcomed && (!s.apns || appReady));
     let keep = [], dirty = welcome;
     for (const s of subs) {
+      if (s.apns && !appReady) { keep.push(s); continue; }  // the app's push key isn't set up yet: hold this phone until it is
       let gone = false;
       const mine2 = s.welcomed ? msgs : [{ title: " ", body: "Alerts are on for this phone.", tag: "welcome" }, ...msgs];
       for (const m of mine2) {
-        try { const st = await sendPush(env, s, m); if (st === 404 || st === 410) { gone = true; dirty = true; break; } if (st >= 400) console.log("push", st); }
+        try { const st = s.apns ? await sendApns(env, s, m) : await sendPush(env, s, m); if (st === 404 || st === 410) { gone = true; dirty = true; break; } if (st >= 400) console.log("push", st); }
         catch (e) { console.log("push failed", String(e).slice(0, 120)); }
       }
       if (!gone) keep.push(Object.assign({}, s, { welcomed: true }));

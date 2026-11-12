@@ -4,7 +4,7 @@
 // The workflow asks Claude (with web search) for the summary and saves it to Supabase; the app sees it appear.
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
 import { WorkflowEntrypoint } from "cloudflare:workers";
-import { runAlerts, sendPush } from "./alerts.js";
+import { runAlerts, sendPush, sendApns } from "./alerts.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -98,7 +98,7 @@ export default {
       const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
       const doc = (await getDoc(env, (me.id === "dj" ? "" : "u/" + me.id + "/") + "prefs/push")) || {};
       const out = [];
-      for (const sub of doc.subs || []) out.push(await sendPush(env, sub, { title: typeof p.title === "string" ? p.title.slice(0, 80) : "", body: String(p.body || "Test from Slate").slice(0, 200), tag: "test" }).catch((e) => String(e)));
+      for (const sub of doc.subs || []) out.push(await (sub.apns ? sendApns : sendPush)(env, sub, { title: typeof p.title === "string" ? p.title.slice(0, 80) : "", body: String(p.body || "Test from Slate").slice(0, 200), tag: "test" }).catch((e) => String(e)));
       return json({ ok: true, sent: out });
     }
     if (url.pathname === "/api/whoami" && req.method === "POST") {

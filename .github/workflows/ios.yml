@@ -35,18 +35,22 @@ jobs:
           SLATE_PASS: ${{ secrets.SLATE_PASS }}
         run: |
           APP=build/Build/Products/Debug-iphonesimulator/Slate.app
-          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x['platform']=='iOS' and x['isAvailable']]; print(sorted(r,key=lambda x:[int(p) for p in x['version'].split('.')])[-1]['identifier'])")
-          echo "runtime $RUNTIME"
+          xcrun simctl list runtimes -j > runtimes.json
           mkdir -p shots
           ARGS=""; if [ -n "$SLATE_PASS" ]; then ARGS="-pass $SLATE_PASS"; fi
           xcrun simctl list devicetypes -j > types.json
           for WANT in "iPhone 17 Pro" "iPhone Duo"; do
             TYPE=$(python3 -c "import json,sys; t=[x for x in json.load(open('types.json'))['devicetypes'] if x['name']==sys.argv[1]] or [x for x in json.load(open('types.json'))['devicetypes'] if x['name'].startswith(sys.argv[1])]; print(t[0]['identifier'] if t else '')" "$WANT")
             if [ -z "$TYPE" ]; then echo "no simulator named $WANT"; continue; fi
+            # the newest iOS that runs this device type (iPhone Duo has its own runtime)
+            RUNTIME=$(python3 -c "import json,sys; r=[x for x in json.load(open('runtimes.json'))['runtimes'] if x['platform']=='iOS' and x['isAvailable'] and any(d['identifier']==sys.argv[1] for d in x.get('supportedDeviceTypes',[]))]; print(sorted(r,key=lambda x:[int(p) for p in x['version'].split('.')])[-1]['identifier'] if r else '')" "$TYPE")
+            echo "$WANT on $RUNTIME"
+            if [ -z "$RUNTIME" ]; then continue; fi
             NAME=$(echo "$WANT" | tr ' ' '-')
             UDID=$(xcrun simctl create "$NAME" "$TYPE" "$RUNTIME")
             xcrun simctl boot "$UDID"
             xcrun simctl bootstatus "$UDID" -b
+            if [ "$WANT" = "iPhone Duo" ]; then xcrun simctl help ui 2>&1 | head -40; xcrun simctl help io 2>&1 | grep -i -A3 display | head -20; fi
             xcrun simctl ui "$UDID" appearance dark || true
             xcrun simctl status_bar "$UDID" override --time "7:30" || true
             xcrun simctl install "$UDID" "$APP"
