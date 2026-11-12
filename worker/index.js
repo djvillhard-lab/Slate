@@ -45,7 +45,9 @@ async function logUsage(env, user, u) {
   await mergeDoc(env, "stats/usage", { days: { [d]: day } });
 }
 
+const MOMENT_LGS = { nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League" };
 function target(p) {
+  if (p.kind === "moments") return { path: "moments/" + p.date, patch: (x) => ({ date: p.date, leagues: { [p.key]: x } }) };
   if (p.kind === "team") return { path: "teams/" + p.key, patch: (x) => x };
   return { path: "previews/" + p.date, patch: (x) => ({ games: { [p.id]: x } }) };
 }
@@ -58,10 +60,10 @@ export default {
     const url = new URL(req.url);
     if (url.pathname === "/api/summary" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
-      if (!p || !["preview", "recap", "team"].includes(p.kind)) return json({ error: "bad kind" }, 400);
-      if (p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
+      if (!p || !["preview", "recap", "team", "moments"].includes(p.kind)) return json({ error: "bad kind" }, 400);
+      if (p.kind === "moments" ? !(MOMENT_LGS[p.key] && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
       if (!apiKey(env) || !env.SUPABASE_SECRET) return json({ error: "Summaries aren't set up yet (missing keys in Cloudflare)." }, 503);
-      const me = await whoIs(env, p.pass);
+      const me = (env.SUPABASE_SECRET && p.pass === env.SUPABASE_SECRET) ? { id: "dj", cap: 0 } : await whoIs(env, p.pass);
       if (!me) return json({ error: "Wrong passcode" }, 403);
       if (me.cap) {
         const day = (((await getDoc(env, "stats/usage")) || {}).days || {})[ctDay()] || {};
@@ -70,7 +72,7 @@ export default {
       const t = target(p), at = new Date().toISOString();
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
-        game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, 16000) };
+        game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, p.kind === "moments" ? 60000 : 16000) };
       try { await env.SUMMARY.create({ params }); }
       catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind, error: "Couldn't start: " + String(e).slice(0, 120) } })); return json({ error: "Couldn't start" }, 500); }
       return json({ ok: true, at }, 202);
@@ -98,6 +100,16 @@ const RULES = `Rules for all writing: every fact must come from the facts you we
 
 function prompt(p) {
   const game = p.game, facts = p.facts;
+  if (p.kind === "moments") return `You're writing the "Moments" page of a sports fan's app: what mattered in ${MOMENT_LGS[p.key]} on the night of ${p.date}.
+ESPN facts (JSON): every finished game that night (score, ranks, records, pregame line, overtime, notes, team leaders), plus "performers" (the night's best stat lines, ranked) and, where present, "lines" (every regular's box line): ${facts}
+You may do up to three web searches (for example "${MOMENT_LGS[p.key]} last night upsets" or a player's season averages) to judge what was unusual.
+${RULES}
+Answer with only this JSON inside <json></json> tags:
+{"over": [{"name": "full name", "team": "ABBR", "line": "that night's box line", "why": "one line, 10-20 words: why this was well above his usual level, with the comparison (season average, role, opponent)"}],
+ "under": [{"name": "...", "team": "ABBR", "line": "...", "why": "one line, 10-20 words: why this was well below what's expected of him"}],
+ "games": [{"away": "ABBR", "home": "ABBR", "score": "AWY 98, HOM 101", "tag": "Upset" | "Thriller" | "Comeback" | "Overtime" | "Blowout" | "Statement", "why": "one or two sentences, 20-40 words: what happened and how it ended"}],
+ "top": [{"name": "...", "team": "ABBR", "line": "...", "why": "a few words"}]}
+over: exactly 5 players who beat their norms by the most (not just the biggest totals). under: exactly 5 established players (starters or stars) who fell well short; never someone who left hurt unless you say so. games: the 5 most dramatic games (crazy endings, upsets by rank or line, comebacks, overtime, one-score finishes), best first; fewer only if fewer were played. top: only for the Premier League (10 best performances from goals, assists and key moments); [] otherwise. Use only players and games in the facts.`;
   if (p.kind === "team") return `Write a short summary of this team for a sports fan's app. Today is ${new Date().toDateString()}.
 Team facts (JSON): ${facts}
 Do two or three web searches for this team's news and season story (recent news from the last 4 days, and one including "The Athletic").
@@ -161,7 +173,10 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
-        if (p.kind === "team") {
+        if (p.kind === "moments") {
+          const pick = (a, n) => (Array.isArray(a) ? a : []).filter((x) => x && (x.name || x.away)).slice(0, n).map((x) => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, String(v == null ? "" : v).slice(0, 300)])));
+          await mergeDoc(this.env, t.path, t.patch({ over: pick(ans.over, 5), under: pick(ans.under, 5), games: pick(ans.games, 5), top: pick(ans.top, 10), at: now, writing: null }));
+        } else if (p.kind === "team") {
           const g = JSON.parse(p.facts || "{}");
           await putDoc(this.env, t.path, { key: p.key, name: g.name || "", league: g.league || "", summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 6), headlines: athletic(ans.headlines), at: now, by: "request", writing: null });
         } else if (p.kind === "recap") {

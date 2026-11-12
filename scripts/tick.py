@@ -657,6 +657,104 @@ def event_catalog(now):
     print("event catalog:", len(cat), "events,", seen, "games with notes")
 
 # ---------- main ----------
+# ---- Moments: once each morning, the night before in four leagues (Claude writes it through the Slate worker)
+MOMENT_LGS = ["nba", "ncaam", "ncaaf", "epl"]
+WORKER = "https://slate.djvillhard.workers.dev"
+
+def moment_game(ev):
+    c = (ev.get("competitions") or [{}])[0]; st = ((ev.get("status") or {}).get("type") or {})
+    if st.get("state") != "post": return None
+    sides = {}
+    for t in c.get("competitors") or []:
+        tm = t.get("team") or {}; rk = ((t.get("curatedRank") or {}).get("current")) or 99
+        ld = []
+        for cat in t.get("leaders") or []:
+            for a in (cat.get("leaders") or [])[:1]:
+                ld.append(f'{cat.get("abbreviation") or cat.get("name")}: {(a.get("athlete") or {}).get("shortName", "")} {a.get("displayValue", "")}')
+        sides[t.get("homeAway")] = {"abbr": tm.get("abbreviation"), "name": tm.get("displayName"), "score": t.get("score"),
+            "rank": rk if rk and rk < 26 else None, "record": ((t.get("records") or [{}])[0]).get("summary"), "won": bool(t.get("winner")), "leaders": ld[:4]}
+    if "away" not in sides or "home" not in sides: return None
+    odds = ((c.get("odds") or [{}])[0]).get("details")
+    notes = "; ".join(n.get("headline", "") for n in (c.get("notes") or []) if n.get("headline"))
+    goals = []
+    for d in c.get("details") or []:
+        if d.get("scoringPlay"):
+            goals.append(f'{(d.get("clock") or {}).get("displayValue", "")} {", ".join((a.get("displayName") or "") for a in d.get("athletesInvolved") or [])}')
+    g = {"id": ev.get("id"), "away": sides["away"], "home": sides["home"], "final": st.get("detail"), "line": odds, "note": notes}
+    if goals: g["goals"] = goals[:12]
+    try: g["margin"] = abs(float(sides["away"]["score"]) - float(sides["home"]["score"]))
+    except Exception: g["margin"] = 99
+    return g
+
+def moment_interest(g):
+    s = 0
+    if "OT" in str(g.get("final")) or "SO" in str(g.get("final")): s += 5
+    if g["margin"] <= 3: s += 4
+    elif g["margin"] <= 7: s += 2
+    for side, other in (("away", "home"), ("home", "away")):
+        r1, r2 = g[side]["rank"], g[other]["rank"]
+        if r1: s += 2
+        if g[side]["won"] and r2 and (not r1 or r1 > r2): s += 6
+    return s
+
+def moments_facts(lg, day, standouts):
+    evs = [e for e in scoreboard_events(lg, day) if ct_day(parse(e.get("date"))) == day]
+    games = [g for g in (moment_game(e) for e in evs) if g]
+    if not games: return None
+    games.sort(key=lambda g: -moment_interest(g))
+    facts = {"night": day, "games": games[:40], "gameCount": len(games)}
+    perf = ((standouts or {}).get("leagues") or {}).get(lg) or []
+    facts["performers"] = [{k: r.get(k) for k in ("name", "team", "pos", "line", "result", "opp")} for r in perf[:25]]
+    if lg == "nba":  # every regular's line, so Claude can spot the off nights
+        lines = []
+        for g in games[:15]:
+            sm = get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={g['id']}")
+            for tb in ((sm.get("boxscore") or {}).get("players") or []):
+                ab = (tb.get("team") or {}).get("abbreviation")
+                for grp in tb.get("statistics") or []:
+                    lab = grp.get("labels") or []
+                    for a in grp.get("athletes") or []:
+                        st = dict(zip(lab, a.get("stats") or []))
+                        try: mins = int(str(st.get("MIN", "0")).split(":")[0] or 0)
+                        except Exception: mins = 0
+                        if mins >= 18: lines.append(f'{(a.get("athlete") or {}).get("displayName")} {ab}: {st.get("MIN")} min, {st.get("PTS")} pts, {st.get("REB")} reb, {st.get("AST")} ast, {st.get("FG")} FG, {st.get("3PT")} 3PT, {st.get("TO")} TO')
+        facts["lines"] = lines[:160]
+    return facts
+
+def ct_day(t): return t.astimezone(CT).date().isoformat() if t else ""
+
+def moments_work(now, force_day=None, only=None):
+    loc = now.astimezone(CT)
+    if not force_day and loc.hour < 5: return
+    day = force_day or (loc.date() - datetime.timedelta(days=1)).isoformat()
+    d = sb_get([f"moments/{day}", f"standouts/{day}"])
+    have = (d.get(f"moments/{day}") or {}).get("leagues") or {}
+    for lg in ([only] if only else MOMENT_LGS):
+        cur = have.get(lg) or {}
+        if cur.get("at") or cur.get("none"): continue
+        w = cur.get("writing") or {}
+        if w and not w.get("error") and (now - (parse(w.get("at")) or now)).total_seconds() < 900: continue
+        facts = moments_facts(lg, day, d.get(f"standouts/{day}"))
+        if not facts:
+            # no games that night: point at the league's most recent night with games (written once, shared)
+            back = None
+            for k in range(1, 7):
+                b = (datetime.date.fromisoformat(day) - datetime.timedelta(days=k)).isoformat()
+                bd = sb_get([f"moments/{b}"]).get(f"moments/{b}") or {}
+                bl = (bd.get("leagues") or {}).get(lg) or {}
+                if bl.get("see"): back = bl["see"]; break
+                if bl.get("at") and not bl.get("none"): back = b; break
+                if bl.get("none"): continue
+                if any(ct_day(parse(e.get("date"))) == b and ((e.get("status") or {}).get("type") or {}).get("state") == "post" for e in scoreboard_events(lg, b)):
+                    back = b; moments_work(now, b, lg); break
+            sb_put(f"moments/{day}", {"date": day, "leagues": {lg: ({"see": back} if back else {"none": True}) | {"at": iso(now)}}}, merge=True); continue
+        if DRY: print("moments", lg, len(facts["games"]), "games"); continue
+        body = json.dumps({"pass": KEY, "kind": "moments", "key": lg, "date": day, "facts": facts}).encode()
+        try:
+            r = urllib.request.urlopen(urllib.request.Request(WORKER + "/api/summary", data=body, method="POST", headers={"content-type": "application/json", "User-Agent": "slate-tick"}), timeout=30)
+            print("moments", lg, day, r.status)
+        except Exception as e: print("moments failed", lg, e)
+
 def main():
     if not KEY: sys.exit("SUPABASE_SECRET is not set")
     now = now_utc()
@@ -840,7 +938,12 @@ def main():
         else: print("standouts failed", d, r.stderr[-300:])
 
     print("todo:", [(t.get("id") or t.get("key"), t["why"]) for t in todo])
+    try: moments_work(now)
+    except Exception as e: print("moments error", e)
     print("writes:", WRITES or "none")
 
 if __name__ == "__main__":
-    main()
+    if "--moments" in sys.argv:  # python tick.py --moments 2026-11-10
+        moments_work(now_utc(), sys.argv[sys.argv.index("--moments") + 1])
+    else:
+        main()
