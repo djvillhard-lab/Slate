@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111204801";
+<script>window.SLATE_BUILD = "20261111205433";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1696,7 +1696,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   <section id="view-rules" aria-label="Slate rules" hidden><div id="rules-body"></div></section>
   <section id="view-game" aria-label="Matchup" hidden><div id="game-body"></div></section>
   <section id="view-best" aria-label="Player rankings" hidden><div id="best-body"></div></section>
-  <section id="view-moments" aria-label="Postgame" hidden><div id="mm-body"></div></section>
+  <section id="view-moments" aria-label="Box Office" hidden><div id="mm-body"></div></section>
   <section id="view-teams" aria-label="Teams" hidden><div id="teams-body"></div></section>
   <section id="view-tabs" aria-label="Edit All games tabs" hidden><div id="tabs-body"></div></section>
   <section id="view-team" aria-label="Team" hidden><div id="team-body"></div></section>
@@ -1869,7 +1869,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     <button class="mi" id="nav-rules" type="button" role="menuitem" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>Slate rules</span></button>
     <button class="mi" id="nav-moments" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg>
-      <span>Postgame</span>
+      <span>Box Office</span>
     </button>
     <button class="mi" id="nav-teams" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3zm0 2.2 6 2.2V11c0 3.9-2.5 7.4-6 8.8-3.5-1.4-6-4.9-6-8.8V6.4l6-2.2z"/></svg>
@@ -2615,7 +2615,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var bt = $("dock-back"); if (!bt) return;
     var show = state.view !== homeView();
     bt.hidden = !show; renderDockDay(); var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
-    if (show) { $("dock-back-t").textContent = isDuo ? "Postgame" : "Tonight's Slate"; bt.setAttribute("aria-label", isDuo ? "Back to Postgame" : "Back to tonight's slate"); }
+    if (show) { $("dock-back-t").textContent = isDuo ? "Box Office" : "Tonight's Slate"; bt.setAttribute("aria-label", isDuo ? "Back to Box Office" : "Back to tonight's slate"); }
   }
   // after the final: a recap (written once, frozen an hour after the game ends) takes the quick read's place
   function recapOf(pv) { return pv && pv.recap && pv.recap.text ? pv.recap : null; }
@@ -2779,9 +2779,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   function previewBlock(g, inTray) {
     var pv = (state.previews || {})[g.id], box = el("div", "pv");
-    if (!pv || !(pv.summary || (pv.recap && pv.recap.text))) {
-      var qr0 = quickRecap(g);
-      if (qr0 && recapShown(g)) { var rb0 = el("div", "pv-recap"); rb0.appendChild(el("b", "pv-h", "Box score recap")); rb0.appendChild(readNode(qr0.text, qr0.bullets, "pv-sum", true)); box.appendChild(rb0); }
+    if (!pv || !(pv.summary || (pv.recap && pv.recap.text)) || (status(g).kind === "over" && !recapOf(pv))) {
 
       var ctl = gameClaudeCtl(g); if (ctl) box.appendChild(ctl);
       return box;
@@ -2795,8 +2793,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (o.provider) od.appendChild(el("i", null, o.provider));
       box.appendChild(od);
     }
-    var rc = part === "pre" ? null : (pv && recapOf(pv)) || quickRecap(g), rcOpen = rc && recapShown(g);
-    pv = pv || {};
+    var rc = recapOf(pv), rcOpen = rc && recapShown(g);
     if (rc) {
       if (rcOpen) {
         var rb = el("div", "pv-recap"); rb.appendChild(el("b", "pv-h", rc.quick ? "Box score recap" : "Recap")); rb.appendChild(readNode(rc.text, rc.bullets, "pv-sum", rc.quick));
@@ -3827,7 +3824,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       // tonight: the live top performers, straight from the box scores; the rest is written tomorrow morning
       body.appendChild(el("p", "mm-when", "Today, " + fmtDate(day, { weekday: "long", month: "short", day: "numeric" })));
       if (rk.date !== day) { rk.date = day; rkSub(); }
-      if (mm.lg === "epl") { body.appendChild(el("div", "notice", "Live player rankings aren't available for the Premier League. Postgame for today is written tomorrow morning.")); return; }
+      if (mm.lg === "epl") { body.appendChild(el("div", "notice", "Live player rankings aren't available for the Premier League. Today's Box Office is written tomorrow morning.")); return; }
       rkPollL(mm.lg, false);
       var dk = rkData(mm.lg), rows = dk ? dk.rows : [];
       if (!rows.length) { body.appendChild(el("div", "notice", !rk.loaded ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
@@ -3849,9 +3846,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     else when.textContent = (day === shiftDate(today, -1) ? "Last night, " : "") + fmtDate(day, { weekday: "long", month: "short", day: "numeric" });
     body.appendChild(when);
     if (doc === undefined) { body.appendChild(el("div", "notice", "Loading…")); return; }
-    if (!L || (!L.at && !L.writing)) { body.appendChild(el("div", "notice", day >= shiftDate(today, -1) && new Date().getHours() < 7 ? "Postgame for last night is written each morning. Check back soon." : "No Postgame was written for this night.")); return; }
+    if (!L || (!L.at && !L.writing)) { body.appendChild(el("div", "notice", day >= shiftDate(today, -1) && new Date().getHours() < 7 ? "Last night's Box Office is written each morning. Check back soon." : "Nothing was written for this night.")); return; }
     if (L.none) { body.appendChild(el("div", "notice", "No " + name + " games in the week before this night.")); return; }
-    if (L.writing && !L.at) { body.appendChild(el("div", "notice", L.writing.error ? "Postgame for this night isn't ready yet. Check back soon." : "Claude is writing this Postgame. About a minute.")); return; }
+    if (L.writing && !L.at) { body.appendChild(el("div", "notice", L.writing.error ? "This night isn't ready yet. Check back soon." : "Claude is writing this night's Box Office. About a minute.")); return; }
     // 1. top performers: the night's ranking (EPL: Claude's picks)
     var sp = "standouts/" + night; if (mm.lg !== "epl") mmWatch(sp);
     var all = mm.lg === "epl" ? (L.top || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), more = !!mm.more[mm.lg], top = all.slice(0, more ? 25 : 10);
@@ -4469,13 +4466,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var hasPre = pv && pv.summary;
     if (kind === "over") {
       var rcx = pv && recapOf(pv);
-      section("recap", "Recap and box score", rcx ? "Final · written after the game" : "Final", function (box) {
+      section("recap", "Recap and box score", rcx ? "Final · written after the game" : "Final · tap to have Claude write the recap", function (box) {
         previewSections(g, pv, box, "recap");
-        if (pv && (pv.summary || (pv.recap && pv.recap.text))) { var gcl = gameClaudeCtl(g); if (gcl) box.appendChild(gcl); }
+        if (rcx) { var gcl = gameClaudeCtl(g); if (gcl) box.appendChild(gcl); }
+        var tp = live ? boxStars(g, b) : null; if (tp) box.appendChild(tp);
         if (sport) boxFill(box);
+        pvExtras(box);
       });
       if (sport) teamSec();
-      section("pv", "Pregame preview", hasPre ? "How it looked before tip-off" : "None written", function (box) { previewSections(g, pv, box, "pre"); pvExtras(box); });
     } else if (kind === "live") {
       if (sport) section("box", "Box score", "Live", boxFill);
       if (sport) teamSec();
@@ -4492,11 +4490,35 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     }
   }
   // the matchup page's preview sections (odds, quick read or recap, deep dive, players, form, headlines)
+  // the game's top performers straight from the box score, each with a full line (at least four stats)
+  var STAR_COLS = { bball: ["PTS", "REB", "AST", "FG", "3PT", "STL", "BLK"], hockey: ["G", "A", "S", "+/-", "TOI", "SV", "SA"], football: ["C/ATT", "YDS", "TD", "INT", "CAR", "REC", "LONG"], baseball: ["AB", "H", "R", "RBI", "HR", "BB", "K"], soccer: ["G", "A", "SH", "ST"] };
+  function boxStars(g, b) {
+    var sport = BX_SPORT[g.league] || "", want = STAR_COLS[sport]; if (!want || !b || !b.teams) return null;
+    var all = [];
+    b.teams.forEach(function (t) {
+      (t.groups || []).forEach(function (gr) {
+        var cols = gr.cols || [];
+        (gr.rows || []).forEach(function (r) {
+          if ("dnp" in r) return;
+          var v = {}; cols.forEach(function (c, i) { v[c] = r.s[i]; });
+          var n = function (k) { var x = parseFloat(String(v[k] == null ? "" : v[k]).replace("+", "")); return isNaN(x) ? 0 : x; };
+          var score = sport === "bball" ? n("PTS") + n("REB") * 1.2 + n("AST") * 1.5 + n("STL") * 2 + n("BLK") * 2 : sport === "hockey" ? n("G") * 6 + n("A") * 4 + n("S") * .5 + n("SV") * .3 : sport === "football" ? n("YDS") / 10 + n("TD") * 6 - n("INT") * 4 : sport === "baseball" ? n("H") * 2 + n("HR") * 4 + n("RBI") * 2 + n("K") : n("G") * 6 + n("A") * 4 + n("SH");
+          var parts = want.filter(function (k) { return v[k] != null && v[k] !== "" && v[k] !== "0" && v[k] !== "0-0"; }).slice(0, 5).map(function (k) { return v[k] + " " + k; });
+          if (parts.length < 4) parts = want.filter(function (k) { return v[k] != null && v[k] !== ""; }).slice(0, 4).map(function (k) { return v[k] + " " + k; });
+          all.push({ n: r.n, team: t.abbr, score: score, line: parts.join(" · ") });
+        });
+      });
+    });
+    all.sort(function (a, c) { return c.score - a.score; }); if (!all.length) return null;
+    var wc = gvCard("Top performers", "gv-watch");
+    all.slice(0, 4).forEach(function (w) { var r = el("div", "pw"); r.appendChild(el("span", "pw-n", w.n)); r.appendChild(el("span", "pw-t", w.team)); r.appendChild(el("span", "pw-l", w.line)); wc.appendChild(r); });
+    return wc;
+  }
   // part: "recap" (after the final: the recap and top performers), "pre" (the pregame preview only), or nothing (all of it)
   function previewSections(g, pv, body, part) {
     if (part === "recap") {
-      var rc0 = (pv && recapOf(pv)) || quickRecap(g);
-      if (!rc0) { var np0 = gvCard(null); np0.appendChild(previewBlock(g)); body.appendChild(np0); return; }
+      var rc0 = pv && recapOf(pv);
+      if (!rc0) { var np0 = gvCard(null); var c0 = gameClaudeCtl(g); if (c0) np0.appendChild(c0); body.appendChild(np0); return; }
     } else if (!pv || !(pv.summary || (part !== "pre" && pv.recap && pv.recap.text))) { var np = gvCard(null); np.appendChild(part === "pre" ? el("p", "pv-none", "No pregame preview was written for this game.") : previewBlock(g)); body.appendChild(np); return; }
     // the betting line sits at the top of the matchup page, so it isn't repeated here
     var o = {};
@@ -4508,7 +4530,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (o.provider) od.appendChild(el("i", null, o.provider));
       body.appendChild(od);
     }
-    var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
+    var rc = part === "pre" ? null : recapOf(pv), rcOpen = rc && recapShown(g);
     if (rc) {
       var rq = withSwitch(gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap"));
       if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); }
@@ -4519,7 +4541,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       body.appendChild(q);
     }
     if (part === "recap") {
-      var st0 = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }) : [];
+      var st0 = [];
       if (st0.length) { var wc0 = gvCard("Top performers", "gv-watch"); st0.forEach(function (w) { var r = el("div", "pw"); r.appendChild(el("span", "pw-n", w.name)); if (w.team) r.appendChild(el("span", "pw-t", w.team)); if (w.line) r.appendChild(el("span", "pw-l", w.line)); wc0.appendChild(r); }); body.appendChild(wc0); }
       return;
     }
@@ -5838,7 +5860,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var dl = dayLabel(state.date), named = /^(today|yesterday|tomorrow)$/.test(dl);
     var shortDate = fmtDate(state.date, { weekday: "short" }) + ", " + fmtDate(state.date, { month: "short", day: "numeric" });
     var slateTitle = state.date === today ? "Tonight's Slate" : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
-    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "moments" ? "Postgame" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
+    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "moments" ? "Box Office" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     var tl = $("title"); if (tl) tl.classList.toggle("has-brand", v === "lineup");
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
