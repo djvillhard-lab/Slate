@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111180107";
+<script>window.SLATE_BUILD = "20261111180513";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1529,14 +1529,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .toast.pop { animation: toastIn .2s cubic-bezier(.2,.8,.2,1); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .toast.pop { animation: none; } }
-.sty { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--raise); flex: none; }
+.sty { display: inline-flex; gap: 2px; padding: 3px; border-radius: 11px; background: rgba(0,0,0,.28); flex: none; }
 .sty button { width: 34px; height: 28px; display: grid; place-items: center; border-radius: 8px; color: var(--dim); background: none; border: 0; }
 .sty button svg { width: 16px; height: 16px; }
-.sty button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
+.sty button[aria-pressed="true"] { background: rgba(255,255,255,.1); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
 .gv-hrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .gv-hrow .gv-h { margin-bottom: 0; }
 .gv-hrow + * { margin-top: 10px; }
-.sty-tray { float: right; margin: -2px 0 4px 8px; }
+.pv-hrow { margin: 4px 0 0; } .pv-hrow .pv-h { margin: 0; }
 .tm-dd { display: flex; align-items: center; gap: 8px; width: 100%; margin: 14px 0 4px; padding: 10px 2px; border-top: 1px solid var(--hair); font-size: 14px; font-weight: 800; color: var(--head); text-align: left; }
 .tm-dd em { font-style: normal; margin-left: auto; font-size: 12.5px; font-weight: 650; color: var(--dim); }
 .tm-dd svg { width: 16px; height: 16px; color: var(--dim); transition: transform .15s; transform: rotate(-90deg); }
@@ -2727,7 +2727,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         box.appendChild(rb);
       } else box.appendChild(recapGate(g));
     } else if (pv.summary) {
-      var sw0 = styleSwitch(); sw0.classList.add("sty-tray"); box.appendChild(sw0);
+      var hr0 = el("div", "gv-hrow pv-hrow"); hr0.appendChild(el("b", "pv-h", "The quick read")); hr0.appendChild(styleSwitch()); box.appendChild(hr0);
       box.appendChild(readNode(pv.summary, pv.bullets, "pv-sum"));
 
     }
