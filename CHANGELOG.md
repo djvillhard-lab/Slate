@@ -3,6 +3,12 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.11.1 (Nov 12, 2026)
+- Soccer: shirt numbers are readable on light team colours (dark numbers on white kits).
+- Removed the player stat table during and after matches (the pitch and timeline show it).
+- Before kickoff, the quick look shows each team's season stats (top 6 players and the No. 1 keeper) after the preview; the full matchup has every player. Lineups move to the top once announced.
+- Timeline names use full surnames (De Bruyne, not Bruyne).
+
 ## 2.11.0 (Nov 12, 2026)
 - Soccer gets its own match view, in the quick look and the full matchup:
   - Lineups on a small pitch: formation, the starting XI by position with shirt numbers in team colours, goal and card markers, who came off and when, and the bench (with when subs came on). Shows before kickoff once lineups are announced (about an hour out).
