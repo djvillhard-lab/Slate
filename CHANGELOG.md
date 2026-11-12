@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.7.3 (Nov 12, 2026)
+- All games: the Live button no longer tucks under the date bar.
+- The note at the bottom now says live scores update every 10 seconds (it still said 30, plus a confusing "last refresh" time).
+
 ## 2.7.2 (Nov 12, 2026)
 - The main page reads "Today's Slate" until 5 PM, then "Tonight's Slate", every day.
 
