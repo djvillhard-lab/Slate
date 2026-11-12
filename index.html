@@ -25,6 +25,15 @@
       if (typed && typed.trim()) localStorage.setItem("slate-pass", typed.trim()); else localStorage.setItem("slate-view-only", "1");
     }
   } catch (e) {}
+  // a change on a phone with no passcode (view only): ask for it right then, once, instead of failing quietly
+  var asked = false;
+  function askPassNow() {
+    if (asked) return; asked = true;
+    setTimeout(function () {
+      var t = window.prompt("This phone isn't signed in, so changes can't save.\n\nEnter your Slate passcode:");
+      if (t && t.trim()) { try { localStorage.setItem("slate-pass", t.trim()); localStorage.removeItem("slate-view-only"); localStorage.removeItem("slate-user"); } catch (e) {} location.reload(); }
+    }, 50);
+  }
   window.slateAskPass = function () { try { localStorage.removeItem("slate-view-only"); localStorage.removeItem("slate-pass"); } catch (e) {} location.reload(); };
   // who this phone belongs to: "dj" (the main passcode) or another person's id from users/registry, found by the worker
   function who() { try { return localStorage.getItem("slate-user") || "dj"; } catch (e) { return "dj"; } }
@@ -79,7 +88,7 @@
         });
       },
       set: function (data) {
-        if (!pass()) { var e0 = new Error("No passcode on this device"); e0.code = "permission-denied"; return Promise.reject(e0); }
+        if (!pass()) { askPassNow(); var e0 = new Error("No passcode on this device"); e0.code = "permission-denied"; return Promise.reject(e0); }
         if (who() !== "dj") return fetch("/api/save", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass(), path: path, data: data }) }).then(function (r) {
           if (!r.ok) { var e = new Error("save " + r.status); e.code = r.status === 403 ? "permission-denied" : "unavailable"; throw e; }
           notify(path);
@@ -125,8 +134,8 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_CHANGES = "# Slate release history\n\nVersion 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.\nFrom 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).\n\n## 2.4.4 (Nov 12, 2026)\n- Fix for a phone that forgets whose profile it is (settings wouldn't save): it now checks with the server and reopens on the right profile.\n- Failed saves are recorded on the server so problems on a phone can be traced.\n\n## 2.4.3 (Nov 12, 2026)\n- Finished games get a proper closing line: past tense, the winner's story first, and nothing that only fits a live game (no \"triple-double watch\", runs or pace).\n\n## 2.4.2 (Nov 12, 2026)\n- Fixed Claude summaries failing with a \"Bad control character\" error (line breaks inside Claude's answer are now handled).\n- When a summary doesn't finish, the message is now in plain words instead of a technical error.\n\n## 2.4.1 (Nov 11, 2026)\n- Notifications settings: removed \"from Slate\" from the description.\n\n## 2.4.0 (Nov 11, 2026)\n- Alerts are close to instant: Slate's server checks live scores every minute and sends finals, reminders, live scores and upset alerts within about a minute.\n\n## 2.3.3 (Nov 11, 2026)\n- Faster live updates while the app is open: slate scores and the open game's box score every 10 seconds (was 30); other live games every minute (was 2).\n- Date picker: the month and the day are the same size.\n\n## 2.3.2 (Nov 11, 2026)\n- The refresh button at the top now resets the app: it reloads the newest version with fresh data, which fixes anything stuck.\n- Removed the Refresh link at the bottom of the slate (scores and games update on their own).\n\n## 2.3.1 (Nov 11, 2026)\n- Folding the phone no longer leaves the menu scrolling with the page: the app resets its zoom and size right after a fold.\n\n## 2.3.0 (Nov 11, 2026)\n- Release history is viewable in the app: Settings > What's new.\n\n## 2.2.3 (Nov 11, 2026)\n- Player headshots no longer show initials behind the photo. Initials appear only when a player has no photo.\n\n## 2.2.2 (Nov 11, 2026)\n- Box Office: the league tabs stay in place when you swipe between leagues. Long names like Premier League and Champions League no longer jump out of view.\n\n## 2.2.1 (Nov 11, 2026)\n- Quick box score (matchup dropdown on the slate): the picked team's stats show as a sideways-scrolling row under the team tabs, like the full box score.\n- Teams: more columns on a wide upright screen, and two columns on the right side when unfolded sideways.\n- Box Office: two columns of players on a wide upright screen.\n\n## 2.2.0 (Nov 11, 2026)\n- Box Office can be built for any past night and any league with a free \"Build this night's Box Office\" button (ready within about 10 minutes).\n- New Box Office leagues: NHL, women's college basketball (WCBB) and Champions League, plus MLB and WNBA during their seasons.\n\n## 2.1.1 (Nov 11, 2026)\n- Quick box score: team stats moved above the players.\n- Box Office: two-column layout when unfolded and held upright.\n\n## 2.1.0 (Nov 11, 2026)\n- Phone alerts come from Slate itself as push notifications, at no cost: reminders, finals, live scores, upset watch and the daily brief, with the same settings as before.\n- New \"This phone\" switch in Settings > Notifications to turn alerts on for each phone (works for your brother's phone too).\n- The hourly Claude alerts run is retired.\n\n## 2.0.0 (Nov 11, 2026): efficiency release\n- Claude only writes when you tap a button. Nothing that costs money runs on its own.\n- Live highlights under games are written by the app's own rules (free) instead of Claude.\n- Box Office: top performers and wild finishes are built free each morning; Claude's over and underachievers are written only when you tap.\n- Fewer web searches per Claude summary (preview 2, team 2, recap 1, Box Office 2), which lowers the cost of each summary.\n- The day slates (every game, today plus three days) are built by a free script instead of a daily Claude run, and \"Build slate\" requests go through the same free job.\n- The version number now shows in Settings.\n";</script>
-<script>window.SLATE_BUILD = "20261112084819";
+<script>window.SLATE_CHANGES = "# Slate release history\n\nVersion 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.\nFrom 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).\n\n## 2.5.0 (Nov 12, 2026)\n- New accent option, Team colors (Drew's idea): the app's accent switches each day to the colors of your first team, in your Teams page order, that plays that day. If none play, it uses the theme's color. It's the last swatch under Settings > Look.\n- A phone that isn't signed in now asks for the passcode as soon as you change something, instead of showing \"Couldn't save settings\" and quietly showing DJ's slate.\n\n## 2.4.4 (Nov 12, 2026)\n- Fix for a phone that forgets whose profile it is (settings wouldn't save): it now checks with the server and reopens on the right profile.\n- Failed saves are recorded on the server so problems on a phone can be traced.\n\n## 2.4.3 (Nov 12, 2026)\n- Finished games get a proper closing line: past tense, the winner's story first, and nothing that only fits a live game (no \"triple-double watch\", runs or pace).\n\n## 2.4.2 (Nov 12, 2026)\n- Fixed Claude summaries failing with a \"Bad control character\" error (line breaks inside Claude's answer are now handled).\n- When a summary doesn't finish, the message is now in plain words instead of a technical error.\n\n## 2.4.1 (Nov 11, 2026)\n- Notifications settings: removed \"from Slate\" from the description.\n\n## 2.4.0 (Nov 11, 2026)\n- Alerts are close to instant: Slate's server checks live scores every minute and sends finals, reminders, live scores and upset alerts within about a minute.\n\n## 2.3.3 (Nov 11, 2026)\n- Faster live updates while the app is open: slate scores and the open game's box score every 10 seconds (was 30); other live games every minute (was 2).\n- Date picker: the month and the day are the same size.\n\n## 2.3.2 (Nov 11, 2026)\n- The refresh button at the top now resets the app: it reloads the newest version with fresh data, which fixes anything stuck.\n- Removed the Refresh link at the bottom of the slate (scores and games update on their own).\n\n## 2.3.1 (Nov 11, 2026)\n- Folding the phone no longer leaves the menu scrolling with the page: the app resets its zoom and size right after a fold.\n\n## 2.3.0 (Nov 11, 2026)\n- Release history is viewable in the app: Settings > What's new.\n\n## 2.2.3 (Nov 11, 2026)\n- Player headshots no longer show initials behind the photo. Initials appear only when a player has no photo.\n\n## 2.2.2 (Nov 11, 2026)\n- Box Office: the league tabs stay in place when you swipe between leagues. Long names like Premier League and Champions League no longer jump out of view.\n\n## 2.2.1 (Nov 11, 2026)\n- Quick box score (matchup dropdown on the slate): the picked team's stats show as a sideways-scrolling row under the team tabs, like the full box score.\n- Teams: more columns on a wide upright screen, and two columns on the right side when unfolded sideways.\n- Box Office: two columns of players on a wide upright screen.\n\n## 2.2.0 (Nov 11, 2026)\n- Box Office can be built for any past night and any league with a free \"Build this night's Box Office\" button (ready within about 10 minutes).\n- New Box Office leagues: NHL, women's college basketball (WCBB) and Champions League, plus MLB and WNBA during their seasons.\n\n## 2.1.1 (Nov 11, 2026)\n- Quick box score: team stats moved above the players.\n- Box Office: two-column layout when unfolded and held upright.\n\n## 2.1.0 (Nov 11, 2026)\n- Phone alerts come from Slate itself as push notifications, at no cost: reminders, finals, live scores, upset watch and the daily brief, with the same settings as before.\n- New \"This phone\" switch in Settings > Notifications to turn alerts on for each phone (works for your brother's phone too).\n- The hourly Claude alerts run is retired.\n\n## 2.0.0 (Nov 11, 2026): efficiency release\n- Claude only writes when you tap a button. Nothing that costs money runs on its own.\n- Live highlights under games are written by the app's own rules (free) instead of Claude.\n- Box Office: top performers and wild finishes are built free each morning; Claude's over and underachievers are written only when you tap.\n- Fewer web searches per Claude summary (preview 2, team 2, recap 1, Box Office 2), which lowers the cost of each summary.\n- The day slates (every game, today plus three days) are built by a free script instead of a daily Claude run, and \"Build slate\" requests go through the same free job.\n- The version number now shows in Settings.\n";</script>
+<script>window.SLATE_BUILD = "20261112085814";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1370,6 +1379,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .fp-h { margin-top: 18px; }
 .tray-ts { margin: 2px 0 10px; }
 .mm-bi { display: inline-flex; }
+.sw-team svg { filter: drop-shadow(0 0 2px rgba(0,0,0,.8)); color: #fff; }
 .rel-sec { margin-top: 10px; }
 .rel-list { display: grid; gap: 14px; padding: 4px 4px 8px; }
 .rel-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
@@ -1839,6 +1849,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     <div class="themes" id="theme-grid" role="group" aria-label="Theme"></div>
     <p class="hint acc-h">Accent color</p>
     <div class="swatches" id="swatches" role="group" aria-label="Accent color"></div>
+    <p class="hint" id="acc-team-h"></p>
 
     <div class="sec"><h2>Slate</h2></div>
     <div class="optrow">
@@ -2107,14 +2118,50 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var a = Math.max(screen.width || 0, screen.height || 0), b = Math.min(screen.width || 0, screen.height || 0) || 1;
     return state.textSizeWide || Number(state.foldNudge) || a / b < 1.9 ? "duo" : "iphone";
   }
+  // ---- team colors accent: the color of the first team (Teams page order) that plays today ----
+  var TEAM_ACC = (function () { try { return JSON.parse(localStorage.getItem("slate-team-acc") || "null"); } catch (e) { return null; } })();
+  function hexRgb(h) { h = String(h || "").replace("#", ""); if (!/^[0-9a-f]{6}$/i.test(h)) return null; return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  function rgbHex(c) { return "#" + c.map(function (v) { return ("0" + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2); }).join(""); }
+  function taLum(c) { var f = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); }
+  function mix(c, to, t) { return c.map(function (v, i) { return v + (to[i] - v) * t; }); }
+  function teamAccent(base) {
+    var tc = TEAM_ACC && TEAM_ACC.date === todayInHome() ? TEAM_ACC : null; if (!tc) return null;
+    // pick the team's color that reads best on this theme; nudge it lighter (dark themes) or darker (light) until readable
+    var cs = [hexRgb(tc.c1), hexRgb(tc.c2)].filter(Boolean); if (!cs.length) return null;
+    var dark = base !== "light", ok = function (c) { var L = taLum(c); return L > 0.02 && L < 0.85; };
+    var pickC = ok(cs[0]) ? cs[0] : (cs[1] && ok(cs[1]) ? cs[1] : cs[0]);
+    var fill = pickC.slice(), text = pickC.slice(), k = 0;
+    if (taLum(fill) > 0.9) fill = mix(fill, [0, 0, 0], 0.25);
+    while (dark && taLum(text) < 0.22 && k++ < 12) text = mix(text, [255, 255, 255], 0.15);
+    while (!dark && taLum(text) > 0.18 && k++ < 12) text = mix(text, [0, 0, 0], 0.15);
+    while (dark && taLum(fill) < 0.12 && k++ < 24) fill = mix(fill, [255, 255, 255], 0.12);
+    return { name: tc.name, text: rgbHex(text), fill: rgbHex(fill), deep: rgbHex(mix(fill, [0, 0, 0], 0.45)), on: taLum(fill) > 0.3 ? "#0C0C0C" : "#FFFFFF" };
+  }
+  function updateTeamAccent() {
+    if (state.accent !== "team" || state.date !== todayInHome() || !state.teams) return;
+    var list = myTeamList(), ord = state.teamOrder || [];
+    if (ord.length) list = list.map(function (t, i) { var j = ord.indexOf(tmKey(t)); return [j === -1 ? 1e3 + i : j, t]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
+    var gs = games(), pick = null;
+    list.some(function (t) {
+      var g = gs.filter(function (x) { return x.league === t.lg && (teamMatch(x.away, t.name, t.lg) || teamMatch(x.home, t.name, t.lg)); })[0];
+      if (!g) return false;
+      var sd = teamMatch(g.away, t.name, t.lg) ? "away" : "home", kn = t.known || {};
+      pick = { date: state.date, name: t.name, c1: g[sd + "Color"] || kn.c1 || "", c2: g[sd + "Alt"] || kn.c2 || "" };
+      return !!(pick.c1 || pick.c2);
+    });
+    var next = pick || { date: state.date, name: "", c1: "", c2: "" };
+    if (TEAM_ACC && TEAM_ACC.date === next.date && TEAM_ACC.c1 === next.c1 && TEAM_ACC.c2 === next.c2) return;
+    TEAM_ACC = next; try { localStorage.setItem("slate-team-acc", JSON.stringify(next)); } catch (e) {}
+    applyLook();
+  }
   function applyLook() {
     var root = document.documentElement;
     if (!THEMES[state.look]) state.look = "dark";
     var th = THEMES[state.look];
-    if (!ACCENTS[state.accent]) state.accent = THEMES[state.look][2];
+    if (!ACCENTS[state.accent] && state.accent !== "team") state.accent = THEMES[state.look][2];
     root.setAttribute("data-look", th[1]); root.setAttribute("data-theme", state.look);
     THEME_VARS.forEach(function (v, i) { root.style.setProperty(v, th[3][i]); });
-    var a = ACCENTS[state.accent];
+    var a = state.accent === "team" ? (teamAccent(th[1]) || ACCENTS[th[2]]) : ACCENTS[state.accent];
     root.style.setProperty("--accent", th[1] === "light" ? a.deep : a.text);
     root.style.setProperty("--accent-fill", a.fill);
     root.style.setProperty("--accent-deep", a.deep);
@@ -2997,7 +3044,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.4.4";
+  var SLATE_VERSION = "2.5.0";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -6004,6 +6051,15 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       b.addEventListener("click", function () { state.accent = k; applyLook(); saveSettings(); render(); });
       sw.appendChild(b);
     });
+    var tb = el("button", "sw sw-team"); tb.type = "button";
+    var ta = TEAM_ACC && TEAM_ACC.date === todayInHome() && (TEAM_ACC.c1 || TEAM_ACC.c2) ? TEAM_ACC : null;
+    tb.style.background = ta ? "linear-gradient(135deg, " + (ta.c1 || ta.c2) + " 50%, " + (ta.c2 || ta.c1) + " 50%)" : "conic-gradient(#c41e3a 0 25%, #002f87 0 50%, #da291c 0 75%, #fdb827 0)";
+    tb.setAttribute("aria-label", "Team colors accent"); tb.setAttribute("aria-pressed", state.accent === "team" ? "true" : "false");
+    if (state.accent === "team") tb.appendChild(icon("check"));
+    tb.addEventListener("click", function () { state.accent = "team"; TEAM_ACC = null; updateTeamAccent(); applyLook(); saveSettings(); render(); });
+    sw.appendChild(tb);
+    var th0 = $("acc-team-h");
+    if (th0) th0.textContent = state.accent === "team" ? (ta && ta.name ? "Team colors: today it's " + ta.name + ", your first team (in your Teams order) that plays today." : "Team colors: none of your teams play today, so it uses the theme's color.") : "The last swatch, Team colors, switches each day to your first team that plays.";
   }
 
   // ---------- chrome ----------
@@ -6213,7 +6269,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (!max) return;
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) + "px");
   }
-  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderMoments(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
+  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); updateTeamAccent(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderMoments(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
 
   // ---------- actions ----------
   // iOS can leave a fixed element where it was when a page swaps for a shorter one and the scroll jumps
