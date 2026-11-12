@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111214105";
+<script>window.SLATE_BUILD = "20261111214311";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -6587,16 +6587,20 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); setTimeout(checkShort, 1600); }
   // iPhone's Home Screen apps sometimes keep a too-short screen after a turn; when the visible area is clearly
   // smaller than the screen and re-fitting didn't help, a quick reload puts it right (at most once a minute)
+  // self-calibrating: remember the tallest the screen has been at this width; if it comes back clearly shorter,
+  // iPhone is stuck with a stale size, and a quick reload (at most once a minute) fixes it
   function checkShort() {
-    if (!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)) || document.hidden) return;
-    var land = window.innerWidth > window.innerHeight, sw = screen.width, sh = screen.height;
-    var expect = land ? Math.min(sw, sh) : Math.max(sw, sh);
-    if (window.innerHeight >= expect - 30) return;
+    if (document.hidden) return;
+    var w = window.innerWidth, h = window.innerHeight, key = "slate-maxh-" + (w > h ? "L" : "P") + "-" + Math.round(w / 20);
+    var best = 0; try { best = Number(localStorage.getItem(key)) || 0; } catch (e) {}
+    if (h > best) { try { localStorage.setItem(key, String(h)); } catch (e) {} return; }
+    if (h >= best - 40) return;
     var last = 0; try { last = Number(sessionStorage.getItem("slate-refit")) || 0; } catch (e) {}
     if (Date.now() - last < 60000) return;
     try { sessionStorage.setItem("slate-refit", String(Date.now())); } catch (e) {}
     location.reload();
   }
+  setInterval(checkShort, 3000);
   window.addEventListener("orientationchange", refit);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refit(); });
   window.addEventListener("pageshow", refit);
