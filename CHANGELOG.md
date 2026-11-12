@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.5.2 (Nov 12, 2026)
+- Games with no US channel listed now show no channel instead of "Local TV" (it was a guess, and usually wrong for international games). Same in the matchup view and the copied slate.
+
 ## 2.5.1 (Nov 12, 2026)
 - Team colors: the explanation now pops up briefly when you pick it, instead of a line that always sits under the swatches.
 
