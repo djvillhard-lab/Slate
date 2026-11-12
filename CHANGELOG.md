@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.8.0 (Nov 12, 2026)
+- All games opens on your teams (★), with ALL as the second tab.
+- New filters under ALL: All, Best of each league (up to 3 standout games per league: your teams, ranked matchups, national TV, top teams, winning teams) and National TV.
+
 ## 2.7.5 (Nov 12, 2026)
 - All games: slimmer header so the games get more room: smaller league tabs, filters and day picker, and less space around the search button.
 
