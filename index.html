@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111213456";
+<script>window.SLATE_BUILD = "20261111213538";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -396,7 +396,7 @@ footer.foot { margin-top: 26px; font-size: 13px; color: var(--dim); text-align: 
 html.duo, html.duo body { height: 100%; overflow: hidden; }
 html.duo .app { display: grid; grid-template-columns: calc(50% - var(--hinge) / 2 + var(--fold-shift)) var(--hinge) minmax(0, 1fr); height: 100vh; height: 100dvh; }
 /* unfolded: pin the two panes to the screen's edges, so a stale height after rotating or coming back can't leave a gap at the bottom */
-html.duo .app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: auto; height: var(--app-h, 100dvh); }
+html.duo .app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: auto !important; }
 html.duo .pane { height: 100%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; min-width: 0; }
 html.duo .hinge { display: block; position: relative; }
 html.duo .hinge::after { content: ""; position: absolute; top: 18px; bottom: 18px; left: 50%; width: 1px; margin-left: -.5px; background: var(--line); }
