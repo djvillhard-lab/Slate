@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111184800";
+<script>window.SLATE_BUILD = "20261111185314";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1321,13 +1321,8 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-row .rk-st i { font-size: 11.5px; }
 .rk-row > .pstar { justify-self: end; }
 /* live highlight under a slate game */
-.hl { display: flex; align-items: baseline; gap: 7px; margin-top: 8px; padding: 7px 10px; border-radius: 10px; background: var(--raise); font-size: 13.5px; line-height: 1.35; font-weight: 600; color: var(--ink); }
-.hl i { font-style: normal; font-size: 11px; flex: none; color: var(--dim); }
-.hl.up i { color: var(--accent); } .hl.down i { color: var(--live); }
-/* the small box score's team switch: two compact pills, not two big blocks */
-.tray .bx-seg, .bx-pl:not(.real) .bx-seg { display: inline-flex !important; width: auto !important; gap: 2px !important; padding: 3px !important; border-radius: 10px !important; margin: 0 0 6px !important; background: rgba(0,0,0,.28) !important; }
-.tray .bx-seg button, .bx-pl:not(.real) .bx-seg button { height: 28px !important; min-height: 0 !important; width: auto !important; padding: 0 14px !important; font-size: 12.5px !important; border-radius: 8px !important; border: 0 !important; background: none !important; }
-.tray .bx-seg button[aria-pressed="true"], .bx-pl:not(.real) .bx-seg button[aria-pressed="true"] { background: rgba(255,255,255,.1) !important; color: var(--ink) !important; }
+.hl { margin: 8px 0 0; font-size: 13px; line-height: 1.35; font-weight: 600; color: #F2867C; }
+:root[data-look="light"] .hl { color: #C42B1F; }
 /* Moments */
 .mm-soon { opacity: .4; pointer-events: none; display: inline-flex; align-items: baseline; gap: 5px; }
 .mm-soon i { font-style: normal; font-size: 10px; font-weight: 800; color: var(--dim); }
@@ -2959,7 +2954,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function hlCompute(lg, sum) {
     var sport = BX_SPORT[lg], head = ((sum.header || {}).competitions || [])[0] || {}, st = ((head.status || {}).type || {});
     if (st.state !== "in") return null;
-    var period = (head.status || {}).period || 0, teams = {}, c = [], lead1 = null;
+    var period = (head.status || {}).period || 0, teams = {}, c = [], lead1 = null, ctxP = {}, ctxT = {};
     (head.competitors || []).forEach(function (k) { var tm = k.team || {}; teams[String(tm.id)] = { abbr: tm.abbreviation || "", name: tm.shortDisplayName || tm.displayName || "", side: k.homeAway, score: hlNum(k.score) }; });
     var tid = Object.keys(teams);
     function add(key, score, tone, text, facts) { c.push({ key: key, score: score, tone: tone, text: text, facts: facts }); }
@@ -2969,6 +2964,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var t = teams[String((bt.team || {}).id)]; if (!t || sport !== "bball") return;
       var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = x.displayValue; });
       var three = hlMA(m["threePointFieldGoalsMade-threePointFieldGoalsAttempted"]), fg = hlMA(m["fieldGoalsMade-fieldGoalsAttempted"]);
+      ctxT[t.abbr] = "FG " + fg.join("-") + ", 3PT " + three.join("-") + (m.turnovers ? ", TO " + m.turnovers : "") + (m.totalRebounds ? ", REB " + m.totalRebounds : "");
       if (three[1] >= 6 && three[0] / three[1] >= 0.6) add("3hot|" + t.abbr + "|" + three[0], 30 + three[0] * 3 + (three[0] / three[1]) * 20, 1, t.name + " are " + three[0] + "-of-" + three[1] + " from three", { team: t.name, threes: three.join("-") });
       if (three[1] >= 14 && three[0] / three[1] <= 0.2) add("3cold|" + t.abbr + "|" + Math.floor(three[1] / 4), 28 + three[1], -1, t.name + " are " + three[0] + "-of-" + three[1] + " from three", { team: t.name, threes: three.join("-") });
       if (fg[1] >= 30 && fg[0] / fg[1] <= 0.34) add("fgcold|" + t.abbr + "|" + Math.floor(fg[1] / 10), 30, -1, t.name + " are shooting " + Math.round(100 * fg[0] / fg[1]) + "% (" + fg.join("-") + ")", { team: t.name, fg: fg.join("-") });
@@ -2984,7 +2980,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
           var nm = (a.athlete || {}).displayName || "", sh = (a.athlete || {}).shortName || nm, id = (a.athlete || {}).id || nm;
           if (sport === "bball") {
             var pts = hlNum(s2.PTS), min = hlNum(String(s2.MIN || "0").split(":")[0]), reb = hlNum(s2.REB), ast = hlNum(s2.AST), fg = hlMA(s2.FG), th = hlMA(s2["3PT"]);
+            (ctxP[t.abbr] = ctxP[t.abbr] || []).push({ n: sh, pts: pts, l: pts + "p " + reb + "r " + ast + "a " + fg.join("-") + " FG " + th.join("-") + " 3PT " + min + "m" });
             if (pts >= 8 && (!lead1 || pts > lead1.pts)) lead1 = { pts: pts, nm: nm, id: id, abbr: t.abbr, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + fg.join("-") + " FG" };
+            // a hot start: lots of points in few minutes (catches a college scorer going off early)
+            if (pts >= 10 && min > 0 && pts / min >= 0.85 && pts < 20) add("hot|" + id + "|" + Math.floor(pts / 4), 30 + pts * 1.4 + (pts / min) * 10, 1, nm + " has " + pts + " pts in " + min + " min (" + fg.join("-") + " FG" + (th[0] >= 2 ? ", " + th.join("-") + " 3PT" : "") + ")", { player: nm, team: t.abbr, line: pts + " pts in " + min + " min, " + fg.join("-") + " FG, " + th.join("-") + " 3PT" });
             if (pts >= 20) {
               var pace = min >= 8 ? Math.round(pts / min * 36) : 0, txt = nm + " has " + pts + " pts" + (min ? " in " + min + " min" : "") + " (" + fg.join("-") + " FG" + (th[0] >= 3 ? ", " + th[0] + " threes" : "") + ")";
               if (pace >= 45 && pts < 45) txt += ", on pace for " + pace;
@@ -3032,6 +3031,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (!c.length) return null;
     c.sort(function (a, b) { return b.score - a.score; });
     var top = c[0]; top.when = ((head.status || {}).type || {}).shortDetail || ""; top.period = period;
+    // what Claude sees: the best few angles plus the game around them
+    top.cands = c.slice(0, 6).map(function (x) { return x.text; });
+    var sc = tid.map(function (i) { return teams[i].abbr + " " + teams[i].score; }).join(", ");
+    top.ctx = { score: sc, clock: top.when, teams: ctxT, players: Object.keys(ctxP).reduce(function (o, k) { o[k] = ctxP[k].sort(function (a, b) { return b.pts - a.pts; }).slice(0, 3).map(function (x) { return x.n + ": " + x.l; }); return o; }, {}) };
+    // ask again when the lead story changes or a new period starts
+    top.ask = top.key + "|p" + period;
     return top;
   }
   function hlWatch() {
@@ -3044,15 +3049,16 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function hlNode(g) {
     var cur = bx.live[g.id], h = cur && cur.hl; if (!h) return null;
     hlWatch();
-    var saved = ((HL.doc || {}).games || {})[g.id], text = saved && saved.key === h.key && saved.text ? saved.text : h.text;
-    if (!(saved && saved.key === h.key) && !HL_ASK[g.id + h.key] && window.SLATE_SELF) {
-      HL_ASK[g.id + h.key] = 1;
+    var saved = ((HL.doc || {}).games || {})[g.id], fresh = saved && saved.key === h.ask && saved.text;
+    // keep showing Claude's last line for this game until a new one lands (it beats the plain fallback)
+    var text = fresh ? saved.text : (saved && saved.text && saved.at && Date.now() - Date.parse(saved.at) < 20 * 60000 ? saved.text : h.text);
+    if (!fresh && !HL_ASK[g.id + h.ask] && window.SLATE_SELF) {
+      HL_ASK[g.id + h.ask] = 1;
       var pass = ""; try { pass = localStorage.getItem("slate-pass") || ""; } catch (e) {}
-      if (pass) fetch("/api/highlight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass, date: state.date, id: g.id, key: h.key, raw: h.text, game: g.away + " at " + g.home + " (" + (g.league || "") + ")", when: h.when, facts: h.facts }) }).then(null, function () {});
+      var wl = (((state.previews || {})[g.id] || {}).watch || []).map(function (w) { return w.name + (w.team ? " (" + w.team + ")" : ""); }).slice(0, 4);
+      if (pass) fetch("/api/highlight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass, date: state.date, id: g.id, key: h.ask, raw: h.text, game: g.away + " at " + g.home + " (" + ((LEAGUES[g.league] || {}).name || g.league) + ")", when: h.when, facts: { angles: h.cands, game: h.ctx, stars: wl } }) }).then(null, function () {});
     }
-    var n = el("div", "hl " + (h.tone > 0 ? "up" : h.tone < 0 ? "down" : ""));
-    n.appendChild(el("i", null, h.tone < 0 ? "▼" : "▲")); n.appendChild(el("span", null, text));
-    return n;
+    return el("p", "hl", text);
   }
   // ---- where a game's box comes from ----
   var bx = { live: {}, sb: {} };
