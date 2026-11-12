@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111225728";
+<script>window.SLATE_BUILD = "20261111230521";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1365,10 +1365,15 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .fp-h { margin-top: 18px; }
 .tray-ts { margin: 2px 0 10px; }
 .mm-bi { display: inline-flex; }
-/* unfolded and held upright: Box Office uses the whole width, two columns of players (1-5 left, 6-10 right) */
-html.roomy main.wrap:has(#view-moments:not([hidden])) { max-width: 1000px; }
-html.roomy #mm-body .mm-top, html.roomy #mm-body .mm-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), auto); grid-auto-flow: column; column-gap: 28px; }
-html.roomy #mm-body .mm-more { max-width: 360px; margin-left: auto; margin-right: auto; }
+/* wide single screen (unfolded and held upright): Box Office and Teams use the whole width */
+@media (min-width: 520px) {
+  html:not(.duo) main.wrap:has(#view-moments:not([hidden])), html:not(.duo) main.wrap:has(#view-teams:not([hidden])) { max-width: 1000px; }
+  html:not(.duo) #mm-body .mm-top, html:not(.duo) #mm-body .mm-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), auto); grid-auto-flow: column; column-gap: 28px; }
+  html:not(.duo) #mm-body .mm-more { max-width: 360px; margin-left: auto; margin-right: auto; }
+  html:not(.duo) #teams-body .tcards { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+/* unfolded and sideways: the right side shows teams two across */
+html.duo #teams-body .tcards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .fp-list { display: grid; }
 .fp-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 2px; border-top: 1px solid var(--hair); }
 .fp-face { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; }
@@ -2973,7 +2978,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.2.0";
+  var SLATE_VERSION = "2.2.1";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -3363,10 +3368,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     wrap.appendChild(seg);
     var t = b.teams[side] || b.teams[0], groups = (t.groups || []).filter(function (gr) { return !compact || (BX_COMPACT[sport] || {})[gr.k]; });
     if (!groups.length) { wrap.appendChild(el("p", "bx-dnp", season ? "No season stats for this team yet." : "No player stats yet.")); return wrap; }
-    if (!compact) {
-      wrap.classList.add("real");
-      if (!season) { var tcard = bxTeamCard(g, t, sport); if (tcard) wrap.appendChild(tcard); }
-    }
+    if (!compact) wrap.classList.add("real");
+    // the picked team's stats: one sideways-scrolling row under the team tabs (the quick look and the full box score alike)
+    if (!season) { var tcard = bxTeamCard(g, t, sport); if (tcard) wrap.appendChild(tcard); }
     groups.forEach(function (gr) {
       if (groups.length > 1) wrap.appendChild(el("b", compact ? "bx-gh" : "bxp-grp", BX_GROUP[gr.k] || gr.k));
       wrap.appendChild(compact ? bxTable(g, gr, compact, sport, b.state === "in") : bxRows(g, gr, sport, b.state === "in", t));
@@ -3460,17 +3464,6 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var os = oddsStrip(g, b); if (os) box.appendChild(os);
     if (!boxShown(g)) box.appendChild(boxGate(g));
     else {
-      // team stats: one collapsed row above the box score, like the full matchup page
-      var ts = bxTeamStats(g, b, true);
-      if (ts) {
-        var on = !!TRAY_TS[g.id], sec = el("div", "gv-sec tray-ts" + (on ? " open" : ""));
-        var tg = el("button", "gv-toggle"); tg.type = "button"; tg.setAttribute("aria-expanded", on ? "true" : "false");
-        var tx = el("span", "gv-tt"); tx.appendChild(el("b", null, "Team stats")); tg.appendChild(tx); tg.appendChild(icon("more"));
-        tg.addEventListener("click", function (e) { e.stopPropagation(); TRAY_TS[g.id] = !TRAY_TS[g.id]; keepScroll(function () { renderLineup(); renderGames(); }); });
-        sec.appendChild(tg);
-        if (on) { var tin = el("div", "gv-sec-in"); tin.appendChild(ts); sec.appendChild(tin); }
-        box.appendChild(sec);
-      }
       box.appendChild(bxPlayers(g, b, true, false));
     }
     box.appendChild(el("p", "pv-at", bxStamp(b)));
