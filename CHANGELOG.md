@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.14.1 (Nov 12, 2026)
+- Removed the estimated xG and the xG one-liners. Slate only shows expected goals when ESPN actually provides them (it currently doesn't for team totals), so the stat won't appear for now.
+
 ## 2.14.0 (Nov 12, 2026)
 - Expected goals (xG) for soccer, second in the team stats row next to possession, live and after the final. ESPN's free feeds don't publish team xG, so Slate estimates it from ESPN's shot-by-shot commentary (where each shot came from, header or foot, penalties, free kicks, fast breaks and through balls). If ESPN ever sends real xG, that's used instead.
 - New soccer one-liners from xG: "Brighton have created 2.5 xG to 0.6", and "Fulham won despite an xG of 0.4 to 1.9".
