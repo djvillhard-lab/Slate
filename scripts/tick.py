@@ -19,6 +19,12 @@ SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co"
 KEY = os.environ.get("SUPABASE_SECRET", "")
 DRY = "--dry" in sys.argv
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
+for _m in ("slates", "standouts"):  # a runner that only downloaded tick.py: fetch the helpers it imports
+    if not os.path.exists(os.path.join(HERE, _m + ".py")):
+        try:
+            _r = urllib.request.Request(f"https://xpkzcdaawaqiqgwkkwst.supabase.co/rest/v1/docs?path=eq.code/{_m}&select=data", headers={"apikey": "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ", "Authorization": "Bearer sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ"})
+            open(os.path.join(HERE, _m + ".py"), "w").write(json.load(urllib.request.urlopen(_r, timeout=30))[0]["data"]["py"])
+        except Exception as _e: print("couldn't fetch", _m, _e)
 
 PATHS = {
     "nfl": ["football/nfl"], "ncaaf": ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
@@ -1038,12 +1044,21 @@ def main():
         else: print("standouts failed", d, r.stderr[-300:])
 
     print("todo:", [(t.get("id") or t.get("key"), t["why"]) for t in todo])
-    # ---- 7. phone alerts (push notifications, free)
+    # ---- 7. phone alerts: Slate's server sends them every minute (worker cron); it reads who follows what from here
     try:
-        import alerts
         people[0]["mine"] = mine
-        alerts.run(sb_get, sb_put, KEY, now, D, games, sc, people, dry=DRY)
-    except Exception as e: print("alerts error", e)
+        slim = {}
+        for g in games:
+            e = {k: g[k] for k in ("league", "start", "away", "home", "awayShort", "homeShort", "awayRank", "homeRank") if g.get(k) not in (None, "")}
+            e["tv"] = (g.get("tv") or [])[:1]
+            ev = evs.get(g["id"])
+            if ev: e["ev"] = ev.get("id")
+            if g.get("flip"): e["flip"] = True
+            slim[g["id"]] = e
+        aset = {"date": D, "people": people, "games": slim}
+        old = sb_get([f"alertsets/{D}"]).get(f"alertsets/{D}") or {}
+        if {k: v for k, v in old.items() if k != "updatedAt"} != aset: sb_put(f"alertsets/{D}", dict(aset, updatedAt=iso(now)))
+    except Exception as e: print("alertsets error", e)
     try: moments_work(now)
     except Exception as e: print("moments error", e)
     try: slates_work(now)

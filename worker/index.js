@@ -4,6 +4,7 @@
 // The workflow asks Claude (with web search) for the summary and saves it to Supabase; the app sees it appear.
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
 import { WorkflowEntrypoint } from "cloudflare:workers";
+import { runAlerts } from "./alerts.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -61,6 +62,8 @@ function target(p) {
 const apiKey = (env) => env.ANTHROPIC_API_KEY || env["dj-api-key"] || env.DJ_API_KEY || "";
 
 export default {
+  // every minute: phone alerts from live ESPN scores
+  async scheduled(event, env, ctx) { ctx.waitUntil(runAlerts(env).catch((e) => console.log("alerts error", String(e)))); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname === "/api/summary" && req.method === "POST") {
