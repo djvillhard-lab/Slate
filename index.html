@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111214622";
+<script>window.SLATE_BUILD = "20261111215144";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -6592,14 +6592,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // smaller than the screen and re-fitting didn't help, a quick reload puts it right (at most once a minute)
   // self-calibrating: remember the tallest the screen has been at this width. If iPhone later hands the app a
   // shorter window (it does after some turns), stretch the layout to the known height instead of leaving a gap.
-  var SHORT_GAP = 0;
+  var SHORT_GAP = 0, SHORT_KEY = "";
   function checkShort() {
     if (document.hidden) return;
     var w = window.innerWidth, h = window.innerHeight, key = "slate-maxh-" + (w > h ? "L" : "P") + "-" + Math.round(w / 20);
     var best = 0; try { best = Number(localStorage.getItem(key)) || 0; } catch (e) {}
     if (h > best) { try { localStorage.setItem(key, String(h)); } catch (e) {} best = h; }
     var gap = h < best - 40 && best - h < 400 ? best - h : 0;
-    if (gap === SHORT_GAP) return;
+    // once the stretch is on, it stays on for this width and orientation: taking it off is what made the
+    // window shrink again and flicker. Only a turn of the phone (a new width) resets it.
+    if (SHORT_GAP && SHORT_KEY === key) return;
+    if (!gap && !SHORT_GAP) return;
+    SHORT_KEY = gap ? key : "";
     SHORT_GAP = gap;
     var root = document.documentElement;
     root.classList.toggle("short-fix", !!gap);
