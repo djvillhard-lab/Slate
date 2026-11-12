@@ -109,7 +109,7 @@ Answer with only this JSON inside <json></json> tags:
  "under": [{"name": "...", "team": "ABBR", "line": "...", "why": "one line, 10-20 words: why this was well below what's expected of him"}],
  "games": [{"away": "ABBR", "home": "ABBR", "score": "AWY 98, HOM 101", "tag": "Upset" | "Thriller" | "Comeback" | "Overtime" | "Blowout" | "Statement", "why": "one or two sentences, 20-40 words: what happened and how it ended"}],
  "top": [{"name": "...", "team": "ABBR", "line": "...", "why": "a few words"}]}
-over: exactly 5 players who beat their norms by the most (not just the biggest totals). under: exactly 5 established players (starters or stars) who fell well short; never someone who left hurt unless you say so. games: the 5 most dramatic games (crazy endings, upsets by rank or line, comebacks, overtime, one-score finishes), best first; fewer only if fewer were played. top: only for the Premier League (10 best performances from goals, assists and key moments); [] otherwise. Use only players and games in the facts.`;
+over: exactly 5 players who beat their norms by the most (not just the biggest totals). under: exactly 5 established players (starters or stars) who fell well short; never someone who left hurt unless you say so. games: the 5 most dramatic games (crazy endings, upsets by rank or line, comebacks, overtime, one-score finishes), best first; fewer only if fewer were played. top: only for the Premier League (10 best performances from goals, assists and key moments); [] otherwise. Use only players and games in the facts. Inside the JSON strings, never use double quotation marks; use single quotes if you must quote.`;
   if (p.kind === "team") return `Write a short summary of this team for a sports fan's app. Today is ${new Date().toDateString()}.
 Team facts (JSON): ${facts}
 Do two or three web searches for this team's news and season story (recent news from the last 4 days, and one including "The Athletic").
@@ -147,18 +147,33 @@ Answer with only this JSON inside <json></json> tags:
 Watch: 2-4 players, never one who is out. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
 }
 
-async function askClaude(env, text) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-    body: JSON.stringify({ model: MODEL, max_tokens: 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }], messages: [{ role: "user", content: text }] })
-  });
-  const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error("Claude API " + r.status + ": " + ((body.error || {}).message || "").slice(0, 160));
-  const out = (body.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
-  const m = /<json>([\s\S]*?)<\/json>/.exec(out) || /(\{[\s\S]*\})/.exec(out);
-  if (!m) throw new Error("No summary in Claude's answer");
-  return { ans: JSON.parse(m[1]), usage: body.usage || {} };
+async function askClaude(env, text, big) {
+  const msgs = [{ role: "user", content: text }], usage = { input_tokens: 0, output_tokens: 0, server_tool_use: { web_search_requests: 0 } };
+  let out = "";
+  for (let turn = 0; turn < 4; turn++) {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
+      body: JSON.stringify({ model: MODEL, max_tokens: big ? 10000 : 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }], messages: msgs })
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error("Claude API " + r.status + ": " + ((body.error || {}).message || "").slice(0, 160));
+    const u = body.usage || {}; usage.input_tokens += (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0); usage.output_tokens += u.output_tokens || 0;
+    usage.server_tool_use.web_search_requests += ((u.server_tool_use || {}).web_search_requests) || 0;
+    out += (body.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
+    // a long search turn can pause; hand the partial answer back so Claude finishes it
+    if (body.stop_reason === "pause_turn") { msgs.push({ role: "assistant", content: body.content }); continue; }
+    if (body.stop_reason === "max_tokens") throw new Error("Claude's answer ran too long");
+    break;
+  }
+  const all = [...out.matchAll(/<json>([\s\S]*?)<\/json>/g)], m = all.length ? all[all.length - 1] : /(\{[\s\S]*\})/.exec(out);
+  if (!m) throw new Error("No summary in Claude's answer: " + out.slice(-140));
+  let raw = m[1].trim().replace(/^```(json)?/, "").replace(/```$/, "");
+  try { return { ans: JSON.parse(raw), usage }; }
+  catch (e) {  // curly quotes and stray trailing commas are the usual slips
+    raw = raw.replace(/[\u201c\u201d]/g, '\\"').replace(/,\s*([\]}])/g, "$1");
+    return { ans: JSON.parse(raw), usage };
+  }
 }
 
 const athletic = (list) => (Array.isArray(list) ? list : []).filter((h) => h && h.title && /^https:\/\/(www\.)?(nytimes\.com\/athletic|theathletic\.com)/.test(h.url || "")).slice(0, 4).map((h) => ({ title: String(h.title).slice(0, 200), source: "The Athletic", url: h.url }));
@@ -168,7 +183,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const p = event.payload, t = target(p);
     try {
-      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "4 minutes" }, async () => askClaude(this.env, prompt(p)));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments"));
       const ans = res.ans || res;
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
       const now = new Date().toISOString();
