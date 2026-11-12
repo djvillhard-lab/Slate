@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111211439";
+<script>window.SLATE_BUILD = "20261111211729";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3535,7 +3535,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var t = team.team || {}, tid = t.id, me = teams[tid];
       if (/^ncaa/.test(lg) && !(me && me.team && me.team.conferenceId)) return;
       var rs = result(tid);
-      var base = { team: t.abbreviation || "", teamName: t.displayName || "", color: t.color ? "#" + t.color : "", opp: rs[0], result: rs[1], ev: ev.id, home: !!(me && me.homeAway === "home") };
+      var base = { tid: String(tid || ""), team: t.abbreviation || "", teamName: t.displayName || "", color: t.color ? "#" + t.color : "", opp: rs[0], result: rs[1], ev: ev.id, home: !!(me && me.homeAway === "home") };
       if (live) { base.live = true; base.detail = st.shortDetail || ""; }
       function push(nm, pos, r, id) { if (!r) return; var o = {}; Object.keys(base).forEach(function (k) { o[k] = base[k]; }); o.name = nm; o.pos = pos; o.id = id || ""; o.score = Math.round(r[0] * 10) / 10; o.line = r[1]; rows.push(o); }
       if (kind === "football") {
@@ -3719,6 +3719,22 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     row.appendChild(playerStar(p));
     return row;
   }
+  // football box scores don't say a player's position: look it up on the team roster once (kept on the phone), and guess from the line meanwhile
+  var FPOS = (function () { try { return JSON.parse(localStorage.getItem("slate-fpos") || "{}"); } catch (e) { return {}; } })(), FPOS_ASK = {};
+  function footPos(r, lg) {
+    if (r.pos) return r.pos;
+    if (r.id && FPOS[r.id]) return FPOS[r.id];
+    if (r.tid && r.id && !FPOS_ASK[lg + r.tid] && RK_PATH[lg]) {
+      FPOS_ASK[lg + r.tid] = 1;
+      rkFetch(rkUrl(lg, "teams/" + r.tid + "/roster", "")).then(function (j) {
+        ((j && j.athletes) || []).forEach(function (grp) { (grp.items || []).forEach(function (a) { var p = (a.position || {}).abbreviation; if (a.id && p) FPOS[a.id] = p; }); });
+        try { localStorage.setItem("slate-fpos", JSON.stringify(FPOS)); } catch (e) {}
+        if (state.view === "moments") keepScroll(renderMoments); else if (state.view === "best") keepScroll(renderBest);
+      });
+    }
+    var l = String(r.line || "");
+    return /pass yds/.test(l) ? "QB" : /^\S+ rush/.test(l) ? "RB" : /^\S+ rec/.test(l) ? "WR/TE" : /TKL|sacks|INT/.test(l) ? "DEF" : "";
+  }
   function bestRow(r, rank, lgx) {
     var lg = lgx || r.lg || state.bestLeague;
     var row = el("div", "rk-row" + (isFav(r.teamName, lg) || isFavPlayer(r.id, lg) ? " fav" : ""));
@@ -3733,7 +3749,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var mid = el("div", "rk-mid");
     var top = el("div", "rk-top"), nm = el("span", "rk-nm");
     var parts = String(r.name || "").split(" "), shortN = parts.length > 1 ? parts[0][0] + ". " + parts.slice(1).join(" ") : r.name;
-    nm.appendChild(el("b", null, shortN)); if (r.pos) nm.appendChild(el("span", null, " · " + r.pos));
+    var posT = RK_KIND[lg] === "football" ? footPos(r, lg) : r.pos;
+    nm.appendChild(el("b", null, shortN)); if (posT) nm.appendChild(el("span", "rk-pos", " · " + posT));
     top.appendChild(nm);
     // rank sits in its own narrow column on the left; the star on the right edge
     row.insertBefore(el("span", "rk-rank" + (rank && rank <= 3 ? " top" : ""), rank ? String(rank) : (lgx === undefined && r.lg ? (LEAGUES[r.lg] || {}).tag || "" : "")), row.firstChild);
