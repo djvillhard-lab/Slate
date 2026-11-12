@@ -121,8 +121,8 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_CHANGES = "# Slate release history\n\nVersion 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.\nFrom 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).\n\n## 2.3.2 (Nov 11, 2026)\n- The refresh button at the top now resets the app: it reloads the newest version with fresh data, which fixes anything stuck.\n- Removed the Refresh link at the bottom of the slate (scores and games update on their own).\n\n## 2.3.1 (Nov 11, 2026)\n- Folding the phone no longer leaves the menu scrolling with the page: the app resets its zoom and size right after a fold.\n\n## 2.3.0 (Nov 11, 2026)\n- Release history is viewable in the app: Settings > What's new.\n\n## 2.2.3 (Nov 11, 2026)\n- Player headshots no longer show initials behind the photo. Initials appear only when a player has no photo.\n\n## 2.2.2 (Nov 11, 2026)\n- Box Office: the league tabs stay in place when you swipe between leagues. Long names like Premier League and Champions League no longer jump out of view.\n\n## 2.2.1 (Nov 11, 2026)\n- Quick box score (matchup dropdown on the slate): the picked team's stats show as a sideways-scrolling row under the team tabs, like the full box score.\n- Teams: more columns on a wide upright screen, and two columns on the right side when unfolded sideways.\n- Box Office: two columns of players on a wide upright screen.\n\n## 2.2.0 (Nov 11, 2026)\n- Box Office can be built for any past night and any league with a free \"Build this night's Box Office\" button (ready within about 10 minutes).\n- New Box Office leagues: NHL, women's college basketball (WCBB) and Champions League, plus MLB and WNBA during their seasons.\n\n## 2.1.1 (Nov 11, 2026)\n- Quick box score: team stats moved above the players.\n- Box Office: two-column layout when unfolded and held upright.\n\n## 2.1.0 (Nov 11, 2026)\n- Phone alerts come from Slate itself as push notifications, at no cost: reminders, finals, live scores, upset watch and the daily brief, with the same settings as before.\n- New \"This phone\" switch in Settings > Notifications to turn alerts on for each phone (works for your brother's phone too).\n- The hourly Claude alerts run is retired.\n\n## 2.0.0 (Nov 11, 2026): efficiency release\n- Claude only writes when you tap a button. Nothing that costs money runs on its own.\n- Live highlights under games are written by the app's own rules (free) instead of Claude.\n- Box Office: top performers and wild finishes are built free each morning; Claude's over and underachievers are written only when you tap.\n- Fewer web searches per Claude summary (preview 2, team 2, recap 1, Box Office 2), which lowers the cost of each summary.\n- The day slates (every game, today plus three days) are built by a free script instead of a daily Claude run, and \"Build slate\" requests go through the same free job.\n- The version number now shows in Settings.\n";</script>
-<script>window.SLATE_BUILD = "20261111232157";
+<script>window.SLATE_CHANGES = "# Slate release history\n\nVersion 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.\nFrom 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).\n\n## 2.3.3 (Nov 11, 2026)\n- Faster live updates while the app is open: slate scores and the open game's box score every 10 seconds (was 30); other live games every minute (was 2).\n- Date picker: the month and the day are the same size.\n\n## 2.3.2 (Nov 11, 2026)\n- The refresh button at the top now resets the app: it reloads the newest version with fresh data, which fixes anything stuck.\n- Removed the Refresh link at the bottom of the slate (scores and games update on their own).\n\n## 2.3.1 (Nov 11, 2026)\n- Folding the phone no longer leaves the menu scrolling with the page: the app resets its zoom and size right after a fold.\n\n## 2.3.0 (Nov 11, 2026)\n- Release history is viewable in the app: Settings > What's new.\n\n## 2.2.3 (Nov 11, 2026)\n- Player headshots no longer show initials behind the photo. Initials appear only when a player has no photo.\n\n## 2.2.2 (Nov 11, 2026)\n- Box Office: the league tabs stay in place when you swipe between leagues. Long names like Premier League and Champions League no longer jump out of view.\n\n## 2.2.1 (Nov 11, 2026)\n- Quick box score (matchup dropdown on the slate): the picked team's stats show as a sideways-scrolling row under the team tabs, like the full box score.\n- Teams: more columns on a wide upright screen, and two columns on the right side when unfolded sideways.\n- Box Office: two columns of players on a wide upright screen.\n\n## 2.2.0 (Nov 11, 2026)\n- Box Office can be built for any past night and any league with a free \"Build this night's Box Office\" button (ready within about 10 minutes).\n- New Box Office leagues: NHL, women's college basketball (WCBB) and Champions League, plus MLB and WNBA during their seasons.\n\n## 2.1.1 (Nov 11, 2026)\n- Quick box score: team stats moved above the players.\n- Box Office: two-column layout when unfolded and held upright.\n\n## 2.1.0 (Nov 11, 2026)\n- Phone alerts come from Slate itself as push notifications, at no cost: reminders, finals, live scores, upset watch and the daily brief, with the same settings as before.\n- New \"This phone\" switch in Settings > Notifications to turn alerts on for each phone (works for your brother's phone too).\n- The hourly Claude alerts run is retired.\n\n## 2.0.0 (Nov 11, 2026): efficiency release\n- Claude only writes when you tap a button. Nothing that costs money runs on its own.\n- Live highlights under games are written by the app's own rules (free) instead of Claude.\n- Box Office: top performers and wild finishes are built free each morning; Claude's over and underachievers are written only when you tap.\n- Fewer web searches per Claude summary (preview 2, team 2, recap 1, Box Office 2), which lowers the cost of each summary.\n- The day slates (every game, today plus three days) are built by a free script instead of a daily Claude run, and \"Build slate\" requests go through the same free job.\n- The version number now shows in Settings.\n";</script>
+<script>window.SLATE_BUILD = "20261111232726";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1586,7 +1586,7 @@ html .dd-arrow svg { transform: none; width: 16px; height: 16px; }
 html .dd-arrow:first-child { order: 3; }
 html .dd-prev { order: 1; } html .dd-prev svg { transform: rotate(180deg); }
 html .dd-date { order: 2; grid-template-columns: auto auto; column-gap: 3px; align-items: baseline; padding: 0 2px; min-width: 58px; }
-html .dd-date b { font-size: 11px; } html .dd-date b.dd-n { font-size: 17px; }
+html .dd-date b, html .dd-date b.dd-n { font-size: 15px; }
 html .dd-date em { grid-column: 1 / -1; font-size: 9.5px; }
 html .menu-pop { bottom: 56px !important; }
 .dd-arrow.dd-end { opacity: .3; }
@@ -2181,15 +2181,15 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function livePoll() {
     if (!window.SLATE_SELF || livePolling || document.hidden || !state.date) return;
     if (LIVE_DATE !== state.date) LIVE_AT = {};
-    // how often each league is checked: every 30 seconds while a slate game is live or about to start,
-    // every 2 minutes while any other game is live, every 5 minutes otherwise (start-time changes)
+    // how often each league is checked: every 10 seconds while a slate game is live or about to start,
+    // every minute while any other game is live, every 5 minutes otherwise (start-time changes)
     var now = Date.now(), need = {}, list = games(), every = {}, slate = state.slateSet || {};
     list.forEach(function (g) {
       var t = new Date(g.moved || g.start).getTime(); if (isNaN(t) || !ESPN_URLS[g.league]) return;
       var s = scoreRaw(g.id);
       if (t <= now + 3 * 3600000 && now < t + 8 * 3600000 && !(s && s.state === "post")) {
         var live = (s && s.state === "in") || (t <= now && now < t + 4 * 3600000);
-        var gap = (slate[g.id] || hasFav(g)) && (live || t - now < 10 * 60000) ? 30000 : live ? 120000 : 300000;
+        var gap = (slate[g.id] || hasFav(g)) && (live || t - now < 10 * 60000) ? 10000 : live ? 60000 : 300000;
         every[g.league] = Math.min(every[g.league] || 1e9, gap);
         need[g.league] = need[g.league] || {}; need[g.league][etDate(t)] = 1;
       }
@@ -2237,7 +2237,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     }, function () { livePolling = false; });
   }
   if (window.SLATE_SELF) {
-    setInterval(livePoll, 30000);
+    setInterval(livePoll, 10000);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) { LIVE_AT = {}; livePoll(); } });
   }
   function scoreOf(g) { var s = scoreRaw(g.id); return s && (s.state === "in" || s.state === "post") ? s : null; }
@@ -2991,7 +2991,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.3.2";
+  var SLATE_VERSION = "2.3.3";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -3168,7 +3168,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (cur && cur.data) {
       if (cur.data.state === "post") return;
       if (cur.data.state === "pre" && kind === "upcoming") return;
-      if (Date.now() - cur.at < 25000) return;
+      if (Date.now() - cur.at < (state.openId === g.id || (state.view === "game" && state.gameId === g.id) ? 9000 : 25000)) return;
     } else if (cur && cur.err && Date.now() - cur.at < 60000) return;
     bxFetch(g);
   }
@@ -3181,6 +3181,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     setInterval(function () {
       if (document.hidden) return;
       [state.openId, state.view === "game" ? state.gameId : null].forEach(function (id) {
+        if (!id) return; var g = games().filter(function (x) { return x.id === id; })[0];
+        if (g && status(g).kind === "live") bxNeed(g);
+      });
+    }, 10000);
+    setInterval(function () {
+      if (document.hidden) return;
+      [].forEach(function (id) {
         if (!id) return; var g = games().filter(function (x) { return x.id === id; })[0];
         if (g && status(g).kind === "live") bxNeed(g);
       });
