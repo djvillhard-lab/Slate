@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111185314";
+<script>window.SLATE_BUILD = "20261111185708";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3046,6 +3046,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     HL.unsub = db.doc("live/" + state.date).onSnapshot(function (sn) { HL.doc = sn.exists ? sn.data() : null; if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, function () {});
   }
   // the highlight line under a live game on the slate
+  function hlStories(g) {
+    var pv = (state.previews || {})[g.id] || {}, out = [];
+    (Array.isArray(pv.bullets) ? pv.bullets : []).slice(0, 3).forEach(function (b) { out.push(String(b)); });
+    (Array.isArray(pv.headlines) ? pv.headlines : []).slice(0, 2).forEach(function (h) { if (h && h.title) out.push("Headline: " + h.title); });
+    if (pv.injuries) out.push("Injuries: " + String(pv.injuries).slice(0, 160));
+    return out;
+  }
   function hlNode(g) {
     var cur = bx.live[g.id], h = cur && cur.hl; if (!h) return null;
     hlWatch();
@@ -3056,7 +3063,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       HL_ASK[g.id + h.ask] = 1;
       var pass = ""; try { pass = localStorage.getItem("slate-pass") || ""; } catch (e) {}
       var wl = (((state.previews || {})[g.id] || {}).watch || []).map(function (w) { return w.name + (w.team ? " (" + w.team + ")" : ""); }).slice(0, 4);
-      if (pass) fetch("/api/highlight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass, date: state.date, id: g.id, key: h.ask, raw: h.text, game: g.away + " at " + g.home + " (" + ((LEAGUES[g.league] || {}).name || g.league) + ")", when: h.when, facts: { angles: h.cands, game: h.ctx, stars: wl } }) }).then(null, function () {});
+      if (pass) fetch("/api/highlight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass, date: state.date, id: g.id, key: h.ask, raw: h.text, game: g.away + " at " + g.home + " (" + ((LEAGUES[g.league] || {}).name || g.league) + ")", when: h.when, facts: { angles: h.cands, game: h.ctx, stars: wl, storylines: hlStories(g) } }) }).then(null, function () {});
     }
     return el("p", "hl", text);
   }

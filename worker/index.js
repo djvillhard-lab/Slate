@@ -90,17 +90,19 @@ export default {
       if (cur.key === p.key) return json({ ok: true, text: cur.text });
       if ((cur.n || 0) >= 20) return json({ error: "limit" }, 429);
       const ask = `You write the one live highlight shown under a game on a sports fan's slate. Game: ${String(p.game || "").slice(0, 120)}. Clock: ${String(p.when || "").slice(0, 40)}.
-Facts (JSON: candidate angles ranked by an algorithm, the score, team shooting, each team's top three players, the pregame players to watch): ${JSON.stringify(p.facts || {}).slice(0, 1500)}
-Pick the single most interesting thing a fan glancing at the score would want to know right now, and write it in one or two short sentences (at most 28 words). Be specific and a little creative: a player going off early, a duel between two stars ("Tatum vs. Brown: 14 apiece at the half"), a team that can't miss or can't buy a bucket, a run that flipped the game. Early in a game with little happening, frame the matchup to watch using the stars. Use only numbers from the facts, exactly. No hype words, no emojis, no hashtags.
+Facts (JSON: candidate angles ranked by an algorithm, the score, team shooting, each team's top three players, the pregame players to watch, and the pregame storylines and headlines about this matchup): ${JSON.stringify(p.facts || {}).slice(0, 1500)}
+Pick the single most interesting thing a fan glancing at the score would want to know right now, and write it in one or two short sentences (at most 28 words). Be specific and a little creative: a player going off early, a duel between two stars ("Tatum vs. Brown: 14 apiece at the half"), a team that can't miss or can't buy a bucket, a run that flipped the game. Early in a game with little happening, frame the matchup to watch using the stars or a pregame storyline, and tie it to how it's going so far. Use only numbers from the facts, exactly. No hype words, no emojis, no hashtags.
 Reply with only the highlight inside <line></line>. Do not explain or think out loud.`;
       const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
         headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-        body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 160, messages: [{ role: "user", content: ask }], stop_sequences: ["</line>"] }) });
+        body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 160, messages: [{ role: "user", content: ask }] }) });
       const b = await r.json().catch(() => ({}));
       if (!r.ok) return json({ error: "claude " + r.status + ": " + String((b.error || {}).message || "").slice(0, 120) }, 502);
-      let text = (b.content || []).filter((x) => x.type === "text").map((x) => x.text).join(" ").replace(/^[\s\S]*<line>/, "").replace(/<\/?line>/g, "").trim().replace(/^["']|["']$/g, "");
+      const rawOut = (b.content || []).filter((x) => x.type === "text").map((x) => x.text).join(" ");
+      const lm = /<line>([\s\S]*?)(<\/line>|$)/.exec(rawOut);
+      let text = (lm ? lm[1] : rawOut).trim().replace(/^["']|["']$/g, "");
       // a line that rambles or second-guesses itself is dropped; the app keeps its own wording instead
-      if (!text || text.length > 220 || /\b(wait|actually|hmm|the stat says|I think|let me)\b/i.test(text)) return json({ error: "unusable", got: String(text).slice(0, 300) }, 502);
+      if (!text || text.length > 220 || /\b(wait|actually|hmm|the stat says|I think|let me)\b/i.test(text)) return json({ error: "unusable", got: rawOut.slice(0, 300) }, 502);
       await mergeDoc(env, path, { date: p.date, games: { [p.id]: { key: String(p.key).slice(0, 80), text, n: (cur.n || 0) + 1, at: new Date().toISOString() } } });
       ctx.waitUntil(logUsage(env, me.id, b.usage || {}, "haiku").catch(() => {}));
       return json({ ok: true, text });
