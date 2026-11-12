@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.7.2 (Nov 12, 2026)
+- The main page reads "Today's Slate" until 5 PM, then "Tonight's Slate", every day.
+
 ## 2.7.1 (Nov 12, 2026)
 - Reorder sits on the left, directly above the first section title, in League view only.
 
