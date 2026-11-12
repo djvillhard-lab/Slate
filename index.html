@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111213901";
+<script>window.SLATE_BUILD = "20261111214105";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1859,6 +1859,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     <div class="optrow" id="cost-row" hidden>
       <div><b>Claude summaries</b><span id="cost-text"></span></div>
     </div>
+    <p class="mm-how" id="screen-diag"></p>
     <div class="optrow" id="ver-row">
       <div><b>App version</b><span id="ver-text"></span></div>
       <button type="button" class="outline quiet" id="ver-btn">Update now</button>
@@ -6346,7 +6347,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   $("l-btn-refresh").addEventListener("click", refreshApp);
   $("l-btn-settings").addEventListener("click", function () { openSub("settings"); showCost(); });
   // what the on-demand summaries have cost this month (DJ only; the worker logs each one to stats/usage)
-  function showCost() {
+  function screenDiag() {
+    var d = $("screen-diag"); if (!d) return; var vv = window.visualViewport, pr = document.createElement("div");
+    pr.style.cssText = "position:fixed;left:0;right:0;top:0;bottom:0;pointer-events:none;visibility:hidden"; document.body.appendChild(pr); var fh = pr.getBoundingClientRect().height; pr.remove();
+    d.textContent = "Screen check: window " + window.innerWidth + "×" + window.innerHeight + " · fixed area " + Math.round(fh) + " · visible " + (vv ? Math.round(vv.width) + "×" + Math.round(vv.height) : "?") + " · screen " + screen.width + "×" + screen.height + " · " + (isDuo ? "split" : "single");
+  }
+  function showCost() { screenDiag();
     var me = ""; try { me = localStorage.getItem("slate-user") || "dj"; } catch (e) {}
     if (!db || me !== "dj") return;
     db.doc("stats/usage").get().then(function (sn) {
@@ -6573,6 +6579,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     setTimeout(repinDock, 400);
     var base = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
     document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
+    var bd = document.body, y0 = window.scrollY; bd.style.minHeight = "calc(100vh + 2px)"; window.scrollTo(0, y0 + 1);
+    setTimeout(function () { window.scrollTo(0, y0); bd.style.minHeight = ""; }, 30);
     vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); alignSides($("lineup-body")); alignSides($("games-body")); repinDock(); }, 60);
   }
   // iPhone sometimes keeps the old width after a turn, a fold, or coming back to the app: re-fit a few times as it settles
