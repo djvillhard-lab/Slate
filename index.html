@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111210416";
+<script>window.SLATE_BUILD = "20261111210759";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -4448,13 +4448,17 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       body.appendChild(wrap);
     }
     // finished: recap + box score, team stats, pregame preview. live: box score, team stats, preview. upcoming: preview, player stats, team stats
-    function pvExtras(box) {
+    function standFill(box) {
       var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
       var groups = Array.isArray(lg.standings) ? lg.standings : [];
       var show = groups.filter(function (gr) { return (gr.rows || []).some(function (r) { return marks.indexOf(String(r.abbr || "").toUpperCase()) !== -1; }); });
       if (!show.length && groups.length) show = groups.slice(0, 1);
       show.forEach(function (gr) { box.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
       if (Array.isArray(lg.poll) && lg.poll.length) box.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
+    }
+    // standings live with team stats; previews keep the Athletic links and byline
+    function pvExtras(box) {
+      if (!sport) standFill(box);
       var ath = athFor(g.league, [short(g, "away"), short(g, "home")]);
       if (ath.length) box.appendChild(linkList("From The Athletic", ath.slice(0, 5)));
       if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
@@ -4477,6 +4481,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         if (ts) tc.appendChild(ts);
         else tc.appendChild(live ? boxGate(g) : el("p", "pv-none", window.SLATE_SELF ? "Loading team stats…" : "Team stats arrive with the next hourly refresh."));
         box.appendChild(tc);
+        standFill(box);
       });
     }
     var hasPre = pv && pv.summary;
