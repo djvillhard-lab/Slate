@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111225431";
+<script>window.SLATE_BUILD = "20261111225728";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1364,6 +1364,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .mm-tag.t-upset { background: var(--live); color: #fff; } .mm-tag.t-thriller, .mm-tag.t-overtime { background: var(--accent); color: #0b1a10; } .mm-tag.t-comeback { background: #d9a43a; color: #1d1405; }
 .fp-h { margin-top: 18px; }
 .tray-ts { margin: 2px 0 10px; }
+.mm-bi { display: inline-flex; }
 /* unfolded and held upright: Box Office uses the whole width, two columns of players (1-5 left, 6-10 right) */
 html.roomy main.wrap:has(#view-moments:not([hidden])) { max-width: 1000px; }
 html.roomy #mm-body .mm-top, html.roomy #mm-body .mm-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), auto); grid-auto-flow: column; column-gap: 28px; }
@@ -2972,7 +2973,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.1.1";
+  var SLATE_VERSION = "2.2.0";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -3817,13 +3818,17 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   // ---- Moments: the night before in four leagues: top performers, over- and underachievers, wild finishes.
   // moments/<night>: the free tick job adds the rule-picked finishes each morning ("auto"); Claude's take is written only when someone taps Write. Top performers come from standouts/<night>.
-  var MM_LGS = [["nfl", "NFL"], ["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"]];
-  var MM_SOON = ["NHL", "WCBB", "Champions League"];
+  var MM_LGS = [["nfl", "NFL"], ["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"], ["nhl", "NHL"], ["ncaaw", "WCBB"], ["ucl", "Champions League"], ["mlb", "MLB"], ["wnba", "WNBA"]];
+  var MM_SOON = [];
+  var MM_SOCCER = { epl: 1, ucl: 1 };
+  // leagues out of season for the night being viewed stay off the strip (month 1-12)
+  var MM_SEASON = { mlb: [3, 11], wnba: [5, 10] };
   // same league order as All games (your tab order there, else the app's default)
   function mmLgs() {
     var ord = (state.gamesOrder || []).length ? state.gamesOrder : ORDER;
     var at = function (k) { var i = ord.indexOf(k); return i === -1 ? 999 + ORDER.indexOf(k) : i; };
-    return MM_LGS.slice().sort(function (a, b) { return at(a[0]) - at(b[0]); });
+    var mo = Number(String(mm.date || todayInHome()).slice(5, 7));
+    return MM_LGS.filter(function (o) { var r = MM_SEASON[o[0]]; return !r || (mo >= r[0] && mo <= r[1]) || mm.lg === o[0]; }).sort(function (a, b) { return at(a[0]) - at(b[0]); });
   }
   var mm = { date: null, lg: "nba", docs: {}, subs: {}, more: {} };
   function mmWatch(path) {
@@ -3859,7 +3864,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var k = RK_KIND[lg];
     return el("p", "mm-how", k === "bball" ? "How they're ranked: Game Score, a one-number grade for a night's box score. Points, plus credit for rebounds, assists, steals and blocks, minus missed shots, turnovers and fouls."
       : k === "football" ? "How they're ranked: total production. Yards, touchdowns and catches add up and interceptions count against; defenders earn credit for tackles, sacks and picks."
-      : lg === "epl" ? "How they're picked: Claude weighs goals, assists and the key moments of each match."
+      : MM_SOCCER[lg] ? "How they're picked: Claude weighs goals, assists and the key moments of each match."
       : "How they're ranked: a one-number grade built from the box score.");
   }
   function renderMoments() {
@@ -3880,7 +3885,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       // tonight: the live top performers, straight from the box scores; the rest is written tomorrow morning
       body.appendChild(el("p", "mm-when", "Today, " + fmtDate(day, { weekday: "long", month: "short", day: "numeric" })));
       rk.date = day; rkSub();  // safe to repeat: it only subscribes once per day, and retries if the database wasn't ready yet
-      if (mm.lg === "epl") { body.appendChild(el("div", "notice", "Live player rankings aren't available for the Premier League. Tonight's finishes show up tomorrow morning.")); return; }
+      if (MM_SOCCER[mm.lg]) { body.appendChild(el("div", "notice", "Live player rankings aren't available for soccer. Tonight's finishes show up tomorrow morning.")); return; }
       rkPollL(mm.lg, false);
       var dk = rkData(mm.lg), rows = dk ? dk.rows : [];
       if (!rows.length) { body.appendChild(el("div", "notice", !rk.loaded ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
@@ -3908,12 +3913,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (doc === undefined) { body.appendChild(el("div", "notice", "Loading…")); return; }
     if (L && L.none) { body.appendChild(el("div", "notice", "No " + name + " games in the week before this night.")); return; }
     // 1. top performers: the night's ranking from the box scores (free). EPL's come from Claude's write-up.
-    var sp = "standouts/" + night; if (mm.lg !== "epl") mmWatch(sp);
-    var all = mm.lg === "epl" ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), more = !!mm.more[mm.lg], top = all.slice(0, more ? 25 : 10);
+    var sp = "standouts/" + night; if (!MM_SOCCER[mm.lg]) mmWatch(sp);
+    var all = MM_SOCCER[mm.lg] ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), more = !!mm.more[mm.lg], top = all.slice(0, more ? 25 : 10);
     if (top.length) {
       body.appendChild(mmSec("Top performers", "Top " + top.length));
       var tl = el("div", "bs-list mm-top");
-      top.forEach(function (r, i) { tl.appendChild(mm.lg === "epl" ? mmPerson(r, "top", i) : bestRow(r, i + 1, mm.lg)); });
+      top.forEach(function (r, i) { tl.appendChild(MM_SOCCER[mm.lg] ? mmPerson(r, "top", i) : bestRow(r, i + 1, mm.lg)); });
       tl.style.setProperty("--rows", Math.ceil(top.length / 2)); body.appendChild(tl);
       if (all.length > 10) {
         var mb = el("button", "mm-more", more ? "Show top 10" : "Show top " + Math.min(25, all.length)); mb.type = "button";
@@ -3925,7 +3930,17 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     // 2. Claude's take (over/underachievers, and its pick of the finishes): only when someone taps Write
     var wrote = !!(L && L.at);
     if (!wrote) {
-      if (!L || !L.ready) { if (!top.length) body.appendChild(el("div", "notice", "This night's Box Office is put together each morning after 5 AM.")); }
+      if (!L || !L.ready) {
+        // not put together yet (an older night, or a league added later): build it on request, free
+        var bk = day + "|" + mm.lg, req = mmBuildReq(day, mm.lg);
+        var nb = el("div", "cl-ctl mm-cl");
+        if (req || (MM_BUILD[bk] && Date.now() - MM_BUILD[bk] < 60000)) { var bs = el("span", "cl-busy"); bs.appendChild(el("i", "cl-dot")); bs.appendChild(el("span", null, "Building this night's Box Office… usually within 10 minutes")); nb.appendChild(bs); }
+        else {
+          var bb = el("button", "cl-go"); bb.type = "button"; var ri = el("span", "mm-bi"); ri.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>'; bb.appendChild(ri); bb.appendChild(el("span", "cl-l", "Build this night's Box Office")); bb.appendChild(el("span", "cl-t", "free"));
+          var bd = day, blg = mm.lg; bb.addEventListener("click", function () { mmBuild(bd, blg); }); nb.appendChild(bb);
+        }
+        body.appendChild(nb);
+      }
       else {
         var w = L.writing, box = el("div", "cl-ctl mm-cl"), busy = (w && !w.error && Date.now() - Date.parse(w.at) < 10 * 60000) || MM_ASK[path + mm.lg];
         if (busy) { var spn = el("span", "cl-busy"); spn.appendChild(el("i", "cl-dot")); spn.appendChild(el("span", null, "Claude is picking the over and underachievers… about a minute")); box.appendChild(spn); }
@@ -3955,7 +3970,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (wrote) body.appendChild(el("p", "pv-at", "Written by Claude from ESPN box scores · " + new Date(L.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })));
     else if (fins.length) body.appendChild(el("p", "pv-at", "Top performers and finishes from ESPN box scores."));
   }
-  var MM_ASK = {};
+  var MM_ASK = {}, MM_BUILD = {};
+  // build requests ride in prefs/load "box" (the 10-minute job picks them up)
+  function mmBuildReq(day, lg) { var r = (state.loadReq || {}).box || []; return r.some(function (x) { return x && x.date === day && x.lg === lg; }); }
+  function mmBuild(day, lg) {
+    if (!db) return;
+    MM_BUILD[day + "|" + lg] = Date.now(); keepScroll(renderMoments);
+    db.doc("prefs/load").get().then(function (sn) {
+      var d = (sn.exists ? sn.data() : {}) || {}, box = (d.box || []).filter(function (x) { return x && !(x.date === day && x.lg === lg); }).slice(-20);
+      box.push({ date: day, lg: lg, at: new Date().toISOString() }); d.box = box; state.loadReq = d;
+      return db.doc("prefs/load").set(d);
+    }).then(function () { toast("Building it now. Usually within 10 minutes."); }, function () { delete MM_BUILD[day + "|" + lg]; keepScroll(renderMoments); toast("Couldn't ask for it. Try again."); });
+  }
   function mmAsk(day, lg) {
     var pass = slatePass(); if (!pass) { toast("Enter your passcode first (bottom of the page)"); return; }
     var k = "moments/" + day + lg; MM_ASK[k] = 1; keepScroll(renderMoments);

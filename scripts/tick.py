@@ -658,7 +658,8 @@ def event_catalog(now):
 
 # ---------- main ----------
 # ---- Moments: once each morning, the night before in four leagues (Claude writes it through the Slate worker)
-MOMENT_LGS = ["nfl", "nba", "ncaam", "ncaaf", "epl"]
+MOMENT_LGS = ["nfl", "nba", "ncaam", "ncaaf", "epl", "nhl", "ncaaw", "ucl", "mlb", "wnba"]
+MOMENT_SEASON = {"mlb": (3, 11), "wnba": (5, 10)}  # months; skipped by the morning run outside them
 WORKER = "https://slate.djvillhard.workers.dev"
 
 def moment_game(ev):
@@ -750,7 +751,8 @@ def moments_work(now, force_day=None, only=None):
     day = force_day or (loc.date() - datetime.timedelta(days=1)).isoformat()
     d = sb_get([f"moments/{day}", f"standouts/{day}"])
     have = (d.get(f"moments/{day}") or {}).get("leagues") or {}
-    for lg in ([only] if only else MOMENT_LGS):
+    mo = int(day[5:7])
+    for lg in ([only] if only else [l for l in MOMENT_LGS if l not in MOMENT_SEASON or MOMENT_SEASON[l][0] <= mo <= MOMENT_SEASON[l][1]]):
         cur = have.get(lg) or {}
         if cur.get("at") or cur.get("none") or cur.get("ready"): continue
         w = cur.get("writing") or {}
@@ -778,12 +780,12 @@ def moments_work(now, force_day=None, only=None):
 
 def auto_finishes(lg, games):
     """The night's 5 wildest games by rule: overtime, one-score finishes, upsets by rank or by the line."""
-    soccer = lg == "epl"
+    soccer = lg in ("epl", "ucl")
     out = []
     for g in games:
         a, h = g["away"], g["home"]; w, l = (a, h) if a["won"] else (h, a) if h["won"] else (None, None)
         fin = str(g.get("final") or ""); ot = bool(re.search(r"\b(OT|SO|\d+OT)\b", fin))
-        close = g["margin"] <= (1 if soccer else 3); s = 0; tag = ""
+        close = g["margin"] <= (1 if soccer or lg in ("nhl", "mlb") else 3); s = 0; tag = ""
         fav = None
         m = re.match(r"^([A-Z]{2,5})\s+-", str(g.get("line") or ""))
         if m: fav = m.group(1)
@@ -806,6 +808,33 @@ def auto_finishes(lg, games):
         out.append((s, {"away": a["abbr"], "home": h["abbr"], "score": sc, "tag": tag, "why": why}))
     out.sort(key=lambda x: -x[0])
     return [x[1] for x in out[:5]]
+
+def box_requests(now):
+    """Box Office for any night and league, on request (the app's Build button): free stats, finishes and facts."""
+    reg = (sb_get(["users/registry"]).get("users/registry") or {}).get("users") or {}
+    docs = ["prefs/load"] + [f"u/{u.get('id')}/prefs/load" for u in reg.values() if u.get("id") and u.get("id") != "dj"]
+    got = sb_get(docs)
+    for path in docs:
+        d = got.get(path) or {}; reqs = [r for r in d.get("box") or [] if r and re.match(r"^\d{4}-\d{2}-\d{2}$", str(r.get("date"))) and r.get("lg") in MOMENT_LGS]
+        if not reqs: continue
+        today = now.astimezone(CT).date().isoformat()
+        for r in reqs[:6]:
+            day, lg = r["date"], r["lg"]
+            if day >= today: continue
+            st = sb_get([f"standouts/{day}"]).get(f"standouts/{day}") or {}
+            if lg in ("nba", "wnba", "ncaam", "ncaaw", "nhl", "nfl", "ncaaf", "mlb") and not (st.get("final") and lg in (st.get("leagues") or {})):
+                out = f"/tmp/standouts-{day}.json"
+                rr = subprocess.run([sys.executable, os.path.join(HERE, "standouts.py"), day, out], capture_output=True, text=True)
+                if rr.returncode == 0 and os.path.exists(out):
+                    data = json.load(open(out))
+                    if data.get("leagues"): sb_put(f"standouts/{day}", data)
+            try: moments_work(now, day, lg)
+            except Exception as e: print("box build failed", day, lg, e)
+            print("box built", day, lg)
+        cur = sb_get([path]).get(path) or {}
+        done = {(r["date"], r["lg"]) for r in reqs[:6]}
+        cur["box"] = [r for r in cur.get("box") or [] if (r.get("date"), r.get("lg")) not in done]
+        sb_put(path, cur)
 
 def slates_work(now):
     """Day documents (every game) from ESPN, free: each morning after 4 AM, and right away for dates DJ asks to load."""
@@ -1019,6 +1048,8 @@ def main():
     except Exception as e: print("moments error", e)
     try: slates_work(now)
     except Exception as e: print("slates error", e)
+    try: box_requests(now)
+    except Exception as e: print("box requests error", e)
     print("writes:", WRITES or "none")
 
 if __name__ == "__main__":

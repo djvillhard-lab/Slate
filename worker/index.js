@@ -50,7 +50,7 @@ async function logUsage(env, user, u, model) {
   await mergeDoc(env, "stats/usage", { days: { [d]: day } });
 }
 
-const MOMENT_LGS = { nfl: "NFL", nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League" };
+const MOMENT_LGS = { nfl: "NFL", nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League", nhl: "NHL", ncaaw: "women's college basketball", ucl: "Champions League", mlb: "MLB", wnba: "WNBA" };
 function target(p) {
   if (p.kind === "moments") return { path: "moments/" + p.date, patch: (x) => ({ date: p.date, leagues: { [p.key]: x } }) };
   if (p.kind === "team") return { path: "teams/" + p.key, patch: (x) => x };
@@ -117,11 +117,11 @@ ESPN facts (JSON): every finished game that night (score, ranks, records, pregam
 You may do up to two web searches (for example "${MOMENT_LGS[p.key]} last night upsets" or a player's season averages) to judge what was unusual.
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
-{"over": [{"name": "full name", "id": "the player's ESPN id from the facts, or empty", "team": "ABBR", "line": "that night's box line in this form: 31 PTS · 9 REB · 5 AST (football: 312 YDS · 3 TD; soccer: 2 G · 1 A)", "why": "one line, 10-20 words: why this was well above his usual level, with the comparison (season average, role, opponent)"}],
+{"over": [{"name": "full name", "id": "the player's ESPN id from the facts, or empty", "team": "ABBR", "line": "that night's box line in this form: 31 PTS · 9 REB · 5 AST (football: 312 YDS · 3 TD; hockey: 2 G · 1 A · 5 SOG; baseball: 3-4 · HR · 3 RBI or 7 IP · 9 K; soccer: 2 G · 1 A)", "why": "one line, 10-20 words: why this was well above his usual level, with the comparison (season average, role, opponent)"}],
  "under": [{"name": "...", "id": "...", "team": "ABBR", "line": "same form", "why": "one line, 10-20 words: why this was well below what's expected of him"}],
  "games": [{"away": "ABBR", "home": "ABBR", "score": "AWY 98, HOM 101", "tag": "Upset" | "Thriller" | "Comeback" | "Overtime" | "Blowout" | "Statement", "why": "one or two sentences, 20-40 words: what happened and how it ended"}],
  "top": [{"name": "...", "team": "ABBR", "line": "...", "why": "a few words"}]}
-over: exactly 5 players who beat their norms by the most (not just the biggest totals). under: exactly 5 established players (starters or stars, judged against their own season averages, which you may look up) who fell well short; take them from "lines" when present; never someone who left hurt unless you say so. In both lists use five different teams: one player per team. games: the 5 most dramatic games (crazy endings, upsets by rank or line, comebacks, overtime, one-score finishes), best first; fewer only if fewer were played. top: only for the Premier League (10 best performances from goals, assists and key moments); [] otherwise. Use only players and games in the facts. Inside the JSON strings, never use double quotation marks; use single quotes if you must quote.`;
+over: exactly 5 players who beat their norms by the most (not just the biggest totals). under: exactly 5 established players (starters or stars, judged against their own season averages, which you may look up) who fell well short; take them from "lines" when present; never someone who left hurt unless you say so. In both lists use five different teams: one player per team. games: the 5 most dramatic games (crazy endings, upsets by rank or line, comebacks, overtime, one-score finishes), best first; fewer only if fewer were played. top: only for soccer (Premier League, Champions League: the 10 best performances from goals, assists and key moments); [] otherwise. Use only players and games in the facts. Inside the JSON strings, never use double quotation marks; use single quotes if you must quote.`;
   if (p.kind === "team") return `Write a short summary of this team for a sports fan's app. Today is ${new Date().toDateString()}.
 Team facts (JSON): ${facts}
 Do two web searches for this team's news and season story (recent news from the last 4 days, and one including "The Athletic").
