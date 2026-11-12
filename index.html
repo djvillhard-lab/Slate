@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111214311";
+<script>window.SLATE_BUILD = "20261111214622";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -395,6 +395,8 @@ footer.foot { margin-top: 26px; font-size: 13px; color: var(--dim); text-align: 
 .hinge { display: none; }
 html.duo, html.duo body { height: 100%; overflow: hidden; }
 html.duo .app { display: grid; grid-template-columns: calc(50% - var(--hinge) / 2 + var(--fold-shift)) var(--hinge) minmax(0, 1fr); height: 100vh; height: 100dvh; }
+html.short-fix.duo .app { bottom: auto !important; height: var(--app-h) !important; }
+html.short-fix body { min-height: var(--app-h); }
 /* unfolded: pin the two panes to the screen's edges, so a stale height after rotating or coming back can't leave a gap at the bottom */
 html.duo .app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: auto !important; }
 html.duo .pane { height: 100%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; min-width: 0; }
@@ -6073,7 +6075,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var vv = window.visualViewport;
       // only nudge for a real on-screen keyboard or toolbar gap; a bad reading after the app wakes up must never push it off screen
       var off = vv ? (window.innerHeight - vv.height - vv.offsetTop) : 0;
-      d.style.transform = off > 1 && off < 160 && !document.hidden ? "translateY(" + (-off) + "px)" : "";
+      var g = typeof SHORT_GAP === "number" ? SHORT_GAP : 0;
+      d.style.transform = g ? "translateY(" + g + "px)" : off > 1 && off < 160 && !document.hidden ? "translateY(" + (-off) + "px)" : "";
     });
   }
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", repinDock); }
@@ -6584,21 +6587,25 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); alignSides($("lineup-body")); alignSides($("games-body")); repinDock(); }, 60);
   }
   // iPhone sometimes keeps the old width after a turn, a fold, or coming back to the app: re-fit a few times as it settles
-  function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); setTimeout(checkShort, 1600); }
+  function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); [300, 1600].forEach(function (ms) { setTimeout(checkShort, ms); }); }
   // iPhone's Home Screen apps sometimes keep a too-short screen after a turn; when the visible area is clearly
   // smaller than the screen and re-fitting didn't help, a quick reload puts it right (at most once a minute)
-  // self-calibrating: remember the tallest the screen has been at this width; if it comes back clearly shorter,
-  // iPhone is stuck with a stale size, and a quick reload (at most once a minute) fixes it
+  // self-calibrating: remember the tallest the screen has been at this width. If iPhone later hands the app a
+  // shorter window (it does after some turns), stretch the layout to the known height instead of leaving a gap.
+  var SHORT_GAP = 0;
   function checkShort() {
     if (document.hidden) return;
     var w = window.innerWidth, h = window.innerHeight, key = "slate-maxh-" + (w > h ? "L" : "P") + "-" + Math.round(w / 20);
     var best = 0; try { best = Number(localStorage.getItem(key)) || 0; } catch (e) {}
-    if (h > best) { try { localStorage.setItem(key, String(h)); } catch (e) {} return; }
-    if (h >= best - 40) return;
-    var last = 0; try { last = Number(sessionStorage.getItem("slate-refit")) || 0; } catch (e) {}
-    if (Date.now() - last < 60000) return;
-    try { sessionStorage.setItem("slate-refit", String(Date.now())); } catch (e) {}
-    location.reload();
+    if (h > best) { try { localStorage.setItem(key, String(h)); } catch (e) {} best = h; }
+    var gap = h < best - 40 && best - h < 400 ? best - h : 0;
+    if (gap === SHORT_GAP) return;
+    SHORT_GAP = gap;
+    var root = document.documentElement;
+    root.classList.toggle("short-fix", !!gap);
+    root.style.setProperty("--app-h", (gap ? best : h) + "px");
+    root.style.setProperty("--short-gap", gap + "px");
+    repinDock();
   }
   setInterval(checkShort, 3000);
   window.addEventListener("orientationchange", refit);
