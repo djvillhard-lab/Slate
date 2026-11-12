@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111204102";
+<script>window.SLATE_BUILD = "20261111204402";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2585,9 +2585,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments") && !state.menuOpen;
     dn.hidden = !on; if (!on) return;
     dn.textContent = "";
-    var today = todayInHome(), mmMode = v === "moments", rkMode = v === "best" || mmMode, day = mmMode ? (mm.date || shiftDate(today, -1)) : v === "best" ? (rk.date || today) : state.date;
+    var today = todayInHome(), mmMode = v === "moments", rkMode = v === "best" || mmMode, day = mmMode ? (mm.date || today) : v === "best" ? (rk.date || today) : state.date;
     var go = function (iso) { if (mmMode) mmSetDate(iso); else if (rkMode) rkSetDate(iso); else { slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
-    var lastDay = mmMode ? shiftDate(today, -1) : today, atEnd = rkMode && day >= lastDay;
+    var lastDay = today, atEnd = rkMode && day >= lastDay;
     var nxt = el("button", "dd-arrow" + (atEnd ? " dd-end" : "")); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.appendChild(icon("more"));
     nxt.addEventListener("click", function () { if (atEnd) { if (!mmMode) toast("Rankings go up to today"); return; } go(shiftDate(day, 1)); });
     var lab = el("label", "dd-date");
@@ -3590,7 +3590,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         var nLive = Object.keys(evs).filter(function (id) { return ((evs[id].status || {}).type || {}).state === "in"; }).length;
         rk.live[key] = { rows: out.slice(0, RK_TOP), games: Object.keys(evs).length, live: nLive, final: !nLive && day < todayInHome(), at: Date.now() };
       });
-    }).then(function () { rk.busyK[key] = false; if (state.view === "best") keepScroll(renderBest); }, function () { rk.busyK[key] = false; });
+    }).then(function () { rk.busyK[key] = false; if (state.view === "best") keepScroll(renderBest); if (state.view === "moments") keepScroll(renderMoments); }, function () { rk.busyK[key] = false; });
   }
   // how DJ's starred players did: only the games their teams played, every player line (not just the top 25)
   function rkFavPoll(force, dayX) {
@@ -3638,7 +3638,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     }, function () { rk.busyK["fav|" + day] = false; });
   }
   if (window.SLATE_SELF) {
-    setInterval(function () { rkPoll(false); }, 15000);
+    setInterval(function () { rkPoll(false); if (state.view === "moments" && mm.date === todayInHome() && !document.hidden) rkPollL(mm.lg, false); }, 15000);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) rkPoll(false); });
   }
   function rkSub() {
@@ -3784,7 +3784,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (!db || mm.subs[path]) return;
     mm.subs[path] = db.doc(path).onSnapshot(function (sn) { mm.docs[path] = sn.exists ? sn.data() : null; if (state.view === "moments") keepScroll(renderMoments); }, function () { mm.docs[path] = null; });
   }
-  function mmSetDate(iso) { var last = shiftDate(todayInHome(), -1); if (iso > last) iso = last; mm.date = iso; keepScroll(renderMoments); window.scrollTo(0, 0); }
+  function mmSetDate(iso) { var last = todayInHome(); if (iso > last) iso = last; mm.date = iso; keepScroll(renderMoments); window.scrollTo(0, 0); }
   function mmPick(k, dir) { if (mm.lg === k) return; mm.lg = k; if (dir) slideIn($("mm-body"), dir); renderMoments(); window.scrollTo(0, 0);
     var on = document.querySelector(".mm-strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" }); }
   function mmSwipe(step) { var i = -1; MM_LGS.forEach(function (o, j) { if (o[0] === mm.lg) i = j; }); var n = MM_LGS[i + step]; if (n) mmPick(n[0], step > 0 ? "l" : "r"); }
@@ -3811,7 +3811,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function renderMoments() {
     var body = $("mm-body"); if (!body) return; body.textContent = "";
     if (state.view !== "moments") return;
-    var today = todayInHome(); if (!mm.date) mm.date = shiftDate(today, -1);
+    var today = todayInHome(); if (!mm.date) mm.date = today;
     renderDockDay();
     var strip = el("div", "strip mm-strip");
     MM_LGS.forEach(function (o) {
@@ -3820,7 +3820,24 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     });
     MM_SOON.forEach(function (n) { var b = el("span", "lg-tab mm-soon"); b.appendChild(document.createTextNode(n)); b.appendChild(el("i", null, "Soon")); strip.appendChild(b); });
     body.appendChild(strip);
-    var day = mm.date, path = "moments/" + day; mmWatch(path);
+    var day = mm.date, path = "moments/" + day;
+    var nm0 = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
+    if (day === today) {
+      // tonight: the live top performers, straight from the box scores; the rest is written tomorrow morning
+      body.appendChild(el("p", "mm-when", "Today, " + fmtDate(day, { weekday: "long", month: "short", day: "numeric" })));
+      if (rk.date !== day) { rk.date = day; rkSub(); }
+      if (mm.lg === "epl") { body.appendChild(el("div", "notice", "Live player rankings aren't available for the Premier League. Postgame for today is written tomorrow morning.")); return; }
+      rkPollL(mm.lg, false);
+      var dk = rkData(mm.lg), rows = dk ? dk.rows : [];
+      if (!rows.length) { body.appendChild(el("div", "notice", !rk.loaded ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
+      var moreT = !!mm.more[mm.lg], topT = rows.slice(0, moreT ? 25 : 10);
+      body.appendChild(mmSec("Top performers", dk.live ? dk.live + " live" : "Top " + topT.length));
+      var tlT = el("div", "bs-list mm-top"); topT.forEach(function (r, i) { tlT.appendChild(bestRow(r, i + 1, mm.lg)); }); body.appendChild(tlT);
+      if (rows.length > 10) { var mbT = el("button", "mm-more", moreT ? "Show top 10" : "Show top " + Math.min(25, rows.length)); mbT.type = "button"; mbT.addEventListener("click", function () { mm.more[mm.lg] = !moreT; keepScroll(renderMoments); }); body.appendChild(mbT); }
+      body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Overachievers, underachievers and wild finishes are written tomorrow morning."));
+      return;
+    }
+    mmWatch(path);
     var doc = mm.docs[path], L = doc && doc.leagues && doc.leagues[mm.lg], name = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
     var night = day, when = el("p", "mm-when");
     if (L && L.see) {
