@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111224025";
+<script>window.SLATE_BUILD = "20261111225431";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1363,6 +1363,11 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .mm-tag { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--raise); color: var(--ink); }
 .mm-tag.t-upset { background: var(--live); color: #fff; } .mm-tag.t-thriller, .mm-tag.t-overtime { background: var(--accent); color: #0b1a10; } .mm-tag.t-comeback { background: #d9a43a; color: #1d1405; }
 .fp-h { margin-top: 18px; }
+.tray-ts { margin: 2px 0 10px; }
+/* unfolded and held upright: Box Office uses the whole width, two columns of players (1-5 left, 6-10 right) */
+html.roomy main.wrap:has(#view-moments:not([hidden])) { max-width: 1000px; }
+html.roomy #mm-body .mm-top, html.roomy #mm-body .mm-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), auto); grid-auto-flow: column; column-gap: 28px; }
+html.roomy #mm-body .mm-more { max-width: 360px; margin-left: auto; margin-right: auto; }
 .fp-list { display: grid; }
 .fp-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 2px; border-top: 1px solid var(--hair); }
 .fp-face { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; }
@@ -2967,7 +2972,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.1.0";
+  var SLATE_VERSION = "2.1.1";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -3438,6 +3443,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   // the slate tray: a live or finished game shows its box score where the preview was
   function trayBlock(g) { var tb = trayBlock0(g), vl = venueLine(g, "gv-loc tray-loc"); if (tb && vl) tb.insertBefore(vl, tb.firstChild); return tb; }
+  var TRAY_TS = {};
   function trayBlock0(g) {
     var kind = status(g).kind, started = kind === "live" || kind === "over", b = boxFor(g);
     if (started) bxNeed(g);
@@ -3453,9 +3459,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var os = oddsStrip(g, b); if (os) box.appendChild(os);
     if (!boxShown(g)) box.appendChild(boxGate(g));
     else {
-      box.appendChild(bxPlayers(g, b, true, false));
+      // team stats: one collapsed row above the box score, like the full matchup page
       var ts = bxTeamStats(g, b, true);
-      if (ts) { box.appendChild(el("b", "pv-h", "Team stats")); box.appendChild(ts); }
+      if (ts) {
+        var on = !!TRAY_TS[g.id], sec = el("div", "gv-sec tray-ts" + (on ? " open" : ""));
+        var tg = el("button", "gv-toggle"); tg.type = "button"; tg.setAttribute("aria-expanded", on ? "true" : "false");
+        var tx = el("span", "gv-tt"); tx.appendChild(el("b", null, "Team stats")); tg.appendChild(tx); tg.appendChild(icon("more"));
+        tg.addEventListener("click", function (e) { e.stopPropagation(); TRAY_TS[g.id] = !TRAY_TS[g.id]; keepScroll(function () { renderLineup(); renderGames(); }); });
+        sec.appendChild(tg);
+        if (on) { var tin = el("div", "gv-sec-in"); tin.appendChild(ts); sec.appendChild(tin); }
+        box.appendChild(sec);
+      }
+      box.appendChild(bxPlayers(g, b, true, false));
     }
     box.appendChild(el("p", "pv-at", bxStamp(b)));
     return box;
@@ -3871,7 +3886,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (!rows.length) { body.appendChild(el("div", "notice", !rk.loaded ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
       var moreT = !!mm.more[mm.lg], topT = rows.slice(0, moreT ? 25 : 10);
       body.appendChild(mmSec("Top performers", dk.live ? dk.live + " live" : "Top " + topT.length));
-      var tlT = el("div", "bs-list mm-top"); topT.forEach(function (r, i) { tlT.appendChild(bestRow(r, i + 1, mm.lg)); }); body.appendChild(tlT);
+      var tlT = el("div", "bs-list mm-top"); topT.forEach(function (r, i) { tlT.appendChild(bestRow(r, i + 1, mm.lg)); }); tlT.style.setProperty("--rows", Math.ceil(topT.length / 2)); body.appendChild(tlT);
       if (rows.length > 10) { var mbT = el("button", "mm-more", moreT ? "Show top 10" : "Show top " + Math.min(25, rows.length)); mbT.type = "button"; mbT.addEventListener("click", function () { mm.more[mm.lg] = !moreT; keepScroll(renderMoments); }); body.appendChild(mbT); }
       body.appendChild(mmHow(mm.lg));
       body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Wild finishes show up tomorrow morning, and Claude can pick the over and underachievers when you ask."));
@@ -3899,7 +3914,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       body.appendChild(mmSec("Top performers", "Top " + top.length));
       var tl = el("div", "bs-list mm-top");
       top.forEach(function (r, i) { tl.appendChild(mm.lg === "epl" ? mmPerson(r, "top", i) : bestRow(r, i + 1, mm.lg)); });
-      body.appendChild(tl);
+      tl.style.setProperty("--rows", Math.ceil(top.length / 2)); body.appendChild(tl);
       if (all.length > 10) {
         var mb = el("button", "mm-more", more ? "Show top 10" : "Show top " + Math.min(25, all.length)); mb.type = "button";
         mb.addEventListener("click", function () { mm.more[mm.lg] = !more; keepScroll(renderMoments); });
@@ -3922,8 +3937,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         body.appendChild(box);
       }
     }
-    if (wrote && (L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list"); L.over.forEach(function (r) { ol.appendChild(mmRow(r, "over")); }); body.appendChild(ol); }
-    if (wrote && (L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list"); L.under.forEach(function (r) { ul.appendChild(mmRow(r, "under")); }); body.appendChild(ul); }
+    if (wrote && (L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list"); L.over.forEach(function (r) { ol.appendChild(mmRow(r, "over")); }); ol.style.setProperty("--rows", Math.ceil(L.over.length / 2)); body.appendChild(ol); }
+    if (wrote && (L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list"); L.under.forEach(function (r) { ul.appendChild(mmRow(r, "under")); }); ul.style.setProperty("--rows", Math.ceil(L.under.length / 2)); body.appendChild(ul); }
     var fins = wrote && (L.games || []).length ? L.games : ((L && L.auto && L.auto.games) || []);
     if (fins.length) {
       body.appendChild(mmSec("Wild finishes", "Upsets and close calls"));
@@ -3934,6 +3949,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         top2.appendChild(el("b", null, g.score || ((g.away || "") + " @ " + (g.home || ""))));
         c.appendChild(top2); if (g.why) c.appendChild(el("p", null, g.why)); gl.appendChild(c);
       });
+      gl.style.setProperty("--rows", Math.ceil(fins.length / 2));
       body.appendChild(gl);
     }
     if (wrote) body.appendChild(el("p", "pv-at", "Written by Claude from ESPN box scores · " + new Date(L.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })));
