@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111193821";
+<script>window.SLATE_BUILD = "20261111194708";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1697,7 +1697,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   <section id="view-rules" aria-label="Slate rules" hidden><div id="rules-body"></div></section>
   <section id="view-game" aria-label="Matchup" hidden><div id="game-body"></div></section>
   <section id="view-best" aria-label="Player rankings" hidden><div id="best-body"></div></section>
-  <section id="view-moments" aria-label="Moments" hidden><div id="mm-body"></div></section>
+  <section id="view-moments" aria-label="Postgame" hidden><div id="mm-body"></div></section>
   <section id="view-teams" aria-label="Teams" hidden><div id="teams-body"></div></section>
   <section id="view-tabs" aria-label="Edit All games tabs" hidden><div id="tabs-body"></div></section>
   <section id="view-team" aria-label="Team" hidden><div id="team-body"></div></section>
@@ -1870,7 +1870,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     <button class="mi" id="nav-rules" type="button" role="menuitem" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>Slate rules</span></button>
     <button class="mi" id="nav-moments" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg>
-      <span>Moments</span>
+      <span>Postgame</span>
     </button>
     <button class="mi" id="nav-teams" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3zm0 2.2 6 2.2V11c0 3.9-2.5 7.4-6 8.8-3.5-1.4-6-4.9-6-8.8V6.4l6-2.2z"/></svg>
@@ -5790,7 +5790,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var dl = dayLabel(state.date), named = /^(today|yesterday|tomorrow)$/.test(dl);
     var shortDate = fmtDate(state.date, { weekday: "short" }) + ", " + fmtDate(state.date, { month: "short", day: "numeric" });
     var slateTitle = state.date === today ? "Tonight's Slate" : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
-    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "moments" ? "Moments" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
+    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "moments" ? "Postgame" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     var tl = $("title"); if (tl) tl.classList.toggle("has-brand", v === "lineup");
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
