@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111230644";
+<script>window.SLATE_BUILD = "20261111230734";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1365,6 +1365,8 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .fp-h { margin-top: 18px; }
 .tray-ts { margin: 2px 0 10px; }
 .mm-bi { display: inline-flex; }
+/* initials only when there's no photo (a missing photo removes its img) */
+.rk-face:has(img) > i, .bxp-face:has(img) > i, .fp-face:has(img) > i { visibility: hidden; }
 /* wide single screen (unfolded and held upright): Box Office and Teams use the whole width */
 @media (min-width: 520px) {
   html:not(.duo) main.wrap:has(#view-moments:not([hidden])), html:not(.duo) main.wrap:has(#view-teams:not([hidden])) { max-width: 1000px; }
@@ -2978,7 +2980,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.2.2";
+  var SLATE_VERSION = "2.2.3";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
