@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111180513";
+<script>window.SLATE_BUILD = "20261111181018";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1530,12 +1530,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .toast.pop { animation: none; } }
 .sty { display: inline-flex; gap: 2px; padding: 3px; border-radius: 11px; background: rgba(0,0,0,.28); flex: none; }
-.sty button { width: 34px; height: 28px; display: grid; place-items: center; border-radius: 8px; color: var(--dim); background: none; border: 0; }
-.sty button svg { width: 16px; height: 16px; }
+.sty button { width: 34px !important; height: 28px !important; min-width: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center; border-radius: 8px; color: var(--dim); background: none; border: 0; }
+.sty button svg { width: 16px; height: 16px; margin: 0 !important; }
 .sty button[aria-pressed="true"] { background: rgba(255,255,255,.1); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
 .gv-hrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .gv-hrow .gv-h { margin-bottom: 0; }
 .gv-hrow + * { margin-top: 10px; }
+.gv-tg { display: flex; align-items: center; gap: 8px; width: 100%; padding: 0; background: none; border: 0; text-align: left; color: inherit; }
+.gv-tg .gv-h { margin: 0; }
+.gv-tg em { font-style: normal; margin-left: auto; font-size: 12.5px; font-weight: 650; color: var(--dim); }
+.gv-tg svg { width: 16px; height: 16px; color: var(--dim); transition: transform .15s; transform: rotate(-90deg); }
+.gv-tg.shut svg { transform: rotate(90deg); }
+.gv-tg + .gv-p { margin-top: 12px; }
 .pv-hrow { margin: 4px 0 0; } .pv-hrow .pv-h { margin: 0; }
 .tm-dd { display: flex; align-items: center; gap: 8px; width: 100%; margin: 14px 0 4px; padding: 10px 2px; border-top: 1px solid var(--hair); font-size: 14px; font-weight: 800; color: var(--head); text-align: left; }
 .tm-dd em { font-style: normal; margin-left: auto; font-size: 12.5px; font-weight: 650; color: var(--dim); }
@@ -4147,9 +4153,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       body.appendChild(q);
     }
     var long = Array.isArray(pv.long) ? pv.long.filter(Boolean) : [];
-    var dd = gvCard(rc ? "Before the game" : "The deep dive");
-    if (long.length) long.forEach(function (para) { dd.appendChild(el("p", "gv-p", para)); });
-    else if (!rc) dd.appendChild(el("p", "pv-none", "Regenerate the preview to add the longer read."));
+    var dd = gvCard(null), ddOpen = false; try { ddOpen = localStorage.getItem("slate-longread") === "1"; } catch (e) {}
+    if (long.length) {
+      var dt = el("button", "gv-tg" + (ddOpen ? "" : " shut")); dt.type = "button"; dt.setAttribute("aria-expanded", ddOpen ? "true" : "false");
+      dt.appendChild(el("span", "gv-h", rc ? "Before the game" : "The deep dive")); dt.appendChild(el("em", null, ddOpen ? "Hide" : long.length + " paragraphs")); dt.appendChild(icon("more"));
+      dt.addEventListener("click", function () { try { localStorage.setItem("slate-longread", ddOpen ? "0" : "1"); } catch (e) {} keepScroll(render); });
+      dd.appendChild(dt);
+      if (ddOpen) long.forEach(function (para) { dd.appendChild(el("p", "gv-p", para)); });
+    } else { dd.appendChild(el("h3", "gv-h", "The deep dive")); if (!rc) dd.appendChild(el("p", "pv-none", "Regenerate the preview to add the longer read.")); }
     if (long.length || !rc) body.appendChild(dd);
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }) : [];
     var wl = stars.length ? stars : Array.isArray(pv.watch) ? pv.watch.filter(function (w) { return w && w.name; }) : [];
