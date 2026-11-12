@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111213622";
+<script>window.SLATE_BUILD = "20261111213901";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -6576,7 +6576,19 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); alignSides($("lineup-body")); alignSides($("games-body")); repinDock(); }, 60);
   }
   // iPhone sometimes keeps the old width after a turn, a fold, or coming back to the app: re-fit a few times as it settles
-  function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); }
+  function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); setTimeout(checkShort, 1600); }
+  // iPhone's Home Screen apps sometimes keep a too-short screen after a turn; when the visible area is clearly
+  // smaller than the screen and re-fitting didn't help, a quick reload puts it right (at most once a minute)
+  function checkShort() {
+    if (!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)) || document.hidden) return;
+    var land = window.innerWidth > window.innerHeight, sw = screen.width, sh = screen.height;
+    var expect = land ? Math.min(sw, sh) : Math.max(sw, sh);
+    if (window.innerHeight >= expect - 30) return;
+    var last = 0; try { last = Number(sessionStorage.getItem("slate-refit")) || 0; } catch (e) {}
+    if (Date.now() - last < 60000) return;
+    try { sessionStorage.setItem("slate-refit", String(Date.now())); } catch (e) {}
+    location.reload();
+  }
   window.addEventListener("orientationchange", refit);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refit(); });
   window.addEventListener("pageshow", refit);
