@@ -98,7 +98,7 @@
   window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111175822";
+<script>window.SLATE_BUILD = "20261111180004";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1524,7 +1524,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .gv-hrow .gv-h { margin-bottom: 0; }
 .gv-hrow + * { margin-top: 10px; }
 .sty-tray { float: right; margin: -2px 0 4px 8px; }
-.tm-dd { margin: 16px 0 6px; font-size: 13px; font-weight: 800; color: var(--muted); }
+.tm-dd { display: flex; align-items: center; gap: 8px; width: 100%; margin: 14px 0 4px; padding: 10px 2px; border-top: 1px solid var(--hair); font-size: 14px; font-weight: 800; color: var(--head); text-align: left; }
+.tm-dd em { font-style: normal; margin-left: auto; font-size: 12.5px; font-weight: 650; color: var(--dim); }
+.tm-dd svg { width: 16px; height: 16px; color: var(--dim); transition: transform .15s; transform: rotate(-90deg); }
+.tm-dd.shut svg { transform: rotate(90deg); }
 </style>
 </head>
 <body>
@@ -3945,7 +3948,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       withSwitch(cc);
       cc.appendChild(readNode(doc.summary, doc.bullets, "gv-sum"));
       var tl = Array.isArray(doc.long) ? doc.long.filter(Boolean) : [];
-      if (tl.length) { var dh = el("h4", "tm-dd", "The longer read"); cc.appendChild(dh); tl.forEach(function (para) { cc.appendChild(el("p", "gv-p", para)); }); }
+      if (tl.length) {
+        var lrOpen = false; try { lrOpen = localStorage.getItem("slate-longread") === "1"; } catch (e) {}
+        var dh = el("button", "tm-dd" + (lrOpen ? "" : " shut")); dh.type = "button"; dh.setAttribute("aria-expanded", lrOpen ? "true" : "false");
+        dh.appendChild(el("span", null, "The longer read")); dh.appendChild(el("em", null, lrOpen ? "Hide" : tl.length + " paragraphs")); dh.appendChild(icon("more"));
+        dh.addEventListener("click", function () { try { localStorage.setItem("slate-longread", lrOpen ? "0" : "1"); } catch (e) {} keepScroll(renderTeam); });
+        cc.appendChild(dh);
+        if (lrOpen) tl.forEach(function (para) { cc.appendChild(el("p", "gv-p", para)); });
+      }
       if (doc.at) cc.appendChild(el("p", "pv-at", "Written " + new Date(doc.at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })));
     } else cc.appendChild(el("p", "pv-none", "No Claude summary for this team yet."));
     if (skey && window.SLATE_SELF) {
