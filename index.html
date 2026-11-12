@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111181754";
+<script>window.SLATE_BUILD = "20261111181952";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3077,12 +3077,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     }
     return f;
   }
-  function bxCells(cols, idx, vals, plusCol) {
+  function bxCells(cols, idx, vals, plusCol, widths) {
     var row = el("div", "bxp-cells");
     idx.forEach(function (i) {
       var v = vals[i]; v = v != null && v !== "" ? String(v) : "–";
       var c = el("span", "bxp-c"), n = el("b", null, v);
       if (i === plusCol) { var x = parseFloat(v); if (x > 0) n.className = "up"; else if (x < 0) n.className = "down"; }
+      if (widths && widths[i]) c.style.width = widths[i] + "px";
       c.appendChild(n); c.appendChild(el("i", null, cols[i])); row.appendChild(c);
     });
     return row;
@@ -3132,6 +3133,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function bxRows(g, gr, sport, live, team) {
     var cols = gr.cols || [], idx = bxOrder(sport, gr), plus = cols.indexOf("+/-");
     var played = gr.rows.filter(function (r) { return !("dnp" in r); }), out = gr.rows.filter(function (r) { return "dnp" in r; });
+    // every row's column gets the same width, so the columns line up and scroll together
+    var big = window.matchMedia && matchMedia("(max-width: 700px)").matches ? 10.5 : 13.5, widths = {};
+    idx.forEach(function (i) { var m = String(cols[i] || "").length * 7.5; played.forEach(function (r) { m = Math.max(m, String(r.s[i] == null ? "–" : r.s[i]).length * big); }); widths[i] = Math.ceil(Math.max(26, m)); });
     var wrap = el("div", "bxp-list");
     var split = sport === "bball" && gr.k !== "game" && played.some(function (r) { return r.st; }) && played.some(function (r) { return !r.st; });
     var parts = split ? [["Starters", played.filter(function (r) { return r.st; })], ["Bench", played.filter(function (r) { return !r.st; })]] : [[null, played]];
@@ -3145,12 +3149,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         if (r.p) nm.appendChild(el("span", "bxp-p", "· " + r.p));
         if (r.st && !split && sport !== "bball") nm.appendChild(el("span", "bxp-s", "S"));
         right.appendChild(nm);
-        right.appendChild(bxCells(cols, idx, r.s, plus));
+        right.appendChild(bxCells(cols, idx, r.s, plus, widths));
         row.appendChild(right); wrap.appendChild(row);
       });
     });
     if (!played.length) wrap.appendChild(el("p", "bx-dnp", live ? "Nobody has played yet." : "No stats."));
     bxBench(wrap, out, live, team);
+    bxSync(wrap);
     return wrap;
   }
   function bxPlayers(g, b, compact, season) {
@@ -3177,6 +3182,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     });
     if (!season) { var injL = bxInjuries(t); if (injL) wrap.appendChild(injL); }
     return wrap;
+  }
+  // scrolling one player's stats scrolls every player's, like one table
+  function bxSync(wrap) {
+    var cs = Array.prototype.slice.call(wrap.querySelectorAll(".bxp .bxp-cells")), lead = null, t = 0;
+    cs.forEach(function (c) {
+      c.addEventListener("scroll", function () {
+        if (lead && lead !== c) return;
+        lead = c; var x = c.scrollLeft;
+        cs.forEach(function (o) { if (o !== c && Math.abs(o.scrollLeft - x) > 0.5) o.scrollLeft = x; });
+        clearTimeout(t); t = setTimeout(function () { lead = null; }, 120);
+      }, { passive: true });
+    });
   }
   function bxStamp(b) {
     var t = new Date(b.at || 0), tm = isNaN(t) || !b.at ? "" : t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
