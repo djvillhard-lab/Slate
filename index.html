@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111205632";
+<script>window.SLATE_BUILD = "20261111210309";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1322,6 +1322,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-row > .pstar { justify-self: end; }
 /* live highlight under a slate game */
 .hl { grid-column: 1 / -1; margin: 6px 0 0; font-size: 12px; line-height: 1.35; font-weight: 500; color: var(--ink); opacity: .72; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+/* team tabs take the team's color */
+.bx-tabs2 button[aria-pressed="true"] { color: var(--ink) !important; border-bottom-color: var(--tc, var(--accent)) !important; }
+.bx-tabs2 button { box-shadow: inset 0 -1px 0 transparent; }
+.bx-tabs2 button[aria-pressed="true"] { background: linear-gradient(to top, color-mix(in srgb, var(--tc, var(--accent)) 22%, transparent), transparent 70%); }
 /* Moments */
 .pstar-off { display: none; }
 .mm-tip { margin: 6px 2px 10px; font-size: 12.5px; color: var(--dim); }
@@ -1869,11 +1873,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     </button>
     <button class="mi" id="nav-rules" type="button" role="menuitem" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>Slate rules</span></button>
     <button class="mi" id="nav-moments" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5z"/><path d="M12 8.6l1 2.05 2.25.33-1.63 1.59.39 2.24L12 13.75l-2.01 1.06.39-2.24-1.63-1.59 2.25-.33z" fill="currentColor" stroke="none"/></svg>
       <span>Box Office</span>
     </button>
     <button class="mi" id="nav-teams" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3zm0 2.2 6 2.2V11c0 3.9-2.5 7.4-6 8.8-3.5-1.4-6-4.9-6-8.8V6.4l6-2.2z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3c.3 2 1.9 3.4 4 3.4S15.7 5 16 3l3 1.1v4.6c-1 .9-1.6 2.2-1.6 3.6V21H6.6v-8.7C6.6 10.9 6 9.6 5 8.7V4.1z"/><path d="M10.5 11.5h3M12 11.5v5" stroke-linecap="round"/></svg>
       <span>Teams</span>
     </button>
     <button class="mi" id="nav-tv" type="button" role="menuitem">
@@ -1881,7 +1885,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       <span>On TV</span>
     </button>
     <button class="mi" id="nav-games" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2zm12 8H5v9h14v-9zM7 12h4v4H7v-4z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3.5" width="18" height="17" rx="3"/><path d="M3 9.2h18M3 14.8h18M7 6.4h5M7 12h7M7 17.6h4"/><circle cx="17" cy="6.4" r=".6" fill="currentColor"/><circle cx="17" cy="12" r=".6" fill="currentColor"/><circle cx="17" cy="17.6" r=".6" fill="currentColor"/></svg>
       <span>All games</span>
     </button>
   </div>
@@ -3342,6 +3346,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Pick a team");
     b.teams.forEach(function (t, i) {
       var bt = el("button", null, t.abbr || abbr(g, i ? "home" : "away")); bt.type = "button";
+      var sd = i ? "home" : "away", bdg = badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]), tc = bdg.style.background || "";
+      if (tc) bt.style.setProperty("--tc", tc);
       bt.setAttribute("aria-pressed", i === side ? "true" : "false"); bt.setAttribute("aria-label", (t.name || short(g, i ? "home" : "away")) + (season ? " season stats" : " box score"));
       bt.addEventListener("click", function (e) { e.stopPropagation(); if (state.bxSide[g.id] === i) return; state.bxSide[g.id] = i; wrap.replaceWith(bxPlayers(g, b, compact, season)); });
       seg.appendChild(bt);
@@ -4467,11 +4473,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var hasPre = pv && pv.summary;
     if (kind === "over") {
       var rcx = pv && recapOf(pv);
-      section("recap", "Recap and box score", rcx ? "Final · written after the game" : "Final · tap to have Claude write the recap", function (box) {
+      section("recap", "Box score and recap", "Final", function (box) {
+        if (sport) boxFill(box);
         previewSections(g, pv, box, "recap");
         if (rcx) { var gcl = gameClaudeCtl(g); if (gcl) box.appendChild(gcl); }
         var tp = live ? boxStars(g, b) : null; if (tp) box.appendChild(tp);
-        if (sport) boxFill(box);
         pvExtras(box);
       });
       if (sport) teamSec();
@@ -4479,13 +4485,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (sport) section("box", "Box score", "Live", boxFill);
       if (sport) teamSec();
       section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
-        previewSections(g, pv, box, "pre"); pvExtras(box);
-        if (!hasPre) { var gp = gameClaudeCtl(g); if (gp) box.appendChild(gp); }
+        if (!hasPre) { var gp = gvCard(null), gpc = gameClaudeCtl(g); if (gpc) { gp.appendChild(gpc); box.appendChild(gp); } }
+        else previewSections(g, pv, box, "pre");
+        pvExtras(box);
       });
     } else {
       section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
         previewSections(g, pv, box); pvExtras(box);
-        if (hasPre) { var gcl2 = gameClaudeCtl(g); if (gcl2) box.appendChild(gcl2); }
       });
       if (sport) { section("box", "Player stats", "This season", boxFill); teamSec(); }
     }
@@ -4540,6 +4546,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     } else if (pv.summary) {
       var q = withSwitch(gvCard("The quick read")); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
       body.appendChild(q);
+      var qc = gameClaudeCtl(g); if (qc) body.appendChild(qc);
     }
     if (part === "recap") {
       var st0 = [];
