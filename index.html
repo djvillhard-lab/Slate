@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111211729";
+<script>window.SLATE_BUILD = "20261111211908";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3859,7 +3859,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (day === today) {
       // tonight: the live top performers, straight from the box scores; the rest is written tomorrow morning
       body.appendChild(el("p", "mm-when", "Today, " + fmtDate(day, { weekday: "long", month: "short", day: "numeric" })));
-      if (rk.date !== day) { rk.date = day; rkSub(); }
+      rk.date = day; rkSub();  // safe to repeat: it only subscribes once per day, and retries if the database wasn't ready yet
       if (mm.lg === "epl") { body.appendChild(el("div", "notice", "Live player rankings aren't available for the Premier League. Today's Box Office is written tomorrow morning.")); return; }
       rkPollL(mm.lg, false);
       var dk = rkData(mm.lg), rows = dk ? dk.rows : [];
