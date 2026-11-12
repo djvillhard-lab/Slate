@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111215144";
+<script>window.SLATE_BUILD = "20261111215246";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -6075,7 +6075,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var vv = window.visualViewport;
       // only nudge for a real on-screen keyboard or toolbar gap; a bad reading after the app wakes up must never push it off screen
       var off = vv ? (window.innerHeight - vv.height - vv.offsetTop) : 0;
-      var g = typeof SHORT_GAP === "number" ? SHORT_GAP : 0;
+      var g = typeof SHORT_GAP === "number" && SHORT_GAP ? Math.max(0, SHORT_BEST - window.innerHeight) : 0;  // only as far as the window is actually short right now
       d.style.transform = g ? "translateY(" + g + "px)" : off > 1 && off < 160 && !document.hidden ? "translateY(" + (-off) + "px)" : "";
     });
   }
@@ -6576,7 +6576,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   [mqSplit, mqLand, mqBig].forEach(function (mq) { if (mq.addEventListener) mq.addEventListener("change", function () { applyLayout(); }); else if (mq.addListener) mq.addListener(function () { applyLayout(); }); });
   document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
-  window.addEventListener("resize", function () { document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); applyLayout(); alignSides($("lineup-body")); alignSides($("games-body")); });
+  window.addEventListener("resize", function () { if (!SHORT_GAP) document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); repinDock(); applyLayout(); alignSides($("lineup-body")); alignSides($("games-body")); });
   function fitWidth() {
     var vp = document.querySelector('meta[name="viewport"]'); if (!vp) return;
     setTimeout(repinDock, 400);
@@ -6584,7 +6584,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
     var bd = document.body, y0 = window.scrollY; bd.style.minHeight = "calc(100vh + 2px)"; window.scrollTo(0, y0 + 1);
     setTimeout(function () { window.scrollTo(0, y0); bd.style.minHeight = ""; }, 30);
-    vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); alignSides($("lineup-body")); alignSides($("games-body")); repinDock(); }, 60);
+    vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { if (!SHORT_GAP) document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); alignSides($("lineup-body")); alignSides($("games-body")); repinDock(); }, 60);
   }
   // iPhone sometimes keeps the old width after a turn, a fold, or coming back to the app: re-fit a few times as it settles
   function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); [300, 1600].forEach(function (ms) { setTimeout(checkShort, ms); }); }
@@ -6592,7 +6592,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // smaller than the screen and re-fitting didn't help, a quick reload puts it right (at most once a minute)
   // self-calibrating: remember the tallest the screen has been at this width. If iPhone later hands the app a
   // shorter window (it does after some turns), stretch the layout to the known height instead of leaving a gap.
-  var SHORT_GAP = 0, SHORT_KEY = "";
+  var SHORT_GAP = 0, SHORT_KEY = "", SHORT_BEST = 0;
   function checkShort() {
     if (document.hidden) return;
     var w = window.innerWidth, h = window.innerHeight, key = "slate-maxh-" + (w > h ? "L" : "P") + "-" + Math.round(w / 20);
@@ -6604,7 +6604,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (SHORT_GAP && SHORT_KEY === key) return;
     if (!gap && !SHORT_GAP) return;
     SHORT_KEY = gap ? key : "";
-    SHORT_GAP = gap;
+    SHORT_GAP = gap; SHORT_BEST = best;
     var root = document.documentElement;
     root.classList.toggle("short-fix", !!gap);
     root.style.setProperty("--app-h", (gap ? best : h) + "px");
