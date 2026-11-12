@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111213153";
+<script>window.SLATE_BUILD = "20261111213247";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3805,6 +3805,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // moments/<night> is written each morning by the upkeep job (Claude through the worker); top performers come from standouts/<night>.
   var MM_LGS = [["nfl", "NFL"], ["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"]];
   var MM_SOON = ["NHL", "WCBB", "Champions League"];
+  // same league order as All games (your tab order there, else the app's default)
+  function mmLgs() {
+    var ord = (state.gamesOrder || []).length ? state.gamesOrder : ORDER;
+    var at = function (k) { var i = ord.indexOf(k); return i === -1 ? 999 + ORDER.indexOf(k) : i; };
+    return MM_LGS.slice().sort(function (a, b) { return at(a[0]) - at(b[0]); });
+  }
   var mm = { date: null, lg: "nba", docs: {}, subs: {}, more: {} };
   function mmWatch(path) {
     if (!db || mm.subs[path]) return;
@@ -3813,7 +3819,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function mmSetDate(iso) { var last = todayInHome(); if (iso > last) iso = last; mm.date = iso; keepScroll(renderMoments); window.scrollTo(0, 0); }
   function mmPick(k, dir) { if (mm.lg === k) return; mm.lg = k; if (dir) slideIn($("mm-body"), dir); renderMoments(); window.scrollTo(0, 0);
     var on = document.querySelector(".mm-strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" }); }
-  function mmSwipe(step) { var i = -1; MM_LGS.forEach(function (o, j) { if (o[0] === mm.lg) i = j; }); var n = MM_LGS[i + step]; if (n) mmPick(n[0], step > 0 ? "l" : "r"); }
+  function mmSwipe(step) { var L2 = mmLgs(), i = -1; L2.forEach(function (o, j) { if (o[0] === mm.lg) i = j; }); var n = L2[i + step]; if (n) mmPick(n[0], step > 0 ? "l" : "r"); }
   function mmSec(title, sub) { var h = el("div", "sec mm-sec"); h.appendChild(el("h2", null, title)); if (sub) h.appendChild(el("span", "count", sub)); return h; }
   // over/underachievers in the same row as the rankings, with Claude's reason underneath
   function mmRow(r, kind) {
@@ -3848,7 +3854,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var today = todayInHome(); if (!mm.date) mm.date = today;
     renderDockDay();
     var strip = el("div", "strip mm-strip");
-    MM_LGS.forEach(function (o) {
+    mmLgs().forEach(function (o) {
       var b = el("button", "lg-tab", o[1]); b.type = "button"; b.setAttribute("aria-pressed", mm.lg === o[0] ? "true" : "false");
       b.addEventListener("click", function () { mmPick(o[0]); }); strip.appendChild(b);
     });
