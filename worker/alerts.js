@@ -83,7 +83,7 @@ export async function encryptPush(sub, text) {
   const rs = new Uint8Array([0, 0, 16, 0]);
   return cat(salt, rs, new Uint8Array([asPub.length]), asPub, ct);
 }
-async function sendPush(env, sub, msg) {
+export async function sendPush(env, sub, msg) {
   const body = await encryptPush(sub, JSON.stringify(msg));
   const r = await fetch(sub.endpoint, { method: "POST", body, headers: { "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", TTL: "3600", Urgency: "high", Authorization: await vapidAuth(env, sub.endpoint) } });
   return r.status;
