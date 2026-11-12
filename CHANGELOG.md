@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.4.1 (Nov 11, 2026)
+- Notifications settings: removed "from Slate" from the description.
+
 ## 2.4.0 (Nov 11, 2026)
 - Alerts are close to instant: Slate's server checks live scores every minute and sends finals, reminders, live scores and upset alerts within about a minute.
 
