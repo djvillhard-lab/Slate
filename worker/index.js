@@ -113,7 +113,7 @@ export default {
   }
 };
 
-const RULES = `Rules for all writing: every fact must come from the facts you were given or your web searches; never guess rosters or injuries; no betting talk at all (no spreads, totals, moneylines, odds or sportsbooks; the app shows the lines separately); no quote longer than five words; write in your own words, plain and specific, for a knowledgeable fan.`;
+const RULES = `Rules for all writing: plain text only, no citation tags or markup; every fact must come from the facts you were given or your web searches; never guess rosters or injuries; no betting talk at all (no spreads, totals, moneylines, odds or sportsbooks; the app shows the lines separately); no quote longer than five words; write in your own words, plain and specific, for a knowledgeable fan.`;
 
 function prompt(p) {
   const game = p.game, facts = p.facts;
@@ -164,6 +164,13 @@ Answer with only this JSON inside <json></json> tags:
 Watch: 2-4 players, never one who is out. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
 }
 
+// web search answers can carry <cite index='…'>…</cite> markers: keep the words, drop the tags, everywhere in the answer
+function stripCites(v) {
+  if (typeof v === "string") return v.replace(/<\/?cite\b[^>]*>/gi, "").replace(/\s{2,}/g, " ").trim();
+  if (Array.isArray(v)) return v.map(stripCites);
+  if (v && typeof v === "object") { const o = {}; for (const [k, x] of Object.entries(v)) o[k] = stripCites(x); return o; }
+  return v;
+}
 // escape raw line breaks and tabs that Claude sometimes leaves inside JSON strings (paragraph breaks in long text)
 function fixJson(t) {
   let out = "", inStr = false, esc = false;
@@ -219,7 +226,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
     const p = event.payload, t = target(p);
     try {
       const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments", SEARCHES[p.kind]));
-      const ans = res.ans || res;
+      const ans = stripCites(res.ans || res);
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
