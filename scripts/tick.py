@@ -665,7 +665,7 @@ def moment_game(ev):
     c = (ev.get("competitions") or [{}])[0]; st = ((ev.get("status") or {}).get("type") or {})
     if st.get("state") != "post": return None
     sides = {}
-    for t in c.get("competitors") or []:
+    for t in [x for x in (c.get("competitors") or []) if x]:
         tm = t.get("team") or {}; rk = ((t.get("curatedRank") or {}).get("current")) or 99
         ld = []
         for cat in t.get("leaders") or []:
@@ -674,7 +674,7 @@ def moment_game(ev):
         sides[t.get("homeAway")] = {"abbr": tm.get("abbreviation"), "name": tm.get("displayName"), "score": t.get("score"),
             "rank": rk if rk and rk < 26 else None, "record": ((t.get("records") or [{}])[0]).get("summary"), "won": bool(t.get("winner")), "leaders": ld[:4]}
     if "away" not in sides or "home" not in sides: return None
-    odds = ((c.get("odds") or [{}])[0]).get("details")
+    odds = ((c.get("odds") or [{}])[0] or {}).get("details")
     notes = "; ".join(n.get("headline", "") for n in (c.get("notes") or []) if n.get("headline"))
     goals = []
     for d in c.get("details") or []:

@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111182259";
+<script>window.SLATE_BUILD = "20261111183536";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1320,6 +1320,27 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-row .rk-st b { font-size: 17px; }
 .rk-row .rk-st i { font-size: 11.5px; }
 .rk-row > .pstar { justify-self: end; }
+/* Moments */
+.mm-soon { opacity: .4; pointer-events: none; display: inline-flex; align-items: baseline; gap: 5px; }
+.mm-soon i { font-style: normal; font-size: 10px; font-weight: 800; color: var(--dim); }
+.mm-when { margin: 10px 2px 4px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.mm-sec { margin-top: 18px; }
+.mm-list { display: grid; }
+.mm-p { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--hair); align-items: start; }
+.mm-mark { font-size: 13px; font-weight: 800; color: var(--dim); text-align: right; padding-top: 2px; }
+.mm-p.over .mm-mark { color: var(--accent); } .mm-p.under .mm-mark { color: var(--live); }
+.mm-mid { min-width: 0; display: grid; gap: 2px; }
+.mm-nm { display: flex; gap: 8px; align-items: baseline; }
+.mm-nm b { font-size: 15px; color: var(--head); }
+.mm-nm span { font-size: 12px; font-weight: 700; color: var(--dim); }
+.mm-line { font-size: 14px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.mm-why { font-size: 13.5px; line-height: 1.35; color: var(--muted); }
+.mm-g { padding: 12px 0; border-top: 1px solid var(--hair); }
+.mm-gtop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mm-gtop b { font-size: 15.5px; color: var(--head); font-variant-numeric: tabular-nums; }
+.mm-g p { margin: 4px 0 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
+.mm-tag { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--raise); color: var(--ink); }
+.mm-tag.t-upset { background: var(--live); color: #fff; } .mm-tag.t-thriller, .mm-tag.t-overtime { background: var(--accent); color: #0b1a10; } .mm-tag.t-comeback { background: #d9a43a; color: #1d1405; }
 .fp-h { margin-top: 18px; }
 .fp-list { display: grid; }
 .fp-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 2px; border-top: 1px solid var(--hair); }
@@ -1665,6 +1686,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   <section id="view-rules" aria-label="Slate rules" hidden><div id="rules-body"></div></section>
   <section id="view-game" aria-label="Matchup" hidden><div id="game-body"></div></section>
   <section id="view-best" aria-label="Player rankings" hidden><div id="best-body"></div></section>
+  <section id="view-moments" aria-label="Moments" hidden><div id="mm-body"></div></section>
   <section id="view-teams" aria-label="Teams" hidden><div id="teams-body"></div></section>
   <section id="view-tabs" aria-label="Edit All games tabs" hidden><div id="tabs-body"></div></section>
   <section id="view-team" aria-label="Team" hidden><div id="team-body"></div></section>
@@ -1831,13 +1853,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   <button class="dock-back" id="dock-back" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span id="dock-back-t">Back</span></button>
   <div class="menu-pop" id="menu-pop" role="menu" aria-label="Menu" hidden>
     <button class="mi" id="nav-lineup" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5l1.8 1.8L8.5 5M3.5 13l1.8 1.8L8.5 11.5M11.5 6.8h9M11.5 13.3h9M11.5 19.3h9M4 19.3h3"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>
       <span>Slate</span><i class="dot" id="nav-count" hidden></i>
     </button>
     <button class="mi" id="nav-rules" type="button" role="menuitem" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>Slate rules</span></button>
-    <button class="mi" id="nav-games" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2zm12 8H5v9h14v-9zM7 12h4v4H7v-4z"/></svg>
-      <span>All games</span>
+    <button class="mi" id="nav-moments" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg>
+      <span>Moments</span>
     </button>
     <button class="mi" id="nav-best" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15v3h3v3H8v-3h3v-3a5 5 0 0 1-2.7-3H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>
@@ -1850,6 +1872,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     <button class="mi" id="nav-tv" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6v1.5h3V21H7v-1.5h3V18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
       <span>On TV</span>
+    </button>
+    <button class="mi" id="nav-games" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2zm12 8H5v9h14v-9zM7 12h4v4H7v-4z"/></svg>
+      <span>All games</span>
     </button>
   </div>
   <button class="fab" id="menu-fab" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-pop">
@@ -2550,18 +2576,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function tvSwipe(step) { var i = TV_TABS.indexOf(state.tvFilter), n = TV_TABS[i + step]; if (n) tvPick(n, step > 0 ? "l" : "r"); }
   function renderDockDay() {
     var dn = $("dock-day"); if (!dn) return;
-    var v = state.view, on = (v === "best" || v === "games" || v === "tv") && !state.menuOpen;
+    var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments") && !state.menuOpen;
     dn.hidden = !on; if (!on) return;
     dn.textContent = "";
-    var today = todayInHome(), rkMode = v === "best", day = rkMode ? (rk.date || today) : state.date;
-    var go = function (iso) { if (rkMode) rkSetDate(iso); else { slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
-    var atEnd = rkMode && day >= today;
+    var today = todayInHome(), mmMode = v === "moments", rkMode = v === "best" || mmMode, day = mmMode ? (mm.date || shiftDate(today, -1)) : v === "best" ? (rk.date || today) : state.date;
+    var go = function (iso) { if (mmMode) mmSetDate(iso); else if (rkMode) rkSetDate(iso); else { slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
+    var lastDay = mmMode ? shiftDate(today, -1) : today, atEnd = rkMode && day >= lastDay;
     var nxt = el("button", "dd-arrow" + (atEnd ? " dd-end" : "")); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.appendChild(icon("more"));
-    nxt.addEventListener("click", function () { if (atEnd) { toast("Rankings go up to today"); return; } go(shiftDate(day, 1)); });
+    nxt.addEventListener("click", function () { if (atEnd) { toast(mmMode ? "Moments cover finished nights" : "Rankings go up to today"); return; } go(shiftDate(day, 1)); });
     var lab = el("label", "dd-date");
     var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yest." : day === shiftDate(today, 1) ? "Tmrw" : fmtDate(day, { weekday: "short" });
     lab.appendChild(el("b", null, fmtDate(day, { month: "short" }))); lab.appendChild(el("b", "dd-n", fmtDate(day, { day: "numeric" }))); lab.appendChild(el("em", null, dl));
-    var inp = document.createElement("input"); inp.type = "date"; inp.className = "dd-input"; if (rkMode) inp.max = today; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
+    var inp = document.createElement("input"); inp.type = "date"; inp.className = "dd-input"; if (rkMode) inp.max = lastDay; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
     inp.addEventListener("change", function () { if (inp.value) go(inp.value); });
     lab.appendChild(inp);
     var prev = el("button", "dd-arrow dd-prev"); prev.type = "button"; prev.setAttribute("aria-label", "Previous day"); prev.appendChild(icon("more"));
@@ -3604,6 +3630,77 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var opts = rkOpts(rkLeagues(rk.date)), i = -1;
     opts.forEach(function (o, j) { if (o[0] === state.bestLeague) i = j; });
     var n = opts[i + step]; if (n) rkPick(n[0], step > 0 ? "l" : "r");
+  }
+  // ---- Moments: the night before in four leagues: top performers, over- and underachievers, wild finishes.
+  // moments/<night> is written each morning by the upkeep job (Claude through the worker); top performers come from standouts/<night>.
+  var MM_LGS = [["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"]];
+  var MM_SOON = ["NFL", "NHL", "WCBB", "Champions League"];
+  var mm = { date: null, lg: "nba", docs: {}, subs: {} };
+  function mmWatch(path) {
+    if (!db || mm.subs[path]) return;
+    mm.subs[path] = db.doc(path).onSnapshot(function (sn) { mm.docs[path] = sn.exists ? sn.data() : null; if (state.view === "moments") keepScroll(renderMoments); }, function () { mm.docs[path] = null; });
+  }
+  function mmSetDate(iso) { var last = shiftDate(todayInHome(), -1); if (iso > last) iso = last; mm.date = iso; keepScroll(renderMoments); window.scrollTo(0, 0); }
+  function mmPick(k, dir) { if (mm.lg === k) return; mm.lg = k; if (dir) slideIn($("mm-body"), dir); renderMoments(); window.scrollTo(0, 0);
+    var on = document.querySelector(".mm-strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" }); }
+  function mmSwipe(step) { var i = -1; MM_LGS.forEach(function (o, j) { if (o[0] === mm.lg) i = j; }); var n = MM_LGS[i + step]; if (n) mmPick(n[0], step > 0 ? "l" : "r"); }
+  function mmSec(title, sub) { var h = el("div", "sec mm-sec"); h.appendChild(el("h2", null, title)); if (sub) h.appendChild(el("span", "count", sub)); return h; }
+  function mmPerson(r, kind, i) {
+    var row = el("div", "mm-p " + kind);
+    row.appendChild(el("span", "mm-mark", kind === "over" ? "▲" : kind === "under" ? "▼" : String(i + 1)));
+    var mid = el("div", "mm-mid"), nm = el("div", "mm-nm");
+    nm.appendChild(el("b", null, r.name || "")); if (r.team) nm.appendChild(el("span", null, r.team));
+    mid.appendChild(nm);
+    if (r.line) mid.appendChild(el("div", "mm-line", r.line));
+    if (r.why) mid.appendChild(el("div", "mm-why", r.why));
+    row.appendChild(mid);
+    return row;
+  }
+  function renderMoments() {
+    var body = $("mm-body"); if (!body) return; body.textContent = "";
+    if (state.view !== "moments") return;
+    var today = todayInHome(); if (!mm.date) mm.date = shiftDate(today, -1);
+    renderDockDay();
+    var strip = el("div", "strip mm-strip");
+    MM_LGS.forEach(function (o) {
+      var b = el("button", "lg-tab", o[1]); b.type = "button"; b.setAttribute("aria-pressed", mm.lg === o[0] ? "true" : "false");
+      b.addEventListener("click", function () { mmPick(o[0]); }); strip.appendChild(b);
+    });
+    MM_SOON.forEach(function (n) { var b = el("span", "lg-tab mm-soon"); b.appendChild(document.createTextNode(n)); b.appendChild(el("i", null, "Soon")); strip.appendChild(b); });
+    body.appendChild(strip);
+    var day = mm.date, path = "moments/" + day; mmWatch(path);
+    var doc = mm.docs[path], L = doc && doc.leagues && doc.leagues[mm.lg], name = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
+    var night = day, when = el("p", "mm-when");
+    if (L && L.see) { night = L.see; var p2 = "moments/" + night; mmWatch(p2); L = ((mm.docs[p2] || {}).leagues || {})[mm.lg]; when.textContent = "No " + name + " games that night. Here's the latest: " + fmtDate(night, { weekday: "long", month: "short", day: "numeric" }) + "."; }
+    else when.textContent = (day === shiftDate(today, -1) ? "Last night, " : "") + fmtDate(day, { weekday: "long", month: "short", day: "numeric" });
+    body.appendChild(when);
+    if (doc === undefined) { body.appendChild(el("div", "notice", "Loading…")); return; }
+    if (!L || (!L.at && !L.writing)) { body.appendChild(el("div", "notice", day >= shiftDate(today, -1) && new Date().getHours() < 7 ? "Moments for last night are written each morning. Check back soon." : "No Moments were written for this night.")); return; }
+    if (L.none) { body.appendChild(el("div", "notice", "No " + name + " games in the week before this night.")); return; }
+    if (L.writing && !L.at) { body.appendChild(el("div", "notice", L.writing.error ? "Couldn't write this one: " + L.writing.error : "Claude is writing last night's Moments. About a minute.")); return; }
+    // 1. top performers: the night's ranking (EPL: Claude's picks)
+    var sp = "standouts/" + night; if (mm.lg !== "epl") mmWatch(sp);
+    var top = mm.lg === "epl" ? (L.top || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []).slice(0, 10);
+    if (top.length) {
+      body.appendChild(mmSec("Top performers", "Top " + top.length));
+      var tl = el("div", "bs-list mm-top");
+      top.forEach(function (r, i) { tl.appendChild(mm.lg === "epl" ? mmPerson(r, "top", i) : bestRow(r, i + 1, mm.lg)); });
+      body.appendChild(tl);
+    }
+    if ((L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "mm-list"); L.over.forEach(function (r, i) { ol.appendChild(mmPerson(r, "over", i)); }); body.appendChild(ol); }
+    if ((L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "mm-list"); L.under.forEach(function (r, i) { ul.appendChild(mmPerson(r, "under", i)); }); body.appendChild(ul); }
+    if ((L.games || []).length) {
+      body.appendChild(mmSec("Wild finishes", "Upsets and close calls"));
+      var gl = el("div", "mm-list");
+      L.games.forEach(function (g) {
+        var c = el("div", "mm-g"), top2 = el("div", "mm-gtop");
+        if (g.tag) top2.appendChild(el("span", "mm-tag t-" + String(g.tag).toLowerCase(), g.tag));
+        top2.appendChild(el("b", null, g.score || ((g.away || "") + " @ " + (g.home || ""))));
+        c.appendChild(top2); if (g.why) c.appendChild(el("p", null, g.why)); gl.appendChild(c);
+      });
+      body.appendChild(gl);
+    }
+    body.appendChild(el("p", "pv-at", "Written by Claude from ESPN box scores" + (L.at ? " · " + new Date(L.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "")));
   }
   function renderBest() {
     var body = $("best-body"); if (!body) return; body.textContent = "";
@@ -5533,7 +5630,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var dl = dayLabel(state.date), named = /^(today|yesterday|tomorrow)$/.test(dl);
     var shortDate = fmtDate(state.date, { weekday: "short" }) + ", " + fmtDate(state.date, { month: "short", day: "numeric" });
     var slateTitle = state.date === today ? "Tonight's Slate" : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
-    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
+    $("title-t").textContent = v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "moments" ? "Moments" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     var tl = $("title"); if (tl) tl.classList.toggle("has-brand", v === "lineup");
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
@@ -5619,9 +5716,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     cal.appendChild(ci); cal.classList.add("dpick"); ds.appendChild(cal);
     ds.hidden = v !== "games" && v !== "tv";
 
-    ["lineup", "rules", "games", "best", "teams", "tv"].forEach(function (k) { var b = $("nav-" + k); if (!b) return; if (v === k || (k === "teams" && v === "team")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    ["lineup", "rules", "games", "best", "moments", "teams", "tv"].forEach(function (k) { var b = $("nav-" + k); if (!b) return; if (v === k || (k === "teams" && v === "team")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     $("menu-pop").hidden = !state.menuOpen; $("menu-scrim").hidden = !state.menuOpen; $("menu-fab").setAttribute("aria-expanded", state.menuOpen ? "true" : "false");
-    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-teams").hidden = v !== "teams"; $("view-tabs").hidden = v !== "tabs"; $("view-team").hidden = v !== "team";
+    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-moments").hidden = v !== "moments"; $("view-teams").hidden = v !== "teams"; $("view-tabs").hidden = v !== "tabs"; $("view-team").hidden = v !== "team";
     var cnt = lineupGames().length, nc = $("nav-count"); nc.textContent = String(cnt); nc.hidden = !cnt;
     $("view-lineup").hidden = !isDuo && v !== "lineup"; $("view-games").hidden = v !== "games"; $("view-tv").hidden = v !== "tv"; $("view-settings").hidden = v !== "settings"; $("view-notify").hidden = v !== "notify";
   }
@@ -5676,7 +5773,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (!max) return;
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) + "px");
   }
-  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
+  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderMoments(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); }); }
 
   // ---------- actions ----------
   // iOS can leave a fixed element where it was when a page swaps for a shorter one and the scroll jumps
@@ -5711,7 +5808,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     go(); requestAnimationFrame(go);
   }
   // swipes move only what changes: pickers, day switchers, Live buttons and the ticker stay put
-  var SW_STATIC = ".rk-strip, .rk-sub, .rk-day, .lo-row, .ticker, .strip, .substrip, .tb-pills";
+  var SW_STATIC = ".mm-strip, .mm-when, .rk-strip, .rk-sub, .rk-day, .lo-row, .ticker, .strip, .substrip, .tb-pills";
   function slideKids(body) { return body ? Array.prototype.filter.call(body.children, function (c) { return !(c.matches && c.matches(SW_STATIC)); }) : []; }
   function slideIn(body, dir) {
     if (!body || REDUCED) return;
@@ -5956,6 +6053,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function menuGo(v) { state.menuOpen = false; if (state.view === v) { render(); return; } if (state.view === "lineup" || isDuo) openSub(v); else { var from = state.backTo; openSub(v); if (from && from.view !== v) state.backTo = from; renderBack(); } }
   $("nav-games").addEventListener("click", function () { menuGo("games"); });
   $("nav-teams").addEventListener("click", function () { menuGo("teams"); });
+  $("nav-moments").addEventListener("click", function () { mm.date = null; menuGo("moments"); });
   $("nav-best").addEventListener("click", function () { rk.date = null; menuGo("best"); rkPoll(true); });
   $("btn-settings").addEventListener("click", function () { openSub("settings"); showCost(); });
   $("btn-refresh").addEventListener("click", refreshApp);
@@ -6049,6 +6147,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (isDuo && target.closest("#pane-l")) return "day";
       if (state.view === "games" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#strip", t) || target.closest("#view-games"))) return "league";
       if (state.view === "best" && !target.closest(".rk-day, nav.dock, .menu-pop") && (belowStrip(".rk-strip", t) || target.closest("#view-best"))) return "rk";
+      if (state.view === "moments" && !target.closest("nav.dock, .menu-pop") && (belowStrip(".mm-strip", t) || target.closest("#view-moments"))) return "mm";
       if (state.view === "tv" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#substrip", t) || target.closest("#view-tv"))) return "tv";
       if (state.view !== homeView() && state.view !== "lineup") return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
@@ -6059,7 +6158,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
       mode = swipeMode(e.target, t); if (!mode) return;
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
-      scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub"); sx0 = scroller ? scroller.scrollLeft : 0;
+      scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub, .mm-strip"); sx0 = scroller ? scroller.scrollLeft : 0;
       // inside a box score or stats table that scrolls sideways, the finger scrolls the table, never the page
       var wide = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, .bx-ts, .bxp, .bx");
       if (wide && (wide.scrollWidth > wide.clientWidth + 2 || (scroller && scroller.scrollWidth > scroller.clientWidth + 2))) { x0 = null; return; }
@@ -6071,6 +6170,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (mode === "day") return slideKids($("lineup-body"));
       if (mode === "league") return slideKids($("games-body"));
       if (mode === "rk") return slideKids($("best-body"));
+      if (mode === "mm") return slideKids($("mm-body"));
       if (mode === "tv") return slideKids($("tv-body"));
       if (mode === "back") { var v = $("view-" + state.view); return v ? [v] : []; }
       return [];
@@ -6082,7 +6182,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       each(list, function (el2) { el2.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s"; el2.style.transform = ""; el2.style.opacity = ""; });
       setTimeout(function () { clearDrag(list); }, 200);
     }
-    function where() { return [state.view, state.date, state.league, state.bestLeague, state.tvFilter].join("|"); }
+    function where() { return [state.view, state.date, state.league, state.bestLeague, state.tvFilter, mm.lg, mm.date].join("|"); }
     document.addEventListener("touchmove", function (e) {
       if (x0 === null || REDUCED) return;
       var t = e.touches[0], dx = t.clientX - x0, dy = t.clientY - y0;
@@ -6107,6 +6207,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         if (mode === "back") goBack();
         else if (mode === "league") swipeFilter(dx < 0 ? 1 : -1);
         else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
+        else if (mode === "mm") mmSwipe(dx < 0 ? 1 : -1);
         else if (mode === "tv") tvSwipe(dx < 0 ? 1 : -1);
         else { slideDir = dir; setDate(shiftDate(state.date, dx < 0 ? 1 : -1)); }
       }
