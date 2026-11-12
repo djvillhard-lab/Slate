@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111194708";
+<script>window.SLATE_BUILD = "20261111194750";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3828,9 +3828,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     else when.textContent = (day === shiftDate(today, -1) ? "Last night, " : "") + fmtDate(day, { weekday: "long", month: "short", day: "numeric" });
     body.appendChild(when);
     if (doc === undefined) { body.appendChild(el("div", "notice", "Loading…")); return; }
-    if (!L || (!L.at && !L.writing)) { body.appendChild(el("div", "notice", day >= shiftDate(today, -1) && new Date().getHours() < 7 ? "Moments for last night are written each morning. Check back soon." : "No Moments were written for this night.")); return; }
+    if (!L || (!L.at && !L.writing)) { body.appendChild(el("div", "notice", day >= shiftDate(today, -1) && new Date().getHours() < 7 ? "Postgame for last night is written each morning. Check back soon." : "No Postgame was written for this night.")); return; }
     if (L.none) { body.appendChild(el("div", "notice", "No " + name + " games in the week before this night.")); return; }
-    if (L.writing && !L.at) { body.appendChild(el("div", "notice", L.writing.error ? "Couldn't write this one: " + L.writing.error : "Claude is writing last night's Moments. About a minute.")); return; }
+    if (L.writing && !L.at) { body.appendChild(el("div", "notice", L.writing.error ? "Postgame for this night isn't ready yet. Check back soon." : "Claude is writing this Postgame. About a minute.")); return; }
     // 1. top performers: the night's ranking (EPL: Claude's picks)
     var sp = "standouts/" + night; if (mm.lg !== "epl") mmWatch(sp);
     var all = mm.lg === "epl" ? (L.top || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), more = !!mm.more[mm.lg], top = all.slice(0, more ? 25 : 10);
