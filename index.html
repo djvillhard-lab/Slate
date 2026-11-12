@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111211132";
+<script>window.SLATE_BUILD = "20261111211231";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1327,6 +1327,8 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .bx-tabs2 button { box-shadow: inset 0 -1px 0 transparent; }
 .bx-tabs2 button[aria-pressed="true"] { background: linear-gradient(to top, color-mix(in srgb, var(--tc, var(--accent)) 22%, transparent), transparent 70%); }
 /* Moments */
+.ch-live { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-size: 12px; font-weight: 800; color: var(--live); }
+.ch-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
 .mm-how { margin: 6px 2px 0; font-size: 12px; line-height: 1.4; color: var(--dim); }
 .pstar-off { display: none; }
 .mm-tip { margin: 6px 2px 10px; font-size: 12.5px; color: var(--dim); }
@@ -5608,6 +5610,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var h = el("div", "ch-head ch-tg" + (shut ? " shut" : ""));
       var tg = el("button", "ch-tgb"); tg.type = "button"; tg.setAttribute("aria-expanded", shut ? "false" : "true");
       tg.appendChild(el("h2", null, n));
+      var nLive = list.filter(function (g) { return status(g).kind === "live"; }).length;
+      if (nLive) { var lv = el("span", "ch-live"); lv.appendChild(el("i")); lv.appendChild(document.createTextNode(nLive > 1 ? nLive + " live" : "Live")); tg.appendChild(lv); }
       tg.appendChild(el("span", "kind", list.length + (list.length === 1 ? " game" : " games")));
       tg.appendChild(icon("more"));
       tg.addEventListener("click", function () { if (COLLAPSED[ck]) delete COLLAPSED[ck]; else COLLAPSED[ck] = 1; saveC(); });
