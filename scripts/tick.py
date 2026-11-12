@@ -658,7 +658,7 @@ def event_catalog(now):
 
 # ---------- main ----------
 # ---- Moments: once each morning, the night before in four leagues (Claude writes it through the Slate worker)
-MOMENT_LGS = ["nba", "ncaam", "ncaaf", "epl"]
+MOMENT_LGS = ["nfl", "nba", "ncaam", "ncaaf", "epl"]
 WORKER = "https://slate.djvillhard.workers.dev"
 
 def moment_game(ev):
@@ -720,6 +720,25 @@ def moments_facts(lg, day, standouts):
                         except Exception: mins = 0
                         ath = a.get("athlete") or {}
                         if mins >= 18: lines.append(f'{ath.get("displayName")} [id {ath.get("id")}] {ab}: {st.get("MIN")} min, {st.get("PTS")} PTS, {st.get("REB")} REB, {st.get("AST")} AST, {st.get("FG")} FG, {st.get("3PT")} 3PT, {st.get("TO")} TO')
+        facts["lines"] = lines[:220]
+    if lg in ("nfl", "ncaaf"):  # every quarterback, runner and receiver who did something, so the off days show too
+        lines = []
+        path = "football/nfl" if lg == "nfl" else "football/college-football"
+        for g in games[:16 if lg == "nfl" else 20]:
+            sm = get(f"https://site.api.espn.com/apis/site/v2/sports/{path}/summary?event={g['id']}")
+            per = {}
+            for tb in ((sm.get("boxscore") or {}).get("players") or []):
+                ab = (tb.get("team") or {}).get("abbreviation")
+                for grp in tb.get("statistics") or []:
+                    nm = grp.get("name"); lab = grp.get("labels") or []
+                    if nm not in ("passing", "rushing", "receiving"): continue
+                    for a in grp.get("athletes") or []:
+                        ath = a.get("athlete") or {}; st = dict(zip(lab, a.get("stats") or []))
+                        k = (ath.get("id"), ath.get("displayName"), ab); per.setdefault(k, [])
+                        if nm == "passing": per[k].append(f'{st.get("C/ATT")} {st.get("YDS")} pass yds {st.get("TD")} TD {st.get("INT")} INT')
+                        elif nm == "rushing": per[k].append(f'{st.get("CAR")} car {st.get("YDS")} rush yds {st.get("TD")} TD')
+                        else: per[k].append(f'{st.get("REC")} rec {st.get("YDS")} yds {st.get("TD")} TD ({st.get("TGTS", "?")} tgt)')
+            for (pid, name, ab), parts in per.items(): lines.append(f'{name} [id {pid}] {ab}: ' + "; ".join(parts))
         facts["lines"] = lines[:220]
     return facts
 

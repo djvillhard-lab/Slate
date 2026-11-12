@@ -48,7 +48,7 @@ async function logUsage(env, user, u, model) {
   await mergeDoc(env, "stats/usage", { days: { [d]: day } });
 }
 
-const MOMENT_LGS = { nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League" };
+const MOMENT_LGS = { nfl: "NFL", nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League" };
 function target(p) {
   if (p.kind === "moments") return { path: "moments/" + p.date, patch: (x) => ({ date: p.date, leagues: { [p.key]: x } }) };
   if (p.kind === "team") return { path: "teams/" + p.key, patch: (x) => x };

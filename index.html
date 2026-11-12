@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111211908";
+<script>window.SLATE_BUILD = "20261111212226";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3803,8 +3803,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   // ---- Moments: the night before in four leagues: top performers, over- and underachievers, wild finishes.
   // moments/<night> is written each morning by the upkeep job (Claude through the worker); top performers come from standouts/<night>.
-  var MM_LGS = [["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"]];
-  var MM_SOON = ["NFL", "NHL", "WCBB", "Champions League"];
+  var MM_LGS = [["nfl", "NFL"], ["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"]];
+  var MM_SOON = ["NHL", "WCBB", "Champions League"];
   var mm = { date: null, lg: "nba", docs: {}, subs: {}, more: {} };
   function mmWatch(path) {
     if (!db || mm.subs[path]) return;
