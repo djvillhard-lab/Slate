@@ -100,7 +100,7 @@ Reply with only the highlight inside <line></line>. Do not explain or think out 
       if (!r.ok) return json({ error: "claude " + r.status + ": " + String((b.error || {}).message || "").slice(0, 120) }, 502);
       let text = (b.content || []).filter((x) => x.type === "text").map((x) => x.text).join(" ").replace(/^[\s\S]*<line>/, "").replace(/<\/?line>/g, "").trim().replace(/^["']|["']$/g, "");
       // a line that rambles or second-guesses itself is dropped; the app keeps its own wording instead
-      if (!text || text.length > 220 || /\b(wait|actually|hmm|the stat says|I think|let me)\b/i.test(text)) return json({ error: "unusable" }, 502);
+      if (!text || text.length > 220 || /\b(wait|actually|hmm|the stat says|I think|let me)\b/i.test(text)) return json({ error: "unusable", got: String(text).slice(0, 300) }, 502);
       await mergeDoc(env, path, { date: p.date, games: { [p.id]: { key: String(p.key).slice(0, 80), text, n: (cur.n || 0) + 1, at: new Date().toISOString() } } });
       ctx.waitUntil(logUsage(env, me.id, b.usage || {}, "haiku").catch(() => {}));
       return json({ ok: true, text });
