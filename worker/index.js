@@ -95,10 +95,10 @@ Pick the single most interesting thing a fan glancing at the score would want to
 Reply with only the highlight inside <line></line>. Do not explain or think out loud.`;
       const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
         headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-        body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 160, messages: [{ role: "user", content: ask }, { role: "assistant", content: "<line>" }], stop_sequences: ["</line>"] }) });
+        body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 160, messages: [{ role: "user", content: ask }], stop_sequences: ["</line>"] }) });
       const b = await r.json().catch(() => ({}));
-      if (!r.ok) return json({ error: "claude " + r.status }, 502);
-      let text = (b.content || []).filter((x) => x.type === "text").map((x) => x.text).join(" ").replace(/<\/?line>/g, "").trim().replace(/^["']|["']$/g, "");
+      if (!r.ok) return json({ error: "claude " + r.status + ": " + String((b.error || {}).message || "").slice(0, 120) }, 502);
+      let text = (b.content || []).filter((x) => x.type === "text").map((x) => x.text).join(" ").replace(/^[\s\S]*<line>/, "").replace(/<\/?line>/g, "").trim().replace(/^["']|["']$/g, "");
       // a line that rambles or second-guesses itself is dropped; the app keeps its own wording instead
       if (!text || text.length > 220 || /\b(wait|actually|hmm|the stat says|I think|let me)\b/i.test(text)) return json({ error: "unusable" }, 502);
       await mergeDoc(env, path, { date: p.date, games: { [p.id]: { key: String(p.key).slice(0, 80), text, n: (cur.n || 0) + 1, at: new Date().toISOString() } } });
