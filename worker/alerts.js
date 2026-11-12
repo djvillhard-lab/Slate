@@ -33,12 +33,14 @@ async function putDoc(env, path, data) {
 }
 
 // ---------- time (Central) ----------
-function ctParts(t) {
-  const f = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", weekday: "short", hour12: false });
+function ctParts(t, tz) {
+  const f = new Intl.DateTimeFormat("en-US", { timeZone: tz || "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", weekday: "short", hour12: false });
   const p = {}; for (const x of f.formatToParts(t)) p[x.type] = x.value;
   return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) % 24, wd: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday) };
 }
-function clock(t) { return new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" }).format(t); }
+// times in each person's own time zone (saved by their phone with their alert settings)
+let TZ = "America/Chicago";
+function clock(t) { return new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }).format(t); }
 function etDay(t) { const f = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }); return f.format(t).replace(/-/g, ""); }
 
 // ---------- base64url ----------
@@ -165,7 +167,7 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     const body = `${g.awayShort} ${s.a}, ${g.homeShort} ${s.h} · ${s.detail || ""}`, last = Date.parse((sent.liveAt || {})[i] || "");
     if (sent.live[i] !== body && (isNaN(last) || now - last >= 55 * 60000)) out.push(["live", i, "Live", body]);
   }
-  const b = p.brief || {}, hr = ctParts(now).hour, bh = Number(b.hour ?? 9);
+  const b = p.brief || {}, hr = ctParts(now, TZ).hour, bh = Number(b.hour ?? 9);
   if (b.on && !sent.brief && hr >= bh && hr <= bh + 2) {
     const lines = [];
     if (b.lineup && slate.length) {
@@ -224,11 +226,13 @@ export async function runAlerts(env) {
   const list = Object.entries(games).map(([id, g]) => Object.assign({ id }, g)), byid = {}; for (const g of list) byid[g.id] = g;
   for (const w of active) {
     const pre = w.prefix, subs = docs[pre + "prefs/push"].subs, p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
+    TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
+    const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])] };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {
-      const silent = !(p.days || DEFAULTS.days).includes(ct.wd) || inQuiet(p, ct.hour);
+      const silent = !(p.days || DEFAULTS.days).includes(lt.wd) || inQuiet(p, lt.hour);
       for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, w.slate || [], w.mine || [], w.customs || [], now)) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
