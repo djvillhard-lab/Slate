@@ -121,7 +121,8 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111230734";
+<script>window.SLATE_CHANGES = "# Slate release history\n\nVersion 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.\nFrom 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).\n\n## 2.3.0 (Nov 11, 2026)\n- Release history is viewable in the app: Settings > What's new.\n\n## 2.2.3 (Nov 11, 2026)\n- Player headshots no longer show initials behind the photo. Initials appear only when a player has no photo.\n\n## 2.2.2 (Nov 11, 2026)\n- Box Office: the league tabs stay in place when you swipe between leagues. Long names like Premier League and Champions League no longer jump out of view.\n\n## 2.2.1 (Nov 11, 2026)\n- Quick box score (matchup dropdown on the slate): the picked team's stats show as a sideways-scrolling row under the team tabs, like the full box score.\n- Teams: more columns on a wide upright screen, and two columns on the right side when unfolded sideways.\n- Box Office: two columns of players on a wide upright screen.\n\n## 2.2.0 (Nov 11, 2026)\n- Box Office can be built for any past night and any league with a free \"Build this night's Box Office\" button (ready within about 10 minutes).\n- New Box Office leagues: NHL, women's college basketball (WCBB) and Champions League, plus MLB and WNBA during their seasons.\n\n## 2.1.1 (Nov 11, 2026)\n- Quick box score: team stats moved above the players.\n- Box Office: two-column layout when unfolded and held upright.\n\n## 2.1.0 (Nov 11, 2026)\n- Phone alerts come from Slate itself as push notifications, at no cost: reminders, finals, live scores, upset watch and the daily brief, with the same settings as before.\n- New \"This phone\" switch in Settings > Notifications to turn alerts on for each phone (works for your brother's phone too).\n- The hourly Claude alerts run is retired.\n\n## 2.0.0 (Nov 11, 2026): efficiency release\n- Claude only writes when you tap a button. Nothing that costs money runs on its own.\n- Live highlights under games are written by the app's own rules (free) instead of Claude.\n- Box Office: top performers and wild finishes are built free each morning; Claude's over and underachievers are written only when you tap.\n- Fewer web searches per Claude summary (preview 2, team 2, recap 1, Box Office 2), which lowers the cost of each summary.\n- The day slates (every game, today plus three days) are built by a free script instead of a daily Claude run, and \"Build slate\" requests go through the same free job.\n- The version number now shows in Settings.\n";</script>
+<script>window.SLATE_BUILD = "20261111230939";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1365,6 +1366,12 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .fp-h { margin-top: 18px; }
 .tray-ts { margin: 2px 0 10px; }
 .mm-bi { display: inline-flex; }
+.rel-sec { margin-top: 10px; }
+.rel-list { display: grid; gap: 14px; padding: 4px 4px 8px; }
+.rel-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.rel-h b { font-size: 16px; color: var(--head); } .rel-h span { font-size: 12.5px; color: var(--dim); text-align: right; }
+.rel-v ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 5px; }
+.rel-v li { font-size: 14px; line-height: 1.4; color: var(--muted); }
 /* initials only when there's no photo (a missing photo removes its img) */
 .rk-face:has(img) > i, .bxp-face:has(img) > i, .fp-face:has(img) > i { visibility: hidden; }
 /* wide single screen (unfolded and held upright): Box Office and Teams use the whole width */
@@ -1882,6 +1889,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     <div class="optrow" id="ver-row">
       <div><b>App version</b><span id="ver-text"></span></div>
       <button type="button" class="outline quiet" id="ver-btn">Update now</button>
+    </div>
+    <div class="gv-sec rel-sec" id="rel-sec">
+      <button type="button" class="gv-toggle" id="rel-tg" aria-expanded="false"><span class="gv-tt"><b>What's new</b><i>Release history</i></span></button>
+      <div class="gv-sec-in rel-list" id="rel-list" hidden></div>
     </div>
   </section>
 
@@ -2980,7 +2991,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.2.3";
+  var SLATE_VERSION = "2.3.0";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -6468,6 +6479,27 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
   $("open-rules").addEventListener("click", function () { openSub("rules"); });
   $("nt-phone-btn").addEventListener("click", pushTurnOn);
+  // release history: CHANGELOG.md, built into the page as window.SLATE_CHANGES
+  (function () {
+    var tg = $("rel-tg"), list = $("rel-list"); if (!tg || !list) return;
+    tg.appendChild(icon("more"));
+    var md = String(window.SLATE_CHANGES || ""), built = false;
+    function fill() {
+      built = true; list.textContent = "";
+      var cur = null;
+      md.split("\n").forEach(function (ln) {
+        var h = /^##\s+(\S+)\s*(?:\((.*?)\))?\s*(.*)$/.exec(ln);
+        if (h) { cur = el("div", "rel-v"); var hd = el("div", "rel-h"); hd.appendChild(el("b", null, "Slate " + h[1])); hd.appendChild(el("span", null, (h[2] || "") + (h[3] ? " · " + h[3].replace(/^[:\s]+/, "") : ""))); cur.appendChild(hd); cur.appendChild(el("ul")); list.appendChild(cur); return; }
+        var it = /^-\s+(.*)$/.exec(ln);
+        if (it && cur) cur.querySelector("ul").appendChild(el("li", null, it[1]));
+      });
+      if (!list.children.length) list.appendChild(el("p", "pv-none", "No release notes yet."));
+    }
+    tg.addEventListener("click", function () {
+      var open = list.hidden; if (open && !built) fill();
+      list.hidden = !open; tg.setAttribute("aria-expanded", open ? "true" : "false"); $("rel-sec").classList.toggle("open", open);
+    });
+  })();
   (function () {
     var b = window.SLATE_BUILD || "", t = $("ver-text");
     var vb = $("ver-row").querySelector("b"); if (vb) vb.textContent = "Slate " + SLATE_VERSION;
