@@ -162,6 +162,23 @@ Answer with only this JSON inside <json></json> tags:
 Watch: 2-4 players, never one who is out. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
 }
 
+// escape raw line breaks and tabs that Claude sometimes leaves inside JSON strings (paragraph breaks in long text)
+function fixJson(t) {
+  let out = "", inStr = false, esc = false;
+  for (const ch of t) {
+    if (inStr) {
+      if (esc) { out += ch; esc = false; continue; }
+      if (ch === "\\") { out += ch; esc = true; continue; }
+      if (ch === '"') { inStr = false; out += ch; continue; }
+      if (ch === "\n") { out += "\\n"; continue; }
+      if (ch === "\r") continue;
+      if (ch === "\t") { out += " "; continue; }
+      if (ch < " ") continue;
+      out += ch;
+    } else { if (ch === '"') inStr = true; out += ch; }
+  }
+  return out;
+}
 async function askClaude(env, text, big, searches) {
   const msgs = [{ role: "user", content: text }], usage = { input_tokens: 0, output_tokens: 0, server_tool_use: { web_search_requests: 0 } };
   let out = "";
@@ -185,9 +202,10 @@ async function askClaude(env, text, big, searches) {
   if (!m) throw new Error("No summary in Claude's answer: " + out.slice(-140));
   let raw = m[1].trim().replace(/^```(json)?/, "").replace(/```$/, "");
   try { return { ans: JSON.parse(raw), usage }; }
-  catch (e) {  // curly quotes and stray trailing commas are the usual slips
-    raw = raw.replace(/[\u201c\u201d]/g, '\\"').replace(/,\s*([\]}])/g, "$1");
-    return { ans: JSON.parse(raw), usage };
+  catch (e) {  // the usual slips: line breaks or tabs inside strings, curly quotes, stray trailing commas
+    raw = fixJson(raw).replace(/,\s*([\]}])/g, "$1");
+    try { return { ans: JSON.parse(raw), usage }; }
+    catch (e2) { return { ans: JSON.parse(raw.replace(/[\u201c\u201d]/g, '\\"')), usage }; }
   }
 }
 
