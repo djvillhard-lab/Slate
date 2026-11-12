@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111230521";
+<script>window.SLATE_BUILD = "20261111230644";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2978,7 +2978,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.2.1";
+  var SLATE_VERSION = "2.2.2";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -3830,7 +3830,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   function mmSetDate(iso) { var last = todayInHome(); if (iso > last) iso = last; mm.date = iso; keepScroll(renderMoments); window.scrollTo(0, 0); }
   function mmPick(k, dir) { if (mm.lg === k) return; mm.lg = k; if (dir) slideIn($("mm-body"), dir); renderMoments(); window.scrollTo(0, 0);
-    var on = document.querySelector(".mm-strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" }); }
+ }
   function mmSwipe(step) { var L2 = mmLgs(), i = -1; L2.forEach(function (o, j) { if (o[0] === mm.lg) i = j; }); var n = L2[i + step]; if (n) mmPick(n[0], step > 0 ? "l" : "r"); }
   function mmSec(title, sub) { var h = el("div", "sec mm-sec"); h.appendChild(el("h2", null, title)); if (sub) h.appendChild(el("span", "count", sub)); return h; }
   // over/underachievers in the same row as the rankings, with Claude's reason underneath
@@ -3872,6 +3872,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     });
     MM_SOON.forEach(function (n) { var b = el("span", "lg-tab mm-soon"); b.appendChild(document.createTextNode(n)); b.appendChild(el("i", null, "Soon")); strip.appendChild(b); });
     body.appendChild(strip);
+    // the strip is rebuilt on every refresh: keep the picked league in view (centered), without moving the page
+    var onT = strip.querySelector("[aria-pressed=true]");
+    if (onT) { var want = Math.max(0, onT.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft - (strip.clientWidth - onT.offsetWidth) / 2); strip.scrollLeft = mm.stripX != null && mm.stripLg === mm.lg ? mm.stripX : want; mm.stripLg = mm.lg; mm.stripX = strip.scrollLeft; }
+    strip.addEventListener("scroll", function () { mm.stripX = strip.scrollLeft; }, { passive: true });
     var day = mm.date, path = "moments/" + day;
     var nm0 = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
     if (day === today) {
