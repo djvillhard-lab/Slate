@@ -3,6 +3,11 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.11.2 (Nov 12, 2026)
+- Soccer: the full matchup section is called "Lineups and timeline" ("Lineups, timeline and recap" after the final) instead of Box score.
+- Goal ⚽ and assist (A) badges are back on the lineup pitch, plus the assister in the timeline ("· assist Doku").
+- The team stats row (possession, shots, corners…) shows again above the pitch during and after a match.
+
 ## 2.11.1 (Nov 12, 2026)
 - Soccer: shirt numbers are readable on light team colours (dark numbers on white kits).
 - Removed the player stat table during and after matches (the pitch and timeline show it).
