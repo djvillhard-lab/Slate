@@ -3,6 +3,11 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.7.0 (Nov 12, 2026)
+- The sort switch is back to just Time | League.
+- In League view, a small Reorder button sits right above the first section; it lists only the sections on that day's slate.
+- My teams is now a section you can move like any league (it starts at the top until you change it).
+
 ## 2.6.9 (Nov 12, 2026)
 - The ⇅ league-order button now always shows in the Time | League switch, so the buttons never shift. Tapping it from Time view switches to League and opens the order.
 
