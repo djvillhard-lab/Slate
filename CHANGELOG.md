@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.13.2 (Nov 12, 2026)
+- Fixed the preview line and the odds chips disagreeing (line said Giants by 1.5, chips said -2.5). The chips were holding the line from earlier in the day; they now update from the same fetch as the preview line, and an open upcoming game refreshes its odds and injuries every 20 minutes.
+
 ## 2.13.1 (Nov 12, 2026)
 - All games: a league section with games on right now shows a red live dot and count ("Live", "3 live") next to its name, even when the section is collapsed.
 
