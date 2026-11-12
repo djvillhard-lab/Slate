@@ -8,6 +8,8 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
 const MODEL = "claude-sonnet-5-5";
+// web searches allowed per summary: each one adds a cent plus thousands of input tokens
+const SEARCHES = { preview: 2, team: 2, recap: 1, moments: 2 };
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
@@ -72,6 +74,11 @@ export default {
         const day = (((await getDoc(env, "stats/usage")) || {}).days || {})[ctDay()] || {};
         if (((day.by || {})[me.id] || 0) >= me.cap) return json({ error: "That's today's limit of " + me.cap + " Claude summaries. More tomorrow." }, 429);
       }
+      if (p.kind === "moments" && !p.facts) {  // the app only says which night; the free tick job saved the facts
+        const fd = await getDoc(env, "mfacts/" + p.date + "-" + p.key);
+        if (!fd || !fd.facts) return json({ error: "This night's stats aren't ready yet. Try again in a few minutes." }, 404);
+        p.facts = fd.facts;
+      }
       const t = target(p), at = new Date().toISOString();
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
@@ -80,33 +87,8 @@ export default {
       catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind, error: "Couldn't start: " + String(e).slice(0, 120) } })); return json({ error: "Couldn't start" }, 500); }
       return json({ ok: true, at }, 202);
     }
-    // live highlight wording: one short Claude call per new headline, saved to live/<date> for everyone
-    if (url.pathname === "/api/highlight" && req.method === "POST") {
-      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
-      if (!p || !/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") || !/^[a-z0-9-]{3,60}$/.test(p.id || "") || !p.key || !p.raw) return json({ error: "bad request" }, 400);
-      const me = await whoIs(env, p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
-      if (!apiKey(env)) return json({ error: "no key" }, 503);
-      const path = "live/" + p.date, cur = (((await getDoc(env, path)) || {}).games || {})[p.id] || {};
-      if (cur.key === p.key || cur.final) return json({ ok: true, text: cur.text });
-      if ((cur.n || 0) >= 20 && !p.final) return json({ error: "limit" }, 429);
-      const ask = `You write the one live highlight shown under a game on a sports fan's slate. Game: ${String(p.game || "").slice(0, 120)}.
-Facts (JSON: candidate angles ranked by an algorithm, the score, team shooting, each team's top three players, the pregame players to watch, and the pregame storylines and headlines about this matchup): ${JSON.stringify(p.facts || {}).slice(0, 1500)}
-${p.final ? "The game is over. Write its closing line: the defining story of the game (who carried it, the stat that decided it, the run or collapse), as a fan would remember it tomorrow, in past tense." : "Pick the single most interesting thing a fan glancing at the score would want to know right now,"} and write it as one line of about 10-16 words (two very short sentences only if one won't do; never more than 22 words). Be specific and a little creative: a player going off early, a duel between two stars ("Tatum vs. Brown: 14 apiece"), a team that can't miss or can't buy a bucket, a run that flipped the game. Early in a game with little happening, frame the matchup to watch using the stars or a pregame storyline, and tie it to how it's going so far. Use only numbers from the facts, exactly. Never mention the game score, who leads or by how much, the clock, the time left, or the quarter/half/period: the app shows those already. No hype words, no emojis, no hashtags.
-Reply with only the highlight inside <line></line>. Do not explain or think out loud.`;
-      const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
-        headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-        body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 120, thinking: { type: "disabled" }, messages: [{ role: "user", content: ask }] }) });
-      const b = await r.json().catch(() => ({}));
-      if (!r.ok) return json({ error: "claude " + r.status + ": " + String((b.error || {}).message || "").slice(0, 120) }, 502);
-      const rawOut = (b.content || []).filter((x) => x.type === "text").map((x) => x.text).join(" ");
-      const lm = /<line>([\s\S]*?)(<\/line>|$)/.exec(rawOut);
-      let text = (lm ? lm[1] : rawOut).trim().replace(/^["']|["']$/g, "");
-      // a line that rambles or second-guesses itself is dropped; the app keeps its own wording instead
-      if (!text || text.length > 220 || /\b(wait|actually|hmm|the stat says|I think|let me)\b/i.test(text) || /\b\d{1,2}:\d{2}\b/.test(text) || /\b(lead(s|ing)? by|trail(s|ing)? by|at the half|halftime|quarter|left in|second half|first half)\b/i.test(text)) return json({ error: "unusable" }, 502);
-      await mergeDoc(env, path, { date: p.date, games: { [p.id]: { key: String(p.key).slice(0, 80), text, final: !!p.final, n: (cur.n || 0) + 1, at: new Date().toISOString() } } });
-      ctx.waitUntil(logUsage(env, me.id, b.usage || {}, "haiku").catch(() => {}));
-      return json({ ok: true, text });
-    }
+    // live highlights are written by the app's own rules now (free); Claude no longer words them
+    if (url.pathname === "/api/highlight") return json({ error: "off" }, 410);
     if (url.pathname === "/api/whoami" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       const me = await whoIs(env, p && p.pass);
@@ -132,7 +114,7 @@ function prompt(p) {
   const game = p.game, facts = p.facts;
   if (p.kind === "moments") return `You're writing the "Moments" page of a sports fan's app: what mattered in ${MOMENT_LGS[p.key]} on the night of ${p.date}.
 ESPN facts (JSON): every finished game that night (score, ranks, records, pregame line, overtime, notes, team leaders), plus "performers" (the night's best stat lines, ranked) and, where present, "lines" (every regular's box line): ${facts}
-You may do up to three web searches (for example "${MOMENT_LGS[p.key]} last night upsets" or a player's season averages) to judge what was unusual.
+You may do up to two web searches (for example "${MOMENT_LGS[p.key]} last night upsets" or a player's season averages) to judge what was unusual.
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
 {"over": [{"name": "full name", "id": "the player's ESPN id from the facts, or empty", "team": "ABBR", "line": "that night's box line in this form: 31 PTS · 9 REB · 5 AST (football: 312 YDS · 3 TD; soccer: 2 G · 1 A)", "why": "one line, 10-20 words: why this was well above his usual level, with the comparison (season average, role, opponent)"}],
@@ -142,7 +124,7 @@ Answer with only this JSON inside <json></json> tags:
 over: exactly 5 players who beat their norms by the most (not just the biggest totals). under: exactly 5 established players (starters or stars, judged against their own season averages, which you may look up) who fell well short; take them from "lines" when present; never someone who left hurt unless you say so. In both lists use five different teams: one player per team. games: the 5 most dramatic games (crazy endings, upsets by rank or line, comebacks, overtime, one-score finishes), best first; fewer only if fewer were played. top: only for the Premier League (10 best performances from goals, assists and key moments); [] otherwise. Use only players and games in the facts. Inside the JSON strings, never use double quotation marks; use single quotes if you must quote.`;
   if (p.kind === "team") return `Write a short summary of this team for a sports fan's app. Today is ${new Date().toDateString()}.
 Team facts (JSON): ${facts}
-Do two or three web searches for this team's news and season story (recent news from the last 4 days, and one including "The Athletic").
+Do two web searches for this team's news and season story (recent news from the last 4 days, and one including "The Athletic").
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
 {"summary": "4-6 sentences, 80-120 words: how the team is playing (record, recent results, streaks, what's working or not), the storylines from the news (injuries, trades, coaching, a standout player), and what's next (the next one or two games, with day)",
@@ -177,14 +159,14 @@ Answer with only this JSON inside <json></json> tags:
 Watch: 2-4 players, never one who is out. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
 }
 
-async function askClaude(env, text, big) {
+async function askClaude(env, text, big, searches) {
   const msgs = [{ role: "user", content: text }], usage = { input_tokens: 0, output_tokens: 0, server_tool_use: { web_search_requests: 0 } };
   let out = "";
   for (let turn = 0; turn < 4; turn++) {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-      body: JSON.stringify({ model: MODEL, max_tokens: big ? 10000 : 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }], messages: msgs })
+      body: JSON.stringify({ model: MODEL, max_tokens: big ? 10000 : 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: searches || 2 }], messages: msgs })
     });
     const body = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error("Claude API " + r.status + ": " + ((body.error || {}).message || "").slice(0, 160));
@@ -213,7 +195,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const p = event.payload, t = target(p);
     try {
-      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments"));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments", SEARCHES[p.kind]));
       const ans = res.ans || res;
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
       const now = new Date().toISOString();

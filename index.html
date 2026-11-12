@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111215246";
+<script>window.SLATE_BUILD = "20261111223133";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2962,7 +2962,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // ---- Live highlight: the one thing worth knowing about a live game right now.
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
-  var HL = {}, HL_ASK = {};
+  // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
+  var SLATE_VERSION = "2.0.0";
+  var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
   function hlCompute(lg, sum) {
@@ -3073,22 +3075,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   }
   function hlNode(g) {
     hlWatch();
+    // lines come from the app's own rules (free); a closing line Claude wrote earlier is kept for that game
     var cur = bx.live[g.id], h = cur && cur.hl, sv0 = ((HL.doc || {}).games || {})[g.id];
-    // a finished game keeps its closing line for good
-    if (sv0 && sv0.final && sv0.text) return el("p", "hl", sv0.text);
-    if (!h) return null;
-    var saved = sv0;
-    if (saved && (!saved.text || saved.text.length > 200 || /\b(wait|actually|the stat says|I should|error)\b/i.test(saved.text) || hlScorey(saved.text))) saved = null;
-    var fresh = saved && saved.key === h.ask && saved.text;
-    // keep showing Claude's last line for this game until a new one lands (it beats the plain fallback)
-    var text = fresh ? saved.text : (saved && saved.text && saved.at && Date.now() - Date.parse(saved.at) < 20 * 60000 ? saved.text : h.text);
-    if (!fresh && !HL_ASK[g.id + h.ask] && window.SLATE_SELF && state.date >= shiftDate(todayInHome(), -1)) {
-      HL_ASK[g.id + h.ask] = 1;
-      var pass = ""; try { pass = localStorage.getItem("slate-pass") || ""; } catch (e) {}
-      var wl = (((state.previews || {})[g.id] || {}).watch || []).map(function (w) { return w.name + (w.team ? " (" + w.team + ")" : ""); }).slice(0, 4);
-      if (pass) fetch("/api/highlight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass, date: state.date, id: g.id, key: h.ask, final: !!h.final, raw: h.text, game: g.away + " at " + g.home + " (" + ((LEAGUES[g.league] || {}).name || g.league) + ")", when: "", facts: { angles: h.cands, game: h.ctx, stars: wl, storylines: hlStories(g) } }) }).then(null, function () {});
-    }
-    return el("p", "hl", text);
+    if (sv0 && sv0.final && sv0.text && !hlScorey(sv0.text)) return el("p", "hl", sv0.text);
+    return h && h.text ? el("p", "hl", h.text) : null;
   }
   // ---- where a game's box comes from ----
   var bx = { live: {}, sb: {} };
@@ -3807,7 +3797,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var n = opts[i + step]; if (n) rkPick(n[0], step > 0 ? "l" : "r");
   }
   // ---- Moments: the night before in four leagues: top performers, over- and underachievers, wild finishes.
-  // moments/<night> is written each morning by the upkeep job (Claude through the worker); top performers come from standouts/<night>.
+  // moments/<night>: the free tick job adds the rule-picked finishes each morning ("auto"); Claude's take is written only when someone taps Write. Top performers come from standouts/<night>.
   var MM_LGS = [["nfl", "NFL"], ["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"]];
   var MM_SOON = ["NHL", "WCBB", "Champions League"];
   // same league order as All games (your tab order there, else the app's default)
@@ -3871,7 +3861,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       // tonight: the live top performers, straight from the box scores; the rest is written tomorrow morning
       body.appendChild(el("p", "mm-when", "Today, " + fmtDate(day, { weekday: "long", month: "short", day: "numeric" })));
       rk.date = day; rkSub();  // safe to repeat: it only subscribes once per day, and retries if the database wasn't ready yet
-      if (mm.lg === "epl") { body.appendChild(el("div", "notice", "Live player rankings aren't available for the Premier League. Today's Box Office is written tomorrow morning.")); return; }
+      if (mm.lg === "epl") { body.appendChild(el("div", "notice", "Live player rankings aren't available for the Premier League. Tonight's finishes show up tomorrow morning.")); return; }
       rkPollL(mm.lg, false);
       var dk = rkData(mm.lg), rows = dk ? dk.rows : [];
       if (!rows.length) { body.appendChild(el("div", "notice", !rk.loaded ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
@@ -3880,7 +3870,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var tlT = el("div", "bs-list mm-top"); topT.forEach(function (r, i) { tlT.appendChild(bestRow(r, i + 1, mm.lg)); }); body.appendChild(tlT);
       if (rows.length > 10) { var mbT = el("button", "mm-more", moreT ? "Show top 10" : "Show top " + Math.min(25, rows.length)); mbT.type = "button"; mbT.addEventListener("click", function () { mm.more[mm.lg] = !moreT; keepScroll(renderMoments); }); body.appendChild(mbT); }
       body.appendChild(mmHow(mm.lg));
-      body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Overachievers, underachievers and wild finishes are written tomorrow morning."));
+      body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Wild finishes show up tomorrow morning, and Claude can pick the over and underachievers when you ask."));
       return;
     }
     mmWatch(path);
@@ -3897,12 +3887,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     else when.textContent = (day === shiftDate(today, -1) ? "Last night, " : "") + fmtDate(day, { weekday: "long", month: "short", day: "numeric" });
     body.appendChild(when);
     if (doc === undefined) { body.appendChild(el("div", "notice", "Loading…")); return; }
-    if (!L || (!L.at && !L.writing)) { body.appendChild(el("div", "notice", day >= shiftDate(today, -1) && new Date().getHours() < 7 ? "Last night's Box Office is written each morning. Check back soon." : "Nothing was written for this night.")); return; }
-    if (L.none) { body.appendChild(el("div", "notice", "No " + name + " games in the week before this night.")); return; }
-    if (L.writing && !L.at) { body.appendChild(el("div", "notice", L.writing.error ? "This night isn't ready yet. Check back soon." : "Claude is writing this night's Box Office. About a minute.")); return; }
-    // 1. top performers: the night's ranking (EPL: Claude's picks)
+    if (L && L.none) { body.appendChild(el("div", "notice", "No " + name + " games in the week before this night.")); return; }
+    // 1. top performers: the night's ranking from the box scores (free). EPL's come from Claude's write-up.
     var sp = "standouts/" + night; if (mm.lg !== "epl") mmWatch(sp);
-    var all = mm.lg === "epl" ? (L.top || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), more = !!mm.more[mm.lg], top = all.slice(0, more ? 25 : 10);
+    var all = mm.lg === "epl" ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), more = !!mm.more[mm.lg], top = all.slice(0, more ? 25 : 10);
     if (top.length) {
       body.appendChild(mmSec("Top performers", "Top " + top.length));
       var tl = el("div", "bs-list mm-top");
@@ -3915,12 +3903,28 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       }
       body.appendChild(mmHow(mm.lg));
     }
-    if ((L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list"); L.over.forEach(function (r) { ol.appendChild(mmRow(r, "over")); }); body.appendChild(ol); }
-    if ((L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list"); L.under.forEach(function (r) { ul.appendChild(mmRow(r, "under")); }); body.appendChild(ul); }
-    if ((L.games || []).length) {
+    // 2. Claude's take (over/underachievers, and its pick of the finishes): only when someone taps Write
+    var wrote = !!(L && L.at);
+    if (!wrote) {
+      if (!L || !L.ready) { if (!top.length) body.appendChild(el("div", "notice", "This night's Box Office is put together each morning after 5 AM.")); }
+      else {
+        var w = L.writing, box = el("div", "cl-ctl mm-cl"), busy = (w && !w.error && Date.now() - Date.parse(w.at) < 10 * 60000) || MM_ASK[path + mm.lg];
+        if (busy) { var spn = el("span", "cl-busy"); spn.appendChild(el("i", "cl-dot")); spn.appendChild(el("span", null, "Claude is picking the over and underachievers… about a minute")); box.appendChild(spn); }
+        else {
+          if (w && w.error) box.appendChild(el("p", "pv-none cl-err", "Last try didn't finish: " + w.error));
+          var gb = el("button", "cl-go"); gb.type = "button"; gb.appendChild(icon("sparkle")); gb.appendChild(el("span", "cl-l", "Write Claude's over & underachievers")); gb.appendChild(el("span", "cl-t", "about a minute"));
+          var lgK = mm.lg; gb.addEventListener("click", function () { mmAsk(day, lgK); }); box.appendChild(gb);
+        }
+        body.appendChild(box);
+      }
+    }
+    if (wrote && (L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list"); L.over.forEach(function (r) { ol.appendChild(mmRow(r, "over")); }); body.appendChild(ol); }
+    if (wrote && (L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list"); L.under.forEach(function (r) { ul.appendChild(mmRow(r, "under")); }); body.appendChild(ul); }
+    var fins = wrote && (L.games || []).length ? L.games : ((L && L.auto && L.auto.games) || []);
+    if (fins.length) {
       body.appendChild(mmSec("Wild finishes", "Upsets and close calls"));
       var gl = el("div", "mm-list");
-      L.games.forEach(function (g) {
+      fins.forEach(function (g) {
         var c = el("div", "mm-g"), top2 = el("div", "mm-gtop");
         if (g.tag) top2.appendChild(el("span", "mm-tag t-" + String(g.tag).toLowerCase(), g.tag));
         top2.appendChild(el("b", null, g.score || ((g.away || "") + " @ " + (g.home || ""))));
@@ -3928,7 +3932,17 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       });
       body.appendChild(gl);
     }
-    body.appendChild(el("p", "pv-at", "Written by Claude from ESPN box scores" + (L.at ? " · " + new Date(L.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "")));
+    if (wrote) body.appendChild(el("p", "pv-at", "Written by Claude from ESPN box scores · " + new Date(L.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })));
+    else if (fins.length) body.appendChild(el("p", "pv-at", "Top performers and finishes from ESPN box scores."));
+  }
+  var MM_ASK = {};
+  function mmAsk(day, lg) {
+    var pass = slatePass(); if (!pass) { toast("Enter your passcode first (bottom of the page)"); return; }
+    var k = "moments/" + day + lg; MM_ASK[k] = 1; keepScroll(renderMoments);
+    fetch("/api/summary", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass, kind: "moments", key: lg, date: day }) })
+      .then(function (r) { return r.json().then(function (j) { return [r.status, j]; }, function () { return [r.status, {}]; }); })
+      .then(function (res) { if (res[0] >= 300) { delete MM_ASK[k]; keepScroll(renderMoments); toast((res[1] && res[1].error) || "Couldn't start Claude. Try again."); } else setTimeout(function () { delete MM_ASK[k]; }, 15000); },
+            function () { delete MM_ASK[k]; keepScroll(renderMoments); toast("Couldn't reach Slate's server. Try again."); });
   }
   function renderBest() {
     var body = $("best-body"); if (!body) return; body.textContent = "";
@@ -6371,6 +6385,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   $("open-rules").addEventListener("click", function () { openSub("rules"); });
   (function () {
     var b = window.SLATE_BUILD || "", t = $("ver-text");
+    var vb = $("ver-row").querySelector("b"); if (vb) vb.textContent = "Slate " + SLATE_VERSION;
     if (t) t.textContent = b ? "Built " + new Date(b.slice(0, 4) + "-" + b.slice(4, 6) + "-" + b.slice(6, 8) + "T" + b.slice(8, 10) + ":" + b.slice(10, 12) + ":00").toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + ". Tap to load the newest version." : "Tap to load the newest version.";
     $("ver-btn").addEventListener("click", function () { if (window.slateForceUpdate) window.slateForceUpdate(); else location.reload(); });
   })();

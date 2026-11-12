@@ -18,7 +18,7 @@ CT = ZoneInfo("America/Chicago"); ET = ZoneInfo("America/New_York"); UTC = datet
 SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co"
 KEY = os.environ.get("SUPABASE_SECRET", "")
 DRY = "--dry" in sys.argv
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 
 PATHS = {
     "nfl": ["football/nfl"], "ncaaf": ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
@@ -752,7 +752,7 @@ def moments_work(now, force_day=None, only=None):
     have = (d.get(f"moments/{day}") or {}).get("leagues") or {}
     for lg in ([only] if only else MOMENT_LGS):
         cur = have.get(lg) or {}
-        if cur.get("at") or cur.get("none"): continue
+        if cur.get("at") or cur.get("none") or cur.get("ready"): continue
         w = cur.get("writing") or {}
         if w and not w.get("error") and (now - (parse(w.get("at")) or now)).total_seconds() < 900: continue
         facts = moments_facts(lg, day, d.get(f"standouts/{day}"))
@@ -770,11 +770,59 @@ def moments_work(now, force_day=None, only=None):
                     back = b; moments_work(now, b, lg); break
             sb_put(f"moments/{day}", {"date": day, "leagues": {lg: ({"see": back} if back else {"none": True}) | {"at": iso(now)}}}, merge=True); continue
         if DRY: print("moments", lg, len(facts["games"]), "games"); continue
-        body = json.dumps({"pass": KEY, "kind": "moments", "key": lg, "date": day, "facts": facts}).encode()
-        try:
-            r = urllib.request.urlopen(urllib.request.Request(WORKER + "/api/summary", data=body, method="POST", headers={"content-type": "application/json", "User-Agent": "slate-tick"}), timeout=30)
-            print("moments", lg, day, r.status)
-        except Exception as e: print("moments failed", lg, e)
+        # free part only: the facts Claude would need (kept for the app's "Write" button) and rule-picked wild finishes.
+        # Claude's over/underachievers are written only when someone taps the button (they cost money).
+        sb_put(f"mfacts/{day}-{lg}", {"date": day, "league": lg, "facts": facts, "at": iso(now)})
+        sb_put(f"moments/{day}", {"date": day, "leagues": {lg: {"auto": {"games": auto_finishes(lg, facts["games"])}, "ready": iso(now)}}}, merge=True)
+        print("moments ready", lg, day)
+
+def auto_finishes(lg, games):
+    """The night's 5 wildest games by rule: overtime, one-score finishes, upsets by rank or by the line."""
+    soccer = lg == "epl"
+    out = []
+    for g in games:
+        a, h = g["away"], g["home"]; w, l = (a, h) if a["won"] else (h, a) if h["won"] else (None, None)
+        fin = str(g.get("final") or ""); ot = bool(re.search(r"\b(OT|SO|\d+OT)\b", fin))
+        close = g["margin"] <= (1 if soccer else 3); s = 0; tag = ""
+        fav = None
+        m = re.match(r"^([A-Z]{2,5})\s+-", str(g.get("line") or ""))
+        if m: fav = m.group(1)
+        upset = bool(w and l and ((l["rank"] and (not w["rank"] or w["rank"] > l["rank"])) or (fav and fav == l["abbr"])))
+        if upset: s += 6; tag = "Upset"
+        if ot: s += 5; tag = tag or "Overtime"
+        if close: s += 4; tag = tag or "Thriller"
+        if not tag: continue
+        def nm(t): return (f"No. {t['rank']} " if t.get("rank") else "") + (t.get("name") or t.get("abbr") or "")
+        sc = f"{a['abbr']} {a['score']}, {h['abbr']} {h['score']}"
+        if w:
+            why = f"{nm(w)} {'stunned' if upset else 'edged' if close else 'beat'} {nm(l)} {w['score']}-{l['score']}" + (" in overtime" if ot else "")
+            if upset and fav == l["abbr"] and not l.get("rank"): why += f" as {'an underdog' if not soccer else 'the underdog'}"
+            lead = (w.get("leaders") or [""])[0]
+            if lead and not soccer and ": " in lead:
+                cat, rest = lead.split(": ", 1); who, _, val = rest.rpartition(" ")
+                if who and val: why += f". {who} led the way with {val} {cat.lower()}"
+            why += "."
+        else: why = f"{nm(a)} and {nm(h)} drew {a['score']}-{h['score']}."
+        out.append((s, {"away": a["abbr"], "home": h["abbr"], "score": sc, "tag": tag, "why": why}))
+    out.sort(key=lambda x: -x[0])
+    return [x[1] for x in out[:5]]
+
+def slates_work(now):
+    """Day documents (every game) from ESPN, free: each morning after 4 AM, and right away for dates DJ asks to load."""
+    import slates as SL
+    loc = now.astimezone(CT); today = loc.date().isoformat()
+    d = sb_get(["prefs/load", f"slates/{today}"])
+    load = d.get("prefs/load") or {}
+    want = sorted(set((load.get("dates") or []) + (load.get("loading") or [])))
+    if want:
+        SL.run(want, True)
+        cur = sb_get(["prefs/load"]).get("prefs/load") or {}
+        cur["dates"] = [x for x in cur.get("dates") or [] if x not in want]; cur["loading"] = [x for x in cur.get("loading") or [] if x not in want]
+        sb_put("prefs/load", cur)
+    up = parse((d.get(f"slates/{today}") or {}).get("updatedAt"))
+    morning = loc.replace(hour=4, minute=0, second=0, microsecond=0)
+    if loc.hour >= 4 and (not up or up < morning):
+        SL.run([(loc.date() + datetime.timedelta(days=k)).isoformat() for k in range(4)], False)
 
 def main():
     if not KEY: sys.exit("SUPABASE_SECRET is not set")
@@ -961,6 +1009,8 @@ def main():
     print("todo:", [(t.get("id") or t.get("key"), t["why"]) for t in todo])
     try: moments_work(now)
     except Exception as e: print("moments error", e)
+    try: slates_work(now)
+    except Exception as e: print("slates error", e)
     print("writes:", WRITES or "none")
 
 if __name__ == "__main__":
