@@ -87,11 +87,11 @@ export default {
       const me = await whoIs(env, p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
       if (!apiKey(env)) return json({ error: "no key" }, 503);
       const path = "live/" + p.date, cur = (((await getDoc(env, path)) || {}).games || {})[p.id] || {};
-      if (cur.key === p.key) return json({ ok: true, text: cur.text });
-      if ((cur.n || 0) >= 20) return json({ error: "limit" }, 429);
+      if (cur.key === p.key || cur.final) return json({ ok: true, text: cur.text });
+      if ((cur.n || 0) >= 20 && !p.final) return json({ error: "limit" }, 429);
       const ask = `You write the one live highlight shown under a game on a sports fan's slate. Game: ${String(p.game || "").slice(0, 120)}.
 Facts (JSON: candidate angles ranked by an algorithm, the score, team shooting, each team's top three players, the pregame players to watch, and the pregame storylines and headlines about this matchup): ${JSON.stringify(p.facts || {}).slice(0, 1500)}
-Pick the single most interesting thing a fan glancing at the score would want to know right now, and write it as one line of about 10-16 words (two very short sentences only if one won't do; never more than 22 words). Be specific and a little creative: a player going off early, a duel between two stars ("Tatum vs. Brown: 14 apiece at the half"), a team that can't miss or can't buy a bucket, a run that flipped the game. Early in a game with little happening, frame the matchup to watch using the stars or a pregame storyline, and tie it to how it's going so far. Use only numbers from the facts, exactly. Never mention the game score, who leads or by how much, the clock, the time left, or the quarter/half/period: the app shows those already. No hype words, no emojis, no hashtags.
+${p.final ? "The game is over. Write its closing line: the defining story of the game (who carried it, the stat that decided it, the run or collapse), as a fan would remember it tomorrow, in past tense." : "Pick the single most interesting thing a fan glancing at the score would want to know right now,"} and write it as one line of about 10-16 words (two very short sentences only if one won't do; never more than 22 words). Be specific and a little creative: a player going off early, a duel between two stars ("Tatum vs. Brown: 14 apiece"), a team that can't miss or can't buy a bucket, a run that flipped the game. Early in a game with little happening, frame the matchup to watch using the stars or a pregame storyline, and tie it to how it's going so far. Use only numbers from the facts, exactly. Never mention the game score, who leads or by how much, the clock, the time left, or the quarter/half/period: the app shows those already. No hype words, no emojis, no hashtags.
 Reply with only the highlight inside <line></line>. Do not explain or think out loud.`;
       const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
         headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
@@ -103,7 +103,7 @@ Reply with only the highlight inside <line></line>. Do not explain or think out 
       let text = (lm ? lm[1] : rawOut).trim().replace(/^["']|["']$/g, "");
       // a line that rambles or second-guesses itself is dropped; the app keeps its own wording instead
       if (!text || text.length > 220 || /\b(wait|actually|hmm|the stat says|I think|let me)\b/i.test(text) || /\b\d{1,2}:\d{2}\b/.test(text) || /\b(lead(s|ing)? by|trail(s|ing)? by|at the half|halftime|quarter|left in|second half|first half)\b/i.test(text)) return json({ error: "unusable" }, 502);
-      await mergeDoc(env, path, { date: p.date, games: { [p.id]: { key: String(p.key).slice(0, 80), text, n: (cur.n || 0) + 1, at: new Date().toISOString() } } });
+      await mergeDoc(env, path, { date: p.date, games: { [p.id]: { key: String(p.key).slice(0, 80), text, final: !!p.final, n: (cur.n || 0) + 1, at: new Date().toISOString() } } });
       ctx.waitUntil(logUsage(env, me.id, b.usage || {}, "haiku").catch(() => {}));
       return json({ ok: true, text });
     }
