@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.7.5 (Nov 12, 2026)
+- All games: slimmer header so the games get more room: smaller league tabs, filters and day picker, and less space around the search button.
+
 ## 2.7.4 (Nov 12, 2026)
 - Quick box score under a game is more compact so the score and the players fit on screen together: slimmer win-chance bar (no caption), shorter team tabs, tighter team stats row, and no venue line once a game has started.
 
