@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111211231";
+<script>window.SLATE_BUILD = "20261111211439";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3658,7 +3658,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (rk.docDate !== day) return;
       rk.doc = snap.exists ? snap.data() : null; rk.loaded = true;
       if (state.view === "best") { keepScroll(renderBest); rkPoll(true); }
-    }, function () { rk.loaded = true; });
+      if (state.view === "moments") { if (mm.date === day) rkPollL(mm.lg, true); keepScroll(renderMoments); }
+    }, function () { rk.loaded = true; if (state.view === "moments") keepScroll(renderMoments); });
   }
   function rkDefaultDate() {
     var today = todayInHome(), now = Date.now();
