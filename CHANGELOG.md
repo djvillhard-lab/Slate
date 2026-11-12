@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.3.2 (Nov 11, 2026)
+- The refresh button at the top now resets the app: it reloads the newest version with fresh data, which fixes anything stuck.
+- Removed the Refresh link at the bottom of the slate (scores and games update on their own).
+
 ## 2.3.1 (Nov 11, 2026)
 - Folding the phone no longer leaves the menu scrolling with the page: the app resets its zoom and size right after a fold.
 
