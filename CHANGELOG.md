@@ -3,6 +3,11 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.12.0 (Nov 12, 2026)
+- Smarter soccer one-liners. They now tell the story of the match instead of just the latest goal: every scorer for a team ("Kane (2), Saka and Foden have scored for England"), comebacks ("came from two goals down to win, through …"), late winners and equalizers, a team running the game (possession plus shots), winning without the ball, no shots on target, goal-fests, still goalless, red cards with the minute, and keepers keeping a clean sheet.
+- Penalties: a penalty that's just been given jumps to the top of the line ("Penalty to Belgium — Doku was brought down"), and missed or saved penalties get their own line.
+- The soccer timeline now shows penalties too: who won it and who gave it away, plus missed and saved penalties.
+
 ## 2.11.4 (Nov 12, 2026)
 - Soccer games now get the one-line live summary under them on the slate: goals (with the assist, headers, penalties), braces and hat tricks, two quick goals, red cards, possession, shot gaps and busy keepers. After the final whistle the line switches to past tense.
 
