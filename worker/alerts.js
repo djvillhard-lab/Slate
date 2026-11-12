@@ -148,10 +148,11 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
   const rem = new Set([...((p.reminders || {}).lineup ? slate : []), ...((p.reminders || {}).myTeams ? mine : [])]);
   for (const i of [...rem].sort((x, y) => startOf(x) - startOf(y))) {
     const g = byid[i], t = startOf(i);
-    if (!g || isNaN(t) || sent.reminders.includes(i) || ["in", "post"].includes((sc[i] || {}).state)) continue;
-    if (t > now && t - now <= 3600000) {
+    if (!g || isNaN(t) || sent.reminders.includes(i) || (sc[i] || {}).state === "post") continue;
+    // right at the start time (the cron runs every minute); a game that already started within the last 10 minutes still counts
+    if (now >= t && now - t <= 10 * 60000) {
       const orig = new Date(g.start), moved = Math.abs(orig - t) >= 60000;
-      out.push(["reminders", i, "Starting soon", `${clock(t)}` + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}`]);
+      out.push(["reminders", i, "Starting now", `Starting now` + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}`]);
     }
   }
   if ((p.reminders || {}).lineup) for (const c of customs || []) {
@@ -160,10 +161,10 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     const cp = ctParts(now), off = new Date(now.toLocaleString("en-US", { timeZone: "America/Chicago" })) - new Date(now.toLocaleString("en-US", { timeZone: "UTC" }));
     const t = new Date(Date.parse(`${cp.date}T${m[1].padStart(2, "0")}:${m[2]}:00Z`) - off);
     const k = "c:" + c.id;
-    if (!sent.reminders.includes(k) && t > now && t - now <= 3600000) out.push(["reminders", k, "Starting soon", `${clock(t)}: ${c.title || ""}` + (c.tv ? ` on ${c.tv}` : "")]);
+    if (!sent.reminders.includes(k) && now >= t && now - t <= 10 * 60000) out.push(["reminders", k, "Starting now", `Starting now: ${c.title || ""}` + (c.tv ? ` on ${c.tv}` : "")]);
   }
   if ((p.live || {}).myTeams && !spoil) for (const i of mine) {
-    const s = sc[i] || {}, g = byid[i]; if (!g || s.state !== "in") continue;
+    const s = sc[i] || {}, g = byid[i]; if (!g || s.state !== "in" || out.some((x) => x[0] === "reminders" && x[1] === i)) continue;  // the start alert already covers this minute
     const body = `${g.awayShort} ${s.a}, ${g.homeShort} ${s.h} · ${s.detail || ""}`, last = Date.parse((sent.liveAt || {})[i] || "");
     if (sent.live[i] !== body && (isNaN(last) || now - last >= 55 * 60000)) out.push(["live", i, "Live", body]);
   }

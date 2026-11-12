@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.15.2 (Nov 12, 2026)
+- Game reminders now arrive right at the start time ("Starting now: …") instead of up to an hour early. Custom games on the slate work the same way. If a game of one of your teams starts, you get the one alert, not a reminder and a live score in the same minute.
+
 ## 2.15.1 (Nov 12, 2026)
 - Box Office on past nights only shows (and swipes through) leagues that actually played that night. Leagues with no games are gone from the tabs, and it never sits on one.
 
