@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111205526";
+<script>window.SLATE_BUILD = "20261111205632";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1511,6 +1511,7 @@ nav.dock.menu-open .dock-back { display: none; }
 @keyframes miUp { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .menu-pop .mi { animation: none; } }
 /* no zooming: no double-tap zoom, and text fields are 16px so iOS doesn't zoom in when you type */
+html, body { max-width: 100%; overflow-x: hidden; }
 html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 input, select, textarea { font-size: 16px !important; }
 /* Player rankings: the day picker floats bottom-right beside the menu button, where the right thumb rests */
@@ -3337,7 +3338,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function bxPlayers(g, b, compact, season) {
     state.bxSide = state.bxSide || {};
     var side = state.bxSide[g.id]; if (side == null) side = isFav(g.home, g.league) && !isFav(g.away, g.league) ? 1 : 0;
-    var sport = BX_SPORT[g.league] || "", wrap = el("div", "bx-pl"), seg = el("div", "bx-seg");
+    var sport = BX_SPORT[g.league] || "", wrap = el("div", "bx-pl"), seg = el("div", "bx-tabs2");  // same team tabs in the quick look and the full box score
     seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Pick a team");
     b.teams.forEach(function (t, i) {
       var bt = el("button", null, t.abbr || abbr(g, i ? "home" : "away")); bt.type = "button";
@@ -3349,7 +3350,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var t = b.teams[side] || b.teams[0], groups = (t.groups || []).filter(function (gr) { return !compact || (BX_COMPACT[sport] || {})[gr.k]; });
     if (!groups.length) { wrap.appendChild(el("p", "bx-dnp", season ? "No season stats for this team yet." : "No player stats yet.")); return wrap; }
     if (!compact) {
-      wrap.classList.add("real"); seg.className = "bx-tabs2";
+      wrap.classList.add("real");
       if (!season) { var tcard = bxTeamCard(g, t, sport); if (tcard) wrap.appendChild(tcard); }
     }
     groups.forEach(function (gr) {
@@ -6505,11 +6506,19 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     $("pane-l").hidden = !split;
     var sec = $("view-lineup");
     if (split && sec.parentNode !== $("pbody-l")) { $("pbody-l").appendChild(sec); if (state.view === "lineup") state.view = "moments"; }
-    if (!split && sec.parentNode !== $("main-wrap")) { $("main-wrap").insertBefore(sec, $("main-wrap").firstChild); if (state.view === "games" || state.view === "tv" || state.view === "game") state.view = "lineup"; }
+    // folding the phone always lands on the slate
+    if (!split && sec.parentNode !== $("main-wrap")) { $("main-wrap").insertBefore(sec, $("main-wrap").firstChild); state.view = "lineup"; state.menuOpen = false; state.backTo = null; window.scrollTo(0, 0); }
     applyLook(); render();
   }
   [mqSplit, mqLand, mqBig].forEach(function (mq) { if (mq.addEventListener) mq.addEventListener("change", function () { applyLayout(); }); else if (mq.addListener) mq.addListener(function () { applyLayout(); }); });
   window.addEventListener("resize", function () { applyLayout(); alignSides($("lineup-body")); alignSides($("games-body")); });
+  function fitWidth() {
+    var vp = document.querySelector('meta[name="viewport"]'); if (!vp) return;
+    var base = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
+    vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); }, 60);
+  }
+  window.addEventListener("orientationchange", function () { setTimeout(fitWidth, 250); });
+  if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener("change", function () { setTimeout(fitWidth, 250); });
   function nudgeFold(d) { state.foldNudge = d === 0 ? 0 : (Number(state.foldNudge) || 0) + d; saveSettings(); applyLayout(true); toast(isDuo ? "Split moved" : "Applies when the phone is open and sideways"); }
   $("fold-left").addEventListener("click", function () { nudgeFold(-4); });
   $("fold-right").addEventListener("click", function () { nudgeFold(4); });
