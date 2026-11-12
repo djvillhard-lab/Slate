@@ -850,13 +850,15 @@ def main():
     # other people's slates (users/registry → u/<id>/mine/...) also get odds and facts
     reg = (sb_get(["users/registry"]).get("users/registry") or {}).get("users") or {}
     uids = sorted({u.get("id") for u in reg.values() if u.get("id") and u.get("id") != "dj"})
-    others = []
+    others = []; people = [{"prefix": "", "slate": slate, "mine": None, "customs": (lineup or {}).get("custom") or []}]
     if uids:
         ud = sb_get([f"u/{i}/mine/user-settings" for i in uids] + [f"u/{i}/mine/user-lineup-{D}" for i in uids])
         for i in uids:
             us = ud.get(f"u/{i}/mine/user-settings") or {}
             extra = compute_slate(games, us.get("rules"), us.get("teams") or [], ud.get(f"u/{i}/mine/user-lineup-{D}"))
             others += [x for x in extra[:12] if x not in slate and x not in others]
+            people.append({"prefix": f"u/{i}/", "slate": extra, "mine": my_team_ids(games, us.get("teams") or []),
+                           "customs": (ud.get(f"u/{i}/mine/user-lineup-{D}") or {}).get("custom") or []})
     load = docs.get("prefs/load") or {}
     requested = [i for i in (load.get("previews") or []) if load.get("previewDate") == D and i in byid and i not in slate]
     mine = my_team_ids(games, teams)
@@ -1007,6 +1009,12 @@ def main():
         else: print("standouts failed", d, r.stderr[-300:])
 
     print("todo:", [(t.get("id") or t.get("key"), t["why"]) for t in todo])
+    # ---- 7. phone alerts (push notifications, free)
+    try:
+        import alerts
+        people[0]["mine"] = mine
+        alerts.run(sb_get, sb_put, KEY, now, D, games, sc, people, dry=DRY)
+    except Exception as e: print("alerts error", e)
     try: moments_work(now)
     except Exception as e: print("moments error", e)
     try: slates_work(now)

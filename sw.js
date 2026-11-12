@@ -1,6 +1,6 @@
 /* Slate: opens instantly from the phone's copy of the app, then updates in the background.
    A link with ?v=<build> (what the update check opens) always comes from the network. */
-var SHELL = "slate-shell-v10";
+var SHELL = "slate-shell-v11";
 self.addEventListener("install", function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(SHELL).then(function (c) { return c.addAll(["./", "supabase.js", "icon.png"]); }).catch(function () {}));
@@ -33,4 +33,17 @@ self.addEventListener("fetch", function (e) {
   if (/(supabase\.js|icon\.png)$/.test(url.pathname)) {
     e.respondWith(caches.match(req, { ignoreSearch: true }).then(function (hit) { return hit || fresh(req, req); }));
   }
+});
+
+// game alerts: sent by Slate's 10-minute job as push notifications
+self.addEventListener("push", function (e) {
+  var m = {}; try { m = e.data ? e.data.json() : {}; } catch (x) { m = { body: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(m.title || "Slate", { body: m.body || "", tag: m.tag || undefined, icon: "icon.png", badge: "icon.png" }));
+});
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (cs) {
+    for (var i = 0; i < cs.length; i++) { if ("focus" in cs[i]) return cs[i].focus(); }
+    return self.clients.openWindow("./");
+  }));
 });

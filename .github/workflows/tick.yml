@@ -1,6 +1,6 @@
 name: Slate tick
 # The number work for the Slate app: scores, odds, start times, standings and rankings,
-# plus the list of previews Claude needs to write. Free on GitHub, every 10 minutes.
+# day slates, Box Office facts and phone alerts. Free on GitHub, every 10 minutes.
 on:
   schedule:
     - cron: "3,13,23,33,43,53 * * * *"
@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - name: Push library
+        run: pip install --quiet pywebpush
       - name: Tick
         env:
           SUPABASE_SECRET: ${{ secrets.SUPABASE_SECRET }}

@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111223133";
+<script>window.SLATE_BUILD = "20261111224025";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1715,8 +1715,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 
   <section id="view-notify" aria-label="Notifications" hidden>
     <div class="optrow master">
-      <div><b>Notifications</b><span id="nt-state">Alerts arrive as push notifications from Claude.</span></div>
+      <div><b>Notifications</b><span id="nt-state">Alerts arrive as notifications from Slate.</span></div>
       <div class="seg seg2" data-pref="enabled" role="group" aria-label="Notifications"><button type="button" data-v="on">On</button><button type="button" data-v="off">Off</button></div>
+    </div>
+    <div class="optrow" id="nt-phone">
+      <div><b>This phone</b><span id="nt-phone-state">Checking…</span></div>
+      <button type="button" class="outline quiet" id="nt-phone-btn" hidden>Turn on</button>
     </div>
     <div id="nt-body">
       <div class="sec"><h2>Daily brief</h2></div>
@@ -1738,7 +1742,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       </div>
 
       <div class="sec"><h2>Game reminders</h2></div>
-      <p class="hint">Sent at the top of the hour before a game starts, so 30 to 60 minutes ahead.</p>
+      <p class="hint">Sent within the hour before a game starts.</p>
       <div class="optrow">
         <div><b>My lineup games</b></div>
         <div class="seg seg2" data-pref="reminders.lineup" role="group" aria-label="Reminders for my lineup games"><button type="button" data-v="on">On</button><button type="button" data-v="off">Off</button></div>
@@ -2963,7 +2967,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
   // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
-  var SLATE_VERSION = "2.0.0";
+  var SLATE_VERSION = "2.1.0";
   var HL = {};
   function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
   function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
@@ -5711,7 +5715,46 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     $("nt-body").classList.toggle("off", !state.notify.enabled);
     $("nt-quiet-row").hidden = !state.notify.quiet.on;
     $("nt-spoiler").textContent = state.showScores ? "Score alerts include the score. Hide scores in Settings to get spoiler-free alerts." : "Spoiler-free: scores are hidden in Settings, so alerts only say when a game ends.";
-    $("nt-state").textContent = state.notify.enabled ? "Alerts arrive as push notifications from Claude." : "You won't get any game notifications.";
+    $("nt-state").textContent = state.notify.enabled ? "Alerts arrive as notifications from Slate." : "You won't get any game notifications.";
+    pushState();
+  }
+  // ---- phone alerts: this phone's push subscription, saved to prefs/push (the 10-minute job sends the alerts) ----
+  var PUSH_KEY = "BGOiSg4w33W5Lui867BMvNq2fDnRLjdoOADhr5Vx_C2gOaibYV8joMK8K6ibx9o8sZFByk_K107NupNiJNORWNY";
+  var pushInfo = { checked: false, on: false, busy: false };
+  function pushOk() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+  function pushKeyBytes() { var b = PUSH_KEY.replace(/-/g, "+").replace(/_/g, "/"); b += "===".slice((b.length + 3) % 4); var r = atob(b), u = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) u[i] = r.charCodeAt(i); return u; }
+  function pushState() {
+    var st = $("nt-phone-state"), bt = $("nt-phone-btn"); if (!st) return;
+    if (!pushOk()) { st.textContent = "Open Slate from your Home Screen icon to turn on alerts for this phone."; bt.hidden = true; return; }
+    if (!pushInfo.checked && !pushInfo.busy) {
+      pushInfo.busy = true;
+      navigator.serviceWorker.ready.then(function (r) { return r.pushManager.getSubscription(); }).then(function (sub) {
+        pushInfo.on = !!sub && Notification.permission === "granted"; pushInfo.checked = true; pushInfo.busy = false;
+        if (sub && pushInfo.on) pushSave(sub, true); pushState();
+      }, function () { pushInfo.checked = true; pushInfo.busy = false; pushState(); });
+    }
+    if (Notification.permission === "denied") { st.textContent = "Notifications are blocked for Slate. Turn them on in iPhone Settings > Notifications > Slate."; bt.hidden = true; return; }
+    st.textContent = pushInfo.on ? "Alerts are on for this phone." : "Alerts aren't on for this phone yet.";
+    bt.hidden = pushInfo.on || !pushInfo.checked; bt.textContent = pushInfo.busy ? "Turning on…" : "Turn on";
+  }
+  function pushSave(sub, quiet) {
+    var j = sub.toJSON ? sub.toJSON() : sub;
+    return db.doc("prefs/push").get().then(function (sn) {
+      var subs = ((sn.exists ? sn.data() : {}) || {}).subs || [];
+      if (subs.some(function (x) { return x.endpoint === j.endpoint; })) return;
+      subs = subs.filter(function (x) { return x && x.endpoint; }).slice(-3);
+      subs.push({ endpoint: j.endpoint, keys: j.keys, at: new Date().toISOString(), welcomed: false });
+      return db.doc("prefs/push").set({ subs: subs });
+    }).then(function () { if (!quiet) toast("Alerts are on. A test alert arrives within 10 minutes."); }, function () { if (!quiet) toast("Couldn't save this phone. Try again."); });
+  }
+  function pushTurnOn() {
+    if (!pushOk() || pushInfo.busy) return;
+    pushInfo.busy = true; pushState();
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== "granted") throw new Error("denied");
+      return navigator.serviceWorker.ready.then(function (r) { return r.pushManager.getSubscription().then(function (s) { return s || r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKeyBytes() }); }); });
+    }).then(function (sub) { pushInfo.on = true; pushInfo.busy = false; pushState(); return pushSave(sub, false); },
+      function () { pushInfo.busy = false; pushState(); toast("Notifications weren't allowed."); });
   }
 
   // ---------- settings ----------
@@ -6383,6 +6426,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   $("nav-tv").addEventListener("click", function () { menuGo("tv"); });
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
   $("open-rules").addEventListener("click", function () { openSub("rules"); });
+  $("nt-phone-btn").addEventListener("click", pushTurnOn);
   (function () {
     var b = window.SLATE_BUILD || "", t = $("ver-text");
     var vb = $("ver-row").querySelector("b"); if (vb) vb.textContent = "Slate " + SLATE_VERSION;
