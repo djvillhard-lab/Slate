@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111213538";
+<script>window.SLATE_BUILD = "20261111213622";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3874,8 +3874,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (!rows.length) { body.appendChild(el("div", "notice", !rk.loaded ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
       var moreT = !!mm.more[mm.lg], topT = rows.slice(0, moreT ? 25 : 10);
       body.appendChild(mmSec("Top performers", dk.live ? dk.live + " live" : "Top " + topT.length));
-      var tlT = el("div", "bs-list mm-top"); topT.forEach(function (r, i) { tlT.appendChild(bestRow(r, i + 1, mm.lg)); }); body.appendChild(tlT); body.appendChild(mmHow(mm.lg));
+      var tlT = el("div", "bs-list mm-top"); topT.forEach(function (r, i) { tlT.appendChild(bestRow(r, i + 1, mm.lg)); }); body.appendChild(tlT);
       if (rows.length > 10) { var mbT = el("button", "mm-more", moreT ? "Show top 10" : "Show top " + Math.min(25, rows.length)); mbT.type = "button"; mbT.addEventListener("click", function () { mm.more[mm.lg] = !moreT; keepScroll(renderMoments); }); body.appendChild(mbT); }
+      body.appendChild(mmHow(mm.lg));
       body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Overachievers, underachievers and wild finishes are written tomorrow morning."));
       return;
     }
@@ -3903,12 +3904,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       body.appendChild(mmSec("Top performers", "Top " + top.length));
       var tl = el("div", "bs-list mm-top");
       top.forEach(function (r, i) { tl.appendChild(mm.lg === "epl" ? mmPerson(r, "top", i) : bestRow(r, i + 1, mm.lg)); });
-      body.appendChild(tl); body.appendChild(mmHow(mm.lg));
+      body.appendChild(tl);
       if (all.length > 10) {
         var mb = el("button", "mm-more", more ? "Show top 10" : "Show top " + Math.min(25, all.length)); mb.type = "button";
         mb.addEventListener("click", function () { mm.more[mm.lg] = !more; keepScroll(renderMoments); });
         body.appendChild(mb);
       }
+      body.appendChild(mmHow(mm.lg));
     }
     if ((L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list"); L.over.forEach(function (r) { ol.appendChild(mmRow(r, "over")); }); body.appendChild(ol); }
     if ((L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list"); L.under.forEach(function (r) { ul.appendChild(mmRow(r, "under")); }); body.appendChild(ul); }
