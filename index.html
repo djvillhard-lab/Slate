@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111181952";
+<script>window.SLATE_BUILD = "20261111182259";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1334,6 +1334,15 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 /* keep wide box scores inside the page so they scroll sideways instead of being cut off */
 #game-body, #game-body > *, #game-body .gv-card, .bx-pl, .bx-pl > *, .bxp, .bxp-r { min-width: 0; max-width: 100%; }
 .bxp-cells { touch-action: pan-x pan-y; }
+/* full box score: the whole group scrolls sideways as one table; faces and names stay put */
+.bxp-sc { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
+.bxp-sc::-webkit-scrollbar { display: none; }
+.bxp-sc .bxp { width: max-content; min-width: 100%; max-width: none; grid-template-columns: auto auto; }
+.bxp-sc .bxp-r { max-width: none; }
+.bxp-sc .bxp-cells { overflow: visible; }
+.bxp-fw { position: sticky; left: 0; z-index: 2; background: var(--card); padding-right: 2px; align-self: stretch; display: grid; align-items: center; }
+.bxp-sc .bxp-nm { position: sticky; left: 48px; z-index: 1; width: max-content; max-width: calc(100vw - 150px); }
+.bxp-sc .bxp-sec { position: sticky; left: 0; display: inline-block; }
 .bx-inj b { color: var(--muted); font-weight: 800; }
 .rk-idle { opacity: .8; } .rk-idle .rk-foot { color: var(--dim); font-weight: 650; }
 .tm-tbl th .pstar { width: 26px; height: 26px; margin: 0 4px 0 -4px; vertical-align: middle; }
@@ -3134,28 +3143,28 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var cols = gr.cols || [], idx = bxOrder(sport, gr), plus = cols.indexOf("+/-");
     var played = gr.rows.filter(function (r) { return !("dnp" in r); }), out = gr.rows.filter(function (r) { return "dnp" in r; });
     // every row's column gets the same width, so the columns line up and scroll together
-    var big = window.matchMedia && matchMedia("(max-width: 700px)").matches ? 10.5 : 13.5, widths = {};
+    var big = 10.5, widths = {};
     idx.forEach(function (i) { var m = String(cols[i] || "").length * 7.5; played.forEach(function (r) { m = Math.max(m, String(r.s[i] == null ? "–" : r.s[i]).length * big); }); widths[i] = Math.ceil(Math.max(26, m)); });
-    var wrap = el("div", "bxp-list");
+    var wrap = el("div", "bxp-list"), sc = el("div", "bxp-sc");  // one sideways scroller for the whole group
     var split = sport === "bball" && gr.k !== "game" && played.some(function (r) { return r.st; }) && played.some(function (r) { return !r.st; });
     var parts = split ? [["Starters", played.filter(function (r) { return r.st; })], ["Bench", played.filter(function (r) { return !r.st; })]] : [[null, played]];
     parts.forEach(function (pt) {
-      if (pt[0]) wrap.appendChild(el("b", "bxp-sec", pt[0]));
+      if (pt[0]) sc.appendChild(el("b", "bxp-sec", pt[0]));
       pt[1].forEach(function (r) {
-        var row = el("div", "bxp");
-        row.appendChild(bxFace(g, r, team));
+        var row = el("div", "bxp"), fw = el("span", "bxp-fw");
+        fw.appendChild(bxFace(g, r, team)); row.appendChild(fw);
         var right = el("div", "bxp-r"), nm = el("div", "bxp-nm");
         nm.appendChild(el("span", "bxp-n", r.n));
         if (r.p) nm.appendChild(el("span", "bxp-p", "· " + r.p));
         if (r.st && !split && sport !== "bball") nm.appendChild(el("span", "bxp-s", "S"));
         right.appendChild(nm);
         right.appendChild(bxCells(cols, idx, r.s, plus, widths));
-        row.appendChild(right); wrap.appendChild(row);
+        row.appendChild(right); sc.appendChild(row);
       });
     });
+    if (played.length) wrap.appendChild(sc);
     if (!played.length) wrap.appendChild(el("p", "bx-dnp", live ? "Nobody has played yet." : "No stats."));
     bxBench(wrap, out, live, team);
-    bxSync(wrap);
     return wrap;
   }
   function bxPlayers(g, b, compact, season) {
@@ -6050,9 +6059,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
       mode = swipeMode(e.target, t); if (!mode) return;
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
-      scroller = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub"); sx0 = scroller ? scroller.scrollLeft : 0;
+      scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub"); sx0 = scroller ? scroller.scrollLeft : 0;
       // inside a box score or stats table that scrolls sideways, the finger scrolls the table, never the page
-      var wide = e.target.closest(".bx-scroll, .bxp-cells, .tm-tbl-w, .bx-ts, .bxp, .bx");
+      var wide = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, .bx-ts, .bxp, .bx");
       if (wide && (wide.scrollWidth > wide.clientWidth + 2 || (scroller && scroller.scrollWidth > scroller.clientWidth + 2))) { x0 = null; return; }
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     }, { passive: true });
