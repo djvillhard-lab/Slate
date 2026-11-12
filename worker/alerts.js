@@ -209,6 +209,7 @@ async function liveScores(games, want, now) {
 export async function runAlerts(env) {
   if (!env.SUPABASE_SECRET) return;
   const now = new Date(), D = ctParts(new Date(now.getTime() - 4 * 3600000)).date, ct = ctParts(now);
+  if (now.getUTCMinutes() % 10 === 0) await putDoc(env, "stats/cron", { at: now.toISOString() });  // heartbeat: shows the minute job is running
   const base = await getDocs(env, [`alertsets/${D}`]);
   const aset = base[`alertsets/${D}`]; if (!aset || !aset.people) return;
   const people = aset.people, games = aset.games || {};
