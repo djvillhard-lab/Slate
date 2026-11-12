@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111185708";
+<script>window.SLATE_BUILD = "20261111190022";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1321,7 +1321,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-row .rk-st i { font-size: 11.5px; }
 .rk-row > .pstar { justify-self: end; }
 /* live highlight under a slate game */
-.hl { margin: 8px 0 0; font-size: 13px; line-height: 1.35; font-weight: 600; color: #F2867C; }
+.hl { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; line-height: 1.35; font-weight: 600; color: #F2867C; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 :root[data-look="light"] .hl { color: #C42B1F; }
 /* Moments */
 .mm-soon { opacity: .4; pointer-events: none; display: inline-flex; align-items: baseline; gap: 5px; }
@@ -3056,7 +3056,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function hlNode(g) {
     var cur = bx.live[g.id], h = cur && cur.hl; if (!h) return null;
     hlWatch();
-    var saved = ((HL.doc || {}).games || {})[g.id], fresh = saved && saved.key === h.ask && saved.text;
+    var saved = ((HL.doc || {}).games || {})[g.id];
+    if (saved && (!saved.text || saved.text.length > 200 || /\b(wait|actually|the stat says|I should|error)\b/i.test(saved.text))) saved = null;
+    var fresh = saved && saved.key === h.ask && saved.text;
     // keep showing Claude's last line for this game until a new one lands (it beats the plain fallback)
     var text = fresh ? saved.text : (saved && saved.text && saved.at && Date.now() - Date.parse(saved.at) < 20 * 60000 ? saved.text : h.text);
     if (!fresh && !HL_ASK[g.id + h.ask] && window.SLATE_SELF) {
@@ -4558,7 +4560,6 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var cr = el("span", "tm"); var cb = badgeFor("+", "custom"); cb.style.background = "var(--raise)"; cb.style.color = "var(--ink)"; cb.style.setProperty("--ring", "transparent"); cr.appendChild(cb);
       var cw = el("span", "nmw"); cw.appendChild(el("span", "nm", g.home)); cr.appendChild(cw); cr.appendChild(el("span")); main.appendChild(cr);
     } else { sideOrder(g).forEach(function (s2) { main.appendChild(teamLine(g, s2)); }); }
-    if (mode === "lineup" && !g.custom && st.kind === "live") { var hn = hlNode(g); if (hn) main.appendChild(hn); else bxNeed(g); }
     var trayMode = mode === "lineup" || (mode === "games" && !g.custom);
     if (trayMode) {
       var wide = !isDuo || mode === "games";
@@ -4629,6 +4630,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     }
     row.appendChild(main);
     row.appendChild(statusSide(g, mode));
+    // the live highlight runs the full width of the card, under the teams and the clock
+    if (mode === "lineup" && !g.custom && st.kind === "live") { var hn = hlNode(g); if (hn) row.appendChild(hn); else bxNeed(g); }
     if (openTray) row.appendChild(openTray);
     if (mode === "lineup" && isDuo && state.view === "game" && state.gameId === g.id) row.classList.add("picked");
     if (mode === "lineup" && !g.custom) {
