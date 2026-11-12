@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111212226";
+<script>window.SLATE_BUILD = "20261111213039";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -3875,9 +3875,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var doc = mm.docs[path], L = doc && doc.leagues && doc.leagues[mm.lg], name = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
     var night = day, when = el("p", "mm-when");
     if (L && L.see) {
-      night = L.see; var p2 = "moments/" + night; mmWatch(p2); L = ((mm.docs[p2] || {}).leagues || {})[mm.lg];
-      body.appendChild(el("div", "notice mm-none", "No " + name + " games " + (day === shiftDate(today, -1) ? "last night" : "on " + fmtDate(day, { weekday: "long", month: "short", day: "numeric" })) + "."));
-      when.textContent = "Latest: " + fmtDate(night, { weekday: "long", month: "short", day: "numeric" });
+      // no games that night: say so, and offer a jump to the league's latest night instead of repeating it here
+      when.textContent = fmtDate(day, { weekday: "long", month: "short", day: "numeric" }); body.appendChild(when);
+      var nn = el("div", "notice mm-none"); nn.appendChild(el("span", null, "No " + name + " games " + (day === shiftDate(today, -1) ? "last night" : "that night") + ". "));
+      var jb = el("button", "pv-get", "Go to " + fmtDate(L.see, { weekday: "short", month: "short", day: "numeric" })); jb.type = "button";
+      var to = L.see; jb.addEventListener("click", function () { slideIn($("mm-body"), "r"); mmSetDate(to); });
+      nn.appendChild(jb); body.appendChild(nn); return;
     }
     else when.textContent = (day === shiftDate(today, -1) ? "Last night, " : "") + fmtDate(day, { weekday: "long", month: "short", day: "numeric" });
     body.appendChild(when);
