@@ -233,7 +233,8 @@ export async function runAlerts(env) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
         else sent[kind].push(key);
-        if (!silent && body) msgs.push({ title, body, tag: `${kind}-${key}` });
+        // iPhone adds "from Slate" under the title, so the alert itself is the title: two lines, not three
+        if (!silent && body) msgs.push(kind === "brief" ? { title, body, tag: `${kind}-${key}` } : { title: body, body: "", tag: `${kind}-${key}` });
       }
     }
     msgs = msgs.slice(0, 8);
@@ -241,7 +242,7 @@ export async function runAlerts(env) {
     let keep = [], dirty = welcome;
     for (const s of subs) {
       let gone = false;
-      const mine2 = s.welcomed ? msgs : [{ title: "Slate", body: "Alerts are on for this phone.", tag: "welcome" }, ...msgs];
+      const mine2 = s.welcomed ? msgs : [{ title: "Alerts are on for this phone.", body: "", tag: "welcome" }, ...msgs];
       for (const m of mine2) {
         try { const st = await sendPush(env, s, m); if (st === 404 || st === 410) { gone = true; dirty = true; break; } if (st >= 400) console.log("push", st); }
         catch (e) { console.log("push failed", String(e).slice(0, 120)); }
