@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.13.4 (Nov 12, 2026)
+- Unfolded: the Time / League switch no longer jumps around. It stays on the left in both modes; Reorder appears just to its right when sorting by league.
+- Soccer timeline: nothing is cut off anymore. Long names wrap, and the extra detail (assist, who won and conceded a penalty, who a sub came on for) sits on its own smaller line under the player.
+
 ## 2.13.2 (Nov 12, 2026)
 - Fixed the preview line and the odds chips disagreeing (line said Giants by 1.5, chips said -2.5). The chips were holding the line from earlier in the day; they now update from the same fetch as the preview line, and an open upcoming game refreshes its odds and injuries every 20 minutes.
 
