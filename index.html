@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111204402";
+<script>window.SLATE_BUILD = "20261111204611";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2795,7 +2795,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (o.provider) od.appendChild(el("i", null, o.provider));
       box.appendChild(od);
     }
-    var rc = recapOf(pv) || quickRecap(g), rcOpen = rc && recapShown(g);
+    var rc = part === "pre" ? null : (pv && recapOf(pv)) || quickRecap(g), rcOpen = rc && recapShown(g);
+    pv = pv || {};
     if (rc) {
       if (rcOpen) {
         var rb = el("div", "pv-recap"); rb.appendChild(el("b", "pv-h", rc.quick ? "Box score recap" : "Recap")); rb.appendChild(readNode(rc.text, rc.bullets, "pv-sum", rc.quick));
@@ -4418,7 +4419,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var ostrip = oddsStrip(g, b); if (ostrip) { ostrip.classList.add("gv-oddsbar"); body.appendChild(ostrip); }
     var live = boxLive(b), season = !live && b && b.state === "pre" && b.season;
     state.gvSec = state.gvSec || {};
-    var open = state.gvSec[g.id] || (state.gvSec[g.id] = { box: started, team: false, pv: false });
+    var open = state.gvSec[g.id] || (state.gvSec[g.id] = { recap: kind === "over", box: kind === "live", team: false, pv: !started });
     function section(key, title, sub, fill) {
       var on = !!open[key], wrap = el("div", "gv-sec" + (on ? " open" : ""));
       var tg = el("button", "gv-toggle"); tg.type = "button"; tg.setAttribute("aria-expanded", on ? "true" : "false");
@@ -4433,37 +4434,31 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       if (on) { inner = el("div", "gv-sec-in"); fill(inner); wrap.appendChild(inner); if (state.secAnim === g.id + "|" + key) { state.secAnim = null; slideOpen(inner); } }
       body.appendChild(wrap);
     }
-    // order: preview first, then player stats, then team stats
-    var rcx = pv && recapOf(pv), qrx = !rcx && pv && quickRecap(g);
-    section("pv", rcx || qrx ? "Recap and preview" : "Preview", rcx ? "Written after the final" : qrx ? "Box score recap for now" : pv && pv.summary ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
-      previewSections(g, pv, box);
-      // standings or the poll, with tonight's two teams marked
+    // finished: recap + box score, team stats, pregame preview. live: box score, team stats, preview. upcoming: preview, player stats, team stats
+    function pvExtras(box) {
       var marks = [abbr(g, "away"), abbr(g, "home")].map(function (x) { return x.toUpperCase(); });
       var groups = Array.isArray(lg.standings) ? lg.standings : [];
       var show = groups.filter(function (gr) { return (gr.rows || []).some(function (r) { return marks.indexOf(String(r.abbr || "").toUpperCase()) !== -1; }); });
       if (!show.length && groups.length) show = groups.slice(0, 1);
       show.forEach(function (gr) { box.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
       if (Array.isArray(lg.poll) && lg.poll.length) box.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
-      var ln2 = Array.isArray(lg.news) ? lg.news.filter(function (h) { return h && h.title && /^https:\/\//.test(h.url || ""); }) : [];
       var ath = athFor(g.league, [short(g, "away"), short(g, "home")]);
       if (ath.length) box.appendChild(linkList("From The Athletic", ath.slice(0, 5)));
-
       if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
-      if (pv && (pv.summary || (pv.recap && pv.recap.text))) { var gcl = gameClaudeCtl(g); if (gcl) box.appendChild(gcl); }
-    });
-    if (sport) {
-      section("box", started ? "Box score" : "Player stats", started ? (kind === "live" ? "Live" : "Final") : "This season", function (box) {
-        if (live) {
-          var bc = gvCard(null, "gv-box");
-          bc.appendChild(boxShown(g) ? bxPlayers(g, b, false, false) : boxGate(g));
-          bc.appendChild(el("p", "pv-at bx-at", bxStamp(b))); box.appendChild(bc);
-        } else if (season) {
-          var sc2 = gvCard(null, "gv-box"); sc2.appendChild(bxPlayers(g, b, false, true)); sc2.appendChild(el("p", "pv-at bx-at", bxStamp(b))); box.appendChild(sc2);
-        } else {
-          var wn = gvCard(null); wn.appendChild(el("p", "pv-none", window.SLATE_SELF ? (started ? "Loading the box score…" : "Loading this season's stats…") : started ? "The box score arrives with the next hourly refresh." : "This season's stats arrive with the next hourly refresh.")); box.appendChild(wn);
-        }
-      });
-      section("team", "Team stats", started ? "Tonight" : "This season", function (box) {
+    }
+    function boxFill(box) {
+      if (live) {
+        var bc = gvCard(null, "gv-box");
+        bc.appendChild(boxShown(g) ? bxPlayers(g, b, false, false) : boxGate(g));
+        bc.appendChild(el("p", "pv-at bx-at", bxStamp(b))); box.appendChild(bc);
+      } else if (season) {
+        var sc2 = gvCard(null, "gv-box"); sc2.appendChild(bxPlayers(g, b, false, true)); sc2.appendChild(el("p", "pv-at bx-at", bxStamp(b))); box.appendChild(sc2);
+      } else {
+        var wn = gvCard(null); wn.appendChild(el("p", "pv-none", window.SLATE_SELF ? (started ? "Loading the box score…" : "Loading this season's stats…") : started ? "The box score arrives with the next hourly refresh." : "This season's stats arrive with the next hourly refresh.")); box.appendChild(wn);
+      }
+    }
+    function teamSec() {
+      section("team", "Team stats", started ? (kind === "live" ? "Live" : "Final") : "This season", function (box) {
         var ts = (live && boxShown(g)) || season ? bxTeamStats(g, b, false) : null;
         var tc = gvCard(null, "gv-box");
         if (ts) tc.appendChild(ts);
@@ -4471,10 +4466,38 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         box.appendChild(tc);
       });
     }
+    var hasPre = pv && pv.summary;
+    if (kind === "over") {
+      var rcx = pv && recapOf(pv);
+      section("recap", "Recap and box score", rcx ? "Final · written after the game" : "Final", function (box) {
+        previewSections(g, pv, box, "recap");
+        if (pv && (pv.summary || (pv.recap && pv.recap.text))) { var gcl = gameClaudeCtl(g); if (gcl) box.appendChild(gcl); }
+        if (sport) boxFill(box);
+      });
+      if (sport) teamSec();
+      section("pv", "Pregame preview", hasPre ? "How it looked before tip-off" : "None written", function (box) { previewSections(g, pv, box, "pre"); pvExtras(box); });
+    } else if (kind === "live") {
+      if (sport) section("box", "Box score", "Live", boxFill);
+      if (sport) teamSec();
+      section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
+        previewSections(g, pv, box, "pre"); pvExtras(box);
+        if (!hasPre) { var gp = gameClaudeCtl(g); if (gp) box.appendChild(gp); }
+      });
+    } else {
+      section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
+        previewSections(g, pv, box); pvExtras(box);
+        if (hasPre) { var gcl2 = gameClaudeCtl(g); if (gcl2) box.appendChild(gcl2); }
+      });
+      if (sport) { section("box", "Player stats", "This season", boxFill); teamSec(); }
+    }
   }
   // the matchup page's preview sections (odds, quick read or recap, deep dive, players, form, headlines)
-  function previewSections(g, pv, body) {
-    if (!pv || !(pv.summary || (pv.recap && pv.recap.text))) { var np = gvCard(null); np.appendChild(previewBlock(g)); body.appendChild(np); return; }
+  // part: "recap" (after the final: the recap and top performers), "pre" (the pregame preview only), or nothing (all of it)
+  function previewSections(g, pv, body, part) {
+    if (part === "recap") {
+      var rc0 = (pv && recapOf(pv)) || quickRecap(g);
+      if (!rc0) { var np0 = gvCard(null); np0.appendChild(previewBlock(g)); body.appendChild(np0); return; }
+    } else if (!pv || !(pv.summary || (part !== "pre" && pv.recap && pv.recap.text))) { var np = gvCard(null); np.appendChild(part === "pre" ? el("p", "pv-none", "No pregame preview was written for this game.") : previewBlock(g)); body.appendChild(np); return; }
     // the betting line sits at the top of the matchup page, so it isn't repeated here
     var o = {};
     if (o.spread || o.total || (o.ml && o.ml.away != null)) {
@@ -4494,6 +4517,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     } else if (pv.summary) {
       var q = withSwitch(gvCard("The quick read")); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
       body.appendChild(q);
+    }
+    if (part === "recap") {
+      var st0 = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }) : [];
+      if (st0.length) { var wc0 = gvCard("Top performers", "gv-watch"); st0.forEach(function (w) { var r = el("div", "pw"); r.appendChild(el("span", "pw-n", w.name)); if (w.team) r.appendChild(el("span", "pw-t", w.team)); if (w.line) r.appendChild(el("span", "pw-l", w.line)); wc0.appendChild(r); }); body.appendChild(wc0); }
+      return;
     }
     var long = Array.isArray(pv.long) ? pv.long.filter(Boolean) : [];
     var dd = gvCard(null), ddOpen = false; try { ddOpen = localStorage.getItem("slate-longread") === "1"; } catch (e) {}
