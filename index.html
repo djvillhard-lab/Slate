@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111213039";
+<script>window.SLATE_BUILD = "20261111213153";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -6562,10 +6562,15 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var vp = document.querySelector('meta[name="viewport"]'); if (!vp) return;
     setTimeout(repinDock, 400);
     var base = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
-    vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); }, 60);
+    vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); alignSides($("lineup-body")); alignSides($("games-body")); repinDock(); }, 60);
   }
-  window.addEventListener("orientationchange", function () { setTimeout(fitWidth, 250); });
-  if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener("change", function () { setTimeout(fitWidth, 250); });
+  // iPhone sometimes keeps the old width after a turn, a fold, or coming back to the app: re-fit a few times as it settles
+  function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); }
+  window.addEventListener("orientationchange", refit);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) refit(); });
+  window.addEventListener("pageshow", refit);
+  window.addEventListener("focus", refit);
+  if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener("change", refit);
   function nudgeFold(d) { state.foldNudge = d === 0 ? 0 : (Number(state.foldNudge) || 0) + d; saveSettings(); applyLayout(true); toast(isDuo ? "Split moved" : "Applies when the phone is open and sideways"); }
   $("fold-left").addEventListener("click", function () { nudgeFold(-4); });
   $("fold-right").addEventListener("click", function () { nudgeFold(4); });
