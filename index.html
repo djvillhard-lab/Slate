@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111184618";
+<script>window.SLATE_BUILD = "20261111184800";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1324,6 +1324,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .hl { display: flex; align-items: baseline; gap: 7px; margin-top: 8px; padding: 7px 10px; border-radius: 10px; background: var(--raise); font-size: 13.5px; line-height: 1.35; font-weight: 600; color: var(--ink); }
 .hl i { font-style: normal; font-size: 11px; flex: none; color: var(--dim); }
 .hl.up i { color: var(--accent); } .hl.down i { color: var(--live); }
+/* the small box score's team switch: two compact pills, not two big blocks */
+.tray .bx-seg, .bx-pl:not(.real) .bx-seg { display: inline-flex !important; width: auto !important; gap: 2px !important; padding: 3px !important; border-radius: 10px !important; margin: 0 0 6px !important; background: rgba(0,0,0,.28) !important; }
+.tray .bx-seg button, .bx-pl:not(.real) .bx-seg button { height: 28px !important; min-height: 0 !important; width: auto !important; padding: 0 14px !important; font-size: 12.5px !important; border-radius: 8px !important; border: 0 !important; background: none !important; }
+.tray .bx-seg button[aria-pressed="true"], .bx-pl:not(.real) .bx-seg button[aria-pressed="true"] { background: rgba(255,255,255,.1) !important; color: var(--ink) !important; }
 /* Moments */
 .mm-soon { opacity: .4; pointer-events: none; display: inline-flex; align-items: baseline; gap: 5px; }
 .mm-soon i { font-style: normal; font-size: 10px; font-weight: 800; color: var(--dim); }
@@ -3135,8 +3139,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   var BX_GROUP = { "": "Players", game: "Per game", team: "Skaters", goalkeeping: "Goalies", forwards: "Forwards", defenses: "Defense", goalies: "Goalies", passing: "Passing", rushing: "Rushing", receiving: "Receiving", fumbles: "Fumbles", defensive: "Defense", interceptions: "Interceptions", kickReturns: "Kick returns", puntReturns: "Punt returns", kicking: "Kicking", punting: "Punting", batting: "Batting", pitching: "Pitching", lineup: "Lineup" };
   // the slate's quick look: a few columns and the top few players in each group
   var BX_COMPACT = {
-    bball: { "": { cols: ["MIN", "PTS", "REB", "AST"], sort: ["PTS", "REB", "AST"], n: 6 } },
-    hockey: { forwards: { cols: ["G", "A", "S", "TOI"], sort: ["G", "A", "S"], n: 4 }, defenses: { cols: ["G", "A", "S", "TOI"], sort: ["G", "A", "S"], n: 2 }, goalies: { cols: ["SA", "SV", "SV%"], sort: ["SA"], n: 2 } },
+    bball: { "": { cols: ["MIN", "PTS", "REB", "AST", "FG", "3PT", "STL", "BLK", "+/-"], sort: ["PTS", "REB", "AST"], n: 6 } },
+    hockey: { forwards: { cols: ["G", "A", "+/-", "S", "TOI"], sort: ["G", "A", "S"], n: 4 }, defenses: { cols: ["G", "A", "S", "TOI"], sort: ["G", "A", "S"], n: 2 }, goalies: { cols: ["SA", "SV", "SV%"], sort: ["SA"], n: 2 } },
     football: { passing: { cols: ["C/ATT", "YDS", "TD", "INT"], sort: ["YDS"], n: 1 }, rushing: { cols: ["CAR", "YDS", "TD"], sort: ["YDS"], n: 2 }, receiving: { cols: ["REC", "YDS", "TD"], sort: ["YDS"], n: 3 } },
     baseball: { batting: { cols: ["AB", "R", "H", "RBI"], sort: ["H", "RBI", "R"], n: 4 }, pitching: { cols: ["IP", "H", "ER", "K"], sort: ["IP", "K"], n: 2 } },
     soccer: { lineup: { cols: ["G", "A", "SH"], sort: ["G", "A", "SH"], n: 5 } }
