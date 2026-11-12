@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.4.3 (Nov 12, 2026)
+- Finished games get a proper closing line: past tense, the winner's story first, and nothing that only fits a live game (no "triple-double watch", runs or pace).
+
 ## 2.4.2 (Nov 12, 2026)
 - Fixed Claude summaries failing with a "Bad control character" error (line breaks inside Claude's answer are now handled).
 - When a summary doesn't finish, the message is now in plain words instead of a technical error.
