@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111190022";
+<script>window.SLATE_BUILD = "20261111190718";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1324,6 +1324,11 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .hl { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; line-height: 1.35; font-weight: 600; color: #F2867C; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 :root[data-look="light"] .hl { color: #C42B1F; }
 /* Moments */
+.mm-more { display: block; width: 100%; margin: 8px 0 0; padding: 10px; border-radius: 12px; background: var(--raise); color: var(--ink); font-size: 14px; font-weight: 700; }
+.mm-list .rk-row .mm-why { font-size: 12.5px; line-height: 1.35; color: var(--muted); margin-top: 2px; }
+.rk-row.mm-over > .rk-rank { color: var(--accent); } .rk-row.mm-under > .rk-rank { color: var(--live); }
+.mm-none { margin-top: 10px; }
+
 .mm-soon { opacity: .4; pointer-events: none; display: inline-flex; align-items: baseline; gap: 5px; }
 .mm-soon i { font-style: normal; font-size: 10px; font-weight: 800; color: var(--dim); }
 .mm-when { margin: 10px 2px 4px; font-size: 14px; font-weight: 700; color: var(--muted); }
@@ -1863,10 +1868,6 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     <button class="mi" id="nav-moments" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg>
       <span>Moments</span>
-    </button>
-    <button class="mi" id="nav-best" type="button" role="menuitem">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15v3h3v3H8v-3h3v-3a5 5 0 0 1-2.7-3H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>
-      <span>Player rankings</span>
     </button>
     <button class="mi" id="nav-teams" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3zm0 2.2 6 2.2V11c0 3.9-2.5 7.4-6 8.8-3.5-1.4-6-4.9-6-8.8V6.4l6-2.2z"/></svg>
@@ -2586,7 +2587,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var go = function (iso) { if (mmMode) mmSetDate(iso); else if (rkMode) rkSetDate(iso); else { slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
     var lastDay = mmMode ? shiftDate(today, -1) : today, atEnd = rkMode && day >= lastDay;
     var nxt = el("button", "dd-arrow" + (atEnd ? " dd-end" : "")); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.appendChild(icon("more"));
-    nxt.addEventListener("click", function () { if (atEnd) { toast(mmMode ? "Moments cover finished nights" : "Rankings go up to today"); return; } go(shiftDate(day, 1)); });
+    nxt.addEventListener("click", function () { if (atEnd) { if (!mmMode) toast("Rankings go up to today"); return; } go(shiftDate(day, 1)); });
     var lab = el("label", "dd-date");
     var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yest." : day === shiftDate(today, 1) ? "Tmrw" : fmtDate(day, { weekday: "short" });
     lab.appendChild(el("b", null, fmtDate(day, { month: "short" }))); lab.appendChild(el("b", "dd-n", fmtDate(day, { day: "numeric" }))); lab.appendChild(el("em", null, dl));
@@ -3767,7 +3768,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // moments/<night> is written each morning by the upkeep job (Claude through the worker); top performers come from standouts/<night>.
   var MM_LGS = [["nba", "NBA"], ["ncaam", "CBB"], ["ncaaf", "CFB"], ["epl", "Premier League"]];
   var MM_SOON = ["NFL", "NHL", "WCBB", "Champions League"];
-  var mm = { date: null, lg: "nba", docs: {}, subs: {} };
+  var mm = { date: null, lg: "nba", docs: {}, subs: {}, more: {} };
   function mmWatch(path) {
     if (!db || mm.subs[path]) return;
     mm.subs[path] = db.doc(path).onSnapshot(function (sn) { mm.docs[path] = sn.exists ? sn.data() : null; if (state.view === "moments") keepScroll(renderMoments); }, function () { mm.docs[path] = null; });
@@ -3777,6 +3778,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var on = document.querySelector(".mm-strip [aria-pressed=true]"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" }); }
   function mmSwipe(step) { var i = -1; MM_LGS.forEach(function (o, j) { if (o[0] === mm.lg) i = j; }); var n = MM_LGS[i + step]; if (n) mmPick(n[0], step > 0 ? "l" : "r"); }
   function mmSec(title, sub) { var h = el("div", "sec mm-sec"); h.appendChild(el("h2", null, title)); if (sub) h.appendChild(el("span", "count", sub)); return h; }
+  // over/underachievers in the same row as the rankings, with Claude's reason underneath
+  function mmRow(r, kind) {
+    var line = String(r.line || "").replace(/\s*,\s*/g, " · ");
+    var row = bestRow({ id: r.id || "", name: r.name, team: r.team, teamName: r.teamName || "", line: line, opp: r.opp || "", result: r.result || "" }, kind === "over" ? "▲" : "▼", mm.lg);
+    row.classList.add("mm-" + kind);
+    var mid = row.querySelector(".rk-mid"); if (mid && r.why) mid.appendChild(el("div", "mm-why", r.why));
+    return row;
+  }
   function mmPerson(r, kind, i) {
     var row = el("div", "mm-p " + kind);
     row.appendChild(el("span", "mm-mark", kind === "over" ? "▲" : kind === "under" ? "▼" : String(i + 1)));
@@ -3803,7 +3812,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var day = mm.date, path = "moments/" + day; mmWatch(path);
     var doc = mm.docs[path], L = doc && doc.leagues && doc.leagues[mm.lg], name = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
     var night = day, when = el("p", "mm-when");
-    if (L && L.see) { night = L.see; var p2 = "moments/" + night; mmWatch(p2); L = ((mm.docs[p2] || {}).leagues || {})[mm.lg]; when.textContent = "No " + name + " games that night. Here's the latest: " + fmtDate(night, { weekday: "long", month: "short", day: "numeric" }) + "."; }
+    if (L && L.see) {
+      night = L.see; var p2 = "moments/" + night; mmWatch(p2); L = ((mm.docs[p2] || {}).leagues || {})[mm.lg];
+      body.appendChild(el("div", "notice mm-none", "No " + name + " games " + (day === shiftDate(today, -1) ? "last night" : "on " + fmtDate(day, { weekday: "long", month: "short", day: "numeric" })) + "."));
+      when.textContent = "Latest: " + fmtDate(night, { weekday: "long", month: "short", day: "numeric" });
+    }
     else when.textContent = (day === shiftDate(today, -1) ? "Last night, " : "") + fmtDate(day, { weekday: "long", month: "short", day: "numeric" });
     body.appendChild(when);
     if (doc === undefined) { body.appendChild(el("div", "notice", "Loading…")); return; }
@@ -3812,15 +3825,20 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (L.writing && !L.at) { body.appendChild(el("div", "notice", L.writing.error ? "Couldn't write this one: " + L.writing.error : "Claude is writing last night's Moments. About a minute.")); return; }
     // 1. top performers: the night's ranking (EPL: Claude's picks)
     var sp = "standouts/" + night; if (mm.lg !== "epl") mmWatch(sp);
-    var top = mm.lg === "epl" ? (L.top || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []).slice(0, 10);
+    var all = mm.lg === "epl" ? (L.top || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), more = !!mm.more[mm.lg], top = all.slice(0, more ? 25 : 10);
     if (top.length) {
       body.appendChild(mmSec("Top performers", "Top " + top.length));
       var tl = el("div", "bs-list mm-top");
       top.forEach(function (r, i) { tl.appendChild(mm.lg === "epl" ? mmPerson(r, "top", i) : bestRow(r, i + 1, mm.lg)); });
       body.appendChild(tl);
+      if (all.length > 10) {
+        var mb = el("button", "mm-more", more ? "Show top 10" : "Show top " + Math.min(25, all.length)); mb.type = "button";
+        mb.addEventListener("click", function () { mm.more[mm.lg] = !more; keepScroll(renderMoments); });
+        body.appendChild(mb);
+      }
     }
-    if ((L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "mm-list"); L.over.forEach(function (r, i) { ol.appendChild(mmPerson(r, "over", i)); }); body.appendChild(ol); }
-    if ((L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "mm-list"); L.under.forEach(function (r, i) { ul.appendChild(mmPerson(r, "under", i)); }); body.appendChild(ul); }
+    if ((L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list"); L.over.forEach(function (r) { ol.appendChild(mmRow(r, "over")); }); body.appendChild(ol); }
+    if ((L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list"); L.under.forEach(function (r) { ul.appendChild(mmRow(r, "under")); }); body.appendChild(ul); }
     if ((L.games || []).length) {
       body.appendChild(mmSec("Wild finishes", "Upsets and close calls"));
       var gl = el("div", "mm-list");
@@ -6188,7 +6206,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   $("nav-games").addEventListener("click", function () { menuGo("games"); });
   $("nav-teams").addEventListener("click", function () { menuGo("teams"); });
   $("nav-moments").addEventListener("click", function () { mm.date = null; menuGo("moments"); });
-  $("nav-best").addEventListener("click", function () { rk.date = null; menuGo("best"); rkPoll(true); });
+
   $("btn-settings").addEventListener("click", function () { openSub("settings"); showCost(); });
   $("btn-refresh").addEventListener("click", refreshApp);
   $("l-btn-refresh").addEventListener("click", refreshApp);

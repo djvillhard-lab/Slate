@@ -704,11 +704,12 @@ def moments_facts(lg, day, standouts):
     games.sort(key=lambda g: -moment_interest(g))
     facts = {"night": day, "games": games[:40], "gameCount": len(games)}
     perf = ((standouts or {}).get("leagues") or {}).get(lg) or []
-    facts["performers"] = [{k: r.get(k) for k in ("name", "team", "pos", "line", "result", "opp")} for r in perf[:25]]
-    if lg == "nba":  # every regular's line, so Claude can spot the off nights
+    facts["performers"] = [{k: r.get(k) for k in ("id", "name", "team", "pos", "line", "result", "opp")} for r in perf[:25]]
+    if lg in ("nba", "ncaam"):  # every regular's line, so Claude can spot the off nights (and pick from many teams)
         lines = []
-        for g in games[:15]:
-            sm = get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={g['id']}")
+        path = "basketball/nba" if lg == "nba" else "basketball/mens-college-basketball"
+        for g in games[:15 if lg == "nba" else 20]:
+            sm = get(f"https://site.api.espn.com/apis/site/v2/sports/{path}/summary?event={g['id']}")
             for tb in ((sm.get("boxscore") or {}).get("players") or []):
                 ab = (tb.get("team") or {}).get("abbreviation")
                 for grp in tb.get("statistics") or []:
@@ -717,8 +718,9 @@ def moments_facts(lg, day, standouts):
                         st = dict(zip(lab, a.get("stats") or []))
                         try: mins = int(str(st.get("MIN", "0")).split(":")[0] or 0)
                         except Exception: mins = 0
-                        if mins >= 18: lines.append(f'{(a.get("athlete") or {}).get("displayName")} {ab}: {st.get("MIN")} min, {st.get("PTS")} pts, {st.get("REB")} reb, {st.get("AST")} ast, {st.get("FG")} FG, {st.get("3PT")} 3PT, {st.get("TO")} TO')
-        facts["lines"] = lines[:160]
+                        ath = a.get("athlete") or {}
+                        if mins >= 18: lines.append(f'{ath.get("displayName")} [id {ath.get("id")}] {ab}: {st.get("MIN")} min, {st.get("PTS")} PTS, {st.get("REB")} REB, {st.get("AST")} AST, {st.get("FG")} FG, {st.get("3PT")} 3PT, {st.get("TO")} TO')
+        facts["lines"] = lines[:220]
     return facts
 
 def ct_day(t): return t.astimezone(CT).date().isoformat() if t else ""
