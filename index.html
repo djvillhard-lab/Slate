@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111204611";
+<script>window.SLATE_BUILD = "20261111204801";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -2572,7 +2572,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // open a page that Back returns from (the menu's own pages don't keep a Back)
   function openSub(v) {
     var from = state.view, y = paneY(); if (from === v) return;
-    setView(v); state.backTo = { view: isDuo && from === "lineup" ? "games" : from, y: y }; renderBack();
+    setView(v); state.backTo = { view: isDuo && from === "lineup" ? homeView() : from, y: y }; renderBack();
     var sec = $("view-" + v); if (sec && !REDUCED) { sec.classList.remove("push-in"); void sec.offsetWidth; sec.classList.add("push-in"); setTimeout(function () { sec.classList.remove("push-in"); }, 320); }
   }
   // day picker for Player rankings and All games: a vertical pill above Back, by the right thumb (later day on top)
@@ -2601,10 +2601,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     dn.appendChild(nxt); dn.appendChild(lab); dn.appendChild(prev);
   }
   // Back always returns to tonight's slate (unfolded, the slate is on the left, so the right side returns to All games)
-  function homeView() { return isDuo ? "games" : "lineup"; }
+  function homeView() { return isDuo ? "moments" : "lineup"; }
   function goBack() {
-    var home = homeView(); if (state.view === home && state.date === todayInHome()) return false;
-    state.backTo = null;
+    var home = homeView(); if (state.view === home && state.date === todayInHome() && (home !== "moments" || !mm.date || mm.date === todayInHome())) return false;
+    state.backTo = null; if (home === "moments") mm.date = null;
     if (state.view !== home) setView(home);
     if (state.date !== todayInHome()) { slideDir = "r"; setDate(todayInHome()); }
     if (isDuo) { $("pane-r").scrollTop = 0; $("pane-l").scrollTop = 0; } else window.scrollTo(0, 0);
@@ -2615,7 +2615,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     var bt = $("dock-back"); if (!bt) return;
     var show = state.view !== homeView();
     bt.hidden = !show; renderDockDay(); var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
-    if (show) { $("dock-back-t").textContent = "Tonight's Slate"; bt.setAttribute("aria-label", "Back to tonight's slate"); }
+    if (show) { $("dock-back-t").textContent = isDuo ? "Postgame" : "Tonight's Slate"; bt.setAttribute("aria-label", isDuo ? "Back to Postgame" : "Back to tonight's slate"); }
   }
   // after the final: a recap (written once, frozen an hour after the game ends) takes the quick read's place
   function recapOf(pv) { return pv && pv.recap && pv.recap.text ? pv.recap : null; }
@@ -5829,7 +5829,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     return "";
   }
   function renderTop() {
-    if (isDuo && state.view === "lineup") state.view = "games";
+    if (isDuo && state.view === "lineup") state.view = "moments";
     renderBack();
     var v = state.view, today = todayInHome();
     // title (lineup + settings)
@@ -6482,7 +6482,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     root.classList.toggle("duo", split); root.classList.toggle("corner", corner); root.classList.toggle("roomy", corner && big); root.classList.remove("rail");
     $("pane-l").hidden = !split;
     var sec = $("view-lineup");
-    if (split && sec.parentNode !== $("pbody-l")) { $("pbody-l").appendChild(sec); if (state.view === "lineup") state.view = "games"; }
+    if (split && sec.parentNode !== $("pbody-l")) { $("pbody-l").appendChild(sec); if (state.view === "lineup") state.view = "moments"; }
     if (!split && sec.parentNode !== $("main-wrap")) { $("main-wrap").insertBefore(sec, $("main-wrap").firstChild); if (state.view === "games" || state.view === "tv" || state.view === "game") state.view = "lineup"; }
     applyLook(); render();
   }
