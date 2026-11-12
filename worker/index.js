@@ -91,6 +91,11 @@ export default {
       return json({ ok: true, at }, 202);
     }
     // live highlights are written by the app's own rules now (free); Claude no longer words them
+    if (url.pathname === "/api/xgprobe") {  // temporary: does ESPN's core API carry team xG
+      const ev = String(url.searchParams.get("ev") || "").replace(/\D/g, ""), lg = String(url.searchParams.get("lg") || "eng.1").replace(/[^a-z0-9.]/g, ""), tid = String(url.searchParams.get("t") || "").replace(/\D/g, "");
+      const u = `https://sports.core.api.espn.com/v2/sports/soccer/leagues/${lg}/events/${ev}/competitions/${ev}/competitors/${tid}/statistics`;
+      try { const r = await fetch(u); const t = await r.text(); const i = t.indexOf("xpected"); return json({ s: r.status, n: t.length, xg: i >= 0 ? t.slice(Math.max(0, i - 200), i + 300) : "", head: t.slice(0, 300) }); } catch (e) { return json({ err: String(e) }); }
+    }
     if (url.pathname === "/api/highlight") return json({ error: "off" }, 410);
     // a test notification to this person's phones (Settings experiments): {pass, title, body}
     if (url.pathname === "/api/testpush" && req.method === "POST") {
