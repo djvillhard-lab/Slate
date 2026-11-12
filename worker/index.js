@@ -101,11 +101,13 @@ export default {
     if (url.pathname === "/api/save" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       const me = await whoIs(env, p && p.pass);
-      if (!me || me.id === "dj") return json({ error: "Wrong passcode" }, 403);
       const path = String(p.path || "");
-      if (!path.startsWith("u/" + me.id + "/") || path.length > 200 || JSON.stringify(p.data || {}).length > 400000) return json({ error: "Not allowed" }, 403);
+      // failed saves are noted (last 20) so a problem on someone's phone can be traced
+      const fail = async (why, code) => { try { const d = (await getDoc(env, "stats/savefail")) || {}; const l = (d.list || []).slice(-19); l.push({ at: new Date().toISOString(), who: me ? me.id : "?", path: path.slice(0, 80), why, ua: String(req.headers.get("user-agent") || "").slice(0, 80) }); await rpc(env, "mirror_doc", { p_path: "stats/savefail", p_data: { list: l }, p_merge: false }); } catch (e) {} return json({ error: why }, code); };
+      if (!me || me.id === "dj") return fail("Wrong passcode", 403);
+      if (!path.startsWith("u/" + me.id + "/") || path.length > 200 || JSON.stringify(p.data || {}).length > 400000) return fail("Not allowed", 403);
       const r = await rpc(env, "mirror_doc", { p_path: path, p_data: p.data || {}, p_merge: !!p.merge });
-      return r.ok ? json({ ok: true }) : json({ error: "Couldn't save" }, 502);
+      return r.ok ? json({ ok: true }) : fail("Couldn't save " + r.status, 502);
     }
     return env.ASSETS.fetch(req);
   }
