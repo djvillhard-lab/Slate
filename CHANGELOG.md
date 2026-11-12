@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.11.4 (Nov 12, 2026)
+- Soccer games now get the one-line live summary under them on the slate: goals (with the assist, headers, penalties), braces and hat tricks, two quick goals, red cards, possession, shot gaps and busy keepers. After the final whistle the line switches to past tense.
+
 ## 2.11.3 (Nov 12, 2026)
 - Notifications read "from Slate" on top with the alert underneath (two lines). The morning brief starts with "Today's games".
 
