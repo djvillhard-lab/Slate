@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111193713";
+<script>window.SLATE_BUILD = "20261111193821";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1324,7 +1324,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .hl { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; line-height: 1.35; font-weight: 600; color: #F2867C; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 :root[data-look="light"] .hl { color: #C42B1F; }
 /* Moments */
-.bxp-star { transform: scale(.8); margin-left: 2px; }
+.pstar-off { display: none; }
 .mm-tip { margin: 6px 2px 10px; font-size: 12.5px; color: var(--dim); }
 .mm-fav { margin-bottom: 12px; }
 .mm-more { display: block; width: 100%; margin: 8px 0 0; padding: 10px; border-radius: 12px; background: var(--raise); color: var(--ink); font-size: 14px; font-weight: 700; }
@@ -2984,7 +2984,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
           var nm = (a.athlete || {}).displayName || "", sh = (a.athlete || {}).shortName || nm, id = (a.athlete || {}).id || nm;
           if (sport === "bball") {
             var pts = hlNum(s2.PTS), min = hlNum(String(s2.MIN || "0").split(":")[0]), reb = hlNum(s2.REB), ast = hlNum(s2.AST), fg = hlMA(s2.FG), th = hlMA(s2["3PT"]);
-            if (isFavPlayer(id, lg) && pts >= 6) add("fav|" + id + "|" + Math.floor(pts / 5), 38 + pts * 1.2, 1, "Your player " + nm + ": " + pts + " pts, " + reb + " reb, " + ast + " ast (" + fg.join("-") + " FG)", { player: nm, team: t.abbr, starred: true, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + fg.join("-") + " FG" });
+            if (false) add("fav|" + id + "|" + Math.floor(pts / 5), 38 + pts * 1.2, 1, "Your player " + nm + ": " + pts + " pts, " + reb + " reb, " + ast + " ast (" + fg.join("-") + " FG)", { player: nm, team: t.abbr, starred: true, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + fg.join("-") + " FG" });
             (ctxP[t.abbr] = ctxP[t.abbr] || []).push({ n: sh, pts: pts, l: pts + "p " + reb + "r " + ast + "a " + fg.join("-") + " FG " + th.join("-") + " 3PT " + min + "m" });
             if (pts >= 8 && (!lead1 || pts > lead1.pts)) lead1 = { pts: pts, nm: nm, id: id, abbr: t.abbr, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + fg.join("-") + " FG" };
             // a hot start: lots of points in few minutes (catches a college scorer going off early)
@@ -3464,7 +3464,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (i !== -1) { list.splice(i, 1); toast("Removed " + p.name); } else { list.push({ id: String(p.id), name: p.name, lg: p.lg, team: p.team || "", teamName: p.teamName || "" }); toast("★ Added " + p.name); }
     state.players = list; rk.fav = {}; saveSettings(); render();
   }
-  function playerStar(p) {
+  function playerStar(p) { return el("span", "pstar-off"); }
+  function playerStarOld(p) {
     var on = isFavPlayer(p.id, p.lg), b = el("button", "pstar" + (on ? " on" : "")); b.type = "button";
     b.appendChild(starIcon(on)); b.setAttribute("aria-pressed", on ? "true" : "false");
     b.setAttribute("aria-label", (on ? "Remove " : "Add ") + p.name + (on ? " from" : " to") + " my players");
@@ -3817,29 +3818,6 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     MM_SOON.forEach(function (n) { var b = el("span", "lg-tab mm-soon"); b.appendChild(document.createTextNode(n)); b.appendChild(el("i", null, "Soon")); strip.appendChild(b); });
     body.appendChild(strip);
     var day = mm.date, path = "moments/" + day; mmWatch(path);
-    // your starred players first: their line from that night, or when they play next
-    var favs = state.players || [];
-    if (favs.length) {
-      var fk = "mm:fav", shut = !!COLLAPSED[fk], fd = rk.fav[day];
-      if (!fd) rkFavPoll(true, day);
-      var fh = el("button", "sec sec-tg mm-sec" + (shut ? " shut" : "")); fh.type = "button"; fh.setAttribute("aria-expanded", shut ? "false" : "true");
-      fh.appendChild(el("h2", null, "Your players")); fh.appendChild(el("span", "count", fd ? fd.rows.length + " played" : "…")); fh.appendChild(icon("more"));
-      fh.addEventListener("click", function () { if (COLLAPSED[fk]) delete COLLAPSED[fk]; else COLLAPSED[fk] = 1; try { localStorage.setItem("slate-collapsed", JSON.stringify(COLLAPSED)); } catch (e) {} keepScroll(renderMoments); });
-      body.insertBefore(fh, strip);
-      if (!shut) {
-        var fl = el("div", "bs-list mm-fav");
-        if (!fd) fl.appendChild(el("p", "pv-none", "Finding your players' games…"));
-        else {
-          var shown = {};
-          fd.rows.forEach(function (r) { shown[r.lg + "|" + r.id] = 1; fl.appendChild(bestRow(r, 0)); });
-          favs.forEach(function (p) { if (!shown[p.lg + "|" + p.id]) fl.appendChild(favIdleRow(p, fd, day)); });
-        }
-        body.insertBefore(fl, strip);
-      }
-    } else {
-      var tip = el("p", "mm-tip", "Tip: tap ☆ on any player to follow them here and in live highlights.");
-      body.insertBefore(tip, strip);
-    }
     var doc = mm.docs[path], L = doc && doc.leagues && doc.leagues[mm.lg], name = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
     var night = day, when = el("p", "mm-when");
     if (L && L.see) {
