@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111184514";
+<script>window.SLATE_BUILD = "20261111184607";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -6275,7 +6275,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub, .mm-strip"); sx0 = scroller ? scroller.scrollLeft : 0;
       // inside a box score or stats table that scrolls sideways, the finger scrolls the table, never the page
       var wide = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, .bx-ts, .bxp, .bx");
-      if (wide && (wide.scrollWidth > wide.clientWidth + 2 || (scroller && scroller.scrollWidth > scroller.clientWidth + 2))) { x0 = null; return; }
+      if (wide || e.target.closest(".bx-pl, .gv-box")) { x0 = null; return; }  // never change pages from inside a box score
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     }, { passive: true });
     // the page follows the finger, then slides out and the next one slides in
