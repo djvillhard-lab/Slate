@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.13.1 (Nov 12, 2026)
+- All games: a league section with games on right now shows a red live dot and count ("Live", "3 live") next to its name, even when the section is collapsed.
+
 ## 2.13.0 (Nov 12, 2026)
 - Upcoming games on the slate get a one-line preview too, on any day (today, tomorrow, further out). It's built free from ESPN's pre-game data: win and losing streaks, team leaders who are out or questionable, close or lopsided betting lines, ESPN's predictor (a coin flip or a near-lock), unbeaten home or road records, ranked showdowns, top-of-table and relegation clashes, one-sided head-to-heads, and ESPN's own preview headline when nothing stands out. Two facts about the same team read as one sentence ("Canucks have lost five in a row and are 1-8 at home").
 - Games added to the slate later get their line as soon as they appear. Lines refresh every 30 minutes and are kept on the phone so they show right away next time.
