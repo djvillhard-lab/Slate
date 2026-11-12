@@ -36,11 +36,14 @@ async function whoIs(env, pass) {
 const ctDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 // running cost log: stats/usage {days: {D: {n, in, out, search, usd, by: {user: n}}}}
 const PRICE = { in: 2 / 1e6, out: 10 / 1e6, search: 10 / 1000 };
-async function logUsage(env, user, u) {
+const HAIKU = { in: 1 / 1e6, out: 5 / 1e6 };
+async function logUsage(env, user, u, model) {
   const d = ctDay(), doc = (await getDoc(env, "stats/usage")) || { days: {} }, day = (doc.days || {})[d] || { n: 0, in: 0, out: 0, search: 0, usd: 0, by: {} };
   const inT = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), outT = u.output_tokens || 0, sr = ((u.server_tool_use || {}).web_search_requests) || 0;
   day.n += 1; day.in += inT; day.out += outT; day.search += sr;
-  day.usd = Math.round((day.usd + inT * PRICE.in + outT * PRICE.out + sr * PRICE.search) * 10000) / 10000;
+  const pr = model === "haiku" ? HAIKU : PRICE;
+  day.usd = Math.round((day.usd + inT * pr.in + outT * pr.out + sr * PRICE.search) * 10000) / 10000;
+  if (model === "haiku") { day.hl = (day.hl || 0) + 1; day.n -= 1; day.by[user] -= 1; }
   day.by = day.by || {}; day.by[user] = (day.by[user] || 0) + 1;
   await mergeDoc(env, "stats/usage", { days: { [d]: day } });
 }
@@ -76,6 +79,31 @@ export default {
       try { await env.SUMMARY.create({ params }); }
       catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind, error: "Couldn't start: " + String(e).slice(0, 120) } })); return json({ error: "Couldn't start" }, 500); }
       return json({ ok: true, at }, 202);
+    }
+    // live highlight wording: one short Claude call per new headline, saved to live/<date> for everyone
+    if (url.pathname === "/api/highlight" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      if (!p || !/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") || !/^[a-z0-9-]{3,60}$/.test(p.id || "") || !p.key || !p.raw) return json({ error: "bad request" }, 400);
+      const me = await whoIs(env, p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
+      if (!apiKey(env)) return json({ error: "no key" }, 503);
+      const path = "live/" + p.date, cur = (((await getDoc(env, path)) || {}).games || {})[p.id] || {};
+      if (cur.key === p.key) return json({ ok: true, text: cur.text });
+      if ((cur.n || 0) >= 20) return json({ error: "limit" }, 429);
+      const ask = `Rewrite this live sports stat into one punchy line for a fan's app (max 16 words, present tense, no hype words like "insane", no emojis, keep every number exact, don't add facts).
+Game: ${String(p.game || "").slice(0, 120)} (${String(p.when || "").slice(0, 40)})
+Stat: ${String(p.raw).slice(0, 240)}
+Details: ${JSON.stringify(p.facts || {}).slice(0, 400)}
+Answer with only the line.`;
+      const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
+        headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
+        body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 80, messages: [{ role: "user", content: ask }] }) });
+      const b = await r.json().catch(() => ({}));
+      if (!r.ok) return json({ error: "claude " + r.status }, 502);
+      const text = (b.content || []).filter((x) => x.type === "text").map((x) => x.text).join(" ").trim().replace(/^["']|["']$/g, "").slice(0, 160);
+      if (!text) return json({ error: "empty" }, 502);
+      await mergeDoc(env, path, { date: p.date, games: { [p.id]: { key: String(p.key).slice(0, 80), text, n: (cur.n || 0) + 1, at: new Date().toISOString() } } });
+      ctx.waitUntil(logUsage(env, me.id, b.usage || {}, "haiku").catch(() => {}));
+      return json({ ok: true, text });
     }
     if (url.pathname === "/api/whoami" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }

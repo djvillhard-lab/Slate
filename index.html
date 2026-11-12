@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111183536";
+<script>window.SLATE_BUILD = "20261111184514";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1320,6 +1320,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .rk-row .rk-st b { font-size: 17px; }
 .rk-row .rk-st i { font-size: 11.5px; }
 .rk-row > .pstar { justify-self: end; }
+/* live highlight under a slate game */
+.hl { display: flex; align-items: baseline; gap: 7px; margin-top: 8px; padding: 7px 10px; border-radius: 10px; background: var(--raise); font-size: 13.5px; line-height: 1.35; font-weight: 600; color: var(--ink); }
+.hl i { font-style: normal; font-size: 11px; flex: none; color: var(--dim); }
+.hl.up i { color: var(--accent); } .hl.down i { color: var(--live); }
 /* Moments */
 .mm-soon { opacity: .4; pointer-events: none; display: inline-flex; align-items: baseline; gap: 5px; }
 .mm-soon i { font-style: normal; font-size: 10px; font-weight: 800; color: var(--dim); }
@@ -2941,6 +2945,111 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     });
     return out;
   }
+
+  // ---- Live highlight: the one thing worth knowing about a live game right now.
+  // The app scores candidates from ESPN's live summary (hot shooting, big lines and paces, runs, comebacks);
+  // when the top one changes, the worker has a small Claude model word it once and saves it to live/<date> for everyone.
+  var HL = {}, HL_ASK = {};
+  function hlNum(x) { var n = parseFloat(String(x == null ? "" : x).replace("+", "")); return isNaN(n) ? 0 : n; }
+  function hlMA(x) { var p = String(x || "").split("-"); return p.length === 2 ? [hlNum(p[0]), hlNum(p[1])] : [0, 0]; }
+  function hlCompute(lg, sum) {
+    var sport = BX_SPORT[lg], head = ((sum.header || {}).competitions || [])[0] || {}, st = ((head.status || {}).type || {});
+    if (st.state !== "in") return null;
+    var period = (head.status || {}).period || 0, teams = {}, c = [], lead1 = null;
+    (head.competitors || []).forEach(function (k) { var tm = k.team || {}; teams[String(tm.id)] = { abbr: tm.abbreviation || "", name: tm.shortDisplayName || tm.displayName || "", side: k.homeAway, score: hlNum(k.score) }; });
+    var tid = Object.keys(teams);
+    function add(key, score, tone, text, facts) { c.push({ key: key, score: score, tone: tone, text: text, facts: facts }); }
+    var box = sum.boxscore || {};
+    // team shooting (basketball)
+    (box.teams || []).forEach(function (bt) {
+      var t = teams[String((bt.team || {}).id)]; if (!t || sport !== "bball") return;
+      var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = x.displayValue; });
+      var three = hlMA(m["threePointFieldGoalsMade-threePointFieldGoalsAttempted"]), fg = hlMA(m["fieldGoalsMade-fieldGoalsAttempted"]);
+      if (three[1] >= 6 && three[0] / three[1] >= 0.6) add("3hot|" + t.abbr + "|" + three[0], 30 + three[0] * 3 + (three[0] / three[1]) * 20, 1, t.name + " are " + three[0] + "-of-" + three[1] + " from three", { team: t.name, threes: three.join("-") });
+      if (three[1] >= 14 && three[0] / three[1] <= 0.2) add("3cold|" + t.abbr + "|" + Math.floor(three[1] / 4), 28 + three[1], -1, t.name + " are " + three[0] + "-of-" + three[1] + " from three", { team: t.name, threes: three.join("-") });
+      if (fg[1] >= 30 && fg[0] / fg[1] <= 0.34) add("fgcold|" + t.abbr + "|" + Math.floor(fg[1] / 10), 30, -1, t.name + " are shooting " + Math.round(100 * fg[0] / fg[1]) + "% (" + fg.join("-") + ")", { team: t.name, fg: fg.join("-") });
+      if (fg[1] >= 25 && fg[0] / fg[1] >= 0.62) add("fghot|" + t.abbr + "|" + Math.floor(fg[1] / 10), 32, 1, t.name + " are shooting " + Math.round(100 * fg[0] / fg[1]) + "% (" + fg.join("-") + ")", { team: t.name, fg: fg.join("-") });
+    });
+    // players
+    (box.players || []).forEach(function (tp) {
+      var t = teams[String((tp.team || {}).id)] || { abbr: "" };
+      (tp.statistics || []).forEach(function (grp) {
+        var lab = grp.labels || [], gname = String(grp.name || "").toLowerCase();
+        (grp.athletes || []).forEach(function (a) {
+          var s2 = {}; lab.forEach(function (l, i) { s2[l] = (a.stats || [])[i]; });
+          var nm = (a.athlete || {}).displayName || "", sh = (a.athlete || {}).shortName || nm, id = (a.athlete || {}).id || nm;
+          if (sport === "bball") {
+            var pts = hlNum(s2.PTS), min = hlNum(String(s2.MIN || "0").split(":")[0]), reb = hlNum(s2.REB), ast = hlNum(s2.AST), fg = hlMA(s2.FG), th = hlMA(s2["3PT"]);
+            if (pts >= 8 && (!lead1 || pts > lead1.pts)) lead1 = { pts: pts, nm: nm, id: id, abbr: t.abbr, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + fg.join("-") + " FG" };
+            if (pts >= 20) {
+              var pace = min >= 8 ? Math.round(pts / min * 36) : 0, txt = nm + " has " + pts + " pts" + (min ? " in " + min + " min" : "") + " (" + fg.join("-") + " FG" + (th[0] >= 3 ? ", " + th[0] + " threes" : "") + ")";
+              if (pace >= 45 && pts < 45) txt += ", on pace for " + pace;
+              add("pts|" + id + "|" + Math.floor(pts / 5), pts * 1.6 + Math.max(0, pace - 35) * 0.8 + (pts >= 50 ? 40 : pts >= 40 ? 15 : 0), 1, txt, { player: nm, team: t.abbr, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + min + " min, " + fg.join("-") + " FG, " + th.join("-") + " 3PT" });
+            }
+            var dbl = [pts, reb, ast].filter(function (v) { return v >= 10; }).length, near = [pts, reb, ast].filter(function (v) { return v >= 7; }).length;
+            if (near === 3) add("td|" + id + "|" + dbl, 34 + dbl * 8, 1, sh + " has " + pts + "-" + reb + "-" + ast + (dbl === 3 ? ", a triple-double" : ", triple-double watch"), { player: nm, team: t.abbr, line: pts + " pts, " + reb + " reb, " + ast + " ast" });
+            if (reb >= 15) add("reb|" + id + "|" + Math.floor(reb / 3), reb * 2, 1, sh + " has " + reb + " rebounds", { player: nm, line: reb + " reb" });
+            if (fg[1] >= 9 && fg[0] / fg[1] <= 0.2) add("cold|" + id + "|" + Math.floor(fg[1] / 3), 24 + fg[1], -1, sh + " is " + fg.join("-") + " from the field", { player: nm, team: t.abbr, line: pts + " pts, " + fg.join("-") + " FG" });
+          } else if (sport === "football") {
+            var yds = hlNum(s2.YDS), td = hlNum(s2.TD);
+            if (gname === "passing" && (yds >= 275 || td >= 3)) add("pass|" + id + "|" + Math.floor(yds / 50) + td, yds / 8 + td * 8, 1, sh + ": " + yds + " passing yds, " + td + " TD", { player: nm, line: (s2["C/ATT"] || "") + ", " + yds + " yds, " + td + " TD, " + (s2.INT || 0) + " INT" });
+            if (gname === "passing" && hlNum(s2.INT) >= 3) add("int|" + id + "|" + s2.INT, 40, -1, sh + " has thrown " + s2.INT + " interceptions", { player: nm, line: s2.INT + " INT" });
+            if ((gname === "rushing" || gname === "receiving") && (yds >= 125 || td >= 2)) add(gname + "|" + id + "|" + Math.floor(yds / 25) + td, yds / 5 + td * 8, 1, sh + ": " + yds + " " + (gname === "rushing" ? "rushing" : "receiving") + " yds" + (td ? ", " + td + " TD" : ""), { player: nm, line: yds + " yds, " + td + " TD" });
+          } else if (sport === "hockey") {
+            var g2 = hlNum(s2.G), sv = hlNum(s2.SV);
+            if (g2 >= 2) add("g|" + id + "|" + g2, g2 * 22, 1, sh + (g2 >= 3 ? " has a hat trick" : " has two goals"), { player: nm, line: g2 + " goals" });
+            if (sv >= 30) add("sv|" + id + "|" + Math.floor(sv / 5), sv, 1, sh + " has " + sv + " saves" + (hlNum(s2.GA) === 0 ? " and a shutout going" : ""), { player: nm, line: sv + " saves, " + s2.GA + " GA" });
+          }
+        });
+      });
+    });
+    // runs and comebacks from the scoring plays
+    var plays = (sum.plays || sum.scoringPlays || []).filter(function (x) { return x.scoringPlay !== false && x.awayScore != null; });
+    if (plays.length && tid.length === 2) {
+      var A = tid.filter(function (i) { return teams[i].side === "away"; })[0], H = tid.filter(function (i) { return teams[i].side === "home"; })[0];
+      var worstA = 0, worstH = 0, run = 0, runTeam = null, pa = 0, ph = 0;
+      plays.forEach(function (x) {
+        var a = hlNum(x.awayScore), h = hlNum(x.homeScore);
+        worstA = Math.min(worstA, a - h); worstH = Math.min(worstH, h - a);
+        var who = a > pa ? A : h > ph ? H : null, pts = (a - pa) + (h - ph);
+        if (who) { if (who === runTeam && !(a > pa && h > ph)) run += pts; else { runTeam = who; run = pts; } }
+        pa = a; ph = h;
+      });
+      var lead = teams[A].score - teams[H].score;
+      if (sport === "bball" && run >= 10) add("run|" + teams[runTeam].abbr + "|" + Math.floor(run / 4), 26 + run * 1.5, 0, teams[runTeam].name + " are on a " + run + "-0 run", { team: teams[runTeam].name, run: run });
+      var big = sport === "bball" ? 15 : sport === "football" ? 14 : 3;
+      if (lead > 0 && -worstA >= big) add("cb|" + A + "|" + Math.floor(-worstA / 5), 45 + (-worstA), 1, teams[A].name + " came back from " + (-worstA) + " down to lead", { team: teams[A].name, deficit: -worstA });
+      if (lead < 0 && -worstH >= big) add("cb|" + H + "|" + Math.floor(-worstH / 5), 45 + (-worstH), 1, teams[H].name + " came back from " + (-worstH) + " down to lead", { team: teams[H].name, deficit: -worstH });
+    }
+    // a quiet game still gets a line: the margin if it's lopsided, else the top scorer
+    if (tid.length === 2) { var d = teams[tid[0]].score - teams[tid[1]].score, up = d > 0 ? teams[tid[0]] : teams[tid[1]], m = Math.abs(d);
+      if (m >= (sport === "bball" ? 20 : sport === "football" ? 21 : 4)) add("lead|" + up.abbr + "|" + Math.floor(m / 5), 20 + m / 2, 0, up.name + " lead by " + m, { team: up.name, lead: m }); }
+    if (lead1) add("top|" + lead1.id + "|" + Math.floor(lead1.pts / 5), 10 + lead1.pts / 2, 0, lead1.nm + " leads all scorers with " + lead1.pts, { player: lead1.nm, team: lead1.abbr, line: lead1.line });
+    if (!c.length) return null;
+    c.sort(function (a, b) { return b.score - a.score; });
+    var top = c[0]; top.when = ((head.status || {}).type || {}).shortDetail || ""; top.period = period;
+    return top;
+  }
+  function hlWatch() {
+    if (!db || HL.sub === state.date) return;
+    if (HL.unsub) { try { HL.unsub(); } catch (e) {} }
+    HL.sub = state.date; HL.doc = null;
+    HL.unsub = db.doc("live/" + state.date).onSnapshot(function (sn) { HL.doc = sn.exists ? sn.data() : null; if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, function () {});
+  }
+  // the highlight line under a live game on the slate
+  function hlNode(g) {
+    var cur = bx.live[g.id], h = cur && cur.hl; if (!h) return null;
+    hlWatch();
+    var saved = ((HL.doc || {}).games || {})[g.id], text = saved && saved.key === h.key && saved.text ? saved.text : h.text;
+    if (!(saved && saved.key === h.key) && !HL_ASK[g.id + h.key] && window.SLATE_SELF) {
+      HL_ASK[g.id + h.key] = 1;
+      var pass = ""; try { pass = localStorage.getItem("slate-pass") || ""; } catch (e) {}
+      if (pass) fetch("/api/highlight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass, date: state.date, id: g.id, key: h.key, raw: h.text, game: g.away + " at " + g.home + " (" + (g.league || "") + ")", when: h.when, facts: h.facts }) }).then(null, function () {});
+    }
+    var n = el("div", "hl " + (h.tone > 0 ? "up" : h.tone < 0 ? "down" : ""));
+    n.appendChild(el("i", null, h.tone < 0 ? "▼" : "▲")); n.appendChild(el("span", null, text));
+    return n;
+  }
   // ---- where a game's box comes from ----
   var bx = { live: {}, sb: {} };
   function boxFor(g) {
@@ -2989,6 +3098,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         });
       });
     }).then(function (r) {
+      try { var nh = hlCompute(lg, r[0]); if ((nh && nh.key) !== (cur.hl && cur.hl.key) || (nh && cur.hl && nh.text !== cur.hl.text)) { cur.hl = nh; cur.hlNew = true; } } catch (e) {}
       cur.data = bxNorm(lg, r[0], r[1]); cur.data.at = new Date().toISOString(); cur.at = Date.now(); cur.busy = false; cur.err = false; bxRedraw(g);
     }, function () { cur.busy = false; cur.at = Date.now(); cur.err = true; bxRedraw(g); });
   }
@@ -3005,6 +3115,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     bxFetch(g);
   }
   function bxRedraw(g) {
+    var cur = bx.live[g.id]; if (cur && cur.hlNew) { cur.hlNew = false; if (inLineup(g.id) && (state.view === "lineup" || isDuo)) keepScroll(renderLineup); }
     if (state.view === "game" && state.gameId === g.id) keepScroll(renderGame);
     if (state.openId === g.id && document.querySelector("#lineup-body .tray")) keepScroll(renderLineup);
   }
@@ -3015,6 +3126,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         if (!id) return; var g = games().filter(function (x) { return x.id === id; })[0];
         if (g && status(g).kind === "live") bxNeed(g);
       });
+      // every live game on the slate, for its highlight line
+      if (state.date === todayInHome()) lineupGames().forEach(function (g) { if (!g.custom && status(g).kind === "live") bxNeed(g); });
     }, 30000);
   }
 
@@ -4428,6 +4541,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var cr = el("span", "tm"); var cb = badgeFor("+", "custom"); cb.style.background = "var(--raise)"; cb.style.color = "var(--ink)"; cb.style.setProperty("--ring", "transparent"); cr.appendChild(cb);
       var cw = el("span", "nmw"); cw.appendChild(el("span", "nm", g.home)); cr.appendChild(cw); cr.appendChild(el("span")); main.appendChild(cr);
     } else { sideOrder(g).forEach(function (s2) { main.appendChild(teamLine(g, s2)); }); }
+    if (mode === "lineup" && !g.custom && st.kind === "live") { var hn = hlNode(g); if (hn) main.appendChild(hn); else bxNeed(g); }
     var trayMode = mode === "lineup" || (mode === "games" && !g.custom);
     if (trayMode) {
       var wide = !isDuo || mode === "games";
