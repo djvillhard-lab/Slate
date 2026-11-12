@@ -1,0 +1,5 @@
+*.xcuserstate
+DerivedData/
+build/
+ios/build/
+xcuserdata/

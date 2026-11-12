@@ -1,0 +1,68 @@
+name: iPhone app
+# Builds the Slate iPhone app (ios/) with Xcode 27 on Apple's toolchain, then runs it in the iPhone and
+# iPhone Duo simulators and saves screenshots. Proof it compiles and a preview without a Mac.
+on:
+  push:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+concurrency:
+  group: ios
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pick the newest Xcode (27.1 or later fills iPhone Duo's screens)
+        run: |
+          ls -d /Applications/Xcode*.app
+          NEW=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$NEW" ]; then sudo xcode-select -s "$NEW"; fi
+          xcodebuild -version
+          xcrun simctl list runtimes | grep -i ios || true
+          xcrun simctl list devicetypes | grep -i iphone || true
+
+      - name: Build for the simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project ios/Slate.xcodeproj -scheme Slate -configuration Debug \
+            -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -40
+
+      - name: Run in the simulators and take screenshots
+        env:
+          SLATE_PASS: ${{ secrets.SLATE_PASS }}
+        run: |
+          APP=build/Build/Products/Debug-iphonesimulator/Slate.app
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x['platform']=='iOS' and x['isAvailable']]; print(sorted(r,key=lambda x:[int(p) for p in x['version'].split('.')])[-1]['identifier'])")
+          echo "runtime $RUNTIME"
+          mkdir -p shots
+          ARGS=""; if [ -n "$SLATE_PASS" ]; then ARGS="-pass $SLATE_PASS"; fi
+          xcrun simctl list devicetypes -j > types.json
+          for WANT in "iPhone 17 Pro" "iPhone Duo"; do
+            TYPE=$(python3 -c "import json,sys; t=[x for x in json.load(open('types.json'))['devicetypes'] if x['name']==sys.argv[1]] or [x for x in json.load(open('types.json'))['devicetypes'] if x['name'].startswith(sys.argv[1])]; print(t[0]['identifier'] if t else '')" "$WANT")
+            if [ -z "$TYPE" ]; then echo "no simulator named $WANT"; continue; fi
+            NAME=$(echo "$WANT" | tr ' ' '-')
+            UDID=$(xcrun simctl create "$NAME" "$TYPE" "$RUNTIME")
+            xcrun simctl boot "$UDID"
+            xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl ui "$UDID" appearance dark || true
+            xcrun simctl status_bar "$UDID" override --time "7:30" || true
+            xcrun simctl install "$UDID" "$APP"
+            xcrun simctl launch "$UDID" com.djvillhard.slate $ARGS
+            sleep 30
+            xcrun simctl io "$UDID" screenshot "shots/$NAME.png"
+            # a second look after the page has settled
+            sleep 15
+            xcrun simctl io "$UDID" screenshot "shots/$NAME-later.png"
+            xcrun simctl shutdown "$UDID" || true
+          done
+          ls -la shots
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: slate-ios-screenshots
+          path: shots/
+          retention-days: 5

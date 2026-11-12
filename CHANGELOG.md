@@ -3,6 +3,11 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.16.0 (Nov 12, 2026)
+- Groundwork for the Slate iPhone app (in the repo under ios/). The app is a native shell around this same page, so every web update shows up in the app too.
+- The page now knows when it's inside the app: on iPhone Duo the app's own control strip (Slate, All games, Box Office, Teams, On TV, Settings) replaces the floating menu button, and alerts can come through Apple's push service.
+- New preview page, app-preview.html, shows the page next to a stand-in for the app's strip, so the layout can be tried in Safari before the app is built.
+
 ## 2.15.2 (Nov 12, 2026)
 - Game reminders now arrive right at the start time ("Starting now: …") instead of up to an hour early. Custom games on the slate work the same way. If a game of one of your teams starts, you get the one alert, not a reminder and a live score in the same minute.
 
