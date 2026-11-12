@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111213247";
+<script>window.SLATE_BUILD = "20261111213405";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -5149,8 +5149,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       pa.setAttribute("d", path); sv.appendChild(pa); bt.appendChild(sv); bt.appendChild(el("span", null, label));
       bt.addEventListener("click", fn); return bt;
     }
-    if (!isPastDay()) row.appendChild(act("Add a game", "M12 5v14M5 12h14", function () { $("btn-add").click(); }));
-    if (games().length) row.appendChild(act("All games", "M4 6h16M4 12h16M4 18h10", function () { openSub("games"); }));
+    if (games().length) row.appendChild(act("All games", "M3 9.2h18M3 14.8h18M7 6.4h5M7 12h7M7 17.6h4M6 3.5h12a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-11a3 3 0 0 1 3-3z", function () { state.gamesLive = false; openSub("games"); }));
     if (row.childNodes.length) acts.appendChild(row);
     if (lg.length) { var cl = el("button", "sa-clear", "Clear slate"); cl.type = "button"; cl.addEventListener("click", clearLineup); acts.appendChild(cl); }
     if (!acts.childNodes.length) return;
