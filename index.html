@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111184607";
+<script>window.SLATE_BUILD = "20261111184618";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -6307,6 +6307,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
         locked = true; drag = dragTarget(); each(drag, function (el2) { el2.style.transition = "none"; el2.style.willChange = "transform, opacity"; });
       }
       if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { snapBack(drag); drag = null; x0 = null; locked = false; return; }
+      if (mode === "back" && dx < 0) dx = 0;  // pages you open only swipe back (to the right)
       var m = dx * 0.7, op = String(1 - Math.min(Math.abs(dx) / 700, 0.3));
       each(drag, function (el2) { el2.style.transform = "translate3d(" + m + "px,0,0)"; el2.style.opacity = op; });
     }, { passive: true });
@@ -6316,6 +6317,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       var d = drag; drag = null; locked = false;
       var fast = Math.abs(dx) >= 35 && Math.abs(dx) / Math.max(ms, 1) > 0.45;
       if ((Math.abs(dx) < 60 && !fast) || Math.abs(dy) > Math.abs(dx) * 0.7 || ms > 1200 || (scroller && Math.abs(scroller.scrollLeft - sx0) > 2)) { snapBack(d); return; }
+      if (mode === "back" && dx < 0) { snapBack(d); return; }
       var dir = dx < 0 ? "l" : "r", before = where();
       function act() {
         if (mode === "back") goBack();
