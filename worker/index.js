@@ -20,6 +20,31 @@ async function rpc(env, fn, body, key) {
 const mergeDoc = (env, path, data) => rpc(env, "mirror_doc", { p_path: path, p_data: data, p_merge: true });
 const putDoc = (env, path, data) => rpc(env, "mirror_doc", { p_path: path, p_data: data, p_merge: false });
 
+async function getDoc(env, path) {
+  const r = await fetch(`${SB}/rest/v1/docs?select=data&path=eq.${encodeURIComponent(path)}`, { headers: { apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET } });
+  const rows = r.ok ? await r.json() : []; return rows[0] ? rows[0].data : null;
+}
+async function sha(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
+// who a passcode belongs to: DJ (the Supabase passcode) or someone listed (by passcode hash) in users/registry
+async function whoIs(env, pass) {
+  pass = String(pass || ""); if (pass.length < 8) return null;
+  const chk = await rpc(env, "save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString(), via: "worker" }, p_pass: pass, p_merge: false }, PUB);
+  if (chk.ok && !/not allowed|error/i.test(chk.text)) return { id: "dj", name: "DJ", cap: 0 };
+  const reg = (await getDoc(env, "users/registry")) || {}, u = (reg.users || {})[await sha(pass)];
+  return u && u.id ? { id: u.id, name: u.name || u.id, cap: Number(u.cap) || 0 } : null;
+}
+const ctDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+// running cost log: stats/usage {days: {D: {n, in, out, search, usd, by: {user: n}}}}
+const PRICE = { in: 2 / 1e6, out: 10 / 1e6, search: 10 / 1000 };
+async function logUsage(env, user, u) {
+  const d = ctDay(), doc = (await getDoc(env, "stats/usage")) || { days: {} }, day = (doc.days || {})[d] || { n: 0, in: 0, out: 0, search: 0, usd: 0, by: {} };
+  const inT = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), outT = u.output_tokens || 0, sr = ((u.server_tool_use || {}).web_search_requests) || 0;
+  day.n += 1; day.in += inT; day.out += outT; day.search += sr;
+  day.usd = Math.round((day.usd + inT * PRICE.in + outT * PRICE.out + sr * PRICE.search) * 10000) / 10000;
+  day.by = day.by || {}; day.by[user] = (day.by[user] || 0) + 1;
+  await mergeDoc(env, "stats/usage", { days: { [d]: day } });
+}
+
 function target(p) {
   if (p.kind === "team") return { path: "teams/" + p.key, patch: (x) => x };
   return { path: "previews/" + p.date, patch: (x) => ({ games: { [p.id]: x } }) };
@@ -36,16 +61,34 @@ export default {
       if (!p || !["preview", "recap", "team"].includes(p.kind)) return json({ error: "bad kind" }, 400);
       if (p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
       if (!apiKey(env) || !env.SUPABASE_SECRET) return json({ error: "Summaries aren't set up yet (missing keys in Cloudflare)." }, 503);
-      // the passcode is checked by Supabase itself: only the right one can write prefs/
-      const chk = await rpc(env, "save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString(), via: "summary" }, p_pass: String(p.pass || ""), p_merge: false }, PUB);
-      if (!chk.ok || /not allowed|error/i.test(chk.text)) return json({ error: "Wrong passcode" }, 403);
+      const me = await whoIs(env, p.pass);
+      if (!me) return json({ error: "Wrong passcode" }, 403);
+      if (me.cap) {
+        const day = (((await getDoc(env, "stats/usage")) || {}).days || {})[ctDay()] || {};
+        if (((day.by || {})[me.id] || 0) >= me.cap) return json({ error: "That's today's limit of " + me.cap + " Claude summaries. More tomorrow." }, 429);
+      }
       const t = target(p), at = new Date().toISOString();
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
-      const params = { kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
+      const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
         game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, 16000) };
       try { await env.SUMMARY.create({ params }); }
       catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind, error: "Couldn't start: " + String(e).slice(0, 120) } })); return json({ error: "Couldn't start" }, 500); }
       return json({ ok: true, at }, 202);
+    }
+    if (url.pathname === "/api/whoami" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass);
+      return me ? json({ id: me.id, name: me.name }) : json({ error: "Wrong passcode" }, 403);
+    }
+    // saves for everyone but DJ: only inside their own u/<id>/ space
+    if (url.pathname === "/api/save" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass);
+      if (!me || me.id === "dj") return json({ error: "Wrong passcode" }, 403);
+      const path = String(p.path || "");
+      if (!path.startsWith("u/" + me.id + "/") || path.length > 200 || JSON.stringify(p.data || {}).length > 400000) return json({ error: "Not allowed" }, 403);
+      const r = await rpc(env, "mirror_doc", { p_path: path, p_data: p.data || {}, p_merge: !!p.merge });
+      return r.ok ? json({ ok: true }) : json({ error: "Couldn't save" }, 502);
     }
     return env.ASSETS.fetch(req);
   }
@@ -103,7 +146,7 @@ async function askClaude(env, text) {
   const out = (body.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
   const m = /<json>([\s\S]*?)<\/json>/.exec(out) || /(\{[\s\S]*\})/.exec(out);
   if (!m) throw new Error("No summary in Claude's answer");
-  return JSON.parse(m[1]);
+  return { ans: JSON.parse(m[1]), usage: body.usage || {} };
 }
 
 const athletic = (list) => (Array.isArray(list) ? list : []).filter((h) => h && h.title && /^https:\/\/(www\.)?(nytimes\.com\/athletic|theathletic\.com)/.test(h.url || "")).slice(0, 4).map((h) => ({ title: String(h.title).slice(0, 200), source: "The Athletic", url: h.url }));
@@ -113,7 +156,9 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const p = event.payload, t = target(p);
     try {
-      const ans = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "4 minutes" }, async () => askClaude(this.env, prompt(p)));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "4 minutes" }, async () => askClaude(this.env, prompt(p)));
+      const ans = res.ans || res;
+      await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
         if (p.kind === "team") {

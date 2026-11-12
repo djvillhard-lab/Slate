@@ -26,7 +26,17 @@
     }
   } catch (e) {}
   window.slateAskPass = function () { try { localStorage.removeItem("slate-view-only"); localStorage.removeItem("slate-pass"); } catch (e) {} location.reload(); };
-  function mapPath(p) { var m = /^data\/users\/[^/]+\/(.+)$/.exec(p); return m ? "mine/user-" + m[1] : p; }
+  // who this phone belongs to: "dj" (the main passcode) or another person's id from users/registry, found by the worker
+  function who() { try { return localStorage.getItem("slate-user") || "dj"; } catch (e) { return "dj"; } }
+  function mapPath(p) {
+    var m = /^data\/users\/[^/]+\/(.+)$/.exec(p); if (m) p = "mine/user-" + m[1];
+    var u = who(); if (u !== "dj" && /^(mine|prefs)\//.test(p)) p = "u/" + u + "/" + p;
+    return p;
+  }
+  function whoami() {
+    return fetch("/api/whoami", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass() }) })
+      .then(function (r) { return r.ok ? r.json() : null; }, function () { return null; });
+  }
   // keep the last copy of each document on the phone so the app opens instantly, then catch up from the network
   var CK = "slate-doc:";
   function cacheGet(path) { try { var v = localStorage.getItem(CK + path); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
@@ -70,6 +80,10 @@
       },
       set: function (data) {
         if (!pass()) { var e0 = new Error("No passcode on this device"); e0.code = "permission-denied"; return Promise.reject(e0); }
+        if (who() !== "dj") return fetch("/api/save", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass(), path: path, data: data }) }).then(function (r) {
+          if (!r.ok) { var e = new Error("save " + r.status); e.code = r.status === 403 ? "permission-denied" : "unavailable"; throw e; }
+          notify(path);
+        }, function () { var e = new Error("offline"); e.code = "unavailable"; throw e; });
         return sb.rpc("save_doc", { p_path: path, p_data: data, p_pass: pass(), p_merge: false }).then(function (r) {
           if (r.error) { var e = new Error(r.error.message); e.code = /not allowed/.test(r.error.message) ? "permission-denied" : "unavailable"; throw e; }
           notify(path);
@@ -88,17 +102,26 @@
       }
     };
   }
+  // check the passcode once; a new phone waits for the answer so it never shows someone else's slate
+  var known = (function () { try { return localStorage.getItem("slate-user"); } catch (e) { return null; } })();
+  var ready = Promise.resolve();
   if (pass()) {
-    sb.rpc("save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString() }, p_pass: pass(), p_merge: false }).then(function (r) {
-      if (r.error && /not allowed/.test(r.error.message)) { try { localStorage.removeItem("slate-pass"); } catch (e) {} alert("That passcode didn't work. Try again."); location.reload(); }
+    var check = whoami().then(function (w) {
+      if (w && w.id) { var was = known; try { localStorage.setItem("slate-user", w.id); localStorage.setItem("slate-user-name", w.name || ""); } catch (e) {} if (was && was !== w.id) location.reload(); return; }
+      // no answer: wrong passcode or offline; Supabase tells the two apart
+      return sb.rpc("save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString() }, p_pass: pass(), p_merge: false }).then(function (r) {
+        if (r.error && /not allowed/.test(r.error.message)) { try { localStorage.removeItem("slate-pass"); localStorage.removeItem("slate-user"); } catch (e) {} alert("That passcode didn't work. Try again."); location.reload(); }
+        else if (!r.error) { try { localStorage.setItem("slate-user", "dj"); } catch (e) {} }
+      });
     });
-  }
+    if (!known) ready = Promise.race([check, new Promise(function (res) { setTimeout(res, 6000); })]);
+  } else { try { localStorage.removeItem("slate-user"); } catch (e) {} }
   var db = { doc: doc, collection: function (c) { return { doc: function (id) { return doc(c + "/" + id); } }; } };
   var user = { id: function () { return Promise.resolve("dj"); }, isOwner: function () { return Promise.resolve(!!pass()); } };
-  window.claude = { use: function (k) { return Promise.resolve(k === "db" ? db : k === "user" ? user : null); } };
+  window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111181018";
+<script>window.SLATE_BUILD = "20261111181503";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1775,9 +1798,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
       <ol>
         <li>Open this page's link in Safari on your iPhone.</li>
         <li>Tap Share, then <strong>Add to Home Screen</strong>.</li>
-        <li>Name it <strong>Lineup</strong>. It opens like an app.</li>
+        <li>Name it <strong>Slate</strong>. It opens like an app.</li>
       </ol>
-      <p>Stay signed in to Claude in Safari so your games and picks load.</p>
+    </div>
+    <div class="optrow" id="cost-row" hidden>
+      <div><b>Claude summaries</b><span id="cost-text"></span></div>
     </div>
     <div class="optrow" id="ver-row">
       <div><b>App version</b><span id="ver-text"></span></div>
@@ -5701,7 +5726,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   function lineupText() {
     var lines = [(state.date === todayInHome() ? "Tonight" : fmtDate(state.date, { weekday: "short", month: "short", day: "numeric" })) + "'s slate:"];
     lineupGames().forEach(function (g) {
-      function nm(s) { return (g[s + "Rank"] ? "#" + g[s + "Rank"] + " " : "") + g[s] + (g[s + "Record"] ? " (" + g[s + "Record"] + ")" : ""); }
+      function nm(s) { return (g[s + "Rank"] ? "#" + g[s + "Rank"] + " " : "") + g[s]; }
       lines.push(timeText(g.start) + " · " + (g.custom ? g.home : nm(sideOrder(g)[0]) + sep(g) + nm(sideOrder(g)[1])) + " · " + ((g.tv && g.tv.length) ? g.tv.join(" / ") : "local TV"));
     });
     return lines.join("\n");
@@ -5889,10 +5914,22 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   $("nav-games").addEventListener("click", function () { menuGo("games"); });
   $("nav-teams").addEventListener("click", function () { menuGo("teams"); });
   $("nav-best").addEventListener("click", function () { rk.date = null; menuGo("best"); rkPoll(true); });
-  $("btn-settings").addEventListener("click", function () { openSub("settings"); });
+  $("btn-settings").addEventListener("click", function () { openSub("settings"); showCost(); });
   $("btn-refresh").addEventListener("click", refreshApp);
   $("l-btn-refresh").addEventListener("click", refreshApp);
-  $("l-btn-settings").addEventListener("click", function () { openSub("settings"); });
+  $("l-btn-settings").addEventListener("click", function () { openSub("settings"); showCost(); });
+  // what the on-demand summaries have cost this month (DJ only; the worker logs each one to stats/usage)
+  function showCost() {
+    var me = ""; try { me = localStorage.getItem("slate-user") || "dj"; } catch (e) {}
+    if (!db || me !== "dj") return;
+    db.doc("stats/usage").get().then(function (sn) {
+      var d = sn.exists ? sn.data() : null, mo = todayInHome().slice(0, 7), n = 0, usd = 0, by = {};
+      Object.keys((d && d.days) || {}).forEach(function (k) { if (k.slice(0, 7) !== mo) return; var x = d.days[k]; n += x.n || 0; usd += x.usd || 0; Object.keys(x.by || {}).forEach(function (u) { by[u] = (by[u] || 0) + x.by[u]; }); });
+      var others = Object.keys(by).filter(function (u) { return u !== "dj"; }).map(function (u) { return (u === "bro" ? "brother" : u) + " " + by[u]; });
+      $("cost-text").textContent = n ? "This month: " + n + (n === 1 ? " summary" : " summaries") + ", about $" + usd.toFixed(2) + (others.length ? " (" + others.join(", ") + ")" : "") + "." : "None written this month yet. Each costs roughly 10 to 20 cents.";
+      $("cost-row").hidden = false;
+    }, function () {});
+  }
   $("nav-tv").addEventListener("click", function () { menuGo("tv"); });
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
   $("open-rules").addEventListener("click", function () { openSub("rules"); });

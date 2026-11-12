@@ -680,6 +680,16 @@ def main():
     teams = sett.get("teams") or []
     lineup = docs.get(f"mine/user-lineup-{D}") or docs.get(f"mine/lineup-{D}")
     slate = compute_slate(games, sett.get("rules"), teams, lineup)
+    # other people's slates (users/registry → u/<id>/mine/...) also get odds and facts
+    reg = (sb_get(["users/registry"]).get("users/registry") or {}).get("users") or {}
+    uids = sorted({u.get("id") for u in reg.values() if u.get("id") and u.get("id") != "dj"})
+    others = []
+    if uids:
+        ud = sb_get([f"u/{i}/mine/user-settings" for i in uids] + [f"u/{i}/mine/user-lineup-{D}" for i in uids])
+        for i in uids:
+            us = ud.get(f"u/{i}/mine/user-settings") or {}
+            extra = compute_slate(games, us.get("rules"), us.get("teams") or [], ud.get(f"u/{i}/mine/user-lineup-{D}"))
+            others += [x for x in extra[:12] if x not in slate and x not in others]
     load = docs.get("prefs/load") or {}
     requested = [i for i in (load.get("previews") or []) if load.get("previewDate") == D and i in byid and i not in slate]
     mine = my_team_ids(games, teams)
@@ -709,7 +719,7 @@ def main():
     for i, s in sc.items(): state.setdefault(i, s.get("state"))
 
     # ---- 2. facts and odds for the games that get previews
-    focus = slate[:12] + requested
+    focus = slate[:12] + others + requested
     def start_of(i):
         s = sc.get(i, {}); return parse(s.get("start")) if s.get("state") == "pre" and s.get("start") else parse(byid[i].get("start"))
     pre_focus = [i for i in focus if i in evs and state.get(i) != "post"]
