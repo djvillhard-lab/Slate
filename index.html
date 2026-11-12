@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111210759";
+<script>window.SLATE_BUILD = "20261111211132";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -1516,7 +1516,7 @@ nav.dock.menu-open .dock-back { display: none; }
 @keyframes miUp { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .menu-pop .mi { animation: none; } }
 /* no zooming: no double-tap zoom, and text fields are 16px so iOS doesn't zoom in when you type */
-html, body { max-width: 100%; overflow-x: hidden; }
+body { max-width: 100%; overflow-x: clip; }
 html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 input, select, textarea { font-size: 16px !important; }
 /* Player rankings: the day picker floats bottom-right beside the menu button, where the right thumb rests */
@@ -6529,12 +6529,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (split && sec.parentNode !== $("pbody-l")) { $("pbody-l").appendChild(sec); if (state.view === "lineup") state.view = "moments"; }
     // folding the phone always lands on the slate
     if (!split && sec.parentNode !== $("main-wrap")) { $("main-wrap").insertBefore(sec, $("main-wrap").firstChild); state.view = "lineup"; state.menuOpen = false; state.backTo = null; window.scrollTo(0, 0); }
-    applyLook(); render();
+    applyLook(); render(); setTimeout(repinDock, 50); setTimeout(repinDock, 400);
   }
   [mqSplit, mqLand, mqBig].forEach(function (mq) { if (mq.addEventListener) mq.addEventListener("change", function () { applyLayout(); }); else if (mq.addListener) mq.addListener(function () { applyLayout(); }); });
   window.addEventListener("resize", function () { applyLayout(); alignSides($("lineup-body")); alignSides($("games-body")); });
   function fitWidth() {
     var vp = document.querySelector('meta[name="viewport"]'); if (!vp) return;
+    setTimeout(repinDock, 400);
     var base = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
     vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); }, 60);
   }
