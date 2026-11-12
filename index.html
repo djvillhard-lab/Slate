@@ -121,7 +121,7 @@
   window.claude = { use: function (k) { return ready.then(function () { return k === "db" ? db : k === "user" ? user : null; }); } };
 })();
 </script>
-<script>window.SLATE_BUILD = "20261111203051";
+<script>window.SLATE_BUILD = "20261111204102";
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -4849,19 +4849,19 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
     if (!games().length) { if (isDuo) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
     var list = gamesFiltered();
     if (state.date === todayInHome()) {
-      var gl = state.gamesLive == null ? (function () { try { return localStorage.getItem("slate-games-live") === "1"; } catch (e) { return false; } })() : state.gamesLive;
+      var gl = !!state.gamesLive;  // starts off every time All games opens; tap Live to narrow for now
       state.gamesLive = gl;
       var nLv = list.filter(function (g) { return status(g).kind === "live"; }).length;
       var lo = el("div", "lo-row"), lb = el("button", "lo-btn" + (gl ? " on" : "")); lb.type = "button";
       lb.setAttribute("aria-pressed", gl ? "true" : "false"); lb.setAttribute("aria-label", "Show only live games");
       lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live")); lb.appendChild(el("b", null, String(nLv)));
-      lb.addEventListener("click", function () { state.gamesLive = !state.gamesLive; try { localStorage.setItem("slate-games-live", state.gamesLive ? "1" : "0"); } catch (e) {} keepScroll(renderGames); });
+      lb.addEventListener("click", function () { state.gamesLive = !state.gamesLive; keepScroll(renderGames); });
       lo.appendChild(lb); body.appendChild(lo);
       if (gl) {
         var before = list.length; list = list.filter(function (g) { return status(g).kind === "live"; });
         if (!list.length && before) {
           var nl = el("div", "notice lo-none"); nl.appendChild(el("span", null, before === 1 ? "This game isn't live right now." : "None of these " + before + " games are live right now."));
-          var sa = el("button", "pv-get", "Show all"); sa.type = "button"; sa.addEventListener("click", function () { state.gamesLive = false; try { localStorage.setItem("slate-games-live", "0"); } catch (e) {} keepScroll(renderGames); });
+          var sa = el("button", "pv-get", "Show all"); sa.type = "button"; sa.addEventListener("click", function () { state.gamesLive = false; keepScroll(renderGames); });
           nl.appendChild(sa); body.appendChild(nl); return;
         }
       }
@@ -6214,7 +6214,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
   // ---------- wiring ----------
   $("nav-lineup").addEventListener("click", function () { setView("lineup"); });
   function menuGo(v) { state.menuOpen = false; if (state.view === v) { render(); return; } if (state.view === "lineup" || isDuo) openSub(v); else { var from = state.backTo; openSub(v); if (from && from.view !== v) state.backTo = from; renderBack(); } }
-  $("nav-games").addEventListener("click", function () { menuGo("games"); });
+  $("nav-games").addEventListener("click", function () { state.gamesLive = false; menuGo("games"); });
   $("nav-teams").addEventListener("click", function () { menuGo("teams"); });
   $("nav-moments").addEventListener("click", function () { mm.date = null; menuGo("moments"); });
 
