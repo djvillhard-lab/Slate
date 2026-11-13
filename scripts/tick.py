@@ -1074,8 +1074,7 @@ def main():
 
     try: athletic_work(now)
     except Exception as e: print("athletic failed", e)
-    try: newsletter_work(now)
-    except Exception as e: print("newsletters failed", e)
+    # The Athletic newsletters: checked by the Worker cron now (worker/newsletters.js)
     try: event_catalog(now)
     except Exception as e: print("event catalog failed", e)
 
