@@ -67,6 +67,20 @@ those builds without a Mac.
   - `APNS_TEAM_ID` = the Team ID
 - Deploy. Within a minute the app on your phone gets "Alerts are on for this phone."
 
+### 8. Clean up your mom's iMac (5 min)
+First make sure: Xcode Cloud finished at least one build (App Store Connect > Xcode Cloud), and Slate installs
+and opens from TestFlight on your phone. After that the iMac isn't needed; builds run on Apple's servers.
+- **If you used your own Mac user (recommended):** log out, log into your mom's account, System Settings >
+  Users & Groups > select your user > **Delete User** > delete the home folder. That removes your Apple ID,
+  Xcode settings and signing keys, the project, simulators and caches in one step.
+- **Then remove Xcode** (it's installed for everyone): Finder > Applications > drag **Xcode** to the Trash >
+  empty the Trash (enter her password if asked).
+- **If you didn't use a separate user:** Xcode > Settings > Accounts > select your Apple ID > **−**. Quit Xcode,
+  drag it to the Trash. Finder > Go > Go to Folder > `~/Library/Developer` > delete that folder (simulators and
+  builds, often 20-40 GB). Delete the cloned Slate folder. Empty the Trash.
+- On your phone, use the **TestFlight** copy of Slate from now on (that's the one that updates). The copy Xcode
+  installed directly can be deleted. Developer Mode can stay on or off.
+
 The Home Screen web app keeps working the whole time; keep it until you're happy with the app.
 
 ---
