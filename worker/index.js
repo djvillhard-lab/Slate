@@ -70,6 +70,20 @@ export default {
   },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    // The Athletic FC is email-only: a small Google Apps Script in DJ's Gmail sends each morning's subject line and
+    // "View Online" link here. Only DJ's passcode is accepted, and only the link and subject are stored.
+    if (url.pathname === "/api/newsletter" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass);
+      if (!me || me.id !== "dj") return json({ error: "Wrong passcode" }, 403);
+      if (!p || p.key !== "fc" || !/^https:\/\/(links\.e1\.nytimes\.com|www\.nytimes\.com)\//.test(String(p.url || ""))) return json({ error: "bad newsletter" }, 400);
+      const at = String(p.at || new Date().toISOString()).slice(0, 30), title = String(p.title || "The Athletic FC").slice(0, 200);
+      const doc = (await getDoc(env, "news/email-dj")) || {}, items = { ...(doc.items || {}) };
+      const list = (items.fc || []).filter((x) => x.url !== p.url);
+      items.fc = [{ title, url: String(p.url).slice(0, 600), at }, ...list].slice(0, 3);
+      await putDoc(env, "news/email-dj", { updatedAt: new Date().toISOString(), items });
+      return json({ ok: true });
+    }
     if (url.pathname === "/api/summary" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       if (!p || !["preview", "recap", "team", "moments"].includes(p.kind)) return json({ error: "bad kind" }, 400);
