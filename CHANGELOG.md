@@ -4,6 +4,10 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.23.0 (Nov 12, 2026)
+- Full matchup page: on finished games, Claude's summary now comes first, above the top performers and the box score. Live games show the top performers above the box score too.
+- Soccer goals stand out in the match summary: a ⚽, a tinted card with the scorer's name in bold, and the score after the goal (home team first, like ENG 1–0 CRO).
+
 ## 2.22.1 (Nov 12, 2026)
 - Full matchup page: the game's top four performers now sit above the box score on finished games, instead of below it.
 
@@ -14,13 +18,6 @@ From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last nu
   - It marks half-time and full time with the score.
   - The full matchup adds one line each for bookings and subs per team.
   - The card on the slate keeps to goals, penalties and red cards.
-
-## 2.23.0 (Nov 12, 2026)
-- Full matchup page, finished games: Claude's summary comes first, then the game's top performers, then the box score. Live games show the top performers above the box score too.
-- Soccer goals stand out in the match summary: a ⚽, a tinted card with the scorer's name in bold, and the score after the goal (home team first, like ENG 1–0 CRO).
-
-## 2.22.0 (Nov 12, 2026)
-- Soccer: the match timeline is now a written match summary in bullet points. It covers each goal with its minute, scorer and assist, and the score after it; penalties awarded, missed or saved; red cards; and the half-time and full-time scores. Bookings and subs are summed up per team at the end (in the full matchup).
 
 ## 2.21.1 (Nov 12, 2026)
 - Live hockey games get a one-liner. Before, there was only a line for two-goal games or 30-save goalies. Now there are lines for:
