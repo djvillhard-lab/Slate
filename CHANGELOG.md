@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.20.2 (Nov 12, 2026)
+- Slate: the jump to the live or next games now lands on the right game with larger text sizes on iPhone. The browser does the lining-up itself, since Safari measures the zoomed page differently and the old math overshot by one game. A reload also starts fresh instead of reopening where you'd left off, so it always aims at what's on.
+
 ## 2.20.1 (Nov 12, 2026)
 - Slate: when the earliest live game is in the first time slot, coming back now shows the page from the top instead of cutting that game off. Coming back to the app also re-aims at the live or next games, even if you'd left the page scrolled somewhere else.
 - Box Office and other pages always open at the top. The page checks again over the next half second, in case iPhone Safari kept the old scroll position.
