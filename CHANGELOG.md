@@ -3,6 +3,14 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.19.1 (Nov 12, 2026)
+- Box scores look the same in every sport and in both places: the quick look under a game now uses the same player rows as the full box score (headshot, name, position, big numbers with small labels), with its key columns and top players. Football, hockey, baseball and soccer match basketball.
+- Team stat rows use short labels ("Yards", "3rd down", "PP chances", "Faceoff %") so they fit.
+
+## 2.19.0 (Nov 12, 2026)
+- Today's slate opens at what's happening now: it scrolls to the first time slot with a live game, or the next start time if nothing's live. It happens once when you open Slate (and again after it's been away 20+ minutes), and never while you're scrolling.
+- Box Office: two columns of players on the open screen again; Text size explains what Auto reads from your iPhone (2.18.4).
+
 ## 2.18.4 (Nov 12, 2026)
 - Box Office: two columns of players again on the open screen (one column only on the narrow cover screen), so there's no big empty space on the right.
 - Settings > Text size shows what Auto is reading from your iPhone ("Your iPhone is at 100% right now…").
