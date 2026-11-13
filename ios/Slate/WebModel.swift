@@ -43,6 +43,7 @@ final class WebModel: ObservableObject {
     }
 
     func go(_ target: String) {
+        view = target  // light the strip button right away; the page's own report follows
         js("window.SlateApp && SlateApp.go(\(Self.quote(target)))")
     }
 

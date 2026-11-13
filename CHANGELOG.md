@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.16.3 (Nov 12, 2026)
+- App strip: the tapped button lights up right away (preview and the iPhone app), instead of waiting for the page to report back.
+
 ## 2.16.2 (Nov 12, 2026)
 - iPhone app strip: Settings is out (it stays in the header), and All games moves to the bottom spot, closest to your thumb. Order top to bottom: Slate, Box Office, Teams, On TV, All games. The preview page matches.
 

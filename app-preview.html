@@ -38,15 +38,19 @@
   // carry a #pass= link through to the page inside
   if (location.hash) frame.src = "./?native=strip" + location.hash;
   document.querySelectorAll("[data-go]").forEach(function (b) {
-    b.addEventListener("click", function () { try { frame.contentWindow.SlateApp.go(b.getAttribute("data-go")); } catch (e) {} });
+    b.addEventListener("click", function () {
+      light(b.getAttribute("data-go"));  // light it right away; the page's own report follows
+      try { frame.contentWindow.SlateApp.go(b.getAttribute("data-go")); } catch (e) {}
+    });
   });
+  function light(v) { document.querySelectorAll("[data-go]").forEach(function (b) { if (b.getAttribute("data-go") === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
   // the page reports where it is, like it does to the app: light up the matching button
   window.addEventListener("message", function (e) {
     if (e.origin !== location.origin || !e.data || !e.data.slate) return;
     var m = e.data.slate; if (m.t !== "state") return;
     var v = m.view === "team" ? "teams" : m.view;
     if (m.duo && m.view === "lineup") v = "lineup";
-    document.querySelectorAll("[data-go]").forEach(function (b) { if (b.getAttribute("data-go") === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    light(v);
     document.documentElement.style.background = m.look === "light" ? "#F2F4F7" : m.look === "black" ? "#000" : "#121821";
   });
 </script>
