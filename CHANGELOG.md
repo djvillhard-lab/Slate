@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.26.2 (Nov 13, 2026)
+- The newsletter list under your slate is now titled "The Athletic Newsletters".
+
 ## 2.26.1 (Nov 13, 2026)
 - Newsletters you've opened are grayed out under your slate, the same way a finished game is, so you can see what's left to read. Remembered on this phone for a week.
 
