@@ -3,6 +3,23 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.18.0 (Nov 12, 2026)
+The UX review's changes, all in one version. The version before them is saved on the pre-ux-review branch, so it can be put back in one step.
+- Colors (Midnight, cleaned up): easier-to-read gray text, a brighter live red, the menu a little more solid. Finished games go quiet with color instead of fading to 55%. Live highlights are red; the preview line under upcoming games is a plain line, not a box. Red now means live only: losses and underachievers are gray. The Live button reads dark on red. With Increase Contrast on in iPhone settings, a high-contrast Midnight turns on by itself.
+- Bigger targets: the slate header has two 44-point buttons, Settings and More (Reset, Slate rules, Share). Day arrows, the Live button, menu items, Time/League, league tabs and channel links all reach 44 points at every text size.
+- Larger text: at L and XL, records hide and the status and channel move to their own line so names stay whole. New "iPhone" text size follows the iPhone's own setting.
+- Back shows only on pages you drill into (Matchup, Team, rules, notifications) and on another day's slate, and sits beside the menu button instead of above it.
+- Teams: dark team colors (Raiders, Notre Dame) use their second color so the tile isn't blank. Tiles at least 190 points wide.
+- All games and On TV: one date picker, the bottom pill.
+- Settings: the passed-on themes are gone (Midnight only); selected options use the accent; section headings read as headings; the Add to Home Screen steps and the screen check line are hidden where they don't apply.
+- "Updated 7:24 PM" beside the Live button, "Scores delayed" after a minute with no new scores.
+- Long write-ups (quick read, Claude's take) open at four lines with More. Paid buttons say "Regenerate · Claude".
+- Opening the app no longer flashes "No games match your rules" before the slate loads, and a phone without a passcode doesn't try to save.
+- Wording: preview times say which day; the share sheet says "Tonight's slate"; load errors point to Reset.
+- Watch sheet: YouTube TV is the main button, the network's app is outlined, Cancel is plain text.
+- One system for corners (4 / 8 / 16 / round), text sizes (11, 13, 15, 16, 22, 28), weights (500, 700, 800) and spacing (4, 8, 12, 16, 24).
+- Cover screen held sideways: a one-line header that scrolls away.
+
 ## 2.17.0 (Nov 12, 2026)
 - iPhone app (and the preview): the page now runs all the way under the right-side strip, like Sleeper. The strip's buttons float on the page's own background with no separate panel, and the page keeps its content clear of them.
 - Full box score: no more empty gap between a player's headshot and name on wide screens (2.16.5).
