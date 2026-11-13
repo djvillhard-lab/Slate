@@ -4,6 +4,28 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.24.0 (Nov 12, 2026)
+- Suggestions reworked. Every suggestion shows its reason on top, with big "Not now" and "Add to slate" buttons (Add on the right).
+- Coming up: big games your rules didn't pick, from the media side:
+  - rivalries (a built-in list for the NBA, NHL, NFL, MLB, college and soccer)
+  - top-of-standings clashes, with the real standing (3rd West vs 4th West)
+  - two ranked college teams
+  - finals, cups, bowls and other big events (small early-season tournaments count for much less)
+  - knockout ties
+  - two winning teams
+  - two of the biggest clubs or nations
+  - a national TV pick
+- From how you use the app:
+  - teams you keep adding or opening
+  - games your starred players are in
+  - leagues you follow (adds, opens, rules, your teams), which lift their big games
+  - late games in leagues you usually drop, which sink
+- Friendlies only get suggested for personal reasons. Being on League Pass (or any one channel) is never a reason any more.
+- Live now: a new "Worth a look right now" block at the top of today's slate suggests:
+  - a close finish late in a game (a one-score game in the last 5 minutes, the 4th quarter, the 3rd period, the last 15 minutes or the 7th inning on), in leagues you follow
+  - a big individual night from the live box score: 35+ points in the NBA, 300 passing or 130 rushing or receiving yards, a hat trick watch in the NHL
+  - a truly standout one of either in any league
+
 ## 2.23.3 (Nov 12, 2026)
 - The Time / League switch on the slate: the blue highlight now fits inside the switch at every text size instead of spilling past it.
 
