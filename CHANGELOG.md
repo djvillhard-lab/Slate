@@ -3,6 +3,11 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.18.1 (Nov 12, 2026)
+- Back is back on every page that isn't your slate (and on another day's slate), still sitting beside the menu button.
+- The header's ••• menu shows icons and matches the bottom menu's look (Reset, Slate rules, Share).
+- Pulling past the top or bottom of a page no longer drags the menu button and date pill with it.
+
 ## 2.18.0 (Nov 12, 2026)
 The UX review's changes, all in one version. The version before them is saved on the pre-ux-review branch, so it can be put back in one step.
 - Colors (Midnight, cleaned up): easier-to-read gray text, a brighter live red, the menu a little more solid. Finished games go quiet with color instead of fading to 55%. Live highlights are red; the preview line under upcoming games is a plain line, not a box. Red now means live only: losses and underachievers are gray. The Live button reads dark on red. With Increase Contrast on in iPhone settings, a high-contrast Midnight turns on by itself.
