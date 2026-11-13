@@ -12,7 +12,7 @@ PROJ = os.path.join(ROOT, "Slate.xcodeproj")
 
 BUNDLE_ID = "com.djvillhard.slate"
 DEPLOY = "17.0"          # the app runs on iOS 17 and later; iPhone Duo needs the iOS 27.1 SDK (Xcode 27.1) to fill its screens
-MARKETING = "1.0"
+MARKETING = "3.0"
 BUILD = "1"
 
 

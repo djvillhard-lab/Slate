@@ -7,6 +7,9 @@ This weekend is just: put it on your phone, then set things up so you never need
 the next time it opens. Only changes to the Swift files in `ios/Slate/` need a new build, and Xcode Cloud can do
 those builds without a Mac.
 
+**Version 3:** the first build on your phone is Slate 3.0. The app's version is already set to 3.0, and the
+web app moves to 3.0.0 the same day, so the release history marks the real app as the start of version 3.
+
 ---
 
 ## Before Saturday (from your PC or phone)

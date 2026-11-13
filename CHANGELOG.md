@@ -1,7 +1,13 @@
 # Slate release history
 
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
+Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
+
+## 2.21.0 (Nov 12, 2026)
+- Slate: removed the jump to the live or next games. The slate opens at the top of the page again.
+- Each time slot folds shut: tap its time (or the folded line) to fold or unfold it. A folded slot shows one line of its games, like DET–WSH, with a red dot on any that are live. Folds are remembered for that day on this phone.
+- iPhone app prep: the app's version is set to 3.0 for its first build this weekend.
 
 ## 2.20.3 (Nov 12, 2026)
 - Slate: the jump to the live or next games measures how far to scroll instead of trusting the page's reported positions. With larger text, iPhone Safari reports those on a different scale, which sent the page too far down.

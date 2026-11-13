@@ -18,7 +18,7 @@ final class WebModel: ObservableObject {
     weak var webView: WKWebView?
     private var pushAsked = false
 
-    var appVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0" }
+    var appVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0" }
 
     // The first page load. A "-pass <code>" launch argument signs in (used by the CI screenshots).
     var startURL: URL {
