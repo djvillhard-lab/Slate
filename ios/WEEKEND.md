@@ -82,9 +82,32 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
   use the real one. Slate keeps track of which is which. After switching to the TestFlight copy, turn alerts on
   again in it (Settings > Notifications > This phone).
 
+### 7b. Test it before you let go of the iMac (15 min)
+The iMac is the only place you can fix something by hand this weekend, so check everything first. Use the copy
+Xcode put on your phone, then repeat the starred items in the TestFlight copy once it arrives.
+- [ ] **Opens and signs in:** quit the app fully (swipe it away) and reopen. It should open straight to your slate
+      with no passcode prompt and no flash of the wrong color or wrong games. *
+- [ ] **Folded, upright:** slate, scroll, tap a game, Back. The menu button stays put while you scroll.
+- [ ] **Folded, sideways:** same as above. Text and cards fill the width.
+- [ ] **Unfolded, upright and sideways:** the page fills the screen to both edges, nothing hidden under the clock
+      or the side strip. *
+- [ ] **The side strip (unfolded):** tap Slate, Box Office, Teams, On TV, All games. Each opens the right page
+      and lights up; the floating menu button is gone. Scroll each page: the strip never moves. *
+- [ ] **Folding and unfolding while a page is open:** do it on the slate and on Box Office, a few times each.
+      Nothing sticks halfway, the layout settles within a second.
+- [ ] **Links:** a TV channel, an ESPN link and an Athletic newsletter open outside the app; coming back lands
+      you where you were. *
+- [ ] **Text size:** Settings > Text size > Auto, then change the iPhone's text size and come back. Slate follows.
+- [ ] **Alerts:** Settings > Notifications > This phone > Turn on, allow when iPhone asks. Then add a game that
+      starts in a few minutes and wait for the "Starting now" alert. (Needs step 7 done.) *
+- [ ] **Offline:** turn on Airplane Mode, open the app. It shows your last slate or a clear "can't reach" note,
+      not a blank screen. Turn Airplane Mode off.
+- [ ] **TestFlight:** Slate installs from the TestFlight app and opens. *
+If anything fails, take a photo and send it to Claude before going on to step 8.
+
 ### 8. Clean up your mom's iMac (5 min)
-First make sure: Xcode Cloud finished at least one build (App Store Connect > Xcode Cloud), and Slate installs
-and opens from TestFlight on your phone. After that the iMac isn't needed; builds run on Apple's servers.
+First make sure every box in 7b is ticked, Xcode Cloud finished at least one build (App Store Connect > Xcode
+Cloud), and Slate installs and opens from TestFlight on your phone. After that the iMac isn't needed; builds run on Apple's servers.
 - **If you used your own Mac user (recommended):** log out, log into your mom's account, System Settings >
   Users & Groups > select your user > **Delete User** > delete the home folder. That removes your Apple ID,
   Xcode settings and signing keys, the project, simulators and caches in one step.
