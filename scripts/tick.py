@@ -631,27 +631,34 @@ NEWSLETTERS = {  # key: (feeds to look in, how an edition is recognised: URL end
     "nooffseason": (["wnba", "womens-college-basketball"], r"-no-offseason/$|Welcome to No Offseason"),
 }
 def newsletter_work(now):
+    # From 4 a.m. Central, look every 30 minutes for each newsletter's edition of the day; once today's is found,
+    # stop looking for that one until tomorrow. Nothing after 8 p.m. (weekly ones simply aren't out that day).
+    local = now.astimezone(ZoneInfo("America/Chicago")); day = local.strftime("%Y-%m-%d")
+    if local.hour < 4 or local.hour >= 20: return
     have = sb_get(["news/newsletters"]).get("news/newsletters") or {}
-    at = parse(have.get("updatedAt"))
-    if at and (now - at).total_seconds() < 30 * 60: return
-    feeds, doc = {}, {"updatedAt": iso(now), "items": {}}
-    for key, (slugs, rx) in NEWSLETTERS.items():
-        seen, out = set(), []
+    at = parse(have.get("updatedAt")); found = dict(have.get("found") or {}) if have.get("day") == day else {}
+    todo = [k for k in NEWSLETTERS if found.get(k) != day]
+    if not todo: return
+    if at and (now - at).total_seconds() < 29 * 60 and have.get("day") == day: return
+    def when(x):
+        try: return email.utils.parsedate_to_datetime(x["at"]).timestamp()
+        except Exception: return 0
+    feeds, items = {}, dict(have.get("items") or {})
+    for key in todo:
+        slugs, rx = NEWSLETTERS[key]; seen, out = set(), []
         for slug in slugs:
             if slug not in feeds: feeds[slug] = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
             for it in feeds[slug]:
                 if it["url"] in seen: continue
                 if re.search(rx, it["url"]) or re.search(rx, it["title"]) or re.search(rx, it["desc"]):
                     seen.add(it["url"]); out.append({"title": re.sub(r"^The Bounce:\s*", "", it["title"]), "url": it["url"], "at": it["at"]})
-        def when(x):
-            try: return email.utils.parsedate_to_datetime(x["at"]).timestamp()
-            except Exception: return 0
         out.sort(key=when, reverse=True)
-        if out: doc["items"][key] = [dict(x, at=iso(datetime.datetime.fromtimestamp(when(x), UTC))) if when(x) else x for x in out[:3]]
-    if doc["items"]: sb_put("news/newsletters", doc)
-    print("newsletters:", {k: len(v) for k, v in doc["items"].items()})
-
-
+        if not out: continue
+        items[key] = [dict(x, at=iso(datetime.datetime.fromtimestamp(when(x), UTC))) if when(x) else x for x in out[:3]]
+        t = when(out[0])
+        if t and datetime.datetime.fromtimestamp(t, UTC).astimezone(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d") == day: found[key] = day
+    sb_put("news/newsletters", {"updatedAt": iso(now), "day": day, "found": found, "items": items})
+    print("newsletters: checked", todo, "found today", sorted(found))
 
 # ---------- upcoming events catalog (Big events picker) ----------
 CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
