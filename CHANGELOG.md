@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.16.2 (Nov 12, 2026)
+- iPhone app strip: Settings is out (it stays in the header), and All games moves to the bottom spot, closest to your thumb. Order top to bottom: Slate, Box Office, Teams, On TV, All games. The preview page matches.
+
 ## 2.16.1 (Nov 12, 2026)
 - Fixed the app preview link opening the regular Slate page: the offline cache was answering every page address with the app. Now only Slate itself is cached, and other pages (like the preview) load normally.
 

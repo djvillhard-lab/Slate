@@ -43,7 +43,7 @@ those builds without a Mac.
 - In the app, sign in once with your passcode (it keeps it after that).
 
 ### 5. Try it
-- Folded and unfolded, rotated both ways. On iPhone Duo, Slate / All games / Box Office / Teams / On TV / Settings
+- Folded and unfolded, rotated both ways. On iPhone Duo, Slate / Box Office / Teams / On TV / All games
   sit in the system strip on the right, and the floating menu button goes away.
 - Links to ESPN, streaming apps and maps open outside the app, like the Home Screen version.
 - Settings > Notifications > This phone > **Turn on**. (Alerts need step 7 before they arrive.)

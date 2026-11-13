@@ -27,11 +27,10 @@
   <nav class="strip" aria-label="App controls">
     <div class="tag">App<br>preview</div>
     <button type="button" data-go="lineup" aria-label="Slate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg></button>
-    <button type="button" data-go="games" aria-label="All games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3.5" width="18" height="17" rx="3"/><path d="M3 9.2h18M3 14.8h18M7 6.4h5M7 12h7M7 17.6h4"/></svg></button>
     <button type="button" data-go="moments" aria-label="Box Office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5z"/></svg></button>
     <button type="button" data-go="teams" aria-label="Teams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3c.3 2 1.9 3.4 4 3.4S15.7 5 16 3l3 1.1v4.6c-1 .9-1.6 2.2-1.6 3.6V21H6.6v-8.7C6.6 10.9 6 9.6 5 8.7V4.1z"/></svg></button>
     <button type="button" data-go="tv" aria-label="On TV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="13" rx="2"/><path d="M8 21h8" stroke-linecap="round"/></svg></button>
-    <button type="button" data-go="settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <button type="button" data-go="games" aria-label="All games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3.5" width="18" height="17" rx="3"/><path d="M3 9.2h18M3 14.8h18M7 6.4h5M7 12h7M7 17.6h4"/></svg></button>
   </nav>
 </div>
 <script>
@@ -45,7 +44,7 @@
   window.addEventListener("message", function (e) {
     if (e.origin !== location.origin || !e.data || !e.data.slate) return;
     var m = e.data.slate; if (m.t !== "state") return;
-    var v = m.view === "game" || m.view === "best" ? "" : m.view === "notify" || m.view === "rules" || m.view === "tabs" ? "settings" : m.view;
+    var v = m.view === "team" ? "teams" : m.view;
     if (m.duo && m.view === "lineup") v = "lineup";
     document.querySelectorAll("[data-go]").forEach(function (b) { if (b.getAttribute("data-go") === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     document.documentElement.style.background = m.look === "light" ? "#F2F4F7" : m.look === "black" ? "#000" : "#121821";

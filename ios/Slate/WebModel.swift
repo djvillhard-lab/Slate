@@ -32,7 +32,6 @@ final class WebModel: ObservableObject {
     // which strip button is lit
     var activeTarget: String {
         switch view {
-        case "notify", "rules", "tabs": return "settings"
         case "team": return "teams"
         case "game", "best": return ""
         default: return view

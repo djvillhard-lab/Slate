@@ -21,12 +21,12 @@ struct RootView: View {
             .toolbar {
                 if model.strip {
                     ToolbarItemGroup(placement: .bottomBar) {
+                        // top to bottom; All games sits lowest, closest to the thumb (Settings stays in the page header)
                         StripButton(title: "Slate", symbol: "wand.and.stars", target: "lineup", model: model)
-                        StripButton(title: "All games", symbol: "list.bullet.rectangle", target: "games", model: model)
                         StripButton(title: "Box Office", symbol: "ticket", target: "moments", model: model)
                         StripButton(title: "Teams", symbol: "tshirt", target: "teams", model: model)
                         StripButton(title: "On TV", symbol: "tv", target: "tv", model: model)
-                        StripButton(title: "Settings", symbol: "gearshape", target: "settings", model: model)
+                        StripButton(title: "All games", symbol: "list.bullet.rectangle", target: "games", model: model)
                     }
                 }
             }
