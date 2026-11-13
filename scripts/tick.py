@@ -618,6 +618,20 @@ def athletic_work(now):
     if doc["leagues"]: sb_put("news/athletic", doc)
     print("athletic feeds:", {k: len(v) for k, v in doc["leagues"].items()})
 
+
+# ---------- temporary: do The Athletic's public RSS feeds carry its newsletter editions? ----------
+NL_RX = re.compile(r"(the pulse|the bounce|scoop city|red light|until saturday|the windup|the athletic fc|full time|prime tire|money ?call|\bpeak\b|newsletter)", re.I)
+def nl_probe(now):
+    have = sb_get(["debug/newsletters"]).get("debug/newsletters") or {}
+    if have.get("v") == 1: return
+    out = {"v": 1, "at": iso(now), "rss": {}}
+    for slug in ["news", "newsletters", "the-pulse"] + list(ATHLETIC.values()):
+        items = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
+        hits = [{"t": i["title"], "u": i["url"], "d": i["desc"][:120], "at": i["at"]} for i in items if NL_RX.search(i["title"] + " " + i["desc"])]
+        out["rss"][slug] = {"n": len(items), "hits": hits[:12], "first": [i["title"] for i in items[:3]]}
+    sb_put("debug/newsletters", out)
+    print("newsletter probe written")
+
 # ---------- upcoming events catalog (Big events picker) ----------
 CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
              "ncaaf": ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
@@ -1025,6 +1039,8 @@ def main():
 
     try: athletic_work(now)
     except Exception as e: print("athletic failed", e)
+    try: nl_probe(now)
+    except Exception as e: print("nl probe failed", e)
     try: event_catalog(now)
     except Exception as e: print("event catalog failed", e)
 
