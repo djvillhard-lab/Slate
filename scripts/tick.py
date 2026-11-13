@@ -651,6 +651,26 @@ def newsletter_work(now):
     if doc["items"]: sb_put("news/newsletters", doc)
     print("newsletters:", {k: len(v) for k, v in doc["items"].items()})
 
+
+# ---------- temporary: where do The Athletic FC editions live on the web? ----------
+def fc_probe(now):
+    have = sb_get(["debug/newsletters"]).get("debug/newsletters") or {}
+    if have.get("v") == 4: return
+    out = {"v": 4, "at": iso(now), "pages": {}, "rss": {}}
+    for u in ["https://www.nytimes.com/athletic/newsletters/the-athletic-fc/", "https://www.nytimes.com/athletic/newsletters/the-pulse/", "https://www.nytimes.com/athletic/newsletters/"]:
+        try:
+            r = urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0 (slate)"}), timeout=20); st, body = r.status, r.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as e: st, body = e.code, ""
+        except Exception as e: st, body = str(e)[:60], ""
+        links = []
+        for m in re.finditer(r'href="(https://www\.nytimes\.com/athletic/\d+/[^"#?]+)"', body):
+            if m.group(1) not in links: links.append(m.group(1))
+        out["pages"][u] = {"st": st, "len": len(body), "title": (re.search(r"<title>([^<]*)", body).group(1)[:100] if re.search(r"<title>", body) else ""), "links": links[:15]}
+    for slug in ["the-athletic-fc", "athletic-fc", "newsletters/the-athletic-fc", "europe", "la-liga", "serie-a", "bundesliga", "transfers", "world-cup"]:
+        items = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
+        out["rss"][slug] = {"n": len(items), "fc": [i["url"] for i in items if re.search(r"athletic fc|the-athletic-fc|phil hay", (i["title"] + i["desc"] + i["url"]).lower())][:5]}
+    sb_put("debug/newsletters", out)
+
 # ---------- upcoming events catalog (Big events picker) ----------
 CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
              "ncaaf": ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
@@ -1060,6 +1080,8 @@ def main():
     except Exception as e: print("athletic failed", e)
     try: newsletter_work(now)
     except Exception as e: print("newsletters failed", e)
+    try: fc_probe(now)
+    except Exception as e: print("fc probe failed", e)
     try: event_catalog(now)
     except Exception as e: print("event catalog failed", e)
 
