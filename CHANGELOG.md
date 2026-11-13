@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.20.1 (Nov 12, 2026)
+- Slate: when the earliest live game is in the first time slot, coming back now shows the page from the top instead of cutting that game off. Coming back to the app also re-aims at the live or next games, even if you'd left the page scrolled somewhere else.
+- Box Office and other pages always open at the top. The page checks again over the next half second, in case iPhone Safari kept the old scroll position.
+
 ## 2.20.0 (Nov 12, 2026)
 - Box Office: every player shows five stats. The 4th and 5th are picked from what stood out that night.
   - Basketball: threes, steals, blocks or field goals.
