@@ -5,6 +5,7 @@
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, sendPush, sendApns } from "./alerts.js";
+import { runNewsletters } from "./newsletters.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -63,7 +64,10 @@ const apiKey = (env) => env.ANTHROPIC_API_KEY || env["dj-api-key"] || env.DJ_API
 
 export default {
   // every minute: phone alerts from live ESPN scores
-  async scheduled(event, env, ctx) { ctx.waitUntil(runAlerts(env).catch((e) => console.log("alerts error", String(e)))); },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runAlerts(env).catch((e) => console.log("alerts error", String(e))));
+    ctx.waitUntil(runNewsletters(env, getDoc, putDoc).catch((e) => console.log("newsletters error", String(e))));
+  },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname === "/api/summary" && req.method === "POST") {
