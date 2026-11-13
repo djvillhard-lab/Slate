@@ -3,6 +3,9 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.20.3 (Nov 12, 2026)
+- Slate: the jump to the live or next games measures how far to scroll instead of trusting the page's reported positions. With larger text, iPhone Safari reports those on a different scale, which sent the page too far down.
+
 ## 2.20.2 (Nov 12, 2026)
 - Slate: the jump to the live or next games now lands on the right game with larger text sizes on iPhone. The browser does the lining-up itself, since Safari measures the zoomed page differently and the old math overshot by one game. A reload also starts fresh instead of reopening where you'd left off, so it always aims at what's on.
 
