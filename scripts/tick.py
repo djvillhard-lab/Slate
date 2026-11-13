@@ -623,24 +623,18 @@ def athletic_work(now):
 NL_RX = re.compile(r"(the pulse|the bounce|scoop city|red light|until saturday|the windup|the athletic fc|full time|prime tire|money ?call|\bpeak\b|newsletter)", re.I)
 def nl_probe(now):
     have = sb_get(["debug/newsletters"]).get("debug/newsletters") or {}
-    if have.get("v") == 2: return
-    out = {"v": 2, "at": iso(now), "feeds": {}, "names": {}}
-    slugs = ["news", "nhl", "nfl", "nba", "mlb", "wnba", "football", "premier-league", "college-football", "college-basketball", "womens-college-basketball",
-             "f1", "formula-1", "golf", "tennis", "nwsl", "womens-soccer", "soccer", "business", "culture", "olympics", "ufc", "boxing", "college-sports", "fantasy", "betting", "mls", "champions-league"]
-    for slug in slugs:
-        items = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
-        out["feeds"][slug] = len(items)
-        for i in items:
-            m = re.search(r"(?:Welcome to|This is|Sign up for) (The [A-Z][\w']*(?: [A-Z][\w']*)*|[A-Z][\w']*(?: [A-Z][\w']*)*), The Athletic", i["desc"]) or re.search(r"^(The Bounce|The Pulse|Scoop City|Red Light|Until Saturday|The Windup|Prime Tire|Full Time|Money Call|Peak)\b", i["title"])
-            tail = re.search(r"-([a-z0-9]+(?:-[a-z0-9]+)?)/$", i["url"])
-            key = m.group(1) if m else None
-            if not key: continue
-            e = out["names"].setdefault(key, {"n": 0, "feeds": [], "tails": [], "ex": i["url"], "last": i["at"]})
-            e["n"] += 1
-            if slug not in e["feeds"]: e["feeds"].append(slug)
-            if tail and tail.group(1) not in e["tails"] and len(e["tails"]) < 6: e["tails"].append(tail.group(1))
+    if have.get("v") == 3: return
+    out = {"v": 3, "at": iso(now), "hits": {}}
+    look = {"scoop": r"scoop[- ]city", "redlight": r"red[- ]light", "fc": r"athletic[- ]fc|the-athletic-fc", "until": r"until[- ]saturday", "peak": r"\bpeak\b", "money": r"money ?call|moneycall"}
+    for slug in ["news", "nhl", "nfl", "football", "premier-league", "soccer", "champions-league", "college-football", "college-sports", "culture", "golf", "tennis", "olympics", "mlb", "nba"]:
+        for i in rss(f"https://www.nytimes.com/athletic/rss/{slug}/"):
+            blob = (i["title"] + " " + i["desc"] + " " + i["url"]).lower()
+            for k, rx in look.items():
+                if re.search(rx, blob):
+                    l = out["hits"].setdefault(k, [])
+                    if len(l) < 4 and i["url"] not in [x["u"] for x in l]: l.append({"f": slug, "t": i["title"][:90], "d": i["desc"][:110], "u": i["url"], "at": i["at"]})
     sb_put("debug/newsletters", out)
-    print("newsletter probe written", list(out["names"]))
+    print("newsletter probe written", list(out["hits"]))
 
 # ---------- upcoming events catalog (Big events picker) ----------
 CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
