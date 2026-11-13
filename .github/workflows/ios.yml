@@ -8,6 +8,8 @@ on:
 concurrency:
   group: ios
   cancel-in-progress: true
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: xcode-27
@@ -50,19 +52,29 @@ jobs:
             UDID=$(xcrun simctl create "$NAME" "$TYPE" "$RUNTIME")
             xcrun simctl boot "$UDID"
             xcrun simctl bootstatus "$UDID" -b
-            if [ "$WANT" = "iPhone Duo" ]; then xcrun simctl help ui 2>&1 | head -40; xcrun simctl help io 2>&1 | grep -i -A3 display | head -20; fi
             xcrun simctl ui "$UDID" appearance dark || true
             xcrun simctl status_bar "$UDID" override --time "7:30" || true
             xcrun simctl install "$UDID" "$APP"
             xcrun simctl launch "$UDID" com.djvillhard.slate $ARGS
-            sleep 30
-            xcrun simctl io "$UDID" screenshot "shots/$NAME.png"
-            # a second look after the page has settled
-            sleep 15
-            xcrun simctl io "$UDID" screenshot "shots/$NAME-later.png"
+            sleep 35
+            # iPhone Duo has two screens (outer and inner): capture every display the simulator has
+            DISPLAYS=$(xcrun simctl io "$UDID" screenshot /tmp/probe.png 2>&1 | grep -o -- '--display=[0-9]*' | cut -d= -f2 || true)
+            if [ -z "$DISPLAYS" ]; then cp /tmp/probe.png "shots/$NAME.png" 2>/dev/null || true; else
+              for D in $DISPLAYS; do xcrun simctl io "$UDID" screenshot --display=$D "shots/$NAME-display$D.png" || true; done; fi
             xcrun simctl shutdown "$UDID" || true
           done
           ls -la shots
+
+      # also kept on the ios-screenshots branch, so they can be viewed straight from the repo
+      - name: Save screenshots to the ios-screenshots branch
+        if: always()
+        run: |
+          ls shots/*.png >/dev/null 2>&1 || exit 0
+          cd shots
+          git init -q -b ios-screenshots
+          git config user.name "slate-ci"; git config user.email "slate-ci@users.noreply.github.com"
+          git add . && git commit -q -m "Simulator screenshots from ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:ios-screenshots
 
       - uses: actions/upload-artifact@v4
         if: always()
