@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.26.4 (Nov 13, 2026)
+- All games: changing the day keeps the league you're looking at instead of jumping back to My teams, even on a day that league has no games (it says so and stays put).
+
 ## 2.26.3 (Nov 13, 2026)
 - No more flash when Slate opens. It used to show the wrong accent color and a slate built from the default rules (a handful of early-season college tournament games) for a split second before your own settings arrived. Now it shows "Loading your slate…" for that moment, and the team-color accent keeps today's saved color instead of briefly falling back to green.
 
