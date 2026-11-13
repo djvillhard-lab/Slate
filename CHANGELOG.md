@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.23.1 (Nov 12, 2026)
+- Soccer match summary: removed the subs line. Bookings stay.
+
 ## 2.23.0 (Nov 12, 2026)
 - Full matchup page: on finished games, Claude's summary now comes first, above the top performers and the box score. Live games show the top performers above the box score too.
 - Soccer goals stand out in the match summary: a ⚽, a tinted card with the scorer's name in bold, and the score after the goal (home team first, like ENG 1–0 CRO).
