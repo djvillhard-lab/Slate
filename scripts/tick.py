@@ -11,7 +11,7 @@ Reads DJ's slate and settings from Supabase, then:
 D = the Central date four hours ago, so late games still count for the evening they started.
 Needs SUPABASE_SECRET in the environment. Standard library only.
 """
-import json, os, sys, re, datetime, urllib.request, urllib.parse, subprocess, concurrent.futures as cf
+import email.utils, json, os, sys, re, datetime, urllib.request, urllib.parse, subprocess, concurrent.futures as cf
 from zoneinfo import ZoneInfo
 
 CT = ZoneInfo("America/Chicago"); ET = ZoneInfo("America/New_York"); UTC = datetime.timezone.utc
@@ -619,22 +619,37 @@ def athletic_work(now):
     print("athletic feeds:", {k: len(v) for k, v in doc["leagues"].items()})
 
 
-# ---------- temporary: do The Athletic's public RSS feeds carry its newsletter editions? ----------
-NL_RX = re.compile(r"(the pulse|the bounce|scoop city|red light|until saturday|the windup|the athletic fc|full time|prime tire|money ?call|\bpeak\b|newsletter)", re.I)
-def nl_probe(now):
-    have = sb_get(["debug/newsletters"]).get("debug/newsletters") or {}
-    if have.get("v") == 3: return
-    out = {"v": 3, "at": iso(now), "hits": {}}
-    look = {"scoop": r"scoop[- ]city", "redlight": r"red[- ]light", "fc": r"athletic[- ]fc|the-athletic-fc", "until": r"until[- ]saturday", "peak": r"\bpeak\b", "money": r"money ?call|moneycall"}
-    for slug in ["news", "nhl", "nfl", "football", "premier-league", "soccer", "champions-league", "college-football", "college-sports", "culture", "golf", "tennis", "olympics", "mlb", "nba"]:
-        for i in rss(f"https://www.nytimes.com/athletic/rss/{slug}/"):
-            blob = (i["title"] + " " + i["desc"] + " " + i["url"]).lower()
-            for k, rx in look.items():
-                if re.search(rx, blob):
-                    l = out["hits"].setdefault(k, [])
-                    if len(l) < 4 and i["url"] not in [x["u"] for x in l]: l.append({"f": slug, "t": i["title"][:90], "d": i["desc"][:110], "u": i["url"], "at": i["at"]})
-    sb_put("debug/newsletters", out)
-    print("newsletter probe written", list(out["hits"]))
+# ---------- The Athletic's newsletters: each edition is also posted on the site and shows up in its public feeds ----------
+NEWSLETTERS = {  # key: (feeds to look in, how an edition is recognised: URL ending or description wording)
+    "pulse": (["news", "nfl", "college-sports", "nba", "mlb"], r"-the-pulse/$|The Pulse(?: Newsletter|, The Athletic)"),
+    "bounce": (["nba"], r"-the-bounce/$|^The Bounce:"),
+    "windup": (["mlb"], r"-the-windup/$|Welcome to The Windup"),
+    "moneycall": (["college-football", "news", "nfl", "nba", "college-sports"], r"-moneycall/$|free sports business newsletter"),
+    "peak": (["news", "nhl", "nfl", "nba", "tennis", "golf", "olympics", "mlb", "college-sports"], r"-peak/$"),
+    "primetire": (["formula-1"], r"prime-tire|Prime Tire"),
+    "fulltime": (["nwsl"], r"-full-time/$|Welcome to Full Time"),
+    "nooffseason": (["wnba", "womens-college-basketball"], r"-no-offseason/$|Welcome to No Offseason"),
+}
+def newsletter_work(now):
+    have = sb_get(["news/newsletters"]).get("news/newsletters") or {}
+    at = parse(have.get("updatedAt"))
+    if at and (now - at).total_seconds() < 30 * 60: return
+    feeds, doc = {}, {"updatedAt": iso(now), "items": {}}
+    for key, (slugs, rx) in NEWSLETTERS.items():
+        seen, out = set(), []
+        for slug in slugs:
+            if slug not in feeds: feeds[slug] = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
+            for it in feeds[slug]:
+                if it["url"] in seen: continue
+                if re.search(rx, it["url"]) or re.search(rx, it["title"]) or re.search(rx, it["desc"]):
+                    seen.add(it["url"]); out.append({"title": re.sub(r"^The Bounce:\s*", "", it["title"]), "url": it["url"], "at": it["at"]})
+        def when(x):
+            try: return email.utils.parsedate_to_datetime(x["at"]).timestamp()
+            except Exception: return 0
+        out.sort(key=when, reverse=True)
+        if out: doc["items"][key] = [dict(x, at=iso(datetime.datetime.fromtimestamp(when(x), UTC))) if when(x) else x for x in out[:3]]
+    if doc["items"]: sb_put("news/newsletters", doc)
+    print("newsletters:", {k: len(v) for k, v in doc["items"].items()})
 
 # ---------- upcoming events catalog (Big events picker) ----------
 CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
@@ -1043,8 +1058,8 @@ def main():
 
     try: athletic_work(now)
     except Exception as e: print("athletic failed", e)
-    try: nl_probe(now)
-    except Exception as e: print("nl probe failed", e)
+    try: newsletter_work(now)
+    except Exception as e: print("newsletters failed", e)
     try: event_catalog(now)
     except Exception as e: print("event catalog failed", e)
 
