@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.18.4 (Nov 12, 2026)
+- Box Office: two columns of players again on the open screen (one column only on the narrow cover screen), so there's no big empty space on the right.
+- Settings > Text size shows what Auto is reading from your iPhone ("Your iPhone is at 100% right now…").
+
 ## 2.18.3 (Nov 12, 2026)
 - Text size settings made clearer: "iPhone" is now "Auto" (it matches your iPhone's own text size), Auto is offered for both Folded and Unfolded, and the note explains folded means the cover screen and unfolded the big screen. The second "Unfolded" heading is now "Open screen layout", with updated wording for the crease nudge.
 - Help notes appear at the top center (2.18.2).
