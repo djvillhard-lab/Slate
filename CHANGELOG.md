@@ -4,6 +4,15 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.21.1 (Nov 12, 2026)
+- Live hockey games get a one-liner. Before, there was only a line for two-goal games or 30-save goalies. Now there are lines for:
+  - who has scored for each team
+  - 3-point nights and two-assist games
+  - a goalie's shutout in progress (15+ saves)
+  - a scoreless game's shots
+  - lopsided shot totals
+  - hot or cold power plays
+
 ## 2.21.0 (Nov 12, 2026)
 - Slate: removed the jump to the live or next games. The slate opens at the top of the page again.
 - Each time slot folds shut: tap its time (or the folded line) to fold or unfold it. A folded slot shows one line of its games, like DET–WSH, with a red dot on any that are live. Folds are remembered for that day on this phone.
