@@ -4,6 +4,17 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.22.1 (Nov 12, 2026)
+- Full matchup page: the game's top four performers now sit above the box score on finished games, instead of below it.
+
+## 2.22.0 (Nov 12, 2026)
+- Soccer: the timeline is replaced by a written match summary in bullet points.
+  - Each goal has its minute, the scorer, who set it up, and the score after it ("England lead 2–1").
+  - It also covers penalties won, missed or saved, and red cards.
+  - It marks half-time and full time with the score.
+  - The full matchup adds one line each for bookings and subs per team.
+  - The card on the slate keeps to goals, penalties and red cards.
+
 ## 2.21.1 (Nov 12, 2026)
 - Live hockey games get a one-liner. Before, there was only a line for two-goal games or 30-save goalies. Now there are lines for:
   - who has scored for each team
