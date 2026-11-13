@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.18.3 (Nov 12, 2026)
+- Text size settings made clearer: "iPhone" is now "Auto" (it matches your iPhone's own text size), Auto is offered for both Folded and Unfolded, and the note explains folded means the cover screen and unfolded the big screen. The second "Unfolded" heading is now "Open screen layout", with updated wording for the crease nudge.
+- Help notes appear at the top center (2.18.2).
+
 ## 2.18.2 (Nov 12, 2026)
 - Help notes ("Added to slate", "Alerts are on…" and the like) now pop up at the top center of the screen instead of the bottom, clear of the menu button and date pill.
 
