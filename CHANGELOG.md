@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.25.2 (Nov 13, 2026)
+- Newsletters are checked smarter. From 4 a.m. Central, Slate looks every 30 minutes for each picked newsletter's edition of the day. Once today's is found it stops checking that one until tomorrow, and all checking ends at 8 p.m. (weekly ones just aren't out that day).
+
 ## 2.25.1 (Nov 13, 2026)
 - Settings: The Athletic newsletters is now one row like the other settings. It shows what's picked (or None) and opens with a tap to choose.
 
