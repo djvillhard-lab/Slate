@@ -4,6 +4,10 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.25.3 (Nov 13, 2026)
+- Unfolded and held upright, the page fills the screen. It no longer sits in a narrow column with empty space on both sides, and the gap above the header is smaller.
+- The menu button no longer parks in the middle of the screen after folding, unfolding or turning the phone. Right after the screen changes size it stays put while things settle and re-pins itself a few times. It only lifts when the keyboard is really up.
+
 ## 2.25.2 (Nov 13, 2026)
 - Newsletters are checked smarter. From 4 a.m. Central, Slate looks every 30 minutes for each picked newsletter's edition of the day. Once today's is found it stops checking that one until tomorrow, and all checking ends at 8 p.m. (weekly ones just aren't out that day).
 
