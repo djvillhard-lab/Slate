@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.26.1 (Nov 13, 2026)
+- Newsletters you've opened are grayed out under your slate, the same way a finished game is, so you can see what's left to read. Remembered on this phone for a week.
+
 ## 2.26.0 (Nov 13, 2026)
 - The Athletic FC, which is only sent by email, can now appear under your slate. A small Google Apps Script in your Gmail sends Slate each morning's subject line and "View Online" link (nothing else from the email). It shows in Settings > The Athletic newsletters for you only, not your brother, since the link is tied to your email.
 
