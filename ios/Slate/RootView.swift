@@ -10,8 +10,10 @@ struct RootView: View {
         NavigationStack {
             ZStack {
                 Color.slateBackground(model.look).ignoresSafeArea()
+                // the page always runs edge to edge, under the strip too (like Sleeper); it keeps its own content
+                // clear of the strip's buttons using the width we pass in (setInset)
                 SlateWebView(model: model)
-                    .ignoresSafeArea(.container, edges: model.strip ? [.top, .bottom, .leading] : .all)
+                    .ignoresSafeArea(.container, edges: .all)
                     .ignoresSafeArea(.keyboard)
                 if let err = model.loadError {
                     OfflineView(message: err) { model.reload() }
@@ -31,6 +33,15 @@ struct RootView: View {
                 }
             }
             .toolbar(model.strip ? .visible : .hidden, for: .bottomBar)
+            .toolbarBackground(.hidden, for: .bottomBar)  // the buttons float over the page's own background
+            .background {
+                // how much room the strip takes on the right: the page pads its content by this much
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { model.setStripInset(proxy.safeAreaInsets.trailing) }
+                        .onChange(of: proxy.safeAreaInsets.trailing) { _, w in model.setStripInset(w) }
+                }
+            }
         }
         .preferredColorScheme(model.look == "light" ? .light : .dark)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in

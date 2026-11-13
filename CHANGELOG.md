@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.17.0 (Nov 12, 2026)
+- iPhone app (and the preview): the page now runs all the way under the right-side strip, like Sleeper. The strip's buttons float on the page's own background with no separate panel, and the page keeps its content clear of them.
+- Full box score: no more empty gap between a player's headshot and name on wide screens (2.16.5).
+
 ## 2.16.5 (Nov 12, 2026)
 - Full box score: player rows no longer leave a big empty gap between the headshot and the name on wide screens. Stats sit right next to the player.
 

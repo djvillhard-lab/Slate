@@ -51,6 +51,17 @@ final class WebModel: ObservableObject {
         guard on != strip else { return }
         strip = on
         js("window.SlateApp && SlateApp.setStrip(\(on))")
+        setStripInset(trailingInset)
+    }
+
+    private var stripInset: CGFloat = 0
+    private var trailingInset: CGFloat = 0
+    func setStripInset(_ w: CGFloat) {
+        trailingInset = w
+        let v = strip ? w : 0
+        guard abs(v - stripInset) >= 1 else { return }
+        stripInset = v
+        js("window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(v.rounded())))")
     }
 
     func reload() {
@@ -66,7 +77,7 @@ final class WebModel: ObservableObject {
         switch t {
         case "ready":
             loadError = nil
-            js("window.SlateApp && SlateApp.setStrip(\(strip))")
+            js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded())))")
         case "state":
             if let v = m["view"] as? String { view = v }
             if let l = m["look"] as? String { look = l }
