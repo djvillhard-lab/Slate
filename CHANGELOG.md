@@ -3,6 +3,14 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.20.0 (Nov 12, 2026)
+- Box Office: every player shows five stats. The 4th and 5th are picked from what stood out that night.
+  - Basketball: threes, steals, blocks or field goals.
+  - Hockey: always goals, assists, shots and +/-, then hits, blocked shots, faceoffs or ice time.
+  - Football: completions and passer rating for QBs, carries and yards per carry for runners, targets and longest catch for receivers, tackles for loss, QB hits and pass breakups for defenders.
+  - Baseball: hits and walks allowed for pitchers, walks and steals for hitters.
+- Coming back to today's slate scrolls to the live or next games, the same as a reload. This happens from the Slate button, Back, swiping back to today, or reopening the app after 5 minutes away.
+
 ## 2.19.2 (Nov 12, 2026)
 - Box Office: no more empty space on the right. Each player row puts its game (clock or result, score, opponent) in a right-hand column instead of a third line, and the open screen shows two columns of these rows. Headshots no longer cover the first stat.
 - The menu button and date pill stay pinned in one spot on the open screen while you scroll, like on the cover screen.

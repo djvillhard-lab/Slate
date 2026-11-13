@@ -45,9 +45,12 @@ def bball(g):
     oreb, dreb = num(s.get("OREB")), num(s.get("DREB"))
     score = pts + 0.4 * fgm - 0.7 * fga - 0.4 * (fta - ftm) + 0.7 * oreb + 0.3 * dreb + stl + 0.7 * ast + 0.7 * blk - 0.4 * pf - to
     parts = [f"{fmt(pts)} PTS", f"{fmt(reb)} REB", f"{fmt(ast)} AST"]
-    if stl >= 3: parts.append(f"{fmt(stl)} STL")
-    if blk >= 3: parts.append(f"{fmt(blk)} BLK")
-    if tpm >= 4: parts.append(f"{fmt(tpm)} 3PM")
+    ex = []   # 4th and 5th: what stood out most, with field goals as the fallback (same as the page)
+    if fga: ex.append((0.6 + (1 if fga >= 10 and fgm / fga >= 0.6 else 0), f"{fmt(fgm)}-{fmt(fga)} FG"))
+    if tpm: ex.append((tpm / 3, f"{fmt(tpm)} 3PM"))
+    if stl: ex.append((stl / 2, f"{fmt(stl)} STL"))
+    if blk: ex.append((blk / 2, f"{fmt(blk)} BLK"))
+    parts += [x[1] for x in sorted(ex, key=lambda x: -x[0])[:2]]
     return score, " · ".join(parts), s.get("FG", "") and f"{s.get('FG')} FG"
 
 def hockey(group, g, final=True):
@@ -61,11 +64,13 @@ def hockey(group, g, final=True):
         return score, line, ""
     gl, a, pm, sog = num(s.get("G")), num(s.get("A")), num(s.get("+/-")), num(s.get("S"))   # ESPN: S = shots, SOG = shootout goals
     score = 3 * gl + 2 * a + 0.5 * pm + 0.3 * sog + 0.1 * (num(s.get("HT")) + num(s.get("BS")))
-    parts = []
-    if gl: parts.append(f"{fmt(gl)} G")
-    if a: parts.append(f"{fmt(a)} A")
-    parts.append(f"{fmt(sog)} SOG")
-    if pm: parts.append(("+" if pm > 0 else "") + fmt(pm))
+    parts = [f"{fmt(gl)} G", f"{fmt(a)} A", f"{fmt(sog)} SOG", ("+" if pm > 0 else "") + fmt(pm) + " +/-"]
+    ht, bs, fw, fl = (num(s.get(x)) for x in ("HT", "BS", "FW", "FL")); ex = []
+    if ht >= 4: ex.append((ht / 4, f"{fmt(ht)} HIT"))
+    if bs >= 3: ex.append((bs / 3, f"{fmt(bs)} BLK"))
+    if fw + fl >= 10 and fw / (fw + fl) >= 0.6: ex.append((1.1, f"{fmt(fw)}-{fmt(fl)} FO"))
+    if s.get("TOI"): ex.append((0.9, f"{s.get('TOI')} TOI"))
+    if ex: parts.append(max(ex, key=lambda x: x[0])[1])
     return score, " · ".join(parts), s.get("TOI", "") and f"{s.get('TOI')} TOI"
 
 def football(groups):
@@ -76,19 +81,19 @@ def football(groups):
         c, a = (p.get("C/ATT", "0/0").split("/") + ["0"])[:2]
         y, td, it = num(p.get("YDS")), num(p.get("TD")), num(p.get("INT"))
         sc += 0.04 * y + 4 * td - 2 * it
-        if y >= 100 or td: parts.append(f"{fmt(y)} pass yds · {fmt(td)} TD" + (f" · {fmt(it)} INT" if it else "") + f" ({c}/{a})")
+        if y >= 100 or td: parts.append(f"{fmt(y)} pass yds · {fmt(td)} TD" + (f" · {fmt(it)} INT" if it else "") + f" · {c}/{a} cmp" + (f" · {p.get('RTG')} RTG" if num(p.get("RTG")) else ""))
     r = groups.get("rushing")
     if r:
-        y, td = num(r.get("YDS")), num(r.get("TD")); sc += 0.1 * y + 6 * td
-        if y >= 40 or td: parts.append(f"{fmt(y)} rush yds" + (f" · {fmt(td)} TD" if td else ""))
+        y, td, car = num(r.get("YDS")), num(r.get("TD")), num(r.get("CAR")); sc += 0.1 * y + 6 * td
+        if y >= 40 or td: parts.append(f"{fmt(y)} rush yds" + (f" · {fmt(td)} TD" if td else "") + (f" · {fmt(car)} car" if car else "") + (f" · {y / car:.1f} ypc" if car >= 5 else ""))
     w = groups.get("receiving")
     if w:
-        n, y, td = num(w.get("REC")), num(w.get("YDS")), num(w.get("TD")); sc += 0.5 * n + 0.1 * y + 6 * td
-        if y >= 40 or td: parts.append(f"{fmt(n)} rec · {fmt(y)} yds" + (f" · {fmt(td)} TD" if td else ""))
+        n, y, td, tg, lo = (num(w.get(x)) for x in ("REC", "YDS", "TD", "TGTS", "LONG")); sc += 0.5 * n + 0.1 * y + 6 * td
+        if y >= 40 or td: parts.append(f"{fmt(n)} rec · {fmt(y)} yds" + (f" · {fmt(td)} TD" if td else "") + (f" · {fmt(tg)} tgt" if tg else "") + (f" · {fmt(lo)} long" if lo else ""))
     d = groups.get("defensive")
     if d:
-        tk, sk = num(d.get("TOT")), num(d.get("SACKS")); sc += 0.3 * tk + 2 * sk
-        if sk or tk >= 8: parts.append(f"{fmt(tk)} TKL" + (f" · {fmt(sk)} sacks" if sk else ""))
+        tk, sk, tfl, qh, pd = (num(d.get(x)) for x in ("TOT", "SACKS", "TFL", "QB HTS", "PD")); sc += 0.3 * tk + 2 * sk
+        if sk or tk >= 8: parts.append(f"{fmt(tk)} TKL" + (f" · {fmt(sk)} sacks" if sk else "") + (f" · {fmt(tfl)} TFL" if tfl else "") + (f" · {fmt(qh)} QB hits" if qh else "") + (f" · {fmt(pd)} PD" if pd else ""))
     it = groups.get("interceptions")
     if it:
         n = num(it.get("INT")); sc += 3 * n
@@ -100,10 +105,10 @@ def baseball(group, g):
     if group == "pitching":
         ip = num(s.get("IP")); k, er, h, bb = (num(s.get(x)) for x in ("K", "ER", "H", "BB"))
         if ip < 3: return None
-        return 1.5 * ip + k - 2 * er - 0.5 * (h + bb), f"{s.get('IP')} IP · {fmt(k)} K · {fmt(er)} ER", ""
+        return 1.5 * ip + k - 2 * er - 0.5 * (h + bb), f"{s.get('IP')} IP · {fmt(k)} K · {fmt(er)} ER · {fmt(h)} H · {fmt(bb)} BB", ""
     h, hr, rbi, r, sb, bb = (num(s.get(x)) for x in ("H", "HR", "RBI", "R", "SB", "BB"))
     if not (h or bb): return None
-    parts = [f"{fmt(h)}-{s.get('AB', '0')}"] + ([f"{fmt(hr)} HR"] if hr else []) + ([f"{fmt(rbi)} RBI"] if rbi else []) + ([f"{fmt(r)} R"] if r else [])
+    parts = [f"{fmt(h)}-{s.get('AB', '0')}"] + ([f"{fmt(hr)} HR"] if hr else []) + ([f"{fmt(rbi)} RBI"] if rbi else []) + ([f"{fmt(r)} R"] if r else []) + ([f"{fmt(bb)} BB"] if bb else []) + ([f"{fmt(sb)} SB"] if sb else [])
     return h + 3 * hr + rbi + r + 1.5 * sb + 0.5 * bb, " · ".join(parts), ""
 
 def game_rows(lg, path, kind, ev):
