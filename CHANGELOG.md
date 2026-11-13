@@ -4,6 +4,11 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.25.0 (Nov 13, 2026)
+- The Athletic's newsletters under your slate. Settings > Slate > The Athletic newsletters lets you pick any of eight: The Pulse, The Bounce (NBA), The Windup (MLB), Money Call, Peak, Prime Tire (F1), Full Time (women's soccer) and No Offseason (women's basketball). "None" turns them all off; none is picked to start.
+- Today's slate shows a "From The Athletic" list with the latest edition of each pick from the last three days, newest first, marked Today, Yesterday or the weekday. Each one opens the edition on The Athletic's site.
+- The editions come from The Athletic's public feeds, checked every 30 minutes by the GitHub job. Scoop City, Red Light, The Athletic FC and Until Saturday aren't posted there, so they can't be included.
+
 ## 2.24.1 (Nov 13, 2026)
 - Suggestions: each card leads with the league (icon and name, like NHL) next to the reason's label. The Not now and Add to slate buttons are smaller and quieter: plain text for Not now, a soft button for Add.
 
