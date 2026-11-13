@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.16.4 (Nov 12, 2026)
+- Teams: removed the double line under the league tabs in Find a team.
+- Team tiles: the next-game line always fits on one line ("Nov 22 10:30a @ Liverpool"). Long opponent names use their abbreviation, and the channel stays on the game itself.
+
 ## 2.16.3 (Nov 12, 2026)
 - App strip: the tapped button lights up right away (preview and the iPhone app), instead of waiting for the page to report back.
 
