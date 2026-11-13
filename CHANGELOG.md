@@ -3,6 +3,10 @@
 Version 1 is everything built before the first efficiency pass. Version 2 is everything from that pass up to Nov 11, 2026, ending with the build below.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.19.2 (Nov 12, 2026)
+- Box Office: no more empty space on the right. Each player row puts its game (clock or result, score, opponent) in a right-hand column instead of a third line, and the open screen shows two columns of these rows. Headshots no longer cover the first stat.
+- The menu button and date pill stay pinned in one spot on the open screen while you scroll, like on the cover screen.
+
 ## 2.19.1 (Nov 12, 2026)
 - Box scores look the same in every sport and in both places: the quick look under a game now uses the same player rows as the full box score (headshot, name, position, big numbers with small labels), with its key columns and top players. Football, hockey, baseball and soccer match basketball.
 - Team stat rows use short labels ("Yards", "3rd down", "PP chances", "Faceoff %") so they fit.
