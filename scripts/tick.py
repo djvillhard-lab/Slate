@@ -623,14 +623,24 @@ def athletic_work(now):
 NL_RX = re.compile(r"(the pulse|the bounce|scoop city|red light|until saturday|the windup|the athletic fc|full time|prime tire|money ?call|\bpeak\b|newsletter)", re.I)
 def nl_probe(now):
     have = sb_get(["debug/newsletters"]).get("debug/newsletters") or {}
-    if have.get("v") == 1: return
-    out = {"v": 1, "at": iso(now), "rss": {}}
-    for slug in ["news", "newsletters", "the-pulse"] + list(ATHLETIC.values()):
+    if have.get("v") == 2: return
+    out = {"v": 2, "at": iso(now), "feeds": {}, "names": {}}
+    slugs = ["news", "nhl", "nfl", "nba", "mlb", "wnba", "football", "premier-league", "college-football", "college-basketball", "womens-college-basketball",
+             "f1", "formula-1", "golf", "tennis", "nwsl", "womens-soccer", "soccer", "business", "culture", "olympics", "ufc", "boxing", "college-sports", "fantasy", "betting", "mls", "champions-league"]
+    for slug in slugs:
         items = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
-        hits = [{"t": i["title"], "u": i["url"], "d": i["desc"][:120], "at": i["at"]} for i in items if NL_RX.search(i["title"] + " " + i["desc"])]
-        out["rss"][slug] = {"n": len(items), "hits": hits[:12], "first": [i["title"] for i in items[:3]]}
+        out["feeds"][slug] = len(items)
+        for i in items:
+            m = re.search(r"(?:Welcome to|This is|Sign up for) (The [A-Z][\w']*(?: [A-Z][\w']*)*|[A-Z][\w']*(?: [A-Z][\w']*)*), The Athletic", i["desc"]) or re.search(r"^(The Bounce|The Pulse|Scoop City|Red Light|Until Saturday|The Windup|Prime Tire|Full Time|Money Call|Peak)\b", i["title"])
+            tail = re.search(r"-([a-z0-9]+(?:-[a-z0-9]+)?)/$", i["url"])
+            key = m.group(1) if m else None
+            if not key: continue
+            e = out["names"].setdefault(key, {"n": 0, "feeds": [], "tails": [], "ex": i["url"], "last": i["at"]})
+            e["n"] += 1
+            if slug not in e["feeds"]: e["feeds"].append(slug)
+            if tail and tail.group(1) not in e["tails"] and len(e["tails"]) < 6: e["tails"].append(tail.group(1))
     sb_put("debug/newsletters", out)
-    print("newsletter probe written")
+    print("newsletter probe written", list(out["names"]))
 
 # ---------- upcoming events catalog (Big events picker) ----------
 CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
