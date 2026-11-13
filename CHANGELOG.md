@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.23.3 (Nov 12, 2026)
+- The Time / League switch on the slate: the blue highlight now fits inside the switch at every text size instead of spilling past it.
+
 ## 2.23.2 (Nov 12, 2026)
 - Soccer match summary is more compact. Goal lines are plain bullets lined up with the rest, with a ⚽ in place of the bullet as the only marker (no highlight, bold or pill), and the score after the goal in plain gray. Less space between lines.
 
