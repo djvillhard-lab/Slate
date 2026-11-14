@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.39.2 (Nov 14, 2026)
+- Worth a look: the reason line moved under the matchup, styled like the slate's one-liners (red while the game is live, plain once it's final). The league, tag and ✕ stay above the game.
+
 ## 2.39.1 (Nov 14, 2026)
 - Unfolded: the two headers line up. "Today's Slate" and "All games" start at the same height, the league tabs sit level with the date row, and the Time/League row lines up with the Live row on the right. The "you've edited this slate" note moved under the Time/League row.
 - Every live game with a score now has a red line: its highlight, or until one exists, the game's standout so far ("J. Evans 102 pass yds", "D. Dupree 42 rush yds, 1 TD"). Before any score, the pre-game line stays.
