@@ -55,7 +55,11 @@ export async function runNewsletters(env, getDoc, putDoc) {
     if (!out.length) continue;
     const days = [...new Set(out.filter((x) => x.at && now - x.at < 42 * 86400000).map((x) => ct(new Date(x.at)).wd))].sort();
     if (days.length) sched[key] = days;
-    items[key] = out.slice(0, 3).map((x) => ({ title: x.title, url: x.url, at: x.at ? new Date(x.at).toISOString().replace(/\.\d+Z$/, "Z") : "" }));
+    // keep two weeks of editions (newest first), so an earlier day's slate still links its newsletter
+    const fresh = out.map((x) => ({ title: x.title, url: x.url, at: x.at ? new Date(x.at).toISOString().replace(/\.\d+Z$/, "Z") : "" }));
+    const urls = new Set(fresh.map((x) => x.url));
+    items[key] = fresh.concat((items[key] || []).filter((x) => !urls.has(x.url)))
+      .filter((x) => x.at && now - Date.parse(x.at) < 15 * 86400000).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 14);
     if (out[0].at && ct(new Date(out[0].at)).day === c.day) found[key] = c.day;
   }
   // keep any newsletter this job doesn't handle (the email-only ones arrive by another route)

@@ -82,7 +82,7 @@ export default {
       const at = String(p.at || new Date().toISOString()).slice(0, 30), title = String(p.title || "The Athletic FC").slice(0, 200);
       const doc = (await getDoc(env, "news/email-dj")) || {}, items = { ...(doc.items || {}) };
       const list = (items.fc || []).filter((x) => x.url !== p.url);
-      items.fc = [{ title, url: String(p.url).slice(0, 600), at }, ...list].slice(0, 3);
+      items.fc = [{ title, url: String(p.url).slice(0, 600), at }, ...list].slice(0, 14);  // two weeks, for earlier days' slates
       await putDoc(env, "news/email-dj", { updatedAt: new Date().toISOString(), items });
       return json({ ok: true });
     }
