@@ -83,7 +83,7 @@ target_common = {
     "CODE_SIGN_ENTITLEMENTS": "Slate.entitlements",
     "CODE_SIGN_STYLE": "Automatic",
     "CURRENT_PROJECT_VERSION": BUILD,
-    "DEVELOPMENT_TEAM": "",
+    "DEVELOPMENT_TEAM": "GYZZCJ8WV2",
     "ENABLE_PREVIEWS": "YES",
     "GENERATE_INFOPLIST_FILE": "YES",
     "INFOPLIST_FILE": "Slate-Info.plist",
@@ -106,7 +106,7 @@ target_common = {
 live_common = {
     "CODE_SIGN_STYLE": "Automatic",
     "CURRENT_PROJECT_VERSION": BUILD,
-    "DEVELOPMENT_TEAM": "",
+    "DEVELOPMENT_TEAM": "GYZZCJ8WV2",
     "GENERATE_INFOPLIST_FILE": "YES",
     "INFOPLIST_FILE": "SlateLive-Info.plist",
     "INFOPLIST_KEY_CFBundleDisplayName": "Slate Live",

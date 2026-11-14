@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 3.0.1 (Nov 14, 2026)
+- The iPhone project now carries DJ's Apple team, so Xcode Cloud can sign and export builds for TestFlight (the first TestFlight build failed at export without it).
+
 ## 3.0.0 (Nov 14, 2026): the iPhone app
 - Slate is now a real iPhone app (build 3.0), installed from Xcode on DJ's iPhone Duo, with Xcode Cloud building it for TestFlight.
 - Alerts arrive through Apple's push service, and live scores show on the Lock Screen and in the Dynamic Island.

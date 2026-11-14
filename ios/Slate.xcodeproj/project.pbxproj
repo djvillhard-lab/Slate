@@ -290,7 +290,7 @@
 				CODE_SIGN_ENTITLEMENTS = Slate.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Slate-Info.plist";
@@ -322,7 +322,7 @@
 				CODE_SIGN_ENTITLEMENTS = Slate.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Slate-Info.plist";
@@ -351,7 +351,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SlateLive-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slate Live";
@@ -377,7 +377,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SlateLive-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slate Live";
