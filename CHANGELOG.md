@@ -4,6 +4,11 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.42.0 (Nov 14, 2026)
+- Play by play is gone everywhere. In its place, a tapped game (and Full matchup) leads with the game's top individual performances.
+- Football games list every score: quarter and clock, team, TD / FG / safety, who scored ("A. Flora run 77 yds"), and the score after it. Soccer keeps its goal timeline (scorer and minute).
+- Full matchup's live section is now "Top performers and players".
+
 ## 2.41.0 (Nov 14, 2026)
 - Worth a look settings (per account, Settings > Worth a look): pick exactly which leagues can show up (starts with your slate-rule leagues and your teams' leagues), plus two new filters: National TV only, and College: ranked teams only. Games already on your slate always qualify. Replaces the old "I watch / All" choice.
 
