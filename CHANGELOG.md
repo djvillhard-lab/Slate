@@ -4,6 +4,10 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.33.0 (Nov 14, 2026)
+- Live play by play: tap a live game and the last 5 plays come first (newest on top), the box score under them. Each play is one line; jersey numbers, formations and tacklers are trimmed. Football plays lead with the down ("3rd & 8"); other sports with the period and clock. Scoring plays are bold. Also on the Full matchup page. It uses the game data the box score already loads, so no extra requests.
+- Fixed the spot in "who has the ball" during timeouts (ESPN counts the yard line from the home team's goal line).
+
 ## 2.32.0 (Nov 13, 2026)
 - "Worth a look right now" is now just "Worth a look".
 - Football lines add who has the ball and where: "A 6-point game late. PRST ball, 3rd & 4 at SUU 35" (worked out from the yard line during timeouts, when ESPN drops the text).
