@@ -35,7 +35,8 @@ async function whoIs(env, pass) {
   const chk = await rpc(env, "save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString(), via: "worker" }, p_pass: pass, p_merge: false }, PUB);
   if (chk.ok && !/not allowed|error/i.test(chk.text)) return { id: "dj", name: "DJ", cap: 0 };
   const reg = (await getDoc(env, "users/registry")) || {}, u = (reg.users || {})[await sha(pass)];
-  return u && u.id ? { id: u.id, name: u.name || u.id, cap: Number(u.cap) || 0 } : null;
+  // everyone but DJ gets at most 10 Claude summaries a day (a lower cap in the registry still applies)
+  return u && u.id ? { id: u.id, name: u.name || u.id, cap: Math.min(Number(u.cap) || 10, 10) } : null;
 }
 const ctDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 // running cost log: stats/usage {days: {D: {n, in, out, search, usd, by: {user: n}}}}
@@ -47,8 +48,9 @@ async function logUsage(env, user, u, model) {
   day.n += 1; day.in += inT; day.out += outT; day.search += sr;
   const pr = model === "haiku" ? HAIKU : PRICE;
   day.usd = Math.round((day.usd + inT * pr.in + outT * pr.out + sr * PRICE.search) * 10000) / 10000;
-  if (model === "haiku") { day.hl = (day.hl || 0) + 1; day.n -= 1; day.by[user] -= 1; }
-  day.by = day.by || {}; day.by[user] = (day.by[user] || 0) + 1;
+  day.by = day.by || {};
+  // Haiku lines (free-tier helpers) don't count toward anyone's daily summary limit
+  if (model === "haiku") { day.hl = (day.hl || 0) + 1; day.n -= 1; } else day.by[user] = (Number(day.by[user]) || 0) + 1;
   await mergeDoc(env, "stats/usage", { days: { [d]: day } });
 }
 

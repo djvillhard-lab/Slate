@@ -4,6 +4,14 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.27.0 (Nov 13, 2026)
+- "Worth a look right now" is its own collapsible section at the top of today's slate, like the league sections. Each game keeps its league, label and one-line reason, with a ✕ to hide it. The game row has the + / ✓ from All games, and a game you add stays in the section, ticked, for the rest of the day, so one more tap takes it back off.
+- New Settings > Worth a look right now: turn the section on or off, choose close finishes and big individual nights separately, and pick leagues you follow or any league.
+- Teams page: each team card shows its sport icon, the same as on the slate. The next-game line is shorter ("Tmrw 7p @ CHI") so it no longer gets cut off.
+- Soccer match summary: own goals are credited to the team that benefits. They had been counted for the own goal scorer's team.
+- Less empty space under "Updated" and the Live button at the top of the slate.
+- Claude summaries: every account except DJ's is limited to 10 a day. Also fixed a counting bug that could let an account go past its limit.
+
 ## 2.26.4 (Nov 13, 2026)
 - All games: changing the day keeps the league you're looking at instead of jumping back to My teams, even on a day that league has no games (it says so and stays put).
 
