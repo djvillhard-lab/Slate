@@ -4,6 +4,12 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.32.0 (Nov 13, 2026)
+- "Worth a look right now" is now just "Worth a look".
+- Football lines add who has the ball and where: "A 6-point game late. PRST ball, 3rd & 4 at SUU 35" (worked out from the yard line during timeouts, when ESPN drops the text).
+- Basketball close finishes add the game's top scorer: "A 2-point game late. S. Gilgeous-Alexander 37 pts".
+- Finished games (the 10 minutes they stay) swap the old reason for the result at a glance: a game-winner when there was one ("Game-winner: Alex Wilkins makes 24-foot three point jumper"), otherwise the top scorers, top passer/rusher, or goal scorers.
+
 ## 2.31.0 (Nov 13, 2026)
 - Time | League moved from the bottom bar to the top of the slate, on the left of the Updated / Live row, in the same quiet pill style as Reorder (on every phone, folded or not).
 - In League view, Reorder now sits under the last league section.
