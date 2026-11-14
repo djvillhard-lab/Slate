@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 3.0.2 (Nov 14, 2026)
+- Xcode Cloud now prints the TestFlight export's signing errors straight into its build log (ios/ci_scripts/ci_post_xcodebuild.sh), so a failed export shows its real reason.
+
 ## 3.0.1 (Nov 14, 2026)
 - The iPhone project now carries DJ's Apple team, so Xcode Cloud can sign and export builds for TestFlight (the first TestFlight build failed at export without it).
 
