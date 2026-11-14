@@ -1,7 +1,8 @@
 import SwiftUI
 
-// The page fills the screen. On iPhone Duo, Slate's main destinations go in the system's control strip
-// (Apple moves bottom toolbar items into the right-side bar there), and the page hides its own menu button.
+// The page fills the screen. On iPhone Duo (while Settings > Phone is iPhone Duo), Slate's menu goes in the system's
+// control strip as one button (Apple moves bottom toolbar items into the right-side bar there), and the page hides
+// its own menu button. With Phone set to iPhone, the page shows its own menu, as on any iPhone.
 // On a regular iPhone the page looks and works exactly like the Home Screen app.
 struct RootView: View {
     @ObservedObject private var model = WebModel.shared
@@ -10,8 +11,8 @@ struct RootView: View {
         NavigationStack {
             ZStack {
                 Color.slateBackground(model.look).ignoresSafeArea()
-                // the page always runs edge to edge, under the strip too (like Sleeper); it keeps its own content
-                // clear of the strip's buttons using the width we pass in (setInset)
+                // the page always runs edge to edge, under the strip too (like Sleeper); it keeps its buttons
+                // clear of the strip using the width we pass in (setInset)
                 SlateWebView(model: model)
                     .ignoresSafeArea(.container, edges: .all)
                     .ignoresSafeArea(.keyboard)
@@ -22,21 +23,14 @@ struct RootView: View {
             .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 if model.strip {
-                    ToolbarItemGroup(placement: .bottomBar) {
-                        // top to bottom; All games sits lowest, closest to the thumb (Settings stays in the page header)
-                        // same order as the page's menu: On TV, Teams, Box Office, All games, Slate (Slate nearest the thumb)
-                        StripButton(title: "On TV", symbol: "tv", target: "tv", model: model)
-                        StripButton(title: "Teams", symbol: "tshirt", target: "teams", model: model)
-                        StripButton(title: "Box Office", symbol: "ticket", target: "moments", model: model)
-                        StripButton(title: "All games", symbol: "list.bullet.rectangle", target: "games", model: model)
-                        StripButton(title: "Slate", symbol: "wand.and.stars", target: "lineup", model: model)
-                    }
+                    // one button in the strip; tapping it opens Slate's pages (Slate last, nearest the thumb)
+                    ToolbarItem(placement: .bottomBar) { SlateMenu(model: model) }
                 }
             }
             .toolbar(model.strip ? .visible : .hidden, for: .bottomBar)
             .toolbarBackground(.hidden, for: .bottomBar)  // the buttons float over the page's own background
             .background {
-                // how much room the strip takes on the right: the page pads its content by this much
+                // how much room iOS's column takes on the right: the page keeps its buttons this far from the edge
                 GeometryReader { proxy in
                     Color.clear
                         .onAppear { model.setStripInset(proxy.safeAreaInsets.trailing) }
@@ -46,28 +40,43 @@ struct RootView: View {
         }
         .preferredColorScheme(model.look == "light" ? .light : .dark)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in
-            model.setStrip(DeviceShape.isWideScreen)
+            model.refreshStrip()
         }
-        .onAppear { model.setStrip(DeviceShape.isWideScreen) }
+        .onAppear { model.refreshStrip() }
     }
 }
 
-private struct StripButton: View {
-    let title: String
-    let symbol: String
-    let target: String
+// Slate's pages, in the page's own menu order
+private struct Destination: Identifiable {
+    let title: String, symbol: String, target: String
+    var id: String { target }
+    static let all = [
+        Destination(title: "On TV", symbol: "tv", target: "tv"),
+        Destination(title: "Teams", symbol: "tshirt", target: "teams"),
+        Destination(title: "Box Office", symbol: "ticket", target: "moments"),
+        Destination(title: "All games", symbol: "list.bullet.rectangle", target: "games"),
+        Destination(title: "Slate", symbol: "wand.and.stars", target: "lineup"),
+    ]
+}
+
+// The single menu button in iPhone Duo's strip. The page that's open gets the checkmark.
+private struct SlateMenu: View {
     @ObservedObject var model: WebModel
 
     var body: some View {
-        let on = model.activeTarget == target
-        Button {
-            model.go(target)
+        Menu {
+            Picker("Go to", selection: Binding(get: { model.activeTarget }, set: { model.go($0) })) {
+                ForEach(Destination.all) { d in
+                    Label(d.title, systemImage: d.symbol).tag(d.target)
+                }
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
         } label: {
-            Label(title, systemImage: symbol)
-                .symbolVariant(on ? .fill : .none)
+            Label("Menu", systemImage: "line.3.horizontal")
         }
-        .tint(on ? Color.accentColor : Color.primary)
-        .accessibilityAddTraits(on ? .isSelected : [])
+        .menuOrder(.fixed)
+        .accessibilityLabel("Menu")
     }
 }
 

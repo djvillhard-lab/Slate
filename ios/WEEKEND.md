@@ -52,8 +52,8 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
 - In the app, sign in once with your passcode (it keeps it after that).
 
 ### 5. Try it
-- Folded and unfolded, rotated both ways. On iPhone Duo, On TV / Teams / Box Office / All games / Slate
-  sit in the system strip on the right (same order as the menu), and the floating menu button goes away.
+- Folded and unfolded, rotated both ways. On iPhone Duo, the system strip on the right holds one menu
+  button (On TV / Teams / Box Office / All games / Slate), and the floating menu button goes away.
   Unfolded, the left side is your slate and the right side opens on All games.
 - Links to ESPN, streaming apps and maps open outside the app, like the Home Screen version.
 - Settings > Notifications > This phone > **Turn on**. (Alerts need step 7 before they arrive.)
@@ -97,8 +97,9 @@ Xcode put on your phone, then repeat the starred items in the TestFlight copy on
 - [ ] **Folded, sideways:** same as above. Text and cards fill the width.
 - [ ] **Unfolded, upright and sideways:** the page fills the screen to both edges, nothing hidden under the clock
       or the side strip. *
-- [ ] **The side strip (unfolded):** tap On TV, Teams, Box Office, All games, Slate. Each opens the right page
-      and lights up; the floating menu button is gone. Scroll each page: the strip never moves. *
+- [ ] **The side strip:** one menu button. Tap it: On TV, Teams, Box Office, All games, Slate, with a check on the
+      open page. Pages run under the strip; the header buttons, day picker and Back sit just left of it.
+      Settings > Phone > iPhone: the strip menu goes away and the page's own menu button shows instead. *
 - [ ] **Folding and unfolding while a page is open:** do it on the slate and on Box Office, a few times each.
       Nothing sticks halfway, the layout settles within a second.
 - [ ] **Links:** a TV channel, an ESPN link and an Athletic newsletter open outside the app; coming back lands

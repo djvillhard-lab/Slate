@@ -11,6 +11,7 @@ final class WebModel: ObservableObject {
 
     @Published var view = "lineup"
     @Published var duo = false
+    @Published var device = ""   // Settings > Phone: "duo" or "iphone", as the page reports it
     @Published var look = "dark"
     @Published private(set) var strip = false
     @Published var loadError: String?
@@ -47,6 +48,11 @@ final class WebModel: ObservableObject {
         js("window.SlateApp && SlateApp.go(\(Self.quote(target)))")
     }
 
+    // the strip menu: only on a wide (Duo) screen, and only while Settings > Phone is not set to iPhone
+    func refreshStrip() {
+        setStrip(DeviceShape.isWideScreen && device != "iphone")
+    }
+
     func setStrip(_ on: Bool) {
         guard on != strip else { return }
         strip = on
@@ -56,9 +62,10 @@ final class WebModel: ObservableObject {
 
     private var stripInset: CGFloat = 0
     private var trailingInset: CGFloat = 0
+    // the width of iOS's column on the right edge (Duo): the page keeps its buttons clear of it, strip or not
     func setStripInset(_ w: CGFloat) {
         trailingInset = w
-        let v = strip ? w : 0
+        let v = w
         guard abs(v - stripInset) >= 1 else { return }
         stripInset = v
         js("window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(v.rounded())))")
@@ -82,6 +89,7 @@ final class WebModel: ObservableObject {
             if let v = m["view"] as? String { view = v }
             if let l = m["look"] as? String { look = l }
             if let d = m["duo"] as? Bool { duo = d }
+            if let dv = m["device"] as? String, dv != device { device = dv; refreshStrip() }
         case "push-status":
             pushStatus()
         case "pass":
