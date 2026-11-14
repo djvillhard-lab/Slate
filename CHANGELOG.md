@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.35.1 (Nov 14, 2026)
+- Box Office: the date picker can go to today even before any game has started (it used to bounce back to last night). Opening Box Office still starts on last night until today has results.
+
 ## 2.35.0 (Nov 14, 2026)
 - The Athletic Newsletters now stay on the day they came out: each day's slate links the editions published that day (with the time), so you can go back a day or two and open one you missed. Opened ones stay grayed out on that phone for two weeks.
 - The server keeps two weeks of editions for each newsletter (it kept only the last 3), including The Athletic FC from email.
