@@ -15,7 +15,7 @@ const PATHS = {
 };
 const DEFAULTS = { enabled: true, brief: { on: true, hour: 9, myTeams: true, lineup: true, topGames: true }, reminders: { lineup: true, myTeams: true },
   finals: { myTeams: true, lineup: false }, live: { myTeams: false }, upsets: { on: false },
-  close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, big: { lineup: false, myTeams: false }, lead: 0,
+  close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, lead: 0,
   liveAct: { on: true, lineup: true, myTeams: false }, quiet: { on: true, start: 23, end: 8 }, days: [0, 1, 2, 3, 4, 5, 6], spoilerFree: false };
 const LEAGUE_NAME = { nfl: "NFL", ncaaf: "College Football", nba: "NBA", wnba: "WNBA", ncaam: "Men's College Hoops", ncaaw: "Women's College Hoops", nhl: "NHL", mlb: "MLB", mls: "MLS",
   epl: "Premier League", ucl: "Champions League", uel: "Europa League", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "International" };
@@ -268,9 +268,9 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
   }
   // during games: close finishes, overtime, your team scoring, someone having a huge night
   const pick = (o) => new Set([...((o || {}).lineup ? slate : []), ...((o || {}).myTeams ? mine : [])]);
-  const closeSet = pick(p.close), otSet = pick(p.ot), bigSet = pick(p.big), goalSet = (p.goals || {}).myTeams ? new Set(mine) : new Set();
-  for (const k of ["close", "ot", "goals", "big"]) sent[k] = sent[k] || [];
-  for (const i of new Set([...closeSet, ...otSet, ...bigSet, ...goalSet])) {
+  const closeSet = pick(p.close), otSet = pick(p.ot), goalSet = (p.goals || {}).myTeams ? new Set(mine) : new Set();
+  for (const k of ["close", "ot", "goals"]) sent[k] = sent[k] || [];
+  for (const i of new Set([...closeSet, ...otSet, ...goalSet])) {
     const s = sc[i] || {}, g = byid[i]; if (!g || s.state !== "in") continue;
     const a = Number(s.a), h = Number(s.h); if (isNaN(a) || isNaN(h)) continue;
     const m = Math.abs(a - h), det = String(s.detail || ""), sport = SPORT[g.league] || "", per = s.p || 0, ck = s.ck || 0, ot = /\b(OT|SO|ET)\b|extra time|shootout/i.test(det);
@@ -287,16 +287,6 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
       const tot = a + h, key = i + ":" + tot, prevMax = Math.max(-1, ...sent.goals.filter((x) => x.startsWith(i + ":")).map((x) => Number(x.split(":")[1])));
       if (tot > 0 && tot > prevMax && prevMax >= 0) out.push(["goals", key, "Goal", `Goal! ${score}`]);
       else if (prevMax < 0) sent.goals.push(key);  // first look at this game: remember the score, don't alert for goals already in
-    }
-    if (bigSet.has(i) && !spoil) for (const L of s.ld || []) {
-      const num = (rx) => { const x = rx.exec(L.d); return x ? Number(x[1]) : 0; }, k = i + ":" + L.n + ":" + L.c;
-      if (sent.big.includes(k)) continue;
-      let line = "";
-      if (sport === "bball" && L.c === "points" && (L.v || Number(L.d)) >= (g.league === "nba" ? 40 : 30)) line = `${L.n} has ${L.v || L.d} points`;
-      if (sport === "football" && L.c === "passingYards" && (num(/(\d+) YDS/) >= 350 || num(/(\d+) TD/) >= 4)) line = `${L.n}: ${L.d}`;
-      if (sport === "football" && /^(rushing|receiving)Yards$/.test(L.c) && num(/(\d+) YDS/) >= 150) line = `${L.n}: ${L.d}`;
-      if (sport === "hockey" && L.c === "goals" && (L.v || Number(L.d)) >= 3) line = `${L.n} has a hat trick`;
-      if (line) out.push(["big", k, "Big night", `${line} · ${side(g, "away")} @ ${side(g, "home")}`]);
     }
   }
   if ((p.live || {}).myTeams && !spoil) for (const i of mine) {
@@ -372,7 +362,7 @@ export async function runAlerts(env) {
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
-      close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], big: [...(s0.big || [])], la: JSON.parse(JSON.stringify(s0.la || {})) };
+      close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})) };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {

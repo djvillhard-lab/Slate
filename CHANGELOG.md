@@ -4,6 +4,11 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.37.0 (Nov 14, 2026)
+- Notifications page reworked: Morning brief; Game alerts as one list with a My slate and a My teams tick for each (Game starting, Close finish, Overtime, Final score, Goals, Hourly score), nothing ticked = off; Upset watch; Live scores on the Lock Screen with the same two ticks (on whenever one is ticked); then When.
+- Removed the "Big night" alert completely. Around kickoff ESPN lists each player's season totals, so a Dayton football game at 0-0 sent three alerts with different players.
+- Worth a look's Big individual nights now wait until a game has a score and is past the first period/quarter, for the same reason.
+
 ## 2.36.3 (Nov 14, 2026)
 - Every game on the slate keeps a line under it: once a game goes live, its pre-game line stays until the game's own first line arrives (it used to go blank in between). If a game never had one, the line shows the two records ("Syracuse (4-5) at NC State (4-5)").
 - The live game's own line is red while the game is on; pre-game lines stay as they were.
