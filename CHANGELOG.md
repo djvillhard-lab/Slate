@@ -4,6 +4,12 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 3.2.0 (Nov 14, 2026)
+- iPhone Duo strip menu (needs the new TestFlight build): tapping the strip's menu button now pops On TV, Teams, Box Office, All games and Slate up above it as separate round buttons with their names beside them; the open page is lit, and picking one folds them away. The button turns into an ✕ while they're open. Same folded and unfolded.
+- Fixed the Slate header's Settings and More buttons covering the title in the app: iOS reports the Duo's side column as screen padding too, so the header was counting it twice.
+- Text sizes reworked: XS, S, M, L and XL (XXS is gone; it moves to XS). Each size now stops growing once the page would get too narrow for the game cards, so big sizes never squeeze cards out of shape on the folded Duo or a regular iPhone. At L and XL, team records hide to keep full team names.
+- Soccer match summaries: goals now read "Scorer (assist)", "Scorer (penalty)" or "Scorer (own goal)", with the score beside them.
+
 ## 3.1.1 (Nov 14, 2026)
 - iPhone app: the Slate header's Settings and More buttons sit in line at the right end, next to the side column, instead of floating over the title (Safari placed the floating buttons wrong at larger text sizes). "Tonight's Slate" shrinks to fit.
 

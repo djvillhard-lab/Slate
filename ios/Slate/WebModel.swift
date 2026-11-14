@@ -11,6 +11,7 @@ final class WebModel: ObservableObject {
 
     @Published var view = "lineup"
     @Published var duo = false
+    @Published var menuOpen = false
     @Published var device = ""   // Settings > Phone: "duo" or "iphone", as the page reports it
     @Published var look = "dark"
     @Published private(set) var strip = false
@@ -41,6 +42,22 @@ final class WebModel: ObservableObject {
 
     func js(_ source: String) {
         webView?.evaluateJavaScript(source, completionHandler: nil)
+    }
+
+    func toggleMenu() {
+        menuOpen.toggle()  // flip the icon right away; the page's own report follows
+        js("window.SlateApp && SlateApp.toggleMenu && SlateApp.toggleMenu()")
+    }
+
+    private var menuAnchor = CGRect.zero
+    func setMenuAnchor(_ r: CGRect) {
+        guard r.width > 0, abs(r.minX - menuAnchor.minX) + abs(r.minY - menuAnchor.minY) + abs(r.width - menuAnchor.width) >= 1 else { return }
+        menuAnchor = r
+        sendMenuAnchor()
+    }
+    private func sendMenuAnchor() {
+        guard menuAnchor.width > 0 else { return }
+        js("window.SlateApp && SlateApp.setMenuAnchor && SlateApp.setMenuAnchor(\(Int(menuAnchor.minX)), \(Int(menuAnchor.minY)), \(Int(menuAnchor.width)), \(Int(menuAnchor.height)))")
     }
 
     func go(_ target: String) {
@@ -85,10 +102,12 @@ final class WebModel: ObservableObject {
         case "ready":
             loadError = nil
             js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded())))")
+            sendMenuAnchor()
         case "state":
             if let v = m["view"] as? String { view = v }
             if let l = m["look"] as? String { look = l }
             if let d = m["duo"] as? Bool { duo = d }
+            if let mo = m["menuOpen"] as? Bool { menuOpen = mo }
             if let dv = m["device"] as? String, dv != device { device = dv; refreshStrip() }
         case "push-status":
             pushStatus()

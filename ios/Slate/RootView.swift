@@ -23,7 +23,7 @@ struct RootView: View {
             .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 if model.strip {
-                    // one button in the strip; tapping it opens Slate's pages (Slate last, nearest the thumb)
+                    // one button in the strip; tapping it opens Slate's pages above it
                     ToolbarItem(placement: .bottomBar) { SlateMenu(model: model) }
                 }
             }
@@ -46,37 +46,20 @@ struct RootView: View {
     }
 }
 
-// Slate's pages, in the page's own menu order
-private struct Destination: Identifiable {
-    let title: String, symbol: String, target: String
-    var id: String { target }
-    static let all = [
-        Destination(title: "On TV", symbol: "tv", target: "tv"),
-        Destination(title: "Teams", symbol: "tshirt", target: "teams"),
-        Destination(title: "Box Office", symbol: "ticket", target: "moments"),
-        Destination(title: "All games", symbol: "list.bullet.rectangle", target: "games"),
-        Destination(title: "Slate", symbol: "wand.and.stars", target: "lineup"),
-    ]
-}
-
-// The single menu button in iPhone Duo's strip. The page that's open gets the checkmark.
+// The single menu button in iPhone Duo's strip. Tapping it opens Slate's pages as separate round buttons stacked
+// just above it (drawn by the page, so they match its look); picking one, or tapping it again, closes them.
+// It tells the page where it sits so the buttons line up over it.
 private struct SlateMenu: View {
     @ObservedObject var model: WebModel
 
     var body: some View {
-        Menu {
-            Picker("Go to", selection: Binding(get: { model.activeTarget }, set: { model.go($0) })) {
-                ForEach(Destination.all) { d in
-                    Label(d.title, systemImage: d.symbol).tag(d.target)
-                }
-            }
-            .pickerStyle(.inline)
-            .labelsHidden()
+        Button {
+            model.toggleMenu()
         } label: {
-            Label("Menu", systemImage: "line.3.horizontal")
+            Label(model.menuOpen ? "Close menu" : "Menu", systemImage: model.menuOpen ? "xmark" : "line.3.horizontal")
         }
-        .menuOrder(.fixed)
-        .accessibilityLabel("Menu")
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.setMenuAnchor($0) }
+        .accessibilityLabel(model.menuOpen ? "Close menu" : "Menu")
     }
 }
 
