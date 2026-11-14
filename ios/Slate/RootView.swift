@@ -23,8 +23,20 @@ struct RootView: View {
             .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 if model.strip {
-                    // one button in the strip; tapping it opens Slate's pages above it
-                    ToolbarItem(placement: .bottomBar) { SlateMenu(model: model) }
+                    // the strip shows one menu button; tapping it opens Slate's pages as strip buttons right above it
+                    // (top to bottom: On TV, Teams, Box Office, All games, Slate). Picking one closes them again.
+                    ToolbarItemGroup(placement: .bottomBar) {
+                        if model.stripOpen {
+                            ForEach(Destination.all) { d in
+                                StripButton(dest: d, model: model)
+                            }
+                        }
+                        Button {
+                            withAnimation(.snappy) { model.stripOpen.toggle() }
+                        } label: {
+                            Label(model.stripOpen ? "Close menu" : "Menu", systemImage: model.stripOpen ? "xmark" : "line.3.horizontal")
+                        }
+                    }
                 }
             }
             .toolbar(model.strip ? .visible : .hidden, for: .bottomBar)
@@ -48,20 +60,35 @@ struct RootView: View {
     }
 }
 
-// The single menu button in iPhone Duo's strip. Tapping it opens Slate's pages as separate round buttons stacked
-// just above it (drawn by the page, so they match its look); picking one, or tapping it again, closes them.
-// It tells the page where it sits so the buttons line up over it.
-private struct SlateMenu: View {
+// Slate's pages, in the page's own menu order
+private struct Destination: Identifiable {
+    let title: String, symbol: String, target: String
+    var id: String { target }
+    static let all = [
+        Destination(title: "On TV", symbol: "tv", target: "tv"),
+        Destination(title: "Teams", symbol: "tshirt", target: "teams"),
+        Destination(title: "Box Office", symbol: "ticket", target: "moments"),
+        Destination(title: "All games", symbol: "list.bullet.rectangle", target: "games"),
+        Destination(title: "Slate", symbol: "wand.and.stars", target: "lineup"),
+    ]
+}
+
+// One page button in the open strip menu; the open page is lit
+private struct StripButton: View {
+    let dest: Destination
     @ObservedObject var model: WebModel
 
     var body: some View {
+        let on = model.activeTarget == dest.target
         Button {
-            model.toggleMenu()
+            model.go(dest.target)
+            withAnimation(.snappy) { model.stripOpen = false }
         } label: {
-            Label(model.menuOpen ? "Close menu" : "Menu", systemImage: model.menuOpen ? "xmark" : "line.3.horizontal")
+            Label(dest.title, systemImage: dest.symbol)
+                .symbolVariant(on ? .fill : .none)
         }
-        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.setMenuAnchor($0) }
-        .accessibilityLabel(model.menuOpen ? "Close menu" : "Menu")
+        .tint(on ? Color.accentColor : Color.primary)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 

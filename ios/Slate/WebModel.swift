@@ -12,6 +12,7 @@ final class WebModel: ObservableObject {
     @Published var view = "lineup"
     @Published var duo = false
     @Published var menuOpen = false
+    @Published var stripOpen = false   // the strip menu, open (its page buttons showing) or closed
     @Published var device = ""   // Settings > Phone: "duo" or "iphone", as the page reports it
     @Published var look = "dark"
     @Published private(set) var strip = false

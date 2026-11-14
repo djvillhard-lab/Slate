@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.2.2 (Nov 14, 2026)
+TestFlight: 3.0 (10)
+- iPhone Duo strip menu, take three: the strip shows one menu button at the bottom. Tap it and On TV, Teams, Box Office, All games and Slate appear as strip buttons right above it, in the strip itself, the open page lit. Pick one (or tap the ✕) and they fold back into the one button. Same folded and unfolded.
+
 ## 3.2.1 (Nov 14, 2026)
 TestFlight: 3.0 (9)
 - iPhone Duo, unfolded: the two sides now split exactly on the fold. The app tells the page where the middle of the screen is instead of the page guessing (iOS's side column threw the guess off). Settings > Move split still fine-tunes it.
