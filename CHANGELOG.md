@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.30.3 (Nov 13, 2026)
+- Worth a look reasons drop the clock and period (it's on the game row right below): "A 6-point game late", "A 4-point game in OT".
+
 ## 2.30.2 (Nov 13, 2026)
 - Worth a look reasons say "An 8-point game" (and 11, 18) instead of "A 8-point game".
 
