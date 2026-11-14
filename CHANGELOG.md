@@ -4,6 +4,16 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.34.0 (Nov 14, 2026)
+- Box Office always opens on a page with results: today once a game has a score, otherwise last night. Postponed and canceled games (which ESPN marks as "over") no longer count as played.
+- Box Office no longer shows a decided game as "End of 4th": ESPN sometimes leaves college football games there for a while, and Slate now treats them as final (on the page and in the stored rankings).
+- On TV: channels with a game on right now come first, then the rest, alphabetical within each.
+- Team cards: today's game fits on one line ("Today 2:30p vs BC").
+- Game trays: the venue, betting line and Claude button sit closer together.
+- Tapping a started game waits for its box score instead of flashing the Claude button first.
+- Full matchup: the quick read shows in full (no More link).
+- The slate page no longer shows the Today button (the date picker gets you back to today).
+
 ## 2.33.2 (Nov 14, 2026): final review before the iPhone app
 - Faster opens, far fewer network calls: reopening Slate went from 57 ESPN requests to 13 in the first 25 seconds.
   - Games that need the same day's scoreboard now share one request instead of each asking (32 duplicate requests on open, gone).

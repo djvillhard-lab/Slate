@@ -1,7 +1,7 @@
 """Rank last night's individual performances by league from ESPN box scores.
 Usage: python3 standouts.py YYYY-MM-DD [out.json]
 Writes {"date","updatedAt","leagues":{lg:[...top 15...]},"games":n}. Night = the Central-time date of the start."""
-import json, sys, datetime, urllib.request, concurrent.futures as cf
+import json, re, sys, datetime, urllib.request, concurrent.futures as cf
 from zoneinfo import ZoneInfo
 CT = ZoneInfo("America/Chicago")
 LEAGUES = {  # key: (path, extra query, kind)
@@ -116,6 +116,9 @@ def game_rows(lg, path, kind, ev):
     comp = ev["competitions"][0]
     teams = {c["team"]["id"]: c for c in comp["competitors"]}
     st = ev["status"]["type"]; live = st.get("state") == "in"
+    # ESPN can leave a decided game at "End of 4th" (in progress) for a long while: count it as final
+    cs = comp.get("competitors", [])
+    if live and len(cs) == 2 and num(cs[0].get("score")) != num(cs[1].get("score")) and re.match(r"End of (4th|Regulation|2nd Half|3rd Period)", st.get("shortDetail") or st.get("detail") or "", re.I): live = False
     def result(tid):
         me = teams.get(tid); opp = next((c for k, c in teams.items() if k != tid), None)
         if not me or not opp: return "", ""
