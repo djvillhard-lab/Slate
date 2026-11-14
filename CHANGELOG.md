@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.37.2 (Nov 14, 2026)
+- Menu (bottom right), top to bottom: All games, On TV, Teams, Box Office, Slate. Slate sits at the bottom, nearest your thumb.
+
 ## 2.37.1 (Nov 14, 2026)
 - Live scores on the Lock Screen stay up after the final, showing the final score, until you swipe them away. iOS removes an ended one on its own after 4 hours at most (Apple's limit), so that's the longest it can stay.
 
