@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.34.2 (Nov 14, 2026)
+- The Athletic Newsletters stay off the slate on Saturdays and Sundays unless a picked newsletter actually publishes that day. All of DJ's picks (The Pulse, The Bounce, Moneycall, Peak, The Athletic FC) are weekday-only, so his weekend slate has no newsletter section.
+
 ## 2.34.1 (Nov 14, 2026)
 - Removed the Today pill next to the date at the top of the slate (it showed on any other day). The back arrow in the bottom corner still returns to today on another day's slate (put back after 2.34.0 hid it by mistake).
 
