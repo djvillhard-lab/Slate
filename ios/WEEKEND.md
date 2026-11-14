@@ -37,6 +37,9 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
 - The bundle ID is `com.djvillhard.slate`. If Xcode says it's taken, change it to `com.djvillhard.slate2` and tell Claude
   (alerts then also need a Cloudflare secret `APNS_TOPIC` = the new bundle ID).
 - Push Notifications should already show under capabilities (it comes from Slate.entitlements).
+- Then pick the **SlateLive** target (same list, under Slate) and set the same **Team** there. It's the small
+  piece that draws live notifications; its bundle ID is `com.djvillhard.slate.live` (if you changed the app's ID
+  above, change this one to match, ending in `.live`). Nothing else to add: live notifications use the same push key.
 
 ### 4. Put it on your Duo (5 min)
 - Plug the Duo into the iMac with a cable. Unlock it and tap **Trust**.
@@ -100,6 +103,9 @@ Xcode put on your phone, then repeat the starred items in the TestFlight copy on
 - [ ] **Text size:** Settings > Text size > Auto, then change the iPhone's text size and come back. Slate follows.
 - [ ] **Alerts:** Settings > Notifications > This phone > Turn on, allow when iPhone asks. Then add a game that
       starts in a few minutes and wait for the "Starting now" alert. (Needs step 7 done.) *
+- [ ] **Live notifications:** with a game on your slate live (or add one that is), wait a minute or two. Its score
+      shows on the Lock Screen and in the Dynamic Island, then updates. If not: iPhone Settings > Slate > Live
+      Activities must be on, and Slate's Settings > Notifications > Live notifications too. (Needs step 7.) *
 - [ ] **Offline:** turn on Airplane Mode, open the app. It shows your last slate or a clear "can't reach" note,
       not a blank screen. Turn Airplane Mode off.
 - [ ] **TestFlight:** Slate installs from the TestFlight app and opens. *
