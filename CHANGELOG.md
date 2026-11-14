@@ -4,6 +4,10 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.36.1 (Nov 14, 2026)
+- All games: a league's filters are always all listed (dimmed when no game matches that day), so leagues with the same rules show the same strip: men's and women's college hoops both show Both ranked, Top-10 team, Any ranked team, National TV, then conferences.
+- New NBA rule and filter: NBA Cup (group play, knockouts and the final). NBA now has National TV, Top 4 teams, Winning teams and NBA Cup, in Slate rules and on All games alike.
+
 ## 2.36.0 (Nov 14, 2026)
 - All games: the filters under each league are now the same choices as that league's slate rules, worded the same way (e.g. College Football: Both ranked, Top-10 team, Any ranked team, National TV, then conferences; NFL: Prime time, Division games, Winning teams; Premier League: Big Six clash, Any Big Six club, Top of the table, National TV; International: USA, Heavyweight clash, Any big nation, Games that count). A choice only shows when some of the day's games match it.
 
