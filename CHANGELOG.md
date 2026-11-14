@@ -4,6 +4,17 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.28.0 (Nov 13, 2026)
+- More notifications, each switched on or off for your account in Settings > Notifications (every Slate account has its own):
+  - Game starts: choose My slate and/or My teams, and when (at the start, 10 or 30 minutes before).
+  - Close finishes: a one-score game late (last 5 minutes, 80th minute, 8th inning on), for your slate and/or your teams.
+  - Overtime: when a game goes to overtime or extra time.
+  - My team scores: every goal in your teams' hockey and soccer games (off to start).
+  - Big individual nights: 40 points, 350 passing or 150 rushing or receiving yards, a hat trick (off to start).
+  - Still there: the daily brief, hourly score for your teams, upset alerts, and finals for your slate and/or your teams.
+- The notifications page is reorganized into Daily brief, Game starts, During games, Final scores, Live notifications and When. "How it works" now says what really happens: Slate checks every minute.
+- The Live notifications switches are in place for the iPhone app.
+
 ## 2.27.0 (Nov 13, 2026)
 - "Worth a look right now" is its own collapsible section at the top of today's slate, like the league sections. Each game keeps its league, label and one-line reason, with a ✕ to hide it. The game row has the + / ✓ from All games, and a game you add stays in the section, ticked, for the rest of the day, so one more tap takes it back off.
 - New Settings > Worth a look right now: turn the section on or off, choose close finishes and big individual nights separately, and pick leagues you follow or any league.

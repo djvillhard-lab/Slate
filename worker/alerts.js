@@ -14,10 +14,14 @@ const PATHS = {
   intl: ["soccer/fifa.friendly", "soccer/uefa.nations", "soccer/concacaf.nations.league", "soccer/uefa.euroq", "soccer/fifa.worldq.uefa", "soccer/fifa.worldq.conmebol", "soccer/fifa.worldq.concacaf", "soccer/concacaf.gold", "soccer/conmebol.america", "soccer/fifa.world"],
 };
 const DEFAULTS = { enabled: true, brief: { on: true, hour: 9, myTeams: true, lineup: true, topGames: true }, reminders: { lineup: true, myTeams: true },
-  finals: { myTeams: true, lineup: false }, live: { myTeams: false }, upsets: { on: false }, quiet: { on: true, start: 23, end: 8 }, days: [0, 1, 2, 3, 4, 5, 6], spoilerFree: false };
+  finals: { myTeams: true, lineup: false }, live: { myTeams: false }, upsets: { on: false },
+  close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, big: { lineup: false, myTeams: false }, lead: 0,
+  liveAct: { on: true, lineup: true, myTeams: false }, quiet: { on: true, start: 23, end: 8 }, days: [0, 1, 2, 3, 4, 5, 6], spoilerFree: false };
 const NATIONAL = ["ABC", "CBS", "NBC", "FOX", "ESPN", "ESPN2", "ESPNU", "ESPNEWS", "TNT", "TBS", "truTV", "FS1", "FS2", "CBSSN", "USA", "NBA TV", "NHL Network", "MLB Network", "NFL Network", "BTN", "SEC Network", "ACC Network", "CW", "Prime Video", "Peacock", "Netflix"];
 const BIG_NET = ["ABC", "CBS", "NBC", "FOX", "ESPN", "TNT", "Prime Video", "Netflix"];
 const COLLEGE = { ncaaf: 1, ncaam: 1, ncaaw: 1 };
+const SPORT = { nba: "bball", wnba: "bball", ncaam: "bball", ncaaw: "bball", nfl: "football", ncaaf: "football", nhl: "hockey", mlb: "baseball",
+  mls: "soccer", epl: "soccer", ucl: "soccer", uel: "soccer", laliga: "soccer", seriea: "soccer", bundesliga: "soccer", ligue1: "soccer", facup: "soccer", intl: "soccer" };
 
 // ---------- Supabase ----------
 function sbHeaders(env) { return { apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET }; }
@@ -191,9 +195,11 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     const g = byid[i], t = startOf(i);
     if (!g || isNaN(t) || sent.reminders.includes(i) || (sc[i] || {}).state === "post") continue;
     // right at the start time (the cron runs every minute); a game that already started within the last 10 minutes still counts
-    if (now >= t && now - t <= 10 * 60000) {
+    const lead = Math.max(0, Math.min(60, Number(p.lead) || 0)) * 60000, at = new Date(t.getTime() - lead);
+    if (now >= at && now - at <= 10 * 60000) {
       const orig = new Date(g.start), moved = Math.abs(orig - t) >= 60000;
-      out.push(["reminders", i, "Starting now", `Starting now` + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}`]);
+      const head = lead ? `In ${Math.round(lead / 60000)} min (${clock(t)})` : "Starting now";
+      out.push(["reminders", i, head, head + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}`]);
     }
   }
   if ((p.reminders || {}).lineup) for (const c of customs || []) {
@@ -203,6 +209,39 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     const t = new Date(Date.parse(`${cp.date}T${m[1].padStart(2, "0")}:${m[2]}:00Z`) - off);
     const k = "c:" + c.id;
     if (!sent.reminders.includes(k) && now >= t && now - t <= 10 * 60000) out.push(["reminders", k, "Starting now", `Starting now: ${c.title || ""}` + (c.tv ? ` on ${c.tv}` : "")]);
+  }
+  // during games: close finishes, overtime, your team scoring, someone having a huge night
+  const pick = (o) => new Set([...((o || {}).lineup ? slate : []), ...((o || {}).myTeams ? mine : [])]);
+  const closeSet = pick(p.close), otSet = pick(p.ot), bigSet = pick(p.big), goalSet = (p.goals || {}).myTeams ? new Set(mine) : new Set();
+  for (const k of ["close", "ot", "goals", "big"]) sent[k] = sent[k] || [];
+  for (const i of new Set([...closeSet, ...otSet, ...bigSet, ...goalSet])) {
+    const s = sc[i] || {}, g = byid[i]; if (!g || s.state !== "in") continue;
+    const a = Number(s.a), h = Number(s.h); if (isNaN(a) || isNaN(h)) continue;
+    const m = Math.abs(a - h), det = String(s.detail || ""), sport = SPORT[g.league] || "", per = s.p || 0, ck = s.ck || 0, ot = /\b(OT|SO|ET)\b|extra time|shootout/i.test(det);
+    const score = spoil ? `${g.awayShort || g.away} @ ${g.homeShort || g.home}` : `${side(g, "away")} ${a}, ${side(g, "home")} ${h} · ${det}`;
+    if (otSet.has(i) && ot && !sent.ot.includes(i)) { out.push(["ot", i, "Overtime", `Overtime: ${score}`]); sent.ot.push(i); continue; }
+    if (closeSet.has(i) && !ot && !sent.close.includes(i)) {
+      const min = parseInt(det, 10) || 0, inn = /(Top|Bot|Mid|End) (\d+)/i.exec(det);
+      const late = sport === "bball" ? (COLLEGE[g.league] && g.league !== "ncaaw" ? per >= 2 : per >= 4) && ck > 0 && ck <= 300
+        : sport === "football" ? per >= 4 && ck <= 300 : sport === "hockey" ? per >= 3 && ck <= 300 : sport === "soccer" ? per >= 2 && min >= 80 : sport === "baseball" ? !!inn && Number(inn[2]) >= 8 : false;
+      const tight = sport === "bball" ? m <= 5 : sport === "football" ? m <= 8 : sport === "baseball" ? m <= 2 : m <= 1;
+      if (late && tight) out.push(["close", i, "Close finish", `Close finish: ${score}`]);
+    }
+    if (goalSet.has(i) && !spoil && (sport === "hockey" || sport === "soccer")) {
+      const tot = a + h, key = i + ":" + tot, prevMax = Math.max(-1, ...sent.goals.filter((x) => x.startsWith(i + ":")).map((x) => Number(x.split(":")[1])));
+      if (tot > 0 && tot > prevMax && prevMax >= 0) out.push(["goals", key, "Goal", `Goal! ${score}`]);
+      else if (prevMax < 0) sent.goals.push(key);  // first look at this game: remember the score, don't alert for goals already in
+    }
+    if (bigSet.has(i) && !spoil) for (const L of s.ld || []) {
+      const num = (rx) => { const x = rx.exec(L.d); return x ? Number(x[1]) : 0; }, k = i + ":" + L.n + ":" + L.c;
+      if (sent.big.includes(k)) continue;
+      let line = "";
+      if (sport === "bball" && L.c === "points" && (L.v || Number(L.d)) >= (g.league === "nba" ? 40 : 30)) line = `${L.n} has ${L.v || L.d} points`;
+      if (sport === "football" && L.c === "passingYards" && (num(/(\d+) YDS/) >= 350 || num(/(\d+) TD/) >= 4)) line = `${L.n}: ${L.d}`;
+      if (sport === "football" && /^(rushing|receiving)Yards$/.test(L.c) && num(/(\d+) YDS/) >= 150) line = `${L.n}: ${L.d}`;
+      if (sport === "hockey" && L.c === "goals" && (L.v || Number(L.d)) >= 3) line = `${L.n} has a hat trick`;
+      if (line) out.push(["big", k, "Big night", `${line} · ${side(g, "away")} @ ${side(g, "home")}`]);
+    }
   }
   if ((p.live || {}).myTeams && !spoil) for (const i of mine) {
     const s = sc[i] || {}, g = byid[i]; if (!g || s.state !== "in" || out.some((x) => x[0] === "reminders" && x[1] === i)) continue;  // the start alert already covers this minute
@@ -244,7 +283,10 @@ async function liveScores(games, want, now) {
     for (const x of c.competitors || []) cs[x.homeAway] = x;
     if (st.state === "pre") { sc[id] = { state: "pre", start: e.date }; continue; }
     if (!cs.away || !cs.home) continue;
-    sc[id] = { state: st.state, a: Number(cs.away.score), h: Number(cs.home.score), detail: st.shortDetail || "" };
+    const ld = [];
+    const take = (L) => { const x = (L.leaders || [])[0]; if (x && x.athlete) ld.push({ c: L.name, n: x.athlete.displayName || x.athlete.shortName || "", d: String(x.displayValue || ""), v: Number(x.value) || 0 }); };
+    (c.leaders || []).forEach(take); for (const x of c.competitors || []) (x.leaders || []).forEach((L) => { if (/^(points|goals)$/.test(L.name)) take(L); });
+    sc[id] = { state: st.state, a: Number(cs.away.score), h: Number(cs.home.score), detail: st.shortDetail || "", p: Number((c.status || {}).period) || 0, ck: Number((c.status || {}).clock) || 0, ld };
   }
   return sc;
 }
@@ -270,7 +312,8 @@ export async function runAlerts(env) {
     const pre = w.prefix, subs = docs[pre + "prefs/push"].subs, p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
     const lt = ctParts(now, TZ);
-    const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])] };
+    const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
+      close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], big: [...(s0.big || [])] };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {
@@ -278,7 +321,7 @@ export async function runAlerts(env) {
       for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, w.slate || [], w.mine || [], w.customs || [], now)) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
-        else sent[kind].push(key);
+        else if (kind !== "ot") sent[kind].push(key);
                 // a blank title: iPhone then shows "from Slate" on top and the alert under it (two lines)
         if (!silent && body) msgs.push({ title: " ", body: kind === "brief" ? "Today's games\n" + body : body, tag: `${kind}-${key}` });
       }
