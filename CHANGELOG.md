@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.37.1 (Nov 14, 2026)
+- Live scores on the Lock Screen stay up after the final, showing the final score, until you swipe them away. iOS removes an ended one on its own after 4 hours at most (Apple's limit), so that's the longest it can stay.
+
 ## 2.37.0 (Nov 14, 2026)
 - Notifications page reworked: Morning brief; Game alerts as one list with a My slate and a My teams tick for each (Game starting, Close finish, Overtime, Final score, Goals, Hourly score), nothing ticked = off; Upset watch; Live scores on the Lock Screen with the same two ticks (on whenever one is ticked); then When.
 - Removed the "Big night" alert completely. Around kickoff ESPN lists each player's season totals, so a Dayton football game at 0-0 sent three alerts with different players.

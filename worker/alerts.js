@@ -178,7 +178,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     const tok = (la.acts || {})[id];
     if (s.state === "post") {
       cur.end = 1;
-      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 15 * 60 }, 10);
+      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 4 * 3600 }  // the longest iOS keeps an ended one (you can swipe it away sooner), 10);
       continue;
     }
     if (!tok || cur.k === key) continue;
