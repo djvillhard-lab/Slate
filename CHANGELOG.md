@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 3.1.1 (Nov 14, 2026)
+- iPhone app: the Slate header's Settings and More buttons sit in line at the right end, next to the side column, instead of floating over the title (Safari placed the floating buttons wrong at larger text sizes). "Tonight's Slate" shrinks to fit.
+
 ## 3.1.0 (Nov 14, 2026)
 - iPhone Duo (iPhone app): the side strip has one menu button instead of five; tapping it lists On TV, Teams, Box Office, All games and Slate, with a check on the open page. Needs the new TestFlight build.
 - Pages now run all the way under the strip. The header buttons, the day picker, Back and links like Edit order stay just left of it, so nothing hides under the clock.
