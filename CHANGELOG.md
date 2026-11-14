@@ -4,6 +4,12 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.33.1 (Nov 14, 2026)
+- Worth a look football lines no longer include the down and yard line (the play by play has it).
+- Football play by play shows who has the ball on every line ("PRST 1st&10"), in true order, without repeats.
+- Shorter plays so more fit on one line: "W.Burns pass to D.Spjut for 9 yds to PSU28, 1st down", "Alex Wilkins makes 24-ft 3-pt jumper, ast Otega Oweh", "FT 2/2 good".
+- Full matchup: the live section is now "Plays and players" (play by play first, then top performers, then every player); a finished game's is "Recap and players".
+
 ## 2.33.0 (Nov 14, 2026)
 - Live play by play: tap a live game and the last 5 plays come first (newest on top), the box score under them. Each play is one line; jersey numbers, formations and tacklers are trimmed. Football plays lead with the down ("3rd & 8"); other sports with the period and clock. Scoring plays are bold. Also on the Full matchup page. It uses the game data the box score already loads, so no extra requests.
 - Fixed the spot in "who has the ball" during timeouts (ESPN counts the yard line from the home team's goal line).
