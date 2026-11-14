@@ -14,8 +14,11 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
 
 ## Before Saturday (from your PC or phone)
 
-1. ~~Join the Apple Developer Program~~ Done Nov 13. Wait for Apple's activation email before step 3 below.
-2. That's it. Everything else is ready in the repo.
+1. ~~Join the Apple Developer Program~~ Done Nov 13, active Nov 14.
+2. ~~Create the push key~~ Done Nov 14 on your phone (the `AuthKey_….p8` file, its Key ID). **Bring the .p8 to the
+   iMac**: AirDrop it, or save it to iCloud Drive and open it there. Also note your **Team ID** (developer site >
+   Membership details). You'll paste these into Cloudflare in step 7.
+3. Everything else is ready in the repo. Web app is at 2.39.x; it moves to 3.0.0 once the app is on your phone.
 
 ## At the iMac (about an hour, most of it waiting on downloads)
 
@@ -49,8 +52,9 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
 - In the app, sign in once with your passcode (it keeps it after that).
 
 ### 5. Try it
-- Folded and unfolded, rotated both ways. On iPhone Duo, Slate / Box Office / Teams / On TV / All games
-  sit in the system strip on the right, and the floating menu button goes away.
+- Folded and unfolded, rotated both ways. On iPhone Duo, On TV / Teams / Box Office / All games / Slate
+  sit in the system strip on the right (same order as the menu), and the floating menu button goes away.
+  Unfolded, the left side is your slate and the right side opens on All games.
 - Links to ESPN, streaming apps and maps open outside the app, like the Home Screen version.
 - Settings > Notifications > This phone > **Turn on**. (Alerts need step 7 before they arrive.)
 
@@ -73,9 +77,8 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
     **Automatic Updates**.
 
 ### 7. Turn on alerts through Apple (5 min)
-- developer.apple.com/account > **Certificates, IDs & Profiles > Keys > +**. Name it "Slate push", tick
-  **Apple Push Notifications service (APNs)**, Continue > Register > **Download** (you only get one download).
-- Note the **Key ID** (10 characters) and your **Team ID** (top right of the developer site, 10 characters).
+- The key is already made (you downloaded the .p8 on your phone). Have the file on the iMac, plus its **Key ID**
+  and your **Team ID** (developer site > Membership details, 10 characters).
 - Cloudflare dashboard > Workers & Pages > **slate** > Settings > **Variables and Secrets** > Add, type **Secret**:
   - `APNS_KEY` = the whole text of the downloaded .p8 file (open it in TextEdit, copy everything)
   - `APNS_KEY_ID` = the Key ID
@@ -94,7 +97,7 @@ Xcode put on your phone, then repeat the starred items in the TestFlight copy on
 - [ ] **Folded, sideways:** same as above. Text and cards fill the width.
 - [ ] **Unfolded, upright and sideways:** the page fills the screen to both edges, nothing hidden under the clock
       or the side strip. *
-- [ ] **The side strip (unfolded):** tap Slate, Box Office, Teams, On TV, All games. Each opens the right page
+- [ ] **The side strip (unfolded):** tap On TV, Teams, Box Office, All games, Slate. Each opens the right page
       and lights up; the floating menu button is gone. Scroll each page: the strip never moves. *
 - [ ] **Folding and unfolding while a page is open:** do it on the slate and on Box Office, a few times each.
       Nothing sticks halfway, the layout settles within a second.
@@ -103,9 +106,11 @@ Xcode put on your phone, then repeat the starred items in the TestFlight copy on
 - [ ] **Text size:** Settings > Text size > Auto, then change the iPhone's text size and come back. Slate follows.
 - [ ] **Alerts:** Settings > Notifications > This phone > Turn on, allow when iPhone asks. Then add a game that
       starts in a few minutes and wait for the "Starting now" alert. (Needs step 7 done.) *
-- [ ] **Live notifications:** with a game on your slate live (or add one that is), wait a minute or two. Its score
-      shows on the Lock Screen and in the Dynamic Island, then updates. If not: iPhone Settings > Slate > Live
-      Activities must be on, and Slate's Settings > Notifications > Live notifications too. (Needs step 7.) *
+- [ ] **Live scores on the Lock Screen:** open Slate once after installing (that registers the phone), then with a
+      game on your slate live, wait a minute or two. Its score shows on the Lock Screen and in the Dynamic Island,
+      then updates, and stays after the final until you swipe it away. If not: iPhone Settings > Slate > Live
+      Activities on, and Slate's Settings > Notifications > Live scores on the Lock Screen ticked. (Needs step 7.) *
+- [ ] **Web version number:** tell Claude when the app is on your phone so the web app moves to 3.0.0.
 - [ ] **Offline:** turn on Airplane Mode, open the app. It shows your last slate or a clear "can't reach" note,
       not a blank screen. Turn Airplane Mode off.
 - [ ] **TestFlight:** Slate installs from the TestFlight app and opens. *

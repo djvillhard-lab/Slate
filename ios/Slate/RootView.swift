@@ -24,11 +24,12 @@ struct RootView: View {
                 if model.strip {
                     ToolbarItemGroup(placement: .bottomBar) {
                         // top to bottom; All games sits lowest, closest to the thumb (Settings stays in the page header)
-                        StripButton(title: "Slate", symbol: "wand.and.stars", target: "lineup", model: model)
-                        StripButton(title: "Box Office", symbol: "ticket", target: "moments", model: model)
-                        StripButton(title: "Teams", symbol: "tshirt", target: "teams", model: model)
+                        // same order as the page's menu: On TV, Teams, Box Office, All games, Slate (Slate nearest the thumb)
                         StripButton(title: "On TV", symbol: "tv", target: "tv", model: model)
+                        StripButton(title: "Teams", symbol: "tshirt", target: "teams", model: model)
+                        StripButton(title: "Box Office", symbol: "ticket", target: "moments", model: model)
                         StripButton(title: "All games", symbol: "list.bullet.rectangle", target: "games", model: model)
+                        StripButton(title: "Slate", symbol: "wand.and.stars", target: "lineup", model: model)
                     }
                 }
             }
