@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.30.1 (Nov 13, 2026)
+- A game that finishes while it's in Worth a look right now stays there for 10 minutes, tagged Final, then drops off. The "N live" count only counts games still going.
+
 ## 2.30.0 (Nov 13, 2026)
 - Worth a look right now is a permanent section at the top of today's slate: always open (no more folding), and gone only when nothing qualifies.
 - Games already on your slate show there too when they qualify (ticked), and stay on your slate as well. A game you add from there stays in the section, ticked.
