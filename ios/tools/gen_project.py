@@ -2,7 +2,8 @@
 """Writes ios/Slate.xcodeproj (project + shared scheme) for the Slate iPhone app.
 
 The app's sources live in ios/Slate/, which the project links as a synchronized folder: any file added there
-is part of the app with no project edits. Re-run this only to change build settings:
+is part of the app with no project edits. ios/SlateLive/ is the live-notification widget extension (embedded in
+the app), and ios/Shared/ is compiled into both. Re-run this only to change build settings:
     python3 ios/tools/gen_project.py
 """
 import hashlib, os
@@ -23,7 +24,10 @@ def oid(name):  # stable 24-hex object ids
 P = {k: oid(k) for k in [
     "project", "mainGroup", "productsGroup", "appRef", "syncGroup", "target",
     "sources", "frameworks", "resources", "projList", "targetList",
-    "projDebug", "projRelease", "targetDebug", "targetRelease", "entRef", "plistRef"]}
+    "projDebug", "projRelease", "targetDebug", "targetRelease", "entRef", "plistRef",
+    # the SlateLive widget extension (live notifications) and the Shared folder both targets compile
+    "liveRef", "liveSync", "sharedSync", "liveTarget", "liveSources", "liveFrameworks", "liveResources", "liveList",
+    "liveDebug", "liveRelease", "livePlistRef", "embedPhase", "embedFile", "liveDep", "liveProxy"]}
 
 
 def settings(d, indent="\t\t\t\t"):
@@ -99,6 +103,25 @@ target_common = {
     "TARGETED_DEVICE_FAMILY": "1",
 }
 
+live_common = {
+    "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": BUILD,
+    "DEVELOPMENT_TEAM": "",
+    "GENERATE_INFOPLIST_FILE": "YES",
+    "INFOPLIST_FILE": "SlateLive-Info.plist",
+    "INFOPLIST_KEY_CFBundleDisplayName": "Slate Live",
+    "INFOPLIST_KEY_NSHumanReadableCopyright": "",
+    "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"],
+    "MARKETING_VERSION": MARKETING,
+    "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID + ".live",
+    "PRODUCT_NAME": "$(TARGET_NAME)",
+    "SKIP_INSTALL": "YES",
+    "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
+    "SUPPORTS_MACCATALYST": "NO",
+    "SWIFT_EMIT_LOC_STRINGS": "YES",
+    "TARGETED_DEVICE_FAMILY": "1",
+}
+
 
 def build():
     o = P
@@ -114,7 +137,37 @@ def build():
 		{o['appRef']} /* Slate.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Slate.app; sourceTree = BUILT_PRODUCTS_DIR; }};
 		{o['entRef']} /* Slate.entitlements */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Slate.entitlements; sourceTree = "<group>"; }};
 		{o['plistRef']} /* Slate-Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Slate-Info.plist"; sourceTree = "<group>"; }};
+		{o['liveRef']} /* SlateLive.appex */ = {{isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlateLive.appex; sourceTree = BUILT_PRODUCTS_DIR; }};
+		{o['livePlistRef']} /* SlateLive-Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateLive-Info.plist"; sourceTree = "<group>"; }};
 /* End PBXFileReference section */
+
+/* Begin PBXBuildFile section */
+		{o['embedFile']} /* SlateLive.appex in Embed Foundation Extensions */ = {{isa = PBXBuildFile; fileRef = {o['liveRef']} /* SlateLive.appex */; settings = {{ATTRIBUTES = (RemoveHeadersOnCopy, ); }}; }};
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		{o['liveProxy']} /* PBXContainerItemProxy */ = {{
+			isa = PBXContainerItemProxy;
+			containerPortal = {o['project']} /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = {o['liveTarget']};
+			remoteInfo = SlateLive;
+		}};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		{o['embedPhase']} /* Embed Foundation Extensions */ = {{
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				{o['embedFile']} /* SlateLive.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		{o['syncGroup']} /* Slate */ = {{
@@ -122,10 +175,27 @@ def build():
 			path = Slate;
 			sourceTree = "<group>";
 		}};
+		{o['liveSync']} /* SlateLive */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SlateLive;
+			sourceTree = "<group>";
+		}};
+		{o['sharedSync']} /* Shared */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		}};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		{o['frameworks']} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['liveFrameworks']} /* Frameworks */ = {{
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -139,8 +209,11 @@ def build():
 			isa = PBXGroup;
 			children = (
 				{o['syncGroup']} /* Slate */,
+				{o['sharedSync']} /* Shared */,
+				{o['liveSync']} /* SlateLive */,
 				{o['entRef']} /* Slate.entitlements */,
 				{o['plistRef']} /* Slate-Info.plist */,
+				{o['livePlistRef']} /* SlateLive-Info.plist */,
 				{o['productsGroup']} /* Products */,
 			);
 			sourceTree = "<group>";
@@ -149,6 +222,7 @@ def build():
 			isa = PBXGroup;
 			children = (
 				{o['appRef']} /* Slate.app */,
+				{o['liveRef']} /* SlateLive.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -163,13 +237,16 @@ def build():
 				{o['sources']} /* Sources */,
 				{o['frameworks']} /* Frameworks */,
 				{o['resources']} /* Resources */,
+				{o['embedPhase']} /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				{o['liveDep']} /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				{o['syncGroup']} /* Slate */,
+				{o['sharedSync']} /* Shared */,
 			);
 			name = Slate;
 			packageProductDependencies = (
@@ -177,6 +254,29 @@ def build():
 			productName = Slate;
 			productReference = {o['appRef']} /* Slate.app */;
 			productType = "com.apple.product-type.application";
+		}};
+		{o['liveTarget']} /* SlateLive */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {o['liveList']} /* Build configuration list for PBXNativeTarget "SlateLive" */;
+			buildPhases = (
+				{o['liveSources']} /* Sources */,
+				{o['liveFrameworks']} /* Frameworks */,
+				{o['liveResources']} /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				{o['liveSync']} /* SlateLive */,
+				{o['sharedSync']} /* Shared */,
+			);
+			name = SlateLive;
+			packageProductDependencies = (
+			);
+			productName = SlateLive;
+			productReference = {o['liveRef']} /* SlateLive.appex */;
+			productType = "com.apple.product-type.app-extension";
 		}};
 /* End PBXNativeTarget section */
 
@@ -189,6 +289,9 @@ def build():
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {{
 					{o['target']} = {{
+						CreatedOnToolsVersion = 27.0;
+					}};
+					{o['liveTarget']} = {{
 						CreatedOnToolsVersion = 27.0;
 					}};
 				}};
@@ -208,12 +311,20 @@ def build():
 			projectRoot = "";
 			targets = (
 				{o['target']} /* Slate */,
+				{o['liveTarget']} /* SlateLive */,
 			);
 		}};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		{o['resources']} /* Resources */ = {{
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['liveResources']} /* Resources */ = {{
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -230,7 +341,22 @@ def build():
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{o['liveSources']} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		{o['liveDep']} /* PBXTargetDependency */ = {{
+			isa = PBXTargetDependency;
+			target = {o['liveTarget']} /* SlateLive */;
+			targetProxy = {o['liveProxy']} /* PBXContainerItemProxy */;
+		}};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		{o['projDebug']} /* Debug */ = {{
@@ -261,6 +387,20 @@ def build():
 			}};
 			name = Release;
 		}};
+		{o['liveDebug']} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+{settings(live_common)}
+			}};
+			name = Debug;
+		}};
+		{o['liveRelease']} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+{settings(live_common)}
+			}};
+			name = Release;
+		}};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -278,6 +418,15 @@ def build():
 			buildConfigurations = (
 				{o['targetDebug']} /* Debug */,
 				{o['targetRelease']} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{o['liveList']} /* Build configuration list for PBXNativeTarget "SlateLive" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{o['liveDebug']} /* Debug */,
+				{o['liveRelease']} /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

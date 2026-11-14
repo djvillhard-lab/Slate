@@ -86,6 +86,22 @@ export default {
       await putDoc(env, "news/email-dj", { updatedAt: new Date().toISOString(), items });
       return json({ ok: true });
     }
+    // the iPhone app reports its live-notification tokens here (it may be in the background, so it posts directly)
+    if (url.pathname === "/api/live-token" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass);
+      if (!me) return json({ error: "Wrong passcode" }, 403);
+      const tok = String(p.token || ""), kind = p.kind, ev = p.env === "sandbox" ? "sandbox" : "production";
+      if (!/^[0-9a-f]{32,400}$/i.test(tok) || !["start", "activity"].includes(kind) || (kind === "activity" && !/^[a-z0-9-]{3,60}$/.test(String(p.gameId || "")))) return json({ error: "bad token" }, 400);
+      const path = (me.id === "dj" ? "" : "u/" + me.id + "/") + "prefs/liveacts", now = Date.now();
+      const doc = (await getDoc(env, path)) || {}, acts = {};
+      for (const [k, v] of Object.entries(doc.acts || {})) if (v && now - Date.parse(v.at) < 20 * 3600000) acts[k] = v;  // a day's games only
+      let start = (doc.start || []).filter((x) => x.token !== tok);
+      if (kind === "start") start = [{ token: tok, env: ev, at: new Date().toISOString() }, ...start].slice(0, 3);
+      else acts[p.gameId] = { token: tok, env: ev, at: new Date().toISOString() };
+      await putDoc(env, path, { start, acts, updatedAt: new Date().toISOString() });
+      return json({ ok: true });
+    }
     if (url.pathname === "/api/summary" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       if (!p || !["preview", "recap", "team", "moments"].includes(p.kind)) return json({ error: "bad kind" }, 400);

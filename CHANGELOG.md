@@ -4,6 +4,12 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.29.0 (Nov 13, 2026)
+- Live notifications for the iPhone app: when a game on your slate (or your teams, if you pick it) goes live, its score appears on the Lock Screen and at the top of the screen, updates as it changes, and clears 15 minutes after the final. Up to 4 at a time; none start during quiet hours. Turned on or off per account in Settings > Notifications > Live notifications. Needs the 3.0 app build.
+- Settings > Worth a look right now is now one collapsible row with a summary. "Show this section" is clearly the parent: the rules sit indented under it and dim when it's off. The rule text now states the actual rules, shorter.
+- Team cards: today's game fits on one line ("Final L 78-85 vs GTWN").
+- Even space above and below the Live button on the slate.
+
 ## 2.28.0 (Nov 13, 2026)
 - More notifications, each switched on or off for your account in Settings > Notifications (every Slate account has its own):
   - Game starts: choose My slate and/or My teams, and when (at the start, 10 or 30 minutes before).

@@ -84,6 +84,8 @@ final class WebModel: ObservableObject {
             if let d = m["duo"] as? Bool { duo = d }
         case "push-status":
             pushStatus()
+        case "pass":
+            if let p = m["pass"] as? String { LiveActivities.shared.pass = p }
         case "push-request":
             pushAsked = true
             requestPush()

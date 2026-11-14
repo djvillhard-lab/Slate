@@ -10,7 +10,37 @@
 		77D077A52DF78C538016CCD4 /* Slate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Slate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F643D304EE83ABC792B09EEA /* Slate.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Slate.entitlements; sourceTree = "<group>"; };
 		10D9F195F0D0D6C56A33F4A5 /* Slate-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Slate-Info.plist"; sourceTree = "<group>"; };
+		69316BB31C402ACFC08E99AE /* SlateLive.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlateLive.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F694A8C9651754237EA7FDF /* SlateLive-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateLive-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXBuildFile section */
+		11D6DC24A69BED2DFDE77EB6 /* SlateLive.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 69316BB31C402ACFC08E99AE /* SlateLive.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		44246C26D5D564AEF2E20463 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8ED27768E18D12DA5E0467B0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4E98551F74F04BA720A0012E;
+			remoteInfo = SlateLive;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B85A3C0852CF4493A3608E88 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				11D6DC24A69BED2DFDE77EB6 /* SlateLive.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		899D8627AD69D3508648A835 /* Slate */ = {
@@ -18,10 +48,27 @@
 			path = Slate;
 			sourceTree = "<group>";
 		};
+		F12D558CEA3E598A29209145 /* SlateLive */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SlateLive;
+			sourceTree = "<group>";
+		};
+		E8A218FD8A79AA26A4A9635D /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		39169D08A8B42D35C03882FE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		62B744BE4E31C06C3CF7B26C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -35,8 +82,11 @@
 			isa = PBXGroup;
 			children = (
 				899D8627AD69D3508648A835 /* Slate */,
+				E8A218FD8A79AA26A4A9635D /* Shared */,
+				F12D558CEA3E598A29209145 /* SlateLive */,
 				F643D304EE83ABC792B09EEA /* Slate.entitlements */,
 				10D9F195F0D0D6C56A33F4A5 /* Slate-Info.plist */,
+				0F694A8C9651754237EA7FDF /* SlateLive-Info.plist */,
 				3BCB80553BCE55C5C679AE70 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				77D077A52DF78C538016CCD4 /* Slate.app */,
+				69316BB31C402ACFC08E99AE /* SlateLive.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -59,13 +110,16 @@
 				D68A14C9DD415F867893037E /* Sources */,
 				39169D08A8B42D35C03882FE /* Frameworks */,
 				CEDE6C41B23E7F0926986469 /* Resources */,
+				B85A3C0852CF4493A3608E88 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2870ADF4841C9D72E867E9D1 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				899D8627AD69D3508648A835 /* Slate */,
+				E8A218FD8A79AA26A4A9635D /* Shared */,
 			);
 			name = Slate;
 			packageProductDependencies = (
@@ -73,6 +127,29 @@
 			productName = Slate;
 			productReference = 77D077A52DF78C538016CCD4 /* Slate.app */;
 			productType = "com.apple.product-type.application";
+		};
+		4E98551F74F04BA720A0012E /* SlateLive */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E3B906775F6607C28200DBF /* Build configuration list for PBXNativeTarget "SlateLive" */;
+			buildPhases = (
+				52DD9473297956CE876A77C7 /* Sources */,
+				62B744BE4E31C06C3CF7B26C /* Frameworks */,
+				43390538CBCF33412F36214E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F12D558CEA3E598A29209145 /* SlateLive */,
+				E8A218FD8A79AA26A4A9635D /* Shared */,
+			);
+			name = SlateLive;
+			packageProductDependencies = (
+			);
+			productName = SlateLive;
+			productReference = 69316BB31C402ACFC08E99AE /* SlateLive.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -85,6 +162,9 @@
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					2842FBBDD5EC2FB1D3B39946 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					4E98551F74F04BA720A0012E = {
 						CreatedOnToolsVersion = 27.0;
 					};
 				};
@@ -104,12 +184,20 @@
 			projectRoot = "";
 			targets = (
 				2842FBBDD5EC2FB1D3B39946 /* Slate */,
+				4E98551F74F04BA720A0012E /* SlateLive */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CEDE6C41B23E7F0926986469 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		43390538CBCF33412F36214E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -126,7 +214,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		52DD9473297956CE876A77C7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2870ADF4841C9D72E867E9D1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4E98551F74F04BA720A0012E /* SlateLive */;
+			targetProxy = 44246C26D5D564AEF2E20463 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		9086EFBA1EC0E84D5A6F181A /* Debug */ = {
@@ -243,6 +346,58 @@
 			};
 			name = Release;
 		};
+		E5D6B8DB96862100E5FA3697 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlateLive-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Slate Live";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "3.0";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.live;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		740894A306C1344BC275B750 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlateLive-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Slate Live";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "3.0";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.live;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -260,6 +415,15 @@
 			buildConfigurations = (
 				0479B4D24E3CD3FF18E40817 /* Debug */,
 				271BDE034E1ED63B134E530B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5E3B906775F6607C28200DBF /* Build configuration list for PBXNativeTarget "SlateLive" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E5D6B8DB96862100E5FA3697 /* Debug */,
+				740894A306C1344BC275B750 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

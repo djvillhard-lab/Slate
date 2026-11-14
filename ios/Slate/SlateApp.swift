@@ -17,6 +17,8 @@ struct SlateApp: App {
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        // live notifications: report tokens even when iOS launches the app in the background for one
+        Task { @MainActor in LiveActivities.shared.start() }
         return true
     }
 

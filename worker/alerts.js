@@ -17,6 +17,8 @@ const DEFAULTS = { enabled: true, brief: { on: true, hour: 9, myTeams: true, lin
   finals: { myTeams: true, lineup: false }, live: { myTeams: false }, upsets: { on: false },
   close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, big: { lineup: false, myTeams: false }, lead: 0,
   liveAct: { on: true, lineup: true, myTeams: false }, quiet: { on: true, start: 23, end: 8 }, days: [0, 1, 2, 3, 4, 5, 6], spoilerFree: false };
+const LEAGUE_NAME = { nfl: "NFL", ncaaf: "College Football", nba: "NBA", wnba: "WNBA", ncaam: "Men's College Hoops", ncaaw: "Women's College Hoops", nhl: "NHL", mlb: "MLB", mls: "MLS",
+  epl: "Premier League", ucl: "Champions League", uel: "Europa League", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "International" };
 const NATIONAL = ["ABC", "CBS", "NBC", "FOX", "ESPN", "ESPN2", "ESPNU", "ESPNEWS", "TNT", "TBS", "truTV", "FS1", "FS2", "CBSSN", "USA", "NBA TV", "NHL Network", "MLB Network", "NFL Network", "BTN", "SEC Network", "ACC Network", "CW", "Prime Video", "Peacock", "Netflix"];
 const BIG_NET = ["ABC", "CBS", "NBC", "FOX", "ESPN", "TNT", "Prime Video", "Netflix"];
 const COLLEGE = { ncaaf: 1, ncaam: 1, ncaaw: 1 };
@@ -118,20 +120,74 @@ async function apnsJwt(a) {
   return a.jwt;
 }
 export async function apnsReady(env) { return !!(await apnsCreds(env)); }
-// same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
-export async function sendApns(env, sub, msg) {
+// one APNs request; 410 means the token is gone
+async function apnsPost(env, token, envName, extra, payload) {
   const a = await apnsCreds(env); if (!a) return 0;
-  const host = sub.env === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
-  const title = String(msg.title || "").trim();
-  const payload = { aps: { alert: title ? { title, body: msg.body } : { body: msg.body }, sound: "default", "thread-id": String(msg.tag || "slate").split("-")[0] }, tag: msg.tag || "" };
-  const headers = { authorization: "bearer " + (await apnsJwt(a)), "apns-topic": a.topic, "apns-push-type": "alert", "apns-priority": "10", "apns-expiration": String(Math.floor(Date.now() / 1000) + 3600), "content-type": "application/json" };
-  if (msg.tag) headers["apns-collapse-id"] = String(msg.tag).slice(0, 64);
-  const r = await fetch(`${host}/3/device/${encodeURIComponent(sub.apns)}`, { method: "POST", headers, body: JSON.stringify(payload) });
+  const host = envName === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
+  const headers = Object.assign({ authorization: "bearer " + (await apnsJwt(a)), "content-type": "application/json" }, extra(a.topic));
+  const r = await fetch(`${host}/3/device/${encodeURIComponent(token)}`, { method: "POST", headers, body: JSON.stringify(payload) });
   if (r.status === 200) return 200;
   let reason = ""; try { reason = (await r.json()).reason || ""; } catch (e) {}
   console.log("apns", r.status, reason);
   if (r.status === 410 || reason === "BadDeviceToken" || reason === "Unregistered" || reason === "DeviceTokenNotForTopic") return 410;
   return r.status;
+}
+// same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
+export async function sendApns(env, sub, msg) {
+  const title = String(msg.title || "").trim();
+  const payload = { aps: { alert: title ? { title, body: msg.body } : { body: msg.body }, sound: "default", "thread-id": String(msg.tag || "slate").split("-")[0] }, tag: msg.tag || "" };
+  return apnsPost(env, sub.apns, sub.env, (topic) => Object.assign({ "apns-topic": topic, "apns-push-type": "alert", "apns-priority": "10", "apns-expiration": String(Math.floor(Date.now() / 1000) + 3600) }, msg.tag ? { "apns-collapse-id": String(msg.tag).slice(0, 64) } : {}), payload);
+}
+
+// ---------- live notifications (Live Activities in the iPhone app) ----------
+// The app reports a "start" token (lets Slate start a live notification) and one token per running game
+// (to update and end it) to <prefix>prefs/liveacts. Each game's state lives in sent-<D>.la[id] = {k, n, end}.
+function laAttrs(id, g, s) {
+  return { gameId: id, league: LEAGUE_NAME[g.league] || String(g.league || "").toUpperCase(), away: g.awayShort || g.away || "", home: g.homeShort || g.home || "",
+    awayAbbr: s.aa || (g.awayShort || g.away || "").slice(0, 3).toUpperCase(), homeAbbr: s.ha || (g.homeShort || g.home || "").slice(0, 3).toUpperCase(), awayColor: s.ac || "", homeColor: s.hc || "" };
+}
+function laState(s) {
+  const x = (s.ld || []).slice().sort((a, b) => b.v - a.v)[0];
+  const st = { a: s.a || 0, h: s.h || 0, detail: s.state === "post" ? (s.detail || "Final") : (s.detail || ""), state: s.state };
+  if (x && x.n && x.d) st.line = `${x.n} ${x.d}`.slice(0, 60);
+  return st;
+}
+async function sendLive(env, tok, event, body, prio) {
+  const aps = Object.assign({ timestamp: Math.floor(Date.now() / 1000), event }, body);
+  return apnsPost(env, tok.token, tok.env, (topic) => ({ "apns-topic": topic + ".push-type.liveactivity", "apns-push-type": "liveactivity", "apns-priority": String(prio) }), { aps });
+}
+// returns true when liveacts (tokens) changed
+async function runLive(env, p, sent, la, ids, games, sc, silent) {
+  const cfg = p.liveAct || {}; let gone = false;
+  const want = new Set(); if (cfg.lineup) ids.slate.forEach((i) => want.add(i)); if (cfg.myTeams) ids.mine.forEach((i) => want.add(i));
+  const running = Object.values(sent.la).filter((x) => !x.end).length;
+  let started = 0;
+  for (const id of Object.keys(sent.la).concat([...want])) {
+    const g = games[id], s = sc[id]; if (!g || !s || s.state === "pre") continue;
+    const cur = sent.la[id], st = laState(s), key = `${st.a}-${st.h}-${st.detail}`;
+    if (!cur) {
+      // a new one: only for a game that's live now, while alerts are on and not held back
+      if (!want.has(id) || s.state !== "in" || !cfg.on || silent || !(la.start || []).length || running + started >= 4) continue;
+      const at = laAttrs(id, g, s), body = { "attributes-type": "SlateGameAttributes", attributes: at, "content-state": st,
+        alert: { title: `${at.away} @ ${at.home}`, body: `Live now: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
+      for (const t of la.start) { const r = await sendLive(env, t, "start", body, 10); if (r === 410) { t.gone = true; gone = true; } }
+      sent.la[id] = { k: key, n: 1 }; started++;
+      continue;
+    }
+    if (cur.end) continue;
+    const tok = (la.acts || {})[id];
+    if (s.state === "post") {
+      cur.end = 1;
+      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 15 * 60 }, 10);
+      continue;
+    }
+    if (!tok || cur.k === key) continue;
+    const scored = !cur.k.startsWith(`${st.a}-${st.h}-`);
+    const r = await sendLive(env, tok, "update", { "content-state": st, "stale-date": Math.floor(Date.now() / 1000) + 10 * 60 }, scored ? 10 : 5);
+    if (r === 410) { delete la.acts[id]; gone = true; cur.end = 1; } else cur.k = key;
+  }
+  if (gone) la.start = (la.start || []).filter((t) => !t.gone);
+  return gone;
 }
 
 // ---------- alert rules (same as the old hourly run) ----------
@@ -266,6 +322,7 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
 }
 
 // ---------- live scores from ESPN ----------
+const hex = (c) => /^[0-9a-f]{6}$/i.test(String(c || "")) ? "#" + c : "";
 async function liveScores(games, want, now) {
   const leagues = {}, sc = {};
   for (const id of want) { const g = games[id]; if (!g || !g.ev || !PATHS[g.league]) continue; const t = new Date(g.start); if (t - now > 75 * 60000 || now - t > 8 * 3600000) continue; leagues[g.league] = 1; }
@@ -286,7 +343,8 @@ async function liveScores(games, want, now) {
     const ld = [];
     const take = (L) => { const x = (L.leaders || [])[0]; if (x && x.athlete) ld.push({ c: L.name, n: x.athlete.displayName || x.athlete.shortName || "", d: String(x.displayValue || ""), v: Number(x.value) || 0 }); };
     (c.leaders || []).forEach(take); for (const x of c.competitors || []) (x.leaders || []).forEach((L) => { if (/^(points|goals)$/.test(L.name)) take(L); });
-    sc[id] = { state: st.state, a: Number(cs.away.score), h: Number(cs.home.score), detail: st.shortDetail || "", p: Number((c.status || {}).period) || 0, ck: Number((c.status || {}).clock) || 0, ld };
+    sc[id] = { state: st.state, a: Number(cs.away.score), h: Number(cs.home.score), detail: st.shortDetail || "", p: Number((c.status || {}).period) || 0, ck: Number((c.status || {}).clock) || 0, ld,
+      aa: (cs.away.team || {}).abbreviation || "", ha: (cs.home.team || {}).abbreviation || "", ac: hex((cs.away.team || {}).color), hc: hex((cs.home.team || {}).color) };
   }
   return sc;
 }
@@ -299,9 +357,10 @@ export async function runAlerts(env) {
   const base = await getDocs(env, [`alertsets/${D}`]);
   const aset = base[`alertsets/${D}`]; if (!aset || !aset.people) return;
   const people = aset.people, games = aset.games || {};
-  const paths = []; for (const w of people) paths.push(w.prefix + "prefs/notify", w.prefix + "prefs/push", `${w.prefix}prefs/sent-${D}`);
+  const paths = []; for (const w of people) paths.push(w.prefix + "prefs/notify", w.prefix + "prefs/push", `${w.prefix}prefs/sent-${D}`, w.prefix + "prefs/liveacts");
   const docs = await getDocs(env, paths);
-  const active = people.filter((w) => (((docs[w.prefix + "prefs/push"] || {}).subs) || []).length);
+  const hasLive = (w) => { const l = docs[w.prefix + "prefs/liveacts"] || {}; return (l.start || []).length || Object.keys(l.acts || {}).length; };
+  const active = people.filter((w) => (((docs[w.prefix + "prefs/push"] || {}).subs) || []).length || hasLive(w));
   if (!active.length) return;
   // which games need a live score: everyone's slate and teams, plus college games for upset watch
   const want = new Set();
@@ -309,11 +368,11 @@ export async function runAlerts(env) {
   const sc = await liveScores(games, want, now);
   const list = Object.entries(games).map(([id, g]) => Object.assign({ id }, g)), byid = {}; for (const g of list) byid[g.id] = g;
   for (const w of active) {
-    const pre = w.prefix, subs = docs[pre + "prefs/push"].subs, p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
+    const pre = w.prefix, subs = (docs[pre + "prefs/push"] || {}).subs || [], p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
-      close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], big: [...(s0.big || [])] };
+      close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], big: [...(s0.big || [])], la: JSON.parse(JSON.stringify(s0.la || {})) };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {
@@ -327,6 +386,12 @@ export async function runAlerts(env) {
       }
     }
     msgs = msgs.slice(0, 8);
+    const la = docs[pre + "prefs/liveacts"];
+    if (la && hasLive(w) && await apnsReady(env)) {
+      const held = p.enabled === false || !(p.days || DEFAULTS.days).includes(lt.wd) || inQuiet(p, lt.hour);
+      try { if (await runLive(env, p, sent, la, { slate: w.slate || [], mine: w.mine || [] }, games, sc, held)) await putDoc(env, pre + "prefs/liveacts", la); }
+      catch (e) { console.log("live failed", String(e).slice(0, 120)); }
+    }
     const appReady = subs.some((s) => s.apns) ? await apnsReady(env) : false;
     const welcome = subs.some((s) => !s.welcomed && (!s.apns || appReady));
     let keep = [], dirty = welcome;
