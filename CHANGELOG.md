@@ -4,6 +4,14 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.33.2 (Nov 14, 2026): final review before the iPhone app
+- Faster opens, far fewer network calls: reopening Slate went from 57 ESPN requests to 13 in the first 25 seconds.
+  - Games that need the same day's scoreboard now share one request instead of each asking (32 duplicate requests on open, gone).
+  - A finished game's one-line note is kept on the phone, so reopening doesn't refetch every final's game data.
+- Safety: links that come from outside data (Claude's headlines, newsletter feeds) only open as web pages. Checked: no passcodes or keys in the public repo, every save goes through the server's passcode check and stays inside the account's own space, live-notification tokens are validated.
+- Cleanup: removed 30 unused pieces of code (old ticker, old preview requests, old cards) and the server's leftover newsletter checker (the Worker does it now). The page is 18 KB smaller.
+- Checked every page (Slate, All games, Teams, On TV, Box Office, Settings, a game's tray and Full matchup) folded and unfolded with no errors.
+
 ## 2.33.1 (Nov 14, 2026)
 - Worth a look football lines no longer include the down and yard line (the play by play has it).
 - Football play by play shows who has the ball on every line ("PRST 1st&10"), in true order, without repeats.

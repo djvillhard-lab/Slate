@@ -11,7 +11,7 @@ Reads DJ's slate and settings from Supabase, then:
 D = the Central date four hours ago, so late games still count for the evening they started.
 Needs SUPABASE_SECRET in the environment. Standard library only.
 """
-import email.utils, json, os, sys, re, datetime, urllib.request, urllib.parse, subprocess, concurrent.futures as cf
+import json, os, sys, re, datetime, urllib.request, urllib.parse, subprocess, concurrent.futures as cf
 from zoneinfo import ZoneInfo
 
 CT = ZoneInfo("America/Chicago"); ET = ZoneInfo("America/New_York"); UTC = datetime.timezone.utc
@@ -618,54 +618,6 @@ def athletic_work(now):
     if doc["leagues"]: sb_put("news/athletic", doc)
     print("athletic feeds:", {k: len(v) for k, v in doc["leagues"].items()})
 
-
-# ---------- The Athletic's newsletters: each edition is also posted on the site and shows up in its public feeds ----------
-NEWSLETTERS = {  # key: (feeds to look in, how an edition is recognised: URL ending or description wording)
-    "pulse": (["news", "nfl", "college-sports", "nba", "mlb"], r"-the-pulse/$|The Pulse(?: Newsletter|, The Athletic)"),
-    "bounce": (["nba"], r"-the-bounce/$|^The Bounce:"),
-    "windup": (["mlb"], r"-the-windup/$|Welcome to The Windup"),
-    "moneycall": (["college-football", "news", "nfl", "nba", "college-sports"], r"-moneycall/$|free sports business newsletter"),
-    "peak": (["news", "nhl", "nfl", "nba", "tennis", "golf", "olympics", "mlb", "college-sports"], r"-peak/$"),
-    "primetire": (["formula-1"], r"prime-tire|Prime Tire"),
-    "fulltime": (["nwsl"], r"-full-time/$|Welcome to Full Time"),
-    "nooffseason": (["wnba", "womens-college-basketball"], r"-no-offseason/$|Welcome to No Offseason"),
-}
-def newsletter_work(now):
-    # Each newsletter is only looked for on the weekdays it actually comes out (learned from its last six weeks of
-    # editions, so a daily-in-season one like The Windup adapts by itself). On those days: from 3 a.m. Central every
-    # 30 minutes until today's edition turns up, then not again until its next day. Once a week every newsletter gets
-    # one full look, to catch a changed schedule.
-    local = now.astimezone(CT); day = local.strftime("%Y-%m-%d"); wd = local.weekday()
-    if local.hour < 3 or local.hour >= 21: return
-    have = sb_get(["news/newsletters"]).get("news/newsletters") or {}
-    at = parse(have.get("updatedAt")); found = dict(have.get("found") or {}) if have.get("day") == day else {}
-    sched = dict(have.get("sched") or {}); schedAt = parse(have.get("schedAt"))
-    refresh = not schedAt or (now - schedAt).total_seconds() > 7 * 86400
-    todo = [k for k in NEWSLETTERS if found.get(k) != day and (refresh or k not in sched or wd in sched[k])]
-    if not todo: return
-    if at and (now - at).total_seconds() < 29 * 60 and have.get("day") == day: return
-    def when(x):
-        try: return email.utils.parsedate_to_datetime(x["at"]).timestamp()
-        except Exception: return 0
-    feeds, items = {}, dict(have.get("items") or {})
-    for key in todo:
-        slugs, rx = NEWSLETTERS[key]; seen, out = set(), []
-        for slug in slugs:
-            if slug not in feeds: feeds[slug] = rss(f"https://www.nytimes.com/athletic/rss/{slug}/")
-            for it in feeds[slug]:
-                if it["url"] in seen: continue
-                if re.search(rx, it["url"]) or re.search(rx, it["title"]) or re.search(rx, it["desc"]):
-                    seen.add(it["url"]); out.append({"title": re.sub(r"^The Bounce:\s*", "", it["title"]), "url": it["url"], "at": it["at"]})
-        out.sort(key=when, reverse=True)
-        if not out: continue
-        days = sorted({datetime.datetime.fromtimestamp(when(x), UTC).astimezone(CT).weekday() for x in out if when(x) and now.timestamp() - when(x) < 42 * 86400})
-        if days: sched[key] = days
-        items[key] = [dict(x, at=iso(datetime.datetime.fromtimestamp(when(x), UTC))) if when(x) else x for x in out[:3]]
-        t = when(out[0])
-        if t and datetime.datetime.fromtimestamp(t, UTC).astimezone(CT).strftime("%Y-%m-%d") == day: found[key] = day
-    doc = {"updatedAt": iso(now), "day": day, "found": found, "items": items, "sched": sched, "schedAt": iso(now) if refresh else (have.get("schedAt") or iso(now))}
-    sb_put("news/newsletters", doc)
-    print("newsletters: checked", todo, "found today", sorted(found), "schedule", sched)
 
 # ---------- upcoming events catalog (Big events picker) ----------
 CAT_PATHS = {"ncaam": ["basketball/mens-college-basketball&groups=50&limit=500"], "ncaaw": ["basketball/womens-college-basketball&groups=50&limit=500"],
