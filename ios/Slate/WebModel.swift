@@ -60,6 +60,16 @@ final class WebModel: ObservableObject {
         js("window.SlateApp && SlateApp.setMenuAnchor && SlateApp.setMenuAnchor(\(Int(menuAnchor.minX)), \(Int(menuAnchor.minY)), \(Int(menuAnchor.width)), \(Int(menuAnchor.height)))")
     }
 
+    // The open Duo folds down the middle of the screen. Tell the page where that is in its own points, so its two
+    // panes split exactly on the fold (iOS's side column makes the page's own guess unreliable).
+    func sendFold() {
+        guard let wv = webView, let scr = wv.window?.windowScene?.screen else { return }
+        let mid = CGPoint(x: scr.bounds.midX, y: scr.bounds.midY)
+        let p = wv.convert(mid, from: scr.coordinateSpace)
+        guard p.x > 0 else { return }
+        js("window.SlateApp && SlateApp.setFold && SlateApp.setFold(\(Int(p.x.rounded())))")
+    }
+
     func go(_ target: String) {
         view = target  // light the strip button right away; the page's own report follows
         js("window.SlateApp && SlateApp.go(\(Self.quote(target)))")
@@ -103,6 +113,7 @@ final class WebModel: ObservableObject {
             loadError = nil
             js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded())))")
             sendMenuAnchor()
+            sendFold()
         case "state":
             if let v = m["view"] as? String { view = v }
             if let l = m["look"] as? String { look = l }

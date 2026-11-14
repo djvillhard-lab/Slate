@@ -41,6 +41,8 @@ struct RootView: View {
         .preferredColorScheme(model.look == "light" ? .light : .dark)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in
             model.refreshStrip()
+            // after a turn or an unfold, once the page has its new size
+            Task { @MainActor in try? await Task.sleep(for: .milliseconds(400)); model.sendFold() }
         }
         .onAppear { model.refreshStrip() }
     }
