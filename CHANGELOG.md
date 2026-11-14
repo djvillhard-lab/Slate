@@ -4,6 +4,9 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.39.0 (Nov 14, 2026)
+- Box Office: players from games on your slate that day carry a small "Slate" tag next to their name (today and past days alike).
+
 ## 2.38.1 (Nov 14, 2026)
 - Worth a look sits in its own tinted, outlined panel with space below it, so it's clearly separate from your slate.
 
