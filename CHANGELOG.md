@@ -4,6 +4,13 @@ Version 1 is everything built before the first efficiency pass. Version 2 is eve
 Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): its first build is 3.0, and the web app moves to 3.0.0 the same day.
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 
+## 2.40.0 (Nov 14, 2026)
+- Quick reads and Claude's write-ups always show in full (no more "More" link), in the game tray and everywhere else.
+- A line under the slate's header (title, date, settings), with even space below it before Time/League and Live.
+- Time | League is the same height as the Live button.
+- "Scores updated 12:30 PM" moved to the help text at the bottom of the slate.
+- The "You've edited this slate" note is gone; "Back to default slate" now sits beside "Clear slate" under the slate, in the same style.
+
 ## 2.39.3 (Nov 14, 2026)
 - Dropped the "A ranked showdown" pre-game line (the ranks are already on the matchup); those games now get their next-best line (streaks, the line, ESPN's prediction, head-to-head).
 
