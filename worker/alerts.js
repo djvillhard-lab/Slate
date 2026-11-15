@@ -195,7 +195,7 @@ export async function sendApns(env, sub, msg) {
 // (to update and end it) to <prefix>prefs/liveacts. Each game's state lives in sent-<D>.la[id] = {k, n, end}.
 function laAttrs(id, g, s) {
   const at = { gameId: id, league: LEAGUE_NAME[g.league] || String(g.league || "").toUpperCase(), away: g.awayShort || g.away || "", home: g.homeShort || g.home || "",
-    awayAbbr: s.aa || (g.awayShort || g.away || "").slice(0, 3).toUpperCase(), homeAbbr: s.ha || (g.homeShort || g.home || "").slice(0, 3).toUpperCase(), awayColor: s.ac || g.awayColor || "", homeColor: s.hc || g.homeColor || "",
+    awayAbbr: s.aa || g.awayAbbr || (g.awayShort || g.away || "").slice(0, 3).toUpperCase(), homeAbbr: s.ha || g.homeAbbr || (g.homeShort || g.home || "").slice(0, 3).toUpperCase(), awayColor: s.ac || g.awayColor || "", homeColor: s.hc || g.homeColor || "",
     // 3.20.0, the scorebug design: each chip's second-color stripe, college ranks, and the channel for the Watch button (all optional in the app)
     awayAlt: s.ax || g.awayAlt || "", homeAlt: s.hx || g.homeAlt || "", channel: String((g.tv || [])[0] || "") };
   for (const side of ["away", "home"]) { const r = Number(g[side + "Rank"]); if (COLLEGE[g.league] && Number.isInteger(r) && r > 0 && r < 26) at[side + "Rank"] = r; }  // a whole number, or the app can't read the notification
@@ -213,7 +213,7 @@ function laState(s) {
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
 function preState(g, kick) {
-  const tv = String((g.tv || [])[0] || ""), st = { a: 0, h: 0, detail: clock(new Date(kick)), state: "pre" };
+  const tv = String((g.tv || [])[0] || ""), st = { a: 0, h: 0, detail: Date.now() >= kick ? "Starting" : clock(new Date(kick)), state: "pre" };
   if (tv) st.line = `On ${tv}`.slice(0, 60);
   return st;
 }
@@ -300,7 +300,8 @@ function boardGame(id, g, s) {
   s = s || {};
   const at = laAttrs(id, g, s), st = s.state === "in" || s.state === "post" ? s.state : "pre";
   const kick = Date.parse(s.start || g.start) || 0;
-  const d = st === "pre" ? clock(new Date(s.start || g.start)) : st === "post" ? (s.detail || "Final") : (s.detail || "");
+  // past the start time but not under way yet (tip-off comes a few minutes after the listed time): "Starting", not a time already gone
+  const d = st === "pre" ? (kick > 0 && Date.now() >= kick ? "Starting" : clock(new Date(s.start || g.start))) : st === "post" ? (s.detail || "Final") : (s.detail || "");
   return { id, aa: at.awayAbbr, ha: at.homeAbbr, ac: at.awayColor, hc: at.homeColor, ax: at.awayAlt, hx: at.homeAlt,
     a: st === "pre" ? 0 : (s.a || 0), h: st === "pre" ? 0 : (s.h || 0), d: String(d).slice(0, 24), s: st,
     // live football (3.25.0): who has the ball and the down and yardage line, when ESPN reports them
@@ -327,7 +328,7 @@ async function runBoard(env, p, sent, la, games, sc) {
   // (a token from after the switch-on belongs to the one the app just started itself: keep it)
   const fresh = tok && Date.parse(tok.at) >= at - 60000;
   if (cur && cur.end && at > (cur.t || 0)) { cur = sent.board = null; if (la.board && !fresh) { delete la.board; gone = true; tok = null; } }
-  const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}-${x.p || ""}-${x.dd || ""}${x.c ? "-c" : ""}`).join("|"), scores = {};
+  const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}-${x.p || ""}-${x.dd || ""}${x.c ? "-c" : ""}-${x.aa}${x.ac}${x.ha}${x.hc}`).join("|"), scores = {};
   for (const x of list) scores[x.id] = `${x.a}-${x.h}`;
   // the game the Dynamic Island shows on its own: the one that last scored, else the first one live
   let lead = cur && cur.lead ? list.findIndex((x) => x.id === cur.lead) : -1;
@@ -499,9 +500,10 @@ function alertLevel(p, sent, kind, id) {
 
 // ---------- live scores from ESPN ----------
 const hex = (c) => /^[0-9a-f]{6}$/i.test(String(c || "")) ? "#" + c : "";
-async function liveScores(games, want, now) {
+// early: the scoreboard's picks, looked up all day (3.33.1) so a later game shows its real abbreviations and colors from the start
+async function liveScores(games, want, now, early) {
   const leagues = {}, sc = {};
-  for (const id of want) { const g = games[id]; if (!g || !g.ev || !PATHS[g.league]) continue; const t = new Date(g.start); if (t - now > 75 * 60000 || now - t > 8 * 3600000) continue; leagues[g.league] = 1; }
+  for (const id of want) { const g = games[id]; if (!g || !g.ev || !PATHS[g.league]) continue; const t = new Date(g.start); if (t - now > (early && early.has(id) ? 14 * 3600000 : 75 * 60000) || now - t > 8 * 3600000) continue; leagues[g.league] = 1; }
   const days = [etDay(new Date(now.getTime() - 6 * 3600000)), etDay(now)].filter((d, i, a) => a.indexOf(d) === i);
   const reqs = [];
   for (const lg of Object.keys(leagues)) for (const p of PATHS[lg]) for (const d of days) {
@@ -514,7 +516,11 @@ async function liveScores(games, want, now) {
     const g = games[id]; const e = g && byEv[g.ev]; if (!e) continue;
     const c = (e.competitions || [])[0] || {}, st = ((c.status || e.status || {}).type) || {}, cs = {};
     for (const x of c.competitors || []) cs[x.homeAway] = x;
-    if (st.state === "pre") { sc[id] = { state: "pre", start: e.date }; continue; }
+    // before the start too (3.33.1): ESPN's abbreviations and team colors, so a live notification or the scoreboard
+    // shows DAL and BOS in their colors from the first minute instead of gray MAV and CEL
+    const look = (x) => x ? { abbr: (x.team || {}).abbreviation || "", c: hex((x.team || {}).color), alt: hex((x.team || {}).alternateColor) } : { abbr: "", c: "", alt: "" };
+    const la0 = look(cs.away), lh0 = look(cs.home);
+    if (st.state === "pre") { sc[id] = { state: "pre", start: e.date, aa: la0.abbr, ha: lh0.abbr, ac: la0.c, hc: lh0.c, ax: la0.alt, hx: lh0.alt }; continue; }
     if (!cs.away || !cs.home) continue;
     const ld = [];
     const tAb = {}; for (const x of c.competitors || []) tAb[String((x.team || {}).id)] = (x.team || {}).abbreviation || "";
@@ -576,13 +582,13 @@ export async function runAlerts(env) {
   const active = people.filter((w) => (((docs[w.prefix + "prefs/push"] || {}).subs) || []).length || hasLive(w));
   if (!active.length) return;
   // which games need a live score: everyone's slate and teams, plus college games for upset watch
-  const want = new Set();
+  const want = new Set(), early = new Set();
   for (const w of active) { (w.slate || []).forEach((i) => want.add(i)); (w.mine || []).forEach((i) => want.add(i)); if ((merged(docs[w.prefix + "prefs/notify"]).upsets || {}).on) for (const [i, g] of Object.entries(games)) if (COLLEGE[g.league] && (g.awayRank || g.homeRank)) want.add(i);
     const pw = merged(docs[w.prefix + "prefs/notify"]), bd = (pw.liveAct || {}).board || {};
     for (const [i, v] of Object.entries(((pw.liveAct || {}).games) || {})) if (v === 1 && games[i]) want.add(i);  // games switched on by name get live scores too
     for (const [i, v] of Object.entries(((pw.alerts || {}).games) || {})) if (v === 1 && games[i]) want.add(i);
-    if (bd.on && Array.isArray(bd.ids)) for (const i of bd.ids) if (games[String(i)]) want.add(String(i)); }
-  const sc = await liveScores(games, want, now);
+    if (bd.on && Array.isArray(bd.ids)) for (const i of bd.ids) if (games[String(i)]) { want.add(String(i)); early.add(String(i)); } }
+  const sc = await liveScores(games, want, now, early);
   const list = Object.entries(games).map(([id, g]) => Object.assign({ id }, g)), byid = {}; for (const g of list) byid[g.id] = g;
   BC = (await apnsReady(env)) ? { doc: await bcLoad(env), want: {} } : null;
   for (const w of active) {

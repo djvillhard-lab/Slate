@@ -1076,7 +1076,7 @@ def main():
         people[0]["mine"] = mine
         slim = {}
         for g in games:
-            e = {k: g[k] for k in ("league", "start", "away", "home", "awayShort", "homeShort", "awayRank", "homeRank") if g.get(k) not in (None, "")}
+            e = {k: g[k] for k in ("league", "start", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank") if g.get(k) not in (None, "")}
             e["tv"] = (g.get("tv") or [])[:1]
             ev = evs.get(g["id"])
             if ev: e["ev"] = ev.get("id")

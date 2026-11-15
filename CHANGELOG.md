@@ -9,6 +9,8 @@ From 3.0.0 on, each release also says which iPhone app build in TestFlight goes 
 TestFlight: 3.33.1 (36)
 - iPhone app, folded Duo: the Dynamic Island in the side column is a tall pill, and a game's live notification was cut off ("SEA 2" and "1 LV" with the scores half gone). Each team's chip now sits with its score stacked beside the camera, away on top and home below, so both scores show in full. The scoreboard's Island gets the same fix.
 - iPhone app: before kickoff, a game's live notification no longer shows 0-0 in the Dynamic Island. It shows the two team chips and the start time.
+- Scoreboard live notification: games still to come show their real abbreviations and team colors from the start (DAL at BOS, PIT at CIN), instead of gray MAV at CEL and STE at BEN until close to the start. A game's own live notification that starts before kickoff gets them too. (Server, works on the current build too.)
+- Scoreboard and live notifications: once a game's listed start time has passed but it hasn't begun yet (NBA games tip a few minutes late), it reads "Starting" instead of the start time. It switches to the score as soon as ESPN has the game under way. (Server.)
 
 ## 3.33.0 (Nov 15, 2026)
 TestFlight: 3.31.0 (35), no new build (web only)
