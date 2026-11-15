@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.22.0 (Nov 15, 2026)
+TestFlight: 3.0 (17), no new build (server and web only)
+- Remove asks first: tapping the ✕ in a game's tray turns the row into Keep and "Remove from slate?". Tap that to remove the game; Keep, or 5 seconds, backs out.
+- A small gray bell sits next to the time on any slate card whose game will notify you. Tap it to turn off that game's notifications: its live score and its game alerts (Game starting, Close finish, Overtime, Final, Goals). Undo is in the note that pops up.
+- The tray's bell now reads On or Off and covers all of that game's notifications the same way. Turning it on also turns on the game's live score where your settings leave it out.
+- Finished games get the bell too: turn it on to put the final score on your Lock Screen. It stays like any final (up to 4 hours) until you swipe it away or turn it off.
+- Server: each game's live score is checked once a minute (a game on both your slate and your teams was being looked at twice).
+
 ## 3.21.0 (Nov 14, 2026)
 TestFlight: 3.0 (17), no new build (server and web only)
 - Live score for one game: tap a game on your slate and its tray has a Live button with a bell. A lit bell means that game's live score shows on your Lock Screen and in the Dynamic Island (by default, whatever Settings > Notifications > Live score covers). Tap it to switch it off for just that game, or on for a game your settings leave out, like one from Worth a look or All games. Switched off mid-game it leaves within a minute; switched on, it starts within a minute, or when the game starts. A game you switch on yourself shows even during quiet hours. Up to 4 at once, as before.

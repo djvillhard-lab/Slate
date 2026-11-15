@@ -172,31 +172,34 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
   for (const [i, v] of Object.entries(per)) { if (v === 1) want.add(i); else if (v === 0) want.delete(i); }
   const running = Object.values(sent.la).filter((x) => !x.end).length;
   let started = 0;
-  for (const id of Object.keys(sent.la).concat([...want])) {
+  for (const id of new Set(Object.keys(sent.la).concat([...want]))) {  // each game once a minute
     const g = games[id], s = sc[id]; if (!g || !s || s.state === "pre") continue;
     let cur = sent.la[id];
     const st = laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`, tok = (la.acts || {})[id];
-    // switched off on the slate while it's running: off the Lock Screen and Dynamic Island right away
-    if (cur && !cur.end && per[id] === 0) {
+    // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
+    if (cur && !cur.off && per[id] === 0) {
       cur.end = 1; cur.off = 1;
       if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) }, 10);
       continue;
     }
-    // switched back on while the game is still going: start it over (its old token belonged to the one that ended)
-    if (cur && cur.end && cur.off && want.has(id) && s.state === "in") { delete sent.la[id]; if (la.acts && la.acts[id]) { delete la.acts[id]; gone = true; } cur = undefined; }
+    // switched back on: start it over (its old token belonged to the one that ended). After the final, only when asked by name.
+    if (cur && cur.end && cur.off && want.has(id) && (s.state === "in" || (s.state === "post" && per[id] === 1))) { delete sent.la[id]; if (la.acts && la.acts[id]) { delete la.acts[id]; gone = true; } cur = undefined; }
     if (!cur) {
       // a new one: only for a game that's live now, while alerts are on and not held back. A game switched on by name
       // on the slate starts even with the rules off or during quiet hours: that tap asked for it.
-      const asked = per[id] === 1;
-      if (!want.has(id) || s.state !== "in" || !(cfg.on || asked) || (silent && !asked) || !(la.start || []).length || running + started >= 4) continue;
+      // A finished game starts only when asked by name (3.22.0): its final score, kept on the Lock Screen like any final.
+      const asked = per[id] === 1, fin = s.state === "post";
+      if (!want.has(id) || !(s.state === "in" || (fin && asked)) || !(cfg.on || asked) || (silent && !asked) || !(la.start || []).length || running + started >= 4) continue;
       const at = laAttrs(id, g, s), body = { "attributes-type": "SlateGameAttributes", attributes: at, "content-state": st,
-        alert: { title: `${at.away} @ ${at.home}`, body: `Live now: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
+        alert: { title: `${at.away} @ ${at.home}`, body: `${fin ? "Final" : "Live now"}: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
       for (const t of la.start) { const r = await sendLive(env, t, "start", body, 10); if (r === 410) { t.gone = true; gone = true; } }
       sent.la[id] = { k: key, n: 1 }; started++;
       continue;
     }
     if (cur.end) continue;
     if (s.state === "post") {
+      // one started for a finished game has no token for a moment: wait a few minutes for it, so it can be ended properly
+      if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; continue; }
       cur.end = 1;
       if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 4 * 3600 }, 10);  // 4 hours: the longest iOS keeps an ended one (you can swipe it away sooner)
       continue;
@@ -394,12 +397,15 @@ export async function runAlerts(env) {
     let msgs = [];
     if (p.enabled !== false) {
       const silent = !(p.days || DEFAULTS.days).includes(lt.wd) || inQuiet(p, lt.hour);
+      // games switched off from the slate (3.22.0: a card's bell, or the tray): their alerts are marked sent but not pushed
+      const offGames = new Set(Object.entries(((p.liveAct || {}).games) || {}).filter(([, v]) => v === 0).map(([i]) => i));
       for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, w.slate || [], w.mine || [], w.customs || [], now)) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
         else if (kind !== "ot") sent[kind].push(key);
+        const muted = kind !== "brief" && offGames.has(String(key).split(":")[0]);
                 // a blank title: iPhone then shows "from Slate" on top and the alert under it (two lines)
-        if (!silent && body) msgs.push({ title: " ", body, tag: `${kind}-${key}` });
+        if (!silent && body && !muted) msgs.push({ title: " ", body, tag: `${kind}-${key}` });
       }
     }
     msgs = msgs.slice(0, 8);
