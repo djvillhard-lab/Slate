@@ -166,15 +166,29 @@ async function sendLive(env, tok, event, body, prio) {
 // returns true when liveacts (tokens) changed
 async function runLive(env, p, sent, la, ids, games, sc, silent) {
   const cfg = p.liveAct || {}; let gone = false;
+  // each game's own switch, from its tray on the slate (3.21.0): 1 = on even where the rules leave it out, 0 = off even where they'd include it
+  const per = cfg.games && typeof cfg.games === "object" ? cfg.games : {};
   const want = new Set(); if (cfg.lineup) ids.slate.forEach((i) => want.add(i)); if (cfg.myTeams) ids.mine.forEach((i) => want.add(i));
+  for (const [i, v] of Object.entries(per)) { if (v === 1) want.add(i); else if (v === 0) want.delete(i); }
   const running = Object.values(sent.la).filter((x) => !x.end).length;
   let started = 0;
   for (const id of Object.keys(sent.la).concat([...want])) {
     const g = games[id], s = sc[id]; if (!g || !s || s.state === "pre") continue;
-    const cur = sent.la[id], st = laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`;
+    let cur = sent.la[id];
+    const st = laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`, tok = (la.acts || {})[id];
+    // switched off on the slate while it's running: off the Lock Screen and Dynamic Island right away
+    if (cur && !cur.end && per[id] === 0) {
+      cur.end = 1; cur.off = 1;
+      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) }, 10);
+      continue;
+    }
+    // switched back on while the game is still going: start it over (its old token belonged to the one that ended)
+    if (cur && cur.end && cur.off && want.has(id) && s.state === "in") { delete sent.la[id]; if (la.acts && la.acts[id]) { delete la.acts[id]; gone = true; } cur = undefined; }
     if (!cur) {
-      // a new one: only for a game that's live now, while alerts are on and not held back
-      if (!want.has(id) || s.state !== "in" || !cfg.on || silent || !(la.start || []).length || running + started >= 4) continue;
+      // a new one: only for a game that's live now, while alerts are on and not held back. A game switched on by name
+      // on the slate starts even with the rules off or during quiet hours: that tap asked for it.
+      const asked = per[id] === 1;
+      if (!want.has(id) || s.state !== "in" || !(cfg.on || asked) || (silent && !asked) || !(la.start || []).length || running + started >= 4) continue;
       const at = laAttrs(id, g, s), body = { "attributes-type": "SlateGameAttributes", attributes: at, "content-state": st,
         alert: { title: `${at.away} @ ${at.home}`, body: `Live now: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
       for (const t of la.start) { const r = await sendLive(env, t, "start", body, 10); if (r === 410) { t.gone = true; gone = true; } }
@@ -182,7 +196,6 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
       continue;
     }
     if (cur.end) continue;
-    const tok = (la.acts || {})[id];
     if (s.state === "post") {
       cur.end = 1;
       if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 4 * 3600 }, 10);  // 4 hours: the longest iOS keeps an ended one (you can swipe it away sooner)
@@ -367,7 +380,8 @@ export async function runAlerts(env) {
   if (!active.length) return;
   // which games need a live score: everyone's slate and teams, plus college games for upset watch
   const want = new Set();
-  for (const w of active) { (w.slate || []).forEach((i) => want.add(i)); (w.mine || []).forEach((i) => want.add(i)); if ((merged(docs[w.prefix + "prefs/notify"]).upsets || {}).on) for (const [i, g] of Object.entries(games)) if (COLLEGE[g.league] && (g.awayRank || g.homeRank)) want.add(i); }
+  for (const w of active) { (w.slate || []).forEach((i) => want.add(i)); (w.mine || []).forEach((i) => want.add(i)); if ((merged(docs[w.prefix + "prefs/notify"]).upsets || {}).on) for (const [i, g] of Object.entries(games)) if (COLLEGE[g.league] && (g.awayRank || g.homeRank)) want.add(i);
+    for (const [i, v] of Object.entries(((merged(docs[w.prefix + "prefs/notify"]).liveAct || {}).games) || {})) if (v === 1 && games[i]) want.add(i); }  // games switched on by name get live scores too
   const sc = await liveScores(games, want, now);
   const list = Object.entries(games).map(([id, g]) => Object.assign({ id }, g)), byid = {}; for (const g of list) byid[g.id] = g;
   for (const w of active) {

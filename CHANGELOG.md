@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.21.0 (Nov 14, 2026)
+TestFlight: 3.0 (17), no new build (server and web only)
+- Live score for one game: tap a game on your slate and its tray has a Live button with a bell. A lit bell means that game's live score shows on your Lock Screen and in the Dynamic Island (by default, whatever Settings > Notifications > Live score covers). Tap it to switch it off for just that game, or on for a game your settings leave out, like one from Worth a look or All games. Switched off mid-game it leaves within a minute; switched on, it starts within a minute, or when the game starts. A game you switch on yourself shows even during quiet hours. Up to 4 at once, as before.
+- The tray's controls are one clean row under Full matchup: star either team on the left (by abbreviation now), and on the right, under your thumb, Remove (the ✕) and the Live bell. The bell shows in the iPhone app, on your own profile, before and during a game.
+
 ## 3.20.0 (Nov 14, 2026)
 TestFlight: 3.0 (17)
 - Live scores on the Lock Screen, redesigned as a scorebug: the slate's team chips (each team's second color as a stripe along the bottom), bigger scores in Slate's own font, the clock in red with a live dot, a football beside the team with the ball, and the down and distance ("2nd & 7 at BC 34"). Under it sits the slate's one-line note, red while the game is on. A Watch button on the right opens the channel's app the way the slate's channel buttons do (YouTube TV; NBC and ESPN's channels ask which), passing through Slate for a moment. After the final the losing team dims and the button becomes Box score.
