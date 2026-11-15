@@ -122,7 +122,7 @@ private struct StripPanel: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             .padding(.bottom, bottom)
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
+        .transition(.opacity)  // fades in place: a scale effect here grew it from the middle of the screen, so it slid across into the column
     }
 }
 
