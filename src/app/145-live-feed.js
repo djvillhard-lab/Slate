@@ -132,13 +132,30 @@
   function fdAtFirst() { var g = feedGame(); if (!g) return true; var l = fdList(g); return !l.length || l[0].id === g.id; }
   function fdKids() { var b = $("feed-body"); return b ? Array.prototype.filter.call(b.children, function (c) { return !c.classList.contains("fd-strip"); }) : []; }
   function fdSlideIn(dir) { if (REDUCED) return; fdKids().forEach(function (c) { c.classList.remove("fd-in-l", "fd-in-r"); void c.offsetWidth; c.classList.add(dir === "l" ? "fd-in-l" : "fd-in-r"); }); }
+  // the score on this page moves only when the scoring play itself is in the play-by-play (3.35.3): ESPN's header (and the
+  // scoreboard) can update first. If the play still hasn't come through after 90 seconds, the header's score shows anyway.
+  function fdSumScore(id, sum) {
+    if (!sum) return null; var comp = ((sum.header || {}).competitions || [])[0] || {}, hd = {};
+    (comp.competitors || []).forEach(function (k) { hd[k.homeAway === "home" ? "h" : "a"] = Number(k.score); });
+    if (hd.a == null || isNaN(hd.a) || hd.h == null || isNaN(hd.h)) return null;
+    var dr = sum.drives || {}, ds = (dr.previous || []).concat(dr.current ? [dr.current] : []), p = null;
+    ds.forEach(function (d) { (d.plays || []).forEach(function (pl) { if (pl.awayScore != null && pl.homeScore != null) p = { a: Number(pl.awayScore), h: Number(pl.homeScore) }; }); });
+    FD.hold = FD.hold || {};
+    if (!p || (p.a === hd.a && p.h === hd.h)) { delete FD.hold[id]; return hd; }
+    var key = hd.a + "-" + hd.h, H = FD.hold[id]; if (!H || H.k !== key) H = FD.hold[id] = { k: key, at: Date.now() };
+    if (Date.now() - H.at > 90000) return hd;
+    if (!FD.ht) FD.ht = setTimeout(function () { FD.ht = null; if (state.view === "feed") renderFeed(true); }, 91000 - (Date.now() - H.at));  // let the header's score through on time
+    return p;
+  }
   function fdStrip(g) {
     var ids = {}, list = fdList(g);
     if (list.length < 2) return null;
     var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Live football games");
     list.forEach(function (x) { if (ids[x.id]) return; ids[x.id] = 1;
       var on = x.id === g.id, b = el("button", "fd-chip" + (on ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", on ? "true" : "false");
-      var v = scoreRaw(x.id) || {}, show = boxShown(x) && v.a != null && !isNaN(v.a);
+      var v = scoreRaw(x.id) || {}, c1 = bx.live[x.id], fs = c1 && c1.sum && Date.now() - (c1.sumAt || 0) < 120000 ? fdSumScore(x.id, c1.sum) : null;
+      if (fs) v = { a: fs.a, h: fs.h, detail: v.detail };  // the same held score as the page below
+      var show = boxShown(x) && v.a != null && !isNaN(v.a);
       ["away", "home"].forEach(function (sd) { var r = el("span", "fd-cr"); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });
       b.appendChild(el("i", null, v.detail || "Live"));
       b.setAttribute("aria-label", x.away + " at " + x.home + (show ? ", " + v.a + " to " + v.h : "") + ", " + (v.detail || "live"));
@@ -207,6 +224,7 @@
     if (last && /End Period|End of Half|End of Game|End of Regulation/i.test(String((last.type || {}).text || "")) && /half|end/i.test(String(st.shortDetail || st.detail || ""))) spot = null;
     var posTid = spot ? String(((spot.e.team || {}).id) || ((((spot.p.start || {}).team) || {}).id) || "") : "", posSide = sideOf[posTid] || "";
     // the scorebug
+    var shown = fdSumScore(g.id, sum); if (shown) { scoreOf.away = shown.a; scoreOf.home = shown.h; }
     var bug = el("div", "fd-bug"), aS = Number(scoreOf.away), hS = Number(scoreOf.home);
     ["away", "mid", "home"].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = /half/i.test(String(st.shortDetail || ""));

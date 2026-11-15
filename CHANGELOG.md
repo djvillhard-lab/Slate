@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.35.3 (Nov 15, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- Live feed: the score no longer changes before the play that scored it. The score bar and the switcher now follow the play-by-play, so a touchdown, field goal, extra point, two-point try or safety moves the score at the same moment its play shows up in the feed. ESPN sometimes updates the score a little before the play; if the play still hasn't come through after 90 seconds, the new score shows anyway so it can't get stuck.
+
 ## 3.35.2 (Nov 15, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - Live feed: play tags sit on the right side of the play card, stacked in the open space beside the headline, instead of on a row of their own. Cards are no longer taller because of them; a long headline wraps beside the tags.
