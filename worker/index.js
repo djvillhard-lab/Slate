@@ -180,6 +180,14 @@ const RULES = `Rules for all writing: plain text only, no citation tags or marku
 
 function prompt(p) {
   const game = p.game, facts = p.facts;
+  if (p.kind === "news" && p.key === "slate") return `You're writing the News page of a sports fan's app, built around this person's slate of games today. Today is ${new Date().toDateString()}.
+Facts (JSON): "slate" (today's games on their slate: id, league, teams, time, TV, why it's on the slate), "byGame" (ESPN and The Athletic headlines about each slate game's teams, with url), "top" (today's top headlines across all of sports, with url), and "interests" (what this person reads most): ${facts}
+Do up to three web searches: the biggest storylines behind the most important slate games, and the biggest sports stories of the last day across all sports.
+${RULES}
+Answer with only this JSON inside <json></json> tags:
+{"games": [{"id": "the slate game's id", "game": "Away at Home", "story": "one paragraph, 70-120 words: why this is one of the day's biggest games and the story behind it (stakes, rivalry, form, a player or coach angle, injuries)", "read": {"title": "...", "url": "...", "source": "ESPN" | "The Athletic"}}],
+ "around": ["4-6 quick hits, one line each, 12-25 words: the top stories in all of sports right now (not limited to the slate), most important first"]}
+games: pick only the 2-4 biggest or most meaningful games on the slate, best first; never list the rest. read: the one headline from byGame for that game (use its exact url) most worth opening, or null if none fits; never invent a url. Inside the JSON strings, never use double quotation marks.`;
   if (p.kind === "news") return `You're writing the News page of a sports fan's app. Today is ${new Date().toDateString()}.
 This brief is for: ${JSON.parse(game || "{}").label || p.key}.
 Facts (JSON): the headlines the app already shows for this page (ESPN and The Athletic: title, source, time, description, url)${p.key === "slate" ? ", the games on this person's slate today (teams, time, TV, why it's on the slate)" : p.key === "teams" ? ", this person's favorite teams" : ""}, and what this person reads most ("interests"): ${facts}
@@ -307,7 +315,11 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
         if (p.kind === "news") {
           const reads = (Array.isArray(ans.reads) ? ans.reads : []).filter((r) => r && r.title && /^https:\/\//.test(r.url || "")).slice(0, 4).map((r) => ({ title: String(r.title).slice(0, 200), url: String(r.url).slice(0, 600), source: String(r.source || "").slice(0, 40), why: String(r.why || "").slice(0, 160) }));
           const watch = (Array.isArray(ans.watch) ? ans.watch : []).slice(0, 12).map((w) => ({ game: String((w || {}).game || "").slice(0, 80), why: String((w || {}).why || "").slice(0, 200) })).filter((w) => w.game);
-          await putDoc(this.env, t.path, { key: p.key, date: p.date, quick: strs(ans.quick, 7), long: strs(ans.long, 6), watch, reads, at: now, by: p.user || "dj", writing: null });
+          const games = (Array.isArray(ans.games) ? ans.games : []).filter((g) => g && g.story).slice(0, 4).map((g) => {
+            const r = g.read && /^https:\/\//.test(g.read.url || "") ? { title: String(g.read.title || "").slice(0, 200), url: String(g.read.url).slice(0, 600), source: String(g.read.source || "").slice(0, 40) } : null;
+            return { id: String(g.id || "").slice(0, 60), game: String(g.game || "").slice(0, 100), story: String(g.story).slice(0, 1200), read: r };
+          });
+          await putDoc(this.env, t.path, { key: p.key, date: p.date, games, around: strs(ans.around, 6), quick: strs(ans.quick, 7), long: strs(ans.long, 6), watch, reads, at: now, by: p.user || "dj", writing: null });
         } else if (p.kind === "moments") {
           const pick = (a, n) => (Array.isArray(a) ? a : []).filter((x) => x && (x.name || x.away)).slice(0, n).map((x) => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, String(v == null ? "" : v).slice(0, 300)])));
           await mergeDoc(this.env, t.path, t.patch({ over: pick(ans.over, 5), under: pick(ans.under, 5), games: pick(ans.games, 5), top: pick(ans.top, 10), at: now, writing: null }));

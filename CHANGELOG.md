@@ -5,6 +5,16 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.9.1 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- The day picker now uses the same frosted, see-through glass as the menu button, and so do the page's own menu button, Back and menu capsule.
+
+## 3.9.0 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- News is now just My slate: the My teams and league tabs are gone.
+- Claude's brief (still only on a tap) is rebuilt: it picks the 2-4 biggest or most meaningful games on your slate and writes a paragraph on each, why it matters and the story behind it, with one related story to open right under it. No list of every game. Then "Around sports": quick hits on the top stories across all of sports, not just your slate.
+- Headlines are grouped by game, each under a bar naming the matchup, league, time and channel, and every story is tagged with the team it's about. ESPN's roundup stories that tag a dozen teams only count for a team they actually mention.
+
 ## 3.8.0 (Nov 14, 2026)
 TestFlight: 3.0 (16)
 - Settings moves into the menu, at the very top (the strip and the floating capsule too). The Settings and More buttons are gone from the slate's header, so the title has the whole row.
