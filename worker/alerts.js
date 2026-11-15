@@ -163,9 +163,12 @@ async function bcSend(env, envName, channel, event, body, prio) {
   const r = await fetch(`${host}/4/broadcasts/apps/${a.topic}`, { method: "POST",
     headers: { authorization: "bearer " + (await apnsJwt(a)), "content-type": "application/json", "apns-channel-id": channel, "apns-push-type": "liveactivity", "apns-priority": String(prio) },
     body: JSON.stringify({ aps: Object.assign({ timestamp: Math.floor(Date.now() / 1000), event }, body) }) });
-  if (r.status !== 200) { let t = ""; try { t = await r.text(); } catch (e) {} console.log("bc send", r.status, t.slice(0, 200)); }
+  let t = ""; if (r.status !== 200) { try { t = await r.text(); } catch (e) {} console.log("bc send", r.status, t.slice(0, 200)); }
+  BC_LAST = { status: r.status, text: t.slice(0, 300), id: r.headers.get("apns-id") || "" };
   return r.status;
 }
+let BC_LAST = null;
+export async function bcTest(env, channel, state) { BC_LAST = null; await bcSend(env, "production", channel, "update", { "content-state": state, "stale-date": Math.floor(Date.now() / 1000) + 600 }, 5); return BC_LAST; }
 export async function bcLoad(env) { const d = (await getDocs(env, ["bc/channels"]))["bc/channels"] || {}; d.games = d.games || {}; return d; }
 export async function bcSave(env, doc) {
   const cut = Date.now() - 2 * 864e5, games = {};

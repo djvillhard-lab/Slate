@@ -4,7 +4,7 @@
 // The workflow asks Claude (with web search) for the summary and saves it to Supabase; the app sees it appear.
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
 import { WorkflowEntrypoint } from "cloudflare:workers";
-import { runAlerts, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave } from "./alerts.js";
+import { runAlerts, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
@@ -213,6 +213,7 @@ export default {
     if (url.pathname === "/api/bc-probe" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       const me = await whoIs(env, p && p.pass); if (!me || me.id !== "dj") return json({ error: "no" }, 403);
+      if (p.channel && p.state) return json({ send: await bcTest(env, String(p.channel), p.state) });
       return json({ prod: await bcRequest(env, "production", "GET", "/all-channels"), sandbox: await bcRequest(env, "sandbox", "GET", "/all-channels") });
     }
     if (url.pathname === "/api/whoami" && req.method === "POST") {
