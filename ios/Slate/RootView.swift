@@ -102,8 +102,12 @@ private struct StripPanel: View {
 
     var body: some View {
         GeometryReader { geo in
-            let col = max(44, model.edgeInsets.trailing)
-            let bottom = max(model.edgeInsets.bottom, 8) + 64          // room for iOS's menu button at the foot of the column
+            // lined up with iOS's own menu button: the same 48-point width, centered on it. iOS draws its column
+            // about 20 points in from the screen's edge and centers the button in it, so the button's center sits
+            // about 27 points inside the column's inner edge (measured on the folded Duo, 3.25.3)
+            let w: CGFloat = 48
+            let center = max(w / 2 + 4, model.edgeInsets.trailing - 27)
+            let bottom = max(model.edgeInsets.bottom, 8) + 45          // just above iOS's menu button
             let top = max(model.edgeInsets.top, 8) + 8
             let n = CGFloat(Destination.all.count)
             let size = min(44, max(30, (geo.size.height - bottom - top - 8) / n))
@@ -118,13 +122,14 @@ private struct StripPanel: View {
                         }
                     }
                     .padding(.vertical, 4)
-                    .frame(width: min(col - 8, size + 8))
+                    .frame(width: w)
                     .modifier(GlassCapsule())
                     // grows up out of the menu button and shrinks back into it (the capsule's own bottom, already in the column)
                     .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
                 }
             }
-            .frame(width: col)
+            .frame(width: w)
+            .padding(.trailing, center - w / 2)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             .padding(.bottom, bottom)
             .animation(.snappy, value: model.stripOpen)
