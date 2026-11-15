@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.29.4 (Nov 15, 2026)
+TestFlight: 3.29.0 (33), no new build (web only)
+- Worth a look: a game that finishes while it's showing keeps its reason in the tag, now "Upset watch · Final" (or "Close finish · Final") instead of just "Final", for the 10 minutes it stays before it drops off.
+
 ## 3.29.3 (Nov 15, 2026)
 TestFlight: 3.29.0 (33), no new build (web only)
 - Removing a game from Worth a look (its ✕) shows a small "Removed from Worth a look · Undo" note at the top center of the page for 5 seconds. Undo puts the game back.
