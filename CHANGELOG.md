@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.6.0 (Nov 14, 2026)
+TestFlight: 3.0 (14), no new build (web only)
+- Every page now has the slate's header: the Slate mark, the page's name in the same type (All games, Box Office, Teams, On TV, Settings and the rest), and a line under it, so you always know where you are. Only the slate keeps its date and the Settings and More buttons; All games keeps its search button. Pages with the day picker at the bottom don't repeat it up top.
+- The header also gives the iPhone Duo's clock and Wi-Fi icons a clear strip at the top of every page.
+
 ## 3.5.0 (Nov 14, 2026)
 TestFlight: 3.0 (14)
 - iPhone app wherever iOS has no side strip (the Duo open and upright, a regular iPhone, or the Duo set to iPhone): the app now draws the menu itself so it matches the strip. One glass capsule at the bottom right with the same icons: Back (when needed) above the three-line menu button; tap it and the capsule grows into On TV, Teams, Box Office, All games and Slate, the open page lit, with the same quick animation; pick one and it shrinks back. The page's day picker sits just left of it.

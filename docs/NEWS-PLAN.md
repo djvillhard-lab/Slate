@@ -16,3 +16,7 @@ Decided with DJ on Nov 14, 2026. Anything that costs money is tap-only (no autom
 - Track opens and time spent (briefs in-app; articles estimated by time away from Slate after tapping).
 - Stored per account (Supabase), so it follows the user to the iPhone app.
 - Used to order tabs and stories and passed to Claude as interests when writing the My slate brief.
+
+## Later: morning slate email (asked Nov 14, 2026; on hold)
+- Any user can turn it on in Settings with their email address (Dad turns it on for himself).
+- How it's sent is still to decide (DJ's Gmail through an Apps Script, or an email service).
