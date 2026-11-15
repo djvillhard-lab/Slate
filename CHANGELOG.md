@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.10.0 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Settings, Notifications and Slate rules now share the style of the rows at the top of Settings: every group sits in a rounded card with a soft shadow, the switches and pickers are fully rounded, and the rule icons are round, in the accent color.
+- Back now goes back where you came from on pages you open from another page: Notifications or Slate rules back to Settings, a team back to Teams, a matchup back to All games or On TV (at the same spot in the list). The menu's own pages still go back to your slate.
+
 ## 3.9.1 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - The day picker now uses the same frosted, see-through glass as the menu button, and so do the page's own menu button, Back and menu capsule.
