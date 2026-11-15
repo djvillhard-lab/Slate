@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.29.2 (Nov 15, 2026)
+TestFlight: 3.29.0 (33), no new build (web only)
+- Soccer quick look: the Match summary shows from kickoff, even before anything big happens. It says "No goals yet" and lists the bookings, instead of being left out until the first goal (England–Spain had only a yellow card, so there was no summary at all).
+- Pre-game notes about injuries name the position: "Seahawks are without RB Wilson", "Raptors are without F Barnes". Saved notes in the old wording are rebuilt.
+
 ## 3.29.1 (Nov 15, 2026)
 TestFlight: 3.29.0 (33), no new build (web only)
 - Fixed: live games on the slate (and in Worth a look) showed their start time beside the red clock. The clock sits where the start time was again, and live games no longer show the start time (the slate's time groups already say it).
