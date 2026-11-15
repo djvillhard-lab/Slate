@@ -41,7 +41,7 @@ struct SlateBoardActivity: Widget {
             } compactTrailing: {
                 if let g = lead { BoardSide(g: g, leading: false) }
             } minimal: {
-                if let g = lead { SplitRing(away: SlateLook.visible(g.ac), home: SlateLook.visible(g.hc), a: g.a, h: g.h) }
+                if let g = lead { MiniScore(a: g.a, h: g.h) }
             }
             .widgetURL(SlateLook.slateURL)
         }
@@ -202,9 +202,9 @@ private struct BoardNarrowAwareSide: View {
         if !narrow {
             BoardChips(g: g, leading: leading)
         } else if leading {
-            SplitRing(away: SlateLook.visible(g.ac), home: SlateLook.visible(g.hc), a: g.a, h: g.h)
+            MiniSide(abbr: g.aa, color: g.ac, alt: g.ax, score: g.a, leading: true)
         } else {
-            EmptyView()
+            MiniSide(abbr: g.ha, color: g.hc, alt: g.hx, score: g.h, leading: false)
         }
     }
 }

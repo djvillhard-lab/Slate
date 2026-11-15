@@ -9,6 +9,10 @@ From 3.0.0 on, each release also says which iPhone app build in TestFlight goes 
 TestFlight: 3.0 (26)
 - Folded iPhone Duo: the open menu now lines up with iOS's menu button below it: the same width, centered over it, and just above it instead of floating higher and to the right.
 
+## 3.25.3 (Nov 15, 2026)
+TestFlight: 3.0 (26)
+- Dynamic Island on the iPhone Duo (where iOS gives the island less width): mini chips instead of the split ring, a small team chip and its score on each side of the camera ("MIN 7 | 10 GB"), for one game and for the scoreboard (the game that last scored). When the island is shared with another live notification, the smallest spot shows just the score ("7–10") instead of the ring. Needs the new TestFlight build.
+
 ## 3.25.2 (Nov 15, 2026)
 TestFlight: 3.0 (25), no new build (web only)
 - Pre-game notes: when both teams are on a streak, the note says it once ("Both on a roll: England have won four straight, Spain five") instead of also leading with one team's streak ("Spain have won five in a row; Both on a roll: …"). A streak line is never paired with another streak line now. Saved notes in the old wording are rebuilt.

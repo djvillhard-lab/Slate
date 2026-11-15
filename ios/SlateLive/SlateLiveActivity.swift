@@ -9,8 +9,8 @@ import WidgetKit
 //   right (the channel's app, through Slate). After the final the loser dims and the note gets the whole width (3.23.0).
 // - Dynamic Island, expanded: the same scorebug around the camera (chips and big scores either side, the clock and
 //   down under it, the one-liner and a Matchup button on the right). One game live: both chips with their scores
-//   ("Chips"). Another game live too: this one can shrink to a small circle with both scores, ringed half in each
-//   team's color.
+//   ("Chips"). Where iOS gives the island less width (the iPhone Duo's side column), mini chips (3.25.3); sharing the
+//   island with another live notification, just the score.
 // Tapping any of it opens that game's matchup in Slate.
 struct SlateLiveActivity: Widget {
     var body: some WidgetConfiguration {
@@ -63,7 +63,7 @@ struct SlateLiveActivity: Widget {
             } compactTrailing: {
                 CompactSide(a: a, s: s, leading: false)
             } minimal: {
-                SplitRing(away: SlateLook.visible(a.awayColor), home: SlateLook.visible(a.homeColor), a: s.a, h: s.h)
+                MiniScore(a: s.a, h: s.h)
             }
             .widgetURL(SlateLook.gameURL(a.gameId))
         }
@@ -344,10 +344,46 @@ private struct NarrowAwareSide: View {
         if !narrow {
             ChipsSide(a: a, s: s, leading: leading)
         } else if leading {
-            SplitRing(away: SlateLook.visible(a.awayColor), home: SlateLook.visible(a.homeColor), a: s.a, h: s.h)
+            MiniSide(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, leading: true)
         } else {
-            EmptyView()
+            MiniSide(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, leading: false)
         }
+    }
+}
+
+// Where iOS gives the Dynamic Island less width (like the iPhone Duo's side column), 3.25.3: mini chips, a small team
+// chip and its score on each side of the camera ("MIN 7 | 10 GB"), in place of the split ring
+struct MiniSide: View {
+    let abbr: String
+    let color: String
+    let alt: String?
+    let score: Int
+    let leading: Bool
+
+    var body: some View {
+        HStack(spacing: 3) {
+            if leading {
+                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2)
+                Text("\(score)").font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.7)
+            } else {
+                Text("\(score)").font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.7)
+                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2)
+            }
+        }
+    }
+}
+
+// the smallest spot (another live notification shares the island): just the score, "7–10"
+struct MiniScore: View {
+    let a: Int
+    let h: Int
+
+    var body: some View {
+        Text("\(a)–\(h)")
+            .font(SlateLook.num(11))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
     }
 }
 
