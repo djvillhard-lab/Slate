@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.19.2 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Fixed: slate notes saved on your phone before 3.19.0 had no team attached, so finished games kept showing them without the abbreviation. Those saved notes are now rebuilt once (they may be blank for a few seconds while they reload), and any note still without a team works it out from the player it names.
+- Game-winner lines also read ESPN's after-the-game wording ("Raleek Brown 4 Yd pass from Arch Manning" becomes "Manning's 4-yd TD pass to Brown"), plus return TDs.
+
 ## 3.19.1 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (server and web only)
 - Worth a look notes get the team abbreviation too ("SCU: E. Mahi has 23 points"). The app matches the player named in the note to the game's stat leaders or box score.
