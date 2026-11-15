@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.17.2 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Football full matchup page, shorter box score: it shows Passing, Rushing and Receiving only, with a "Show defense and special teams" button for the rest (fumbles, defense, interceptions, returns, kicking, punting). After the final, Passing shows the starting QB (others behind "Show all"), and Rushing and Receiving show their top 3.
+
 ## 3.17.1 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Soccer quick look: the last dropdown is called "Lineups and stats" instead of "Box score".
