@@ -142,6 +142,15 @@ export default {
       }
       p.user = me.id;
       const t = target(p), at = new Date().toISOString();
+      // one write-up for everyone: previews, recaps, team pages and Box Office are shared by every account, so if
+      // anyone's already having Claude write this one (or just did, in the last 3 minutes), that's the one everyone
+      // gets: no second Claude call, no second charge
+      const curDoc = (await getDoc(env, t.path)) || {};
+      const entry = p.kind === "moments" ? (curDoc.leagues || {})[p.key] : (p.kind === "team" || p.kind === "news") ? curDoc : (curDoc.games || {})[p.id];
+      const w = entry && entry.writing, nowMs = Date.now();
+      if (w && w.at && !w.error && nowMs - Date.parse(w.at) < 10 * 60000) return json({ ok: true, at: w.at, shared: true }, 202);
+      const last = entry && (p.kind === "recap" ? (entry.recap || {}).at : p.kind === "preview" ? entry.newsAt : entry.at);
+      if (last && nowMs - Date.parse(last) < 3 * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
         game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, p.kind === "moments" ? 60000 : 16000) };

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.24.4 (Nov 15, 2026)
+TestFlight: 3.0 (22), no new build (server and web only)
+- Claude write-ups are written once for everyone: game previews, recaps, team pages and Box Office were already shared by every account, and now two people can't have the same one written twice. If anyone (you or a tester) is already having Claude write it, everyone else's tap just waits for that one; if it was written or regenerated in the last 3 minutes, a new tap shows that one instead of calling Claude again ("Claude wrote this a moment ago, so here it is"). No second charge either way. The personal News briefs (built from each person's own slate) stay per person.
+
 ## 3.24.3 (Nov 15, 2026)
 TestFlight: 3.0 (22)
 - Folded iPhone Duo: the open menu no longer flashes in the middle of the page for a split second before jumping into the side column. It's now laid over the full-screen page, so it's in the column from its very first frame.
