@@ -922,6 +922,31 @@ def main():
     if sc != old_scores or f"scores/{D}" not in docs:
         sb_put(f"scores/{D}", {"date": D, "updatedAt": iso(now), "games": sc})
     for i, s in sc.items(): state.setdefault(i, s.get("state"))
+    # yesterday's games still marked in progress (a late game that ended after the run for that date stopped):
+    # finish them from ESPN so the app doesn't show "4th quarter" the next morning
+    try:
+        prev_sc = (docs.get(f"scores/{PREV}") or {}).get("games") or {}
+        stuck = [i for i, e in prev_sc.items() if (e or {}).get("state") == "in"]
+        if stuck:
+            pp = [f"slates/{PREV}", f"slates/{PREV}-ncaam", f"slates/{PREV}-ncaaw", f"slates/{PREV}-ncaaf"]
+            pd = sb_get(pp); pg = {}
+            for p2 in pp:
+                for g in (pd.get(p2) or {}).get("games") or []:
+                    if g and g.get("id") in stuck: pg[g["id"]] = g
+            lgs = sorted({g["league"] for g in pg.values() if g["league"] in PATHS})
+            with cf.ThreadPoolExecutor(4) as ex: pm = dict(zip(lgs, ex.map(lambda lg: scoreboard_events(lg, PREV), lgs)))
+            new = dict(prev_sc)
+            for i, g in pg.items():
+                ev = find_event(g, pm.get(g["league"], []))
+                if not ev: continue
+                st, det = ev_state(ev)
+                if st in ("in", "post"):
+                    a, h = ev_scores(ev); new[i] = dict(new[i], a=a, h=h, state=st, detail=det)
+            if new != prev_sc:
+                sb_put(f"scores/{PREV}", {"date": PREV, "updatedAt": iso(now), "games": new})
+                docs[f"scores/{PREV}"] = {"games": new}
+    except Exception as e:
+        print("prev scores:", e)
 
     # ---- 2. facts and odds for the games that get previews
     focus = slate[:12] + others + requested

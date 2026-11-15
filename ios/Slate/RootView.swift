@@ -24,6 +24,13 @@ struct RootView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                         .ignoresSafeArea()
                 }
+                if model.strip && model.stripOpen {
+                    // folded Duo: the page buttons, drawn by the app in the side column right above the menu button.
+                    // iOS's own column only has room for a few buttons and tucks the rest into a "more" menu, so these
+                    // are sized to fit the column's height: every page always shows.
+                    StripPanel(model: model)
+                        .ignoresSafeArea()
+                }
                 if let err = model.loadError {
                     OfflineView(message: err) { model.reload() }
                 }
@@ -31,14 +38,10 @@ struct RootView: View {
             .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 if model.strip {
-                    // the strip shows Back (when needed) above one menu button; tapping the menu opens Slate's pages as strip buttons right above it
-                    // (top to bottom: On TV, Teams, Box Office, All games, Slate). Picking one closes them again.
+                    // the strip shows Back (when needed) above one menu button; tapping the menu opens Slate's pages right above it
+                    // (StripPanel, drawn by the app so all of them fit). Picking one closes them again.
                     ToolbarItemGroup(placement: .bottomBar) {
-                        if model.stripOpen {
-                            ForEach(Destination.all) { d in
-                                StripButton(dest: d, model: model)
-                            }
-                        } else if !model.back.isEmpty {
+                        if !model.stripOpen && !model.back.isEmpty {
                             // Back, right above the menu button, only when the page has somewhere to go back to
                             // (pointing right on a past day's slate: forward to today). Hidden while the menu is open.
                             Button {
@@ -92,22 +95,34 @@ private struct Destination: Identifiable {
     ]
 }
 
-// One page button in the open strip menu; the open page is lit
-private struct StripButton: View {
-    let dest: Destination
+// The open strip menu on the folded Duo: every page, stacked in the side column above the menu button,
+// with the buttons shrinking as needed so all of them fit the column's height
+private struct StripPanel: View {
     @ObservedObject var model: WebModel
 
     var body: some View {
-        let on = model.activeTarget == dest.target
-        Button {
-            model.go(dest.target)
-            withAnimation(.snappy) { model.stripOpen = false }
-        } label: {
-            Label(dest.title, systemImage: dest.symbol)
-                .symbolVariant(on ? .fill : .none)
+        GeometryReader { geo in
+            let col = max(44, model.edgeInsets.trailing)
+            let bottom = max(model.edgeInsets.bottom, 8) + 64          // room for iOS's menu button at the foot of the column
+            let top = max(model.edgeInsets.top, 8) + 8
+            let n = CGFloat(Destination.all.count)
+            let size = min(44, max(30, (geo.size.height - bottom - top - 8) / n))
+            VStack(spacing: 0) {
+                ForEach(Destination.all) { d in
+                    FloatButton(symbol: d.symbol, label: d.title, on: model.activeTarget == d.target, size: size) {
+                        model.go(d.target)
+                        withAnimation(.snappy) { model.stripOpen = false }
+                    }
+                }
+            }
+            .padding(.vertical, 4)
+            .frame(width: min(col - 8, size + 8))
+            .modifier(GlassCapsule())
+            .frame(width: col)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            .padding(.bottom, bottom)
         }
-        .tint(on ? Color.accentColor : Color.primary)
-        .accessibilityAddTraits(on ? .isSelected : [])
+        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
     }
 }
 
@@ -146,15 +161,16 @@ private struct FloatButton: View {
     let label: String
     let on: Bool
     var tint: Color? = nil
+    var size: CGFloat = 44
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .symbolVariant(on ? .fill : .none)
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: size >= 40 ? 20 : 17, weight: .medium))
                 .foregroundStyle(on ? Color.accentColor : (tint ?? Color.primary))
-                .frame(width: 44, height: 44)
+                .frame(width: size, height: size)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

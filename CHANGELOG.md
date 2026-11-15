@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.23.1 (Nov 15, 2026)
+TestFlight: 3.0 (19)
+- Folded iPhone Duo: the open menu in the side column now always shows every page (Settings, News, On TV, Teams, Box Office, All games, Slate). iOS's own column only fits a few buttons and was tucking the rest (like Slate) into a second "more" menu, so the app now draws the page buttons itself, stacked right above the menu button and sized to fit the column's height. Needs the new TestFlight build.
+- Fixed: a late game could stay "in progress" the next morning (Utah–Arizona showed the 4th quarter after it had ended). The app now keeps checking any game it last saw in progress until ESPN calls it final, and the server finishes off the previous night's games that were still marked live.
+
 ## 3.23.0 (Nov 15, 2026)
 TestFlight: 3.0 (18)
 - Live scoreboard: on today's slate, a Board button beside Live (in the iPhone app) opens a picker. Pick up to 4 games and tap Show on Lock Screen: they show together in one live notification on your Lock Screen and in the Dynamic Island, one row per game (chips, scores, then the clock or start time; tap a row for that game's matchup). It starts 15 minutes before your first pick (right away if one's already on), keeps up with every score, and ends after the last final (the finals stay up to 4 hours). The Dynamic Island shows whichever game scored last. Change the picks any time; Turn off takes it down within a minute. Needs the new TestFlight build.
