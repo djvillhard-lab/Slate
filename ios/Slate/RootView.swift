@@ -16,19 +16,19 @@ struct RootView: View {
                 SlateWebView(model: model)
                     .ignoresSafeArea(.container, edges: .all)
                     .ignoresSafeArea(.keyboard)
+                    // folded Duo: the page buttons, drawn by the app in the side column right above the menu button.
+                    // iOS's own column only has room for a few buttons and tucks the rest into a "more" menu, so these
+                    // are sized to fit the column's height: every page always shows. Laid over the full-screen page, so
+                    // it's in the column from its first frame (on its own it was first laid out short of the column, then jumped in).
+                    .overlay {
+                        if model.strip && model.stripOpen { StripPanel(model: model).ignoresSafeArea() }
+                    }
                 if model.float {
                     // no side column here (open and upright, or a regular iPhone): the same menu, floating bottom right
                     FloatMenu(model: model)
                         .padding(.trailing, 12 + model.edgeInsets.trailing)
                         .padding(.bottom, max(12, model.edgeInsets.bottom))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                        .ignoresSafeArea()
-                }
-                if model.strip && model.stripOpen {
-                    // folded Duo: the page buttons, drawn by the app in the side column right above the menu button.
-                    // iOS's own column only has room for a few buttons and tucks the rest into a "more" menu, so these
-                    // are sized to fit the column's height: every page always shows.
-                    StripPanel(model: model)
                         .ignoresSafeArea()
                 }
                 if let err = model.loadError {
