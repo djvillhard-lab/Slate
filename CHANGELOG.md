@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.4.0 (Nov 14, 2026)
+TestFlight: 3.0 (12)
+- iPhone app: when TestFlight has a newer app build than the one on your phone, a note at the top of the slate says so ("New app version 3.0 (12) is ready"). Tap it to open TestFlight and update; ✕ hides it until the next build. It waits about 35 minutes after a release so the build is really there. Builds before 3.0 (12) can't report their number, so the note starts working from this build on.
+
 ## 3.3.0 (Nov 14, 2026)
 TestFlight: 3.0 (11)
 - iPhone Duo strip: Back moves into the strip, right above the menu button, and only shows when there's somewhere to go back to (on a past day's slate it points right, to today). Opening the menu hides it until the menu closes. The page's own Back button steps aside in the strip.

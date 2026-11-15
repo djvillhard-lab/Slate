@@ -23,6 +23,8 @@ final class WebModel: ObservableObject {
     private var pushAsked = false
 
     var appVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0" }
+    // the build number TestFlight shows in brackets, e.g. 3.0 (12); Xcode Cloud stamps it on every build
+    var appBuild: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "" }
 
     // The first page load. A "-pass <code>" launch argument signs in (used by the CI screenshots).
     var startURL: URL {
