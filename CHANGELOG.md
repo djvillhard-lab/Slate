@@ -5,13 +5,17 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.4.2 (Nov 14, 2026)
+TestFlight: 3.0 (13), no new build (web only)
+- Release notes: 3.4.0's app build was cancelled by Xcode Cloud when 3.4.1 followed it minutes later; both ship in 3.0 (13).
+
 ## 3.4.1 (Nov 14, 2026)
 TestFlight: 3.0 (13)
 - iPhone Duo open and upright: iOS has no side column there and was putting the strip menu in a bar centred at the bottom. The app now uses the page's own menu button there instead, bottom right like everywhere else (same buttons, same Back above it). Folded, and open sideways, the menu stays in the side strip.
 
 ## 3.4.0 (Nov 14, 2026)
-TestFlight: 3.0 (12)
-- iPhone app: when TestFlight has a newer app build than the one on your phone, a note at the top of the slate says so ("New app version 3.0 (12) is ready"). Tap it to open TestFlight and update; ✕ hides it until the next build. It waits about 35 minutes after a release so the build is really there. Builds before 3.0 (12) can't report their number, so the note starts working from this build on.
+TestFlight: none (Xcode Cloud build 12 was cancelled when 3.4.1 replaced it; its changes ship in 3.0 (13))
+- iPhone app: when TestFlight has a newer app build than the one on your phone, a note at the top of the slate says so ("New app version 3.0 (12) is ready"). Tap it to open TestFlight and update; ✕ hides it until the next build. It waits about 35 minutes after a release so the build is really there. Builds before 3.0 (13) can't report their number, so the note starts working from 3.0 (13) on.
 
 ## 3.3.0 (Nov 14, 2026)
 TestFlight: 3.0 (11)
