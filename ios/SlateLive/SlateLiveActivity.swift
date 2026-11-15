@@ -351,32 +351,39 @@ private struct NarrowAwareSide: View {
         if !narrow {
             ChipsSide(a: a, s: s, leading: leading)
         } else if leading {
-            MiniSide(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, leading: true)
+            MiniSide(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, leading: true, showScore: s.state != "pre")
         } else {
-            MiniSide(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, leading: false)
+            MiniSide(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, leading: false, showScore: s.state != "pre")
         }
     }
 }
 
-// Where iOS gives the Dynamic Island less width (like the iPhone Duo's side column), 3.25.3: mini chips, a small team
-// chip and its score on each side of the camera ("MIN 7 | 10 GB"), in place of the split ring
+// Where iOS gives the Dynamic Island less width (the folded iPhone Duo's side column, where the Island is a tall
+// pill): 3.33.1, the small team chip with its score stacked under it (away on top) or over it (home below), so
+// both scores sit by the camera and nothing is cut off at the pill's edges. Before kickoff (showScore false), just the chip.
 struct MiniSide: View {
     let abbr: String
     let color: String
     let alt: String?
     let score: Int
     let leading: Bool
+    var showScore: Bool = true
 
     var body: some View {
-        HStack(spacing: 3) {
+        VStack(spacing: 2) {
             if leading {
                 Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2)
-                Text("\(score)").font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.7)
+                if showScore { num }
             } else {
-                Text("\(score)").font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.7)
+                if showScore { num }
                 Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2)
             }
         }
+        .frame(maxWidth: 22)
+    }
+
+    private var num: some View {
+        Text("\(score)").font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
     }
 }
 
@@ -403,9 +410,11 @@ private struct ChipsSide: View {
         HStack(spacing: 5) {
             if leading {
                 Chip(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
-                Text("\(s.a)").font(SlateLook.num(15)).foregroundStyle(.white)
+                if s.state != "pre" { Text("\(s.a)").font(SlateLook.num(15)).foregroundStyle(.white) }
             } else {
-                Text("\(s.h)").font(SlateLook.num(15)).foregroundStyle(.white)
+                // before kickoff (3.33.1): the start time in place of 0-0
+                if s.state == "pre" { Text(s.detail).font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6) }
+                else { Text("\(s.h)").font(SlateLook.num(15)).foregroundStyle(.white) }
                 Chip(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
             }
         }

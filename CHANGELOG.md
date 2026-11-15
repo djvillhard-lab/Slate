@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.33.1 (Nov 15, 2026)
+TestFlight: 3.33.1 (36)
+- iPhone app, folded Duo: the Dynamic Island in the side column is a tall pill, and a game's live notification was cut off ("SEA 2" and "1 LV" with the scores half gone). Each team's chip now sits with its score stacked beside the camera, away on top and home below, so both scores show in full. The scoreboard's Island gets the same fix.
+- iPhone app: before kickoff, a game's live notification no longer shows 0-0 in the Dynamic Island. It shows the two team chips and the start time.
+
 ## 3.33.0 (Nov 15, 2026)
 TestFlight: 3.31.0 (35), no new build (web only)
 - Home Screen web app: tapping a game alert (starting, close finish, overtime, goal, upset watch, final, hourly score) opens that game's matchup. If Slate is already open it switches to the game; if not, it opens straight to it. The morning brief still just opens Slate. The iPhone app's alerts get the same tap-through with its next build; the server already sends them the game.
