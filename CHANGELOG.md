@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.12.1 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Box Office, every league tab: Loading… until that league's live check has actually come back. Some tabs were showing "No games have started yet" from an older saved copy before the check finished.
+
 ## 3.12.0 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Slate matchups: scores stay in the middle of the card, but when a team name is long enough to reach them, they move right just enough to clear it (both scores together, so they stay lined up).
