@@ -36,6 +36,12 @@ final class LiveActivities {
     func start() {
         guard !started, !pass.isEmpty, ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         started = true
+        // every time Slate comes up, hand the server the tokens of the live notifications already showing (3.25.4).
+        // iOS only wakes the app for a new one's token when the app wasn't swiped away; until the server has that token
+        // it can't update the score, so opening Slate gets every one of them current again.
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in LiveActivities.shared.resendTokens() }
+        }
         if #available(iOS 17.2, *) {
             Task {
                 for await data in Activity<SlateGameAttributes>.pushToStartTokenUpdates {
@@ -59,6 +65,18 @@ final class LiveActivities {
         for act in Activity<SlateBoardAttributes>.activities { watchBoard(act) }
         Task {
             for await act in Activity<SlateBoardAttributes>.activityUpdates { watchBoard(act) }
+        }
+        resendTokens()
+    }
+
+    func resendTokens() {
+        for act in Activity<SlateGameAttributes>.activities where act.activityState == .active || act.activityState == .stale {
+            watch(act)
+            if let t = act.pushToken { post(kind: "activity", token: Self.hex(t), gameId: act.attributes.gameId) }
+        }
+        for act in Activity<SlateBoardAttributes>.activities where act.activityState == .active || act.activityState == .stale {
+            watchBoard(act)
+            if let t = act.pushToken { post(kind: "board", token: Self.hex(t), gameId: nil) }
         }
     }
 

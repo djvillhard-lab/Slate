@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.25.4 (Nov 15, 2026)
+TestFlight: 3.0 (27)
+- Fixed: live notifications the server started could stay stuck on the score they started with (Ole Miss–Oklahoma showed 0-0 early in the 1st while the game was 7-14 in the 2nd). The server can only update one after the phone sends it that notification's token, and iOS doesn't wake Slate to send it when the app has been swiped away. Now every time Slate opens or comes back to the front, it sends the tokens of every live notification showing, so they all catch up within a minute. The scoreboard was updating normally.
+
 ## 3.25.3 (Nov 15, 2026)
 TestFlight: 3.0 (26)
 - Folded iPhone Duo: the open menu now lines up with iOS's menu button below it: the same width, centered over it, and just above it instead of floating higher and to the right.
