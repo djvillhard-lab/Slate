@@ -170,6 +170,7 @@ final class WebModel: ObservableObject {
             js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded()))); window.SlateApp && SlateApp.setFloat && SlateApp.setFloat(\(float))")
             sendMenuAnchor()
             sendFold()
+            LiveActivities.shared.reportShowing()
             runPendingCall()
         case "state":
             if let v = m["view"] as? String { view = v }

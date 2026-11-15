@@ -69,7 +69,18 @@ final class LiveActivities {
         resendTokens()
     }
 
+    // which games' live notifications are on the phone right now (and whether the scoreboard is): the slate's switches
+    // show exactly that for games that are on or over (3.28.1)
+    func reportShowing() {
+        let on: (ActivityState) -> Bool = { $0 == .active || $0 == .stale || $0 == .ended }
+        let ids = Activity<SlateGameAttributes>.activities.filter { on($0.activityState) }.map { $0.attributes.gameId }
+        let board = Activity<SlateBoardAttributes>.activities.contains { on($0.activityState) }
+        let list = (try? JSONSerialization.data(withJSONObject: ids)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
+        WebModel.shared.js("window.SlateApp && SlateApp.liveShowing && SlateApp.liveShowing(\(list), \(board))")
+    }
+
     func resendTokens() {
+        reportShowing()
         for act in Activity<SlateGameAttributes>.activities where act.activityState == .active || act.activityState == .stale {
             watch(act)
             if let t = act.pushToken { post(kind: "activity", token: Self.hex(t), gameId: act.attributes.gameId) }
@@ -88,8 +99,12 @@ final class LiveActivities {
             for await data in act.pushTokenUpdates { post(kind: "board", token: Self.hex(data), gameId: nil) }
         }
         Task {
-            for await st in act.activityStateUpdates where st == .dismissed { gone(kind: "board-gone", gameId: nil) }
+            for await st in act.activityStateUpdates {
+                if st == .dismissed { gone(kind: "board-gone", gameId: nil) }
+                reportShowing()
+            }
         }
+        reportShowing()
     }
 
     private func watch(_ act: Activity<SlateGameAttributes>) {
@@ -101,8 +116,12 @@ final class LiveActivities {
         }
         // swiped away (or taken down): the game's Live notification switch goes off, on the server and on the slate
         Task {
-            for await st in act.activityStateUpdates where st == .dismissed { gone(kind: "gone", gameId: game) }
+            for await st in act.activityStateUpdates {
+                if st == .dismissed { gone(kind: "gone", gameId: game) }
+                reportShowing()
+            }
         }
+        reportShowing()
     }
 
     // ---- started and ended by the app itself, the moment you switch one on or off on the slate (3.24.0) ----
