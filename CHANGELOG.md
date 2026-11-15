@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.18.0 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Worth a look tags on your slate: any live game on your slate that qualifies for Close finish, Upset watch or Big night gets that tag on its own card (red, top right) instead of showing up again in Worth a look. Worth a look now only lists games that aren't on your slate.
+- Finished games' one-line notes now tell you how it ended when it came down to the wire: "Texas won it on Manning's 4-yd TD pass to Brown with 0:02 left". This covers the go-ahead-for-good score in the last moments or in overtime (or extra time), a walk-off in baseball, and a late winner in soccer. It leads over other notes, like a big stat line.
+
 ## 3.17.2 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Football full matchup page, shorter box score: it shows Passing, Rushing and Receiving only, with a "Show defense and special teams" button for the rest (fumbles, defense, interceptions, returns, kicking, punting). After the final, Passing shows the starting QB (others behind "Show all"), and Rushing and Receiving show their top 3.
