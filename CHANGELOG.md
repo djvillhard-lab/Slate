@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.26.0 (Nov 15, 2026)
+TestFlight: 3.0 (27), no new build (web only)
+- Quick look on a finished game: a Recap dropdown at the top shows Claude's short read, or the button to have Claude write it right there (shared with everyone, like all write-ups).
+- Quick look dropdowns remember how you left them: open one (say Top performers) and it starts open on every quick look you open after that, on this phone; close it and it starts closed.
+- All games: finished games show their start time under "Final".
+- Pre-game notes: when both teams are on the same streak it reads "Both teams have won four in a row".
+
 ## 3.25.4 (Nov 15, 2026)
 TestFlight: 3.0 (27)
 - Fixed: live notifications the server started could stay stuck on the score they started with (Ole Miss–Oklahoma showed 0-0 early in the 1st while the game was 7-14 in the 2nd). The server can only update one after the phone sends it that notification's token, and iOS doesn't wake Slate to send it when the app has been swiped away. Now every time Slate opens or comes back to the front, it sends the tokens of every live notification showing, so they all catch up within a minute. The scoreboard was updating normally.
