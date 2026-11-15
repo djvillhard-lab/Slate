@@ -98,7 +98,8 @@ Xcode put on your phone, then repeat the starred items in the TestFlight copy on
 - [ ] **Unfolded, upright and sideways:** the page fills the screen to both edges, nothing hidden under the clock
       or the side strip. *
 - [ ] **The side strip:** one menu button at the bottom. Tap it: On TV, Teams, Box Office, All games and Slate appear
-      above it as strip buttons (the open page lit); pick one and they fold back into the one button. Pages run under the strip; the header buttons, day picker and Back sit just left of it.
+      above it as strip buttons (the open page lit); pick one and they fold back into the one button. Back sits
+      above the menu button when there's somewhere to go back to, and hides while the menu is open. Pages run under the strip; the header buttons, day picker and Back sit just left of it.
       Settings > Phone > iPhone: the strip menu goes away and the page's own menu button shows instead. *
 - [ ] **Folding and unfolding while a page is open:** do it on the slate and on Box Office, a few times each.
       Nothing sticks halfway, the layout settles within a second.

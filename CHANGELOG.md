@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.3.0 (Nov 14, 2026)
+TestFlight: 3.0 (11)
+- iPhone Duo strip: Back moves into the strip, right above the menu button, and only shows when there's somewhere to go back to (on a past day's slate it points right, to today). Opening the menu hides it until the menu closes. The page's own Back button steps aside in the strip.
+- Regular iPhone (and the Duo set to iPhone): the menu now matches the strip. Back sits above the menu button and hides while the menu is open; the menu button shows three lines; tapping it stacks On TV, Teams, Box Office, All games and Slate above it as round buttons with their names beside them, the open page lit, and picking one closes them. The menu button and Back are round.
+- From here on, changes to the Duo strip are mirrored in the regular iPhone menu.
+
 ## 3.2.3 (Nov 14, 2026)
 TestFlight: 3.0 (10), no new build (web only)
 - Box Office: each player's game result takes two lines instead of three: "W 93-77" on top, the opponent under it. Rows are shorter and the stats line has more room.

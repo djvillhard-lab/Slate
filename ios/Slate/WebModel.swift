@@ -12,6 +12,7 @@ final class WebModel: ObservableObject {
     @Published var view = "lineup"
     @Published var duo = false
     @Published var menuOpen = false
+    @Published var back = ""   // the page's Back: "" (none), "back", or "fwd" (to today)
     @Published var stripOpen = false   // the strip menu, open (its page buttons showing) or closed
     @Published var device = ""   // Settings > Phone: "duo" or "iphone", as the page reports it
     @Published var look = "dark"
@@ -71,6 +72,10 @@ final class WebModel: ObservableObject {
         js("window.SlateApp && SlateApp.setFold && SlateApp.setFold(\(Int(p.x.rounded())))")
     }
 
+    func goBack() {
+        js("window.SlateApp && SlateApp.back && SlateApp.back()")
+    }
+
     func go(_ target: String) {
         view = target  // light the strip button right away; the page's own report follows
         js("window.SlateApp && SlateApp.go(\(Self.quote(target)))")
@@ -120,6 +125,7 @@ final class WebModel: ObservableObject {
             if let l = m["look"] as? String { look = l }
             if let d = m["duo"] as? Bool { duo = d }
             if let mo = m["menuOpen"] as? Bool { menuOpen = mo }
+            back = m["back"] as? String ?? ""
             if let dv = m["device"] as? String, dv != device { device = dv; refreshStrip() }
         case "push-status":
             pushStatus()

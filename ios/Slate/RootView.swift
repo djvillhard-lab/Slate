@@ -23,13 +23,22 @@ struct RootView: View {
             .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 if model.strip {
-                    // the strip shows one menu button; tapping it opens Slate's pages as strip buttons right above it
+                    // the strip shows Back (when needed) above one menu button; tapping the menu opens Slate's pages as strip buttons right above it
                     // (top to bottom: On TV, Teams, Box Office, All games, Slate). Picking one closes them again.
                     ToolbarItemGroup(placement: .bottomBar) {
                         if model.stripOpen {
                             ForEach(Destination.all) { d in
                                 StripButton(dest: d, model: model)
                             }
+                        } else if !model.back.isEmpty {
+                            // Back, right above the menu button, only when the page has somewhere to go back to
+                            // (pointing right on a past day's slate: forward to today). Hidden while the menu is open.
+                            Button {
+                                model.goBack()
+                            } label: {
+                                Label(model.back == "fwd" ? "Today" : "Back", systemImage: model.back == "fwd" ? "chevron.right" : "chevron.left")
+                            }
+                            .tint(Color.accentColor)
                         }
                         Button {
                             withAnimation(.snappy) { model.stripOpen.toggle() }

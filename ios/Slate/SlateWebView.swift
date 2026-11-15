@@ -17,7 +17,7 @@ struct SlateWebView: UIViewRepresentable {
         let content = WKUserContentController()
         content.add(WeakMessageHandler(context.coordinator), name: "slate")
         // set before the page's own script runs, so the page knows it's inside the app from the first frame
-        let boot = "window.SLATE_NATIVE = { platform: 'ios', app: \(WebModel.quote(model.appVersion)), strip: \(model.strip) };"
+        let boot = "window.SLATE_NATIVE = { platform: 'ios', app: \(WebModel.quote(model.appVersion)), strip: \(model.strip), backBtn: true };"
         content.addUserScript(WKUserScript(source: boot, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController = content
 
