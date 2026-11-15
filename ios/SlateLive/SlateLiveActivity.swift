@@ -49,23 +49,14 @@ struct SlateLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack(spacing: 10) {
-                        // the slate's one-liner: red while the game is on, like the Lock Screen
-                        Text(s.line ?? "")
-                            .font(SlateLook.semi(13))
-                            .foregroundStyle(s.state == "in" ? SlateLook.live : SlateLook.muted)
-                            .lineLimit(s.state == "post" ? 2 : 1)
-                            .minimumScaleFactor(0.85)
-                        Spacer(minLength: 0)
-                        // while the game is on: Matchup, on the right under the thumb (after the final, tapping opens it)
-                        if s.state != "post" {
-                            Link(destination: SlateLook.gameURL(a.gameId)) {
-                                Pill(text: "Matchup", icon: "chevron.right", iconFirst: false, fill: SlateLook.button)
-                            }
-                            .accessibilityLabel("Open this matchup in Slate")
-                        }
-                    }
-                    .padding(.horizontal, 4)
+                    // the slate's one-liner across the whole width (red while the game is on); tapping opens the matchup
+                    Text(s.line ?? "")
+                        .font(SlateLook.semi(13))
+                        .foregroundStyle(s.state == "in" ? SlateLook.live : SlateLook.muted)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
                 }
             } compactLeading: {
                 CompactSide(a: a, s: s, leading: true)
@@ -184,7 +175,6 @@ private struct LockCard: View {
         let live = s.state == "in"
         let hasSit = live && !(s.sit ?? "").isEmpty
         let note = s.line ?? ""
-        let watch = live ? (a.channel ?? "") : ""
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Text(a.league)
@@ -210,35 +200,33 @@ private struct LockCard: View {
                          ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false))
             }
 
-            if hasSit || !note.isEmpty || !watch.isEmpty {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        if hasSit {
+            // the bottom of the card, full width (3.25.1, no Watch button): for live football who has the ball, the down
+            // and the yard line ("MIN ball · 3rd & 4 at GB 35"), then the slate's one-liner across the whole card
+            if hasSit || !note.isEmpty {
+                VStack(alignment: .leading, spacing: 3) {
+                    if hasSit {
+                        HStack(spacing: 5) {
+                            Image(systemName: "football.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(SlateLook.muted)
                             Text(s.sit ?? "")
                                 .font(SlateLook.bold(13))
                                 .foregroundStyle(SlateLook.ink)
                                 .lineLimit(1)
-                        }
-                        // the slate's one-liner: red while the game is on, plain after; two lines when there's room
-                        if !note.isEmpty {
-                            Text(note)
-                                .font(SlateLook.semi(13))
-                                .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
-                                .lineLimit(hasSit ? 1 : 2)
                                 .minimumScaleFactor(0.85)
-                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    Spacer(minLength: 0)
-                    // while the game is on: Watch, on the right under the thumb (tapping the card opens the matchup)
-                    if !watch.isEmpty {
-                        Link(destination: SlateLook.watchURL(watch, a.gameId)) {
-                            Pill(text: watch, icon: "play.fill", iconFirst: true)
-                        }
-                        .accessibilityLabel("Watch on \(watch)")
+                    // red while the game is on, plain after; two lines when there's room
+                    if !note.isEmpty {
+                        Text(note)
+                            .font(SlateLook.semi(13))
+                            .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
+                            .lineLimit(hasSit ? 1 : 2)
+                            .minimumScaleFactor(0.85)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .frame(minHeight: watch.isEmpty ? 0 : 44)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
             }
         }

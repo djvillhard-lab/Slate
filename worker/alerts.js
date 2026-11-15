@@ -156,7 +156,8 @@ function laState(s) {
   if (x && x.n && x.d) st.line = `${x.n} ${x.d}`.slice(0, 60);
   // football, while the ball is live: who has it and the down ("2nd & 7 at BC 34"), straight from ESPN; left out when ESPN has none
   if (s.state === "in" && (s.po === "away" || s.po === "home")) st.poss = s.po;
-  if (s.state === "in" && s.dd) st.sit = String(s.dd).slice(0, 40);
+  // "MIN ball · 3rd & 4 at GB 35" (3.25.1: who has it, in words too, beside the football icon)
+  if (s.state === "in" && s.dd) { const who = s.po === "away" ? s.aa : s.po === "home" ? s.ha : ""; st.sit = ((who ? who + " ball · " : "") + String(s.dd)).slice(0, 44); }
   return st;
 }
 async function sendLive(env, tok, event, body, prio) {
@@ -432,7 +433,13 @@ async function liveScores(games, want, now) {
       ax: hex((cs.away.team || {}).alternateColor), hx: hex((cs.home.team || {}).alternateColor) };
     // football: ESPN's down and distance, and which side has the ball (its team id matched to away or home)
     const sit = c.situation || {}, pid = String(sit.possession || "");
-    if (sit.downDistanceText) sc[id].dd = String(sit.downDistanceText);
+    let dd = sit.downDistanceText || (sit.shortDownDistanceText && sit.possessionText ? `${sit.shortDownDistanceText} at ${sit.possessionText}` : "");
+    if (!dd && Number(sit.down) > 0 && Number(sit.distance) > 0 && Number(sit.yardLine) > 0 && Number(sit.yardLine) < 100) {
+      // between plays ESPN sometimes drops the text: work it out (yardLine counts from the home team's goal line)
+      const y = Number(sit.yardLine), spot = y === 50 ? "midfield" : y < 50 ? `${sc[id].ha} ${y}` : `${sc[id].aa} ${100 - y}`;
+      dd = `${["", "1st", "2nd", "3rd", "4th"][Number(sit.down)] || ""} & ${sit.distance} at ${spot}`;
+    }
+    if (dd) sc[id].dd = String(dd);
     if (pid) sc[id].po = pid === String((cs.away.team || {}).id) ? "away" : pid === String((cs.home.team || {}).id) ? "home" : "";
   }
   return sc;
