@@ -13,6 +13,10 @@ TestFlight: 3.0 (26)
 TestFlight: 3.0 (25), no new build (web only)
 - Pre-game notes: when both teams are on a streak, the note says it once ("Both on a roll: England have won four straight, Spain five") instead of also leading with one team's streak ("Spain have won five in a row; Both on a roll: …"). A streak line is never paired with another streak line now. Saved notes in the old wording are rebuilt.
 
+## 3.25.2 (Nov 15, 2026)
+TestFlight: 3.0 (25), no new build (web only)
+- Pre-game notes: when "Both on a roll" (or a hot team against a cold one) is one of the facts, the single-team streak lines are dropped, whichever ranked higher. "Spain have won five in a row; Both on a roll: England have won four straight, Spain five" now reads "Both on a roll: England have won four straight, Spain five". Saved notes worded the old way are rebuilt.
+
 ## 3.25.1 (Nov 15, 2026)
 TestFlight: 3.0 (25)
 - Live notification (one game): the Watch (channel) button is gone, so the one-liner runs across the whole bottom of the card, on the Lock Screen and in the held-open Dynamic Island (the Matchup button there is gone too; tapping anywhere still opens the matchup).
