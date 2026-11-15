@@ -33,6 +33,7 @@
         var tray = el("div", "tray");
         if (!g.custom && wide) {
           tray.appendChild(trayBlock(g));
+          if (feedOk(g)) tray.appendChild(feedBtn(g));  // a live football game: its play-by-play, right above Full matchup
           // the way into the big matchup page, always in the same spot
           var fm = el("button", "full-mu"); fm.type = "button";
           var fmt = el("span", "fm-t"); fmt.appendChild(el("b", null, "Full matchup"));

@@ -435,7 +435,6 @@
   // the venue only before tip-off: once a game is on, the room goes to the score and box score
   function trayBlock(g) {
     var tb = trayBlock0(g), k = status(g).kind, vl = k === "live" || k === "over" ? null : venueLine(g, "gv-loc tray-loc"); if (tb && vl) tb.insertBefore(vl, tb.firstChild);
-    if (tb && feedOk(g)) tb.insertBefore(feedBtn(g), tb.firstChild);  // a live football game: its play-by-play leads the quick look
     // an upcoming game: Claude's preview (or the button to write one) always leads, above the line, the venue and lineups
     if (tb && k !== "live" && k !== "over") {
       var hr = tb.querySelector(":scope > .pv-hrow"), sum = hr && hr.nextElementSibling, ctl = tb.querySelector(":scope > .cl-ctl");

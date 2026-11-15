@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.34.2 (Nov 15, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- A live football game's quick look: the Live feed button moved from the top of the card down to right above Full matchup, so the score details (win probability, lines, top performers, box score) come first.
+
 ## 3.34.1 (Nov 15, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - Live feed: the field graphic is shorter (about a quarter less tall), so more plays show below it.

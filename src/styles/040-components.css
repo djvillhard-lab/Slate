@@ -1390,6 +1390,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .feed-go em { font-style: normal; font-size: 13px; color: var(--muted); }
 .feed-go svg, .tray .feed-go svg { width: 16px; height: 16px; color: var(--dim); flex: none; }
 .gv-head .feed-go { margin: 12px 0 0; }
+.tray .feed-go { flex-basis: 100%; box-sizing: border-box; margin: 8px 0 4px; }
 .fd-strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 8px; padding: 2px 16px 2px; scroll-snap-type: x proximity; }
 .fd-strip::-webkit-scrollbar { display: none; }
 .fd-chip { flex: none; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 12px; border-radius: 12px; background: var(--card); border: 1.5px solid var(--hair); text-align: left; color: var(--ink); scroll-snap-align: start; }
