@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.15.0 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Scores on your slate's matchup cards now sit in one fixed spot: at the end of the team column, right beside the time and channel column. It's the same on every card, in every rotation and fold, so team names only shorten when there truly isn't room.
+- iPhone Duo, unfolded: tapping a game in Worth a look opens it on the right side, the same as a game on your slate.
+
 ## 3.14.2 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Finished games get their one-line notes back.
