@@ -4,7 +4,7 @@
 // The workflow asks Claude (with web search) for the summary and saves it to Supabase; the app sees it appear.
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
 import { WorkflowEntrypoint } from "cloudflare:workers";
-import { runAlerts, sendPush, sendApns } from "./alerts.js";
+import { runAlerts, sendPush, sendApns, bcRequest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
@@ -190,6 +190,12 @@ export default {
       const out = [];
       for (const sub of doc.subs || []) out.push(await (sub.apns ? sendApns : sendPush)(env, sub, { title: typeof p.title === "string" ? p.title.slice(0, 80) : "", body: String(p.body || "Test from Slate").slice(0, 200), tag: "test" }).catch((e) => String(e)));
       return json({ ok: true, sent: out });
+    }
+    // a quick check that the server can reach Apple's broadcast channel host (DJ only)
+    if (url.pathname === "/api/bc-probe" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass); if (!me || me.id !== "dj") return json({ error: "no" }, 403);
+      return json({ prod: await bcRequest(env, "production", "GET", "/all-channels"), sandbox: await bcRequest(env, "sandbox", "GET", "/all-channels") });
     }
     if (url.pathname === "/api/whoami" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }

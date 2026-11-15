@@ -132,6 +132,18 @@ async function apnsPost(env, token, envName, extra, payload) {
   if (r.status === 410 || reason === "BadDeviceToken" || reason === "Unregistered" || reason === "DeviceTokenNotForTopic") return 410;
   return r.status;
 }
+// ---------- broadcast channels (3.28.0): one APNs channel per game; every live notification for it listens there ----------
+// Channel management lives on its own host and port; production 2196, sandbox 2195.
+export async function bcRequest(env, envName, method, path, body, hdrs) {
+  const a = await apnsCreds(env); if (!a) return { status: 0 };
+  const host = envName === "sandbox" ? "https://api-manage-broadcast.sandbox.push.apple.com:2195" : "https://api-manage-broadcast.push.apple.com:2196";
+  const headers = Object.assign({ authorization: "bearer " + (await apnsJwt(a)), "content-type": "application/json" }, hdrs || {});
+  try {
+    const r = await fetch(`${host}/1/apps/${a.topic}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    let text = ""; try { text = await r.text(); } catch (e) {}
+    return { status: r.status, channel: r.headers.get("apns-channel-id") || "", text: text.slice(0, 300) };
+  } catch (e) { return { status: -1, text: String(e).slice(0, 300) }; }
+}
 // same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
 export async function sendApns(env, sub, msg) {
   const title = String(msg.title || "").trim();
