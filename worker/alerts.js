@@ -537,6 +537,31 @@ async function liveScores(games, want, now) {
   return sc;
 }
 
+// ---------- follow right away ----------
+// The app posts a person's slate and team games the moment they change, so the minute job follows an added game on its
+// next run instead of waiting for the 10-minute tick job to rebuild alertsets. Only today's games that alertsets already
+// knows are taken, and games are only added here (a phone still loading part of the day can't drop any): a removed game
+// goes at the tick job's next rebuild, which works from the same saved slate and teams and replaces this patch.
+export async function followNow(env, prefix, p) {
+  const D = ctParts(new Date(Date.now() - 4 * 3600000)).date;
+  if (p.date !== D) return { ok: false, why: "not today" };
+  const path = `alertsets/${D}`, aset = (await getDocs(env, [path]))[path];
+  if (!aset || !Array.isArray(aset.people)) return { ok: false, why: "not ready" };
+  const games = aset.games || {}, ids = (x) => [...new Set((Array.isArray(x) ? x : []).map(String).filter((i) => games[i]))].slice(0, 200);
+  const customs = (Array.isArray(p.customs) ? p.customs : []).slice(0, 30).filter((c) => c && typeof c === "object")
+    .map((c) => ({ id: String(c.id || "").slice(0, 60), title: String(c.title || "").slice(0, 120), time: String(c.time || "").slice(0, 5), tv: String(c.tv || "").slice(0, 40) }));
+  let w = aset.people.find((x) => x && x.prefix === prefix);
+  if (!w) { w = { prefix, slate: [], mine: [], customs: [] }; aset.people.push(w); }
+  const before = JSON.stringify(w);
+  w.slate = ids([...(w.slate || []), ...ids(p.slate)]);
+  w.mine = ids([...(w.mine || []), ...ids(p.mine)]);
+  if (Array.isArray(p.customs)) w.customs = customs;
+  if (JSON.stringify(w) === before) return { ok: true, changed: false };
+  aset.updatedAt = new Date().toISOString();
+  await putDoc(env, path, aset);
+  return { ok: true, changed: true };
+}
+
 // ---------- the minute job ----------
 export async function runAlerts(env) {
   if (!env.SUPABASE_SECRET) return;
