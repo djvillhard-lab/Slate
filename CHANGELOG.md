@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.10.3 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- The day picker's glass is now the same light gray tint as the app's menu button (and the page's own menu button and Back).
+- Fixed the day picker flickering when you scroll to the very top or bottom: the page re-pins its bottom controls while it bounces, which replayed the picker's grow-in animation. It now only animates when it first appears.
+
 ## 3.10.2 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - The day picker is now clear glass like the app's menu button: mostly see-through with a light blur and a bright edge, instead of the heavier frosted look. The page's own menu button, Back and menu capsule match it.
