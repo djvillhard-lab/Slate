@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.32.0 (Nov 15, 2026)
+TestFlight: 3.31.0 (35), no new build (web only)
+- Alerts now use Apple's two everyday levels. Active lights the screen and plays the sound: Starting now, Close finish, Overtime, Upset watch, Goal, and a Final you aren't already watching. Passive goes quietly into Notification Center: the morning brief, the hourly score, and a Final when that game's live notification (or the scoreboard) already shows it. Nothing is Time Sensitive, so no alert breaks through a Focus.
+- Alerts stack by game in Notification Center: a game's Starting now, Close finish and Final sit together under it, instead of every Final in one pile.
+- Live notifications for a game now start 10 minutes before kickoff instead of when it goes live. Before the start they show 0-0 with the start time and the channel ("On NBC"), and the start alert reads "Starts at 7:30 PM on NBC".
+- These are server changes in the alert job, so they work on the current TestFlight build.
+
 ## 3.31.0 (Nov 15, 2026)
 TestFlight: 3.31.0 (35)
 - New: Live feed, for live football games. Open it from "Live feed" at the top of a live game's quick look, or on its matchup page. At the top, the other live football games to switch between; then the score in big numbers with the clock and who has the ball; the field with the ball, the line of scrimmage (blue) and the line to gain (yellow), the down and distance, and a Red zone tag; ESPN's win probability; then every play, newest first, under its drive. Each play says what happened in plain words ("Mendoza to Jeanty for 7 yards"), shows the players with their jersey number in team colors and their game so far ("11/13, 90 yds"), and ESPN's play text. Scores are highlighted, turnovers outlined in red. It updates every 8 seconds while it's open; new plays slide in on top without moving the play you're reading. Football first: once this format is right, the other sports get it too.

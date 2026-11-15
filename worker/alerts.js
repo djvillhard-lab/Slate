@@ -179,9 +179,14 @@ export async function bcSave(env, doc) {
 let BC = null;  // this run's channel record, and the games whose channel needs this minute's score
 
 // same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
+// 3.32.0: each alert carries Apple's interruption level (msg.level: "active" lights the screen and plays the sound,
+// "passive" goes quietly to the list; never Time Sensitive or Critical) and stacks with its game in Notification Center
+// (msg.thread, "game-<id>"); without them it's Active, stacked under Slate
 export async function sendApns(env, sub, msg) {
-  const title = String(msg.title || "").trim();
-  const payload = { aps: { alert: title ? { title, body: msg.body } : { body: msg.body }, sound: "default", "thread-id": String(msg.tag || "slate").split("-")[0] }, tag: msg.tag || "" };
+  const title = String(msg.title || "").trim(), passive = msg.level === "passive";
+  const aps = { alert: title ? { title, body: msg.body } : { body: msg.body }, "interruption-level": passive ? "passive" : "active", "thread-id": String(msg.thread || "slate").slice(0, 64) };
+  if (!passive) aps.sound = "default";
+  const payload = { aps, tag: msg.tag || "" };
   return apnsPost(env, sub.apns, sub.env, (topic) => Object.assign({ "apns-topic": topic, "apns-push-type": "alert", "apns-priority": "10", "apns-expiration": String(Math.floor(Date.now() / 1000) + 3600) }, msg.tag ? { "apns-collapse-id": String(msg.tag).slice(0, 64) } : {}), payload);
 }
 
@@ -206,6 +211,12 @@ function laState(s) {
   if (s.state === "in" && s.dd) { const who = s.po === "away" ? s.aa : s.po === "home" ? s.ha : ""; st.sit = ((who ? who + " ball · " : "") + String(s.dd)).slice(0, 44); }
   return st;
 }
+// before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
+function preState(g, kick) {
+  const tv = String((g.tv || [])[0] || ""), st = { a: 0, h: 0, detail: clock(new Date(kick)), state: "pre" };
+  if (tv) st.line = `On ${tv}`.slice(0, 60);
+  return st;
+}
 async function sendLive(env, tok, event, body, prio) {
   const aps = Object.assign({ timestamp: Math.floor(Date.now() / 1000), event }, body);
   return apnsPost(env, tok.token, tok.env, (topic) => ({ "apns-topic": topic + ".push-type.liveactivity", "apns-push-type": "liveactivity", "apns-priority": String(prio) }), { aps });
@@ -220,9 +231,12 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
   const running = Object.values(sent.la).filter((x) => !x.end).length;
   let started = 0;
   for (const id of new Set(Object.keys(sent.la).concat([...want]))) {  // each game once a minute
-    const g = games[id], s = sc[id]; if (!g || !s || s.state === "pre") continue;
+    const g = games[id], s = sc[id]; if (!g || !s) continue;
     let cur = sent.la[id];
-    const st = laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`;
+    // before kickoff (3.32.0): a new one starts 10 minutes early, showing 0-0 with the start time and channel
+    const kick = Date.parse(s.start || g.start) || 0, soon = s.state === "pre" && kick > 0 && Date.now() >= kick - 10 * 60000 && Date.now() - kick <= 60 * 60000;
+    if (s.state === "pre" && !cur && !soon) continue;
+    const st = s.state === "pre" ? preState(g, kick) : laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`;
     let tok = (la.acts || {})[id];
     // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
     if (cur && !cur.off && per[id] === 0) {
@@ -243,9 +257,10 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
       // on the slate starts even with the rules off or during quiet hours: that tap asked for it.
       // A finished game starts only when asked by name (3.22.0): its final score, kept on the Lock Screen like any final.
       const asked = per[id] === 1, fin = s.state === "post";
-      if (!want.has(id) || !(s.state === "in" || (fin && asked)) || !(cfg.on || asked) || (silent && !asked) || !(la.start || []).length || running + started >= 4) continue;
+      if (!want.has(id) || !(s.state === "in" || soon || (fin && asked)) || !(cfg.on || asked) || (silent && !asked) || !(la.start || []).length || running + started >= 4) continue;
       const at = laAttrs(id, g, s), body = { "attributes-type": "SlateGameAttributes", attributes: at, "content-state": st,
-        alert: { title: `${at.away} @ ${at.home}`, body: `${fin ? "Final" : "Live now"}: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
+        alert: { title: `${at.away} @ ${at.home}`, body: soon ? (kick > Date.now() ? `Starts at ${clock(new Date(kick))}` : "Starting now") + (at.channel ? ` on ${at.channel}` : "")
+          : `${fin ? "Final" : "Live now"}: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
       // started listening on the game's broadcast channel (3.28.0) when there is one: its updates then reach it whether
       // or not the phone ever hands back a token
       let ch = false;
@@ -468,6 +483,20 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
   return out;
 }
 
+// Apple's interruption level for each kind of alert (3.32.0, docs/NOTIFICATIONS-PLAN.md): Passive for things to read
+// later (the morning brief, the hourly score, a final the live notification already shows), Active for the rest.
+// Nothing is Time Sensitive, so no alert breaks through a Focus.
+function alertLevel(p, sent, kind, id) {
+  if (kind === "brief" || kind === "live") return "passive";
+  if (kind === "finals") {
+    const lv = p.liveAct || {}, cur = (sent.la || {})[id], bd = lv.board || {};
+    const single = cur && !cur.off && ((lv.games || {})[id] !== 0);
+    const board = bd.on && Array.isArray(bd.ids) && bd.ids.map(String).includes(id) && sent.board && !sent.board.off;
+    if (single || board) return "passive";
+  }
+  return "active";
+}
+
 // ---------- live scores from ESPN ----------
 const hex = (c) => /^[0-9a-f]{6}$/i.test(String(c || "")) ? "#" + c : "";
 async function liveScores(games, want, now) {
@@ -550,9 +579,10 @@ export async function runAlerts(env) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
         else if (kind !== "ot") sent[kind].push(key);
-        const muted = kind !== "brief" && offGames.has(String(key).split(":")[0]);
-                // a blank title: iPhone then shows "from Slate" on top and the alert under it (two lines)
-        if (!silent && body && !muted) msgs.push({ title: " ", body, tag: `${kind}-${key}` });
+        const gid = String(key).startsWith("c:") ? String(key) : String(key).split(":")[0];
+        const muted = kind !== "brief" && offGames.has(gid);
+        // a blank title: iPhone then shows "from Slate" on top and the alert under it (two lines)
+        if (!silent && body && !muted) msgs.push({ title: " ", body, tag: `${kind}-${key}`, level: alertLevel(p, sent, kind, gid), thread: kind === "brief" ? "brief" : "game-" + gid });
       }
     }
     msgs = msgs.slice(0, 8);
@@ -579,7 +609,7 @@ export async function runAlerts(env) {
     for (const s of subs) {
       if (s.apns && !appReady) { keep.push(s); continue; }  // the app's push key isn't set up yet: hold this phone until it is
       let gone = false;
-      const mine2 = s.welcomed ? msgs : [{ title: " ", body: "Alerts are on for this phone.", tag: "welcome" }, ...msgs];
+      const mine2 = s.welcomed ? msgs : [{ title: " ", body: "Alerts are on for this phone.", tag: "welcome", level: "active", thread: "slate" }, ...msgs];
       for (const m of mine2) {
         try { const st = s.apns ? await sendApns(env, s, m) : await sendPush(env, s, m); if (st === 404 || st === 410) { gone = true; dirty = true; break; } if (st >= 400) console.log("push", st); }
         catch (e) { console.log("push failed", String(e).slice(0, 120)); }
