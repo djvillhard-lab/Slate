@@ -278,9 +278,10 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     if (otSet.has(i) && ot && !sent.ot.includes(i)) { out.push(["ot", i, "Overtime", `Overtime: ${score}`]); sent.ot.push(i); continue; }
     if (closeSet.has(i) && !ot && !sent.close.includes(i)) {
       const min = parseInt(det, 10) || 0, inn = /(Top|Bot|Mid|End) (\d+)/i.exec(det);
-      const late = sport === "bball" ? (COLLEGE[g.league] && g.league !== "ncaaw" ? per >= 2 : per >= 4) && ck > 0 && ck <= 300
+      // the final 8 minutes (basketball and football, hockey's 3rd), from the 75th minute in soccer, the 7th inning on in baseball
+      const late = sport === "bball" ? ((COLLEGE[g.league] && g.league !== "ncaaw" ? per > 2 || (per === 2 && ck > 0 && ck <= 480) : per > 4 || (per === 4 && ck > 0 && ck <= 480)))
         : sport === "football" ? per > 4 || (per === 4 && ck <= 480) : sport === "hockey" ? per > 3 || (per === 3 && ck <= 480) :  // the final 8 minutes (or overtime), like Worth a look
-        sport === "soccer" ? per >= 2 && min >= 80 : sport === "baseball" ? !!inn && Number(inn[2]) >= 8 : false;
+        sport === "soccer" ? per >= 2 && min >= 75 : sport === "baseball" ? !!inn && Number(inn[2]) >= 7 : false;
       const tight = sport === "bball" ? m <= 5 : sport === "football" ? m <= 8 : sport === "baseball" ? m <= 2 : m <= 1;
       if (late && tight) out.push(["close", i, "Close finish", `Close finish: ${score}`]);
     }
@@ -297,17 +298,15 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
   }
   const b = p.brief || {}, hr = ctParts(now, TZ).hour, bh = Number(b.hour ?? 9);
   if (b.on && !sent.brief && hr >= bh && hr <= bh + 2) {
-    const lines = [];
-    if (b.lineup && slate.length) {
-      const fs = slate.filter((i) => byid[i]).sort((x, y) => startOf(x) - startOf(y));
-      if (fs.length) lines.push(`Tonight's slate: ${fs.length} game${fs.length !== 1 ? "s" : ""}, first at ${clock(startOf(fs[0]))} (${matchup(byid[fs[0]])})`);
-    }
-    if (b.myTeams) {
-      const mt = mine.map((i) => byid[i]).filter(Boolean);
-      lines.push(mt.length ? "Your teams: " + mt.map((g) => `${side(g, "away")} @ ${side(g, "home")} ${clock(startOf(g.id))}` + ((g.tv || []).length ? ` on ${g.tv[0]}` : "")).join(" · ") : "None of your teams play today");
-    }
-    if (b.topGames) { const tg = topGames(games, sc, new Set(slate), now); if (tg.length) lines.push("Also on: " + tg.map((g) => `${side(g, "away")} @ ${side(g, "home")} ${clock(startOf(g.id))} on ${g.tv[0]}`).join(" · ")); }
-    out.push(["brief", "brief", "Today's games", lines.join("\n")]);
+    // "Sat 11/14: 6 games", then one line per game in start order: "11 AM - Davidson @ Dayton"
+    const ids0 = (b.lineup && slate.length ? slate : b.myTeams ? mine : []).filter((i) => byid[i]);
+    const fs = [...new Set(ids0)].sort((x, y) => startOf(x) - startOf(y));
+    const dp = ctParts(now, TZ), wd = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short" }).format(now);
+    const hm = (t) => clock(t).replace(/:00(\s)/, "$1");
+    const lines = [`${wd} ${Number(dp.date.slice(5, 7))}/${Number(dp.date.slice(8, 10))}: ${fs.length} game${fs.length !== 1 ? "s" : ""}`];
+    for (const i of fs) lines.push(`${hm(startOf(i))} - ${side(byid[i], "away")} @ ${side(byid[i], "home")}`);
+    if (fs.length) out.push(["brief", "brief", "Today's games", lines.join("\n")]);
+    else sent.brief = true;
   }
   return out;
 }
@@ -373,7 +372,7 @@ export async function runAlerts(env) {
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
         else if (kind !== "ot") sent[kind].push(key);
                 // a blank title: iPhone then shows "from Slate" on top and the alert under it (two lines)
-        if (!silent && body) msgs.push({ title: " ", body: kind === "brief" ? "Today's games\n" + body : body, tag: `${kind}-${key}` });
+        if (!silent && body) msgs.push({ title: " ", body, tag: `${kind}-${key}` });
       }
     }
     msgs = msgs.slice(0, 8);
