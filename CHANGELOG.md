@@ -5,88 +5,94 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.29.0 (Nov 15, 2026)
+TestFlight: 3.29.0 (33)
+- TestFlight now shows Slate's own version before the build number ("3.29.0 (33)" instead of "3.0 (32)"): each build takes the web app's version number when it's made. Earlier entries keep the "3.0 (N)" they were built as. (The build numbers in this history from 3.23.1 on are corrected to match TestFlight: build 3.28.1 is 32.)
+- The scoreboard syncs like the game switches: once any of your picks is on (or about to start), the Board button and "Turn off / Show on Lock Screen" show whether the scoreboard is actually on your Lock Screen; before that, they show it's scheduled. Tap Show on Lock Screen when it's off and it goes up right away.
+- Quick look on an upcoming game: Claude's preview (or the button to write one) is always at the top, above the betting line, the venue and lineups.
+
 ## 3.28.1 (Nov 15, 2026)
-TestFlight: 3.0 (30)
+TestFlight: 3.0 (32)
 - The Live notification switch on a live or finished game now shows exactly what's on your phone: on only while that game's live notification is actually on your Lock Screen. The app tells the slate which ones are showing (when Slate opens, and the moment one starts, ends or is swiped away). Before, a game could read "on" because your settings included it even though nothing was showing (the server shows at most four at once, and holds them back during quiet hours). Tap a switch that reads off and the live notification goes up right away. Upcoming games still show your setting. Needs the new TestFlight build.
 
 ## 3.28.0 (Nov 15, 2026)
-TestFlight: 3.0 (29)
+TestFlight: 3.0 (31)
 - Live notifications for a game now listen on that game's broadcast channel (Apple's broadcast push): the server sends each score once per game, and every live notification for it updates, whether or not Slate is running or was swiped away. No more stuck scores from a missing token. Works for ones the server starts and ones you switch on from the slate. Needs the new TestFlight build and Broadcast Capability on the app ID (done). If a channel can't be made, it falls back to the old way. The scoreboard stays on its own token (it mixes four games).
 
 ## 3.27.0 (Nov 15, 2026)
-TestFlight: 3.0 (28)
+TestFlight: 3.0 (30)
 - A game's Live notification switch now matches what's on your phone: swipe a live notification away and its switch (in the game's tray, and the gray bell) turns off, and the server won't put it back. The same for the scoreboard (its Show on Lock Screen turns back on as an option). The app tells the server the moment it's swiped away; if the app wasn't running, the server notices the next time it tries to update it. Coming back to Slate also picks up any switch the server turned off.
 
 ## 3.26.0 (Nov 15, 2026)
-TestFlight: 3.0 (27), no new build (web only)
+TestFlight: 3.0 (29), no new build (web only)
 - Quick look on a finished game: a Recap dropdown at the top shows Claude's short read, or the button to have Claude write it right there (shared with everyone, like all write-ups).
 - Quick look dropdowns remember how you left them: open one (say Top performers) and it starts open on every quick look you open after that, on this phone; close it and it starts closed.
 - All games: finished games show their start time under "Final".
 - Pre-game notes: when both teams are on the same streak it reads "Both teams have won four in a row".
 
 ## 3.25.4 (Nov 15, 2026)
-TestFlight: 3.0 (27)
+TestFlight: 3.0 (29)
 - Fixed: live notifications the server started could stay stuck on the score they started with (Ole Miss–Oklahoma showed 0-0 early in the 1st while the game was 7-14 in the 2nd). The server can only update one after the phone sends it that notification's token, and iOS doesn't wake Slate to send it when the app has been swiped away. Now every time Slate opens or comes back to the front, it sends the tokens of every live notification showing, so they all catch up within a minute. The scoreboard was updating normally.
 
 ## 3.25.3 (Nov 15, 2026)
-TestFlight: 3.0 (26)
+TestFlight: 3.0 (28)
 - Folded iPhone Duo: the open menu now lines up with iOS's menu button below it: the same width, centered over it, and just above it instead of floating higher and to the right.
 
 ## 3.25.3 (Nov 15, 2026)
-TestFlight: 3.0 (26)
+TestFlight: 3.0 (27)
 - Dynamic Island on the iPhone Duo (where iOS gives the island less width): mini chips instead of the split ring, a small team chip and its score on each side of the camera ("MIN 7 | 10 GB"), for one game and for the scoreboard (the game that last scored). When the island is shared with another live notification, the smallest spot shows just the score ("7–10") instead of the ring. Needs the new TestFlight build.
 
 ## 3.25.2 (Nov 15, 2026)
-TestFlight: 3.0 (25), no new build (web only)
+TestFlight: 3.0 (26), no new build (web only)
 - Pre-game notes: when both teams are on a streak, the note says it once ("Both on a roll: England have won four straight, Spain five") instead of also leading with one team's streak ("Spain have won five in a row; Both on a roll: …"). A streak line is never paired with another streak line now. Saved notes in the old wording are rebuilt.
 
 ## 3.25.2 (Nov 15, 2026)
-TestFlight: 3.0 (25), no new build (web only)
+TestFlight: 3.0 (26), no new build (web only)
 - Pre-game notes: when "Both on a roll" (or a hot team against a cold one) is one of the facts, the single-team streak lines are dropped, whichever ranked higher. "Spain have won five in a row; Both on a roll: England have won four straight, Spain five" now reads "Both on a roll: England have won four straight, Spain five". Saved notes worded the old way are rebuilt.
 
 ## 3.25.1 (Nov 15, 2026)
-TestFlight: 3.0 (25)
+TestFlight: 3.0 (26)
 - Live notification (one game): the Watch (channel) button is gone, so the one-liner runs across the whole bottom of the card, on the Lock Screen and in the held-open Dynamic Island (the Matchup button there is gone too; tapping anywhere still opens the matchup).
 - Live football: above the one-liner, a football and who has the ball with the down and yard line, in words: "MIN ball · 3rd & 4 at GB 35" (the football by the team's name stays too). When ESPN drops the down text between plays, the server now works it out from the down, distance and yard line, so it stays up. A live notification started from the slate shows it right away too.
 
 ## 3.25.0 (Nov 15, 2026)
-TestFlight: 3.0 (24)
+TestFlight: 3.0 (25)
 - Scoreboard live notification, new Lock Screen design: your four games in a 2×2 grid, one square each. Each square has both teams' chips (the same team colors and stripes as the app) with their scores, then the clock in red while live, "Final" (the losing side dimmed) or the start time. Live football also shows a small football next to the team with the ball, and the down and yardage line under the clock ("3rd & 4 · ILL 35"), updated as it changes. Tap a square for that game's matchup. Needs the new TestFlight build.
 
 ## 3.24.6 (Nov 15, 2026)
-TestFlight: 3.0 (23), no new build (web only)
+TestFlight: 3.0 (24), no new build (web only)
 - Box scores are tighter: smaller player photos, less space above and below each player and between the stat columns, and smaller "Show all" buttons. Same text sizes.
 
 ## 3.24.5 (Nov 15, 2026)
-TestFlight: 3.0 (23)
+TestFlight: 3.0 (24)
 - Folded iPhone Duo: the menu's grow-and-fade open and close is back. It now grows up out of the menu button inside the side column (and shrinks back into it), without the flash in the middle of the page.
 
 ## 3.24.4 (Nov 15, 2026)
-TestFlight: 3.0 (22), no new build (server and web only)
+TestFlight: 3.0 (23), no new build (server and web only)
 - Claude write-ups are written once for everyone: game previews, recaps, team pages and Box Office were already shared by every account, and now two people can't have the same one written twice. If anyone (you or a tester) is already having Claude write it, everyone else's tap just waits for that one; if it was written or regenerated in the last 3 minutes, a new tap shows that one instead of calling Claude again ("Claude wrote this a moment ago, so here it is"). No second charge either way. The personal News briefs (built from each person's own slate) stay per person.
 
 ## 3.24.3 (Nov 15, 2026)
-TestFlight: 3.0 (22)
+TestFlight: 3.0 (23)
 - Folded iPhone Duo: the open menu no longer flashes in the middle of the page for a split second before jumping into the side column. It's now laid over the full-screen page, so it's in the column from its very first frame.
 
 ## 3.24.2 (Nov 15, 2026)
-TestFlight: 3.0 (21)
+TestFlight: 3.0 (22)
 - Folded iPhone Duo: the open menu fades in right where it belongs in the side column, instead of starting toward the middle of the page and sliding over into the column.
 - Pre-game notes don't repeat themselves: after "Both on a roll" (or a hot team against a cold one), the second fact can't be one of the same streaks again ("Both on a roll: Steelers have won four straight, Bengals four", without "; Bengals have won four straight" after it).
 
 ## 3.24.1 (Nov 15, 2026)
-TestFlight: 3.0 (20), no new build (server only)
+TestFlight: 3.0 (21), no new build (server only)
 - The number job (scores, odds, start times, Box Office, slates; scripts/tick.py) is now started every 10 minutes by the Cloudflare server instead of GitHub's own schedule, which only ran it every few hours overnight. GitHub's schedule stays as a backup. Needs a GitHub token saved in Cloudflare as GH_TOKEN.
 
 ## 3.24.0 (Nov 15, 2026)
-TestFlight: 3.0 (20)
+TestFlight: 3.0 (21)
 - Live notifications show up the moment you switch them on: a game's Live notification switch (live or finished games, or one starting within 15 minutes) and the scoreboard's Show on Lock Screen now put it on your Lock Screen right away, and the server takes it over and keeps it current. Switching off (the tray switch, the gray bell on a slate card, or Turn off on the scoreboard) takes it down right away too. Changing the scoreboard's picks while it's on updates it right away. Needs the new TestFlight build; until then it still takes up to a minute.
 - The scoreboard wasn't starting because your phone had never sent the server what it needs to start one on its own; starting it from the app gets around that.
 - Betting lines show for every game, on your slate and in All games, whether or not Claude has written a preview: the line now comes straight from ESPN's scoreboard when the server hasn't saved one. Before, a game without a Claude preview showed no line.
 - Box Office: last night's top performers were missing. An early-morning run had marked Nov 14 finished with only the overnight games, so the rest never came in. Fixed for Nov 14, and a day now only counts as finished once every game in it is over.
 
 ## 3.23.1 (Nov 15, 2026)
-TestFlight: 3.0 (19)
+TestFlight: 3.0 (20)
 - Folded iPhone Duo: the open menu in the side column now always shows every page (Settings, News, On TV, Teams, Box Office, All games, Slate). iOS's own column only fits a few buttons and was tucking the rest (like Slate) into a second "more" menu, so the app now draws the page buttons itself, stacked right above the menu button and sized to fit the column's height. Needs the new TestFlight build.
 - Fixed: a late game could stay "in progress" the next morning (Utah–Arizona showed the 4th quarter after it had ended). The app now keeps checking any game it last saw in progress until ESPN calls it final, and the server finishes off the previous night's games that were still marked live.
 
