@@ -161,7 +161,8 @@ async function bcSend(env, envName, channel, event, body, prio) {
   const a = await apnsCreds(env); if (!a) return 0;
   const host = envName === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
   const r = await fetch(`${host}/4/broadcasts/apps/${a.topic}`, { method: "POST",
-    headers: { authorization: "bearer " + (await apnsJwt(a)), "content-type": "application/json", "apns-channel-id": channel, "apns-push-type": "liveactivity", "apns-priority": String(prio) },
+    headers: { authorization: "bearer " + (await apnsJwt(a)), "content-type": "application/json", "apns-channel-id": channel, "apns-push-type": "liveactivity", "apns-priority": String(prio),
+      "apns-expiration": String(Math.floor(Date.now() / 1000) + 4 * 3600) },  // required for broadcasts (without it APNs answers BadExpirationDate)
     body: JSON.stringify({ aps: Object.assign({ timestamp: Math.floor(Date.now() / 1000), event }, body) }) });
   let t = ""; if (r.status !== 200) { try { t = await r.text(); } catch (e) {} console.log("bc send", r.status, t.slice(0, 200)); }
   BC_LAST = { status: r.status, text: t.slice(0, 300), id: r.headers.get("apns-id") || "" };
