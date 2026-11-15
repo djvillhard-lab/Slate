@@ -114,6 +114,13 @@ enum SlateLook {
     }
 
     // A team color that still shows on the Dynamic Island's black: dark ones (navy, maroon) get brighter, same hue.
+    // text on a team chip: white, or dark on a light team color (England's white), so the letters always show
+    static func onChip(_ hex: String) -> Color {
+        let h = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
+        guard h.count == 6, let v = UInt32(h, radix: 16) else { return .white }
+        let r = Double((v >> 16) & 0xFF), g = Double((v >> 8) & 0xFF), b = Double(v & 0xFF)
+        return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? Color(red: 0x11 / 255, green: 0x18 / 255, blue: 0x20 / 255) : .white
+    }
     static func visible(_ hex: String) -> Color {
         let base = UIColor(Color(slateHex: hex, fallback: .gray))
         var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, al: CGFloat = 0
@@ -149,7 +156,7 @@ struct Chip: View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         Text(abbr)
             .font(SlateLook.num(size))
-            .foregroundStyle(.white)
+            .foregroundStyle(SlateLook.onChip(color))
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .padding(.horizontal, 2)

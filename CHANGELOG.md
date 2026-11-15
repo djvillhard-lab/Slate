@@ -5,6 +5,19 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.31.0 (Nov 15, 2026)
+TestFlight: 3.31.0 (35)
+- New: Live feed, for live football games. Open it from "Live feed" at the top of a live game's quick look, or on its matchup page. At the top, the other live football games to switch between; then the score in big numbers with the clock and who has the ball; the field with the ball, the line of scrimmage (blue) and the line to gain (yellow), the down and distance, and a Red zone tag; ESPN's win probability; then every play, newest first, under its drive. Each play says what happened in plain words ("Mendoza to Jeanty for 7 yards"), shows the players with their jersey number in team colors and their game so far ("11/13, 90 yds"), and ESPN's play text. Scores are highlighted, turnovers outlined in red. It updates every 8 seconds while it's open; new plays slide in on top without moving the play you're reading. Football first: once this format is right, the other sports get it too.
+- New: Best bets, its own section at the bottom of the slate. Stat-based bets for the games on your slate: a player's best mark over his last six games this season ("Anytime TD, 5 of last 6", "25+ points, 6 of 6", "4+ shots"), and game totals against tonight's over/under from both teams' last five games. Each one shows the real number from every game, oldest to newest, with the hits in green. Everything comes from ESPN's game logs; nothing is estimated. Six show at first (no more than two of one kind), Show all opens the rest; games still to come lead, live ones follow. NFL, college football, NBA, WNBA, college basketball and NHL.
+- Pre-game notes: a quarterback's first start of the season leads ("Raiders QB Fernando Mendoza makes his first start of the season; Seahawks are without RB Wilson"). It comes from ESPN's depth chart and the quarterback's game log.
+- Top performers (football): one line per player. A quarterback who also ran (John Mateer) shows once, passing and rushing together, instead of twice.
+- Matchup scores on the slate sit in one column for the whole page, just past the longest team name, in every rotation and fold.
+- All games: the red "N live" sits right beside the league name, and the Live button lines up on the left under the tabs.
+- Every page's header matches the slate's: the mark, the page name and a second line in the same spots, with the line under the header at the same height. Side by side on the unfolded Duo, only the page name changes.
+- iPhone app: on the folded Duo the menu is one glass capsule in the side column, drawn by Slate: the menu button, Back above it, and the pages inside the same capsule when it's open (the X closes it), so the pages always line up with the button.
+- iPhone app: the team chips on live notifications use dark text on light team colors. England's chip was white on white.
+- Fixed (server, already live): live notifications on a game's broadcast channel stopped updating, so England–Spain missed the goal and halftime. Apple turned every update down for a missing expiry time; each one now carries it.
+
 ## 3.30.1 (Nov 15, 2026)
 TestFlight: 3.30.0 (34), no new build (web only)
 - Fixed: since 3.30.0, open copies of Slate kept reloading themselves every couple of minutes (the page and version.json carried different build times). Both now come from one build step, so they always match.

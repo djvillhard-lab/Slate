@@ -189,6 +189,7 @@
     if (loading) return;
     var sg = suggestionBlock("slate"); if (sg) body.appendChild(sg);
     var nlb = newsletterBlock(); if (nlb) body.appendChild(nlb);
+    var bts = betsBlock(lg); if (bts) body.appendChild(bts);
     // two actions in one panel, like the rest of the slate; Share lives in the header, Clear is a quiet link
     var acts = el("div", "slate-acts"), row = el("div", "sa-row");
     function act(label, path, fn) {

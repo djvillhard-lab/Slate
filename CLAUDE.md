@@ -10,8 +10,8 @@ README.md has the full architecture. Several chats work on Slate at once, often 
 
 | Page or area | Files in `src/app/` |
 |---|---|
-| The slate (Today's Slate) | `170-slate-page.js` (page), `050-slate-engine.js` (which games), `180-worth-a-look.js` (Worth a look, learning, rule wording), `190-rules.js` (Slate rules page) |
-| A game: quick look and matchup | `140-game.js` (matchup page), `150-game-row.js` (the card and its quick look; the quick look's box is `trayBlock` in `110-box-score.js`), `100-highlights.js` (live highlight, preview line), `090-box-data.js` + `110-box-score.js` (box scores, soccer lineups) |
+| The slate (Today's Slate) | `170-slate-page.js` (page), `175-best-bets.js` (Best bets, the section at the bottom), `050-slate-engine.js` (which games), `180-worth-a-look.js` (Worth a look, learning, rule wording), `190-rules.js` (Slate rules page) |
+| A game: quick look and matchup | `140-game.js` (matchup page), `145-live-feed.js` (Live feed: a live football game play by play), `150-game-row.js` (the card and its quick look; the quick look's box is `trayBlock` in `110-box-score.js`), `100-highlights.js` (live highlight, preview line), `090-box-data.js` + `110-box-score.js` (box scores, soccer lineups) |
 | All games (and the ticker) | `160-all-games.js` |
 | Teams and team pages | `130-teams.js` |
 | Box Office (player rankings) and Moments | `120-box-office.js` |

@@ -319,7 +319,7 @@
   }
   // ---- Preview line: one free line under an upcoming game, from ESPN's pre-game summary ----
   // streaks, injuries to a team's leaders, the betting line, ESPN's predictor, table clashes, head-to-head, ESPN's preview headline
-  function pvCompute(lg, sum) {
+  function pvCompute(lg, sum, qbx) {
     pvCompute.fb = false; pvCompute.tm = "";
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
@@ -350,6 +350,8 @@
         if (/out|reserve|suspen/i.test(stt)) outs.push(ln); else if (/question|doubt|day-to-day/i.test(stt)) q.push(ln); });
       if (outs.length) add("out|" + i, 58 + outs.length * 4, T[i].name + " are without " + outs.slice(0, 2).join(" and "));
       else if (q.length) add("q|" + i, 40, q[0] + " is " + (/doubt/i.test(JSON.stringify(t.injuries)) ? "doubtful" : "a question mark") + " for " + T[i].name); });
+    // a quarterback's first start of the season (3.31.0): the depth chart's QB1 isn't the team's passing leader and hasn't had a starter's game yet (see pvQB)
+    (qbx || []).forEach(function (q) { if (T[q.team] && q.name) add("qb1|" + q.team, 66, T[q.team].name + " QB " + q.name + " makes his first start of the season"); });
     // the betting line and ESPN's predictor
     var pk = (sum.pickcenter || [])[0], m = pk && /^([A-Z]{2,5})\s+(-[\d.]+)$/.exec(String(pk.details || "").trim());
     if (m && byAbbr[m[1]] && (sport === "football" || sport === "bball")) { var sp = Math.abs(parseFloat(m[2])), fav = byAbbr[m[1]];
@@ -395,15 +397,47 @@
     pvCompute.tm = idIn(c[0].k) ? T[idIn(c[0].k)].abbr : "";
     // the second fact must add something: after "Both on a roll" or a hot-vs-cold line, the streaks are already said
     var STREAK = /^(form|bothhot|won|lost|unb|form5)$/, streaky = STREAK.test(c[0].k.split("|")[0]);
-    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)); })[0];
+    var qbFirst = c[0].k.indexOf("qb1|") === 0;  // "Raiders QB Mendoza makes his first start" doesn't read on into "and are without…": the second fact is the other team's
+    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)); })[0];
     if (c[0].k !== "art" && s2 && t.length + s2.tx.length <= 100 && s2.sc >= 30) {  // two facts when they fit in about a line and a half
       // same team twice reads as one sentence: "Canucks have lost five straight and are 1-8 at home"
-      var who0 = ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
+      var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
       var rest = who0 ? s2.tx.slice(T[who0].name.length + 1) : "";
       t = who0 && /^(are|have|is) /.test(rest) ? t + " and " + rest : who0 ? t : t + "; " + s2.tx;
       if (!who0 && idIn(s2.k) !== idIn(c[0].k)) pvCompute.tm = "";  // two teams' facts: no single team
     }
     return t;
+  }
+  // football, before kickoff: is either team starting a quarterback for the first time this season? The depth chart's QB1 against the team's season
+  // passing leader; when they differ, QB1's game log says whether he's had a starter's game (15+ pass attempts) this season. Depth charts are cached for the session.
+  var QBD = {};
+  // a team's offense from its ESPN depth chart, first name at each spot: { qb, rb, wr1, wr2, wr3, te } (each { id, name, pos })
+  function depthOf(lg, id) {
+    return QBD[lg + "|" + id] || (QBD[lg + "|" + id] = rkFetch(bxApi(lg, "teams/" + id + "/depthcharts")).then(function (d) {
+      var off = ((d && d.depthchart) || []).filter(function (x) { return x.positions && x.positions.qb; })[0], o = {}; if (!off) return null;
+      ["qb", "rb", "wr1", "wr2", "wr3", "te"].forEach(function (k) { var a = ((off.positions[k] || {}).athletes || [])[0]; if (a && a.id) o[k] = { id: String(a.id), name: a.displayName || "", pos: k.replace(/\d/, "").toUpperCase() }; });
+      return o; }));
+  }
+  function pvQB(lg, sum) {
+    var comp = ((sum && sum.header || {}).competitions || [])[0] || {}, yr = String(((sum.header || {}).season || {}).year || "");
+    if (BX_SPORT[lg] !== "football" || ((comp.status || {}).type || {}).state !== "pre") return Promise.resolve([]);
+    var lead = {}, hurt = {};
+    (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); (L.leaders || []).forEach(function (cat) { if (cat.name === "passingYards") lead[i] = String((((cat.leaders || [])[0] || {}).athlete || {}).id || ""); }); });
+    (sum.injuries || []).forEach(function (t) { (t.injuries || []).forEach(function (x) { if (/out|reserve|suspen|doubt/i.test(String(x.status || ""))) hurt[String((x.athlete || {}).id || "")] = 1; }); });
+    return Promise.all((comp.competitors || []).map(function (k) {
+      var id = String((k.team || {}).id || ""); if (!id || !lead[id]) return null;
+      return depthOf(lg, id).then(function (dc) { var qb = dc && dc.qb;
+        if (!qb || qb.id === lead[id] || hurt[qb.id]) return null;
+        return rkFetch("https://site.api.espn.com/apis/common/v3/sports/" + bxBase(lg) + "/athletes/" + qb.id + "/gamelog").then(function (gl) {
+          if (!gl) return null;
+          var ai = (gl.names || []).indexOf("passingAttempts"), st = (gl.seasonTypes || []).filter(function (x) { return !/pre|post|bowl/i.test(x.displayName || ""); })[0];
+          if (st && ai < 0) return null;  // not a passer's log: say nothing
+          var thisYr = st && yr && String(st.displayName || "").indexOf(yr) !== -1, most = 0;
+          if (thisYr) (st.categories || []).forEach(function (c) { (c.events || []).forEach(function (e) { most = Math.max(most, parseFloat((e.stats || [])[ai]) || 0); }); });
+          return most < 15 ? { team: id, name: qb.name } : null;
+        });
+      });
+    })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
   var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for /.test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {}))) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   function pvSave() { try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "" }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
@@ -421,8 +455,11 @@
     while (pvRun < 3 && pvQ.length) (function (g) {
       var p = PV[g.id]; p.queued = false; p.busy = true; pvRun++;
       var cur = bx.live[g.id] || (bx.live[g.id] = {});
+      var qbx = [];
       (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) { if (!ev) return null; cur.ev = ev; return rkFetch(bxSummaryUrl(g.league, ev)); }).then(function (sum) {
-        var tx = null; try { tx = sum ? pvCompute(g.league, sum) : null; } catch (e) {}
+        return sum ? pvQB(g.league, sum).then(function (q) { qbx = q || []; return sum; }, function () { return sum; }) : sum; }).then(function (sum) {
+        if (sum) { cur.sum = sum; cur.sumAt = Date.now(); }
+        var tx = null; try { tx = sum ? pvCompute(g.league, sum, qbx) : null; } catch (e) {}
         if (pvCompute.fb && p.text) tx = p.text;  // never swap a real pre-game line for the plain records one
         // keep the odds chips in step with the line: same fetch, same numbers
         try { var tgt = cur.data || (state.box || {})[g.id]; if (sum && tgt && tgt.state === "pre") { var fresh = bxNorm(g.league, sum, null); if (fresh.odds) { tgt.odds = fresh.odds; bxRedraw(g); } } } catch (e) {}

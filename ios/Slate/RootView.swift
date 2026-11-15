@@ -1,8 +1,7 @@
 import SwiftUI
 
-// The page fills the screen. On iPhone Duo (while Settings > Phone is iPhone Duo), Slate's menu goes in the system's
-// control strip as one button (Apple moves bottom toolbar items into the right-side bar there), and the page hides
-// its own menu button. With Phone set to iPhone, the page shows its own menu, as on any iPhone.
+// The page fills the screen. The app draws Slate's menu itself as one glass capsule (Back, the menu button, the pages):
+// on the folded iPhone Duo centered in iOS's side column, elsewhere floating bottom right (3.31.0).
 // On a regular iPhone the page looks and works exactly like the Home Screen app.
 struct RootView: View {
     @ObservedObject private var model = WebModel.shared
@@ -16,17 +15,12 @@ struct RootView: View {
                 SlateWebView(model: model)
                     .ignoresSafeArea(.container, edges: .all)
                     .ignoresSafeArea(.keyboard)
-                    // folded Duo: the page buttons, drawn by the app in the side column right above the menu button.
-                    // iOS's own column only has room for a few buttons and tucks the rest into a "more" menu, so these
-                    // are sized to fit the column's height: every page always shows. Laid over the full-screen page, so
-                    // it's in the column from its first frame (on its own it was first laid out short of the column, then jumped in).
-                    .overlay {
-                        if model.strip { StripPanel(model: model).ignoresSafeArea() }
-                    }
-                if model.float {
-                    // no side column here (open and upright, or a regular iPhone): the same menu, floating bottom right
+                if model.float || model.strip {
+                    // one glass capsule: Back, the menu button, and the pages when it's open (3.31.0). With no side column
+                    // (open and upright, or a regular iPhone) it floats bottom right; on the folded Duo the app draws it
+                    // itself, centered in iOS's side column, so the pages always line up with the menu button
                     FloatMenu(model: model)
-                        .padding(.trailing, 12 + model.edgeInsets.trailing)
+                        .padding(.trailing, model.strip ? max(2, (model.edgeInsets.trailing - 52) / 2) : 12 + model.edgeInsets.trailing)
                         .padding(.bottom, max(12, model.edgeInsets.bottom))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                         .ignoresSafeArea()
@@ -36,31 +30,7 @@ struct RootView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .toolbar {
-                if model.strip {
-                    // the strip shows Back (when needed) above one menu button; tapping the menu opens Slate's pages right above it
-                    // (StripPanel, drawn by the app so all of them fit). Picking one closes them again.
-                    ToolbarItemGroup(placement: .bottomBar) {
-                        if !model.stripOpen && !model.back.isEmpty {
-                            // Back, right above the menu button, only when the page has somewhere to go back to
-                            // (pointing right on a past day's slate: forward to today). Hidden while the menu is open.
-                            Button {
-                                model.goBack()
-                            } label: {
-                                Label(model.back == "fwd" ? "Today" : "Back", systemImage: model.back == "fwd" ? "chevron.right" : "chevron.left")
-                            }
-                            .tint(Color.accentColor)
-                        }
-                        Button {
-                            withAnimation(.snappy) { model.stripOpen.toggle() }
-                        } label: {
-                            Label(model.stripOpen ? "Close menu" : "Menu", systemImage: model.stripOpen ? "xmark" : "line.3.horizontal")
-                        }
-                    }
-                }
-            }
-            .toolbar(model.strip ? .visible : .hidden, for: .bottomBar)
-            .toolbarBackground(.hidden, for: .bottomBar)  // the buttons float over the page's own background
+            .toolbar(.hidden, for: .bottomBar)  // the app draws its own menu everywhere (3.31.0)
             .background {
                 // how much room iOS's column takes on the right: the page keeps its buttons this far from the edge
                 GeometryReader { proxy in
@@ -93,49 +63,6 @@ private struct Destination: Identifiable {
         Destination(title: "All games", symbol: "list.bullet.rectangle", target: "games"),
         Destination(title: "Slate", symbol: "wand.and.stars", target: "lineup"),
     ]
-}
-
-// The open strip menu on the folded Duo: every page, stacked in the side column above the menu button,
-// with the buttons shrinking as needed so all of them fit the column's height
-private struct StripPanel: View {
-    @ObservedObject var model: WebModel
-
-    var body: some View {
-        GeometryReader { geo in
-            // lined up with iOS's own menu button: the same 48-point width, centered on it. iOS draws its column
-            // about 20 points in from the screen's edge and centers the button in it, so the button's center sits
-            // about 27 points inside the column's inner edge (measured on the folded Duo, 3.25.3)
-            let w: CGFloat = 48
-            let center = max(w / 2 + 4, model.edgeInsets.trailing - 27)
-            let bottom = max(model.edgeInsets.bottom, 8) + 45          // just above iOS's menu button
-            let top = max(model.edgeInsets.top, 8) + 8
-            let n = CGFloat(Destination.all.count)
-            let size = min(44, max(30, (geo.size.height - bottom - top - 8) / n))
-            ZStack(alignment: .bottom) {
-                if model.stripOpen {
-                    VStack(spacing: 0) {
-                        ForEach(Destination.all) { d in
-                            FloatButton(symbol: d.symbol, label: d.title, on: model.activeTarget == d.target, size: size) {
-                                model.go(d.target)
-                                withAnimation(.snappy) { model.stripOpen = false }
-                            }
-                        }
-                    }
-                    .padding(.vertical, 4)
-                    .frame(width: w)
-                    .modifier(GlassCapsule())
-                    // grows up out of the menu button and shrinks back into it (the capsule's own bottom, already in the column)
-                    .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
-                }
-            }
-            .frame(width: w)
-            .padding(.trailing, center - w / 2)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .padding(.bottom, bottom)
-            .animation(.snappy, value: model.stripOpen)
-        }
-        .allowsHitTesting(model.stripOpen)
-    }
 }
 
 // The strip's menu, drawn by the app where iOS has no side column: one glass capsule at the bottom right holding

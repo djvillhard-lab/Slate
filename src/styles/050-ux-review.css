@@ -300,3 +300,10 @@ html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-sh
 .g.panel > .g-bell svg { width: 15px; height: 15px; }
 .g.panel.has-bell > .hl { padding-right: 26px; }
 .g.panel.has-bell:has(> .tray) > .g-bell { display: none; }
+/* one header on every page (3.31.0): the mark, the page name and a second line in the same spots; the line under the
+   header sits right under them everywhere, with a page's tabs below it */
+header.top { border-bottom: 0 !important; }
+header.top .toprow { border-bottom: 1px solid var(--line); }
+.title .d-sub { grid-column: 2; display: flex; align-items: center; height: calc(44px / var(--z, 1)); box-sizing: border-box; margin-top: 3px; font-size: 15px; font-weight: 700; color: var(--muted); white-space: nowrap; }  /* as tall as the slate's date row (its buttons are 44 points at any text size) */
+.title.has-brand > svg.brand { grid-row: 1 / span 2 !important; align-self: center !important; }
+.title.has-brand > .t { align-self: end !important; }

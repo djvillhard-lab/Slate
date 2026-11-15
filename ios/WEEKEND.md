@@ -52,8 +52,9 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
 - In the app, sign in once with your passcode (it keeps it after that).
 
 ### 5. Try it
-- Folded and unfolded, rotated both ways. On iPhone Duo, the system strip on the right holds one menu
-  button (On TV / Teams / Box Office / All games / Slate), and the floating menu button goes away.
+- Folded and unfolded, rotated both ways. On iPhone Duo folded, the side column on the right holds one glass
+  capsule: the menu button, Back above it, and the pages (On TV / Teams / Box Office / All games / Slate) inside
+  it when it's open. The page's own menu button goes away.
   Unfolded, the left side is your slate and the right side opens on All games.
 - Links to ESPN, streaming apps and maps open outside the app, like the Home Screen version.
 - Settings > Notifications > This phone > **Turn on**. (Alerts need step 7 before they arrive.)
@@ -97,11 +98,12 @@ Xcode put on your phone, then repeat the starred items in the TestFlight copy on
 - [ ] **Folded, sideways:** same as above. Text and cards fill the width.
 - [ ] **Unfolded, upright and sideways:** the page fills the screen to both edges, nothing hidden under the clock
       or the side strip. *
-- [ ] **The side strip:** one menu button at the bottom. Tap it: On TV, Teams, Box Office, All games and Slate appear
-      above it as strip buttons (the open page lit); pick one and they fold back into the one button. Back sits
-      above the menu button when there's somewhere to go back to, and hides while the menu is open. Open and upright (no strip there), the same menu floats
-      bottom right as a glass capsule. Pages run under the strip; the header buttons, day picker and Back sit just left of it.
-      Settings > Phone > iPhone: the strip menu goes away and the page's own menu button shows instead. *
+- [ ] **The side column (3.31.0):** one glass capsule, centered in the column, with the menu button at the bottom.
+      Tap it: On TV, Teams, Box Office, All games and Slate open inside the same capsule, above the button (the open
+      page lit); the X closes it. Back sits in the capsule above the menu button when there's somewhere to go back to.
+      Unfolded and upright (no side column), the same capsule floats bottom right. Pages run beside the column; the
+      header buttons, day picker and Back sit just left of it. Settings > Phone > iPhone: the capsule goes away and
+      the page's own menu button shows instead. *
 - [ ] **Folding and unfolding while a page is open:** do it on the slate and on Box Office, a few times each.
       Nothing sticks halfway, the layout settles within a second.
 - [ ] **Links:** a TV channel, an ESPN link and an Athletic newsletter open outside the app; coming back lands
@@ -146,7 +148,7 @@ The Home Screen web app keeps working the whole time; keep it until you're happy
 
 ## What's in ios/
 - `Slate/SlateApp.swift` app start, push registration, rotation rules
-- `Slate/RootView.swift` the screen: the page, plus the iPhone Duo control strip
+- `Slate/RootView.swift` the screen: the page, plus the menu capsule (in the iPhone Duo side column, or floating)
 - `Slate/SlateWebView.swift` the web view: edge to edge, outside links, alerts and dialogs
 - `Slate/WebModel.swift` what the app and the page tell each other (window.SlateApp in index.html)
 - `Slate.entitlements`, `Slate-Info.plist` push permission, launch screen, export compliance

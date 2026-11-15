@@ -29,6 +29,7 @@
       acts.appendChild(sb);
       hd.appendChild(acts);
     }
+    if (feedOk(g)) hd.appendChild(feedBtn(g));
     body.appendChild(hd);
 
     // three sections that open and close: box score, team stats, preview (or recap)
@@ -141,7 +142,19 @@
           // a touchdown that isn't on offense (a fumble or interception return, a kick return) says where it came from
           var odd = sport === "football" && ["passing", "rushing", "receiving"].indexOf(gr.k) === -1;
           if (odd) { if (!n("TD")) return; parts = [n("TD") + " TD (" + (BX_GROUP[gr.k] || gr.k).toLowerCase() + ")"]; }
-          all.push({ n: r.n, team: t.abbr, score: score, line: parts.join(" · "), scored: sport === "football" ? n("TD") > 0 : sport === "hockey" ? n("G") > 0 : false });
+          // football: one line per player, whatever he did (a QB who ran and threw: "81 pass yds · 66 rush yds, 1 rush TD")
+          if (sport === "football") {
+            var key = t.abbr + "|" + r.n, ex = all.filter(function (x) { return x.key === key; })[0];
+            if (!ex) { ex = { key: key, n: r.n, team: t.abbr, score: 0, bits: [], scored: false }; all.push(ex); }
+            var bit = gr.k === "passing" ? n("YDS") + " pass yds" + (n("TD") ? ", " + n("TD") + " pass TD" : "") + (n("INT") ? ", " + n("INT") + " INT" : "") + (v["C/ATT"] ? " (" + v["C/ATT"] + ")" : "")
+              : gr.k === "rushing" ? n("YDS") + " rush yds" + (n("TD") ? ", " + n("TD") + " rush TD" : "")
+              : gr.k === "receiving" ? n("REC") + " rec, " + n("YDS") + " yds" + (n("TD") ? ", " + n("TD") + " rec TD" : "")
+              : parts[0];
+            if (gr.k === "passing") ex.bits.unshift(bit); else ex.bits.push(bit);
+            ex.score += score; ex.scored = ex.scored || (gr.k !== "passing" && n("TD") > 0); ex.line = ex.bits.join(" · ");
+            return;
+          }
+          all.push({ n: r.n, team: t.abbr, score: score, line: parts.join(" · "), scored: sport === "hockey" ? n("G") > 0 : false });
         });
       });
     });

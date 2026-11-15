@@ -67,7 +67,7 @@
     var shortDate = fmtDate(state.date, { weekday: "short" }) + ", " + fmtDate(state.date, { month: "short", day: "numeric" });
     // today reads "Today's Slate" until 5 PM, then "Tonight's Slate" (the page re-renders every minute, so it flips on its own)
     var slateTitle = state.date === today ? (new Date().getHours() < 17 ? "Today's Slate" : "Tonight's Slate") : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
-    $("title-t").textContent = v === "news" ? "News" : v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "best" ? "Player rankings" : v === "moments" ? "Box Office" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
+    $("title-t").textContent = v === "news" ? "News" : v === "settings" ? "Settings" : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "feed" ? "Live feed" : v === "best" ? "Player rankings" : v === "moments" ? "Box Office" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     var tl = $("title"); if (tl) tl.classList.add("has-brand");
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
@@ -77,6 +77,15 @@
     var pg = $("btn-copy").parentNode; pg.hidden = v !== "games"; $("btn-more").hidden = true;
     ["l-btn-settings", "l-btn-more", "l-btn-refresh"].forEach(function (id) { var x = $(id); if (x) x.hidden = true; });
     $("title-d").hidden = isDuo || v !== "lineup";
+    // every page's header has the same second line (3.31.0): the slate's date picker, the day for a page that shows
+    // one day (All games, On TV, Box Office), blank elsewhere, so the mark, the name and the line under the header
+    // sit in the same spots on every page and side by side on the open Duo
+    var sub = $("title-sub");
+    if (sub) {
+      var subOn = $("title-d").hidden; sub.hidden = !subOn;
+      var dd0 = v === "moments" && typeof mm !== "undefined" && mm.date ? mm.date : state.date;
+      sub.textContent = subOn && (v === "games" || v === "tv" || v === "moments") ? fmtDate(dd0, { weekday: "short" }) + ", " + fmtDate(dd0, { month: "short", day: "numeric" }) : "\u00a0";
+    }
     var away = Math.round((new Date(state.date + "T12:00:00") - new Date(today + "T12:00:00")) / 86400000);
     var dayText = named ? shortDate : away > 0 ? "In " + away + " days" : -away + " days ago";
     $("day-label").textContent = dayText; $("l-day-label").textContent = dayText;
@@ -172,7 +181,7 @@
     var ns2 = $("nav-settings2"); if (ns2) { if (v === "settings" || v === "notify" || v === "rules") ns2.setAttribute("aria-current", "page"); else ns2.removeAttribute("aria-current"); }
     ["lineup", "rules", "games", "best", "moments", "teams", "tv", "news"].forEach(function (k) { var b = $("nav-" + k); if (!b) return; if (v === k || (k === "teams" && v === "team")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     placeMenuPop(); $("menu-pop").hidden = !state.menuOpen; $("menu-scrim").hidden = !state.menuOpen; $("menu-fab").setAttribute("aria-expanded", state.menuOpen ? "true" : "false");
-    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-best").hidden = v !== "best"; $("view-moments").hidden = v !== "moments"; $("view-teams").hidden = v !== "teams"; $("view-tabs").hidden = v !== "tabs"; $("view-team").hidden = v !== "team";
+    $("view-rules").hidden = v !== "rules"; $("view-game").hidden = v !== "game"; $("view-feed").hidden = v !== "feed"; $("view-best").hidden = v !== "best"; $("view-moments").hidden = v !== "moments"; $("view-teams").hidden = v !== "teams"; $("view-tabs").hidden = v !== "tabs"; $("view-team").hidden = v !== "team";
     var cnt = lineupGames().length, nc = $("nav-count"); nc.textContent = String(cnt); nc.hidden = !cnt;
     $("view-lineup").hidden = !isDuo && v !== "lineup"; $("view-games").hidden = v !== "games"; $("view-tv").hidden = v !== "tv"; $("view-settings").hidden = v !== "settings"; $("view-notify").hidden = v !== "notify";
   }
@@ -218,12 +227,24 @@
   // slate cards: scores sit mid-card, or just right of the longest team name when that would reach them
   function fitScores(box) {
     if (!box) return;
-    // one score column for the whole slate, the same spot on every card
-    var ps = box.querySelectorAll(".g.panel"), col = 1e9; box.style.removeProperty("--tmw");
-    Array.prototype.forEach.call(ps, function (p) { p.style.removeProperty("--tmw"); var r = p.querySelector(".tm"); if (r) col = Math.min(col, r.parentElement.clientWidth); });
-    // scores sit at the end of the team column, right beside the time / channel column, on every card:
-    // the same spot in every rotation and fold, and names only shorten when there truly isn't room
-    if (col < 1e9) box.style.setProperty("--tmw", Math.ceil(col) + "px");
+    // one score column for the whole slate (3.31.0): just past the longest team name (with its rank and record) on the
+    // page, the same spot on every card; names only shorten when the card is too narrow for that
+    var ps = box.querySelectorAll(".g.panel"), col = 1e9, need = 0; box.style.removeProperty("--tmw");
+    Array.prototype.forEach.call(ps, function (p) {
+      p.style.removeProperty("--tmw");
+      var rows = p.querySelectorAll(".tm"); if (!rows.length) return;
+      col = Math.min(col, rows[0].parentElement.clientWidth);
+      Array.prototype.forEach.call(rows, function (r) {
+        var w = r.querySelector(".nmw"), sc = r.querySelector(".sc"); if (!w || !sc) return;
+        var gap = parseFloat(getComputedStyle(w).columnGap) || 4, rg = parseFloat(getComputedStyle(r).columnGap) || 8, nw = 0, n = 0;
+        // (an SVG, like the team star, has no offsetWidth: measure its box instead)
+        Array.prototype.forEach.call(w.children, function (c) { nw += c.classList.contains("nm") ? c.scrollWidth : (c.getBoundingClientRect().width || 0); n++; });
+        nw += gap * Math.max(0, n - 1);
+        var lead = 0; for (var c0 = r.firstElementChild; c0 && c0 !== w; c0 = c0.nextElementSibling) lead += (c0.getBoundingClientRect().width || 0) + rg;
+        var nd = lead + nw + rg + 16 + Math.max(sc.offsetWidth || 0, 30); if (isFinite(nd)) need = Math.max(need, nd);
+      });
+    });
+    if (need && col < 1e9) box.style.setProperty("--tmw", Math.ceil(Math.min(col, need)) + "px");
   }
   // live score updates redraw the slate on their own: refit the scores each time
   var renderLineup0 = renderLineup; renderLineup = function () { renderLineup0.apply(this, arguments); try { fitScores($("lineup-body")); } catch (e) {} };
@@ -236,5 +257,5 @@
     if (!max) return;
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) + "px");
   }
-  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); updateTeamAccent(); renderTop(); renderLineup(); renderRules(); renderGame(); renderBest(); renderMoments(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderNews(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); fitScores($("lineup-body")); }); }
+  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); updateTeamAccent(); renderTop(); renderLineup(); renderRules(); renderGame(); renderFeed(); renderBest(); renderMoments(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderNews(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); fitScores($("lineup-body")); }); }
 
