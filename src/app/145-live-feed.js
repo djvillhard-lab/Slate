@@ -11,25 +11,39 @@
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;  // opening the feed is asking to see the score
-    if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; FD.sum = (c0 && c0.sum) || null; FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = false; clearTimeout(FD.t); FD.t = null; }
+    if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; FD.sum = (c0 && c0.sum) || null; FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = false; FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
     if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else openSub("feed");
     feedPoll(true);
+  }
+  // how often the feed asks ESPN (3.36.0): every 4 seconds while a play could happen, slower at breaks, backing off after errors.
+  // Straight from the phone to ESPN's public feed (nothing of ours in between), only while this page is open and on screen.
+  function fdGet(url) {
+    var ac = typeof AbortController === "function" ? new AbortController() : null, t = ac ? setTimeout(function () { ac.abort(); }, 7000) : null;  // a stuck request never holds up the next
+    return fetch(url, ac ? { cache: "no-store", signal: ac.signal } : { cache: "no-store" }).then(function (r) { clearTimeout(t); return r.ok ? r.json() : null; }, function () { clearTimeout(t); return null; });
+  }
+  function fdSig(sum) {  // what's on screen: the newest play, the clock, the score and the win probability
+    var comp = ((sum.header || {}).competitions || [])[0] || {}, st = comp.status || {}, dr = sum.drives || {}, cur = dr.current || (dr.previous || [])[(dr.previous || []).length - 1] || {}, pl = (cur.plays || [])[(cur.plays || []).length - 1] || {};
+    return [(dr.previous || []).length, cur.id, (cur.plays || []).length, pl.id, pl.awayScore, pl.homeScore, st.displayClock, st.period, (st.type || {}).state, (comp.competitors || []).map(function (k) { return k.score; }).join("-"), (sum.winprobability || []).length].join("|");
   }
   function feedPoll(now) {
     clearTimeout(FD.t); FD.t = null;
     if (state.view !== "feed") return;
     var g = feedGame(); if (!g) return;
-    if (document.hidden) { FD.t = setTimeout(feedPoll, 5000); return; }
+    if (document.hidden) return;  // the visibilitychange listener picks it up the moment the page is back
     if (FD.busy) return; FD.busy = true;
     var cur = bx.live[g.id] || (bx.live[g.id] = {});
-    (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) { if (!ev) return null; cur.ev = ev; return rkFetch(bxSummaryUrl(g.league, ev)); }).then(function (sum) {
+    (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) { if (!ev) return null; cur.ev = ev; return fdGet(bxSummaryUrl(g.league, ev)); }).then(function (sum) {
       FD.busy = false; if (state.feedId !== g.id) return feedPoll();
-      if (sum) { FD.sum = sum; FD.id = g.id; FD.at = Date.now(); cur.sum = sum; cur.sumAt = Date.now(); }
-      if (state.view === "feed") renderFeed(true);
-      var st = ((((sum || {}).header || {}).competitions || [])[0] || {}).status, k = ((st || {}).type || {}).state;
-      if (state.view === "feed") FD.t = setTimeout(feedPoll, k === "post" ? 120000 : sum ? 8000 : 12000);
+      var changed = true;
+      if (sum) { var sg = fdSig(sum); changed = sg !== FD.sig || FD.id !== g.id; FD.sig = sg; FD.err = 0; FD.sum = sum; FD.id = g.id; FD.at = Date.now(); cur.sum = sum; cur.sumAt = Date.now(); }
+      else FD.err = (FD.err || 0) + 1;
+      if (state.view === "feed" && changed) renderFeed(true);  // nothing new: leave the page alone
+      var st = ((((sum || {}).header || {}).competitions || [])[0] || {}).status || {}, k = (st.type || {}).state, det = String((st.type || {}).shortDetail || st.type && st.type.detail || "");
+      var brk = /half|end of|delay/i.test(det) || /End Period|End of Half/i.test(String(((((sum || {}).drives || {}).current || {}).plays || []).slice(-1).map(function (p) { return (p.type || {}).text; })[0] || ""));
+      var wait = !sum ? Math.min(60000, 6000 * Math.pow(2, Math.min(FD.err, 4))) : k === "post" ? 120000 : k === "pre" ? 30000 : brk ? 12000 : 4000;
+      if (state.view === "feed") FD.t = setTimeout(feedPoll, wait);
       if (sum) fdPrefetch(g);
-    }, function () { FD.busy = false; if (state.view === "feed") FD.t = setTimeout(feedPoll, 12000); });
+    }, function () { FD.busy = false; FD.err = (FD.err || 0) + 1; if (state.view === "feed") FD.t = setTimeout(feedPoll, Math.min(60000, 6000 * Math.pow(2, Math.min(FD.err, 4)))); });
   }
   document.addEventListener("visibilitychange", function () { if (!document.hidden && state.view === "feed") feedPoll(); });
   function fdPrefetch(g) {
