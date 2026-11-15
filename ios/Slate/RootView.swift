@@ -21,7 +21,7 @@ struct RootView: View {
                     // are sized to fit the column's height: every page always shows. Laid over the full-screen page, so
                     // it's in the column from its first frame (on its own it was first laid out short of the column, then jumped in).
                     .overlay {
-                        if model.strip && model.stripOpen { StripPanel(model: model).ignoresSafeArea() }
+                        if model.strip { StripPanel(model: model).ignoresSafeArea() }
                     }
                 if model.float {
                     // no side column here (open and upright, or a regular iPhone): the same menu, floating bottom right
@@ -107,22 +107,29 @@ private struct StripPanel: View {
             let top = max(model.edgeInsets.top, 8) + 8
             let n = CGFloat(Destination.all.count)
             let size = min(44, max(30, (geo.size.height - bottom - top - 8) / n))
-            VStack(spacing: 0) {
-                ForEach(Destination.all) { d in
-                    FloatButton(symbol: d.symbol, label: d.title, on: model.activeTarget == d.target, size: size) {
-                        model.go(d.target)
-                        withAnimation(.snappy) { model.stripOpen = false }
+            ZStack(alignment: .bottom) {
+                if model.stripOpen {
+                    VStack(spacing: 0) {
+                        ForEach(Destination.all) { d in
+                            FloatButton(symbol: d.symbol, label: d.title, on: model.activeTarget == d.target, size: size) {
+                                model.go(d.target)
+                                withAnimation(.snappy) { model.stripOpen = false }
+                            }
+                        }
                     }
+                    .padding(.vertical, 4)
+                    .frame(width: min(col - 8, size + 8))
+                    .modifier(GlassCapsule())
+                    // grows up out of the menu button and shrinks back into it (the capsule's own bottom, already in the column)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottom)))
                 }
             }
-            .padding(.vertical, 4)
-            .frame(width: min(col - 8, size + 8))
-            .modifier(GlassCapsule())
             .frame(width: col)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             .padding(.bottom, bottom)
+            .animation(.snappy, value: model.stripOpen)
         }
-        .transition(.opacity)  // fades in place: a scale effect here grew it from the middle of the screen, so it slid across into the column
+        .allowsHitTesting(model.stripOpen)
     }
 }
 
