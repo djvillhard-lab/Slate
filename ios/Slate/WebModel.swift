@@ -177,6 +177,9 @@ final class WebModel: ObservableObject {
             pushStatus()
         case "pass":
             if let p = m["pass"] as? String { LiveActivities.shared.pass = p }
+        case "live":
+            // a live notification switched on or off on the slate: put it up or take it down right away (3.24.0)
+            LiveActivities.shared.fromPage(m)
         case "push-request":
             pushAsked = true
             requestPush()

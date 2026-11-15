@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.24.0 (Nov 15, 2026)
+TestFlight: 3.0 (20)
+- Live notifications show up the moment you switch them on: a game's Live notification switch (live or finished games, or one starting within 15 minutes) and the scoreboard's Show on Lock Screen now put it on your Lock Screen right away, and the server takes it over and keeps it current. Switching off (the tray switch, the gray bell on a slate card, or Turn off on the scoreboard) takes it down right away too. Changing the scoreboard's picks while it's on updates it right away. Needs the new TestFlight build; until then it still takes up to a minute.
+- The scoreboard wasn't starting because your phone had never sent the server what it needs to start one on its own; starting it from the app gets around that.
+- Betting lines show for every game, on your slate and in All games, whether or not Claude has written a preview: the line now comes straight from ESPN's scoreboard when the server hasn't saved one. Before, a game without a Claude preview showed no line.
+- Box Office: last night's top performers were missing. An early-morning run had marked Nov 14 finished with only the overnight games, so the rest never came in. Fixed for Nov 14, and a day now only counts as finished once every game in it is over.
+
 ## 3.23.1 (Nov 15, 2026)
 TestFlight: 3.0 (19)
 - Folded iPhone Duo: the open menu in the side column now always shows every page (Settings, News, On TV, Teams, Box Office, All games, Slate). iOS's own column only fits a few buttons and was tucking the rest (like Slate) into a second "more" menu, so the app now draws the page buttons itself, stacked right above the menu button and sized to fit the column's height. Needs the new TestFlight build.

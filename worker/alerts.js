@@ -175,15 +175,20 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
   for (const id of new Set(Object.keys(sent.la).concat([...want]))) {  // each game once a minute
     const g = games[id], s = sc[id]; if (!g || !s || s.state === "pre") continue;
     let cur = sent.la[id];
-    const st = laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`, tok = (la.acts || {})[id];
+    const st = laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`;
+    let tok = (la.acts || {})[id];
     // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
     if (cur && !cur.off && per[id] === 0) {
-      cur.end = 1; cur.off = 1;
+      cur.end = 1; cur.off = 1; cur.offAt = Date.now();
       if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) }, 10);
       continue;
     }
     // switched back on: start it over (its old token belonged to the one that ended). After the final, only when asked by name.
-    if (cur && cur.end && cur.off && want.has(id) && (s.state === "in" || (s.state === "post" && per[id] === 1))) { delete sent.la[id]; if (la.acts && la.acts[id]) { delete la.acts[id]; gone = true; } cur = undefined; }
+    // (a token newer than the switch-off belongs to the one the app just started itself: keep it)
+    if (cur && cur.end && cur.off && want.has(id) && (s.state === "in" || (s.state === "post" && per[id] === 1))) { delete sent.la[id]; if (la.acts && la.acts[id] && !(Date.parse(la.acts[id].at) > (cur.offAt || 0))) { delete la.acts[id]; gone = true; } cur = undefined; }
+    // started by the app the moment you switched it on (3.23.2): take it over and keep it current, instead of starting a second one
+    tok = (la.acts || {})[id];
+    if (!cur && tok && Date.now() - Date.parse(tok.at) < 3 * 3600000 && want.has(id)) cur = sent.la[id] = { k: "", n: 1, app: 1 };
     if (!cur) {
       // a new one: only for a game that's live now, while alerts are on and not held back. A game switched on by name
       // on the slate starts even with the rules off or during quiet hours: that tap asked for it.
@@ -238,7 +243,9 @@ async function runBoard(env, p, sent, la, games, sc) {
     return gone;
   }
   // switched on again, or the picks changed, after the last one ended: a fresh one
-  if (cur && cur.end && at > (cur.t || 0)) { cur = sent.board = null; if (la.board) { delete la.board; gone = true; } tok = null; }
+  // (a token from after the switch-on belongs to the one the app just started itself: keep it)
+  const fresh = tok && Date.parse(tok.at) >= at - 60000;
+  if (cur && cur.end && at > (cur.t || 0)) { cur = sent.board = null; if (la.board && !fresh) { delete la.board; gone = true; tok = null; } }
   const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}`).join("|"), scores = {};
   for (const x of list) scores[x.id] = `${x.a}-${x.h}`;
   // the game the Dynamic Island shows on its own: the one that last scored, else the first one live
@@ -247,6 +254,8 @@ async function runBoard(env, p, sent, la, games, sc) {
   if (lead < 0) lead = Math.max(0, list.findIndex((x) => x.s === "in"));
   const state = { games: list, lead }, live = list.some((x) => x.s === "in"), done = list.every((x) => x.s === "post");
   const soon = list.some((x) => x.s === "pre" && Date.parse((sc[x.id] || {}).start || games[x.id].start) - now <= 15 * 60000);
+  // started by the app the moment you tapped Show on Lock Screen (3.23.2): take it over and keep it current
+  if (!cur && fresh) cur = sent.board = { k: "", t: now, lead: list[lead].id, sc: scores, app: 1 };
   if (!cur) {
     // it starts 15 minutes before the first pick (a live notification only lasts 8 hours), or right away once one is on
     if (!(live || soon || done) || !(la.startBoard || []).length) return gone;

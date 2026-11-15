@@ -80,6 +80,47 @@ final class LiveActivities {
         }
     }
 
+    // ---- started and ended by the app itself, the moment you switch one on or off on the slate (3.24.0) ----
+    // The app puts it on the Lock Screen at once with the score it has; the server then picks up its token (posted
+    // below, like any other) and keeps it current. Switching off takes it down at once.
+    func fromPage(_ m: [String: Any]) {
+        guard let op = m["op"] as? String, let kind = m["kind"] as? String else { return }
+        start()
+        if kind == "board" {
+            if op == "end" {
+                Task { for act in Activity<SlateBoardAttributes>.activities { await act.end(nil, dismissalPolicy: .immediate) } }
+                return
+            }
+            guard let list = Self.decode(SlateBoardGameList.self, ["games": m["games"] ?? []]) else { return }
+            let content = SlateBoardAttributes.ContentState(games: list.games, lead: m["lead"] as? Int)
+            Task { await self.show(Activity<SlateBoardAttributes>.activities.first, attributes: SlateBoardAttributes(title: "Your slate"), state: content) }
+            return
+        }
+        guard let id = m["id"] as? String else { return }
+        if op == "end" {
+            Task { for act in Activity<SlateGameAttributes>.activities where act.attributes.gameId == id { await act.end(nil, dismissalPolicy: .immediate) } }
+            return
+        }
+        guard let attrs = Self.decode(SlateGameAttributes.self, m["attrs"]), let state = Self.decode(SlateGameAttributes.ContentState.self, m["state"]) else { return }
+        Task { await self.show(Activity<SlateGameAttributes>.activities.first { $0.attributes.gameId == id }, attributes: attrs, state: state) }
+    }
+
+    // update the one already showing, or start a new one (its push token goes to the server like any other)
+    private func show<A: ActivityAttributes>(_ existing: Activity<A>?, attributes: A, state: A.ContentState) async {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        let content = ActivityContent(state: state, staleDate: Date().addingTimeInterval(15 * 60))
+        if let existing, existing.activityState == .active || existing.activityState == .stale {
+            await existing.update(content)
+            return
+        }
+        _ = try? Activity<A>.request(attributes: attributes, content: content, pushType: .token)
+    }
+
+    private static func decode<T: Decodable>(_ type: T.Type, _ any: Any?) -> T? {
+        guard let any, JSONSerialization.isValidJSONObject(any), let data = try? JSONSerialization.data(withJSONObject: any) else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
+    }
+
     private func post(kind: String, token: String, gameId: String?) {
         var body: [String: Any] = ["pass": pass, "kind": kind, "token": token, "env": env]
         if let gameId { body["gameId"] = gameId }
@@ -96,3 +137,6 @@ final class LiveActivities {
 
     private static func hex(_ d: Data) -> String { d.map { String(format: "%02x", $0) }.joined() }
 }
+
+// the page's list of board games, read with the same keys the server sends
+private struct SlateBoardGameList: Decodable { var games: [SlateBoardGame] }

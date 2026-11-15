@@ -178,7 +178,10 @@ def run(day):
             out["events"][lg] = [e["id"] for e in lst if e["status"]["type"].get("state") == "post"]
             n_live = sum(1 for e in lst if e["status"]["type"].get("state") == "in")
             if n_live: out["live"][lg] = n_live
-    out["final"] = not out["live"]
+            if any(e["status"]["type"].get("state") == "pre" for e in lst): out.setdefault("pending", {})[lg] = 1
+    # final only once every game of the day is over: a run early in the morning (nothing live yet) used to mark the
+    # day final with just the overnight games, so that night's top performers never showed up
+    out["final"] = not out["live"] and not out.get("pending")
     return out
 
 if __name__ == "__main__":
