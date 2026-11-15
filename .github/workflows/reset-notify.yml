@@ -1,0 +1,19 @@
+name: Reset notification settings (one-off)
+# Runs scripts/reset_notify.py by hand only. Dry run unless "apply" is ticked.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Write the change (otherwise a dry run)"
+        type: boolean
+        default: false
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reset
+        env:
+          SUPABASE_SECRET: ${{ secrets.SUPABASE_SECRET }}
+        run: python3 scripts/reset_notify.py ${{ inputs.apply && '--apply' || '' }}
