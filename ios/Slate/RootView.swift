@@ -16,6 +16,14 @@ struct RootView: View {
                 SlateWebView(model: model)
                     .ignoresSafeArea(.container, edges: .all)
                     .ignoresSafeArea(.keyboard)
+                if model.float {
+                    // no side column here (open and upright, or a regular iPhone): the same menu, floating bottom right
+                    FloatMenu(model: model)
+                        .padding(.trailing, 12 + model.edgeInsets.trailing)
+                        .padding(.bottom, max(12, model.edgeInsets.bottom))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        .ignoresSafeArea()
+                }
                 if let err = model.loadError {
                     OfflineView(message: err) { model.reload() }
                 }
@@ -54,8 +62,8 @@ struct RootView: View {
                 // how much room iOS's column takes on the right: the page keeps its buttons this far from the edge
                 GeometryReader { proxy in
                     Color.clear
-                        .onAppear { model.setStripInset(proxy.safeAreaInsets.trailing) }
-                        .onChange(of: proxy.safeAreaInsets.trailing) { _, w in model.setStripInset(w) }
+                        .onAppear { model.edgeInsets = proxy.safeAreaInsets; model.setStripInset(proxy.safeAreaInsets.trailing) }
+                        .onChange(of: proxy.safeAreaInsets) { _, e in model.edgeInsets = e; model.setStripInset(e.trailing) }
                 }
             }
         }
@@ -98,6 +106,72 @@ private struct StripButton: View {
         }
         .tint(on ? Color.accentColor : Color.primary)
         .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}
+
+// The strip's menu, drawn by the app where iOS has no side column: one glass capsule at the bottom right holding
+// Back (when needed) and the menu button; tapping the menu grows it into the page buttons, like the strip does.
+private struct FloatMenu: View {
+    @ObservedObject var model: WebModel
+
+    var body: some View {
+        VStack(spacing: 2) {
+            if model.stripOpen {
+                ForEach(Destination.all) { d in
+                    FloatButton(symbol: d.symbol, label: d.title, on: model.activeTarget == d.target) {
+                        model.go(d.target)
+                        withAnimation(.snappy) { model.stripOpen = false }
+                    }
+                }
+            } else if !model.back.isEmpty {
+                FloatButton(symbol: model.back == "fwd" ? "chevron.right" : "chevron.left", label: model.back == "fwd" ? "Today" : "Back", on: false, tint: .accentColor) {
+                    model.goBack()
+                }
+            }
+            FloatButton(symbol: model.stripOpen ? "xmark" : "line.3.horizontal", label: model.stripOpen ? "Close menu" : "Menu", on: false) {
+                withAnimation(.snappy) { model.stripOpen.toggle() }
+            }
+        }
+        .padding(4)
+        .modifier(GlassCapsule())
+        .animation(.snappy, value: model.stripOpen)
+        .animation(.snappy, value: model.back)
+    }
+}
+
+private struct FloatButton: View {
+    let symbol: String
+    let label: String
+    let on: Bool
+    var tint: Color? = nil
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .symbolVariant(on ? .fill : .none)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(on ? Color.accentColor : (tint ?? Color.primary))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}
+
+// Apple's glass where the phone has it (iOS 26 and later), a frosted capsule before that
+private struct GlassCapsule: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.glassEffect(.regular.interactive(), in: .capsule)
+        } else {
+            content
+                .background(.ultraThinMaterial, in: Capsule())
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.12)))
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
+        }
     }
 }
 

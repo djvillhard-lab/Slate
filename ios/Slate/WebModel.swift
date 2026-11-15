@@ -17,6 +17,8 @@ final class WebModel: ObservableObject {
     @Published var device = ""   // Settings > Phone: "duo" or "iphone", as the page reports it
     @Published var look = "dark"
     @Published private(set) var strip = false
+    @Published private(set) var float = false   // the app's floating menu (wherever the strip isn't)
+    @Published var edgeInsets = EdgeInsets()
     @Published var loadError: String?
 
     weak var webView: WKWebView?
@@ -88,6 +90,13 @@ final class WebModel: ObservableObject {
     // menu in a bar across the bottom, so the page's own menu button (bottom right) is used there instead.
     func refreshStrip() {
         setStrip(DeviceShape.isWideScreen && device != "iphone" && trailingInset > 0)
+        setFloat(!strip)
+    }
+
+    func setFloat(_ on: Bool) {
+        guard on != float else { return }
+        float = on
+        js("window.SlateApp && SlateApp.setFloat && SlateApp.setFloat(\(on))")
     }
 
     func setStrip(_ on: Bool) {
@@ -123,7 +132,7 @@ final class WebModel: ObservableObject {
         switch t {
         case "ready":
             loadError = nil
-            js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded())))")
+            js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded()))); window.SlateApp && SlateApp.setFloat && SlateApp.setFloat(\(float))")
             sendMenuAnchor()
             sendFold()
         case "state":

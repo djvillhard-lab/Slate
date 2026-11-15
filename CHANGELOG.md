@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.5.0 (Nov 14, 2026)
+TestFlight: 3.0 (14)
+- iPhone app wherever iOS has no side strip (the Duo open and upright, a regular iPhone, or the Duo set to iPhone): the app now draws the menu itself so it matches the strip. One glass capsule at the bottom right with the same icons: Back (when needed) above the three-line menu button; tap it and the capsule grows into On TV, Teams, Box Office, All games and Slate, the open page lit, with the same quick animation; pick one and it shrinks back. The page's day picker sits just left of it.
+- In Safari, the page's own menu matches too: the page icons stack in one capsule above the menu button, without labels, the open page lit.
+
 ## 3.4.2 (Nov 14, 2026)
 TestFlight: 3.0 (13), no new build (web only)
 - Release notes: 3.4.0's app build was cancelled by Xcode Cloud when 3.4.1 followed it minutes later; both ship in 3.0 (13).
