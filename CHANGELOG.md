@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.19.3 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- One-line notes all read the same way now: the player's first and last name, no colon after it, and spelled-out stats ("TTU: Thomas Castellanos 223 passing yds, 3 TD", "UTAH: Devon Dampier 75 rushing yds, 2 TD"). Before, some lines used initials ("D. Dampier 57 rush yds") and some had a second colon. This applies on slate cards, Worth a look and the Big night notes. Notes saved on your phone in the old wording are rebuilt once.
+
 ## 3.19.2 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Fixed: slate notes saved on your phone before 3.19.0 had no team attached, so finished games kept showing them without the abbreviation. Those saved notes are now rebuilt once (they may be blank for a few seconds while they reload), and any note still without a team works it out from the player it names.
