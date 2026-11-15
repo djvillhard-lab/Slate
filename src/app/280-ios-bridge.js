@@ -147,6 +147,7 @@
       if (state.view === "best" && !target.closest(".rk-day, nav.dock, .menu-pop") && (belowStrip(".rk-strip", t) || target.closest("#view-best"))) return "rk";
       if (state.view === "moments" && !target.closest("nav.dock, .menu-pop") && (belowStrip(".mm-strip", t) || target.closest("#view-moments"))) return "mm";
       if (state.view === "tv" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#substrip", t) || target.closest("#view-tv"))) return "tv";
+      if (state.view === "feed") return "feed";  // left: next live game; right: the game before, or back from the first one
       if (state.view !== homeView() && state.view !== "lineup") return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
@@ -156,7 +157,7 @@
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
       mode = swipeMode(e.target, t); if (!mode) return;
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
-      scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub, .mm-strip"); sx0 = scroller ? scroller.scrollLeft : 0;
+      scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub, .mm-strip, .fd-strip"); sx0 = scroller ? scroller.scrollLeft : 0;
       // inside a box score or stats table that scrolls sideways, the finger scrolls the table, never the page
       var wide = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, .bx-ts, .bxp, .bx");
       if (wide || e.target.closest(".bx-pl, .gv-box")) { x0 = null; return; }  // never change pages from inside a box score
@@ -170,6 +171,7 @@
       if (mode === "rk") return slideKids($("best-body"));
       if (mode === "mm") return slideKids($("mm-body"));
       if (mode === "tv") return slideKids($("tv-body"));
+      if (mode === "feed") return fdKids();
       if (mode === "back") { var v = $("view-" + state.view); return v ? [v] : []; }
       return [];
     }
@@ -180,7 +182,7 @@
       each(list, function (el2) { el2.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s"; el2.style.transform = ""; el2.style.opacity = ""; });
       setTimeout(function () { clearDrag(list); }, 200);
     }
-    function where() { return [state.view, state.date, state.league, state.bestLeague, state.tvFilter, mm.lg, mm.date].join("|"); }
+    function where() { return [state.view, state.date, state.league, state.bestLeague, state.tvFilter, mm.lg, mm.date, state.feedId].join("|"); }
     document.addEventListener("touchmove", function (e) {
       if (x0 === null || REDUCED) return;
       var t = e.touches[0], dx = t.clientX - x0, dy = t.clientY - y0;
@@ -209,6 +211,7 @@
         else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
         else if (mode === "mm") mmSwipe(dx < 0 ? 1 : -1);
         else if (mode === "tv") tvSwipe(dx < 0 ? 1 : -1);
+        else if (mode === "feed") { if (!fdSwipe(dx < 0 ? 1 : -1) && dx > 0) goBack(); }
         else { slideDir = dir; setDate(shiftDate(state.date, dx < 0 ? 1 : -1)); }
       }
       if (!d || !d.length || REDUCED) { act(); return; }
@@ -217,7 +220,7 @@
         var stay = where() === before; act();
         if (where() === before) { clearDrag(d); each(d, function (el2) { el2.classList.remove("sl-l", "sl-r"); void el2.offsetWidth; el2.classList.add(dir === "l" ? "sl-r" : "sl-l"); }); return; }   // nothing further that way: come back
         clearDrag(d);
-        if (mode === "back") { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("sl-l", "sl-r"); void nv.offsetWidth; nv.classList.add("sl-r"); setTimeout(function () { nv.classList.remove("sl-r"); }, 300); } }
+        if (mode === "back" || (mode === "feed" && state.view !== "feed")) { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("sl-l", "sl-r"); void nv.offsetWidth; nv.classList.add("sl-r"); setTimeout(function () { nv.classList.remove("sl-r"); }, 300); } }
       }, 110);
     }, { passive: true });
     document.addEventListener("touchcancel", function () { x0 = null; if (drag) snapBack(drag); drag = null; locked = false; }, { passive: true });

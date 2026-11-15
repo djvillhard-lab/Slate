@@ -92,9 +92,23 @@
   // a team's color that shows on a dark card: black or near-black gives way to the team's second color (or a neutral gray)
   function fdTint(g, sd) { var c = badgeColor(g, sd); if (c && lum(c) >= 0.06) return c; var a2 = g[sd + "Alt"]; return hexOk(a2) && lum(a2) >= 0.06 ? a2 : "#8A94A6"; }
   function fdJersey(g, sd, P) { var j = el("span", "fd-jer", P.jer ? P.jer : "•"), c = badgeColor(g, sd) || "#555"; j.style.background = c; if (lum(c) > 0.62) j.style.color = "#111"; j.setAttribute("aria-hidden", "true"); return j; }
-  function fdStrip(g) {
-    var ids = {}, list = games().filter(function (x) { return feedOk(x) || x.id === g.id; });
+  // the live games in the switcher's order: your slate's first, then by start time
+  function fdList(g) {
+    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !(feedOk(x) || x.id === g.id)) return false; ids[x.id] = 1; return true; });
     list.sort(function (a, b) { return (inLineup(b.id) - inLineup(a.id)) || byStart(a, b); });
+    return list;
+  }
+  // a sideways swipe on the page moves to the next (left) or previous (right) game in the switcher; false when there's none that way
+  function fdSwipe(step) {
+    var g = feedGame(); if (!g) return false;
+    var list = fdList(g), i = -1; list.forEach(function (x, j) { if (x.id === g.id) i = j; });
+    var n = i < 0 ? null : list[i + step]; if (!n) return false;
+    openFeed(n); fdSlideIn(step > 0 ? "l" : "r"); return true;
+  }
+  function fdKids() { var b = $("feed-body"); return b ? Array.prototype.filter.call(b.children, function (c) { return !c.classList.contains("fd-strip"); }) : []; }
+  function fdSlideIn(dir) { if (REDUCED) return; fdKids().forEach(function (c) { c.classList.remove("sl-l", "sl-r"); void c.offsetWidth; c.classList.add(dir === "l" ? "sl-l" : "sl-r"); }); }
+  function fdStrip(g) {
+    var ids = {}, list = fdList(g);
     if (list.length < 2) return null;
     var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Live football games");
     list.forEach(function (x) { if (ids[x.id]) return; ids[x.id] = 1;
@@ -136,14 +150,17 @@
     var bug = el("div", "fd-bug"), aS = Number(scoreOf.away), hS = Number(scoreOf.home);
     ["away", "mid", "home"].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = /half/i.test(String(st.shortDetail || ""));
-        mid.appendChild(el("b", null, over ? "Final" : ht ? "Half" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, ht ? "Halftime" : per > 4 ? "OT" : per ? ordN(per) : "")); bug.appendChild(mid); return; }
-      var tm = el("div", "fd-tm"); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
-      var nm = el("b", null, short(g, sd)); if (!over && posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball"); nm.appendChild(bl); } tm.appendChild(nm);
-      if (recOf[sd]) tm.appendChild(el("i", null, recOf[sd]));
+        var sd0 = spot && !over ? Number(spot.e.down) || 0 : 0;
+        mid.appendChild(el("b", null, over ? "Final" : ht ? "Half" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, ht ? "Halftime" : per > 4 ? "OT" : per ? ordN(per) : "")); if (sd0 && spot.e.shortDownDistanceText) mid.appendChild(el("em", "fd-mdd", String(spot.e.shortDownDistanceText))); bug.appendChild(mid); return; }
+      var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
+      // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
+      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); if (!over && posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball"); nm.appendChild(bl); } tm.appendChild(nm);
       var scn = el("b", "fd-sc" + ((sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
     body.appendChild(bug);
+    // the scorebug stays on screen under the top bar while the plays scroll
+    var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
     // the field: the away team's end zone on the left; the ball, the line of scrimmage and the yellow line to gain
     if (!over && spot) {
       var E = spot.e, pt = String(E.possessionText || ""), pm = /^([A-Z]{2,4})\s+(\d+)$/.exec(pt), x = null;
@@ -168,6 +185,7 @@
       fld.setAttribute("aria-label", (down ? E.shortDownDistanceText + ", " : "") + "ball on the " + pt);
       body.appendChild(fld);
     }
+    var wpHost = body.lastChild && body.lastChild.classList.contains("fd-field") ? body.lastChild : body;  // win probability sits in the field's card
     // ESPN's win probability after the latest play
     var wp = (sum.winprobability || [])[(sum.winprobability || []).length - 1];
     if (!over && wp && wp.homeWinPercentage != null) {
@@ -176,7 +194,7 @@
       var bar = el("span", "fd-wpb"), ba = el("i"), bh = el("i"); ba.style.width = ap + "%"; ba.style.background = fdTint(g, "away"); bh.style.width = hp + "%"; bh.style.background = fdTint(g, "home"); bar.appendChild(ba); bar.appendChild(bh); wr.appendChild(bar);
       wr.appendChild(el("span", null, hp + "% " + abbr(g, "home")));
       wr.setAttribute("aria-label", "ESPN win probability: " + abbr(g, "away") + " " + ap + " percent, " + abbr(g, "home") + " " + hp + " percent");
-      var wl = el("p", "fd-wpl", "Win probability (ESPN)"); body.appendChild(wl); body.appendChild(wr);
+      var wl = el("p", "fd-wpl", "Win probability (ESPN)"); wpHost.appendChild(wl); wpHost.appendChild(wr);
     }
     // the plays, newest first, under their drives
     var list = el("div", "fd-list"), shown = 0, cap = FD.more ? 1e9 : 60, fresh = FD.seen ? FD.seen : null, seenNow = {};
