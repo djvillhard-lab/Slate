@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.14.1 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Upset watch games that are already on your slate no longer show twice: they stay out of Worth a look, and the game's card on your slate gets a red "Upset watch" tag in its corner instead (its own one-line note stays).
+
 ## 3.14.0 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Today's slate leads with what's live: finished games move to a Finished group at the bottom (open to start; tap its header to fold it). Live and upcoming games stay on top in time order (or by league), right under Worth a look.
