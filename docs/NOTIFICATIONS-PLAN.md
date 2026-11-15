@@ -2,16 +2,16 @@
 
 Nov 15, 2026 · DJ Villhard
 
-Published readout with the mockups inline: https://claude.ai/artifact/EqCuZwu1LJHedBY6oUDMqx (private to DJ). This file is the copy future sessions build from. It was written against main at commit baf80d8 (Slate 3.29.0, TestFlight 3.29.0 (33)) and is a plan only: no app code, version or build changed with it.
+Published readout with the mockups inline: https://claude.ai/artifact/EqCuZwu1LJHedBY6oUDMqx (private to DJ). This file is the copy future sessions build from. It was written against main at commit baf80d8 (Slate 3.29.0, TestFlight 3.29.0 (33)) and is a plan only: no app code, version or build changed with it. DJ answered all 11 decisions on Nov 15; they're at the end and override anything above that disagrees.
 
 **Where we are.** Slate 3.29.0 sends alerts through Apple and Web Push, runs live notifications for single games (each on its game's Apple broadcast channel since 3.28.0) and a 4-game Board from a server job that runs every minute, and lets you, Drew and Dad each set your own alerts. Missing: Apple's urgency levels, tapping an alert to open its game, buttons on alerts, per-team and per-league control, and a lag of up to 10 minutes before a game you add is followed.
 
-**Where we're going.** 13 alerts, each at an honest Apple urgency level, grouped by game, with Watch on YouTube TV, Live score and Mute buttons. A sport-specific line on every live notification, using only stats ESPN actually sends. The Board takes over once three or more games are live. A Notifications page with Teams, Leagues and Recent alerts. Still free to run, and no alert ever calls Claude.
+**Where we're going.** 13 alerts, each at an honest Apple urgency level, grouped by game, with Watch, Live score and Mute buttons. A sport-specific line on every live notification, using only stats ESPN actually sends. The Board takes over once three or more games are live. A Notifications page with Teams, Leagues and Recent alerts. Still free to run, and no alert ever calls Claude.
 
 **Top 3 next steps.**
 
 1. **Server-only quick wins**, no app build: urgency levels, grouping by game, the right game in the Dynamic Island, instant follow for added games, sport-specific lines.
-2. **One app build through Xcode Cloud**, no Mac: Time Sensitive, tap opens the game, the three buttons, live-notification polish for Duo and StandBy.
+2. **One app build through Xcode Cloud**, no Mac: tap opens the game, the three buttons, live-notification polish for Duo and StandBy.
 3. **The new Notifications page**: Teams, Leagues and Recent alerts, right-thumb controls, same on Duo and iPhone.
 
 ## Part 1: Where notifications stand today
@@ -89,18 +89,18 @@ Slate 3.29.0 (TestFlight 3.29.0 (33)) already sends alerts through Apple and the
 
 ## Part 2a: Notification catalog
 
-The target is 13 events, each with one Apple interruption level picked by Apple's rule: Time Sensitive only for something happening now or within the hour, Active for scores people want when they arrive, Passive for things to read later ([Managing notifications](https://developer.apple.com/design/human-interface-guidelines/managing-notifications)). Every text is built from ESPN data and Slate's own free one-liners; no notification ever calls Claude.
+The target is 13 events, each with one Apple interruption level. By your decision, none is Time Sensitive, so nothing breaks through Focus: Active for alerts worth lighting the screen, Passive for things to read later ([Managing notifications](https://developer.apple.com/design/human-interface-guidelines/managing-notifications)). Every text is built from ESPN data and Slate's own free one-liners; no notification ever calls Claude. A new account starts with every alert off; the Default column is what a future first-run setup would suggest (decision 8).
 
 How the levels behave, per Apple: Passive goes to the list without lighting the screen; Active lights the screen and can play a sound; Time Sensitive also breaks through Focus and scheduled summaries; Critical also overrides the silent switch and needs a special entitlement, so Slate never uses it ([UNNotificationInterruptionLevel](https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel), [Managing notifications](https://developer.apple.com/design/human-interface-guidelines/managing-notifications)). iOS asks people the first time a Time Sensitive alert arrives and keeps checking that they still want them, so overusing it gets it switched off.
 
 | Event | Trigger | Who gets it by default | Default | Level | Example |
 | --- | --- | --- | --- | --- | --- |
 | Morning brief | Each profile's chosen hour (9 AM) | My slate, My teams, top national games | On | Passive | Sat 11/15: 6 games · 11 AM Davidson @ Dayton · 1:30 PM Boston College @ No. 5 Notre Dame |
-| Game starting | Start time, or 10 or 30 minutes before | My slate, My teams | On | Time Sensitive | Starting now: Boston College @ No. 5 Notre Dame on NBC |
+| Game starting | Start time, or 10 or 30 minutes before | My slate, My teams | On | Active | Starting now: Boston College @ No. 5 Notre Dame on NBC |
 | Live notification starts | The game goes live (target: 10 minutes before) | My slate | On | Comes with the live notification (Apple requires an alert on a server start) | BC @ ND · Live now: BC 0, ND 0 |
 | Score change | Every score | My teams, hockey and soccer only | Off | Active, or none when a live notification is showing (it updates in place) | Goal! Man United 2, Everton 1 · 67' |
-| Close finish | A one-score game in its last minutes | My slate, My teams | On | Time Sensitive | Close finish: Pistons 110, Knicks 112 · 4th 2:31 |
-| Overtime | Overtime or extra time starts | My slate, My teams | On | Time Sensitive | Overtime: Texas 31, Georgia 31 |
+| Close finish | A one-score game in its last minutes | My slate, My teams | On | Active; rides on the live notification when one is showing | Close finish: Pistons 110, Knicks 112 · 4th 2:31 |
+| Overtime | Overtime or extra time starts | My slate, My teams | On | Active; rides on the live notification when one is showing | Overtime: Texas 31, Georgia 31 |
 | Upset watch | A ranked college team trails late | Every ranked game, opt-in | Off | Active | Upset watch: No. 5 Notre Dame trails Boston College 24-17 · 4th 5:00 |
 | Big game starting (new) | Both teams ranked, or a national-TV game Slate ranks highly | Opt-in | Off | Active | Starting now: No. 3 Texas @ No. 7 Georgia on ABC |
 | Final | The game ends | My teams (on), My slate (off) | On | Active; Passive when a live notification already shows the final | Final: No. 5 Notre Dame 34, Boston College 10 |
@@ -111,7 +111,7 @@ How the levels behave, per Apple: Passive goes to the list without lighting the 
 
 Four rules sit on top of the table:
 
-- **One notification per moment.** Apple warns against sending several notifications for the same thing ([Notifications](https://developer.apple.com/design/human-interface-guidelines/notifications)). While a game's live notification is showing, it updates silently and Slate sends no separate score alert. Close finish and Overtime are the open question: as an alert on the live notification they'd light the screen and open the expanded Dynamic Island, but since 3.28.0 that update goes to everyone following the game on its channel, so it would skip each person's quiet hours and mutes. Recommended: keep them as regular per-person alerts (see Decisions; [ActivityKit push notifications](https://developer.apple.com/documentation/activitykit/starting-and-updating-live-activities-with-activitykit-push-notifications)).
+- **One notification per moment.** Apple warns against sending several notifications for the same thing ([Notifications](https://developer.apple.com/design/human-interface-guidelines/notifications)). While a game's live notification is showing, scores update it silently with no separate alert, and Close finish and Overtime ride on it as an alert: the screen lights and the expanded Dynamic Island opens, with no separate banner. That update reaches everyone following the game on its channel, by design: having the live notification on means you want that game's big moments (decision 11; [ActivityKit push notifications](https://developer.apple.com/documentation/activitykit/starting-and-updating-live-activities-with-activitykit-push-notifications)).
 - **Grouped by game.** thread-id becomes the game, so a game's starting, close-finish and final alerts stack together in Notification Center.
 - **Tap goes to the game.** Every alert carries the game's id; tapping opens its matchup, the same way the live notification does.
 - **Same catalog for everyone.** DJ, Drew and Dad each start from these defaults and change their own in Settings.
@@ -120,12 +120,12 @@ Four rules sit on top of the table:
 
 - **Banners stay iOS's.** Slate controls only the words: short title-case titles, no app name, full sentences in the body ([Notifications HIG](https://developer.apple.com/design/human-interface-guidelines/notifications)). With previews hidden, the body reads "Game update".
 - **Three buttons on touch and hold**, on Game starting, Close finish, Overtime, Upset watch and Big game starting. Apple allows up to four and says not to add one that only opens the app ([Notifications HIG](https://developer.apple.com/design/human-interface-guidelines/notifications)).
-  - **Watch on YouTube TV** opens tv.youtube.com/live, the same link Slate's watch buttons use today, which iOS hands to the YouTube TV app.
+  - **Watch on YouTube TV** is labeled with the channel ("Watch on NBC") and opens YouTube TV through tv.youtube.com/live, the link Slate's watch buttons use today. For a game YouTube TV doesn't carry, it names and opens that app instead ("Watch on Prime Video"), per decision 5.
   - **Live score** turns on that game's live notification.
   - **Mute this game** stops that game's alerts, the same as the gray bell.
 - **Web app.** Same words and the same tap-through to the game. I can't confirm from Apple or WebKit that buttons show on iOS web notifications, so the web gets none.
 
-> Mockup in the published readout: Lock Screen alerts grouped by game with Time Sensitive marks, and a held alert showing Watch on YouTube TV, Live score and Mute this game
+> Mockup in the published readout: Lock Screen alerts grouped by game, and a held Starting now alert with Watch on NBC, Live score and Mute this game
 
 ### Inside the app
 
@@ -138,7 +138,7 @@ Four rules sit on top of the table:
 
 The scorebug you picked stays the base everywhere: two team chips with the second-color stripe, big Archivo scores, the red clock, one line underneath. What changes by sport is that line and one small marker. Every field below comes from ESPN's free scoreboard, the same request the worker already makes once a minute. I checked them against today's live NFL, NBA and college basketball feeds and last week's Premier League results.
 
-Two things stay out because they're estimates: ESPN's win probability (it's in the feed, but it's ESPN's model) and Slate's own soccer xG.
+Slate's own soccer xG stays out because it's Slate's estimate. ESPN's win probability goes in, labeled as ESPN's ("ESPN win prob: KC 91%"), for football and basketball, from the same scoreboard request (decision 10).
 
 ### What each sport shows
 
@@ -153,14 +153,14 @@ Two things stay out because they're estimates: ESPN's win probability (it's in t
 
 Two I can't confirm yet. Hockey power play: no NHL game was live while I checked, and the scoreboard I pulled had no power-play field (the page gets it from play-by-play after a goal). Baseball bases, outs and count: the season is over, so there's no live game to check. Both get a reserved spot in the design and get built only after a live check.
 
-> Mockup in the published readout: Lock Screen live notification for each sport: NFL, college football, NBA, college basketball, NHL, soccer and MLB, using real ESPN scores
+> Mockup in the published readout: Lock Screen live notification for each sport (NFL, college football, NBA, college basketball, NHL, soccer, MLB) with real ESPN scores and ESPN win probability on football and basketball
 
 ### The four presentations
 
 - **Lock Screen.** 84 to 160 points tall on a regular iPhone; past 160, iOS may cut it off. Apple's standard margin is 14 points ([Live Activities HIG](https://developer.apple.com/design/human-interface-guidelines/live-activities), [Displaying live data](https://developer.apple.com/documentation/activitykit/displaying-live-data-with-live-activities)). The line wraps to two lines rather than cutting off (fixed after your Duo screenshot), so the tallest version is still under 160.
 - **Compact.** Chip and score on each side, snug against the camera. Apple's own example for this spot is two team logos and the score. Each side is 52.33 points wide on a 393-point iPhone.
 - **Minimal.** The split ring with both scores. Apple asks for live information here rather than a logo, which the ring does.
-- **Expanded.** The scorebug around the camera, 84 to 160 points tall. It pops open by itself only when an alert rides on the live notification update, which is a decision for you because channel updates reach everyone following the game.
+- **Expanded.** The scorebug around the camera, 84 to 160 points tall. It also pops open by itself on a Close finish or Overtime alert, which rides on the live notification (decision 11).
 
 Two small upgrades from Apple's guidance: scores should roll with a number transition when they change, and a live notification that hasn't heard from the server in 10 minutes should say so ("Updated 3:14") instead of looking current. Neither is in `ios/SlateLive/SlateLiveActivity.swift` today.
 
@@ -201,23 +201,22 @@ In StandBy the minimal view sits at the top, and a tap shows the Lock Screen vie
 
 ### After the final
 
-Apple's guidance is 15 to 30 minutes on the Lock Screen after the end, with 4 hours the most iOS allows ([Live Activities HIG](https://developer.apple.com/design/human-interface-guidelines/live-activities)). Slate keeps finals for the full 4 hours today. That's a choice for you in the Decisions list.
+Apple's guidance is 15 to 30 minutes on the Lock Screen after the end, with 4 hours the most iOS allows ([Live Activities HIG](https://developer.apple.com/design/human-interface-guidelines/live-activities)). Slate keeps finals for the full 4 hours today; the target is 1 hour (decision 2).
 
 ## Part 2c: Notification settings, per profile
 
-Each profile (you, Drew, Dad) gets the same page in the same order, saved under its own prefix as today. Apple requires an in-app place to change notification choices, and the system's own Time Sensitive switch lives in iOS Settings, so the page links there too ([Managing notifications](https://developer.apple.com/design/human-interface-guidelines/managing-notifications)).
+Each profile (you, Drew, Dad) gets the same page in the same order, saved under its own prefix as today. A new account starts with everything off until the person turns it on; a first-run setup flow comes later (decision 8). Apple requires an in-app place to change notification choices, and the page links to Slate's page in iOS Settings for the system switches ([Managing notifications](https://developer.apple.com/design/human-interface-guidelines/managing-notifications)).
 
 The page, top to bottom:
 
 1. **This phone.** Alerts allowed, Live notifications allowed, Frequent updates allowed, each with a fix-it link when off. Apple says to detect when someone turns off frequent updates and ask them to turn it back on ([ActivityKit push notifications](https://developer.apple.com/documentation/activitykit/starting-and-updating-live-activities-with-activitykit-push-notifications)).
-2. **Alerts.** The catalog's events as rows, each with one switch and, under it, the level in plain words: "Breaks through Focus" for Time Sensitive, "Silent, in the list" for Passive.
+2. **Alerts.** The catalog's events as rows, each with one switch and, under it, the level in plain words: "Lights the screen" for Active, "Silent, in the list" for Passive.
 3. **Teams.** Every team in My teams with a three-way control: All, Big moments, Off. Big moments means Game starting, Close finish, Overtime and Final. Each team also gets a Live notification switch for its games.
 4. **Leagues.** The same three-way control per league, for slate games you don't follow by team. Upset watch sits under the college leagues.
-5. **Live notifications.** Start for: My slate, My teams. Start: at kickoff or 10 minutes before. Use the Board when 3 or more games are live. Keep a final: 30 minutes or 4 hours.
-6. **Quiet hours.** Start, end and days, as today. One added switch, off by default: "Close finishes for my teams can come through."
-7. **Recent alerts.** The last 24 hours of what was sent, newest first, each tapping through to its game.
+5. **Live notifications.** Start for: My slate, My teams. Set by your decisions rather than switches: they start 10 minutes before kickoff, the Board takes over once 3 or more games are live, and a final stays 1 hour.
+6. **Recent alerts.** The last 24 hours of what was sent, newest first, each tapping through to its game.
 
-When settings disagree, the most specific wins: the game's own switches, then the team, then the league, then the event row. Quiet hours hold everything except what you let through.
+When settings disagree, the most specific wins: the game's own switches, then the team, then the league, then the event row. There are no quiet hours or day limits: the When section is removed (decision 9).
 
 Design rules this page follows:
 
@@ -284,6 +283,7 @@ Effort: S is about one session, M is two or three. Every step is built by Claude
 | Per-sport lines through the existing text line (both top scorers, NHL leaders, soccer last goal) | Same line for every sport | S | No |
 | Web push tap opens the game (`sw.js`) | Tap opens Slate wherever it was | S | No |
 | Remove `scripts/alerts.py`; fix "10-minute job" in `sw.js` | Leftovers | S | No |
+| Finals stay 1 hour; Board starts by itself at 3+ live games; Close finish and Overtime ride on the live notification; ESPN win probability in the live line | Decisions 2, 4, 10 and 11 | S | No |
 
 The per-sport lines ride the text field the app already shows, so current builds display them with no update.
 
@@ -291,8 +291,7 @@ The per-sport lines ride the text field the app already shows, so current builds
 
 | Step | Closes | Effort | Needs a Mac? |
 | --- | --- | --- | --- |
-| Time Sensitive: entitlement in `ios/Slate.entitlements`, turned on for the app at developer.apple.com | Every alert at one level | S | No; the developer site is a web page |
-| Tap opens the game; Watch on YouTube TV, Live score and Mute this game buttons | No tap-through, no buttons | M | No |
+| Tap opens the game; Watch (channel or app), Live score and Mute this game buttons | No tap-through, no buttons | M | No |
 | Report alert, live-notification and frequent-update permission to the page | "This phone" can't tell what's off | S | No |
 | Live notification polish: stale label, score roll, red-zone tint, timeout ticks, red-card mark, H and E columns, leading-only view at limited width, StandBy layout | Partial Duo and StandBy; missing sport markers | M | No; checking it needs your phones |
 | Quiet in-app banner while Slate is open | Full iOS banner over the app | S | No |
@@ -303,10 +302,10 @@ New live-notification fields stay optional so older builds keep working while Te
 
 | Step | Closes | Effort | Needs a Mac? |
 | --- | --- | --- | --- |
-| Teams and Leagues with All, Big, Off; Alerts rows with plain-word levels; quiet-hours exception | All-or-nothing My teams; no league control | M | No |
+| Teams and Leagues with All, Big, Off; Alerts rows with plain-word levels; remove quiet hours and days; everything off for new accounts | All-or-nothing My teams; no league control | M | No |
 | Recent alerts list | No history in the app | S | No |
 
-### Phase 4: speed, optional
+### Phase 4: speed (decided: 20-second updates)
 
 | Step | Closes | Effort | Needs a Mac? |
 | --- | --- | --- | --- |
@@ -319,19 +318,21 @@ New live-notification fields stay optional so older builds keep working while Te
 
 Nothing here needs a Mac. A Mac would only add iOS Simulator push tests, which Apple limits to Apple-silicon or T2 Macs ([ActivityKit push notifications](https://developer.apple.com/documentation/activitykit/starting-and-updating-live-activities-with-activitykit-push-notifications)), and Xcode's previews of Duo poses ([Designing for iPhone Duo](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo)). TestFlight on your Duo covers both, and `.github/workflows/ios.yml` already builds simulator screenshots for free.
 
-## Decisions for you
+## Decisions (answered Nov 15)
 
-1. **Time Sensitive** for Game starting, Close finish and Overtime only? My recommendation is yes; everything else stays Active or Passive.
-2. **How long a final stays** on the Lock Screen: 30 minutes (Apple's suggested range) or 4 hours (today)?
-3. **Start live notifications** at kickoff (today) or 10 minutes before?
-4. **Switch to the Board** automatically once 3 or more of your games are live?
-5. **Games YouTube TV doesn't carry** (Prime Video, Peacock or ESPN+ only): hide the Watch button, or open YouTube TV anyway?
-6. **App icon badge**: drop it and stop asking for badge permission (my recommendation), or count unread alerts?
-7. **Score speed**: stay at 1 minute, or build the free 20-second updates?
-8. **New alerts** (Big game starting, Game winner, Delayed or postponed): ship the first two off and the third on, as in the catalog?
-9. **Quiet hours**: let your teams' close finishes through, or hold everything?
-10. **Win probability** stays out because it's ESPN's estimate. Agree?
-11. **Close finish and Overtime**: a regular alert that respects each person's quiet hours and mutes (my recommendation), or an alert on the live notification that opens the Dynamic Island for everyone following the game on its broadcast channel?
+Your answers. Where anything above disagrees, these win.
+
+1. **Time Sensitive:** none. Every alert is Active or Passive, so nothing breaks through Focus, and no Time Sensitive entitlement is needed.
+2. **Finals** stay on the Lock Screen for 1 hour.
+3. **Live notifications start** 10 minutes before kickoff.
+4. **The Board starts by itself** once 3 or more of your games are live.
+5. **Buttons on regular alerts:** Watch (the game's channel in YouTube TV, or the streaming app for a game YouTube TV doesn't carry), Live score and Mute this game. Live notifications get no buttons. Tapping any alert or live notification opens the matchup in Slate.
+6. **App icon badge:** dropped, and Slate stops asking for badge permission.
+7. **Score speed:** build the free 20-second updates during live games.
+8. **Defaults:** nothing is on for a new account; every alert and live notification has to be turned on. A first-run setup flow comes later. Existing profiles keep what they've set.
+9. **Quiet hours and Days:** removed from Slate entirely.
+10. **ESPN win probability:** shown, labeled as ESPN's, for football and basketball.
+11. **Close finish and Overtime** ride on the live notification when it's showing, for everyone following that game. Having the live notification on counts as wanting that game's big moments.
 
 ## Sources
 
