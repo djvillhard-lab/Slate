@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.16.0 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Matchup page after the final: a Scoring timeline sits under Top performers. Football lists every TD and field goal; soccer lists every goal (scorer and assist, penalties and own goals marked); hockey lists every goal with its assists (power play, short-handed and empty net marked); baseball lists every scoring play. Each line shows the score after it. Basketball has none (too many baskets to be useful).
+- Live games get the same timeline for hockey, baseball and soccer (football already had it).
+- Box score after the final: each long player list shows its first few (basketball: the starters; football: the top 3; other sports: the top 5), with a "Show all N players" button to open the rest.
+- Top performers now include every touchdown and goal scorer, beyond the usual top four. Before, a fifth TD scorer (like Jordan Faison) or a defensive TD (like Jaylen Sneed's fumble return) could be left off. Return and defensive TDs say where they came from.
+- Finished group: when the slate is sorted by Time, finished games stay in time groups; the league dropdowns are only for the League sort.
+
 ## 3.15.2 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Finished group: each league's dropdown arrow now sits right next to its game count instead of at the far right.
