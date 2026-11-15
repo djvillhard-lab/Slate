@@ -25,4 +25,6 @@ struct SlateBoardGame: Codable, Hashable {
     var h: Int                // home score
     var d: String             // ESPN's "8:42 - 3rd", "Final", or the start time "7:30 PM"
     var s: String             // "pre", "in" or "post"
+    var p: String?            // football, live: who has the ball, "away" or "home" (3.25.0; optional, so older ones still decode)
+    var dd: String?           // football, live: ESPN's down and distance, "3rd & 4 at ILL 35"
 }

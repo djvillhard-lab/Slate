@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.25.0 (Nov 15, 2026)
+TestFlight: 3.0 (24)
+- Scoreboard live notification, new Lock Screen design: your four games in a 2×2 grid, one square each. Each square has both teams' chips (the same team colors and stripes as the app) with their scores, then the clock in red while live, "Final" (the losing side dimmed) or the start time. Live football also shows a small football next to the team with the ball, and the down and yardage line under the clock ("3rd & 4 · ILL 35"), updated as it changes. Tap a square for that game's matchup. Needs the new TestFlight build.
+
 ## 3.24.6 (Nov 15, 2026)
 TestFlight: 3.0 (23), no new build (web only)
 - Box scores are tighter: smaller player photos, less space above and below each player and between the stat columns, and smaller "Show all" buttons. Same text sizes.

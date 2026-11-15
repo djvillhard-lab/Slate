@@ -226,7 +226,9 @@ function boardGame(id, g, s) {
   const at = laAttrs(id, g, s), st = s.state === "in" || s.state === "post" ? s.state : "pre";
   const d = st === "pre" ? clock(new Date(s.start || g.start)) : st === "post" ? (s.detail || "Final") : (s.detail || "");
   return { id, aa: at.awayAbbr, ha: at.homeAbbr, ac: at.awayColor, hc: at.homeColor, ax: at.awayAlt, hx: at.homeAlt,
-    a: st === "pre" ? 0 : (s.a || 0), h: st === "pre" ? 0 : (s.h || 0), d: String(d).slice(0, 24), s: st };
+    a: st === "pre" ? 0 : (s.a || 0), h: st === "pre" ? 0 : (s.h || 0), d: String(d).slice(0, 24), s: st,
+    // live football (3.25.0): who has the ball and the down and yardage line, when ESPN reports them
+    ...(st === "in" && (s.po === "away" || s.po === "home") ? { p: s.po } : {}), ...(st === "in" && s.dd ? { dd: String(s.dd).slice(0, 32) } : {}) };
 }
 async function runBoard(env, p, sent, la, games, sc) {
   const b = (p.liveAct || {}).board || {}; let gone = false;
@@ -246,7 +248,7 @@ async function runBoard(env, p, sent, la, games, sc) {
   // (a token from after the switch-on belongs to the one the app just started itself: keep it)
   const fresh = tok && Date.parse(tok.at) >= at - 60000;
   if (cur && cur.end && at > (cur.t || 0)) { cur = sent.board = null; if (la.board && !fresh) { delete la.board; gone = true; tok = null; } }
-  const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}`).join("|"), scores = {};
+  const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}-${x.p || ""}-${x.dd || ""}`).join("|"), scores = {};
   for (const x of list) scores[x.id] = `${x.a}-${x.h}`;
   // the game the Dynamic Island shows on its own: the one that last scored, else the first one live
   let lead = cur && cur.lead ? list.findIndex((x) => x.id === cur.lead) : -1;
