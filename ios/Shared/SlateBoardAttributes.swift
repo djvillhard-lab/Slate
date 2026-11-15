@@ -7,7 +7,7 @@ import Foundation
 struct SlateBoardAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var games: [SlateBoardGame]
-        var lead: Int?        // the game that last scored: the one the Dynamic Island shows on its own
+        var lead: Int?        // before 3.30.0, the game that last scored; the Dynamic Island now works out its own game (BoardLook.lead)
     }
 
     var title: String         // "Your slate"
@@ -27,4 +27,7 @@ struct SlateBoardGame: Codable, Hashable {
     var s: String             // "pre", "in" or "post"
     var p: String?            // football, live: who has the ball, "away" or "home" (3.25.0; optional, so older ones still decode)
     var dd: String?           // football, live: ESPN's down and distance, "3rd & 4 at ILL 35"
+    var t: Double?            // 3.30.0: kickoff, seconds since 1970 (for the countdown before a game starts)
+    var tv: String?           // 3.30.0: the channel, shown beside the start time ("12:00 PM · CBS")
+    var c: Bool?              // 3.30.0: kickoff is within the hour, so the Dynamic Island counts down to it
 }

@@ -3,9 +3,10 @@ import SwiftUI
 import WidgetKit
 
 // The live scoreboard (3.23.0): up to four games you picked on the slate, in one live notification.
-// Lock Screen: the four games in a 2×2 grid (both chips and scores, the clock, "Final" or the start time, and for live
-// football who has the ball and the down); tapping a square opens that game's matchup. Dynamic Island: held open, the same rows; otherwise the game that last scored, as "Chips"
-// (or its split ring where iOS gives the island less width, like the iPhone Duo's side column).
+// 3.30.0, "Score line": on the Lock Screen and in the Dynamic Island held open, each game is one line in a 2×2 grid
+// ("KC 14 – 3 ATL") with the clock under it (red while live), "Final", or before kickoff "KC at ATL" with the start
+// time and channel; tapping a game opens its matchup. The Dynamic Island on its own shows your first pick, and once
+// that's final your next pick that's live: chips and scores, or before kickoff both chips and a countdown.
 struct SlateBoardActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: SlateBoardAttributes.self) { context in
@@ -29,19 +30,17 @@ struct SlateBoardActivity: Widget {
                         .padding(.trailing, 6)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(spacing: 5) {
-                        ForEach(Array(s.games.prefix(4)), id: \.id) { g in
-                            Link(destination: SlateLook.gameURL(g.id)) { BoardRow(g: g) }
-                        }
-                    }
-                    .padding(.horizontal, 4)
+                    BoardGrid(games: Array(s.games.prefix(4)), dark: true, gap: 5)
+                        .padding(.horizontal, 2)
                 }
             } compactLeading: {
                 if let g = lead { BoardSide(g: g, leading: true) }
             } compactTrailing: {
                 if let g = lead { BoardSide(g: g, leading: false) }
             } minimal: {
-                if let g = lead { MiniScore(a: g.a, h: g.h) }
+                if let g = lead {
+                    if BoardLook.pre(g) { BoardKickoff(g: g, size: 10, width: 30) } else { MiniScore(a: g.a, h: g.h) }
+                }
             }
             .widgetURL(SlateLook.slateURL)
         }
@@ -68,117 +67,148 @@ enum BoardLook {
         return !s.games.isEmpty && s.games.allSatisfy({ $0.s == "post" }) ? "Final" : ""
     }
 
-    // the game the Dynamic Island shows on its own: the one that last scored, else the first one live, else the first
+    // the game the Dynamic Island shows on its own (3.30.0): your first pick until it's final, then your next pick
+    // that's live, else your next one still to start
     static func lead(_ s: SlateBoardAttributes.ContentState) -> SlateBoardGame? {
-        if let i = s.lead, s.games.indices.contains(i) { return s.games[i] }
-        return s.games.first(where: { $0.s == "in" }) ?? s.games.first
+        guard let first = s.games.first else { return nil }
+        if first.s != "post" { return first }
+        return s.games.first(where: { $0.s == "in" }) ?? s.games.first(where: { $0.s != "post" }) ?? first
+    }
+
+    static func pre(_ g: SlateBoardGame) -> Bool { g.s != "in" && g.s != "post" }
+
+    // under a game's score: the clock, "Final", or before kickoff the start time and channel ("12:00 PM · CBS")
+    static func under(_ g: SlateBoardGame) -> String {
+        if pre(g), let tv = g.tv, !tv.isEmpty, !g.d.isEmpty { return g.d + " · " + tv }
+        return clock(g)
+    }
+
+    // kickoff, when the server says it's within the hour: what the Dynamic Island counts down to
+    static func kickoff(_ g: SlateBoardGame) -> Date? {
+        guard pre(g), g.c == true, let t = g.t, t > 0 else { return nil }
+        return Date(timeIntervalSince1970: t)
+    }
+
+    static func spoken(_ g: SlateBoardGame) -> String {
+        pre(g) ? "\(g.aa) at \(g.ha), \(under(g))" : "\(g.aa) \(g.a), \(g.ha) \(g.h), \(clock(g))"
     }
 }
 
-// Lock Screen (3.25.0): the four games in a 2×2 grid, each in its own square: both team chips (the app's colors)
-// with their scores, then the clock (red while live), "Final" or the start time; a live football game also shows
-// who has the ball and the down and yardage line. Tap a square for that game's matchup.
+// Lock Screen (3.30.0, "Score line"): the games in a 2×2 grid, one line each. Tap a game for its matchup.
 private struct BoardCard: View {
     let s: SlateBoardAttributes.ContentState
 
     var body: some View {
-        let games = Array(s.games.prefix(4))
-        let cols = [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)]
-        LazyVGrid(columns: games.count == 1 ? [GridItem(.flexible())] : cols, spacing: 6) {
-            ForEach(games, id: \.id) { g in
-                Link(destination: SlateLook.gameURL(g.id)) { BoardSquare(g: g) }
-            }
-        }
-        .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
-        .foregroundStyle(SlateLook.ink)
+        BoardGrid(games: Array(s.games.prefix(4)), dark: false, gap: 6)
+            .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
+            .foregroundStyle(SlateLook.ink)
     }
 }
 
-private struct BoardSquare: View {
-    let g: SlateBoardGame
+private struct BoardGrid: View {
+    let games: [SlateBoardGame]
+    let dark: Bool
+    let gap: CGFloat
 
     var body: some View {
-        let pre = g.s != "in" && g.s != "post", fin = g.s == "post", live = g.s == "in"
-        VStack(alignment: .leading, spacing: 2) {
-            BoardTeam(abbr: g.aa, color: g.ac, alt: g.ax, score: pre ? nil : g.a, ball: live && g.p == "away", dim: fin && g.a < g.h)
-            BoardTeam(abbr: g.ha, color: g.hc, alt: g.hx, score: pre ? nil : g.h, ball: live && g.p == "home", dim: fin && g.h < g.a)
-            Text(BoardLook.clock(g))
-                .font(SlateLook.num(13))
-                .foregroundStyle(live ? SlateLook.live : fin ? SlateLook.ink : SlateLook.muted)
-                .lineLimit(1)
-                .padding(.top, 1)
-            // football: the down and the yardage line, while ESPN reports one
-            if live, let dd = g.dd, !dd.isEmpty {
-                Text(BoardLook.down(dd))
-                    .font(SlateLook.semi(11))
-                    .foregroundStyle(SlateLook.muted)
+        let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
+        LazyVGrid(columns: games.count == 1 ? [GridItem(.flexible())] : cols, spacing: gap) {
+            ForEach(games, id: \.id) { g in
+                Link(destination: SlateLook.gameURL(g.id)) { BoardLine(g: g, dark: dark) }
+            }
+        }
+    }
+}
+
+// one game: "KC 14 – 3 ATL" (the loser dimmed once it's final), or "KC at ATL" before kickoff; under it the clock
+// with a red dot while it's being played, "Final", or the start time and channel
+private struct BoardLine: View {
+    let g: SlateBoardGame
+    let dark: Bool
+
+    var body: some View {
+        let pre = BoardLook.pre(g), fin = g.s == "post", live = g.s == "in"
+        let under = BoardLook.under(g), playing = live && !under.lowercased().contains("half")
+        VStack(spacing: 3) {
+            HStack(spacing: 6) {
+                Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 34, height: 18, size: 10, stripe: 2, radius: 3)
+                    .opacity(fin && g.a < g.h ? 0.5 : 1)
+                if pre {
+                    Text("at").font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted)
+                } else {
+                    Text("\(g.a)").font(SlateLook.num(21)).opacity(fin && g.a < g.h ? 0.5 : 1)
+                    Text("–").font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted)
+                    Text("\(g.h)").font(SlateLook.num(21)).opacity(fin && g.h < g.a ? 0.5 : 1)
+                }
+                Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 34, height: 18, size: 10, stripe: 2, radius: 3)
+                    .opacity(fin && g.h < g.a ? 0.5 : 1)
+            }
+            .lineLimit(1)
+            .frame(height: 22)
+            HStack(spacing: 4) {
+                if playing { Circle().fill(SlateLook.live).frame(width: 5, height: 5) }
+                Text(under)
+                    .font(SlateLook.num(11))
+                    .foregroundStyle(live ? SlateLook.live : fin ? SlateLook.ink : SlateLook.muted)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
         }
-        .padding(EdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8))
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SlateLook.raise, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .foregroundStyle(SlateLook.ink)
+        .padding(EdgeInsets(top: 7, leading: 6, bottom: 6, trailing: 6))
+        .frame(maxWidth: .infinity)
+        .background(dark ? Color.white.opacity(0.09) : SlateLook.raise, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(BoardLook.spoken(g)))
     }
 }
 
-// one team in a square: its chip, the football when it has the ball, its score at the right
-private struct BoardTeam: View {
-    let abbr: String, color: String, alt: String?
-    let score: Int?
-    let ball: Bool
-    let dim: Bool
+// before kickoff, in the Dynamic Island: a countdown to the start once it's within the hour (it ticks on the phone,
+// no update needed); earlier than that, the start time
+private struct BoardKickoff: View {
+    let g: SlateBoardGame
+    let size: CGFloat
+    let width: CGFloat
 
     var body: some View {
-        HStack(spacing: 5) {
-            Chip(abbr: abbr, color: color, alt: alt, width: 38, height: 19, size: 11, stripe: 2, radius: 3)
-            if ball {
-                Image(systemName: "football.fill")
-                    .font(.system(size: 9))
-                    .foregroundStyle(SlateLook.muted)
-                    .accessibilityLabel("has the ball")
-            }
-            Spacer(minLength: 2)
-            if let score {
-                Text("\(score)").font(SlateLook.num(19)).lineLimit(1)
-            }
+        if let k = BoardLook.kickoff(g) {
+            let now = Date()
+            Text(timerInterval: min(now, k)...k, countsDown: true)
+                .font(SlateLook.num(size))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(width: width)
+                .accessibilityLabel(Text("Starts at \(g.d)"))
+        } else {
+            Text(g.d.replacingOccurrences(of: " PM", with: "").replacingOccurrences(of: " AM", with: ""))
+                .font(SlateLook.num(size))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(maxWidth: width)
+                .accessibilityLabel(Text("Starts at \(g.d)"))
         }
-        .frame(height: 20)
-        .opacity(dim ? 0.5 : 1)
     }
 }
 
-// one game: away chip and score, home score and chip, then the clock (red while live), "Final" or the start time
-private struct BoardRow: View {
+// before kickoff where the island is narrow (iPhone Duo's side column): the countdown inside a ring in the two teams' colors
+private struct BoardKickoffRing: View {
     let g: SlateBoardGame
 
     var body: some View {
-        let pre = g.s != "in" && g.s != "post", fin = g.s == "post"
-        HStack(spacing: 8) {
-            Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 36, height: 20, size: 11, stripe: 2, radius: 3)
-            Text(pre ? "" : "\(g.a)")
-                .font(SlateLook.num(20))
-                .frame(width: 30, alignment: .trailing)
-                .opacity(fin && g.a < g.h ? 0.5 : 1)
-            Text(pre ? "at" : "–")
-                .font(SlateLook.semi(12))
-                .foregroundStyle(SlateLook.muted)
-            Text(pre ? "" : "\(g.h)")
-                .font(SlateLook.num(20))
-                .frame(width: 30, alignment: .leading)
-                .opacity(fin && g.h < g.a ? 0.5 : 1)
-            Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 36, height: 20, size: 11, stripe: 2, radius: 3)
-            Spacer(minLength: 6)
-            Text(BoardLook.clock(g))
-                .font(SlateLook.num(14))
-                .foregroundStyle(g.s == "in" ? SlateLook.live : fin ? SlateLook.ink : SlateLook.muted)
-                .lineLimit(1)
+        ZStack {
+            Circle().trim(from: 0.5, to: 1).stroke(SlateLook.visible(g.ac), lineWidth: 2).rotationEffect(.degrees(-90))
+            Circle().trim(from: 0, to: 0.5).stroke(SlateLook.visible(g.hc), lineWidth: 2).rotationEffect(.degrees(-90))
+            BoardKickoff(g: g, size: 9, width: 22)
         }
-        .frame(height: 22)
+        .padding(1)
+        .frame(width: 28, height: 28)
     }
 }
 
-// the Dynamic Island with one game showing: its chips and scores beside the camera, or its split ring where narrow
+// the Dynamic Island with one game showing: its chips and scores beside the camera, or mini chips where narrow; before kickoff, a countdown
 private struct BoardSide: View {
     let g: SlateBoardGame
     let leading: Bool
@@ -201,6 +231,9 @@ private struct BoardNarrowAwareSide: View {
     var body: some View {
         if !narrow {
             BoardChips(g: g, leading: leading)
+        } else if BoardLook.pre(g) {
+            // leading side only; iOS hides the empty trailing side
+            if leading { BoardKickoffRing(g: g) }
         } else if leading {
             MiniSide(abbr: g.aa, color: g.ac, alt: g.ax, score: g.a, leading: true)
         } else {
@@ -214,13 +247,25 @@ private struct BoardChips: View {
     let leading: Bool
 
     var body: some View {
-        HStack(spacing: 5) {
+        if BoardLook.pre(g) {
+            // before kickoff: both chips left of the camera, the countdown (or start time) right of it
             if leading {
-                Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
-                Text("\(g.a)").font(SlateLook.num(15)).foregroundStyle(.white)
+                HStack(spacing: 3) {
+                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                }
             } else {
-                Text("\(g.h)").font(SlateLook.num(15)).foregroundStyle(.white)
-                Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                BoardKickoff(g: g, size: 15, width: 46)
+            }
+        } else {
+            HStack(spacing: 5) {
+                if leading {
+                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                    Text("\(g.a)").font(SlateLook.num(15)).foregroundStyle(.white)
+                } else {
+                    Text("\(g.h)").font(SlateLook.num(15)).foregroundStyle(.white)
+                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                }
             }
         }
     }

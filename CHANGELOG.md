@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.30.0 (Nov 15, 2026)
+TestFlight: 3.30.0 (34)
+- The live scoreboard has a new look, "Score line": on the Lock Screen and in the Dynamic Island held open, each of your picks is one line ("KC 14 – 3 ATL") with the clock under it, red with a dot while it's being played. A final stays in its spot with the loser dimmed. Before kickoff a game reads "KC at ATL" with its start time and channel. Games stay in the order you picked them; tap one for its matchup.
+- The Dynamic Island on its own now shows your first pick (it used to follow whichever game scored last). Once your first pick is final, it moves to your next pick that's live.
+- Before kickoff the Dynamic Island no longer shows 0–0: it shows both team chips and a countdown to the start (the start time when that's more than an hour away). On iPhone Duo the countdown sits inside a ring in the two teams' colors. The countdown runs on the phone itself.
+- The new look needs the new TestFlight build; the build before it keeps the old scoreboard.
+
 ## 3.29.4 (Nov 15, 2026)
 TestFlight: 3.29.0 (33), no new build (web only)
 - Worth a look: a game that finishes while it's showing keeps its reason in the tag, now "Upset watch · Final" (or "Close finish · Final") instead of just "Final", for the 10 minutes it stays before it drops off.
