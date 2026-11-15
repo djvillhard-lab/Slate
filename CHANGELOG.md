@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.29.1 (Nov 15, 2026)
+TestFlight: 3.29.0 (33), no new build (web only)
+- Fixed: live games on the slate (and in Worth a look) showed their start time beside the red clock. The clock sits where the start time was again, and live games no longer show the start time (the slate's time groups already say it).
+- Tap anywhere on a matchup card to open or close its quick look: the team rows, the clock, the one-liner, the corner tag. Only the channel links and the bell do their own thing.
+- The bell moved to the card's bottom right corner (hidden while the quick look is open, where the Live notification and Game alerts switches are).
+
 ## 3.29.0 (Nov 15, 2026)
 TestFlight: 3.29.0 (33)
 - TestFlight now shows Slate's own version before the build number ("3.29.0 (33)" instead of "3.0 (32)"): each build takes the web app's version number when it's made. Earlier entries keep the "3.0 (N)" they were built as. (The build numbers in this history from 3.23.1 on are corrected to match TestFlight: build 3.28.1 is 32.)
