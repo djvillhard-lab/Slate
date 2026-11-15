@@ -1,0 +1,3 @@
+# built by build.py from src/: edit src/, not these
+index.html linguist-generated=true -diff
+version.json linguist-generated=true

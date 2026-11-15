@@ -93,7 +93,7 @@ Slate has four parts. Each one does a single job.
 ```
 
 ### 1. The app (this repo, hosted on Cloudflare)
-`index.html` is the whole app: one self-contained page you add to the Home Screen. It reads everything from Supabase and gets live updates as documents change. It talks to ESPN directly for the things that change by the second: live scores, box scores, win chances and team pages. `sw.js` keeps a copy of the app on the phone so it opens instantly and offline. `version.json` lets an open app notice a new version and reload onto it.
+`index.html` is the whole app: one self-contained page you add to the Home Screen, built from `src/` by `build.py` (one source file per page; see CLAUDE.md for the map). It reads everything from Supabase and gets live updates as documents change. It talks to ESPN directly for the things that change by the second: live scores, box scores, win chances and team pages. `sw.js` keeps a copy of the app on the phone so it opens instantly and offline. `version.json` lets an open app notice a new version and reload onto it.
 
 ### 2. Supabase (the data)
 A single `docs` table holds JSON documents, one per path:
@@ -128,6 +128,6 @@ It runs from `.github/workflows/tick.yml` and needs one repository secret, `SUPA
 - **Alerts (hourly):** reads your slate and scores, and pushes reminders, finals, upset watch and the morning brief to your phone.
 
 ### Updating the app
-`index.html` is built from the app's source plus a small layer (`supabase.js` and a shim) that connects it to Supabase. After a change, the new `index.html` and `version.json` are pushed here. Cloudflare picks up each push and publishes it to https://slate.djvillhard.workers.dev within about a minute, and open apps reload onto the new version by themselves. Settings → **Update now** forces it if a phone is holding an old copy. (GitHub Pages was the old host; it stopped publishing reliably, so it is no longer used.)
+The app's source is in `src/`: the page skeleton (`shell.html`), the markup, the styles, and the app's code split into one file per page (`src/app/`), plus a small shim that connects it to Supabase through `supabase.js`. `python3 build.py` joins them into `index.html`, embeds CHANGELOG.md for Settings → Release history, and stamps the same build time into `index.html` and `version.json`. Never edit `index.html` directly: the next build would undo it (build.py notices and stops). After a change, the new `index.html` and `version.json` are pushed here. Cloudflare picks up each push and publishes it to https://slate.djvillhard.workers.dev within about a minute, and open apps reload onto the new version by themselves. Settings → **Update now** forces it if a phone is holding an old copy. (GitHub Pages was the old host; it stopped publishing reliably, so it is no longer used.)
 
 > GitHub pauses scheduled scripts after 60 days with no changes to the repo. Any push restarts the clock.

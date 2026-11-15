@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.30.1 (Nov 15, 2026)
+TestFlight: 3.30.0 (34), no new build (web only)
+- Fixed: since 3.30.0, open copies of Slate kept reloading themselves every couple of minutes (the page and version.json carried different build times). Both now come from one build step, so they always match.
+- Behind the scenes: the app's code is split into one file per page in src/ (the slate, All games, a matchup, Teams, Box Office, News, On TV, Settings…), and build.py puts index.html back together. The phone still loads one page, so nothing looks or works differently. Each Claude chat now reads only the page it's changing, which uses less of DJ's usage and lets several chats work on different pages at once. CLAUDE.md in the repo is the brief every chat starts from.
+
 ## 3.30.0 (Nov 15, 2026)
 TestFlight: 3.30.0 (34)
 - The live scoreboard has a new look, "Score line": on the Lock Screen and in the Dynamic Island held open, each of your picks is one line ("KC 14 – 3 ATL") with the clock under it, red with a dot while it's being played. A final stays in its spot with the loser dimmed. Before kickoff a game reads "KC at ATL" with its start time and channel. Games stay in the order you picked them; tap one for its matchup.

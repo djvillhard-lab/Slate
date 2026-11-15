@@ -1,0 +1,168 @@
+/* ---------- iPhone Duo, unfolded: two panes split at the fold ---------- */
+:root { --hinge: 34px; --z: 1; --fold-shift: 0px; }
+.hinge { display: none; }
+html.duo, html.duo body { height: 100%; overflow: hidden; }
+html.duo .app { display: grid; grid-template-columns: calc(50% - var(--hinge) / 2 + var(--fold-shift)) var(--hinge) minmax(0, 1fr); height: 100vh; height: 100dvh; }
+html.short-fix.duo .app { bottom: auto !important; height: var(--app-h) !important; }
+html.short-fix body { min-height: var(--app-h); }
+/* unfolded: pin the two panes to the screen's edges, so a stale height after rotating or coming back can't leave a gap at the bottom */
+html.duo .app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: auto !important; }
+html.duo .pane { height: 100%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; min-width: 0; }
+html.duo .hinge { display: block; position: relative; }
+html.duo .hinge::after { content: ""; position: absolute; top: 18px; bottom: 18px; left: 50%; width: 1px; margin-left: -.4px; background: var(--line); }
+header.top, main.wrap, .pbody { zoom: var(--z); }
+html.duo .top-inner { max-width: 680px; }
+html.duo main.wrap { max-width: 680px; padding: 4px 16px 120px; }
+html.duo .pbody { max-width: 680px; margin: 0 auto; padding: 4px 16px 40px; }
+html.duo .toprow { display: grid; grid-template-columns: 1fr auto 1fr; padding: 12px 16px 8px; }
+html.duo .toprow .pillgroup { justify-self: end; }
+html.duo .pane-r .pillgroup { display: none; }
+html.duo .pane-r .title { grid-column: 2; }
+html.duo nav.dock { left: calc(50% + var(--hinge) / 2 + var(--fold-shift)); bottom: 12px; }
+html.duo .dock-inner { padding: 0 16px; }
+html.duo .toast { left: calc(75% + var(--fold-shift) / 2); bottom: 96px; }
+html.duo .sheet-backdrop { justify-content: flex-end; }
+html.duo .sheet { width: calc(50% - var(--hinge) / 2 - var(--fold-shift)); max-width: none; border-radius: 22px 22px 0 0; }
+html.duo .slot:first-child { margin-top: 16px; }
+/* ---------- folded (cover screen, either way up): compact icon menu tucked into the bottom-right corner,
+   so every button is under the right thumb. Settings stays on the ☰ button at the top. ---------- */
+html.corner nav.dock { left: auto; right: 4px; bottom: 8px; }
+html.corner .dock-inner { max-width: none; margin: 0; padding: 0; gap: 4px; justify-content: flex-end; align-items: center; }
+html.corner .pillnav { flex: none; height: 56px; padding: 4px; gap: 2px; }
+html.corner .navbtn { flex: none; width: 50px; height: 46px; }
+html.corner .navbtn svg { width: 24px; height: 24px; }
+html.corner .navbtn span { display: none; }
+html.corner .navbtn .dot { top: 0; right: 0; }
+html.corner #nav-settings { display: none; }
+html.corner .searchbtn { width: 56px; height: 56px; }
+html.corner .toast { left: auto; right: 12px; transform: none; bottom: 76px; }
+html.corner main.wrap { padding-bottom: 88px; }
+/* open and upright: the same corner menu, a little bigger and with labels */
+html.corner.roomy nav.dock { right: 10px; bottom: 10px; }
+html.corner.roomy .pillnav { height: 64px; padding: 4px; }
+html.corner.roomy .navbtn { width: 68px; height: 54px; }
+html.corner.roomy .navbtn span { display: block; font-size: 11px; }
+html.corner.roomy .navbtn .dot { top: 1px; right: 6px; }
+html.corner.roomy .searchbtn { width: 64px; height: 64px; }
+html.corner.roomy .toast { bottom: 88px; }
+html.corner.roomy main.wrap { padding-bottom: 96px; }
+/* narrow cards (cover screen with the side menu): time and channel move under the teams */
+.cards, .slot .stack { container-type: inline-size; }
+@container (max-width: 340px) {
+  .card { grid-template-columns: minmax(0, 1fr) 44px; row-gap: 8px; column-gap: 8px; padding: 12px 12px; }
+  .card .sides { grid-column: 1; grid-row: 1; }
+  .card .info { grid-column: 1; grid-row: 2; display: flex !important; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; justify-content: flex-start; text-align: left; max-width: none; padding-left: 48px; }
+  .card .info .time { font-size: 16px; }
+  .card .info .net, .card .info .sub { font-size: 15px; }
+  .card .pick { grid-column: 2; grid-row: 1 / span 2; }
+  .side, .lrow .side { grid-template-columns: 34px minmax(0, 1fr); gap: 8px; }
+  .side.has-score { grid-template-columns: 34px minmax(0, 1fr) auto; }
+  .badge { width: 34px; height: 34px; font-size: 11px; }
+  .badge.sm { font-size: 11px; }
+  .lcard .teams { padding: 12px 12px 12px; }
+  .lfoot { padding: 12px 12px 12px; }
+  .lmeta { padding: 0 12px 12px; }
+}
+@media (horizontal-viewport-segments: 2) {
+  :root { --hinge: max(34px, calc(env(viewport-segment-left 1 0, 0px) - env(viewport-segment-right 0 0, 0px) + 24px)); }
+}
+
+/* =====================================================================
+   Scorebug redesign: sharp, clean, broadcast.
+   Navy night base; one family (Archivo) at two widths: condensed heavy numerals for times and scores,
+   expanded heavy for titles. Team colour chips with an alternate-colour stripe, like a TV scorebug.
+   Content is sharp (4-10px); only the floating menu is soft glass. Red means live; the accent means selected.
+   ===================================================================== */
+:root {
+  --bg: #131A24; --card: #1A2330; --raise: #222D3C; --line: #2C394B; --hair: rgba(148,163,184,.15);
+  --ink: #EAF0F7; --muted: #94A3B8; --dim: #66758A; --head: #CBD5E1;
+  --nav-sel: #2C394B; --shadow: rgba(2,6,12,.5); --live: #FF5B4E;
+  --glass: rgba(28,38,52,.64); --glass-line: rgba(255,255,255,.10);
+  --font: "Archivo", -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", Arial, sans-serif;
+}
+:root[data-look="black"] { --bg: #000; --card: #0C0C0E; --raise: #17171A; --line: #26262B; --hair: rgba(255,255,255,.10); --ink: #F2F2F2; --muted: #9B9BA3; --dim: #66666E; --nav-sel: #2A2A30; --glass: rgba(26,26,30,.64); }
+:root[data-look="light"] { --bg: #F2F4F7; --card: #FFFFFF; --raise: #E9EDF2; --line: #D5DCE5; --hair: rgba(15,23,42,.10); --ink: #0F172A; --muted: #55627A; --dim: #8A94A6; --head: #334155; --nav-sel: #DCE3EC; --live: #D92D20; --glass: rgba(255,255,255,.7); --glass-line: rgba(15,23,42,.08); --shadow: rgba(15,23,42,.14); }
+body { font-family: var(--font); letter-spacing: 0; }
+
+/* header: left-aligned wide title, compact square controls */
+.toprow { display: flex; align-items: center; gap: 8px; padding: 16px 16px 12px; }
+.toprow > .round { order: 3; width: 40px; height: 40px; border: 0; border-radius: 8px; background: var(--raise); }
+.toprow > .title { order: 1; flex: 1; text-align: left; }
+.toprow > .pillgroup { order: 2; margin-left: auto; height: 40px; padding: 0; gap: 0; border: 0; border-radius: 8px; background: var(--raise); }
+.toprow > .pillgroup button { width: 42px; height: 40px; border-radius: 8px; }
+.toprow svg { width: 19px !important; height: 19px !important; }
+.title .t { font-size: 28px; font-weight: 800; font-stretch: 118%; letter-spacing: -.015em; line-height: 1.05; }
+.title .d { display: flex; align-items: center; gap: 0; margin-top: 3px; }
+.title .d span { order: 1; font-size: 15px; font-weight: 700; color: var(--muted); }
+.title .d button { order: 2; width: 30px; height: 26px; font-size: 22px; color: var(--muted); }
+.title .d button:last-child { order: 3; }
+html.duo .toprow { display: flex; padding: 16px 16px 12px; }
+html.duo .pane-r .title { grid-column: auto; }
+.phead .toprow > span:first-child { display: none; }
+
+/* league tabs, conference chips, day picker */
+.strip { gap: 16px; padding: 2px 16px 0; border-bottom: 1px solid var(--hair); }
+.lg-tab { font-size: 16px; font-weight: 800; font-stretch: 112%; color: var(--muted); padding: 8px 0 12px; }
+.lg-tab[aria-pressed="true"] { color: var(--ink); }
+.lg-tab[aria-pressed="true"]::after { left: 0; right: 0; bottom: 0; width: auto; height: 3px; margin: 0; border-radius: 4px 4px 0 0; background: var(--accent-fill); }
+.substrip { gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--hair); }
+.cf-tab { flex: none; font-size: 15px; font-weight: 700; color: var(--muted); padding: 8px 12px; border-radius: 8px; background: var(--raise); }
+.cf-tab[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.dates { gap: 4px; padding: 12px 16px; border-bottom: 1px solid var(--hair); }
+.day { flex: 1 0 56px; padding: 8px 2px 8px; border-radius: 8px; background: var(--card); }
+.day .d { font-size: 13px; font-weight: 700; color: var(--muted); }
+.day .w { font-size: 16px; font-weight: 800; font-stretch: 92%; color: var(--ink); margin-top: 1px; }
+.day[aria-pressed="true"] { background: var(--ink); }
+.day[aria-pressed="true"] .d, .day[aria-pressed="true"] .w { color: var(--bg); }
+
+/* section headers */
+.sec { margin: 24px 0 8px; align-items: baseline; }
+.sec h2 { font-size: 15px; font-weight: 800; font-stretch: 115%; color: var(--ink); letter-spacing: .005em; }
+.count { font-size: 13px; font-weight: 700; color: var(--dim); }
+.hint { font-size: 15px; }
+
+/* team chip (replaces the round badge everywhere): team colour, alternate colour stripe */
+.badge { width: 42px; height: 24px; border-radius: 4px; font-size: 13px; font-weight: 800; font-stretch: 78%; letter-spacing: .02em; box-shadow: inset 0 -3px 0 var(--ring, transparent); }
+.badge.sm { font-size: 11px; }
+
+/* the game strip, used by Lineup, Games and On TV */
+.glist { border-top: 1px solid var(--hair); }
+.g { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; column-gap: 12px; align-items: start; width: 100%; padding: 12px 0 12px; border-bottom: 1px solid var(--hair); text-align: left; color: var(--ink); }
+.g.cont { border-top: 0; }
+.g.over { opacity: .5; }
+.g-time { padding-top: 1px; min-height: 1px; }
+.g-time b { display: block; font-size: 22px; font-weight: 800; font-stretch: 66%; line-height: 1; font-variant-numeric: tabular-nums; }
+.g-time i { display: block; margin-top: 3px; font-style: normal; font-size: 13px; font-weight: 700; color: var(--muted); }
+.g-main { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.g-info { min-width: 0; overflow: hidden; }
+.g-main[role="button"] { cursor: pointer; }
+.tm { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; column-gap: 8px; align-items: center; min-height: 24px; }
+.tm .nmw { min-width: 0; display: flex; align-items: baseline; gap: 4px; }
+.tm .rk { font-size: 13px; font-weight: 800; font-stretch: 80%; color: var(--muted); }
+.tm .nm { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm .rec { flex: none; font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.tm .fv { flex: none; width: 12px; height: 12px; color: var(--accent); align-self: center; }
+.tm .sc { font-size: 22px; font-weight: 800; font-stretch: 66%; line-height: 1; min-width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
+.tm.lose .sc { color: var(--muted); }
+.g-info { display: flex; align-items: center; flex-wrap: nowrap; gap: 8px; min-height: 26px; padding-left: 48px; font-size: 13px; color: var(--muted); }
+.g-info > * { flex: none; }
+.g-info .note { flex: 0 10 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-info .nets { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; }
+.nets .net { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.bug { flex: none; font-size: 13px; font-weight: 800; font-stretch: 88%; padding: 3px 8px 2px; border-radius: 4px; background: var(--raise); color: var(--ink); }
+.bug.live { background: var(--live); color: #fff; }
+.g-info .det { font-weight: 700; color: var(--ink); }
+.g-info .cd { font-weight: 700; }
+.nets { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.net { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: 4px; border: 1px solid var(--line); font-size: 13px; font-weight: 800; font-stretch: 92%; color: var(--ink); text-decoration: none; white-space: nowrap; }
+a.net::before, button.net::before { content: ""; border-left: 7px solid var(--accent); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
+span.net { border-color: transparent; padding: 0; color: var(--head); font-weight: 700; }
+.add { width: 40px; height: 40px; margin-top: 4px; border-radius: 8px; border: 1.5px solid var(--line); display: grid; place-items: center; color: var(--muted); }
+.add.on { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+.add svg { width: 17px; height: 17px; }
+.tray { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 2px 48px; }
+.tray button { height: 36px; padding: 0 12px; border-radius: 8px; background: var(--raise); font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.tray svg { width: 15px; height: 15px; }
+.tray .on svg { color: var(--accent); }
+.tray .rm svg { color: var(--muted); }
+

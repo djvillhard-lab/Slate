@@ -4,3 +4,7 @@ scripts
 wrangler.jsonc
 README.md
 .git
+src
+build.py
+CLAUDE.md
+__pycache__

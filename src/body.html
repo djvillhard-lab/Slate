@@ -1,0 +1,364 @@
+<div class="app" id="app">
+<div class="pane pane-l" id="pane-l" hidden>
+  <header class="top phead">
+    <div class="top-inner">
+      <div class="toprow lineup-top">
+        <span></span>
+        <div class="title has-brand">
+          <svg class="brand" id="brand-l" viewBox="0 0 570 725" aria-hidden="true"><rect x="400" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.35"/><rect x="200" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.41"/><rect x="0" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.48"/><rect x="0" y="150" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.54"/><rect x="0" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.61"/><rect x="200" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.68"/><rect x="400" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.74"/><rect x="400" y="450" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.80"/><rect x="400" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.87"/><rect x="200" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.94"/><rect x="0" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="1.00"/></svg>
+          <div class="t" id="l-title-t">Tonight's Slate</div>
+          <div class="d">
+            <button id="l-day-prev" type="button" aria-label="Previous day">‹</button>
+            <label class="dpick"><span id="l-day-label"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16V20H4zM4 10.5h16M8.5 4v4M15.5 4v4"/></svg><input type="date" id="l-day-input" aria-label="Pick a date"></label>
+            <button id="l-day-next" type="button" aria-label="Next day">›</button>
+            <button class="today-btn" id="l-day-today" type="button" hidden>Today</button>
+          </div>
+        </div>
+        <div class="pillgroup">
+          <button id="l-btn-refresh" type="button" aria-label="Reset the app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg><span class="pb-l">Reset</span></button>
+          <button id="l-btn-settings" type="button" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="pb-l">Settings</span></button>
+          <button id="l-btn-add" type="button" aria-label="Slate rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span class="pb-l">Rules</span></button>
+          <button id="l-btn-more" class="more-btn" type="button" aria-label="More: reset, slate rules, share" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+          <button id="l-btn-copy" type="button" aria-label="Share slate as text">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg>
+          <span class="pb-l">Share</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="pbody" id="pbody-l"></div>
+</div>
+<div class="hinge" aria-hidden="true"></div>
+<div class="pane pane-r" id="pane-r">
+<header class="top">
+  <div class="top-inner">
+    <div class="toprow" id="toprow-r">
+      <button class="round" id="btn-menu" type="button" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>
+      </button>
+      <div class="title" id="title">
+        <svg class="brand" id="brand-r" viewBox="0 0 570 725" aria-hidden="true"><rect x="400" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.35"/><rect x="200" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.41"/><rect x="0" y="0" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.48"/><rect x="0" y="150" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.54"/><rect x="0" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.61"/><rect x="200" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.68"/><rect x="400" y="300" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.74"/><rect x="400" y="450" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.80"/><rect x="400" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.87"/><rect x="200" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="0.94"/><rect x="0" y="600" width="170" height="125" rx="26" fill="#5FD07C" opacity="1.00"/></svg>
+        <div class="t" id="title-t">My Lineup</div>
+        <div class="d" id="title-d">
+          <button id="day-prev" type="button" aria-label="Previous day">‹</button>
+          <label class="dpick"><span id="day-label"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16V20H4zM4 10.5h16M8.5 4v4M15.5 4v4"/></svg><input type="date" id="day-input" aria-label="Pick a date"></label>
+          <button id="day-next" type="button" aria-label="Next day">›</button>
+          <button class="today-btn" id="day-today" type="button" hidden>Today</button>
+        </div>
+      </div>
+      <div class="pillgroup">
+        <button id="btn-refresh" type="button" aria-label="Reset the app" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg><span class="pb-l">Reset</span></button>
+        <button id="btn-settings" type="button" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="pb-l">Settings</span></button>
+        <button id="btn-rules" type="button" aria-label="Slate rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span class="pb-l">Rules</span></button>
+        <button id="btn-find" type="button" aria-label="Search games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg><span class="pb-l">Search</span></button>
+        <button id="btn-add" type="button" aria-label="Add a game by hand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="pb-l">Add</span></button>
+        <button id="btn-more" class="more-btn" type="button" aria-label="More: reset, slate rules, share" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+        <button id="btn-copy" type="button" aria-label="Share slate as text">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg>
+        <span class="pb-l">Share</span></button>
+      </div>
+    </div>
+    <div class="strip" id="strip" role="group" aria-label="Filter by league"></div>
+    <div class="substrip" id="substrip" role="group" aria-label="Filter by conference"></div>
+    <div class="dates" id="dates" role="group" aria-label="Pick a day"></div>
+  </div>
+</header>
+
+<main class="wrap" id="main-wrap">
+  <section id="view-lineup" aria-label="My lineup"><div class="app-upd" id="app-upd" hidden><button type="button" class="au-go" id="au-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span><b id="au-t">New app version ready</b><em>Tap to update in TestFlight</em></span></button><button type="button" class="au-x" id="au-x" aria-label="Hide until the next version">✕</button></div><div id="lineup-body"></div></section>
+
+  <section id="view-games" aria-label="All games" hidden>
+    <input class="search" id="search" type="search" placeholder="Search teams, conferences or channels" aria-label="Search games" hidden>
+    <div id="games-body"></div>
+  </section>
+
+  <section id="view-tv" aria-label="Games by channel" hidden><div id="tv-body"></div></section>
+  <section id="view-news" aria-label="News" hidden><div class="nw-tabs" id="nw-tabs" role="tablist"></div><div id="nw-body"></div></section>
+
+  <section id="view-rules" aria-label="Slate rules" hidden><div id="rules-body"></div></section>
+  <section id="view-game" aria-label="Matchup" hidden><div id="game-body"></div></section>
+  <section id="view-best" aria-label="Player rankings" hidden><div id="best-body"></div></section>
+  <section id="view-moments" aria-label="Box Office" hidden><div id="mm-body"></div></section>
+  <section id="view-teams" aria-label="Teams" hidden><div id="teams-body"></div></section>
+  <section id="view-tabs" aria-label="Edit All games tabs" hidden><div id="tabs-body"></div></section>
+  <section id="view-team" aria-label="Team" hidden><div id="team-body"></div></section>
+
+  <section id="view-notify" aria-label="Notifications" hidden>
+    <div class="optrow master">
+      <div><b>Notifications</b><span id="nt-state">Alerts arrive as notifications.</span></div>
+      <div class="seg seg2" data-pref="enabled" role="group" aria-label="Notifications"><button type="button" data-v="on">On</button><button type="button" data-v="off">Off</button></div>
+    </div>
+    <div class="optrow" id="nt-phone">
+      <div><b>This phone</b><span id="nt-phone-state">Checking…</span></div>
+      <button type="button" class="outline quiet" id="nt-phone-btn" hidden>Turn on</button>
+    </div>
+    <div id="nt-body">
+      <div class="sec"><h2>Morning brief</h2></div>
+      <div class="optrow">
+        <div><b>Morning brief</b><span>One notification with the day's games.</span></div>
+        <div class="seg seg2" data-pref="brief.on" role="group" aria-label="Morning brief"><button type="button" data-v="on">On</button><button type="button" data-v="off">Off</button></div>
+      </div>
+      <div class="optrow">
+        <div><b>Arrives at</b></div>
+        <select class="sel" id="nt-brief-hour" data-pref="brief.hour" aria-label="Morning brief time"></select>
+      </div>
+      <div class="optrow col">
+        <div><b>It lists</b></div>
+        <div class="lgchips">
+          <button type="button" class="lgchip" data-chip="brief.lineup">My slate</button>
+          <button type="button" class="lgchip" data-chip="brief.myTeams">My teams</button>
+          <button type="button" class="lgchip" data-chip="brief.topGames">Top national games</button>
+        </div>
+      </div>
+
+      <div class="sec"><h2>Game alerts</h2></div>
+      <p class="hint">Tick which games each alert is for. Nothing ticked means that alert is off.</p>
+      <div class="ntm" role="group" aria-label="Game alerts">
+        <div class="ntm-h"><span></span><b>My slate</b><b>My teams</b></div>
+        <div class="ntm-r"><div><b>Game starting</b><span>One per game.</span></div>
+          <button type="button" class="ntc" data-chip="reminders.lineup" aria-label="Game starting: my slate"></button><button type="button" class="ntc" data-chip="reminders.myTeams" aria-label="Game starting: my teams"></button></div>
+        <div class="ntm-r ntm-sub"><div><b>Sent</b></div>
+          <select class="sel" id="nt-lead" data-pref="lead" aria-label="When start alerts arrive"><option value="0">At the start</option><option value="10">10 min before</option><option value="30">30 min before</option></select></div>
+        <div class="ntm-r"><div><b>Close finish</b><span>A one-score game late.</span></div>
+          <button type="button" class="ntc" data-chip="close.lineup" aria-label="Close finish: my slate"></button><button type="button" class="ntc" data-chip="close.myTeams" aria-label="Close finish: my teams"></button></div>
+        <div class="ntm-r"><div><b>Overtime</b><span>Overtime or extra time.</span></div>
+          <button type="button" class="ntc" data-chip="ot.lineup" aria-label="Overtime: my slate"></button><button type="button" class="ntc" data-chip="ot.myTeams" aria-label="Overtime: my teams"></button></div>
+        <div class="ntm-r"><div><b>Final score</b><span>When the game ends.</span></div>
+          <button type="button" class="ntc" data-chip="finals.lineup" aria-label="Final score: my slate"></button><button type="button" class="ntc" data-chip="finals.myTeams" aria-label="Final score: my teams"></button></div>
+        <div class="ntm-r"><div><b>Goals</b><span>Every goal, hockey and soccer.</span></div>
+          <i class="ntc-na" aria-hidden="true">–</i><button type="button" class="ntc" data-chip="goals.myTeams" aria-label="Goals: my teams"></button></div>
+        <div class="ntm-r"><div><b>Hourly score</b><span>The score once an hour.</span></div>
+          <i class="ntc-na" aria-hidden="true">–</i><button type="button" class="ntc" data-chip="live.myTeams" aria-label="Hourly score: my teams"></button></div>
+      </div>
+      <p class="hint" id="nt-spoiler"></p>
+      <div class="optrow">
+        <div><b>Upset watch</b><span>Any ranked college team trailing late, not just yours.</span></div>
+        <div class="seg seg2" data-pref="upsets.on" role="group" aria-label="Upset watch"><button type="button" data-v="on">On</button><button type="button" data-v="off">Off</button></div>
+      </div>
+
+      <div class="sec"><h2>Live scores on the Lock Screen</h2></div>
+      <p class="hint">iPhone app only. The score stays on your Lock Screen and at the top of the screen while the game is on, up to 4 games at a time.</p>
+      <div class="ntm" role="group" aria-label="Live scores on the Lock Screen">
+        <div class="ntm-h"><span></span><b>My slate</b><b>My teams</b></div>
+        <div class="ntm-r"><div><b>Live score</b><span>Stays after the final until you swipe it away (iOS clears it after 4 hours).</span></div>
+          <button type="button" class="ntc" data-chip="liveAct.lineup" aria-label="Live score: my slate"></button><button type="button" class="ntc" data-chip="liveAct.myTeams" aria-label="Live score: my teams"></button></div>
+      </div>
+
+      <div class="sec"><h2>When</h2></div>
+      <div class="optrow">
+        <div><b>Quiet hours</b><span>Nothing is sent during these hours.</span></div>
+        <div class="seg seg2" data-pref="quiet.on" role="group" aria-label="Quiet hours"><button type="button" data-v="on">On</button><button type="button" data-v="off">Off</button></div>
+      </div>
+      <div class="optrow" id="nt-quiet-row">
+        <div><b>From</b></div>
+        <div class="selpair">
+          <select class="sel" id="nt-quiet-start" data-pref="quiet.start" aria-label="Quiet hours start"></select>
+          <span>to</span>
+          <select class="sel" id="nt-quiet-end" data-pref="quiet.end" aria-label="Quiet hours end"></select>
+        </div>
+      </div>
+      <div class="optrow col">
+        <div><b>Days</b><span>Send notifications on these days.</span></div>
+        <div class="lgchips" id="nt-days"></div>
+      </div>
+
+      <div class="sec"><h2>How it works</h2></div>
+      <div class="help">
+        <p>Slate checks your games every minute and sends each alert as it happens: your slate, your starred teams and anything you've added by hand.</p>
+        <p>Changes here take effect within a minute. Quiet hours and the days you pick hold back alerts; a live notification that has already started keeps updating.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-settings" aria-label="Settings" hidden>
+    <div class="set-acts">
+      <button class="navrow sa" id="open-rules" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg></i>
+        <span><b>Slate rules</b><span id="rules-summary">What goes on your slate each day</span></span><span class="chev">›</span></button>
+      <button class="navrow sa" id="open-notify" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></i>
+        <span><b>Notifications</b><span id="nt-summary"></span></span><span class="chev">›</span></button>
+      <button class="navrow sa" id="set-share" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg></i>
+        <span><b>Share the slate</b><span>Today's games as text, ready to send</span></span><span class="chev">›</span></button>
+      <button class="navrow sa" id="set-reset" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></i>
+        <span><b>Reset the app</b><span>Loads the newest version fresh</span></span><span class="chev">›</span></button>
+    </div>
+    <div class="sec"><h2>Phone</h2></div>
+    <div class="setcard">
+    <div class="seg seg2" id="device-seg" role="group" aria-label="Phone">
+      <button type="button" data-device="duo">iPhone Duo</button>
+      <button type="button" data-device="iphone">iPhone</button>
+    </div>
+    <p class="hint" id="device-hint"></p>
+    </div>
+
+    <div class="sec"><h2>Look</h2></div>
+    <div class="setcard">
+    <div class="themes" id="theme-grid" role="group" aria-label="Theme"></div>
+    <p class="hint acc-h">Accent color</p>
+    <div class="swatches" id="swatches" role="group" aria-label="Accent color"></div>
+    </div>
+
+    <div class="sec"><h2>Slate</h2></div>
+    <div class="optrow">
+      <div><b>Scores</b><span>Live scores update every 10 seconds. Hide them to avoid spoilers.</span></div>
+      <div class="seg seg2" id="score-seg" role="group" aria-label="Scores"><button type="button" data-v="on">Show</button><button type="button" data-v="off">Hide</button></div>
+    </div>
+    <div class="optrow nl-row-set">
+      <button type="button" class="nl-head" id="nl-head" aria-expanded="false" aria-controls="nl-chips"><span class="nl-hl"><b>The Athletic newsletters</b><span id="nl-sum">None</span></span><span class="nl-chev" aria-hidden="true"></span></button>
+      <div class="nl-chips" id="nl-chips" role="group" aria-label="The Athletic newsletters" hidden></div>
+    </div>
+    <div class="optrow nl-row-set">
+      <button type="button" class="nl-head" id="wal-head" aria-expanded="false" aria-controls="wal-set"><span class="nl-hl"><b>Worth a look</b><span id="wal-sum"></span></span><span class="nl-chev" aria-hidden="true"></span></button>
+      <div class="wal-set" id="wal-set" hidden></div>
+    </div>
+    <div class="optrow">
+      <div><b>Quick reads</b><span>Short previews as a paragraph or as bullet points.</span></div>
+      <div class="seg seg2" id="pvstyle-seg" role="group" aria-label="Quick read style"><button type="button" data-v="para">Paragraph</button><button type="button" data-v="bullets">Bullets</button></div>
+    </div>
+
+    <div class="sec"><h2>Text size</h2></div>
+    <p class="hint duo-only">Set it separately for the cover screen (folded) and the big screen (unfolded).</p>
+    <p class="hint" id="auto-size-note"></p>
+    <div class="optrow col sizerow"><b class="duo-only">Folded</b>
+      <div class="seg seg6" id="size-seg" role="group" aria-label="Text size">
+        <button type="button" data-size="auto" aria-label="Auto: match the iPhone's text size" style="font-size:13px">Auto</button>
+        <button type="button" data-size="xs" aria-label="Extra small" style="font-size:13px">XS</button>
+        <button type="button" data-size="s" aria-label="Small" style="font-size:14px">S</button>
+        <button type="button" data-size="m" aria-label="Default" style="font-size:16px">M</button>
+        <button type="button" data-size="l" aria-label="Large" style="font-size:17.5px">L</button>
+        <button type="button" data-size="xl" aria-label="Extra large" style="font-size:19px">XL</button>
+      </div>
+    </div>
+    <div class="optrow col sizerow duo-only"><b>Unfolded</b>
+      <div class="seg seg6" id="size-seg-wide" role="group" aria-label="Text size when unfolded">
+        <button type="button" data-size="auto" aria-label="Auto: match the iPhone's text size" style="font-size:13px">Auto</button>
+        <button type="button" data-size="xs" aria-label="Extra small" style="font-size:13px">XS</button>
+        <button type="button" data-size="s" aria-label="Small" style="font-size:14px">S</button>
+        <button type="button" data-size="m" aria-label="Default" style="font-size:16px">M</button>
+        <button type="button" data-size="l" aria-label="Large" style="font-size:17.5px">L</button>
+        <button type="button" data-size="xl" aria-label="Extra large" style="font-size:19px">XL</button>
+      </div>
+    </div>
+
+    <div class="sec duo-only"><h2>Open screen layout</h2></div>
+    <div class="optrow col sizerow duo-only"><b>Split on the crease</b><span>For the open screen held sideways. If the gap between your slate and the right side isn't on the crease, nudge it.</span>
+      <div class="foldrow"><button type="button" class="outline quiet" id="fold-left">◀ Left</button><button type="button" class="outline quiet" id="fold-auto">Auto</button><button type="button" class="outline quiet" id="fold-right">Right ▶</button><span class="count" id="fold-val"></span></div>
+    </div>
+
+    <div class="sec a2hs"><h2>On your phone</h2></div>
+    <div class="help a2hs">
+      <ol>
+        <li>Open this page's link in Safari on your iPhone.</li>
+        <li>Tap Share, then <strong>Add to Home Screen</strong>.</li>
+        <li>Name it <strong>Slate</strong>. It opens like an app.</li>
+      </ol>
+    </div>
+    <div class="optrow" id="cost-row" hidden>
+      <div><b>Claude summaries</b><span id="cost-text"></span></div>
+    </div>
+    <p class="mm-how" id="screen-diag"></p>
+    <div class="optrow" id="ver-row">
+      <div><b>App version</b><span id="ver-text"></span></div>
+      <button type="button" class="outline quiet" id="ver-btn">Update now</button>
+    </div>
+    <div class="gv-sec rel-sec" id="rel-sec">
+      <button type="button" class="gv-toggle" id="rel-tg" aria-expanded="false"><span class="gv-tt"><b>What's new</b><i>Release history</i></span></button>
+      <div class="gv-sec-in rel-list" id="rel-list" hidden></div>
+    </div>
+  </section>
+
+  <footer class="foot" id="foot"></footer>
+</main>
+
+<nav class="dock" aria-label="Main">
+  <div class="dock-day" id="dock-day" hidden></div>
+  <div class="dock-day dock-sort" id="dock-sort" role="group" aria-label="Sort the slate" hidden></div>
+  <button class="dock-back" id="dock-back" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span id="dock-back-t">Back</span></button>
+  <div class="menu-pop" id="menu-pop" role="menu" aria-label="Menu" hidden>
+    <button class="mi" id="nav-rules" type="button" role="menuitem" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>Slate rules</span></button>
+    <button class="mi" id="nav-settings2" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      <span>Settings</span>
+    </button>
+    <button class="mi" id="nav-news" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a1 1 0 0 1 1 1v14a1 1 0 0 0 1 1H6a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1z"/><path d="M17 8h2a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2"/><path d="M8 8h5M8 12h5M8 16h3"/></svg>
+      <span>News</span>
+    </button>
+    <button class="mi" id="nav-tv" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6v1.5h3V21H7v-1.5h3V18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
+      <span>On TV</span>
+    </button>
+    <button class="mi" id="nav-teams" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3c.3 2 1.9 3.4 4 3.4S15.7 5 16 3l3 1.1v4.6c-1 .9-1.6 2.2-1.6 3.6V21H6.6v-8.7C6.6 10.9 6 9.6 5 8.7V4.1z"/><path d="M10.5 11.5h3M12 11.5v5" stroke-linecap="round"/></svg>
+      <span>Teams</span>
+    </button>
+    <button class="mi" id="nav-moments" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5z"/><path d="M12 8.6l1 2.05 2.25.33-1.63 1.59.39 2.24L12 13.75l-2.01 1.06.39-2.24-1.63-1.59 2.25-.33z" fill="currentColor" stroke="none"/></svg>
+      <span>Box Office</span>
+    </button>
+    <button class="mi" id="nav-games" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3.5" width="18" height="17" rx="3"/><path d="M3 9.2h18M3 14.8h18M7 6.4h5M7 12h7M7 17.6h4"/><circle cx="17" cy="6.4" r=".6" fill="currentColor"/><circle cx="17" cy="12" r=".6" fill="currentColor"/><circle cx="17" cy="17.6" r=".6" fill="currentColor"/></svg>
+      <span>All games</span>
+    </button>
+    <button class="mi" id="nav-lineup" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 15 9M14 4l1 2.5L17.5 7 15 8l-1 2.5L13 8l-2.5-1L13 6zM19.5 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>
+      <span>Slate</span><i class="dot" id="nav-count" hidden></i>
+    </button>
+  </div>
+  <button class="fab" id="menu-fab" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-pop">
+    <svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+    <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+</nav>
+<div class="menu-scrim" id="menu-scrim" hidden></div>
+</div>
+</div>
+
+<div class="sheet-backdrop" id="sheet-add" role="dialog" aria-modal="true" aria-labelledby="add-title">
+  <form class="sheet" id="custom-form" autocomplete="off">
+    <h3 id="add-title">Add a game</h3>
+    <label for="c-title">Matchup
+      <input class="field" id="c-title" placeholder="e.g. Man United vs Everton" required maxlength="80">
+    </label>
+    <div class="two">
+      <label for="c-time">Start time
+        <input class="field" id="c-time" type="time" required>
+      </label>
+      <label for="c-tv">Channel
+        <input class="field" id="c-tv" placeholder="e.g. USA" maxlength="30">
+      </label>
+    </div>
+    <button class="solid" type="submit">Add to lineup</button>
+    <button class="outline quiet" id="btn-close-add" type="button">Cancel</button>
+  </form>
+</div>
+
+<div class="sheet-backdrop" id="sheet-watch" role="dialog" aria-modal="true" aria-labelledby="watch-title">
+  <div class="sheet">
+    <h3 id="watch-title">Watch</h3>
+    <div class="watchopts" id="watch-opts"></div>
+    <button class="textbtn" id="btn-close-watch" type="button">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheet-board" role="dialog" aria-modal="true" aria-labelledby="board-title">
+  <div class="sheet">
+    <h3 id="board-title">Live scoreboard</h3>
+    <p class="board-sub" id="board-sub">Pick up to 4 games from your slate. They show together in one live notification on your Lock Screen and in the Dynamic Island.</p>
+    <div class="board-list" id="board-list" role="group" aria-label="Games on your slate"></div>
+    <button class="solid" id="btn-board-on" type="button">Show on Lock Screen</button>
+    <button class="textbtn" id="btn-close-board" type="button">Done</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheet-copy" role="dialog" aria-modal="true" aria-labelledby="copy-title">
+  <div class="sheet">
+    <h3 id="copy-title">Tonight's slate</h3>
+    <textarea class="copybox" id="copybox" readonly aria-label="Lineup text"></textarea>
+    <button class="outline quiet" id="btn-close-copy" type="button">Done</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toast-msg"></span><button id="toast-undo" type="button" hidden>Undo</button></div>
+

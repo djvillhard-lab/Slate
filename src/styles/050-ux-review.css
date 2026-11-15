@@ -1,0 +1,302 @@
+/* ===== Slate 2.18.0: changes from the UX review (Nov 12, 2026), kept in one place so they're easy to undo ===== */
+/* 1, 2: live highlights in red; the upcoming preview is a plain line, not a box */
+.g:has(.s-live) > .hl:not(.hl-pre) { color: var(--live); opacity: 1; font-weight: 700; }
+.hl.hl-pre { color: var(--muted); opacity: 1; }
+.hl.hl-live { color: var(--live); opacity: 1; }  /* the live game's own line */
+/* 4: finished games go quiet with color instead of fading to 55% */
+.g.panel.over > :not(.tray) { opacity: 1 !important; }
+.g.panel.over .tm .nm, .g.panel.over .tm .sc { color: var(--head); }
+.g.panel.over .tm.lose .nm, .g.panel.over .tm.lose .sc, .g.panel.over .tm .rec, .g.panel.over .s-final, .g.panel.over .g-lg, .g.panel.over .ctag { color: var(--dim); }
+.g.panel.over .tm .ab, .g.panel.over .tm .badge { filter: saturate(.45) brightness(.78); }
+.g.panel.over > .hl { color: var(--muted); opacity: 1; }
+/* 5: the Live button when on: dark text on the live red */
+.lo-btn.on { color: #121821; }
+.lo-btn.on .lo-dot { background: #121821; }
+.lo-btn.on b { background: rgba(18,24,33,.18); color: #121821; }
+/* 26: how fresh the scores are */
+.lo-upd { white-space: nowrap; }
+.lo-upd.late { color: var(--muted); font-weight: 700; }
+.lo-row:has(.lo-upd) .lo-btn { margin-left: 0; }
+/* 10: red means live only; losses and underachievers are gray */
+.rk-wl.l { color: var(--muted); }
+.form .fl { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
+.mm-p.under .mm-mark, .rk-row.mm-under > .rk-rank { color: var(--muted); }
+/* 7: text on accent-filled buttons follows the accent */
+.full-mu, .full-mu b, .full-mu i { color: var(--on-accent) !important; }
+/* 6: the slate header: two 44-point buttons, Settings and More */
+.toprow.lineup-top > .pillgroup { grid-template-columns: repeat(2, calc(44px / var(--z, 1))) !important; grid-template-rows: calc(44px / var(--z, 1)) !important; gap: 8px !important; }
+/* the slate's header in the iPhone app: the title, then Settings and More in line at the right end, just left of
+   iOS's column on iPhone Duo (--strip-w). In line rather than floating: Safari misplaces floating buttons inside a
+   zoomed header (larger text sizes). At larger text sizes next to the column, the two buttons stack. */
+html[data-native] .toprow.lineup-top:not(#pane-l .toprow) { display: flex !important; align-items: center; padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)) !important; }
+html[data-native] .toprow.lineup-top:not(#pane-l .toprow) > .title { flex: 1 1 auto; min-width: 0; }
+html[data-native] .toprow.lineup-top:not(#pane-l .toprow) > .title .t, html[data-native] .toprow.lineup-top:not(#pane-l .toprow) > .title .d { padding-right: 0 !important; }
+html[data-native] .toprow.lineup-top:not(#pane-l .toprow) > .pillgroup { position: static !important; transform: none !important; flex: none; margin-left: 8px; align-self: center; }
+html.side-col.zoomed .toprow.lineup-top:not(#pane-l .toprow) > .pillgroup { grid-template-columns: calc(44px / var(--z, 1)) !important; grid-template-rows: repeat(2, calc(44px / var(--z, 1))) !important; }
+html[data-native] .toprow.lineup-top:not(#pane-l .toprow) #title-t { font-size: clamp(16px, calc((100vw - var(--strip-w, 0px) - 122px - 75px * var(--z, 1)) / 8.2 / var(--z, 1)), 28px); }
+html.side-col .rlink:not(#pane-l .rlink) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
+html.side-col.zoomed .toprow.lineup-top:not(#pane-l .toprow) #title-t { font-size: clamp(16px, calc((100vw - var(--strip-w, 0px) - 70px - 75px * var(--z, 1)) / 8.2 / var(--z, 1)), 28px); }
+#l-btn-refresh, #l-btn-add, #l-btn-copy, .toprow.lineup-top > .pillgroup #btn-refresh, .toprow.lineup-top > .pillgroup #btn-rules, .toprow.lineup-top > .pillgroup #btn-copy { display: none !important; }
+.more-btn { display: grid !important; place-items: center; }
+.more-btn[hidden] { display: none !important; }
+.toprow.lineup-top > .pillgroup button { width: calc(44px / var(--z, 1)) !important; height: calc(44px / var(--z, 1)) !important; }
+.toprow.lineup-top > .pillgroup svg { width: 20px !important; height: 20px !important; }
+.more-btn { color: var(--accent); }
+.more-pop { position: fixed; z-index: 30; width: 228px; padding: 6px; gap: 2px; border-radius: 16px; background: var(--glass); border: 1px solid var(--glass-line); -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); box-shadow: 0 16px 40px var(--shadow); display: grid; }
+.more-pop .mi { width: 100%; }
+.more-i:active { background: var(--raise); }
+/* 6: 44-point minimum for small controls, at every text size */
+#l-day-prev, #l-day-next, #day-prev, #day-next, .dd-arrow { min-width: calc(44px / var(--z, 1)); min-height: calc(44px / var(--z, 1)); }
+.mi, .ds-b, .lg-tab { min-height: calc(44px / var(--z, 1)); }
+.lo-btn { min-height: 34px; }
+.g-side .net { padding: 15px 0; margin: -15px 0; }
+/* 8: larger text keeps names whole: records hide, status and channel get their own line */
+html.bigtext .tm .rec { display: none; }
+@container (max-width: 330px) { .tm .rec { display: none; } }
+.toprow .t, #title-t { font-size: clamp(20px, calc((100vw - var(--strip-w, 0px)) * .06), 28px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 11: Back sits left of the menu button in the bottom row, not stacked above it */
+html, body { overscroll-behavior-y: none; }
+html.duo body { overflow: hidden; position: fixed; inset: 0; width: 100%; height: 100%; }
+nav.dock { flex-direction: row !important; align-items: flex-end !important; }
+nav.dock .dock-day, nav.dock .dock-sort { order: 0; }
+nav.dock .dock-back { order: 1; }
+nav.dock #menu-fab { order: 2; }
+/* 19: one date picker on All games and On TV: the bottom pill (in reach of the thumb) */
+#dates { display: none !important; }
+/* 20: layout thresholds */
+#teams-body .tcards, html:not(.duo) #teams-body .tcards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important; }
+/* 21: selected means the accent */
+.seg button[aria-pressed="true"], .ds-b[aria-pressed="true"] { background: var(--accent-fill) !important; color: var(--on-accent) !important; }
+/* 22: Cancel as plain centered text */
+.textbtn { display: block; width: 100%; min-height: 44px; margin-top: 4px; text-align: center; font-size: 16px; font-weight: 700; color: var(--muted); }
+/* 23: long write-ups open at four lines */
+/* 24: cover screen held sideways: a one-line header that scrolls away */
+@media (max-height: 420px) and (orientation: landscape) {
+  .toprow.lineup-top { position: static !important; }
+  .toprow.lineup-top .t, .toprow.lineup-top #title-t { font-size: 20px !important; display: inline; }
+  .toprow.lineup-top .d { display: inline-flex; margin-left: 12px; }
+}
+/* help notes (toasts) appear at the top center, clear of the menu button and date pill */
+.toast, html.corner .toast, html.corner.roomy .toast, html.duo .toast { top: calc(max(8px, env(safe-area-inset-top, 0px)) + 6px) !important; bottom: auto !important; max-width: min(340px, calc(100vw - 32px)) !important; z-index: 40; }
+html.duo .toast { max-width: min(340px, calc(50vw - 32px)) !important; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+/* Box Office: no dead space on the right. Wider player rows put the game (clock, opponent, score) in a right-hand
+   column instead of a third line; two columns of players once there's room for two of those rows. */
+#mm-body .mm-top, #mm-body .mm-list.bs-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)) !important; column-gap: 16px !important; }
+#mm-body .rk-row { container-type: inline-size; }
+#mm-body .mm-top .rk-row, #mm-body .mm-list .rk-row { grid-template-columns: 18px 44px minmax(0, 1fr) auto !important; column-gap: 8px !important; }
+@container (min-width: 300px) {
+  #mm-body .rk-mid { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; }
+  #mm-body .rk-mid > .rk-top, #mm-body .rk-mid > .rk-stats { grid-column: 1; }
+  #mm-body .rk-mid > .rk-foot { grid-column: 2; grid-row: 1 / span 2; display: grid !important; justify-items: end; align-content: center; gap: 2px !important; text-align: right; font-size: 13px !important; white-space: nowrap; }
+  #mm-body .rk-mid > .rk-foot { grid-template-columns: auto auto; column-gap: 4px; }
+  #mm-body .rk-mid > .rk-foot > .rk-opp { order: 2; grid-column: 1 / -1; }
+  #mm-body .rk-mid > .rk-foot > .rk-live { grid-column: 1 / -1; }
+  /* live: the clock, then the score and opponent on one line; final: W/L and score, then the opponent. Two lines
+     either way, same size. */
+  #mm-body .rk-mid > .rk-foot > .rk-sc { order: 1; }
+  #mm-body .rk-mid > .rk-foot:has(> .rk-live) > .rk-opp { grid-column: auto; order: 2; }
+  #mm-body .rk-mid > .rk-foot > .rk-live { font-weight: 800; }
+  #mm-body .rk-mid > .rk-foot > .rk-sep { display: none; }
+  #mm-body .rk-mid > .rk-foot > .rk-dot { display: none; }
+  #mm-body .rk-mid > .mm-why { grid-column: 1 / -1; }
+}
+/* open phone held upright: use the whole width instead of a 640px column with empty sides */
+@media (min-width: 600px) and (max-width: 1000px) and (orientation: portrait) {
+  html:not(.duo) .top-inner, html:not(.duo) main.wrap { max-width: none !important; }
+  html:not(.duo) main.wrap { padding-left: 12px; padding-right: 12px; }
+  html:not(.duo) header.top { padding-top: calc(env(safe-area-inset-top, 0px) / var(--z, 1)) !important; }
+}
+/* 32: menu pills one width */
+.menu-pop .mi { width: 100%; }
+/* 33: settings section headings read as headings */
+#view-settings .sec h2, #view-notify .sec h2 { font-size: 16px; font-weight: 800; color: var(--head); letter-spacing: 0; }
+.seg.seg6 { grid-template-columns: 1.4fr repeat(5, 1fr); gap: 2px; }
+.seg.seg6 button { padding: 0 2px; }
+/* 27: Increase Contrast on the iPhone turns on the high-contrast Midnight */
+@media (prefers-contrast: more) {
+  :root[data-theme="dark"] { --bg: #0F151D !important; --card: #18202D !important; --raise: #222C3B !important; --line: #4A5A72 !important; --ink: #FFFFFF !important; --head: #E6ECF3 !important; --muted: #BCC6D3 !important; --dim: #A7B3C3 !important; --live: #FF7468 !important; --glass: rgba(24,32,45,.96) !important; }
+}
+/* the menu, everywhere: like the app's strip, the page buttons sit as icons in one capsule right above the menu
+   button, the open page lit; picking one closes it. */
+#menu-pop { padding: 4px !important; gap: 2px !important; border: 1px solid var(--line) !important; background: var(--card) !important; border-radius: 27px !important; box-shadow: 0 10px 30px var(--shadow) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; display: flex; flex-direction: column; align-items: center; width: auto !important; right: -4px !important; transform-origin: 50% 100%; }
+#menu-pop:not([hidden]) { animation: capsIn .22s cubic-bezier(.2, .9, .3, 1.15); }
+@keyframes capsIn { from { opacity: 0; transform: scaleY(.6) translateY(16px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #menu-pop { animation: none; } }
+#menu-pop[hidden] { display: none !important; }
+#menu-pop .mi { width: 44px !important; height: 44px !important; min-height: 0 !important; padding: 0 !important; gap: 0 !important; justify-content: center; background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 50% !important; animation: none !important; }
+#menu-pop .mi[hidden] { display: none !important; }
+#menu-pop .mi svg { width: 22px !important; height: 22px !important; color: var(--ink); }
+#menu-pop .mi .dot, #menu-pop #nav-count { display: none !important; }
+#menu-pop .mi > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+#menu-pop .mi[aria-current="page"] svg { color: var(--accent); }
+/* the app's strip mode: the menu opens from the strip's button, so it sits on the page by that button (--ma-r/-b) */
+html[data-strip] #menu-pop { position: fixed !important; z-index: 31; right: var(--ma-r, calc((var(--strip-w, 0px) - 54px) / 2)) !important; bottom: var(--ma-b, 84px) !important; left: auto !important; top: auto !important; }
+/* the menu button and Back are round, like the page buttons and the strip */
+html nav.dock .fab, html nav.dock .dock-back { border-radius: 50% !important; }
+/* newer app builds draw the menu themselves where there's no strip (a capsule at the bottom right), Back included;
+   the page keeps only its day picker, just left of that capsule */
+html[data-float] #menu-fab, html[data-float] #menu-pop, html[data-float] #menu-scrim, html[data-float] #dock-back { display: none !important; }
+html[data-float] nav.dock { right: calc(var(--strip-w, 0px) + 12px + 60px) !important; }
+/* newer app builds draw Back in the strip themselves */
+html[data-strip][data-nback] #dock-back { display: none !important; }
+/* the iPhone app: a note on the slate when TestFlight has a newer app build than the one installed */
+.app-upd { display: flex; align-items: center; gap: 4px; margin: 4px 0 14px; padding: 4px 4px 4px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent-fill) 14%, var(--card)); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+.app-upd[hidden] { display: none; }
+.app-upd .au-go { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px; text-align: left; color: var(--ink); }
+.app-upd .au-go svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
+.app-upd .au-go span { display: grid; min-width: 0; }
+.app-upd .au-go b { font-size: 15px; font-weight: 800; }
+.app-upd .au-go em { font-style: normal; font-size: 13px; color: var(--muted); }
+.app-upd .au-x { width: 44px; height: 44px; flex: none; color: var(--dim); font-size: 16px; }
+/* one header for every page: the Slate mark, the page's name in the slate title's type, and a line under it */
+header.top { border-bottom: 1px solid var(--line); }
+html[data-view="games"] header.top #strip { margin-bottom: 0; }
+/* News */
+.nw-tabs { display: flex; gap: 16px; overflow-x: auto; padding: 2px 4px 0; margin: 0 0 14px; scrollbar-width: none; border-bottom: 1px solid var(--hair); }
+.nw-tabs::-webkit-scrollbar { display: none; }
+.nw-brief { padding: 14px 14px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent-fill) 7%, var(--card)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); margin-bottom: 18px; }
+.nw-bh { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+.nw-bh svg { width: 18px; height: 18px; color: var(--accent); }
+.nw-sub { margin: 12px 0 4px; font-size: 13px; font-weight: 800; color: var(--muted); }
+.nw-pitch { font-weight: 600; font-size: 14px; line-height: 1.4; }
+.nw-quick, .nw-watch { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; line-height: 1.4; }
+.nw-watch { list-style: none; padding-left: 0; }
+.nw-watch li { display: grid; gap: 1px; } .nw-watch b { font-size: 14px; } .nw-watch span { color: var(--muted); font-size: 14px; }
+.nw-more { margin-top: 10px; font-size: 14px; font-weight: 800; color: var(--accent); min-height: 36px; }
+.nw-long p { margin: 8px 0 0; font-size: 15px; line-height: 1.5; }
+.nw-foot { margin: 10px 0 0; font-size: 12px; color: var(--dim); }
+.nw-list { display: grid; }
+.nw-art { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--hair); color: var(--ink); text-decoration: none; }
+.nw-brief .nw-art:first-of-type { border-top: 0; }
+.nw-tx { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.nw-h { font-size: 15px; line-height: 1.3; font-weight: 800; }
+.nw-d { font-size: 14px; line-height: 1.35; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nw-m { font-size: 12px; font-weight: 700; color: var(--dim); }
+.nw-img { width: 84px; height: 56px; object-fit: cover; border-radius: 8px; flex: none; background: var(--raise); }
+/* Settings: the actions that used to sit behind the header's buttons, as rows with round icons like the menu's */
+.set-acts { display: grid; gap: 8px; margin: 4px 0 8px; }
+.set-acts .navrow.sa { margin: 0 !important; padding: 8px 12px 8px 8px !important; border: 1px solid var(--line) !important; border-radius: 28px !important; background: var(--card) !important; justify-content: flex-start; gap: 12px; box-shadow: 0 6px 18px var(--shadow); }
+.set-acts .navrow.sa > span:not(.chev) { flex: 1; min-width: 0; text-align: left; }
+.set-acts .navrow.sa b { font-size: 16px; }
+.set-acts .navrow.sa span span { font-size: 13px; }
+.set-acts .sa-ic { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--raise); border: 1px solid var(--line); color: var(--accent); }
+.set-acts .sa-ic svg { width: 20px; height: 20px; }
+/* the day picker: a capsule like the menu's, round arrows, the same quick grow-in */
+html .dock-day { height: 46px !important; padding: 0 4px !important; border-radius: 23px !important; background: var(--glass-clear) !important; -webkit-backdrop-filter: blur(6px) saturate(180%) !important; backdrop-filter: blur(6px) saturate(180%) !important; border: 1px solid var(--glass-edge) !important; box-shadow: 0 10px 30px var(--shadow) !important; transform-origin: 100% 50%; }
+html .dock-day.dd-in { animation: dayIn .22s cubic-bezier(.2, .9, .3, 1.15); }
+html .dock-day[hidden] { display: none !important; }
+@keyframes dayIn { from { opacity: 0; transform: scaleX(.7); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { html .dock-day { animation: none; } }
+html .dock-day .dd-arrow { width: 36px !important; height: 36px !important; border-radius: 50% !important; display: grid; place-items: center; }
+html .dock-day .dd-arrow:active { background: var(--raise); }
+.nw-game { padding: 10px 0 4px; border-top: 1px solid var(--hair); }
+.nw-game:first-of-type { border-top: 0; }
+.nw-gt { display: block; font-size: 16px; font-weight: 800; }
+.nw-story { margin: 4px 0 2px; font-size: 15px; line-height: 1.45; }
+.nw-game .nw-art { margin-top: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.nw-gh { display: grid; gap: 2px; margin: 18px 0 2px; padding: 8px 12px; border-radius: 10px; background: var(--raise); }
+.nw-gh b { font-size: 15px; font-weight: 800; } .nw-gh span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.nw-about { justify-self: start; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 6px; background: color-mix(in srgb, var(--accent-fill) 18%, transparent); color: var(--accent); }
+.nw-tabs[hidden] { display: none; }
+/* the page's own menu button, Back and the menu capsule use the same frosted glass as the day picker (and the app's menu) */
+/* clear glass like Apple's (the app's own menu): mostly see-through, lightly blurred, a bright edge */
+:root { --glass-clear: rgba(255, 255, 255, .13); --glass-edge: rgba(255, 255, 255, .16); }
+:root[data-look="light"] { --glass-clear: rgba(255, 255, 255, .34); --glass-edge: rgba(255, 255, 255, .7); }
+html nav.dock .fab, html nav.dock .dock-back, #menu-pop { background: var(--glass-clear) !important; -webkit-backdrop-filter: blur(6px) saturate(180%) !important; backdrop-filter: blur(6px) saturate(180%) !important; border-color: var(--glass-edge) !important; }
+html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(0,0,0,.28) !important; }
+/* Settings and its pages (Notifications, Slate rules): rounded cards with a soft shadow and round icons, like the
+   rows at the top of Settings and the menu */
+#view-settings .optrow, #view-settings .setcard, #view-settings .gv-sec, #view-notify .optrow, #view-rules .rsum, #view-rules .rpanel, #view-rules .lgcard {
+  background: var(--card) !important; border: 1px solid var(--line) !important; border-radius: 22px !important; box-shadow: 0 6px 18px var(--shadow) !important; margin: 8px 0 !important; }
+#view-settings .optrow, #view-settings .setcard, #view-notify .optrow { padding: 12px 14px !important; }
+#view-settings .gv-sec { padding: 4px 14px !important; }
+#view-settings .setcard .hint { margin-bottom: 0; }
+#view-settings .seg, #view-notify .seg, #view-rules .seg { border-radius: 999px !important; }
+#view-settings .seg button, #view-notify .seg button, #view-rules .seg button { border-radius: 999px !important; }
+#view-notify .navrow, #view-rules .navrow { border: 1px solid var(--line) !important; border-radius: 28px !important; background: var(--card) !important; box-shadow: 0 6px 18px var(--shadow); padding: 12px 16px !important; }
+#view-rules .ricon, #view-rules .lgcard .lg-head > svg.sp { width: 44px !important; height: 44px !important; border-radius: 50% !important; background: var(--raise) !important; border: 1px solid var(--line); color: var(--accent) !important; box-sizing: border-box; }
+#view-rules .lgcard .lg-head > svg.sp { padding: 11px; flex: none; }
+#view-rules .ricon svg { width: 20px; height: 20px; }
+#view-notify .ntm { background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 6px 18px var(--shadow); padding: 6px 12px; }
+/* the slate's matchups: one shared score column, set by fitScores (beside the time / channel column) */
+#lineup-body .g.panel { container-type: inline-size; }
+#lineup-body .g.panel .tm { max-width: var(--tmw, 60%); }
+.nw-soon { display: grid; justify-items: center; gap: 6px; padding: 64px 16px; text-align: center; }
+.nw-soon svg { width: 34px; height: 34px; color: var(--accent); }
+.nw-soon b { font-size: 22px; font-weight: 800; } .nw-soon span { color: var(--muted); font-size: 15px; }
+/* today's finished games: their own group at the bottom, tighter rows (times stay, the one-line notes go) */
+.sl-fin { margin-top: 18px; }
+.sl-fin .tgroup { margin-top: 2px; }
+.sl-fin .tg-time b { font-size: 18px !important; } .sl-fin .tg-time i { font-size: 12px !important; }
+.sl-fin .g.panel { padding: 8px 12px !important; }
+.sl-fin-lg { margin-top: 6px; }
+.top-undo { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px); transform: translate(-50%, -12px); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--raise); border: 1px solid var(--line); box-shadow: 0 6px 18px var(--shadow); font-size: 13px; font-weight: 700; color: var(--muted); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; white-space: nowrap; }
+.top-undo.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.top-undo button { border: 0; background: none; color: var(--accent); font: inherit; font-weight: 800; padding: 4px 8px; cursor: pointer; }
+.hl-tm { font-weight: 800; }
+.sl-fin-h { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; color: var(--muted); font: inherit; padding: 8px 4px; cursor: pointer; text-align: left; }
+.sl-fin-h b { font-size: 15px; font-weight: 700; color: var(--ink); }
+.sl-fin-h .count { font-size: 13px; color: var(--muted); }
+.sl-fin-h svg { width: 15px; height: 15px; margin-left: -2px; color: var(--dim); transform: rotate(90deg); transition: transform .15s ease; }
+.sl-fin-lg.shut .sl-fin-h svg { transform: rotate(0deg); }
+.sl-fin .g.panel .g-lg.g-lg { display: flex !important; }
+.sl-fin .fin-t { font-weight: 700; color: var(--muted); }
+.sl-fin .tm { min-height: 20px !important; }
+.sl-fin .tm .sc { font-size: 18px !important; }
+.sl-fin .tm .nm { font-size: 15px; }
+.sl-fin .tg-games { gap: 6px; }
+.sl-fin .g.panel .ctag { display: none !important; }
+.sl-fin .g.panel.tagged .g-side { margin-top: 0 !important; }
+.sl-fin .g-side { gap: 2px !important; }
+.ctag.upset { color: var(--live); font-weight: 800; }
+
+/* 3.21.0: an opened slate game's controls in one clean row: team stars on the left; Remove and the live-score bell on the right */
+.tray-acts { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 2px; }
+.tray-acts .ta-sp { flex: 1; }
+.tray-acts button { height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--ink); font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.tray-acts button svg { width: 16px; height: 16px; color: var(--muted); }
+.tray-acts button.on { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.tray-acts button.on svg { color: var(--accent); }
+.tray-acts .ta-ic { width: 38px; padding: 0; justify-content: center; }
+.tray-acts .ta-ic svg { width: 14px; height: 14px; }
+/* 3.22.0: Remove asks first; while it does, the row is just Keep and "Remove from slate?" */
+.tray-acts .ta-keep { display: none; }
+.tray-acts.confirm .ta-fav, .tray-acts.confirm .ta-live { display: none; }
+.tray-acts.confirm .ta-keep { display: inline-flex; }
+.tray-acts .ta-confirm { color: var(--live, #FF5B4E); border-color: color-mix(in srgb, var(--live, #FF5B4E) 55%, transparent); padding: 0 14px; }
+.tray-acts .ta-confirm svg { width: 14px; height: 14px; color: var(--live, #FF5B4E); }
+/* 3.23.0: a game's two notification switches, their own row in the tray */
+.tray-nt { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; margin-top: 2px; }
+.tray-nt .ta-nt { height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--ink); font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; min-width: 0; }
+.tray-nt .ta-nt svg { width: 16px; height: 16px; flex: none; color: var(--muted); }
+.tray-nt .ta-nt.on { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.tray-nt .ta-nt.on svg { color: var(--accent); }
+.tray-nt .ta-nt:not(.on) { color: var(--muted); }
+/* the slate's Board button, beside Live; lit in the accent while the scoreboard is on */
+.lo-row .lo-board { margin-right: 8px; gap: 6px; }
+.lo-row .lo-board svg { width: 13px; height: 13px; }
+.lo-row .lo-board.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #0C0C0C); }
+.lo-row .lo-board.on b { background: rgba(0,0,0,.18); color: var(--on-accent, #0C0C0C); }
+/* the scoreboard picker */
+.board-sub { margin: -4px 0 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.board-list { display: grid; gap: 6px; }
+.board-row { display: grid; grid-template-columns: 24px auto 1fr; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--ink); text-align: left; }
+.board-row.on { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.board-row:disabled { opacity: .45; }
+.board-ck { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--dim); display: grid; place-items: center; }
+.board-row.on .board-ck { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #0C0C0C); }
+.board-ck svg { width: 14px; height: 14px; }
+.board-tm { display: inline-flex; align-items: center; gap: 8px; }
+.board-at { color: var(--muted); font-size: 13px; font-weight: 700; }
+.board-st { justify-self: end; color: var(--muted); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.board-st.live { color: var(--live, #FF5B4E); }
+.board-none { margin: 0; color: var(--muted); }
+/* the slate card's bell: small and gray, just left of the time; a bigger tap area than it looks */
+.g-side .s-row { display: inline-flex; align-items: center; gap: 6px; }
+.g-bell { display: inline-flex; align-items: center; justify-content: center; padding: 10px 4px 10px 10px; margin: -10px -4px -10px -10px; border: 0; background: none; color: var(--dim); }
+.g-bell svg { width: 13px; height: 13px; }
+.g.panel > .g-bell { position: absolute; right: 6px; bottom: 4px; margin: 0; padding: 8px; z-index: 1; }
+.g.panel > .g-bell svg { width: 15px; height: 15px; }
+.g.panel.has-bell > .hl { padding-right: 26px; }
+.g.panel.has-bell:has(> .tray) > .g-bell { display: none; }

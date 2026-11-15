@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-look="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#121821">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Slate">
+<link rel="apple-touch-icon" href="icon.png">
+<script>window.SLATE_SELF = {url: "https://xpkzcdaawaqiqgwkkwst.supabase.co", key: "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ"};</script>
+<script src="supabase.js"></script>
+<script>
+{{boot/db-shim.js}}
+</script>
+<script>window.SLATE_CHANGES = {{CHANGES}};</script>
+<script>window.SLATE_BUILD = "{{BUILD}}";
+(function () {
+  // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
+  var last = 0;
+  function check() {
+    if (Date.now() - last < 60000) return; last = Date.now();
+    fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      if (!v || !v.build || v.build === window.SLATE_BUILD) return;
+      // tried this version in the last 2 minutes (GitHub still publishing): don't loop, but try again later
+      try { var tr = JSON.parse(localStorage.getItem("slate-tried") || "{}"); if (tr.b === v.build && Date.now() - tr.at < 120000) return; localStorage.setItem("slate-tried", JSON.stringify({ b: v.build, at: Date.now() })); } catch (e) {}
+      location.replace(location.pathname + "?v=" + v.build);
+    }, function () {});
+  }
+  // Settings > Update now: drop the phone's saved copy and load straight from GitHub
+  window.slateForceUpdate = function () {
+    var go = function () { location.replace(location.pathname + "?v=" + Date.now()); };
+    var p = [];
+    try { if (window.caches) p.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })); } catch (e) {}
+    try { if (navigator.serviceWorker) p.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.update().catch(function () {}); })); })); } catch (e) {}
+    Promise.all(p).then(go, go); setTimeout(go, 2500);
+  };
+  setTimeout(check, 1500);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+  window.addEventListener("pageshow", function (e) { if (e.persisted) { last = 0; check(); } });
+})();</script>
+<script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});</script>
+<title>Slate</title>
+<style>
+{{styles/010-fonts.css}}
+{{styles/020-base.css}}
+{{styles/030-duo.css}}
+{{styles/040-components.css}}
+</style>
+<style id="ux-review">
+{{styles/050-ux-review.css}}
+</style>
+</head>
+<body>
+{{body.html}}
+<script>{{data/teams.js}}</script>
+<script>
+(function () {
+{{app/*.js}}
+})();
+</script>
+</body>
+</html>
