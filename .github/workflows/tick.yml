@@ -1,6 +1,7 @@
 name: Slate tick
 # The number work for the Slate app: scores, odds, start times, standings and rankings,
-# day slates, Box Office facts and phone alerts. Free on GitHub, every 10 minutes.
+# day slates, Box Office facts and phone alerts. Free on GitHub, every 10 minutes: started by the Cloudflare worker
+# (worker/index.js, startTick), since GitHub's own schedule below only ran every few hours at night. The schedule stays as a backup.
 on:
   schedule:
     - cron: "3,13,23,33,43,53 * * * *"

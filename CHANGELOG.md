@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.24.1 (Nov 15, 2026)
+TestFlight: 3.0 (20), no new build (server only)
+- The number job (scores, odds, start times, Box Office, slates; scripts/tick.py) is now started every 10 minutes by the Cloudflare server instead of GitHub's own schedule, which only ran it every few hours overnight. GitHub's schedule stays as a backup. Needs a GitHub token saved in Cloudflare as GH_TOKEN.
+
 ## 3.24.0 (Nov 15, 2026)
 TestFlight: 3.0 (20)
 - Live notifications show up the moment you switch them on: a game's Live notification switch (live or finished games, or one starting within 15 minutes) and the scoreboard's Show on Lock Screen now put it on your Lock Screen right away, and the server takes it over and keeps it current. Switching off (the tray switch, the gray bell on a slate card, or Turn off on the scoreboard) takes it down right away too. Changing the scoreboard's picks while it's on updates it right away. Needs the new TestFlight build; until then it still takes up to a minute.

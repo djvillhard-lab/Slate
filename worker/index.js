@@ -70,11 +70,22 @@ function target(p) {
 // the Anthropic key may be saved as ANTHROPIC_API_KEY or as dj-api-key
 const apiKey = (env) => env.ANTHROPIC_API_KEY || env["dj-api-key"] || env.DJ_API_KEY || "";
 
+async function startTick(env) {
+  const r = await fetch("https://api.github.com/repos/djvillhard-lab/Slate/actions/workflows/tick.yml/dispatches", {
+    method: "POST", body: JSON.stringify({ ref: "main" }),
+    headers: { authorization: "Bearer " + env.GH_TOKEN, accept: "application/vnd.github+json", "user-agent": "slate-worker", "x-github-api-version": "2022-11-28", "content-type": "application/json" },
+  });
+  if (r.status !== 204) console.log("tick dispatch", r.status, (await r.text()).slice(0, 200));
+}
+
 export default {
   // every minute: phone alerts from live ESPN scores
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runAlerts(env).catch((e) => console.log("alerts error", String(e))));
     ctx.waitUntil(runNewsletters(env, getDoc, putDoc).catch((e) => console.log("newsletters error", String(e))));
+    // the number job (scripts/tick.py on GitHub) every 10 minutes, started from here: GitHub's own schedule only
+    // ran it every few hours at night. Needs a GitHub token (Actions: read and write on this repo) saved in Cloudflare as GH_TOKEN.
+    if (env.GH_TOKEN && new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 3) ctx.waitUntil(startTick(env).catch((e) => console.log("tick error", String(e))));
   },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
