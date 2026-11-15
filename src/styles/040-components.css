@@ -1446,7 +1446,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-res { font-style: normal; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: var(--raise); color: var(--muted); }
 .fd-res.sc { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--ink); }
 .fd-res.to { background: color-mix(in srgb, var(--live, #E5484D) 22%, transparent); color: var(--ink); }
-.fd-play { display: grid; gap: 3px; padding: 8px 10px; border-radius: 10px; background: var(--card); border: 1px solid var(--hair); }
+.fd-play { display: flow-root; padding: 8px 10px; border-radius: 10px; background: var(--card); border: 1px solid var(--hair); }
 .fd-play.fd-k-score { border-color: color-mix(in srgb, var(--accent) 50%, transparent); background: color-mix(in srgb, var(--accent) 9%, var(--card)); }
 .fd-play.fd-k-score .fd-pt { color: var(--accent); }
 .fd-play.fd-k-turn { border-color: color-mix(in srgb, var(--live, #E5484D) 45%, transparent); }
@@ -1460,7 +1460,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-pn b { font-size: 13px; font-weight: 800; color: var(--ink); }
 .fd-pn i { font-style: normal; font-size: 12px; color: var(--muted); }
 .fd-px { margin: 0 0 2px; font-size: 14px; font-weight: 500; line-height: 1.35; color: var(--ink); opacity: .88; }
-.fd-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 1px 0 2px; }
+.fd-tags { float: right; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; max-width: 46%; margin: 4px 0 2px 8px; }
+.fd-play > .fd-pt { margin-top: 3px; }
+.fd-play > .fd-px { margin-top: 3px; }
+.fd-play > .fd-pl { margin-top: 4px; }
 .fd-tag { font-size: 11px; font-weight: 800; line-height: 18px; padding: 0 7px; border-radius: 999px; background: var(--raise); color: var(--muted); white-space: nowrap; }
 .fd-tag.hot { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--ink); }
 .fd-tag.good { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
