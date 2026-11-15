@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.14.0 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Today's slate leads with what's live: finished games move to a Finished group at the bottom (open to start; tap its header to fold it). Live and upcoming games stay on top in time order (or by league), right under Worth a look.
+- Finished rows are tighter: start times stay, while the league line, tags and one-line notes drop, with smaller scores, so the group takes much less room. Tap a game for its box score as usual.
+- Other days' slates are unchanged.
+
 ## 3.13.0 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (server and web only)
 - Morning brief, new format: the day and how many games ("Sat 11/14: 6 games"), then one line per slate game in start order ("11 AM - Davidson @ Dayton", "1:30 PM - Boston College @ No. 5 Notre Dame"). If your slate is empty it lists your teams' games; with nothing at all it isn't sent.
