@@ -4,6 +4,7 @@ import SwiftUI
 // A live notification (Live Activity) for one game: the score on the Lock Screen and at the top of the screen.
 // Shared by the app and the SlateLive widget extension. Slate's server starts, updates and ends these by push,
 // so the property names below are also the JSON keys it sends ("attributes" and "content-state").
+// Keys added after 3.0 (16) are optional, so live notifications started before an app update still decode.
 struct SlateGameAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var a: Int            // away score
@@ -11,6 +12,8 @@ struct SlateGameAttributes: ActivityAttributes {
         var detail: String    // "4:12 - 3rd", "Halftime", "Final"
         var state: String     // "pre", "in" or "post"
         var line: String?     // optional one-liner, like the slate's ("Cade Cunningham has 41 pts")
+        var poss: String?     // football: who has the ball, "away" or "home" (from ESPN, while it reports one)
+        var sit: String?      // football: ESPN's down and distance, "2nd & 7 at BC 34"
     }
 
     var gameId: String
@@ -21,6 +24,11 @@ struct SlateGameAttributes: ActivityAttributes {
     var homeAbbr: String
     var awayColor: String     // "#RRGGBB", or "" for the default
     var homeColor: String
+    var awayAlt: String?      // the team's second color: the stripe along the bottom of its chip
+    var homeAlt: String?
+    var awayRank: Int?        // college rankings (No. 5), when ranked
+    var homeRank: Int?
+    var channel: String?      // "NBC", "ESPN"…, as on the slate: the Watch button
 }
 
 extension Color {

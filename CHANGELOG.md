@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.20.0 (Nov 14, 2026)
+TestFlight: 3.0 (17)
+- Live scores on the Lock Screen, redesigned as a scorebug: the slate's team chips (each team's second color as a stripe along the bottom), bigger scores in Slate's own font, the clock in red with a live dot, a football beside the team with the ball, and the down and distance ("2nd & 7 at BC 34"). Under it sits the slate's one-line note, red while the game is on. A Watch button on the right opens the channel's app the way the slate's channel buttons do (YouTube TV; NBC and ESPN's channels ask which), passing through Slate for a moment. After the final the losing team dims and the button becomes Box score.
+- Dynamic Island: pressing and holding it opens the same scorebug around the camera: each team's chip and big score on either side, the clock and the down and distance under the camera, then the red one-line note and a Matchup button on the right (Box score after the final). With one game live it shows both teams' chips and scores; with another game live too, the small circle holds both scores, ringed half in each team's color (away on the left, home on the right). Dark team colors are brightened there so they show on black. Where iOS gives the island less width (the iPhone Duo's side column, an iPhone turned sideways), one game live shows that small split-ring circle too, as Apple asks.
+- Tapping a live score now opens that game's matchup in Slate instead of the slate's front page.
+- Server: live scores now carry each team's second color, college rankings, the channel, and for football ESPN's down and distance and who has the ball (only while ESPN reports them).
+- Needs the new TestFlight build. Live scores already running when you update switch to the new look, but their stripes, rankings and Watch button start with the next game.
+
 ## 3.19.3 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - One-line notes all read the same way now: the player's first and last name, no colon after it, and spelled-out stats ("TTU: Thomas Castellanos 223 passing yds, 3 TD", "UTAH: Devon Dampier 75 rushing yds, 2 TD"). Before, some lines used initials ("D. Dampier 57 rush yds") and some had a second colon. This applies on slate cards, Worth a look and the Big night notes. Notes saved on your phone in the old wording are rebuilt once.

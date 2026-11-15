@@ -143,13 +143,20 @@ export async function sendApns(env, sub, msg) {
 // The app reports a "start" token (lets Slate start a live notification) and one token per running game
 // (to update and end it) to <prefix>prefs/liveacts. Each game's state lives in sent-<D>.la[id] = {k, n, end}.
 function laAttrs(id, g, s) {
-  return { gameId: id, league: LEAGUE_NAME[g.league] || String(g.league || "").toUpperCase(), away: g.awayShort || g.away || "", home: g.homeShort || g.home || "",
-    awayAbbr: s.aa || (g.awayShort || g.away || "").slice(0, 3).toUpperCase(), homeAbbr: s.ha || (g.homeShort || g.home || "").slice(0, 3).toUpperCase(), awayColor: s.ac || "", homeColor: s.hc || "" };
+  const at = { gameId: id, league: LEAGUE_NAME[g.league] || String(g.league || "").toUpperCase(), away: g.awayShort || g.away || "", home: g.homeShort || g.home || "",
+    awayAbbr: s.aa || (g.awayShort || g.away || "").slice(0, 3).toUpperCase(), homeAbbr: s.ha || (g.homeShort || g.home || "").slice(0, 3).toUpperCase(), awayColor: s.ac || g.awayColor || "", homeColor: s.hc || g.homeColor || "",
+    // 3.20.0, the scorebug design: each chip's second-color stripe, college ranks, and the channel for the Watch button (all optional in the app)
+    awayAlt: s.ax || g.awayAlt || "", homeAlt: s.hx || g.homeAlt || "", channel: String((g.tv || [])[0] || "") };
+  for (const side of ["away", "home"]) { const r = Number(g[side + "Rank"]); if (COLLEGE[g.league] && Number.isInteger(r) && r > 0 && r < 26) at[side + "Rank"] = r; }  // a whole number, or the app can't read the notification
+  return at;
 }
 function laState(s) {
   const x = (s.ld || []).slice().sort((a, b) => b.v - a.v)[0];
   const st = { a: s.a || 0, h: s.h || 0, detail: s.state === "post" ? (s.detail || "Final") : (s.detail || ""), state: s.state };
   if (x && x.n && x.d) st.line = `${x.n} ${x.d}`.slice(0, 60);
+  // football, while the ball is live: who has it and the down ("2nd & 7 at BC 34"), straight from ESPN; left out when ESPN has none
+  if (s.state === "in" && (s.po === "away" || s.po === "home")) st.poss = s.po;
+  if (s.state === "in" && s.dd) st.sit = String(s.dd).slice(0, 40);
   return st;
 }
 async function sendLive(env, tok, event, body, prio) {
@@ -164,7 +171,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
   let started = 0;
   for (const id of Object.keys(sent.la).concat([...want])) {
     const g = games[id], s = sc[id]; if (!g || !s || s.state === "pre") continue;
-    const cur = sent.la[id], st = laState(s), key = `${st.a}-${st.h}-${st.detail}`;
+    const cur = sent.la[id], st = laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`;
     if (!cur) {
       // a new one: only for a game that's live now, while alerts are on and not held back
       if (!want.has(id) || s.state !== "in" || !cfg.on || silent || !(la.start || []).length || running + started >= 4) continue;
@@ -335,7 +342,12 @@ async function liveScores(games, want, now) {
     const take = (L) => { const x = (L.leaders || [])[0]; if (x && x.athlete) ld.push({ c: L.name, n: x.athlete.displayName || x.athlete.shortName || "", d: String(x.displayValue || ""), v: Number(x.value) || 0, t: tAb[String((x.team || (x.athlete || {}).team || {}).id || "")] || "" }); };
     (c.leaders || []).forEach(take); for (const x of c.competitors || []) (x.leaders || []).forEach((L) => { if (/^(points|goals)$/.test(L.name)) take(L); });
     sc[id] = { state: st.state, a: Number(cs.away.score), h: Number(cs.home.score), detail: st.shortDetail || "", p: Number((c.status || {}).period) || 0, ck: Number((c.status || {}).clock) || 0, ld,
-      aa: (cs.away.team || {}).abbreviation || "", ha: (cs.home.team || {}).abbreviation || "", ac: hex((cs.away.team || {}).color), hc: hex((cs.home.team || {}).color) };
+      aa: (cs.away.team || {}).abbreviation || "", ha: (cs.home.team || {}).abbreviation || "", ac: hex((cs.away.team || {}).color), hc: hex((cs.home.team || {}).color),
+      ax: hex((cs.away.team || {}).alternateColor), hx: hex((cs.home.team || {}).alternateColor) };
+    // football: ESPN's down and distance, and which side has the ball (its team id matched to away or home)
+    const sit = c.situation || {}, pid = String(sit.possession || "");
+    if (sit.downDistanceText) sc[id].dd = String(sit.downDistanceText);
+    if (pid) sc[id].po = pid === String((cs.away.team || {}).id) ? "away" : pid === String((cs.home.team || {}).id) ? "home" : "";
   }
   return sc;
 }

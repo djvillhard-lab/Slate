@@ -1,6 +1,9 @@
 # Live scores on the Lock Screen and Dynamic Island: ideas for the redesign
 
-DJ will decide on these (Nov 14, 2026). Current design is in ios/SlateLive/SlateLiveActivity.swift.
+Decided Nov 14, 2026 and built in 3.20.0 (ios/SlateLive/SlateLiveActivity.swift): the Lock Screen is the scorebug
+(design A) with the slate's red one-liner; the expanded Dynamic Island is A's too (one-liner red); one game live
+shows both chips and scores ("Chips"); a second game live shows the split ring. Mockups: the "Slate live notifications
+redesign" design canvas. The ideas below that weren't used are kept for later.
 
 ## Lock Screen card
 - Possession and down-and-distance for football ("ND ball · 2nd & 7 at BC 34"), bonus/fouls for basketball, power play for hockey.

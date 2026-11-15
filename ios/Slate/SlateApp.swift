@@ -10,6 +10,8 @@ struct SlateApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                // a tapped live notification (Lock Screen or Dynamic Island) opens its game's matchup
+                .onOpenURL { url in Task { @MainActor in WebModel.shared.openLink(url) } }
         }
     }
 }

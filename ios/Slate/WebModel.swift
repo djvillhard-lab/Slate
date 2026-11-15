@@ -23,6 +23,8 @@ final class WebModel: ObservableObject {
 
     weak var webView: WKWebView?
     private var pushAsked = false
+    private var pageReady = false      // the page has said "ready" (SlateApp is there to call)
+    private var pendingCall: String?   // a live notification's tap to hand the page once it is
 
     var appVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0" }
     // the build number TestFlight shows in brackets, e.g. 3.0 (12); Xcode Cloud stamps it on every build
@@ -81,6 +83,32 @@ final class WebModel: ObservableObject {
         js("window.SlateApp && SlateApp.back && SlateApp.back()")
     }
 
+    // A live notification's links (SlateLiveActivity.swift): #game=<id> opens that game's matchup; #watch=<channel>&gid=<id>
+    // (the Lock Screen's Watch button) opens the channel's app like the slate's channel buttons. Handed to the page right
+    // away if it's up, otherwise as soon as it says it's ready (a cold launch from the Lock Screen).
+    func openLink(_ url: URL) {
+        guard let frag = url.fragment else { return }
+        var q: [String: String] = [:]
+        for part in frag.split(separator: "&") {
+            let kv = part.split(separator: "=", maxSplits: 1).map(String.init)
+            if kv.count == 2 { q[kv[0]] = kv[1].removingPercentEncoding ?? kv[1] }
+        }
+        if let ch = q["watch"], !ch.isEmpty {
+            pendingCall = "SlateApp.watch && SlateApp.watch(\(Self.quote(ch)), \(Self.quote(q["gid"] ?? "")))"
+        } else if let id = q["game"], !id.isEmpty {
+            pendingCall = "SlateApp.openGame && SlateApp.openGame(\(Self.quote(id)))"
+        } else {
+            return
+        }
+        if pageReady { runPendingCall() }
+    }
+
+    private func runPendingCall() {
+        guard let call = pendingCall else { return }
+        pendingCall = nil
+        js("window.SlateApp && " + call)
+    }
+
     func go(_ target: String) {
         view = target  // light the strip button right away; the page's own report follows
         js("window.SlateApp && SlateApp.go(\(Self.quote(target)))")
@@ -133,9 +161,11 @@ final class WebModel: ObservableObject {
         switch t {
         case "ready":
             loadError = nil
+            pageReady = true
             js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded()))); window.SlateApp && SlateApp.setFloat && SlateApp.setFloat(\(float))")
             sendMenuAnchor()
             sendFold()
+            runPendingCall()
         case "state":
             if let v = m["view"] as? String { view = v }
             if let l = m["look"] as? String { look = l }
@@ -150,6 +180,9 @@ final class WebModel: ObservableObject {
         case "push-request":
             pushAsked = true
             requestPush()
+        case "open":
+            // a link the page opens in another app (the Watch button's YouTube TV, a streaming app)
+            if let u = m["url"] as? String, let url = URL(string: u), url.scheme == "https" { UIApplication.shared.open(url) }
         default:
             break
         }
