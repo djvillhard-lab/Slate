@@ -4,7 +4,7 @@
 // The workflow asks Claude (with web search) for the summary and saves it to Supabase; the app sees it appear.
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
 import { WorkflowEntrypoint } from "cloudflare:workers";
-import { runAlerts, sendPush, sendApns, bcRequest } from "./alerts.js";
+import { runAlerts, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
@@ -108,6 +108,15 @@ export default {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       const me = await whoIs(env, p && p.pass);
       if (!me) return json({ error: "Wrong passcode" }, 403);
+      // started by the app on the game's broadcast channel (3.28.0): no token to keep, just that it's running there
+      if (p.kind === "activity-ch") {
+        if (!/^[a-z0-9-]{3,60}$/.test(String(p.gameId || ""))) return json({ error: "bad game" }, 400);
+        const lp = (me.id === "dj" ? "" : "u/" + me.id + "/") + "prefs/liveacts", ld = (await getDoc(env, lp)) || {};
+        ld.acts = ld.acts || {}; ld.acts[p.gameId] = { ch: 1, env: p.env === "sandbox" ? "sandbox" : "production", at: new Date().toISOString() };
+        ld.updatedAt = new Date().toISOString(); ld.start = ld.start || [];
+        await putDoc(env, lp, ld);
+        return json({ ok: true });
+      }
       // swiped away on the phone (3.27.0): that game's Live notification switch goes off (the scoreboard's too), so the
       // slate's button matches what's showing, and the server doesn't put it back
       if (p.kind === "gone" || p.kind === "board-gone") {
@@ -190,6 +199,15 @@ export default {
       const out = [];
       for (const sub of doc.subs || []) out.push(await (sub.apns ? sendApns : sendPush)(env, sub, { title: typeof p.title === "string" ? p.title.slice(0, 80) : "", body: String(p.body || "Test from Slate").slice(0, 200), tag: "test" }).catch((e) => String(e)));
       return json({ ok: true, sent: out });
+    }
+    // the game's broadcast channel, for a live notification the app starts itself (3.28.0); made on first ask
+    if (url.pathname === "/api/live-channel" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
+      if (!/^[a-z0-9-]{3,60}$/.test(String(p.gameId || ""))) return json({ error: "bad game" }, 400);
+      const doc = await bcLoad(env), ch = await bcChannel(env, doc, String(p.gameId), p.env === "sandbox" ? "sandbox" : "production");
+      if (doc.dirty) await bcSave(env, doc);
+      return json(ch ? { channel: ch } : { channel: "" });
     }
     // a quick check that the server can reach Apple's broadcast channel host (DJ only)
     if (url.pathname === "/api/bc-probe" && req.method === "POST") {

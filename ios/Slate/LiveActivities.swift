@@ -127,7 +127,19 @@ final class LiveActivities {
             return
         }
         guard let attrs = Self.decode(SlateGameAttributes.self, m["attrs"]), let state = Self.decode(SlateGameAttributes.ContentState.self, m["state"]) else { return }
-        Task { await self.show(Activity<SlateGameAttributes>.activities.first { $0.attributes.gameId == id }, attributes: attrs, state: state) }
+        Task {
+            let existing = Activity<SlateGameAttributes>.activities.first { $0.attributes.gameId == id }
+            // a new one listens on the game's broadcast channel (3.28.0), so the server's score updates reach it even
+            // when Slate isn't running; without a channel it falls back to its own token
+            if existing == nil, #available(iOS 18.0, *), let ch = await self.channel(for: id), ActivityAuthorizationInfo().areActivitiesEnabled {
+                let content = ActivityContent(state: state, staleDate: Date().addingTimeInterval(15 * 60))
+                if (try? Activity<SlateGameAttributes>.request(attributes: attrs, content: content, pushType: .channel(ch))) != nil {
+                    self.postChannel(gameId: id)
+                    return
+                }
+            }
+            await self.show(existing, attributes: attrs, state: state)
+        }
     }
 
     // update the one already showing, or start a new one (its push token goes to the server like any other)
@@ -144,6 +156,28 @@ final class LiveActivities {
     private static func decode<T: Decodable>(_ type: T.Type, _ any: Any?) -> T? {
         guard let any, JSONSerialization.isValidJSONObject(any), let data = try? JSONSerialization.data(withJSONObject: any) else { return nil }
         return try? JSONDecoder().decode(type, from: data)
+    }
+
+    // the game's broadcast channel from the server ("" when broadcast isn't available)
+    private func channel(for gameId: String) async -> String? {
+        var req = URLRequest(url: URL(string: "https://slate.djvillhard.workers.dev/api/live-channel")!)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "content-type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["pass": pass, "gameId": gameId, "env": env])
+        req.timeoutInterval = 6
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let ch = j["channel"] as? String, !ch.isEmpty else { return nil }
+        return ch
+    }
+
+    // tell the server this game's live notification is up, on its channel, so it keeps it current
+    private func postChannel(gameId: String) {
+        var req = URLRequest(url: Self.endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "content-type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["pass": pass, "kind": "activity-ch", "gameId": gameId, "env": env])
+        URLSession.shared.dataTask(with: req).resume()
     }
 
     // a live notification that's no longer on the phone: the server switches it off (so it isn't started again) and the

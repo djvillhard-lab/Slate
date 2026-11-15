@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.28.0 (Nov 15, 2026)
+TestFlight: 3.0 (29)
+- Live notifications for a game now listen on that game's broadcast channel (Apple's broadcast push): the server sends each score once per game, and every live notification for it updates, whether or not Slate is running or was swiped away. No more stuck scores from a missing token. Works for ones the server starts and ones you switch on from the slate. Needs the new TestFlight build and Broadcast Capability on the app ID (done). If a channel can't be made, it falls back to the old way. The scoreboard stays on its own token (it mixes four games).
+
 ## 3.27.0 (Nov 15, 2026)
 TestFlight: 3.0 (28)
 - A game's Live notification switch now matches what's on your phone: swipe a live notification away and its switch (in the game's tray, and the gray bell) turns off, and the server won't put it back. The same for the scoreboard (its Show on Lock Screen turns back on as an option). The app tells the server the moment it's swiped away; if the app wasn't running, the server notices the next time it tries to update it. Coming back to Slate also picks up any switch the server turned off.

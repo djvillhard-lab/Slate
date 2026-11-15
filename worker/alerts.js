@@ -144,6 +144,36 @@ export async function bcRequest(env, envName, method, path, body, hdrs) {
     return { status: r.status, channel: r.headers.get("apns-channel-id") || "", text: text.slice(0, 300) };
   } catch (e) { return { status: -1, text: String(e).slice(0, 300) }; }
 }
+// The game → channel record, shared by every account: bc/channels = { games: { [id]: { production, sandbox, at, k, end } } }
+let BC_OFF = 0;  // the broadcast capability isn't on (yet): don't ask again for 10 minutes
+export async function bcChannel(env, doc, id, envName) {
+  doc.games = doc.games || {};
+  const g = doc.games[id] = doc.games[id] || {};
+  if (g[envName]) return g[envName];
+  if (BC_OFF && Date.now() - BC_OFF < 10 * 60000) return "";
+  const r = await bcRequest(env, envName, "POST", "/channels", { "message-storage-policy": 1, "push-type": "LiveActivity" });
+  if ((r.status === 201 || r.status === 200) && r.channel) { g[envName] = r.channel; g.at = new Date().toISOString(); doc.dirty = true; return r.channel; }
+  if (/BroadcastFeatureNotEnabled/.test(r.text || "")) BC_OFF = Date.now();
+  console.log("bc channel", r.status, r.text);
+  return "";
+}
+async function bcSend(env, envName, channel, event, body, prio) {
+  const a = await apnsCreds(env); if (!a) return 0;
+  const host = envName === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
+  const r = await fetch(`${host}/4/broadcasts/apps/${a.topic}`, { method: "POST",
+    headers: { authorization: "bearer " + (await apnsJwt(a)), "content-type": "application/json", "apns-channel-id": channel, "apns-push-type": "liveactivity", "apns-priority": String(prio) },
+    body: JSON.stringify({ aps: Object.assign({ timestamp: Math.floor(Date.now() / 1000), event }, body) }) });
+  if (r.status !== 200) { let t = ""; try { t = await r.text(); } catch (e) {} console.log("bc send", r.status, t.slice(0, 200)); }
+  return r.status;
+}
+export async function bcLoad(env) { const d = (await getDocs(env, ["bc/channels"]))["bc/channels"] || {}; d.games = d.games || {}; return d; }
+export async function bcSave(env, doc) {
+  const cut = Date.now() - 2 * 864e5, games = {};
+  for (const [i, g] of Object.entries(doc.games || {})) if (Date.parse(g.at || 0) > cut) games[i] = g;
+  await putDoc(env, "bc/channels", { games, updatedAt: new Date().toISOString() });
+}
+let BC = null;  // this run's channel record, and the games whose channel needs this minute's score
+
 // same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
 export async function sendApns(env, sub, msg) {
   const title = String(msg.title || "").trim();
@@ -201,7 +231,9 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     if (cur && cur.end && cur.off && want.has(id) && (s.state === "in" || (s.state === "post" && per[id] === 1))) { delete sent.la[id]; if (la.acts && la.acts[id] && !(Date.parse(la.acts[id].at) > (cur.offAt || 0))) { delete la.acts[id]; gone = true; } cur = undefined; }
     // started by the app the moment you switched it on (3.23.2): take it over and keep it current, instead of starting a second one
     tok = (la.acts || {})[id];
-    if (!cur && tok && Date.now() - Date.parse(tok.at) < 3 * 3600000 && want.has(id)) cur = sent.la[id] = { k: "", n: 1, app: 1 };
+    if (!cur && tok && Date.now() - Date.parse(tok.at) < 3 * 3600000 && want.has(id)) cur = sent.la[id] = tok.ch ? { k: "", n: 1, app: 1, ch: 1 } : { k: "", n: 1, app: 1 };
+    if (tok && tok.ch && cur && !cur.ch && !cur.end) cur.ch = 1;
+    if (tok && tok.ch) tok = null;  // listening on the game's channel: no token of its own
     if (!cur) {
       // a new one: only for a game that's live now, while alerts are on and not held back. A game switched on by name
       // on the slate starts even with the rules off or during quiet hours: that tap asked for it.
@@ -210,11 +242,22 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
       if (!want.has(id) || !(s.state === "in" || (fin && asked)) || !(cfg.on || asked) || (silent && !asked) || !(la.start || []).length || running + started >= 4) continue;
       const at = laAttrs(id, g, s), body = { "attributes-type": "SlateGameAttributes", attributes: at, "content-state": st,
         alert: { title: `${at.away} @ ${at.home}`, body: `${fin ? "Final" : "Live now"}: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
-      for (const t of la.start) { const r = await sendLive(env, t, "start", body, 10); if (r === 410) { t.gone = true; gone = true; } }
-      sent.la[id] = { k: key, n: 1 }; started++;
+      // started listening on the game's broadcast channel (3.28.0) when there is one: its updates then reach it whether
+      // or not the phone ever hands back a token
+      let ch = false;
+      for (const t of la.start) {
+        const c = BC ? await bcChannel(env, BC.doc, id, t.env) : "";
+        const r = await sendLive(env, t, "start", c ? Object.assign({ "input-push-channel": c }, body) : body, 10);
+        if (c && r === 200) ch = true;
+        if (r === 410) { t.gone = true; gone = true; }
+      }
+      sent.la[id] = ch ? { k: key, n: 1, ch: 1 } : { k: key, n: 1 }; started++;
+      if (ch && BC) BC.want[id] = st;
       continue;
     }
     if (cur.end) continue;
+    // on the game's channel: the score goes out once for everyone after this loop; the final ends it there too
+    if (cur.ch) { if (BC) BC.want[id] = st; if (s.state === "post") cur.end = 1; else cur.k = key; continue; }
     if (s.state === "post") {
       // one started for a finished game has no token for a moment: wait a few minutes for it, so it can be ended properly
       if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; continue; }
@@ -479,6 +522,7 @@ export async function runAlerts(env) {
     if (bd.on && Array.isArray(bd.ids)) for (const i of bd.ids) if (games[String(i)]) want.add(String(i)); }
   const sc = await liveScores(games, want, now);
   const list = Object.entries(games).map(([id, g]) => Object.assign({ id }, g)), byid = {}; for (const g of list) byid[g.id] = g;
+  BC = (await apnsReady(env)) ? { doc: await bcLoad(env), want: {} } : null;
   for (const w of active) {
     const pre = w.prefix, subs = (docs[pre + "prefs/push"] || {}).subs || [], p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
@@ -537,5 +581,21 @@ export async function runAlerts(env) {
     if (dirty) await putDoc(env, pre + "prefs/push", { subs: keep });
     if (JSON.stringify(sent) !== before) await putDoc(env, `${pre}prefs/sent-${D}`, Object.assign(sent, { updatedAt: now.toISOString() }));
     if (msgs.length) console.log("alerts", pre || "dj", msgs.map((m) => m.body.slice(0, 60)));
+  }
+  // the game channels: this minute's score once per game, for every live notification listening (3.28.0)
+  if (BC) {
+    for (const [id, st] of Object.entries(BC.want)) {
+      const g = BC.doc.games[id]; if (!g) continue;
+      const key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.line || ""}`;
+      if (g.end || g.k === key) continue;
+      const fin = st.state === "post", scored = !String(g.k || "").startsWith(`${st.a}-${st.h}-`);
+      for (const envName of ["production", "sandbox"]) {
+        if (!g[envName]) continue;
+        await bcSend(env, envName, g[envName], fin ? "end" : "update",
+          fin ? { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 4 * 3600 } : { "content-state": st, "stale-date": Math.floor(Date.now() / 1000) + 10 * 60 }, fin || scored ? 10 : 5);
+      }
+      g.k = key; if (fin) g.end = 1; BC.doc.dirty = true;
+    }
+    if (BC.doc.dirty) await bcSave(env, BC.doc);
   }
 }
