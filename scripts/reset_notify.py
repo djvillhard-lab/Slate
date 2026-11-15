@@ -3,6 +3,7 @@ docs/NOTIFICATIONS-PLAN.md). Quiet hours off and every day allowed (decision 9 r
 notification settings (time zone and the like) are kept. Phone tokens (prefs/push, prefs/liveacts) aren't touched.
 
 The old settings are saved first to backup/notify-reset-2026-11-15 (never overwritten on a rerun).
+  Ran once on Nov 15 from a dispatch-only workflow (since removed).
   SUPABASE_SECRET=... python3 scripts/reset_notify.py            dry run: prints what would change
   SUPABASE_SECRET=... python3 scripts/reset_notify.py --apply    backs up, then writes
 Standard library only."""

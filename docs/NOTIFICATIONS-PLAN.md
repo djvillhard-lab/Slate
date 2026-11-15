@@ -4,7 +4,7 @@ Nov 15, 2026 · DJ Villhard
 
 Published readout with the mockups inline: https://claude.ai/artifact/EqCuZwu1LJHedBY6oUDMqx (private to DJ). This file is the copy future sessions build from. It was written against main at commit baf80d8 (Slate 3.29.0, TestFlight 3.29.0 (33)) and is a plan only: no app code, version or build changed with it. DJ answered all 11 decisions on Nov 15; they're at the end and override anything above that disagrees.
 
-**Where we are.** Slate 3.29.0 sends alerts through Apple and Web Push, runs live notifications for single games (each on its game's Apple broadcast channel since 3.28.0) and a 4-game Board from a server job that runs every minute, and lets you, Drew and Dad each set your own alerts. Missing: Apple's urgency levels, tapping an alert to open its game, buttons on alerts, per-team and per-league control, and a lag of up to 10 minutes before a game you add is followed.
+**Where we are.** Slate 3.29.0 sends alerts through Apple and Web Push, runs live notifications for single games (each on its game's Apple broadcast channel since 3.28.0) and a 4-game Board from a server job that runs every minute, and lets you and Drew each set your own alerts. Missing: Apple's urgency levels, tapping an alert to open its game, buttons on alerts, per-team and per-league control, and a lag of up to 10 minutes before a game you add is followed.
 
 **Where we're going.** 13 alerts, each at an honest Apple urgency level, grouped by game, with Watch, Live score and Mute buttons. A sport-specific line on every live notification, using only stats ESPN actually sends. The Board takes over once three or more games are live. A Notifications page with Teams, Leagues and Recent alerts. Still free to run, and no alert ever calls Claude.
 
@@ -114,7 +114,7 @@ Four rules sit on top of the table:
 - **One notification per moment.** Apple warns against sending several notifications for the same thing ([Notifications](https://developer.apple.com/design/human-interface-guidelines/notifications)). While a game's live notification is showing, scores update it silently with no separate alert, and Close finish and Overtime ride on it as an alert: the screen lights and the expanded Dynamic Island opens, with no separate banner. That update reaches everyone following the game on its channel, by design: having the live notification on means you want that game's big moments (decision 11; [ActivityKit push notifications](https://developer.apple.com/documentation/activitykit/starting-and-updating-live-activities-with-activitykit-push-notifications)).
 - **Grouped by game.** thread-id becomes the game, so a game's starting, close-finish and final alerts stack together in Notification Center.
 - **Tap goes to the game.** Every alert carries the game's id; tapping opens its matchup, the same way the live notification does.
-- **Same catalog for everyone.** DJ, Drew and Dad each start from these defaults and change their own in Settings.
+- **Same catalog for everyone.** DJ and Drew (the only two profiles today) and anyone added later work from the same list and change their own in Settings.
 
 ### Banners, Notification Center and buttons
 
@@ -205,7 +205,7 @@ Apple's guidance is 15 to 30 minutes on the Lock Screen after the end, with 4 ho
 
 ## Part 2c: Notification settings, per profile
 
-Each profile (you, Drew, Dad) gets the same page in the same order, saved under its own prefix as today. A new account starts with everything off until the person turns it on; a first-run setup flow comes later (decision 8). Apple requires an in-app place to change notification choices, and the page links to Slate's page in iOS Settings for the system switches ([Managing notifications](https://developer.apple.com/design/human-interface-guidelines/managing-notifications)).
+Each profile (you and Drew today) gets the same page in the same order, saved under its own prefix as today. A new account starts with everything off until the person turns it on; a first-run setup flow comes later (decision 8). Apple requires an in-app place to change notification choices, and the page links to Slate's page in iOS Settings for the system switches ([Managing notifications](https://developer.apple.com/design/human-interface-guidelines/managing-notifications)).
 
 The page, top to bottom:
 
@@ -329,7 +329,7 @@ Your answers. Where anything above disagrees, these win.
 5. **Buttons on regular alerts:** Watch (the game's channel in YouTube TV, or the streaming app for a game YouTube TV doesn't carry), Live score and Mute this game. Live notifications get no buttons. Tapping any alert or live notification opens the matchup in Slate.
 6. **App icon badge:** dropped, and Slate stops asking for badge permission.
 7. **Score speed:** build the free 20-second updates during live games.
-8. **Defaults:** nothing is on for a new account; every alert and live notification has to be turned on. A first-run setup flow comes later. Existing profiles keep what they've set.
+8. **Defaults:** nothing is on for a new account; every alert and live notification has to be turned on. A first-run setup flow comes later. Both existing profiles, yours and Drew's, were reset to all off on Nov 15; the old settings are saved in backup/notify-reset-2026-11-15.
 9. **Quiet hours and Days:** removed from Slate entirely.
 10. **ESPN win probability:** shown, labeled as ESPN's, for football and basketball.
 11. **Close finish and Overtime** ride on the live notification when it's showing, for everyone following that game. Having the live notification on counts as wanting that game's big moments.
