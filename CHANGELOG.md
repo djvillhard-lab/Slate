@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.33.0 (Nov 15, 2026)
+TestFlight: 3.31.0 (35), no new build (web only)
+- Home Screen web app: tapping a game alert (starting, close finish, overtime, goal, upset watch, final, hourly score) opens that game's matchup. If Slate is already open it switches to the game; if not, it opens straight to it. The morning brief still just opens Slate. The iPhone app's alerts get the same tap-through with its next build; the server already sends them the game.
+- Behind the scenes: removed scripts/alerts.py, the old alert script nothing ran anymore (the server has sent alerts every minute since the worker took over), and fixed comments that still said alerts came from a 10-minute job.
+
 ## 3.32.1 (Nov 15, 2026)
 TestFlight: 3.31.0 (35), no new build (web only)
 - A game you add to your slate (or a game of a team you add) is followed right away: its alerts and live notification start from the next minute, instead of after a wait of up to 10 minutes for the server's slate refresh. A game you remove still drops off at that refresh.

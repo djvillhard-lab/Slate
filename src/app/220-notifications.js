@@ -42,7 +42,16 @@
     $("nt-state").textContent = state.notify.enabled ? "Alerts arrive as notifications." : "You won't get any game notifications.";
     pushState();
   }
-  // ---- phone alerts: this phone's push subscription, saved to prefs/push (the 10-minute job sends the alerts) ----
+  // ---- phone alerts: this phone's push subscription, saved to prefs/push (the server's minute job sends the alerts) ----
+  // a tapped alert opens its game: sw.js tells an open Slate, or opens a new one at ?game=<id>
+  if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function (e) {
+    var d = e.data || {}; if (d.slate === "open-game" && d.id && window.SlateApp) window.SlateApp.openGame(String(d.id));
+  });
+  (function () {
+    var m = /[?&]game=([\w.-]{1,40})(?:&|$)/.exec(location.search); if (!m) return;
+    try { history.replaceState(null, "", location.pathname + location.search.replace(/[?&]game=[^&]*/, "").replace(/^&/, "?") + location.hash); } catch (e) {}
+    setTimeout(function () { if (window.SlateApp) window.SlateApp.openGame(m[1]); }, 0);  // after the rest of the page's code has loaded
+  })();
   var PUSH_KEY = "BGOiSg4w33W5Lui867BMvNq2fDnRLjdoOADhr5Vx_C2gOaibYV8joMK8K6ibx9o8sZFByk_K107NupNiJNORWNY";
   var pushInfo = { checked: false, on: false, busy: false };
   function pushOk() { return isNativeApp() || ("serviceWorker" in navigator && "PushManager" in window && "Notification" in window); }
