@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.17.0 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Soccer matchup page: the Scoring section is gone; the match summary covers the goals.
+- Slate quick look (tap a live or finished game): each part is now its own dropdown, closed to start. Football, hockey and baseball: Top performers, Scoring, Box score. Basketball: Top performers, Box score. Soccer: Top performers, Match summary, Box score. Each stays open or closed as you left it while you use the app.
+
 ## 3.16.1 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Final box scores now update after the final: once a game ends, the app checks ESPN again every 2 minutes for the first hour. Before, the first final box score was kept for the rest of the session, so late corrections from ESPN never came in (like Jordan Faison's receiving TD against Boston College showing as 0).
