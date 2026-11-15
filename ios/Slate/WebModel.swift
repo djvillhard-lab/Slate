@@ -155,6 +155,11 @@ final class WebModel: ObservableObject {
         }
     }
 
+    // a live notification swiped away: the slate's switch for it turns off (3.27.0)
+    func liveGone(_ id: String) {
+        js("window.SlateApp && SlateApp.liveGone && SlateApp.liveGone(\(WebModel.quote(id)))")
+    }
+
     // ---- messages from the page ----
     func handle(_ body: Any) {
         guard let m = body as? [String: Any], let t = m["t"] as? String else { return }

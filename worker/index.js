@@ -108,6 +108,17 @@ export default {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       const me = await whoIs(env, p && p.pass);
       if (!me) return json({ error: "Wrong passcode" }, 403);
+      // swiped away on the phone (3.27.0): that game's Live notification switch goes off (the scoreboard's too), so the
+      // slate's button matches what's showing, and the server doesn't put it back
+      if (p.kind === "gone" || p.kind === "board-gone") {
+        const np = (me.id === "dj" ? "" : "u/" + me.id + "/") + "prefs/notify", nd = (await getDoc(env, np)) || {};
+        const lv = nd.liveAct = nd.liveAct && typeof nd.liveAct === "object" ? nd.liveAct : {};
+        if (p.kind === "gone") { if (!/^[a-z0-9-]{3,60}$/.test(String(p.gameId || ""))) return json({ error: "bad game" }, 400); lv.games = lv.games && typeof lv.games === "object" ? lv.games : {}; lv.games[p.gameId] = 0; }
+        else if (lv.board && typeof lv.board === "object") lv.board.on = false;
+        nd.updatedAt = new Date().toISOString();
+        await putDoc(env, np, nd);
+        return json({ ok: true });
+      }
       const tok = String(p.token || ""), kind = p.kind, ev = p.env === "sandbox" ? "sandbox" : "production";
       // kinds: "start" and "activity" (one game's live notification), "start-board" and "board" (the four-game scoreboard, 3.23.0)
       if (!/^[0-9a-f]{32,400}$/i.test(tok) || !["start", "activity", "start-board", "board"].includes(kind) || (kind === "activity" && !/^[a-z0-9-]{3,60}$/.test(String(p.gameId || "")))) return json({ error: "bad token" }, 400);

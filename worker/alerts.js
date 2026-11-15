@@ -213,7 +213,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     if (!tok || cur.k === key) continue;
     const scored = !cur.k.startsWith(`${st.a}-${st.h}-`);
     const r = await sendLive(env, tok, "update", { "content-state": st, "stale-date": Math.floor(Date.now() / 1000) + 10 * 60 }, scored ? 10 : 5);
-    if (r === 410) { delete la.acts[id]; gone = true; cur.end = 1; } else cur.k = key;
+    if (r === 410) { delete la.acts[id]; gone = true; cur.end = 1; (p.__off = p.__off || []).push(id); } else cur.k = key;  // gone from the phone (swiped away): its switch goes off
   }
   if (gone) la.start = (la.start || []).filter((t) => !t.gone);
   return gone;
@@ -499,6 +499,13 @@ export async function runAlerts(env) {
         let changed = await runLive(env, p, sent, la, { slate: w.slate || [], mine: w.mine || [] }, games, sc, held);
         if (await runBoard(env, p, sent, la, games, sc)) changed = true;
         if (changed) await putDoc(env, pre + "prefs/liveacts", la);
+        if ((p.__off || []).length) {  // live notifications swiped away: switch them off on the slate too (3.27.0)
+          const nd = docs[pre + "prefs/notify"] || {}, lv = nd.liveAct = nd.liveAct && typeof nd.liveAct === "object" ? nd.liveAct : {};
+          lv.games = lv.games && typeof lv.games === "object" ? lv.games : {};
+          for (const i of p.__off) lv.games[i] = 0;
+          nd.updatedAt = new Date().toISOString();
+          await putDoc(env, pre + "prefs/notify", nd);
+        }
       }
       catch (e) { console.log("live failed", String(e).slice(0, 120)); }
     }

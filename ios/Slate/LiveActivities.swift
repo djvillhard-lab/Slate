@@ -87,6 +87,9 @@ final class LiveActivities {
         Task {
             for await data in act.pushTokenUpdates { post(kind: "board", token: Self.hex(data), gameId: nil) }
         }
+        Task {
+            for await st in act.activityStateUpdates where st == .dismissed { gone(kind: "board-gone", gameId: nil) }
+        }
     }
 
     private func watch(_ act: Activity<SlateGameAttributes>) {
@@ -95,6 +98,10 @@ final class LiveActivities {
         let game = act.attributes.gameId
         Task {
             for await data in act.pushTokenUpdates { post(kind: "activity", token: Self.hex(data), gameId: game) }
+        }
+        // swiped away (or taken down): the game's Live notification switch goes off, on the server and on the slate
+        Task {
+            for await st in act.activityStateUpdates where st == .dismissed { gone(kind: "gone", gameId: game) }
         }
     }
 
@@ -137,6 +144,22 @@ final class LiveActivities {
     private static func decode<T: Decodable>(_ type: T.Type, _ any: Any?) -> T? {
         guard let any, JSONSerialization.isValidJSONObject(any), let data = try? JSONSerialization.data(withJSONObject: any) else { return nil }
         return try? JSONDecoder().decode(type, from: data)
+    }
+
+    // a live notification that's no longer on the phone: the server switches it off (so it isn't started again) and the
+    // slate's button turns off at once if the page is open
+    private func gone(kind: String, gameId: String?) {
+        var body: [String: Any] = ["pass": pass, "kind": kind]
+        if let gameId { body["gameId"] = gameId }
+        var req = URLRequest(url: Self.endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "content-type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        let bg = UIApplication.shared.beginBackgroundTask(withName: "slate-live-gone")
+        URLSession.shared.dataTask(with: req) { _, _, _ in
+            Task { @MainActor in UIApplication.shared.endBackgroundTask(bg) }
+        }.resume()
+        WebModel.shared.liveGone(gameId ?? "board")
     }
 
     private func post(kind: String, token: String, gameId: String?) {

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.27.0 (Nov 15, 2026)
+TestFlight: 3.0 (28)
+- A game's Live notification switch now matches what's on your phone: swipe a live notification away and its switch (in the game's tray, and the gray bell) turns off, and the server won't put it back. The same for the scoreboard (its Show on Lock Screen turns back on as an option). The app tells the server the moment it's swiped away; if the app wasn't running, the server notices the next time it tries to update it. Coming back to Slate also picks up any switch the server turned off.
+
 ## 3.26.0 (Nov 15, 2026)
 TestFlight: 3.0 (27), no new build (web only)
 - Quick look on a finished game: a Recap dropdown at the top shows Claude's short read, or the button to have Claude write it right there (shared with everyone, like all write-ups).
