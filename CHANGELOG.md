@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.18.1 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Game-winner lines read cleaner: short team names ("Texas", not "Texas Longhorns") and basketball shots in plain words ("LSU won it on Dent's 25-foot three with 0:01 left").
+
 ## 3.18.0 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Worth a look tags on your slate: any live game on your slate that qualifies for Close finish, Upset watch or Big night gets that tag on its own card (red, top right) instead of showing up again in Worth a look. Worth a look now only lists games that aren't on your slate.
