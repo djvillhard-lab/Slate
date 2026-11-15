@@ -11,6 +11,22 @@
     computeSlate(); state.lineup.ids = state.slateIds.slice();
     writer.next = { date: state.date, body: { v: 2, date: state.date, ids: state.slateIds.slice(), added: state.lineup.added.slice(), removed: state.lineup.removed.slice(), custom: (state.lineup.custom || []).slice(), updatedAt: new Date().toISOString() } };
     if (!writer.busy) flushLineup();
+    followSoon();
+  }
+  // Tell the server right away which games to follow (your slate, your teams' games, things added by hand), so an
+  // added game gets its alerts and live notification on the next minute instead of after the 10-minute tick job.
+  var followTimer = null, followSent = "";
+  function followSoon() {
+    clearTimeout(followTimer);
+    followTimer = setTimeout(function () {
+      var pass = slatePass(); if (!pass || !uid || state.date !== todayInHome() || !state.lineupLoaded || !state.settingsLoaded || state.slateStatus !== "ready") return;
+      var body = { date: state.date, slate: (state.slateIds || []).slice(), customs: (state.lineup.custom || []).slice(),
+        mine: games().filter(function (g) { return !g.custom && hasFav(g); }).map(function (g) { return g.id; }) };
+      var key = JSON.stringify(body); if (key === followSent) return;
+      body.pass = pass;
+      fetch("/api/follow", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) followSent = key; }, function () {});
+    }, 1500);
   }
   function flushLineup() {
     var job = writer.next; writer.next = null; if (!job) return;
@@ -35,6 +51,7 @@
       setWriter.busy = false; if (setWriter.dirty) saveSettings();
     }, function () { setWriter.busy = false; toast("Couldn't save settings."); });
     saveNotify();
+    followSoon();
   }
   // Keep the stored slate (which the alert task reads) in step with the rules.
   function maybeAutoAdd() {

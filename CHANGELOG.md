@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.32.1 (Nov 15, 2026)
+TestFlight: 3.31.0 (35), no new build (web only)
+- A game you add to your slate (or a game of a team you add) is followed right away: its alerts and live notification start from the next minute, instead of after a wait of up to 10 minutes for the server's slate refresh. A game you remove still drops off at that refresh.
+
 ## 3.32.0 (Nov 15, 2026)
 TestFlight: 3.31.0 (35), no new build (web only)
 - Alerts now use Apple's two everyday levels. Active lights the screen and plays the sound: Starting now, Close finish, Overtime, Upset watch, Goal, and a Final you aren't already watching. Passive goes quietly into Notification Center: the morning brief, the hourly score, and a Final when that game's live notification (or the scoreboard) already shows it. Nothing is Time Sensitive, so no alert breaks through a Focus.
