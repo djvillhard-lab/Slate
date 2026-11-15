@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.11.2 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Slate matchups: the scores now sit in the middle of the card (replacing 3.11.0's small nudge). Long team names shorten a little sooner to make room.
+
+## 3.11.1 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (web only)
+- Worth a look: close games no longer say "A 5-point game late" or "Tied late"; the score and clock already show that. Their line now names the standout so far (top scorer, passer, rusher or goal scorer), or there's no line if no one stands out yet.
+
 ## 3.11.0 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - Slate matchups: the scores sit a little closer to the team names.
