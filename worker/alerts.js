@@ -279,7 +279,8 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     if (closeSet.has(i) && !ot && !sent.close.includes(i)) {
       const min = parseInt(det, 10) || 0, inn = /(Top|Bot|Mid|End) (\d+)/i.exec(det);
       const late = sport === "bball" ? (COLLEGE[g.league] && g.league !== "ncaaw" ? per >= 2 : per >= 4) && ck > 0 && ck <= 300
-        : sport === "football" ? per >= 4 && ck <= 300 : sport === "hockey" ? per >= 3 && ck <= 300 : sport === "soccer" ? per >= 2 && min >= 80 : sport === "baseball" ? !!inn && Number(inn[2]) >= 8 : false;
+        : sport === "football" ? per > 4 || (per === 4 && ck <= 480) : sport === "hockey" ? per > 3 || (per === 3 && ck <= 480) :  // the final 8 minutes (or overtime), like Worth a look
+        sport === "soccer" ? per >= 2 && min >= 80 : sport === "baseball" ? !!inn && Number(inn[2]) >= 8 : false;
       const tight = sport === "bball" ? m <= 5 : sport === "football" ? m <= 8 : sport === "baseball" ? m <= 2 : m <= 1;
       if (late && tight) out.push(["close", i, "Close finish", `Close finish: ${score}`]);
     }
