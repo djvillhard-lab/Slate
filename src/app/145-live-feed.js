@@ -38,9 +38,24 @@
       (t.statistics || []).forEach(function (gr) { var lab = gr.labels || [];
         (gr.athletes || []).forEach(function (r) { var a = r.athlete || {}, id = String(a.id || ""); if (!id) return;
           var k = fdKey(a.lastName || String(a.displayName || "").split(" ").slice(1).join(" ")), L = ix.byLast[k] || (ix.byLast[k] = []), P = L.filter(function (x) { return x.id === id; })[0];
-          if (!P) { P = { id: id, name: a.displayName || "", first: a.firstName || a.displayName || "", jer: a.jersey || "", tid: tid, st: {} }; L.push(P); }
+          if (!P) { P = { id: id, name: a.displayName || "", first: a.firstName || a.displayName || "", jer: a.jersey || "", tid: tid, pos: (a.position || {}).abbreviation || "", st: {} }; L.push(P); }
           var v = {}; lab.forEach(function (l, i) { v[l] = (r.stats || [])[i]; }); P.st[gr.name] = v; }); }); });
     return ix;
+  }
+  // "F. Mendoza", "J. Smith-Njigba": the first initial and the rest of the name
+  function fdShort(P) { var w = String(P.name || "").split(" "); return w.length > 1 ? w[0].charAt(0) + ". " + w.slice(1).join(" ") : P.name || ""; }
+  // the player's position from ESPN: the box score when it has it, else the team's roster (asked once per team, kept with Box Office's)
+  function fdPos(P, lg) {
+    if (P.pos) return P.pos; if (P.id && FPOS[P.id]) return FPOS[P.id];
+    if (P.tid && !FPOS_ASK[lg + P.tid] && RK_PATH[lg]) {
+      FPOS_ASK[lg + P.tid] = 1;
+      rkFetch(rkUrl(lg, "teams/" + P.tid + "/roster", "")).then(function (j) {
+        var n = 0; ((j && j.athletes) || []).forEach(function (grp) { (grp.items || []).forEach(function (a) { var p = (a.position || {}).abbreviation; if (a.id && p) { FPOS[a.id] = p; n++; } }); });
+        try { localStorage.setItem("slate-fpos", JSON.stringify(FPOS)); } catch (e) {}
+        if (n && state.view === "feed") renderFeed(true);
+      });
+    }
+    return "";
   }
   function fdKey(last) { return String(last || "").toLowerCase().replace(/[\s,]+(jr|sr|ii|iii|iv|v)\.?$/, "").replace(/[^a-z]/g, ""); }  // "Washington Jr." and "Washington" match
   function fdFind(ix, init, last, offTid) {
@@ -216,8 +231,8 @@
         var scs = el("span", "fd-psc"); scs.textContent = abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""); ph.appendChild(scs);
         card.appendChild(ph);
         card.appendChild(el("p", "fd-pt", rd.title));
-        rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, o.P.name)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
         var raw = fdClean(pl.text); if (raw && raw !== rd.title) card.appendChild(el("p", "fd-px", raw));
+        rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
         list.appendChild(card);
       }
     }

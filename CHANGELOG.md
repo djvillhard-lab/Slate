@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.34.3 (Nov 15, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- Live feed plays: players show as "F. Mendoza" instead of their full name, with their position beside it (QB, WR, LB). The position comes from ESPN, from the box score or the team's roster; if ESPN doesn't give one, none is shown.
+- Live feed plays: ESPN's description of the play is bigger and brighter, and sits right under the headline, above the players.
+
 ## 3.34.2 (Nov 15, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - A live football game's quick look: the Live feed button moved from the top of the card down to right above Full matchup, so the score details (win probability, lines, top performers, box score) come first.
