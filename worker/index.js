@@ -5,13 +5,13 @@
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, sendPush, sendApns } from "./alerts.js";
-import { runNewsletters } from "./newsletters.js";
+import { runNewsletters, rss } from "./newsletters.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
 const MODEL = "claude-sonnet-5-5";
 // web searches allowed per summary: each one adds a cent plus thousands of input tokens
-const SEARCHES = { preview: 2, team: 2, recap: 1, moments: 2 };
+const SEARCHES = { preview: 2, team: 2, recap: 1, moments: 2, news: 3 };
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
@@ -55,7 +55,13 @@ async function logUsage(env, user, u, model) {
 }
 
 const MOMENT_LGS = { nfl: "NFL", nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League", nhl: "NHL", ncaaw: "women's college basketball", ucl: "Champions League", mlb: "MLB", wnba: "WNBA" };
+// News briefs: My slate and My teams are personal (under the person's own space); league briefs are shared
+const NEWS_KEY = /^(slate|teams|nfl|ncaaf|nba|mlb|nhl|ncaam|ncaaw|wnba|mls|epl|ucl|uel|facup|laliga|seriea|bundesliga|ligue1|intl)$/;
 function target(p) {
+  if (p.kind === "news") {
+    const mine = p.key === "slate" || p.key === "teams", path = mine ? (p.user && p.user !== "dj" ? "u/" + p.user + "/" : "") + "mine/newsbrief-" + p.date + "-" + p.key : "newsbrief/" + p.date + "-" + p.key;
+    return { path, patch: (x) => x };
+  }
   if (p.kind === "moments") return { path: "moments/" + p.date, patch: (x) => ({ date: p.date, leagues: { [p.key]: x } }) };
   if (p.kind === "team") return { path: "teams/" + p.key, patch: (x) => x };
   return { path: "previews/" + p.date, patch: (x) => ({ games: { [p.id]: x } }) };
@@ -104,8 +110,8 @@ export default {
     }
     if (url.pathname === "/api/summary" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
-      if (!p || !["preview", "recap", "team", "moments"].includes(p.kind)) return json({ error: "bad kind" }, 400);
-      if (p.kind === "moments" ? !(MOMENT_LGS[p.key] && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
+      if (!p || !["preview", "recap", "team", "moments", "news"].includes(p.kind)) return json({ error: "bad kind" }, 400);
+      if (p.kind === "news" ? !(NEWS_KEY.test(p.key || "") && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "moments" ? !(MOMENT_LGS[p.key] && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
       if (!apiKey(env) || !env.SUPABASE_SECRET) return json({ error: "Summaries aren't set up yet (missing keys in Cloudflare)." }, 503);
       const me = (env.SUPABASE_SECRET && p.pass === env.SUPABASE_SECRET) ? { id: "dj", cap: 0 } : await whoIs(env, p.pass);
       if (!me) return json({ error: "Wrong passcode" }, 403);
@@ -118,6 +124,7 @@ export default {
         if (!fd || !fd.facts) return json({ error: "This night's stats aren't ready yet. Try again in a few minutes." }, 404);
         p.facts = fd.facts;
       }
+      p.user = me.id;
       const t = target(p), at = new Date().toISOString();
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
@@ -125,6 +132,17 @@ export default {
       try { await env.SUMMARY.create({ params }); }
       catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind, error: "Couldn't start: " + String(e).slice(0, 120) } })); return json({ error: "Couldn't start" }, 500); }
       return json({ ok: true, at }, 202);
+    }
+    // The Athletic's public RSS feed for one section (News page); cached 15 minutes at the edge
+    if (url.pathname === "/api/athletic") {
+      const slug = String(url.searchParams.get("slug") || "");
+      if (!/^[a-z0-9-]{2,40}$/.test(slug)) return json({ error: "bad slug" }, 400);
+      const cache = caches.default, key = new Request("https://slate.cache/athletic/" + slug);
+      const hit = await cache.match(key); if (hit) return hit;
+      const items = (await rss(slug)).slice(0, 30).map((x) => ({ title: x.title, url: x.url, at: x.at ? new Date(x.at).toISOString() : "", desc: x.desc }));
+      const res = new Response(JSON.stringify({ items }), { headers: { "content-type": "application/json", "cache-control": "public, max-age=900" } });
+      ctx.waitUntil(cache.put(key, res.clone()));
+      return res;
     }
     // live highlights are written by the app's own rules now (free); Claude no longer words them
     if (url.pathname === "/api/highlight") return json({ error: "off" }, 410);
@@ -162,6 +180,17 @@ const RULES = `Rules for all writing: plain text only, no citation tags or marku
 
 function prompt(p) {
   const game = p.game, facts = p.facts;
+  if (p.kind === "news") return `You're writing the News page of a sports fan's app. Today is ${new Date().toDateString()}.
+This brief is for: ${JSON.parse(game || "{}").label || p.key}.
+Facts (JSON): the headlines the app already shows for this page (ESPN and The Athletic: title, source, time, description, url)${p.key === "slate" ? ", the games on this person's slate today (teams, time, TV, why it's on the slate)" : p.key === "teams" ? ", this person's favorite teams" : ""}, and what this person reads most ("interests"): ${facts}
+Do up to three web searches for the biggest storylines here right now (news from the last 2 days: injuries, trades, coaching, results, what's next). Use your own research, not just the headlines.
+${RULES}
+Answer with only this JSON inside <json></json> tags:
+{"quick": ["5-7 quick hits, one line each, 12-25 words: the most important things to know right now, most important first${p.key === "slate" ? "; lead with what matters for tonight's games" : ""}"],
+ "long": ["3-5 paragraphs, 300-450 words in all: a longer read that connects the storylines, with context and what to watch next${p.key === "slate" ? "; walk through tonight's slate in viewing order: why each game matters, who to watch, injuries" : ""}"],
+ ${p.key === "slate" ? `"watch": [{"game": "AWY at HOM", "why": "one line: why to watch tonight"}],
+ ` : ""}"reads": [{"title": "...", "url": "...", "source": "ESPN" | "The Athletic", "why": "a few words on why it's worth reading"}]}
+${p.key === "slate" ? "watch: every game on the slate, in start order. " : ""}reads: 2-4 of the provided headlines (use their exact url) that are most worth opening${p.key === "slate" || p.key === "teams" ? ", favoring this person's interests" : ""}; never invent a url. Inside the JSON strings, never use double quotation marks.`;
   if (p.kind === "moments") return `You're writing the "Moments" page of a sports fan's app: what mattered in ${MOMENT_LGS[p.key]} on the night of ${p.date}.
 ESPN facts (JSON): every finished game that night (score, ranks, records, pregame line, overtime, notes, team leaders), plus "performers" (the night's best stat lines, ranked) and, where present, "lines" (every regular's box line): ${facts}
 You may do up to two web searches (for example "${MOMENT_LGS[p.key]} last night upsets" or a player's season averages) to judge what was unusual.
@@ -275,7 +304,11 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
-        if (p.kind === "moments") {
+        if (p.kind === "news") {
+          const reads = (Array.isArray(ans.reads) ? ans.reads : []).filter((r) => r && r.title && /^https:\/\//.test(r.url || "")).slice(0, 4).map((r) => ({ title: String(r.title).slice(0, 200), url: String(r.url).slice(0, 600), source: String(r.source || "").slice(0, 40), why: String(r.why || "").slice(0, 160) }));
+          const watch = (Array.isArray(ans.watch) ? ans.watch : []).slice(0, 12).map((w) => ({ game: String((w || {}).game || "").slice(0, 80), why: String((w || {}).why || "").slice(0, 200) })).filter((w) => w.game);
+          await putDoc(this.env, t.path, { key: p.key, date: p.date, quick: strs(ans.quick, 7), long: strs(ans.long, 6), watch, reads, at: now, by: p.user || "dj", writing: null });
+        } else if (p.kind === "moments") {
           const pick = (a, n) => (Array.isArray(a) ? a : []).filter((x) => x && (x.name || x.away)).slice(0, n).map((x) => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, String(v == null ? "" : v).slice(0, 300)])));
           await mergeDoc(this.env, t.path, t.patch({ over: pick(ans.over, 5), under: pick(ans.under, 5), games: pick(ans.games, 5), top: pick(ans.top, 10), at: now, writing: null }));
         } else if (p.kind === "team") {

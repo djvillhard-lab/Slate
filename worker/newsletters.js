@@ -18,7 +18,7 @@ const ct = (t) => {
   return { day: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour), wd: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(p.weekday) };
 };
 const unesc = (s) => String(s || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&#(\d+);/g, (m, n) => String.fromCharCode(Number(n)));
-async function rss(slug) {
+export async function rss(slug) {
   try {
     const r = await fetch(`https://www.nytimes.com/athletic/rss/${slug}/`, { headers: { "User-Agent": "Mozilla/5.0 (slate)" } });
     if (!r.ok) return [];

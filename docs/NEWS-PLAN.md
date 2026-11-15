@@ -1,4 +1,4 @@
-# News page (planned; build after the iOS app is set up)
+# News page (built in 3.7.0, Nov 14, 2026)
 
 Decided with DJ on Nov 14, 2026. Anything that costs money is tap-only (no automatic daily briefs).
 

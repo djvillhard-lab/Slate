@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.7.0 (Nov 14, 2026)
+TestFlight: 3.0 (15)
+- News page (new, at the top of the menu and the strip): tabs for My slate, My teams, then each league (the ones you follow first). Each tab lists the latest from ESPN and The Athletic, newest first, with ESPN's photo and summary; tap one to read it.
+- My slate news only shows stories about the teams on today's slate; My teams only your teams.
+- Claude briefs, only when you tap Brief me: quick hits, a longer read and a few stories worth opening, from Claude's own research. On My slate it's built around today's slate (why each game matters, who to watch, injuries) with a Tonight list in viewing order. Each brief is saved for the day, so reopening it is free; league briefs are shared between everyone, My slate and My teams are yours.
+- The page learns what you read: the leagues and teams you open and spend time on move up the tabs and lists, and Claude's My slate and My teams briefs lean toward them. It follows your account to other devices.
+
 ## 3.6.0 (Nov 14, 2026)
 TestFlight: 3.0 (14), no new build (web only)
 - Every page now has the slate's header: the Slate mark, the page's name in the same type (All games, Box Office, Teams, On TV, Settings and the rest), and a line under it, so you always know where you are. Only the slate keeps its date and the Settings and More buttons; All games keeps its search button. Pages with the day picker at the bottom don't repeat it up top.

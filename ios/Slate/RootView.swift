@@ -82,6 +82,7 @@ private struct Destination: Identifiable {
     let title: String, symbol: String, target: String
     var id: String { target }
     static let all = [
+        Destination(title: "News", symbol: "newspaper", target: "news"),
         Destination(title: "On TV", symbol: "tv", target: "tv"),
         Destination(title: "Teams", symbol: "tshirt", target: "teams"),
         Destination(title: "Box Office", symbol: "ticket", target: "moments"),
