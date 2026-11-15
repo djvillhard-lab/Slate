@@ -213,6 +213,65 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
   return gone;
 }
 
+// ---------- the live scoreboard (3.23.0): up to four games picked on the slate, in one live notification ----------
+// Its settings: prefs/notify liveAct.board = { on, ids: [game ids, start order], at: when it was last switched on or changed }.
+// Its state for the day: sent-<D>.board = { k, t (started), lead, sc (scores), end, off, w }.
+function boardGame(id, g, s) {
+  s = s || {};
+  const at = laAttrs(id, g, s), st = s.state === "in" || s.state === "post" ? s.state : "pre";
+  const d = st === "pre" ? clock(new Date(s.start || g.start)) : st === "post" ? (s.detail || "Final") : (s.detail || "");
+  return { id, aa: at.awayAbbr, ha: at.homeAbbr, ac: at.awayColor, hc: at.homeColor, ax: at.awayAlt, hx: at.homeAlt,
+    a: st === "pre" ? 0 : (s.a || 0), h: st === "pre" ? 0 : (s.h || 0), d: String(d).slice(0, 24), s: st };
+}
+async function runBoard(env, p, sent, la, games, sc) {
+  const b = (p.liveAct || {}).board || {}; let gone = false;
+  const ids = (Array.isArray(b.ids) ? b.ids : []).map(String).filter((i) => games[i]).slice(0, 4);
+  const now = Date.now(), at = Number(b.at) || 0, list = ids.map((i) => boardGame(i, games[i], sc[i]));
+  let cur = sent.board, tok = la.board && la.board.token ? la.board : null;
+  // switched off, or nothing picked for today: take it down now
+  if (!b.on || !list.length) {
+    if (cur && !cur.off) {
+      if (!tok && !cur.end && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; return gone; }  // just started: wait a minute or two for its token
+      cur.end = 1; cur.off = 1;
+      if (tok) await sendLive(env, tok, "end", { "content-state": { games: list }, "dismissal-date": Math.floor(now / 1000) }, 10);
+    }
+    return gone;
+  }
+  // switched on again, or the picks changed, after the last one ended: a fresh one
+  if (cur && cur.end && at > (cur.t || 0)) { cur = sent.board = null; if (la.board) { delete la.board; gone = true; } tok = null; }
+  const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}`).join("|"), scores = {};
+  for (const x of list) scores[x.id] = `${x.a}-${x.h}`;
+  // the game the Dynamic Island shows on its own: the one that last scored, else the first one live
+  let lead = cur && cur.lead ? list.findIndex((x) => x.id === cur.lead) : -1;
+  if (cur && cur.sc) list.forEach((x, i) => { if (cur.sc[x.id] && cur.sc[x.id] !== scores[x.id]) lead = i; });
+  if (lead < 0) lead = Math.max(0, list.findIndex((x) => x.s === "in"));
+  const state = { games: list, lead }, live = list.some((x) => x.s === "in"), done = list.every((x) => x.s === "post");
+  const soon = list.some((x) => x.s === "pre" && Date.parse((sc[x.id] || {}).start || games[x.id].start) - now <= 15 * 60000);
+  if (!cur) {
+    // it starts 15 minutes before the first pick (a live notification only lasts 8 hours), or right away once one is on
+    if (!(live || soon || done) || !(la.startBoard || []).length) return gone;
+    const body = { "attributes-type": "SlateBoardAttributes", attributes: { title: "Your slate" }, "content-state": state,
+      alert: { title: "Your slate", body: list.map((x) => x.s === "pre" ? `${x.aa} @ ${x.ha} ${x.d}` : `${x.aa} ${x.a}, ${x.ha} ${x.h}`).join(" · ") } };
+    for (const t of la.startBoard) { const r = await sendLive(env, t, "start", body, 10); if (r === 410) { t.gone = true; gone = true; } }
+    if (gone) la.startBoard = la.startBoard.filter((t) => !t.gone);
+    sent.board = { k: key, t: now, lead: list[lead].id, sc: scores };
+    return gone;
+  }
+  if (cur.end) return gone;
+  if (done) {
+    // all four over: ended with the finals showing (up to 4 hours); a new one waits a few minutes for its token
+    if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; return gone; }
+    cur.end = 1;
+    if (tok) await sendLive(env, tok, "end", { "content-state": state, "dismissal-date": Math.floor(now / 1000) + 4 * 3600 }, 10);
+    return gone;
+  }
+  if (!tok || cur.k === key) return gone;
+  const scored = list.some((x) => cur.sc && cur.sc[x.id] && cur.sc[x.id] !== scores[x.id]);
+  const r = await sendLive(env, tok, "update", { "content-state": state, "stale-date": Math.floor(now / 1000) + 10 * 60 }, scored ? 10 : 5);
+  if (r === 410) { delete la.board; gone = true; cur.end = 1; } else { cur.k = key; cur.sc = scores; cur.lead = list[lead].id; }
+  return gone;
+}
+
 // ---------- alert rules (same as the old hourly run) ----------
 function merged(p) {
   const out = JSON.parse(JSON.stringify(DEFAULTS));
@@ -378,13 +437,16 @@ export async function runAlerts(env) {
   const people = aset.people, games = aset.games || {};
   const paths = []; for (const w of people) paths.push(w.prefix + "prefs/notify", w.prefix + "prefs/push", `${w.prefix}prefs/sent-${D}`, w.prefix + "prefs/liveacts");
   const docs = await getDocs(env, paths);
-  const hasLive = (w) => { const l = docs[w.prefix + "prefs/liveacts"] || {}; return (l.start || []).length || Object.keys(l.acts || {}).length; };
+  const hasLive = (w) => { const l = docs[w.prefix + "prefs/liveacts"] || {}; return (l.start || []).length || Object.keys(l.acts || {}).length || (l.startBoard || []).length || !!l.board; };
   const active = people.filter((w) => (((docs[w.prefix + "prefs/push"] || {}).subs) || []).length || hasLive(w));
   if (!active.length) return;
   // which games need a live score: everyone's slate and teams, plus college games for upset watch
   const want = new Set();
   for (const w of active) { (w.slate || []).forEach((i) => want.add(i)); (w.mine || []).forEach((i) => want.add(i)); if ((merged(docs[w.prefix + "prefs/notify"]).upsets || {}).on) for (const [i, g] of Object.entries(games)) if (COLLEGE[g.league] && (g.awayRank || g.homeRank)) want.add(i);
-    for (const [i, v] of Object.entries(((merged(docs[w.prefix + "prefs/notify"]).liveAct || {}).games) || {})) if (v === 1 && games[i]) want.add(i); }  // games switched on by name get live scores too
+    const pw = merged(docs[w.prefix + "prefs/notify"]), bd = (pw.liveAct || {}).board || {};
+    for (const [i, v] of Object.entries(((pw.liveAct || {}).games) || {})) if (v === 1 && games[i]) want.add(i);  // games switched on by name get live scores too
+    for (const [i, v] of Object.entries(((pw.alerts || {}).games) || {})) if (v === 1 && games[i]) want.add(i);
+    if (bd.on && Array.isArray(bd.ids)) for (const i of bd.ids) if (games[String(i)]) want.add(String(i)); }
   const sc = await liveScores(games, want, now);
   const list = Object.entries(games).map(([id, g]) => Object.assign({ id }, g)), byid = {}; for (const g of list) byid[g.id] = g;
   for (const w of active) {
@@ -392,14 +454,17 @@ export async function runAlerts(env) {
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
-      close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})) };
+      close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
+      board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {
       const silent = !(p.days || DEFAULTS.days).includes(lt.wd) || inQuiet(p, lt.hour);
-      // games switched off from the slate (3.22.0: a card's bell, or the tray): their alerts are marked sent but not pushed
-      const offGames = new Set(Object.entries(((p.liveAct || {}).games) || {}).filter(([, v]) => v === 0).map(([i]) => i));
-      for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, w.slate || [], w.mine || [], w.customs || [], now)) {
+      // a game's alerts switched off on the slate (its card's bell, or Game alerts in its tray): marked sent but not pushed;
+      // switched on for a game off the slate: it gets the slate's alerts
+      const ag = ((p.alerts || {}).games) || {}, offGames = new Set(Object.keys(ag).filter((i) => ag[i] === 0));
+      const slateA = [...new Set([...(w.slate || []), ...Object.keys(ag).filter((i) => ag[i] === 1 && byid[i])])];
+      for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, slateA, w.mine || [], w.customs || [], now)) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
         else if (kind !== "ot") sent[kind].push(key);
@@ -412,7 +477,11 @@ export async function runAlerts(env) {
     const la = docs[pre + "prefs/liveacts"];
     if (la && hasLive(w) && await apnsReady(env)) {
       const held = p.enabled === false || !(p.days || DEFAULTS.days).includes(lt.wd) || inQuiet(p, lt.hour);
-      try { if (await runLive(env, p, sent, la, { slate: w.slate || [], mine: w.mine || [] }, games, sc, held)) await putDoc(env, pre + "prefs/liveacts", la); }
+      try {
+        let changed = await runLive(env, p, sent, la, { slate: w.slate || [], mine: w.mine || [] }, games, sc, held);
+        if (await runBoard(env, p, sent, la, games, sc)) changed = true;
+        if (changed) await putDoc(env, pre + "prefs/liveacts", la);
+      }
       catch (e) { console.log("live failed", String(e).slice(0, 120)); }
     }
     const appReady = subs.some((s) => s.apns) ? await apnsReady(env) : false;

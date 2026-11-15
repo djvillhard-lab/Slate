@@ -12,6 +12,7 @@ final class LiveActivities {
     private var started = false
     private var watching = Set<String>()
     private var lastStartToken = ""
+    private var lastBoardStartToken = ""   // the live scoreboard's (SlateBoardAttributes, 3.23.0)
 
     private var env: String {
         #if DEBUG
@@ -27,7 +28,7 @@ final class LiveActivities {
         set {
             let changed = newValue != pass
             UserDefaults.standard.set(newValue, forKey: "slate-pass")
-            if changed { lastStartToken = "" }
+            if changed { lastStartToken = ""; lastBoardStartToken = "" }
             start()
         }
     }
@@ -42,11 +43,31 @@ final class LiveActivities {
                     if tok != lastStartToken { lastStartToken = tok; post(kind: "start", token: tok, gameId: nil) }
                 }
             }
+            // the live scoreboard has its own start token
+            Task {
+                for await data in Activity<SlateBoardAttributes>.pushToStartTokenUpdates {
+                    let tok = Self.hex(data)
+                    if tok != lastBoardStartToken { lastBoardStartToken = tok; post(kind: "start-board", token: tok, gameId: nil) }
+                }
+            }
         }
         // each live notification the server starts gets its own token, used for its updates and its end
         for act in Activity<SlateGameAttributes>.activities { watch(act) }
         Task {
             for await act in Activity<SlateGameAttributes>.activityUpdates { watch(act) }
+        }
+        for act in Activity<SlateBoardAttributes>.activities { watchBoard(act) }
+        Task {
+            for await act in Activity<SlateBoardAttributes>.activityUpdates { watchBoard(act) }
+        }
+    }
+
+    // the running scoreboard's token, used for its updates and its end
+    private func watchBoard(_ act: Activity<SlateBoardAttributes>) {
+        guard !watching.contains(act.id) else { return }
+        watching.insert(act.id)
+        Task {
+            for await data in act.pushTokenUpdates { post(kind: "board", token: Self.hex(data), gameId: nil) }
         }
     }
 

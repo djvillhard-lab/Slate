@@ -98,14 +98,19 @@ export default {
       const me = await whoIs(env, p && p.pass);
       if (!me) return json({ error: "Wrong passcode" }, 403);
       const tok = String(p.token || ""), kind = p.kind, ev = p.env === "sandbox" ? "sandbox" : "production";
-      if (!/^[0-9a-f]{32,400}$/i.test(tok) || !["start", "activity"].includes(kind) || (kind === "activity" && !/^[a-z0-9-]{3,60}$/.test(String(p.gameId || "")))) return json({ error: "bad token" }, 400);
-      const path = (me.id === "dj" ? "" : "u/" + me.id + "/") + "prefs/liveacts", now = Date.now();
+      // kinds: "start" and "activity" (one game's live notification), "start-board" and "board" (the four-game scoreboard, 3.23.0)
+      if (!/^[0-9a-f]{32,400}$/i.test(tok) || !["start", "activity", "start-board", "board"].includes(kind) || (kind === "activity" && !/^[a-z0-9-]{3,60}$/.test(String(p.gameId || "")))) return json({ error: "bad token" }, 400);
+      const path = (me.id === "dj" ? "" : "u/" + me.id + "/") + "prefs/liveacts", now = Date.now(), at = new Date().toISOString();
       const doc = (await getDoc(env, path)) || {}, acts = {};
       for (const [k, v] of Object.entries(doc.acts || {})) if (v && now - Date.parse(v.at) < 20 * 3600000) acts[k] = v;  // a day's games only
-      let start = (doc.start || []).filter((x) => x.token !== tok);
-      if (kind === "start") start = [{ token: tok, env: ev, at: new Date().toISOString() }, ...start].slice(0, 3);
-      else acts[p.gameId] = { token: tok, env: ev, at: new Date().toISOString() };
-      await putDoc(env, path, { start, acts, updatedAt: new Date().toISOString() });
+      let start = (doc.start || []).filter((x) => x.token !== tok), startBoard = (doc.startBoard || []).filter((x) => x.token !== tok);
+      let board = doc.board && now - Date.parse(doc.board.at) < 20 * 3600000 ? doc.board : null;
+      if (kind === "start") start = [{ token: tok, env: ev, at }, ...start].slice(0, 3);
+      else if (kind === "start-board") startBoard = [{ token: tok, env: ev, at }, ...startBoard].slice(0, 3);
+      else if (kind === "board") board = { token: tok, env: ev, at };
+      else acts[p.gameId] = { token: tok, env: ev, at };
+      const out = { start, acts, startBoard, updatedAt: at }; if (board) out.board = board;
+      await putDoc(env, path, out);
       return json({ ok: true });
     }
     if (url.pathname === "/api/summary" && req.method === "POST") {

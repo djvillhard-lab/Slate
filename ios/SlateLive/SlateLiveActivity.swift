@@ -6,7 +6,7 @@ import WidgetKit
 // Live scores on the Lock Screen and in the Dynamic Island (redesign, 3.20.0):
 // - Lock Screen, a scorebug: the slate's team chips (second-color stripe), big narrow scores, the live clock in red,
 //   a football by whoever has the ball, the down and distance, the slate's red one-liner, and a Watch button on the
-//   right (the channel's app, through Slate). After the final the loser dims and the button opens the box score.
+//   right (the channel's app, through Slate). After the final the loser dims and the note gets the whole width (3.23.0).
 // - Dynamic Island, expanded: the same scorebug around the camera (chips and big scores either side, the clock and
 //   down under it, the one-liner and a Matchup button on the right). One game live: both chips with their scores
 //   ("Chips"). Another game live too: this one can shrink to a small circle with both scores, ringed half in each
@@ -54,13 +54,16 @@ struct SlateLiveActivity: Widget {
                         Text(s.line ?? "")
                             .font(SlateLook.semi(13))
                             .foregroundStyle(s.state == "in" ? SlateLook.live : SlateLook.muted)
-                            .lineLimit(1)
+                            .lineLimit(s.state == "post" ? 2 : 1)
+                            .minimumScaleFactor(0.85)
                         Spacer(minLength: 0)
-                        // on the right, under the thumb
-                        Link(destination: SlateLook.gameURL(a.gameId)) {
-                            Pill(text: s.state == "post" ? "Box score" : "Matchup", icon: "chevron.right", iconFirst: false, fill: SlateLook.button)
+                        // while the game is on: Matchup, on the right under the thumb (after the final, tapping opens it)
+                        if s.state != "post" {
+                            Link(destination: SlateLook.gameURL(a.gameId)) {
+                                Pill(text: "Matchup", icon: "chevron.right", iconFirst: false, fill: SlateLook.button)
+                            }
+                            .accessibilityLabel("Open this matchup in Slate")
                         }
-                        .accessibilityLabel(Text(s.state == "post" ? "Open the box score in Slate" : "Open this matchup in Slate"))
                     }
                     .padding(.horizontal, 4)
                 }
@@ -93,6 +96,9 @@ enum SlateLook {
 
     private static let home = "https://slate.djvillhard.workers.dev/"
     private static func enc(_ s: String) -> String { s.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "" }
+
+    // the slate itself (the live scoreboard's tap)
+    static var slateURL: URL { URL(string: home)! }
 
     // Links the app hands to the page (WebModel.openLink): open this game's matchup …
     static func gameURL(_ id: String) -> URL {
@@ -138,7 +144,7 @@ enum SlateLook {
 
 // The slate's team chip: the team color, its second color as a stripe along the bottom, a faint edge so dark
 // colors (Notre Dame's navy) still read on the navy card.
-private struct Chip: View {
+struct Chip: View {
     let abbr: String
     let color: String
     let alt: String?
@@ -176,6 +182,9 @@ private struct LockCard: View {
 
     var body: some View {
         let live = s.state == "in"
+        let hasSit = live && !(s.sit ?? "").isEmpty
+        let note = s.line ?? ""
+        let watch = live ? (a.channel ?? "") : ""
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Text(a.league)
@@ -201,38 +210,37 @@ private struct LockCard: View {
                          ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false))
             }
 
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    if live, let sit = s.sit, !sit.isEmpty {
-                        Text(sit)
-                            .font(SlateLook.bold(13))
-                            .foregroundStyle(SlateLook.ink)
-                            .lineLimit(1)
+            if hasSit || !note.isEmpty || !watch.isEmpty {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        if hasSit {
+                            Text(s.sit ?? "")
+                                .font(SlateLook.bold(13))
+                                .foregroundStyle(SlateLook.ink)
+                                .lineLimit(1)
+                        }
+                        // the slate's one-liner: red while the game is on, plain after; two lines when there's room
+                        if !note.isEmpty {
+                            Text(note)
+                                .font(SlateLook.semi(13))
+                                .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
+                                .lineLimit(hasSit ? 1 : 2)
+                                .minimumScaleFactor(0.85)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
-                    // the slate's one-liner: red while the game is on, plain after
-                    if let line = s.line, !line.isEmpty {
-                        Text(line)
-                            .font(SlateLook.semi(13))
-                            .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
-                            .lineLimit(1)
+                    Spacer(minLength: 0)
+                    // while the game is on: Watch, on the right under the thumb (tapping the card opens the matchup)
+                    if !watch.isEmpty {
+                        Link(destination: SlateLook.watchURL(watch, a.gameId)) {
+                            Pill(text: watch, icon: "play.fill", iconFirst: true)
+                        }
+                        .accessibilityLabel("Watch on \(watch)")
                     }
                 }
-                Spacer(minLength: 0)
-                // on the right, under the thumb
-                if s.state == "post" {
-                    Link(destination: SlateLook.gameURL(a.gameId)) {
-                        Pill(text: "Box score", icon: "chevron.right", iconFirst: false)
-                    }
-                    .accessibilityLabel("Open the box score in Slate")
-                } else if let ch = a.channel, !ch.isEmpty {
-                    Link(destination: SlateLook.watchURL(ch, a.gameId)) {
-                        Pill(text: ch, icon: "play.fill", iconFirst: true)
-                    }
-                    .accessibilityLabel("Watch on \(ch)")
-                }
+                .frame(minHeight: watch.isEmpty ? 0 : 44)
+                .padding(.top, 8)
             }
-            .frame(height: 44)
-            .padding(.top, 8)
         }
         .padding(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 14))
         .foregroundStyle(SlateLook.ink)
@@ -374,7 +382,7 @@ private struct ChipsSide: View {
 }
 
 // Dynamic Island, minimal (another game is live too): both scores in a ring, away's color on the left half, home's on the right
-private struct SplitRing: View {
+struct SplitRing: View {
     let away: Color
     let home: Color
     let a: Int
