@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.8.0 (Nov 14, 2026)
+TestFlight: 3.0 (16)
+- Settings moves into the menu, at the very top (the strip and the floating capsule too). The Settings and More buttons are gone from the slate's header, so the title has the whole row.
+- Everything that was behind More is now at the top of Settings: Slate rules, Notifications, Share the slate and Reset the app, as rows with round icons in the menu's style.
+- The day picker at the bottom is now a capsule like the menu, with round arrows, and grows in with the same quick animation.
+
 ## 3.7.0 (Nov 14, 2026)
 TestFlight: 3.0 (15)
 - News page (new, at the top of the menu and the strip): tabs for My slate, My teams, then each league (the ones you follow first). Each tab lists the latest from ESPN and The Athletic, newest first, with ESPN's photo and summary; tap one to read it.

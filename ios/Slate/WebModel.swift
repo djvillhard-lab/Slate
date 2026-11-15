@@ -41,6 +41,7 @@ final class WebModel: ObservableObject {
     var activeTarget: String {
         switch view {
         case "team": return "teams"
+        case "notify", "rules": return "settings"
         case "game", "best": return ""
         default: return view
         }
