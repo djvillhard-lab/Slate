@@ -186,7 +186,7 @@ export async function sendApns(env, sub, msg) {
   const title = String(msg.title || "").trim(), passive = msg.level === "passive";
   const aps = { alert: title ? { title, body: msg.body } : { body: msg.body }, "interruption-level": passive ? "passive" : "active", "thread-id": String(msg.thread || "slate").slice(0, 64) };
   if (!passive) aps.sound = "default";
-  const payload = { aps, tag: msg.tag || "" };
+  const payload = { aps, tag: msg.tag || "", game: msg.game || "" };
   return apnsPost(env, sub.apns, sub.env, (topic) => Object.assign({ "apns-topic": topic, "apns-push-type": "alert", "apns-priority": "10", "apns-expiration": String(Math.floor(Date.now() / 1000) + 3600) }, msg.tag ? { "apns-collapse-id": String(msg.tag).slice(0, 64) } : {}), payload);
 }
 
@@ -607,7 +607,9 @@ export async function runAlerts(env) {
         const gid = String(key).startsWith("c:") ? String(key) : String(key).split(":")[0];
         const muted = kind !== "brief" && offGames.has(gid);
         // a blank title: iPhone then shows "from Slate" on top and the alert under it (two lines)
-        if (!silent && body && !muted) msgs.push({ title: " ", body, tag: `${kind}-${key}`, level: alertLevel(p, sent, kind, gid), thread: kind === "brief" ? "brief" : "game-" + gid });
+        if (!silent && body && !muted) msgs.push({ title: " ", body, tag: `${kind}-${key}`, level: alertLevel(p, sent, kind, gid), thread: kind === "brief" ? "brief" : "game-" + gid,
+          // game: the alert's game id, so a tap opens its matchup (custom items and the brief have none)
+          game: kind !== "brief" && byid[gid] ? gid : "" });
       }
     }
     msgs = msgs.slice(0, 8);

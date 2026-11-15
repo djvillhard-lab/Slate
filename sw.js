@@ -37,15 +37,22 @@ self.addEventListener("fetch", function (e) {
   }
 });
 
-// game alerts: sent by Slate's 10-minute job as push notifications
+// game alerts: sent by Slate's server every minute (worker/alerts.js) as push notifications.
+// An alert about a game carries its id; tapping it opens that game's matchup.
 self.addEventListener("push", function (e) {
   var m = {}; try { m = e.data ? e.data.json() : {}; } catch (x) { m = { body: e.data ? e.data.text() : "" }; }
-  e.waitUntil(self.registration.showNotification(typeof m.title === "string" ? m.title : "Slate", { body: m.body || "", tag: m.tag || undefined, icon: "icon.png", badge: "icon.png" }));
+  var game = typeof m.game === "string" && /^[\w.-]{1,40}$/.test(m.game) ? m.game : "";
+  e.waitUntil(self.registration.showNotification(typeof m.title === "string" ? m.title : "Slate", { body: m.body || "", tag: m.tag || undefined, icon: "icon.png", badge: "icon.png", data: { game: game } }));
 });
 self.addEventListener("notificationclick", function (e) {
   e.notification.close();
+  var game = (e.notification.data && e.notification.data.game) || "";
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (cs) {
-    for (var i = 0; i < cs.length; i++) { if ("focus" in cs[i]) return cs[i].focus(); }
-    return self.clients.openWindow("./");
+    for (var i = 0; i < cs.length; i++) {
+      if (!("focus" in cs[i])) continue;
+      if (game) cs[i].postMessage({ slate: "open-game", id: game });  // Slate is already open: it switches to the game
+      return cs[i].focus();
+    }
+    return self.clients.openWindow(game ? "./?game=" + encodeURIComponent(game) : "./");
   }));
 });
