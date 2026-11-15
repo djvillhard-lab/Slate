@@ -137,6 +137,35 @@
     setTimeout(function () { var c = w.querySelector(".fd-chip.on"); if (c && w.scrollWidth > w.clientWidth) w.scrollLeft = Math.max(0, c.offsetLeft - 16); }, 0);
     return w;
   }
+  // play tags (3.35.0), all from ESPN's play data: the most important first, three at most so a row stays readable
+  function fdTags(allPlays, sum, g, sideOf) {
+    var out = {}, wpBy = {}, prevWp = null, pa = 0, ph = 0;
+    (sum.winprobability || []).forEach(function (w) { if (w && w.playId != null && w.homeWinPercentage != null) wpBy[String(w.playId)] = w.homeWinPercentage; });
+    allPlays.forEach(function (pl) {
+      var pid = String(pl.id || pl.sequenceNumber || ""), ty = String((pl.type || {}).text || ""), tx = String(pl.text || ""), y = Number(pl.statYardage) || 0;
+      var S = pl.start || {}, E = pl.end || {}, sd = Number(S.down) || 0, offT = String((S.team || {}).id || ""), endT = String((E.team || {}).id || ""), off = sideOf[offT] || "";
+      var t = [], add = function (pri, txt, cls) { t.push({ p: pri, t: txt, c: cls || "" }); };
+      var aS = pl.awayScore != null ? Number(pl.awayScore) : pa, hS = pl.homeScore != null ? Number(pl.homeScore) : ph;
+      var lead0 = pa > ph ? "away" : ph > pa ? "home" : "", lead1 = aS > hS ? "away" : hS > aS ? "home" : "";
+      if ((aS !== pa || hS !== ph) && lead1 !== lead0) { if (lead1) add(1, abbr(g, lead1) + " takes the lead", "hot"); else add(1, "Ties it", "hot"); }
+      pa = aS; ph = hS;
+      var isPen = /penalty/i.test(ty) || /PENALTY on/.test(tx), noPlay = /no play/i.test(tx) || /^penalty$/i.test(ty);
+      if ((/^Rush|Rushing Touchdown/i.test(ty) && y >= 20) || (/Pass Reception|Passing Touchdown/i.test(ty) && y >= 25)) add(2, "Big play", "hot");
+      var firstDown = sd && E.down === 1 && endT && endT === offT && !/Touchdown|Field Goal|Punt|Kickoff/i.test(ty);
+      if (sd >= 3 && /Rush|Pass|Sack|Scramble|Touchdown/i.test(ty) && !noPlay) {
+        if (firstDown || /Passing Touchdown|Rushing Touchdown/i.test(ty)) add(3, "Converted on " + ordN(sd), "good");
+        else if (!/Touchdown/i.test(ty) && !(E.down === 1 && endT === offT)) add(3, "Stopped on " + ordN(sd), "bad");
+      } else if (firstDown) add(7, "1st down");
+      var w = wpBy[pid]; if (w != null) { if (prevWp != null && Math.abs(w - prevWp) >= 0.10) { var up = w > prevWp ? "home" : "away"; add(4, "+" + Math.round(Math.abs(w - prevWp) * 100) + "% " + abbr(g, up), "swing"); } prevWp = w; }
+      if (isPen && !/^penalty$/i.test(ty)) { var m = /PENALTY on [^,]+,\s*([^,]+?),\s*(\d+)\s*yards?/i.exec(tx), dec = /declined/i.test(tx), offs = /offsetting/i.test(tx);
+        add(5, "Flag" + (m ? ": " + m[1].replace(/\s+/g, " ") + (dec ? ", declined" : offs ? ", offsetting" : ", " + m[2] + " yds") : offs ? ": offsetting" : ""), "flag"); }
+      var yte = Number(S.yardsToEndzone); if (sd && yte > 0 && yte <= 20) add(6, "Red zone", "rz");
+      var per = Number((pl.period || {}).number) || 0, ck = String((pl.clock || {}).displayValue || ""), cm = /^(\d+):(\d+)/.exec(ck);
+      if ((per === 2 || per === 4) && cm && +cm[1] * 60 + +cm[2] <= 120 && !/timeout|end |two-minute/i.test(ty)) add(8, "Two-minute drill");
+      if (pid && t.length) out[pid] = t.sort(function (a, b) { return a.p - b.p; }).slice(0, 3);
+    });
+    return out;
+  }
   function renderFeed(fromPoll) {
     var body = $("feed-body"); if (!body) return;
     if (state.view !== "feed") { if (body.firstChild) body.textContent = ""; clearTimeout(FD.t); FD.t = null; return; }
@@ -155,6 +184,7 @@
     var ix = fdIndex(sum), drives = [], byId = {};
     var dr = sum.drives || {}; (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { if (!d || !d.id) return; if (byId[d.id] != null) drives[byId[d.id]] = d; else { byId[d.id] = drives.length; drives.push(d); } });
     var allPlays = []; drives.forEach(function (d) { (d.plays || []).forEach(function (p2) { allPlays.push(p2); }); });
+    var tags = fdTags(allPlays, sum, g, sideOf);
     var last = allPlays[allPlays.length - 1] || null, over = st.state === "post";
     // possession and the spot: the latest play's end (a score or kickoff leaves no down to show)
     var spot = null; for (var j = allPlays.length - 1; j >= 0 && !spot; j--) { var e = allPlays[j].end || {}; if (e.possessionText || e.yardLine != null) spot = { e: e, p: allPlays[j] }; }
@@ -231,6 +261,7 @@
         var scs = el("span", "fd-psc"); scs.textContent = abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""); ph.appendChild(scs);
         card.appendChild(ph);
         card.appendChild(el("p", "fd-pt", rd.title));
+        var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), x.t)); }); card.appendChild(tw); }
         var raw = fdClean(pl.text); if (raw && raw !== rd.title) card.appendChild(el("p", "fd-px", raw));
         rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
         list.appendChild(card);

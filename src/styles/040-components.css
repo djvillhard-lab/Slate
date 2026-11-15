@@ -1454,6 +1454,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-pn b { font-size: 13px; font-weight: 800; color: var(--ink); }
 .fd-pn i { font-style: normal; font-size: 12px; color: var(--muted); }
 .fd-px { margin: 0 0 2px; font-size: 14px; font-weight: 500; line-height: 1.35; color: var(--ink); opacity: .88; }
+.fd-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 1px 0 2px; }
+.fd-tag { font-size: 11px; font-weight: 800; line-height: 18px; padding: 0 7px; border-radius: 999px; background: var(--raise); color: var(--muted); white-space: nowrap; }
+.fd-tag.hot { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--ink); }
+.fd-tag.good { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.fd-tag.bad { background: color-mix(in srgb, var(--live, #E5484D) 18%, transparent); color: var(--ink); }
+.fd-tag.flag { background: rgba(245,197,24,.18); color: color-mix(in srgb, #F5C518 65%, var(--ink)); }
+.fd-tag.swing { background: color-mix(in srgb, #4C9BF5 18%, transparent); color: color-mix(in srgb, #4C9BF5 75%, var(--ink)); }
+.fd-tag.rz { color: var(--live, #E5484D); }
 .fd-pos { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: var(--muted); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; line-height: 15px; }
 .fd-note { margin: 2px 0; text-align: center; font-size: 12px; font-weight: 700; color: var(--dim); }
 .fd-at { text-align: center; }

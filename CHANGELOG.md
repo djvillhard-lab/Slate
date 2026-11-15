@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.35.0 (Nov 15, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- New: play tags on the Live feed, under each play's headline. Takes the lead / Ties it (a score that changes who's ahead), Big play (a run of 20+ yards or a catch of 25+), Converted on 3rd / Stopped on 4th, Win probability swings of 10 points or more on one play ("+18% LV", from ESPN's win probability), Flag (a penalty on a play that still counted, or declined or offsetting, with its yards; a play that is only a penalty already says so in its headline), Red zone (the play started inside the 20), 1st down, and Two-minute drill (the last two minutes of each half). A play shows its three most important tags at most, in that order, so rows stay readable. Everything comes from ESPN's play-by-play.
+
 ## 3.34.3 (Nov 15, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - Live feed plays: players show as "F. Mendoza" instead of their full name, with their position beside it (QB, WR, LB). The position comes from ESPN, from the box score or the team's roster; if ESPN doesn't give one, none is shown.
