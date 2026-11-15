@@ -331,7 +331,8 @@ async function liveScores(games, want, now) {
     if (st.state === "pre") { sc[id] = { state: "pre", start: e.date }; continue; }
     if (!cs.away || !cs.home) continue;
     const ld = [];
-    const take = (L) => { const x = (L.leaders || [])[0]; if (x && x.athlete) ld.push({ c: L.name, n: x.athlete.displayName || x.athlete.shortName || "", d: String(x.displayValue || ""), v: Number(x.value) || 0 }); };
+    const tAb = {}; for (const x of c.competitors || []) tAb[String((x.team || {}).id)] = (x.team || {}).abbreviation || "";
+    const take = (L) => { const x = (L.leaders || [])[0]; if (x && x.athlete) ld.push({ c: L.name, n: x.athlete.displayName || x.athlete.shortName || "", d: String(x.displayValue || ""), v: Number(x.value) || 0, t: tAb[String((x.team || (x.athlete || {}).team || {}).id || "")] || "" }); };
     (c.leaders || []).forEach(take); for (const x of c.competitors || []) (x.leaders || []).forEach((L) => { if (/^(points|goals)$/.test(L.name)) take(L); });
     sc[id] = { state: st.state, a: Number(cs.away.score), h: Number(cs.home.score), detail: st.shortDetail || "", p: Number((c.status || {}).period) || 0, ck: Number((c.status || {}).clock) || 0, ld,
       aa: (cs.away.team || {}).abbreviation || "", ha: (cs.home.team || {}).abbreviation || "", ac: hex((cs.away.team || {}).color), hc: hex((cs.home.team || {}).color) };

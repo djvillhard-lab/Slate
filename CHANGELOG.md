@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.19.1 (Nov 14, 2026)
+TestFlight: 3.0 (16), no new build (server and web only)
+- Worth a look notes get the team abbreviation too ("SCU: E. Mahi has 23 points"). The app matches the player named in the note to the game's stat leaders or box score.
+- Slate cards' early live lines (the standout so far, before the main note loads) get it as well ("OKST: D. Mestemaker 186 pass yds, 1 TD").
+- Server: the live score data now records each stat leader's team.
+
 ## 3.19.0 (Nov 14, 2026)
 TestFlight: 3.0 (16), no new build (web only)
 - One-line notes about a single team now start with that team's abbreviation: "SC: Cutter Woods threw 3 interceptions", "DEN: Nikola Jokic scored 26 (9-14 FG)". This covers live, final and pre-game lines. Lines that already name the team ("Texas won it on…") or cover both teams are left as they are.
