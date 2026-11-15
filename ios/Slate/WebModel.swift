@@ -83,9 +83,11 @@ final class WebModel: ObservableObject {
         js("window.SlateApp && SlateApp.go(\(Self.quote(target)))")
     }
 
-    // the strip menu: only on a wide (Duo) screen, and only while Settings > Phone is not set to iPhone
+    // the strip menu: only on a wide (Duo) screen, only while Settings > Phone is not set to iPhone, and only where
+    // iOS shows its side column (folded, or open and sideways). Open and upright there's no column: iOS would put the
+    // menu in a bar across the bottom, so the page's own menu button (bottom right) is used there instead.
     func refreshStrip() {
-        setStrip(DeviceShape.isWideScreen && device != "iphone")
+        setStrip(DeviceShape.isWideScreen && device != "iphone" && trailingInset > 0)
     }
 
     func setStrip(_ on: Bool) {
@@ -99,7 +101,9 @@ final class WebModel: ObservableObject {
     private var trailingInset: CGFloat = 0
     // the width of iOS's column on the right edge (Duo): the page keeps its buttons clear of it, strip or not
     func setStripInset(_ w: CGFloat) {
+        let changed = abs(w - trailingInset) >= 1
         trailingInset = w
+        if changed { refreshStrip() }
         let v = w
         guard abs(v - stripInset) >= 1 else { return }
         stripInset = v
