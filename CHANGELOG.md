@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.25.2 (Nov 15, 2026)
+TestFlight: 3.0 (25), no new build (web only)
+- Pre-game notes: when both teams are on a streak, the note says it once ("Both on a roll: England have won four straight, Spain five") instead of also leading with one team's streak ("Spain have won five in a row; Both on a roll: …"). A streak line is never paired with another streak line now. Saved notes in the old wording are rebuilt.
+
 ## 3.25.1 (Nov 15, 2026)
 TestFlight: 3.0 (25)
 - Live notification (one game): the Watch (channel) button is gone, so the one-liner runs across the whole bottom of the card, on the Lock Screen and in the held-open Dynamic Island (the Matchup button there is gone too; tapping anywhere still opens the matchup).
