@@ -190,14 +190,17 @@
         if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { x0 = null; return; }
         if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
         if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { x0 = null; return; }
-        locked = true; drag = dragTarget(); each(drag, function (el2) { el2.style.transition = "none"; el2.style.willChange = "transform, opacity"; });
+        locked = true; if (mode === "feed") FD.drag = true; drag = dragTarget(); each(drag, function (el2) { el2.style.transition = "none"; el2.style.willChange = "transform, opacity"; });
       }
       if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { snapBack(drag); drag = null; x0 = null; locked = false; return; }
       if (mode === "back" && dx < 0) dx = 0;  // pages you open only swipe back (to the right)
-      var m = dx * 0.7, op = String(1 - Math.min(Math.abs(dx) / 700, 0.3));
+      var m = mode === "feed" ? dx : dx * 0.7, op = String(1 - Math.min(Math.abs(dx) / (mode === "feed" ? 900 : 700), mode === "feed" ? 0.2 : 0.3));  // the live feed follows the finger one to one
       each(drag, function (el2) { el2.style.transform = "translate3d(" + m + "px,0,0)"; el2.style.opacity = op; });
     }, { passive: true });
+    // once a live feed swipe is going sideways, the page doesn't also scroll up and down under the finger
+    document.addEventListener("touchmove", function (e) { if (locked && mode === "feed" && e.cancelable) e.preventDefault(); }, { passive: false });
     document.addEventListener("touchend", function (e) {
+      FD.drag = false;
       if (x0 === null) { if (drag) snapBack(drag); drag = null; locked = false; return; }
       var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0, ms = Date.now() - t0; x0 = null;
       var d = drag; drag = null; locked = false;
@@ -215,6 +218,13 @@
         else { slideDir = dir; setDate(shiftDate(state.date, dx < 0 ? 1 : -1)); }
       }
       if (!d || !d.length || REDUCED) { act(); return; }
+      if (mode === "feed") {  // carry on from where the finger let go, off the side, then the next game comes in from the other side
+        var vw = window.innerWidth, going = !(dx > 0 && (state.feedId && fdAtFirst()));
+        each(d, function (el2) { el2.style.transition = "transform .16s cubic-bezier(.3,.6,.4,1), opacity .16s"; el2.style.transform = "translate3d(" + (dx < 0 ? -vw : vw) + "px,0,0)"; el2.style.opacity = going ? "0.2" : "0"; });
+        setTimeout(function () { var before2 = where(); act(); if (where() === before2) { clearDrag(d); each(d, function (el2) { el2.classList.remove("sl-l", "sl-r"); void el2.offsetWidth; el2.classList.add(dir === "l" ? "sl-r" : "sl-l"); }); return; } clearDrag(d);
+          if (state.view !== "feed") { var nv2 = $("view-" + state.view); if (nv2) { nv2.classList.remove("sl-l", "sl-r"); void nv2.offsetWidth; nv2.classList.add("sl-r"); setTimeout(function () { nv2.classList.remove("sl-r"); }, 300); } } }, 160);
+        return;
+      }
       each(d, function (el2) { el2.style.transition = "transform .11s cubic-bezier(.4,0,1,1), opacity .11s"; el2.style.transform = "translate3d(" + (dx < 0 ? -40 : 40) + "%,0,0)"; el2.style.opacity = "0"; });
       setTimeout(function () {
         var stay = where() === before; act();
@@ -223,7 +233,7 @@
         if (mode === "back" || (mode === "feed" && state.view !== "feed")) { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("sl-l", "sl-r"); void nv.offsetWidth; nv.classList.add("sl-r"); setTimeout(function () { nv.classList.remove("sl-r"); }, 300); } }
       }, 110);
     }, { passive: true });
-    document.addEventListener("touchcancel", function () { x0 = null; if (drag) snapBack(drag); drag = null; locked = false; }, { passive: true });
+    document.addEventListener("touchcancel", function () { FD.drag = false; x0 = null; if (drag) snapBack(drag); drag = null; locked = false; }, { passive: true });
   })();
   $("day-next").addEventListener("click", function () { slideDir = "l"; setDate(shiftDate(state.date, 1)); });
   $("btn-copy").addEventListener("click", copyLineup);

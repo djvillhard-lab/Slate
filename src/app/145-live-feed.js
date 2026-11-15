@@ -11,7 +11,7 @@
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;  // opening the feed is asking to see the score
-    if (state.feedId !== g.id) { state.feedId = g.id; FD.sum = null; FD.id = null; FD.seen = null; FD.more = false; }
+    if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; FD.sum = (c0 && c0.sum) || null; FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = false; clearTimeout(FD.t); FD.t = null; }
     if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else openSub("feed");
     feedPoll(true);
   }
@@ -28,9 +28,18 @@
       if (state.view === "feed") renderFeed(true);
       var st = ((((sum || {}).header || {}).competitions || [])[0] || {}).status, k = ((st || {}).type || {}).state;
       if (state.view === "feed") FD.t = setTimeout(feedPoll, k === "post" ? 120000 : sum ? 8000 : 12000);
+      if (sum) fdPrefetch(g);
     }, function () { FD.busy = false; if (state.view === "feed") FD.t = setTimeout(feedPoll, 12000); });
   }
   document.addEventListener("visibilitychange", function () { if (!document.hidden && state.view === "feed") feedPoll(); });
+  function fdPrefetch(g) {
+    var list = fdList(g), i = -1; list.forEach(function (x, j) { if (x.id === g.id) i = j; });
+    [list[i - 1], list[i + 1]].forEach(function (n) {
+      if (!n) return; var c = bx.live[n.id] || (bx.live[n.id] = {}); if (c.pf || (c.sum && Date.now() - (c.sumAt || 0) < 60000)) return; c.pf = 1;
+      (c.ev ? Promise.resolve(c.ev) : bxFindEvent(n)).then(function (ev) { if (!ev) return null; c.ev = ev; return rkFetch(bxSummaryUrl(n.league, ev)); })
+        .then(function (sm) { c.pf = 0; if (sm) { c.sum = sm; c.sumAt = Date.now(); } }, function () { c.pf = 0; });
+    });
+  }
   // the players in a game's box score, found by the short names in ESPN's play text ("F.Mendoza", "J.Smith-Njigba")
   function fdIndex(sum) {
     var ix = { byLast: {} };
@@ -120,8 +129,9 @@
     var n = i < 0 ? null : list[i + step]; if (!n) return false;
     openFeed(n); fdSlideIn(step > 0 ? "l" : "r"); return true;
   }
+  function fdAtFirst() { var g = feedGame(); if (!g) return true; var l = fdList(g); return !l.length || l[0].id === g.id; }
   function fdKids() { var b = $("feed-body"); return b ? Array.prototype.filter.call(b.children, function (c) { return !c.classList.contains("fd-strip"); }) : []; }
-  function fdSlideIn(dir) { if (REDUCED) return; fdKids().forEach(function (c) { c.classList.remove("sl-l", "sl-r"); void c.offsetWidth; c.classList.add(dir === "l" ? "sl-l" : "sl-r"); }); }
+  function fdSlideIn(dir) { if (REDUCED) return; fdKids().forEach(function (c) { c.classList.remove("fd-in-l", "fd-in-r"); void c.offsetWidth; c.classList.add(dir === "l" ? "fd-in-l" : "fd-in-r"); }); }
   function fdStrip(g) {
     var ids = {}, list = fdList(g);
     if (list.length < 2) return null;
@@ -134,7 +144,11 @@
       b.setAttribute("aria-label", x.away + " at " + x.home + (show ? ", " + v.a + " to " + v.h : "") + ", " + (v.detail || "live"));
       if (!on) b.addEventListener("click", function () { openFeed(x); });
       w.appendChild(b); });
-    setTimeout(function () { var c = w.querySelector(".fd-chip.on"); if (c && w.scrollWidth > w.clientWidth) w.scrollLeft = Math.max(0, c.offsetLeft - 16); }, 0);
+    // the switcher keeps its place between updates; the chosen game slides into view only when it's off screen
+    var old = document.querySelector("#feed-body .fd-strip"), x0 = old ? old.scrollLeft : null;
+    requestAnimationFrame(function () { if (x0 != null) w.scrollLeft = x0; var c = w.querySelector(".fd-chip.on"); if (!c || w.scrollWidth <= w.clientWidth) return;
+      var l = c.offsetLeft - 16, r = c.offsetLeft + c.offsetWidth + 16 - w.clientWidth;
+      if (x0 == null) w.scrollLeft = Math.max(0, l); else if (w.scrollLeft > l || w.scrollLeft < r) w.scrollTo({ left: Math.max(0, w.scrollLeft > l ? l : r), behavior: REDUCED ? "auto" : "smooth" }); });
     return w;
   }
   // play tags (3.35.0), all from ESPN's play data: the most important first, three at most so a row stays readable
@@ -168,6 +182,7 @@
   }
   function renderFeed(fromPoll) {
     var body = $("feed-body"); if (!body) return;
+    if (fromPoll && FD.drag) { clearTimeout(FD.rt); FD.rt = setTimeout(function () { renderFeed(true); }, 250); return; }
     if (state.view !== "feed") { if (body.firstChild) body.textContent = ""; clearTimeout(FD.t); FD.t = null; return; }
     var g = feedGame();
     if (!g) { body.textContent = ""; body.appendChild(el("div", "notice", "That game isn't on today's list anymore.")); return; }

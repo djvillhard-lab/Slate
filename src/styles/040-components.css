@@ -360,6 +360,12 @@ html.iphone main.wrap { padding-left: 16px; padding-right: 16px; }
 
 @keyframes slideL { from { opacity: 0; transform: translate3d(36%,0,0); } to { opacity: 1; transform: none; } }
 @keyframes slideR { from { opacity: 0; transform: translate3d(-36%,0,0); } to { opacity: 1; transform: none; } }
+/* Live feed: the next game comes in from the side the finger pushed toward (3.35.1) */
+@keyframes fdInL { from { opacity: .2; transform: translate3d(48%,0,0); } to { opacity: 1; transform: none; } }
+@keyframes fdInR { from { opacity: .2; transform: translate3d(-48%,0,0); } to { opacity: 1; transform: none; } }
+.fd-in-l { animation: fdInL .24s cubic-bezier(.2,.8,.2,1); } .fd-in-r { animation: fdInR .24s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { .fd-in-l, .fd-in-r { animation: none; } }
+#feed-body > :not(.fd-strip) { touch-action: pan-y; }
 .sl-l { animation: slideL .22s cubic-bezier(.2,.8,.2,1); } .sl-r { animation: slideR .22s cubic-bezier(.2,.8,.2,1); }
 @media (prefers-reduced-motion: reduce) { .sl-l, .sl-r { animation: none; } }
 #lineup-body.slide-l { animation: slideL .3s cubic-bezier(.2,.8,.2,1); }
