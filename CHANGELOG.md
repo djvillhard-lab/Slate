@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.36.2 (Nov 16, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- iPhone app, folded Duo: undid 3.36.1. Pages stretch the full width again, under the right column like before.
+- Instead, the page now starts just below the clock and Wi-Fi at the top of that column (they reach a little past the top bar), so nothing sits under them when a page opens. On the Live feed, the score bar pins below them too, so it never slides under the Wi-Fi ring. Everything else scrolls past them as usual.
+
 ## 3.36.1 (Nov 15, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - iPhone app, folded Duo: the column on the right (the clock, Wi-Fi and the menu) no longer covers anything on the page. Every page now stops short of it, below the top bar too: the Live feed's score bar and plays, the slate's cards, the league and day bars, and pop-up sheets. Before, only the top bar and a few buttons kept clear of it.

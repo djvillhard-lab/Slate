@@ -57,12 +57,10 @@ html[data-strip] #menu-fab { display: none !important; }
 /* iOS keeps a column on the right edge of iPhone Duo (the clock and, in strip mode, the menu). Pages run under it
    edge to edge; the rows of buttons and the floating controls stop just short of it. The app sets --strip-w. */
 html[data-native] .toprow:not(#pane-l .toprow) { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
-/* 3.36.1: iOS's column on the right (the folded Duo's clock, Wi-Fi and the menu) never covers the page: everything below
-   the top bar stops short of it, and so do the bars under the title (league strip, day picker) */
-html[data-native].side-col main.wrap { padding-right: calc(12px + var(--strip-w, 0px) / var(--z, 1)) !important; }
-html[data-native].side-col #pane-r > header.top > .top-inner > :not(.toprow) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)) !important; }
-html[data-native].side-col .fd-strip { margin-right: 0; padding-right: 0; }
-html[data-native].side-col .sheet { padding-right: calc(16px + var(--strip-w, 0px)); }
+html[data-native] .lo-row:not(#pane-l .lo-row) { padding-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
+/* 3.36.2: the folded Duo's clock and Wi-Fi sit at the top of iOS's right column, a little below the top bar. The page
+   stays full width; it only starts (and pins its score bar) below them, so they never sit on top of anything at rest */
+html[data-native].side-col:not(.duo) main.wrap { padding-top: calc(4px + var(--sc-gap, 0px) / var(--z, 1)); }
 html[data-native] nav.dock { right: calc(var(--strip-w, 0px) + 12px) !important; }
 html[data-native] #best-body .rk-day { right: calc(var(--strip-w, 0px) + 82px); }
 /* strip mode: no menu button in the page, so the day picker and Back sit side by side against the column */
