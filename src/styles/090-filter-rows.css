@@ -1,0 +1,14 @@
+/* Filter rows, 3.65.x (DJ asked): the second row of filters (conferences and "Top-10 team" on All games, the
+   channel filters on On TV, "Ranked teams" in Box Office) uses the same look as the league tabs above it, only
+   smaller: the same wide bold type, muted until picked, ink when picked, and the same 3px accent bar with rounded
+   top corners, as wide as the word and sitting on the row's hairline. Left-aligned, All first (3.52.10). */
+html .substrip { gap: 16px; padding-top: 0 !important; padding-bottom: 0 !important; align-items: stretch; }
+html .substrip .cf-tab {
+  position: relative; flex: none; min-width: 0; background: none; border-radius: 0; box-shadow: none;
+  font-size: 13px !important; font-weight: 800; font-stretch: 112%; letter-spacing: .01em;
+  color: var(--muted); padding: 6px 0 8px !important; }
+html .substrip .cf-tab[aria-pressed="true"] { color: var(--ink); background: none; box-shadow: none; }
+html .substrip .cf-tab[aria-pressed="true"]::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 4px 4px 0 0; background: var(--accent-fill); }
+/* a short word ("All") keeps a 44-point touch area without widening its bar (the league tabs' pattern) */
+html .substrip .cf-tab::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100%; min-width: calc(44px / var(--z, 1)); transform: translateX(-50%); }

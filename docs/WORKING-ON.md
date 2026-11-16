@@ -6,5 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Secondary filter rows (All games, On TV, Box Office) look like the league tabs | src/styles/090-filter-rows.css (new), src/shell.html, docs/pages/all-games.md | 2026-11-16 22:45 |
 | DJ | Project status page: People shows app vs browser correctly, tests no longer count | src/app/296-usage.js, worker/usage.js, status.html, docs/pages/status.md | 2026-11-16 22:42 |

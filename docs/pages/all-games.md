@@ -1,8 +1,12 @@
 # All games
-Last updated: Nov 16, 2026, 3.52.10
+Last updated: Nov 16, 2026, 3.65.7
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
+- The second filter row (conferences, Top-10 team; also On TV's channel filters and Box Office's Ranked teams, all `.cf-tab` in a
+  `.substrip`) looks like the league tabs, only smaller (3.65.7, DJ asked): 13px wide bold type (`font-stretch: 112%`), muted until
+  picked, ink when picked, a 3px accent bar as wide as the word on the hairline. Styles in `src/styles/090-filter-rows.css`
+  (040-components.css was claimed at the time); the 44-point touch area is a `::before`, so "All" keeps a short bar.
 - Live button on the right, in line with the cards (3.38.2, 3.38.4).
 - Secondary filters read left to right on every phone, All first (3.52.10, DJ asked; 3.38.5 to 3.52.9 ran them right to
   left on the Duo with All at the far right).
