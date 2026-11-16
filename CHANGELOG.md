@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.52.8 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Quick look (tap a game on the slate or All games), every sport: before the start it now goes location, betting line, then Claude's preview or the Write Claude's preview button. Claude's preview used to sit above the line and location.
+- Soccer quick look: no season player stats before the start. The lineups still show once they're announced.
+
 ## 3.52.7 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Matchup page: the Player stats section ("This season") is back before the start for every sport except soccer. Soccer still shows player stats only once the game is on.

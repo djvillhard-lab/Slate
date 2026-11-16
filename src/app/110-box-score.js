@@ -439,12 +439,11 @@
   // the venue only before tip-off: once a game is on, the room goes to the score and box score
   function trayBlock(g) {
     var tb = trayBlock0(g), k = status(g).kind, vl = k === "live" || k === "over" ? null : venueLine(g, "gv-loc tray-loc"); if (tb && vl) tb.insertBefore(vl, tb.firstChild);
-    // an upcoming game: Claude's preview (or the button to write one) always leads, above the line, the venue and lineups
+    // an upcoming game: the venue and the betting line lead, then Claude's preview (or the button to write one), then the rest (DJ, 3.52.8)
     if (tb && k !== "live" && k !== "over") {
-      var hr = tb.querySelector(":scope > .pv-hrow"), sum = hr && hr.nextElementSibling, ctl = tb.querySelector(":scope > .cl-ctl");
-      if (sum) tb.insertBefore(sum, tb.firstChild);
-      if (hr) tb.insertBefore(hr, tb.firstChild);
-      else if (ctl) tb.insertBefore(ctl, tb.firstChild);
+      var os = tb.querySelector(":scope > .odds-strip, :scope > .pv-odds");
+      var hr = tb.querySelector(":scope > .pv-hrow"), sum = hr && hr.nextElementSibling, ctl = hr ? null : tb.querySelector(":scope > .cl-ctl");
+      [vl, os, hr, sum, ctl].filter(Boolean).reverse().forEach(function (n) { tb.insertBefore(n, tb.firstChild); });
     }
     return tb;
   }
@@ -457,7 +456,8 @@
       var bxc = bx.live[g.id];
       if (started && BX_SPORT[g.league] && window.SLATE_SELF && !(bxc && bxc.err)) { var wt = el("div", "pv"); wt.appendChild(el("p", "pv-none bx-wait", "Loading the box score…")); return wt; }
       var pvb = previewBlock(g, true);
-      if (BX_SPORT[g.league] === "soccer" && !started && b && b.teams && b.teams.some(function (t) { return (t.xi && t.xi.length) || (t.groups && t.groups.length); })) {
+      // soccer before the start: the lineups once they're announced, never season player stats on their own (DJ, 3.52.5)
+      if (BX_SPORT[g.league] === "soccer" && !started && b && b.teams && b.teams.some(function (t) { return t.xi && t.xi.length; })) {
         // the quick look keeps it short: the top 6 players and the No. 1 keeper by season numbers (the full matchup has them all)
         var bShort = Object.assign({}, b, { teams: b.teams.map(function (t) { return Object.assign({}, t, { groups: (t.groups || []).map(function (gr) { return Object.assign({}, gr, { rows: gr.rows.slice(0, gr.k === "keepers" ? 1 : 6) }); }) }); }) });
         var lub = el("div", "soc-pre"); lub.appendChild(bxPlayers(g, bShort, false, true));

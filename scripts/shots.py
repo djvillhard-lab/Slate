@@ -10,7 +10,7 @@ Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --l
 upcoming games), --full (the whole page, not just the first screen), --wait seconds.
 
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
-plus game:<team> (that game's matchup page) and feed:<team> (its Live feed), found on All games by team name.
+plus game:<team> (that game's matchup page), look:<team> (its quick look on All games) and feed:<team> (its Live feed), found on All games by team name.
 
 Sizes (--sizes, default all three):
     folded  iPhone Duo folded: 466 x 678, the app's side column on the right (strip mode, 84-point inset)
@@ -108,7 +108,7 @@ def main():
             mode = page.evaluate("document.documentElement.className")
             for pg in pages or ["lineup"]:
                 kind, _, team = pg.partition(":")
-                if kind in ("game", "feed"):
+                if kind in ("game", "feed", "look"):
                     page.evaluate("SlateApp.go('games')"); page.wait_for_timeout(2500)
                     hit = page.evaluate("""(T => { const r = [...document.querySelectorAll('#games-body .g')].find(x => x.innerText.indexOf(T) !== -1);
                         if (!r) return false; (r.querySelector('.g-main') || r).click(); return true; })(%s)""" % json.dumps(team))
@@ -122,6 +122,8 @@ def main():
                         if not page.evaluate("(() => { const b = document.querySelector('.feed-go'); if (!b) return false; b.click(); return true; })()"):
                             print(f"  {size}: '{team}' has no Live feed button (not live?)"); continue
                         page.wait_for_timeout(int(wait * 1000))
+                    elif kind == "look":  # the quick look: stay on the card's open tray
+                        page.evaluate("(() => { const t = document.querySelector('.tray'); if (t) t.scrollIntoView({block: 'center'}); })()"); page.wait_for_timeout(500)
                     elif page.evaluate("!!document.querySelector('.tray .full-mu')"):
                         page.evaluate("document.querySelector('.tray .full-mu').click()"); page.wait_for_timeout(2000)
                 else:
