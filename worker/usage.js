@@ -2,6 +2,9 @@
 //
 // POST /api/usage      {pass, opens, secs, views: {view: n}, where}  → adds to that person's counts for today
 // POST /api/usage/all  {pass}  (an admin's passcode only)             → everyone's last 30 days
+// POST /api/usage/marks {pass | key, set?: {id: {v, note?} | null}}  → DJ's check-offs on the status page's "Your list"
+//   (an admin's passcode reads and writes; the feedback reader key only reads, so Claude can see what DJ has tried
+//   and liked or wants changed). Ids: "rel:<version>" (v: like | work), "todo:<id>" (v: done). Kept in stats/marks.
 //
 // The app sends a small count every couple of minutes while it's open (src/app/296-usage.js): how many times it was
 // opened, seconds on screen, and how many times each page was shown. Nothing about what was looked at.
@@ -24,6 +27,8 @@ async function open(env, enc) {
   return JSON.parse(new TextDecoder().decode(pt));
 }
 const ctDay = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d || new Date());
+const READER_HASH = "c67723111b4760fef693da748e542a933145f2ee29eae1dfe5fb551e478b0c58";   // the same reader key as worker/feedback.js
+const shaHex = async (s) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(s || ""))))].map((x) => x.toString(16).padStart(2, "0")).join("");
 const num = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
 
 export async function usageRoute(req, env, url, h) {
@@ -31,6 +36,28 @@ export async function usageRoute(req, env, url, h) {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
   if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
   let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+  if (url.pathname === "/api/usage/marks") {
+    const admin = p && p.pass && ((await whoIs(env, p.pass)) || {}).admin === true;
+    const reader = admin || (p && p.key && (await shaHex(p.key)) === READER_HASH);
+    if (!reader) return json({ error: "Not allowed" }, 403);
+    let doc = { marks: {} };
+    try { const cur = await getDoc(env, "stats/marks"); if (cur && cur.enc) doc = await open(env, cur.enc); } catch (e) { doc = { marks: {} }; }
+    doc.marks = doc.marks || {};
+    if (p.set && typeof p.set === "object") {
+      if (!admin) return json({ error: "Not allowed" }, 403);
+      for (const id of Object.keys(p.set).slice(0, 50)) {
+        if (!/^(rel|todo):[A-Za-z0-9._-]{1,40}$/.test(id)) continue;
+        const m = p.set[id];
+        if (!m || !["like", "work", "done"].includes(m.v)) delete doc.marks[id];
+        else doc.marks[id] = { v: m.v, note: String(m.note || "").slice(0, 300), at: new Date().toISOString() };
+      }
+      const ids = Object.keys(doc.marks); if (ids.length > 400) ids.sort((a, b) => String(doc.marks[a].at).localeCompare(String(doc.marks[b].at))).slice(0, ids.length - 400).forEach((k) => delete doc.marks[k]);
+      const r = await putDoc(env, "stats/marks", { enc: await seal(env, doc) });
+      if (!r.ok) return json({ error: "Couldn't save" }, 502);
+    }
+    return json({ ok: true, marks: doc.marks });
+  }
+
   const me = await whoIs(env, p && p.pass);
   if (!me) return json({ error: "Not allowed" }, 403);
 
@@ -52,6 +79,7 @@ export async function usageRoute(req, env, url, h) {
     doc.id = me.id; doc.name = me.name; doc.last = new Date().toISOString();
     doc.where = appV ? "app" : ["app", "home", "web"].includes(p.where) ? p.where : (doc.where || "");
     if (appV) doc.app = appV.trim() + (/^[0-9]{1,5}$/.test(String(p.build || "")) ? " (" + p.build + ")" : "");                       // the build they last used, shown beside "iPhone app"
+    if (/^\d+\.\d+\.\d+$/.test(String(p.ver || ""))) doc.web = p.ver;   // the Slate version their copy is running (a saved copy can be older than the newest)
     doc.seen = doc.seen || {}; if (doc.where) doc.seen[doc.where] = doc.last;   // last time in each place
     const r = await putDoc(env, path, { enc: await seal(env, doc) });
     return json({ ok: !!r.ok });

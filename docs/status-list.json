@@ -1,0 +1,45 @@
+{
+  "reminders": [
+    {
+      "id": "live-notifs",
+      "title": "Check live notifications on your Duo",
+      "tag": "TestFlight",
+      "note": "Build 41: Board lines and soccer scorers on the Island and Lock Screen"
+    },
+    {
+      "id": "internal-testers",
+      "title": "Move Drew and Doug to internal testers",
+      "tag": "App Store Connect",
+      "note": "They lag a build behind as external testers"
+    },
+    {
+      "id": "weekly-build",
+      "title": "App Store Connect weekly build",
+      "tag": "App Store Connect",
+      "note": "New builds wait for your yes, so batch app changes into one build"
+    },
+    {
+      "id": "drew-setup",
+      "title": "Drew's setup",
+      "tag": "Nov 25",
+      "note": "Paused until Thanksgiving. Needs his Pro plan and GitHub name"
+    }
+  ],
+  "ideas": [
+    {
+      "id": "latest-start",
+      "title": "A latest-start rule for the slate",
+      "note": "Leave out games that start too late for you"
+    },
+    {
+      "id": "thumbs-logos",
+      "title": "Team logos in the Thumbs list",
+      "note": ""
+    },
+    {
+      "id": "lock-logos",
+      "title": "Team logos on the Lock Screen and Island",
+      "note": "Needs a new iPhone build"
+    }
+  ]
+}

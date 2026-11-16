@@ -16,7 +16,7 @@
     function send() {
       if (navigator.webdriver) return;   // a screenshot or test run (scripts/shots.py signs in with a real profile) is not that person using Slate
       var p = pw(); if (!p || (!U.opens && U.secs < 5)) return;
-      var body = JSON.stringify({ pass: p, opens: U.opens, secs: Math.round(U.secs), views: U.views, where: where(), build: (window.SLATE_NATIVE && window.SLATE_NATIVE.build) || "" });
+      var body = JSON.stringify({ pass: p, opens: U.opens, secs: Math.round(U.secs), views: U.views, where: where(), build: (window.SLATE_NATIVE && window.SLATE_NATIVE.build) || "", ver: SLATE_VERSION });
       U.opens = 0; U.secs = 0; U.views = {};
       try { fetch("/api/usage", { method: "POST", headers: { "content-type": "application/json" }, body: body, keepalive: true }).then(null, function () {}); } catch (e) {}
     }

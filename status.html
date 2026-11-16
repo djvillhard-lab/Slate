@@ -57,8 +57,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* header: the Slate mark level with the page name, the day under it, then the hairline (060-header.css) */
 .top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--hair); }
 .top .brand { width: 42px; height: 42px; color: var(--accent); margin: 0 -4px 0 -2px; }
-h1 { margin: 0; font-size: clamp(22px, 6.6vw, 28px); font-weight: 800; font-stretch: 118%; letter-spacing: -.015em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.asof { font-size: 15px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+h1 { margin: 0; font-size: clamp(22px, 6.6vw, 28px); font-weight: 800; font-stretch: 118%; letter-spacing: -.015em; line-height: 1.05; overflow-wrap: anywhere; }
+.asof { font-size: 15px; color: var(--muted); margin-top: 2px; }
 .livepill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--hair); font-size: 13px; font-weight: 800; color: var(--head); }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); flex: none; }
 .livepill.off .dot { background: var(--dim); animation: none; }
@@ -71,10 +71,10 @@ h1 { margin: 0; font-size: clamp(22px, 6.6vw, 28px); font-weight: 800; font-stre
 @media (min-width: 560px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1000px) { .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .tile { background: var(--card); border-radius: 8px; padding: 10px 12px; min-width: 0; }
-.tile .k { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .k { font-size: 13px; color: var(--muted); }
 .tile .v { font-size: 30px; font-weight: 800; font-stretch: 66%; line-height: 1.05; margin-top: 2px; }
 .tile .v small { font-size: 18px; color: var(--muted); font-weight: 800; }
-.tile .s { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.tile .s { font-size: 13px; color: var(--dim); margin-top: 1px; overflow-wrap: anywhere; }
 .tile.hot .v { color: var(--live); }
 .tile.you .v { color: var(--accent); }
 
@@ -88,34 +88,55 @@ h1 { margin: 0; font-size: clamp(22px, 6.6vw, 28px); font-weight: 800; font-stre
 .grid.c2 .zone[data-zone="top"], .grid.c3 .zone[data-zone="top"] { flex-direction: row; align-items: flex-start; }
 .grid.c2 .zone[data-zone="top"] > section, .grid.c3 .zone[data-zone="top"] > section { flex: 1 1 0; }
 .zone:empty { display: none; }
-.grid.dragon .zone:empty { display: flex; min-height: 64px; border-radius: 8px; box-shadow: inset 0 0 0 2px var(--hair); }
-.grid.dragon .zone[data-zone="top"]:empty { min-height: 44px; }
+/* arranging (while a card is being dragged): every card shrinks to its title bar so the whole layout fits on screen,
+   each column and the wide row is one big outlined drop area, and the accent slot is where the card will land */
+.grid.dragon .zone { display: flex; min-height: 132px; outline: 2px dashed var(--line); outline-offset: 4px; border-radius: 8px; position: relative; }
+.grid.dragon .zcols { align-items: stretch; }
+.grid.dragon .zone[data-zone="top"] { min-height: 52px; margin-bottom: 20px; }
+.grid.c1.dragon .zone[data-zone="top"] { display: none; }
+.grid.dragon .zone.over { outline-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.grid.dragon .zone:empty::before { content: "Drop here"; margin: auto; color: var(--dim); font-size: 13px; font-weight: 700; }
+.grid.dragon .zone[data-zone="top"]:empty::before { content: "Wide row: drop here for a full-width card"; }
+.grid.dragon .zone > section { padding-bottom: 0; flex: none; }
+.grid.c2.dragon .zone[data-zone="top"] > section, .grid.c3.dragon .zone[data-zone="top"] > section { flex: 1 1 0; }
+.grid.dragon .zone > section > :not(h2), .ghost > :not(h2) { display: none !important; }
+.grid.dragon .cbtn, .ghost .cbtn { display: none; }
+.zone > section.landed { animation: landed .9s ease-out; }
+@keyframes landed { from { box-shadow: 0 0 0 2px var(--accent); } to { box-shadow: 0 0 0 2px transparent; } }
+@media (prefers-reduced-motion: reduce) { .zone > section.landed { animation: none; } }
 
 .zone > section, .ghost { background: var(--card); border-radius: 8px; padding: 0 12px 10px; min-width: 0; }
 .zone > section.folded { padding-bottom: 0; }
 .zone > section.folded > :not(h2) { display: none !important; }
-.zone > section.ph { background: transparent; box-shadow: inset 0 0 0 2px var(--accent); }
+.zone > section.ph { background: color-mix(in srgb, var(--accent) 14%, transparent); box-shadow: inset 0 0 0 2px var(--accent); }
 .zone > section.ph > * { visibility: hidden; }
-.ghost { position: fixed; z-index: 50; pointer-events: none; margin: 0; box-shadow: 0 14px 34px var(--shadow), 0 0 0 1px var(--hair); transform: scale(1.02) rotate(.4deg); opacity: .96; overflow: hidden; }
+.ghost { position: fixed; z-index: 50; pointer-events: none; margin: 0; padding-bottom: 0; box-shadow: 0 14px 34px var(--shadow), 0 0 0 1px var(--hair); transform: scale(1.02) rotate(.4deg); opacity: .96; overflow: hidden; }
 body.dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
 section > h2 { margin: 0; min-height: 48px; display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 800; font-stretch: 112%; color: var(--ink); letter-spacing: .005em; }
-section > h2 .ct { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+section > h2 .ct { line-height: 1.15; padding: 6px 0; overflow-wrap: break-word; min-width: 0; }
 section > h2 .n { font-size: 13px; font-weight: 700; font-stretch: 100%; color: var(--dim); white-space: nowrap; margin-left: 2px; }
 section > h2 .sp { flex: 1; }
-.grip { width: 30px; height: 48px; margin-left: -8px; display: grid; place-items: center; color: var(--dim); cursor: grab; touch-action: none; flex: none; }
+.grip { width: 40px; height: 48px; margin-left: -12px; display: grid; place-items: center; color: var(--dim); cursor: grab; touch-action: none; flex: none; }
 .grip svg { width: 14px; height: 18px; }
 .cbtn { width: 40px; height: 44px; display: grid; place-items: center; color: var(--dim); flex: none; }
-.cbtn:last-child { margin-right: -10px; }
+.cbtn:last-of-type { margin-right: -10px; }
+@media (hover: hover) and (pointer: fine) { section > h2 { cursor: grab; } section > h2 .cbtn { cursor: pointer; } }
+section { position: relative; }
+.mv { position: absolute; z-index: 20; right: 8px; top: 46px; background: var(--raise); border-radius: 8px; padding: 6px; box-shadow: 0 10px 28px var(--shadow), 0 0 0 1px var(--hair); display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 232px; }
+.mv button { min-height: 44px; border-radius: 4px; background: var(--card); color: var(--ink); font-size: 14px; font-weight: 700; padding: 0 8px; }
+.mv button.wide { grid-column: 1 / -1; }
+.mv button:disabled { opacity: .35; }
+.zone > section.folded > .mv { display: grid !important; }
 .cbtn svg { width: 15px; height: 15px; transition: transform .15s ease; }
 .folded .cbtn.fold svg { transform: rotate(-90deg); }
 
 /* rows and status tags (.bug) */
 .row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--hair); min-width: 0; min-height: 44px; }
 .row .main { flex: 1; min-width: 0; }
-.row .ti { font-size: 16px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row .sub { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.row .ti { font-size: 16px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+.row .sub { font-size: 13px; color: var(--dim); margin-top: 1px; overflow-wrap: anywhere; }
 .meta { font-size: 13px; color: var(--dim); margin-top: 4px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.row .meta { flex-wrap: nowrap; min-width: 0; }
+.row .meta { min-width: 0; }
 .chip { display: inline-block; font-size: 12px; font-weight: 800; font-stretch: 88%; padding: 3px 7px 2px; border-radius: 4px; background: var(--raise); color: var(--ink); white-space: nowrap; flex: none; }
 .chip.you { background: var(--accent-fill); color: var(--on-accent); }
 .chip.live { background: var(--live); color: #fff; }
@@ -131,7 +152,7 @@ section > h2 .sp { flex: 1; }
 .rel { border-top: 0; border-bottom: 1px solid var(--hair); }
 .rel:last-of-type { border-bottom: 0; }
 .rel .ver { font-size: 18px; font-weight: 800; font-stretch: 66%; width: 50px; flex: none; }
-.rel .ti { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rel .ti { white-space: normal; }
 .rel .tm { font-size: 13px; color: var(--dim); font-stretch: 78%; width: 54px; flex: none; text-align: right; }
 
 /* feedback */
@@ -145,6 +166,28 @@ section > h2 .sp { flex: 1; }
 .fb .main { flex: 1; min-width: 0; }
 .fb .q { font-size: 17px; font-weight: 800; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .fb.open .q { -webkit-line-clamp: unset; display: block; }
+.fb .mo { display: none; font-size: 14px; font-weight: 800; color: var(--accent); padding: 4px 0 2px; }
+.fb.long .mo { display: block; }
+
+/* your list */
+.yl-h { font-size: 13px; font-weight: 800; color: var(--muted); padding: 10px 0 4px; border-top: 1px solid var(--hair); display: flex; gap: 6px; align-items: baseline; }
+.yl-h b { color: var(--dim); font-weight: 700; }
+.yl { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; min-width: 0; }
+.yl .main { flex: 1; min-width: 0; padding-top: 3px; }
+.yl .ti { font-size: 16px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+.yl .note { font-size: 13px; color: var(--dim); margin-top: 2px; overflow-wrap: anywhere; }
+.yl .ck { width: 44px; height: 44px; margin: -6px -8px -6px -10px; flex: none; display: grid; place-items: center; }
+.yl .ck i { width: 22px; height: 22px; border-radius: 4px; box-shadow: inset 0 0 0 2px var(--dim); display: grid; place-items: center; color: var(--on-accent); font-style: normal; font-size: 15px; font-weight: 800; line-height: 1; }
+.yl.done .ck i { background: var(--accent-fill); box-shadow: none; }
+.yl.done .ti { color: var(--dim); font-weight: 700; }
+.yl .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.yl .acts button { min-height: 36px; padding: 0 10px; border-radius: 4px; background: var(--raise); color: var(--ink); font-size: 13px; font-weight: 800; }
+.yl .acts button.on { background: var(--accent-fill); color: var(--on-accent); }
+.yl .acts button.on.work { background: var(--live); color: #fff; }
+.yl .why { display: flex; gap: 6px; margin-top: 6px; }
+.yl .why input { flex: 1; min-width: 0; height: 40px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; padding: 0 10px; }
+.yl .why button { height: 40px; padding: 0 12px; border-radius: 4px; background: var(--accent-fill); color: var(--on-accent); font-size: 14px; font-weight: 800; }
+.yl-err { font-size: 13px; color: var(--live); padding: 4px 0; }
 .fb.isdone .q { color: var(--muted); }
 .fb .chip:not(.live):not(.idea) { background: var(--card); }
 .fb .meta .nw { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
@@ -161,8 +204,8 @@ section > h2 .sp { flex: 1; }
 /* pages, people, the jobs */
 .pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; }
 .pg { background: var(--raise); border-radius: 8px; padding: 8px 10px; min-width: 0; min-height: 54px; display: flex; flex-direction: column; justify-content: space-between; gap: 4px; }
-.pg .nm { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pg .st { font-size: 13px; color: var(--dim); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.pg .nm { font-size: 15px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.pg .st { font-size: 13px; color: var(--dim); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .pg.busy { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live) 55%, transparent); }
 .pg .st .ok { color: var(--accent); }
 .ops { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -188,6 +231,42 @@ section > h2 .sp { flex: 1; }
 .gate input { height: 48px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 16px; padding: 0 12px; }
 .gate button { height: 48px; border-radius: 8px; background: var(--accent-fill); color: var(--on-accent); font-weight: 800; }
 .gate .err { color: var(--live); min-height: 18px; font-size: 13px; }
+
+/* ---- type scale (DJ, Nov 16: "too difficult to just look at the dashboard and see what I want to see").
+   Three roles only. Numbers: big, condensed, heavy. Titles: heavy, full ink. Details: regular weight, muted, 14px.
+   Everything else was competing because the whole page was bold. Keep new text inside one of these three. */
+body { font-weight: 500; }
+.tile { padding: 14px 14px 12px; }
+.tile .k { font-size: 14px; font-weight: 700; color: var(--muted); }
+.tile .v { font-size: 42px; font-weight: 800; line-height: 1; margin-top: 6px; }
+.tile .v small { font-size: 20px; }
+.tile .s { font-size: 14px; font-weight: 500; color: var(--muted); margin-top: 4px; }
+.zone, .zcols { gap: 16px; } .zone[data-zone="top"] { margin-bottom: 16px; } .grid { margin-top: 16px; } .tiles { gap: 10px; }
+.zone > section, .ghost { padding: 4px 16px 14px; }
+section > h2 { font-size: 20px; min-height: 52px; }
+@media (max-width: 480px) { section > h2 { font-size: 18px; } .cbtn { width: 36px; } }
+section > h2 .n { font-size: 20px; font-weight: 800; font-stretch: 66%; color: var(--accent); margin-left: 6px; }
+.row { padding: 12px 0; }
+.row .ti, .yl .ti, .pg .nm, .op { font-size: 17px; font-weight: 800; }
+.row .sub, .meta, .yl .note, .pg .st, .op span, .fb .dev, .person .nums, .rel .tm, .empty { font-size: 14px; font-weight: 500; color: var(--muted); }
+.chip { font-size: 12px; font-weight: 700; }
+.fb { padding: 14px; } .fb .q { font-size: 18px; }
+.rel .ver { font-size: 22px; width: 58px; }
+.person { padding: 14px 0; } .person .nm { font-size: 18px; }
+.person .nums b { font-size: 26px; }
+.yl-h { font-size: 14px; font-weight: 800; color: var(--head); padding: 14px 0 6px; }
+.yl-h b { color: var(--accent); font-weight: 800; }
+.yl { padding: 8px 0; }
+.pg { padding: 10px 12px; } .pages { gap: 8px; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+.asof { font-size: 14px; font-weight: 500; }
+
+/* live status: says when it last heard from the server, and turns into a warning when updates stop */
+.livepill { height: auto; min-height: 34px; padding: 4px 12px; font-size: 14px; font-weight: 800; color: var(--ink); text-align: left; line-height: 1.2; }
+.livepill small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+.livepill.off { border-color: var(--live); color: var(--live); }
+.livepill.off small { color: var(--ink); }
+.chip.behind { background: transparent; color: var(--live); box-shadow: inset 0 0 0 1px var(--live); }
+.person .vers { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -195,7 +274,7 @@ section > h2 .sp { flex: 1; }
   <header class="top">
     <svg class="brand" viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(-1.8 .3) rotate(35 12 12)" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.9V21.3" fill="none" stroke-width="2.2" opacity=".55"/><path d="M9.7 18.3h2.6" fill="none" stroke-width="1.7"/><path transform="translate(11 7.4) scale(.88) translate(-11 -7.4)" d="M6.8 5.6H9.2v.4H13l4.8-1.7q1.7 3.1 0 6.2L13 8.8H9.2v.4H6.8a.8.8 0 0 1-.8-.8V6.4a.8.8 0 0 1 .8-.8z" fill="currentColor" stroke-width="2.1"/></g><path d="M21 3.6l.62 1.78 1.78.62-1.78.62-.62 1.78-.62-1.78-1.78-.62 1.78-.62z" fill="currentColor"/><path d="M17.3 2.3l.3.9.9.3-.9.3-.3.9-.3-.9-.9-.3.9-.3z" fill="currentColor" opacity=".8"/></svg>
     <div><h1>Project status</h1><div class="asof" id="asof">Loading…</div></div>
-    <span class="livepill" id="live"><span class="dot pulse"></span><span id="live-l">Live</span></span>
+    <span class="livepill" id="live" role="status"><span class="dot pulse"></span><span><span id="live-l">Live</span><small id="live-t"></small></span></span>
   </header>
 
   <div class="tiles" id="tiles"></div>
@@ -210,7 +289,7 @@ section > h2 .sp { flex: 1; }
           </span></div>
         <div id="feedback"><div class="empty">Loading feedback…</div></div>
       </section>
-      <section data-card="waiting"><h2>Waiting on you <span class="n" id="wait-n"></span></h2><div id="waiting"></div></section>
+      <section data-card="waiting"><h2>Your list <span class="n" id="wait-n"></span></h2><div id="waiting"></div></section>
       <section data-card="people"><h2>People <span class="n" id="ppl-n"></span></h2><div id="people"><div class="empty">Loading…</div></div></section>
       <section data-card="working"><h2>Working now <span class="n" id="work-n"></span></h2><div id="working"></div></section>
       <section data-card="shipped">
@@ -234,7 +313,7 @@ section > h2 .sp { flex: 1; }
 </div>
 <script>
 var TZ = "America/Chicago", REPO = "djvillhard-lab/Slate";
-var D = { web: "", build: "", buildWith: "", releases: [], hours: [], sheet: [], pages: [], waiting: [], feedback: null, asOf: null };
+var D = { web: "", build: "", buildWith: "", releases: [], hours: [], sheet: [], pages: [], list: { reminders: [], ideas: [] }, marks: {}, all: [], feedback: null, asOf: null };
 var fbFilter = "open", relAll = false, shotUrls = {}, commitTimes = {}, commitEtag = "", openFb = {}, seenAt = "";
 try { seenAt = localStorage.getItem("slate-status-seen") || ""; } catch (e) {}
 var PAGES = [
@@ -272,7 +351,7 @@ function tile(k, v, s, cls) {
 }
 
 function render() {
-  $("asof").textContent = new Date().toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" }) + (D.asOf ? " · checked " + tm(D.asOf) : "");
+  $("asof").textContent = new Date().toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" }) + " \u00b7 Central time";
   var fb = D.feedback || [], newFb = fb.filter(function (f) { return f.at > seenAt; }).length;
   var bm = /^(.*) \((\d+)\)/.exec(D.build || "") || [0, D.build || "–", ""];
   var bv = document.createDocumentFragment(); bv.appendChild(document.createTextNode(bm[1] + " ")); bv.appendChild(el("small", null, bm[2] ? "(" + bm[2] + ")" : ""));
@@ -283,20 +362,12 @@ function render() {
   tiles.appendChild(tile("Shipped today", String(D.releases.length), "releases"));
   var openFbN = fb.filter(function (f) { return !f.done; }).length;
   tiles.appendChild(tile("Feedback open", D.feedback ? String(openFbN) : "–", D.feedback ? (newFb ? newFb + " new · " : "") + (fb.length - openFbN) + " addressed" : "", openFbN ? "you" : ""));
-  tiles.appendChild(tile("Working now", String(D.sheet.length), D.sheet.map(function (s) { return s.area; }).join(", ") || "nobody", D.sheet.length ? "hot" : ""));
-  tiles.appendChild(tile("Waiting on you", String(D.waiting.length), "to do", D.waiting.length ? "you" : ""));
+  tiles.appendChild(tile("Working now", String(D.sheet.length), D.sheet.map(function (s) { return s.who; }).filter(function (w, i, a) { return a.indexOf(w) === i; }).join(", ") || "nobody", D.sheet.length ? "hot" : ""));
+  var yl = listCounts();
+  tiles.appendChild(tile("Your list", String(yl.left), yl.try + " to try · " + yl.rem + " reminders", yl.left ? "you" : ""));
   document.title = (openFbN ? "(" + openFbN + ") " : "") + "Project status";
 
-  var w = $("waiting"); w.textContent = ""; $("wait-n").textContent = D.waiting.length || "";
-  D.waiting.forEach(function (x) {
-    var r = el("div", "row"), m = el("div", "main"), mt = el("div", "meta");
-    m.appendChild(el("div", "ti", x.title));
-    mt.appendChild(el("span", "chip you", x.tag));
-    if (x.tf) mt.appendChild(el("span", "chip out", "TestFlight"));
-    if (x.do) mt.appendChild(el("span", null, x.do));
-    m.appendChild(mt); r.appendChild(m); w.appendChild(r);
-  });
-  if (!D.waiting.length) w.appendChild(el("div", "empty", "Nothing waiting on you."));
+  renderList();
 
   var wk = $("working"); wk.textContent = ""; $("work-n").textContent = D.sheet.length || "";
   D.sheet.forEach(function (s) {
@@ -325,8 +396,13 @@ function renderPeople() {
     nm.appendChild(el("span", null, p.name || p.id));
     var live = Date.now() - new Date(p.last).getTime() < 4 * 60000;
     nm.appendChild(el("span", live ? "chip live" : "chip", live ? "On now" : ago(p.last)));
-    if (p.where) nm.appendChild(el("span", "chip out", p.where === "app" ? "iPhone app" + (p.app ? " " + p.app : "") : p.where === "home" ? "Home Screen" : "Browser"));
+    if (p.where) nm.appendChild(el("span", "chip out", p.where === "app" ? "iPhone app" : p.where === "home" ? "Home Screen" : "Browser"));
     m.appendChild(nm);
+    // the two versions they last ran: Slate itself (the web part, which can be an older saved copy) and the iPhone build
+    var vs = el("div", "vers");
+    if (p.web) { var wb = D.web && p.web !== D.web; vs.appendChild(el("span", wb ? "chip behind" : "chip", "Slate " + p.web + (wb ? " \u00b7 behind " + D.web : ""))); }
+    if (p.app) { var ab = D.build && p.app.indexOf("(") > 0 && p.app !== D.build; vs.appendChild(el("span", ab ? "chip behind" : "chip", "iPhone " + p.app + (ab ? " \u00b7 behind " + D.build : ""))); }
+    if (vs.firstChild) m.appendChild(vs);
     var nums = el("div", "nums");
     [[mins(t.secs), " today"], [String(t.opens || 0), t.opens === 1 ? " open" : " opens"], [String((D.claude || {})[p.id] || 0), " summaries"]].forEach(function (x, i) {
       if (i) nums.appendChild(document.createTextNode(" · ")); nums.appendChild(el("b", null, x[0])); nums.appendChild(document.createTextNode(x[1]));
@@ -349,6 +425,68 @@ function renderPeople() {
     box.appendChild(r);
   });
 }
+// ---- Your list: things shipped that DJ hasn't said he's tried, reminders, and things to think about.
+// Reminders and ideas are hand-kept in docs/status-list.json; "to try" is every feature release (x.y.0) of the last
+// three days. DJ's taps are saved by the worker (/api/usage/marks), so they follow him to any screen and Claude can read them.
+var listAll = false, listDone = false, listWhy = "", listErr = "";
+function toTry() {
+  var days = {}; for (var i = 0; i < 3; i++) days[new Date(Date.now() - i * 864e5).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" })] = 1;
+  return D.all.filter(function (e) { return /\.0$/.test(e.v) && days[e.date]; }).slice(0, 12);   // the newest dozen: a list, not a backlog
+}
+function listCounts() {
+  var t = toTry().filter(function (e) { return !D.marks["rel:" + e.v]; }).length;
+  var r = D.list.reminders.filter(function (x) { return !D.marks["todo:" + x.id]; }).length, i = D.list.ideas.filter(function (x) { return !D.marks["todo:" + x.id]; }).length;
+  return { try: t, rem: r, ideas: i, left: t + r + i };
+}
+function setMark(id, m) {
+  var prev = D.marks[id]; if (m) D.marks[id] = { v: m.v, note: m.note || "", at: new Date().toISOString() }; else delete D.marks[id];
+  listErr = ""; render(); var set = {}; set[id] = m || null;
+  api("/api/usage/marks", { pass: pass(), set: set }).then(function (j) { if (!j.ok) throw 0; D.marks = j.marks || {}; render(); })
+    .catch(function () { if (prev) D.marks[id] = prev; else delete D.marks[id]; listErr = "That didn't save. Try again."; render(); });
+}
+function loadMarks() { return api("/api/usage/marks", { pass: pass() }).then(function (j) { if (j.ok && !listWhy) { D.marks = j.marks || {}; render(); } }).catch(function () {}); }
+function renderList() {
+  var w = $("waiting"), c = listCounts(); w.textContent = ""; $("wait-n").textContent = c.left ? c.left + " left" : "";
+  if (listErr) w.appendChild(el("div", "yl-err", listErr));
+  function head(t, n) { var h = el("div", "yl-h", t); if (n) h.appendChild(el("b", null, String(n))); w.appendChild(h); }
+  function todo(x) {
+    var id = "todo:" + x.id, done = !!D.marks[id], r = el("div", "yl" + (done ? " done" : "")), ck = el("button", "ck"), m = el("div", "main");
+    ck.type = "button"; ck.setAttribute("role", "checkbox"); ck.setAttribute("aria-checked", done ? "true" : "false"); ck.setAttribute("aria-label", x.title); ck.appendChild(el("i", null, done ? "\u2713" : ""));
+    ck.onclick = function () { setMark(id, done ? null : { v: "done" }); };
+    m.appendChild(el("div", "ti", x.title));
+    if (!done && (x.note || x.tag)) { var n = el("div", "note"); if (x.tag) { n.appendChild(el("span", "chip out", x.tag)); n.appendChild(document.createTextNode(" ")); } n.appendChild(document.createTextNode(x.note || "")); m.appendChild(n); }
+    r.appendChild(ck); r.appendChild(m); w.appendChild(r);
+  }
+  function rel(e) {
+    var id = "rel:" + e.v, mk = D.marks[id], r = el("div", "yl" + (mk ? " done" : "")), m = el("div", "main"), a = el("div", "acts");
+    var f = e.first, k = f.slice(0, 40).indexOf(": "), area = k > 0 ? f.slice(0, k) : "", text = (k > 0 ? f.slice(k + 2) : f).split(/\. (?=[A-Z])/)[0].replace(/\.$/, "");
+    m.appendChild(el("div", "ti", text.charAt(0).toUpperCase() + text.slice(1)));
+    m.appendChild(el("div", "note", [area, e.v, e.date.replace(/, \d{4}$/, "")].filter(Boolean).join(" \u00b7 ") + (mk && mk.note ? " \u00b7 \u201c" + mk.note + "\u201d" : "")));
+    var like = el("button", mk && mk.v === "like" ? "on" : "", "Tested, I like it"); like.type = "button"; like.onclick = function () { listWhy = ""; setMark(id, mk && mk.v === "like" ? null : { v: "like" }); };
+    var work = el("button", mk && mk.v === "work" ? "on work" : "", "Needs work"); work.type = "button"; work.onclick = function () { if (mk && mk.v === "work") { listWhy = ""; setMark(id, null); } else { listWhy = e.v; render(); var i = w.querySelector(".why input"); if (i) i.focus(); } };
+    a.appendChild(like); a.appendChild(work); m.appendChild(a);
+    if (listWhy === e.v) {
+      var y = el("form", "why"), inp = el("input"), sv = el("button", null, "Save"); inp.placeholder = "What's off? (optional)"; inp.maxLength = 300; inp.setAttribute("aria-label", "What needs work"); sv.type = "submit";
+      y.onsubmit = function (ev) { ev.preventDefault(); listWhy = ""; setMark(id, { v: "work", note: inp.value.trim() }); }; y.appendChild(inp); y.appendChild(sv); m.appendChild(y);
+    }
+    r.appendChild(m); w.appendChild(r);
+  }
+  var tr = toTry(), open = tr.filter(function (e) { return !D.marks["rel:" + e.v]; });
+  if (open.length) {
+    head("To try", open.length);
+    (listAll ? open : open.slice(0, 4)).forEach(rel);
+    if (open.length > 4) { var mo = el("button", "more", listAll ? "Show fewer" : "Show all " + open.length); mo.type = "button"; mo.onclick = function () { listAll = !listAll; render(); }; w.appendChild(mo); }
+  }
+  var rem = D.list.reminders.filter(function (x) { return !D.marks["todo:" + x.id]; }), ideas = D.list.ideas.filter(function (x) { return !D.marks["todo:" + x.id]; });
+  if (rem.length) { head("Reminders", rem.length); rem.forEach(todo); }
+  if (ideas.length) { head("To think about", ideas.length); ideas.forEach(todo); }
+  if (!c.left) w.appendChild(el("div", "empty", "Nothing left on your list."));
+  var doneRel = tr.filter(function (e) { return D.marks["rel:" + e.v]; }), doneTodo = D.list.reminders.concat(D.list.ideas).filter(function (x) { return D.marks["todo:" + x.id]; }), dn = doneRel.length + doneTodo.length;
+  if (dn) {
+    var db = el("button", "more", listDone ? "Hide checked off" : "Show " + dn + " checked off"); db.type = "button"; db.onclick = function () { listDone = !listDone; render(); }; w.appendChild(db);
+    if (listDone) { doneRel.forEach(rel); doneTodo.forEach(todo); }
+  }
+}
 function loadPeople() {
   return api("/api/usage/all", { pass: pass() }).then(function (j) { if (j.people) { D.people = j.people; D.claude = j.claude || {}; renderPeople(); } }).catch(function () {});
 }
@@ -357,6 +495,7 @@ function renderFeedback() {
   var box = $("feedback"); box.textContent = "";
   if (!D.feedback) { box.appendChild(el("div", "empty", "Loading feedback…")); $("fb-n").textContent = ""; return; }
   var list = D.feedback.filter(function (f) { return fbFilter === "all" || (fbFilter === "done") === !!f.done; });
+  requestAnimationFrame(function () { Array.prototype.forEach.call(box.querySelectorAll(".fb"), function (c) { var q = c.querySelector(".q"); c.classList.toggle("long", c.classList.contains("open") || q.scrollHeight > q.clientHeight + 2); }); });
   var nOpen = D.feedback.filter(function (f) { return !f.done; }).length;
   $("fb-n").textContent = nOpen + " open";
   if (!list.length) box.appendChild(el("div", "empty", fbFilter === "open" ? "Everything has been addressed." : "Nothing here yet."));
@@ -364,6 +503,7 @@ function renderFeedback() {
     var c = el("div", "fb" + (f.done ? " isdone" : "") + (f.at > seenAt && !f.done ? " fresh" : "") + (openFb[f.id] ? " open" : "")); c.tabIndex = 0; c.setAttribute("role", "button"); c.setAttribute("aria-expanded", openFb[f.id] ? "true" : "false");
     var m = el("div", "main");
     m.appendChild(el("div", "q", "“" + f.text + "”"));
+    m.appendChild(el("div", "mo", openFb[f.id] ? "Less" : "More"));   // shown only when the quote runs past three lines (measured below)
     var meta = el("div", "meta");
     if (!f.reported) { var nw = el("span", "nw"); nw.title = "Not in a daily report yet"; meta.appendChild(nw); }
     meta.appendChild(el("span", f.kind === "bug" ? "chip live" : f.kind === "idea" ? "chip idea" : "chip", f.kind === "bug" ? "Problem" : f.kind === "idea" ? "Idea" : "Other"));
@@ -457,7 +597,7 @@ function buildReleases() {
     all.push({ v: m[1], date: m[2], tf: tf ? tf[1].trim() : "", first: (bullets[0] || "").replace(/^- /, "").replace(/\*\*|`/g, "") });
   }
   if (!all.length) return;
-  D.web = all[0].v;
+  D.web = all[0].v; D.all = all;
   var b = all.filter(function (e) { return e.tf && e.tf.indexOf("no new build") < 0; })[0];
   D.build = b ? b.tf : ""; D.buildWith = b ? b.v : "";
   var hours = []; for (var i = 0; i < 24; i++) hours.push(0);
@@ -466,7 +606,7 @@ function buildReleases() {
     if (c) { var s = c.subj.replace(/^(DJ|Drew):\s*/, "").replace(/^\d+\.\d+\.\d+:\s*/, ""); var k = s.indexOf(": "); if (k > 0) { area = s.slice(0, k); text = s.slice(k + 2); } else text = s; }
     if (!text) { var f = e.first, k2 = f.slice(0, 40).indexOf(": "); if (k2 > 0) { area = f.slice(0, k2); text = f.slice(k2 + 2); } else text = f; }
     if (c && new Date(c.at).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" }) === today) { var hh = +new Date(c.at).toLocaleString("en-US", { timeZone: TZ, hour: "numeric", hour12: false }) % 24; hours[hh]++; }
-    return { v: e.v, at: c ? c.at : null, area: area, text: short(text.charAt(0).toUpperCase() + text.slice(1), 90), app: !!e.tf && e.tf.indexOf("no new build") < 0 };
+    return { v: e.v, at: c ? c.at : null, area: area, text: text.charAt(0).toUpperCase() + text.slice(1), app: !!e.tf && e.tf.indexOf("no new build") < 0 };
   });
   D.hours = hours;
 }
@@ -481,7 +621,7 @@ function loadRepo() {
         return { who: c[0], area: k > 0 ? c[1].slice(0, k).trim() : c[1], what: k > 0 ? c[1].slice(k + 1).trim() : "", files: c[2], since: since.toISOString(), stale: Date.now() - since.getTime() > 864e5 };
       }).filter(Boolean);
     }),
-    txt("/docs/status-waiting.json").then(function (t) { D.waiting = JSON.parse(t); }).catch(function () {}),
+    txt("/docs/status-list.json").then(function (t) { var j = JSON.parse(t); D.list = { reminders: j.reminders || [], ideas: j.ideas || [] }; }).catch(function () {}),
     Promise.all(PAGES.map(function (p) {
       if (!p[1]) return { name: p[0], note: null, open: 0, keys: p[2] };
       return txt("/docs/pages/" + p[1]).then(function (t) {
@@ -520,19 +660,31 @@ function loadFeedback() {
     if (j._status === 403) { gate("That passcode can't read feedback. Use DJ's."); return; }
     if (!j.items) throw new Error("no items");
     D.feedback = j.items.filter(function (i) { return !i.error; }).reverse();
-    $("live").classList.remove("off"); $("live-l").textContent = "Live";
+    lastOk = Date.now(); liveShow();
     render();
-  }).catch(function () { $("live").classList.add("off"); $("live-l").textContent = "Offline"; });
+  }).catch(function () { liveShow(); });
 }
 function markSeen() { if (D.feedback && D.feedback[0] && document.visibilityState === "visible") { var top = D.feedback[0].at; setTimeout(function () { seenAt = top; try { localStorage.setItem("slate-status-seen", top); } catch (e) {} }, 8000); } }
 
+// the Live pill: the time of the last answer from the server (feedback is asked for every 10 seconds). After 45 seconds
+// without one, or when the browser says it is offline, it turns into a warning with the time updates stopped.
+var lastOk = 0;
+function liveShow() {
+  var off = navigator.onLine === false, stale = lastOk && Date.now() - lastOk > 45000, bad = off || stale || !lastOk;
+  var t = lastOk ? new Date(lastOk).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit" }) : "";
+  $("live").classList.toggle("off", !!(off || stale));
+  $("live-l").textContent = off ? "Offline" : stale ? "Not updating" : lastOk ? "Live" : "Connecting";
+  $("live-t").textContent = t ? (bad ? "Last update " : "Updated ") + t : "";
+}
+window.addEventListener("online", function () { liveShow(); loadFeedback(); }); window.addEventListener("offline", liveShow);
+setInterval(liveShow, 5000);
 var started = false, timers = [];
 function start() {
   if (started) return; started = true;
   $("app").hidden = false; var g = $("gate"); if (g) g.remove();
   render();
-  loadFeedback().then(markSeen); loadRepo().then(loadCommits); loadPeople();
-  timers.push(setInterval(function () { if (document.visibilityState === "visible") loadPeople(); }, 30000));
+  loadFeedback().then(markSeen); loadRepo().then(loadCommits); loadPeople(); loadMarks();
+  timers.push(setInterval(function () { if (document.visibilityState === "visible") { loadPeople(); loadMarks(); } }, 30000));
   timers.push(setInterval(function () { if (document.visibilityState === "visible") loadFeedback().then(markSeen); }, 10000));
   timers.push(setInterval(function () { if (document.visibilityState === "visible") loadRepo(); }, 30000));
   timers.push(setInterval(function () { if (document.visibilityState === "visible") loadCommits(); }, 120000));
@@ -617,46 +769,102 @@ function layRead() {   // the arrangement as it is on screen now
     var x = el("button", "cbtn"); x.type = "button"; x.setAttribute("aria-label", "Close " + ct.textContent); x.appendChild(icon("M4 4l8 8M12 4l-8 8"));
     x.onclick = function () { LAY.closed[k] = true; laySave(); layApply(); }; h.appendChild(x);
 
-    // arrow keys: up and down within its column, left and right to the next column (the top row is the first stop)
+    // moving without dragging: the arrow keys on the grip, and the Move menu's buttons
+    function canMove(dir) {
+      var zone = c.parentNode, zones = Array.prototype.slice.call($("grid").querySelectorAll(".zone")), zi = zones.indexOf(zone);
+      var sibs = Array.prototype.filter.call(zone.children, function (q) { return !q.hidden && q.tagName === "SECTION"; }), i = sibs.indexOf(c), inTop = zi === 0 && curN > 1;
+      if (dir === "wide") return curN > 1;
+      if (inTop) return dir === "left" ? i > 0 : dir === "right" ? i < sibs.length - 1 : dir === "down";
+      if (dir === "up") return i > 0 || curN > 1;
+      if (dir === "down") return i < sibs.length - 1;
+      if (dir === "left") return zi > 1;
+      if (dir === "right") return zi > 0 && zi < zones.length - 1;
+      return false;
+    }
+    function move(dir) {
+      if (!canMove(dir)) return false;
+      var zone = c.parentNode, zones = Array.prototype.slice.call($("grid").querySelectorAll(".zone")), zi = zones.indexOf(zone);
+      var sibs = Array.prototype.filter.call(zone.children, function (q) { return !q.hidden && q.tagName === "SECTION"; }), i = sibs.indexOf(c), inTop = zi === 0 && curN > 1;
+      function into(z, at) { var zs = Array.prototype.filter.call(z.children, function (q) { return !q.hidden && q !== c; }); z.insertBefore(c, zs[Math.min(at, zs.length)] || null); }
+      if (dir === "wide") { if (inTop) into(zones[1], 0); else zones[0].appendChild(c); }
+      else if (inTop) { if (dir === "left") zone.insertBefore(c, sibs[i - 1]); else if (dir === "right") zone.insertBefore(c, sibs[i + 1].nextSibling); else into(zones[Math.min(i + 1, zones.length - 1)], 0); }
+      else if (dir === "up") { if (i > 0) zone.insertBefore(c, sibs[i - 1]); else zones[0].appendChild(c); }
+      else if (dir === "down") zone.insertBefore(c, sibs[i + 1].nextSibling);
+      else into(zones[zi + (dir === "left" ? -1 : 1)], i);        // the same height in the next column
+      layRead(); layApply(); landed(); return true;
+    }
+    function landed() { c.classList.remove("landed"); void c.offsetWidth; c.classList.add("landed"); setTimeout(function () { c.classList.remove("landed"); }, 1000); var r = c.getBoundingClientRect(); if (r.top < 8 || r.top > window.innerHeight - 80) window.scrollBy(0, r.top - 90); }
     g.addEventListener("keydown", function (e) {
-      var zone = c.parentNode, zones = Array.prototype.slice.call($("grid").querySelectorAll(".zone")), zi = zones.indexOf(zone), did = true;
-      var sibs = Array.prototype.filter.call(zone.children, function (q) { return !q.hidden; }), i = sibs.indexOf(c);
-      if (e.key === "ArrowUp" && i > 0) zone.insertBefore(c, sibs[i - 1]);
-      else if (e.key === "ArrowDown" && i < sibs.length - 1) zone.insertBefore(c, sibs[i + 1].nextSibling);
-      else if (e.key === "ArrowLeft" && zi > 0) zones[zi - 1].appendChild(c);
-      else if (e.key === "ArrowRight" && zi < zones.length - 1) zones[zi + 1].insertBefore(c, zones[zi + 1].firstChild);
-      else did = false;
-      if (did) { e.preventDefault(); layRead(); layApply(); cardEl(k).querySelector(".grip").focus(); }
+      var dir = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" }[e.key];
+      if (dir) { e.preventDefault(); if (move(dir)) g.focus(); }
     });
+    var mb = el("button", "cbtn mvb"); mb.type = "button"; mb.setAttribute("aria-label", "Move " + ct.textContent); mb.title = "Move"; mb.appendChild(icon("M8 2v12M2 8h12M8 2l-2 2M8 2l2 2M8 14l-2-2M8 14l2-2M2 8l2-2M2 8l2 2M14 8l-2-2M14 8l-2 2"));
+    h.insertBefore(mb, f);
+    function menuOff() { var m = c.querySelector(".mv"); if (m) m.remove(); document.removeEventListener("pointerdown", outside, true); }
+    function outside(ev) { if (!c.contains(ev.target) || (!ev.target.closest(".mv") && !ev.target.closest(".mvb"))) menuOff(); }
+    function menuOn() {
+      menuOff(); var m = el("div", "mv");
+      [["up", "Up"], ["down", "Down"], ["left", "Left"], ["right", "Right"]].forEach(function (d) {
+        if (curN === 1 && (d[0] === "left" || d[0] === "right")) return;
+        var b = el("button", null, d[1]); b.type = "button"; b.disabled = !canMove(d[0]); b.onclick = function () { move(d[0]); menuOn(); }; m.appendChild(b); });
+      if (curN > 1) { var inTop = c.parentNode.dataset.zone === "top"; var w = el("button", "wide", inTop ? "Back into a column" : "Make it full width"); w.type = "button"; w.onclick = function () { move("wide"); menuOn(); }; m.appendChild(w); }
+      c.appendChild(m); document.addEventListener("pointerdown", outside, true);
+    }
+    mb.onclick = function () { if (c.querySelector(".mv")) menuOff(); else menuOn(); };
 
-    // drag: a copy of the card follows the finger; an outlined slot shows exactly where it will land
-    g.addEventListener("pointerdown", function (e) {
-      if (e.button) return; e.preventDefault();
-      var r = c.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
-      var ghost = c.cloneNode(true); ghost.className = "ghost"; ghost.removeAttribute("data-card"); ghost.style.width = r.width + "px"; ghost.style.maxHeight = Math.min(r.height, 260) + "px";
+    // dragging. Every card shrinks to its title bar so the whole layout is on screen at once; each column (and the
+    // wide row) is one big drop area picked by where the finger is across the page, and the card goes above or
+    // below a neighbour by which half of it the finger is over. The accent slot is exactly where it will land.
+    function dragStart(e) {
+      if (e.button || document.body.classList.contains("dragging")) return; e.preventDefault(); menuOff();
+      var px = e.clientX, py = e.clientY, sx0 = px, sy0 = py, raf = 0, grid = $("grid");
+      var ghost = c.cloneNode(true); ghost.className = "ghost"; ghost.removeAttribute("data-card"); ghost.style.width = Math.min(c.getBoundingClientRect().width, 300) + "px";
       Array.prototype.forEach.call(ghost.querySelectorAll("[id]"), function (n) { n.removeAttribute("id"); });
-      document.body.appendChild(ghost); c.classList.add("ph"); c.style.maxHeight = Math.min(r.height, 120) + "px"; c.style.overflow = "hidden";
-      document.body.classList.add("dragging"); $("grid").classList.add("dragon");
-      var px = e.clientX, py = e.clientY, raf = 0;
+      document.documentElement.style.overflowAnchor = "none";                             // the browser must not re-scroll by itself while cards change size
+      document.body.style.minHeight = document.documentElement.scrollHeight + "px";      // the page keeps its length, so nothing jumps
+      document.body.appendChild(ghost); c.classList.add("ph"); document.body.classList.add("dragging"); grid.classList.add("dragon");
+      window.scrollBy(0, c.getBoundingClientRect().top + 24 - py);                        // its slot stays under the finger
+      var g0 = grid.getBoundingClientRect();                                              // and when the shrunken layout fits on screen, all of it shows
+      if (g0.height < window.innerHeight - 90) { if (g0.top < 70) window.scrollBy(0, g0.top - 70); else if (g0.bottom > window.innerHeight - 20) window.scrollBy(0, g0.bottom - window.innerHeight + 20); }
       function place() {
-        ghost.style.left = (px - Math.min(dx, 40)) + "px"; ghost.style.top = (py - Math.min(dy, 24)) + "px";
-        var zones = Array.prototype.slice.call($("grid").querySelectorAll(".zone")), top = zones[0], cols = zones.slice(1), target = null;
-        var colsTop = $("zcols").getBoundingClientRect().top;
-        if (curN > 1 && py < colsTop - 4) target = top;
-        else { cols.forEach(function (z) { var zr = z.getBoundingClientRect(); if (px >= zr.left - 6 && px <= zr.right + 6) target = z; }); if (!target) target = px < cols[0].getBoundingClientRect().left ? cols[0] : cols[cols.length - 1]; }
+        ghost.style.left = (px - 28) + "px"; ghost.style.top = (py - 24) + "px";
+        var zones = Array.prototype.slice.call(grid.querySelectorAll(".zone")), top = zones[0], cols = zones.slice(1), target = null;
+        if (curN > 1 && py < top.getBoundingClientRect().bottom + 10) target = top;
+        else {   // the nearest column across the page, however far up or down the finger is
+          var best = 1e9; cols.forEach(function (z) { var zr = z.getBoundingClientRect(), d = px < zr.left ? zr.left - px : px > zr.right ? px - zr.right : 0; if (d < best) { best = d; target = z; } });
+        }
         var sibs = Array.prototype.filter.call(target.children, function (q) { return q !== c && !q.hidden; }), before = null, side = target === top && curN > 1;
         for (var i = 0; i < sibs.length; i++) { var sr = sibs[i].getBoundingClientRect(); if (side ? px < sr.left + sr.width / 2 : py < sr.top + sr.height / 2) { before = sibs[i]; break; } }
         if (c.parentNode !== target || c.nextElementSibling !== before) { if (before !== c) target.insertBefore(c, before); }
+        zones.forEach(function (z) { z.classList.toggle("over", z === target); });
       }
-      function tick() { raf = 0; if (py < 80) window.scrollBy(0, -16); else if (py > window.innerHeight - 80) window.scrollBy(0, 16); place(); if (py < 80 || py > window.innerHeight - 80) raf = requestAnimationFrame(tick); }
+      function tick() {   // near the top or bottom edge the page scrolls, but only while there is more of the layout that way
+        raf = 0; var gr = grid.getBoundingClientRect(), edge = 0;
+        if (Math.abs(px - sx0) + Math.abs(py - sy0) > 24) edge = py < 70 && gr.top < 70 ? -12 : py > window.innerHeight - 70 && gr.bottom > window.innerHeight - 16 ? 12 : 0;
+        if (edge) window.scrollBy(0, edge); place(); if (edge) raf = requestAnimationFrame(tick);
+      }
       function mv(ev) { px = ev.clientX; py = ev.clientY; if (!raf) raf = requestAnimationFrame(tick); ev.preventDefault(); }
       function up() {
         document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); document.removeEventListener("pointercancel", up);
-        if (raf) cancelAnimationFrame(raf); ghost.remove(); c.classList.remove("ph"); c.style.maxHeight = ""; c.style.overflow = "";
-        document.body.classList.remove("dragging"); $("grid").classList.remove("dragon"); layRead(); layApply();
+        if (raf) cancelAnimationFrame(raf); ghost.remove(); c.classList.remove("ph");
+        Array.prototype.forEach.call(grid.querySelectorAll(".zone"), function (z) { z.classList.remove("over"); });
+        document.body.classList.remove("dragging"); grid.classList.remove("dragon"); layRead(); layApply();
+        document.body.style.minHeight = "";
+        window.scrollBy(0, c.getBoundingClientRect().top - Math.max(70, Math.min(py - 24, window.innerHeight - 200)));   // the card opens where it was dropped
+        c.classList.remove("landed"); void c.offsetWidth; c.classList.add("landed"); setTimeout(function () { c.classList.remove("landed"); }, 1000);
+        setTimeout(function () { document.documentElement.style.overflowAnchor = ""; }, 300);
       }
       document.addEventListener("pointermove", mv, { passive: false }); document.addEventListener("pointerup", up); document.addEventListener("pointercancel", up);
       place();
+    }
+    g.addEventListener("pointerdown", dragStart);
+    // with a mouse the whole title bar drags (after a small pull, so a plain click does nothing)
+    h.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "mouse" || e.button || e.target.closest(".cbtn, .grip, .mv")) return;
+      var sx = e.clientX, sy = e.clientY;
+      function m(ev) { if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) > 6) { off(); dragStart(ev); } }
+      function off() { document.removeEventListener("pointermove", m); document.removeEventListener("pointerup", off); }
+      document.addEventListener("pointermove", m); document.addEventListener("pointerup", off); e.preventDefault();
     });
   });
   layApply();
