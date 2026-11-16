@@ -1,0 +1,32 @@
+/* The Nov 16, 2026 UX review (docs/pages/ux-review.md), in four releases. Each block below is one release and can be
+   deleted on its own to undo it. The restore point from before all four is the pre-ux-review-3 branch. */
+
+/* ===== Release A (3.48.0): readable and tappable ===== */
+/* 1. Upcoming games: the team row keeps its 60% cap only when there is a score to leave room for */
+#lineup-body .g.panel .tm:not(:has(.sc)) { max-width: none !important; }
+/* 2. On TV: Watch is a real button, and the channel row is a full-height tap */
+html .ch-head .chwatch { min-height: calc(44px / var(--z, 1)); padding: 0 12px !important; border: 1px solid var(--line) !important; border-radius: 8px !important; }
+html .ch-tgb { min-height: calc(44px / var(--z, 1)); }
+/* 3. 44-point touch areas. Buttons that stay small on purpose get an invisible area around them (.hit44 pattern);
+      the rest grow to 44 points. Sizes divide by --z so they stay 44 real points at every text size. */
+.sl-seg button, .lo-btn, .tg-time, .bet-x, .g .add, .rlink, .lg-tab { position: relative; }
+.tg-time { z-index: 1; }
+.sl-seg button::after, .lo-btn::after, .tg-time::after, .bet-x::after, .g .add::after, .rlink::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: calc(44px / var(--z, 1)); transform: translateY(-50%); }
+.bet-x::after, .g .add::after { left: 50%; right: auto; width: calc(44px / var(--z, 1)); transform: translate(-50%, -50%); }
+.rlink::after { left: -6px; right: -6px; }
+.lg-tab::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100%; min-width: calc(34px / var(--z, 1)); transform: translateX(-50%); }
+html .sl-h, html .tdd-h, html .sa-clear, html .gv-act, html .cf-tab, html .seg button, html .net, html .fd-chip, html .fd-more,
+html #nl-head, html #wal-head, html #ver-btn, html .foldrow button, html input.field, html .sizes button {
+  min-height: calc(44px / var(--z, 1)) !important; }
+html .ta-fav, html .rm.ta-ic { min-height: calc(44px / var(--z, 1)); min-width: calc(44px / var(--z, 1)); }
+html #btn-find { min-width: calc(44px / var(--z, 1)); min-height: calc(44px / var(--z, 1)); }
+html .cf-tab { min-width: calc(44px / var(--z, 1)); }
+html .sa-clear { padding-left: 12px; padding-right: 12px; }
+html .g-side .net { display: inline-flex; align-items: center; justify-content: flex-end; }
+/* 4. Readable on color: the Hit tag and Full matchup's second line (team chips are fixed in badgeFor) */
+html .bet-tag.hit { color: #0C1117 !important; }
+html .full-mu i { color: var(--on-accent) !important; opacity: 1 !important; }
+/* 19. Day picker labels clear 4.5 to 1 on the glass */
+html #dock-day em { color: var(--muted) !important; }
+html #dock-day b { color: color-mix(in srgb, var(--accent) 62%, #fff) !important; }

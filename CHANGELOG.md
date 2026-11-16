@@ -5,6 +5,16 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.48.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+First of four releases from the Nov 16 UX review. Each one can be undone by itself, and the branch pre-ux-review-3 holds the app from before all four.
+- Tonight's Slate: upcoming games show full team names. "Ger…", "Neth…" and "Cel…" are now "Germany", "Netherlands" and "Celtics"; the name was being cut to leave room for a score the game doesn't have yet.
+- On TV: Watch is a full-size outlined button, and the channel row you tap to fold a channel is full height.
+- Every button is at least 44 points to the thumb, at every text size. Small ones keep their look and get a larger invisible touch area: Time and League, Live, the time headings, the × on a Best bets pick, the check mark and + on a game, Edit order, Close all channels. Others grow a little: the quick look's Top performers, Scoring and Box score rows, the team star buttons and ×, On your slate, Clear slate, the league filter on Teams, On TV's All / National TV / Streaming, and the switches in Settings and Notifications.
+- Team chips with light colors are readable: gold, tan and bright orange chips (Alabama State, Georgia Tech, Clemson, the Bengals) get dark letters where white was too faint.
+- Best bets: the Hit tag has dark letters on its green. Full matchup's second line is as bright as its first. The day picker's month and "Today" are easier to read.
+- For Claude chats: scripts/shots.py runs without a passcode (read-only, saves blocked) and takes --text, --tomorrow and --full.
+
 ## 3.47.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News: nothing is picked when you open "Customize today's news". The checkmarks for Today's slate, My teams and Leagues are gone; you pick each game, team and league yourself. Each group shows how many are picked and has an All / Clear button.

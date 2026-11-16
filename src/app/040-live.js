@@ -412,6 +412,7 @@
     var b = el("span", "badge" + (text.length > 3 ? " sm" : ""), text);
     b.style.background = c[0]; b.style.setProperty("--ring", c[1]);
     if (lum(c[0]) > 0.72) b.style.color = "#111";
+    else if (contrastRatio(c[0], "#ffffff") < 4.5 && contrastRatio(c[0], "#0C1117") > contrastRatio(c[0], "#ffffff")) b.style.color = "#0C1117";  // light golds and oranges: white text was under 4.5 to 1 (3.48.0)
     b.setAttribute("aria-hidden", "true"); return b;
   }
   function isStreaming(n) { n = String(n).toLowerCase(); return STREAMING.some(function (s) { return n === s || n.indexOf(s) === 0; }); }
