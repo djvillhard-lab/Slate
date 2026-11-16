@@ -11,6 +11,7 @@
     mls: "soccer/usa.1", epl: "soccer/eng.1", laliga: "soccer/esp.1", seriea: "soccer/ita.1", bundesliga: "soccer/ger.1", ligue1: "soccer/fra.1",
     ucl: "soccer/uefa.champions", uel: "soccer/uefa.europa"
   };
+  var LOGO_PRO = { NFL: "nfl", NBA: "nba", WNBA: "wnba", NHL: "nhl", MLB: "mlb" };
   var LOGO_WEEK = 7 * 86400000, LOGO_KEY = "slate-logos-v1";
   var LOGO_REG = (function () { try { return JSON.parse(localStorage.getItem(LOGO_KEY) || "null") || {}; } catch (e) { return {}; } })();  // { lg: { at, t: { name: [seg, c1, c2] } } }
   var LOGO_OK = (function () { try { return JSON.parse(localStorage.getItem("slate-logos-ok") || "null") || {}; } catch (e) { return {}; } })();  // logo URLs this phone has loaded before
@@ -40,7 +41,12 @@
     var k = logoNorm(name); if (!k) return null;
     var hit = logoGames()[k] || LOGO_LIVE[k]; if (hit) return hit;
     for (var lg in LOGO_REG) { var t = LOGO_REG[lg] && LOGO_REG[lg].t; if (t && t[k]) return t[k]; }
-    logoRefresh(); return null;
+    logoRefresh();
+    // the five big pro leagues never wait on ESPN's team list (3.62.2): their logo file is the team's abbreviation,
+    // which the app's own team list already has. One failed download used to leave a whole league without logos for an hour.
+    var kt = typeof teamByName === "function" ? teamByName(name) : null;
+    if (kt && LOGO_PRO[kt.lg] && kt.abbr) return [LOGO_PRO[kt.lg] + "/" + String(kt.abbr).toLowerCase() + ".png", kt.c1, kt.c2];
+    return null;
   }
   function logoRefresh() {
     if (logoLoading || !window.fetch) return;
@@ -58,7 +64,7 @@
         });
         LOGO_REG[lg] = { at: now, t: t };
       }).catch(function () {}).then(function () {
-        if (!LOGO_REG[lg] || LOGO_REG[lg].at !== now) LOGO_REG[lg] = { at: now - LOGO_WEEK + 3600000, t: (LOGO_REG[lg] || {}).t || {} };   // offline or ESPN hiccup: try again in an hour
+        if (!LOGO_REG[lg] || LOGO_REG[lg].at !== now) LOGO_REG[lg] = { at: now - LOGO_WEEK + 120000, t: (LOGO_REG[lg] || {}).t || {} };   // offline or ESPN hiccup: keep what we had, try again in two minutes
       });
     })).then(function () {
       logoLoading = false;

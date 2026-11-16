@@ -17,6 +17,8 @@ Files: `src/app/045-team-logos.js`, `src/styles/080-team-logos.css`, `badgeFor` 
 - Shipped in 3.60.0. The morning email (`worker/morning-email.js`, `mark()`) uses the dark logo as a 30px image when the game carries `awayLogo` / `homeLogo`, else the lettered chip.
 - Teams, Settings and the welcome picker get logos through `teamBadge()` -> `badgeFor()`; nothing to do there.
 
+- 3.62.4: DJ reported NFL logos missing. Pro leagues (NFL, NBA, WNBA, NHL, MLB) now build the logo path from the app's own team list (`LOGO_PRO` in `teamLook`: league + abbreviation, checked against ESPN for all 138 teams), so they never wait on the teams feed. A failed feed retries in 2 minutes. The exact failure on DJ's phone was not reproduced; a failed NFL feed download is the likely cause.
+
 ## Open
 - iPhone Lock Screen and Dynamic Island still show text only. Logos there need `ios/` work and a TestFlight build; not done.
 - Teams ESPN has no logo for (some small colleges, lower-division opponents) keep the colored chip.

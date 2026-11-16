@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.62.4 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Team logos: NFL logos could be missing. Logos for teams whose game had not been refreshed yet waited on a team list downloaded from ESPN, one per league, and if that one download failed the whole league showed lettered boxes for an hour.
+- NFL, NBA, WNBA, NHL and MLB logos no longer need that download at all. A league whose list fails is tried again in two minutes, not an hour.
+
 ## 3.62.3 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Soccer live lines name the player and the team: "Arsenal's Saka has missed a penalty", "Arsenal's Saka had a penalty saved", "an own goal by Chelsea's Smith", "Saka has set up two goals for Arsenal", "Arsenal's Raya has made 5 saves to keep Chelsea out". When ESPN hasn't named the player yet, the line names the team, and it switches to the player as soon as ESPN adds the name.
