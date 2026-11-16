@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.38.2 (Nov 16, 2026)
+TestFlight: 3.38.0 (37), no new build (web only)
+- All games: the Live button sits on the right side of the page, under your thumb.
+- All games on iPhone: the second row of filters (All / Best of each league / National TV, or a league's conferences) lines up on the right. On the folded Duo it stops just left of the clock and Wi-Fi column so they never cover it.
+
 ## 3.38.1 (Nov 16, 2026)
 TestFlight: 3.38.0 (37), no new build (web only)
 - Live feed for basketball is simpler. The shot graphic is gone. Under the score bar you now see each team's top scorer so far (points, rebounds, assists) and ESPN's win probability, then the plays.

@@ -116,7 +116,7 @@
       var gl = !!state.gamesLive;  // starts off every time All games opens; tap Live to narrow for now
       state.gamesLive = gl;
       var nLv = list.filter(function (g) { return status(g).kind === "live"; }).length;
-      var lo = el("div", "lo-row"), lb = el("button", "lo-btn" + (gl ? " on" : "")); lb.type = "button";
+      var lo = el("div", "lo-row gm-live"), lb = el("button", "lo-btn" + (gl ? " on" : "")); lb.type = "button";
       lb.setAttribute("aria-pressed", gl ? "true" : "false"); lb.setAttribute("aria-label", "Show only live games");
       lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live")); lb.appendChild(el("b", null, String(nLv)));
       lb.addEventListener("click", function () { state.gamesLive = !state.gamesLive; keepScroll(renderGames); });
