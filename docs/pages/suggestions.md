@@ -20,6 +20,13 @@ rendered from `230-settings.js`, styles at the end of `src/styles/070-ux-review-
   a game when the thumbs push it down by 20 or more.
 - Settings › Thumbs up and down: summary, More of / Fewer of chips, Start over (with Undo).
 
+## Testing (Nov 16, 2026)
+- On a light Monday nothing reached the 45 bar (the best was 40), so both sections were empty. 3.57.1 added a temporary
+  per-phone test switch (bar 25, up to five; Worth a look took any live game), and 3.58.1 removed it after DJ rated 7 games.
+- DJ's 7 thumbs (2 up: two women's/late college games; 5 down: unranked national-TV men's college, an event, NHL, a live
+  game) taught: fewer college games with no ranked team, men's college hoops, NHL and "Spotlight" picks; more women's
+  hoops and late starts. A conference can net to zero when one team in it is liked and another disliked (Big Ten here).
+
 ## Open / ideas
 - Thumbs on the rule-picked slate cards themselves weren't added (they'd clutter every card); the rules decide those.
 - Forgetting a single chip in Settings (tap to remove) if DJ wants finer control.

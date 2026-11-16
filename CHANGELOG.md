@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.58.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- The "Show extra suggestions today, for testing" switch is gone from Settings, Thumbs up and down. Testing is done, and Suggested for you and Worth a look are back to their usual bar. Your thumbs from the test stay and keep counting.
+
 ## 3.58.0 (Nov 16, 2026)
 TestFlight: 3.58.0 (39)
 - Live notifications carry the game's preview line from the slate ("Celtics have won five in a row and are 6-0 at home"), in every sport. Before kickoff it's the line under the score on the Lock Screen. Once the game is on, it sits as a quiet line under the two standouts, and in the Dynamic Island held open it's under the last play. After the final it's dropped, since it's old news by then.

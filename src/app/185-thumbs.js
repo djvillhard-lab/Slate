@@ -121,11 +121,6 @@
     });
     box.appendChild(up); box.appendChild(dn); return box;
   }
-  // ---------- test mode (3.57.1, temporary): more suggestions today so there are games to rate ----------
-  // On from Settings, this phone only, until midnight. Suggested for you lowers its bar and shows up to five;
-  // Worth a look shows any live game that isn't on your slate, in any league.
-  function fbTest() { try { return localStorage.getItem("slate-sugg-test") === todayInHome(); } catch (e) { return false; } }
-  function fbTestSet(on) { try { if (on) localStorage.setItem("slate-sugg-test", todayInHome()); else localStorage.removeItem("slate-sugg-test"); } catch (e) {} }
   // ---------- Settings: what the thumbs have taught, and starting over ----------
   // strongest first, the specific ones (a team) ahead of the broad ones (a league) at the same strength
   function fbRank(w, sign) {
@@ -140,10 +135,6 @@
   function fbSettings(box) {
     box.textContent = "";
     var w = fbWeights();
-    var tst = fbTest(), tb = el("button", "fb-reset" + (tst ? " on" : ""), tst ? "Testing: extra suggestions on (tap to stop)" : "Show extra suggestions today, for testing"); tb.type = "button";
-    tb.setAttribute("aria-pressed", tst ? "true" : "false");
-    tb.addEventListener("click", function () { fbTestSet(!fbTest()); render(); toast(fbTest() ? "Extra suggestions on until midnight, on this phone. See the top and bottom of today's slate." : "Extra suggestions off"); });
-    box.appendChild(tb);
     box.appendChild(el("p", "fb-help", "Thumbs on Suggested for you and Worth a look teach Slate what you like: the teams, the league, why it was picked, the start time, national TV and ranked matchups. Older thumbs count less over time, and a game still needs its own reason to be suggested, so you keep seeing some variety."));
     var list = function (title, keys) {
       if (!keys.length) return;
