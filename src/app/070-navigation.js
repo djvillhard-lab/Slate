@@ -147,21 +147,8 @@
     }
     return { text: text, stars: stars, quick: true };
   }
-  // a quick read as a paragraph or as bullet points (Claude's own bullets when it wrote them, otherwise one per sentence)
-  // a small ¶ / • switch beside any summary: paragraph or bullets, saved for every page
-  function styleSwitch() {
-    var w = el("div", "sty"); w.setAttribute("role", "group"); w.setAttribute("aria-label", "Read as");
-    [["para", "Paragraph", "M4 6h16M4 10h16M4 14h16M4 18h10"], ["bullets", "Bullets", "M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"]].forEach(function (o) {
-      var b = el("button", null); b.type = "button"; b.setAttribute("aria-label", o[1]); b.setAttribute("aria-pressed", (state.pvStyle || "para") === o[0] ? "true" : "false");
-      var NS = "http://www.w3.org/2000/svg", sv = document.createElementNS(NS, "svg"), pa = document.createElementNS(NS, "path");
-      sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("fill", "none"); sv.setAttribute("stroke", "currentColor"); sv.setAttribute("stroke-width", o[0] === "bullets" ? "2.4" : "2.2"); sv.setAttribute("stroke-linecap", "round");
-      pa.setAttribute("d", o[2]); sv.appendChild(pa); b.appendChild(sv);
-      b.addEventListener("click", function (e) { e.stopPropagation(); if (state.pvStyle === o[0]) return; state.pvStyle = o[0]; saveSettings(); keepScroll(render); });
-      w.appendChild(b);
-    });
-    return w;
-  }
-  function withSwitch(card) { var h = card.querySelector(".gv-h"); if (h) { var row = el("div", "gv-hrow"); card.insertBefore(row, h); row.appendChild(h); row.appendChild(styleSwitch()); } else card.insertBefore(styleSwitch(), card.firstChild); return card; }
+  // a quick read as a paragraph or as bullet points (Claude's own bullets when it wrote them, otherwise one per sentence);
+  // the style is picked only in Settings > Slate and games > Quick reads (state.pvStyle)
   // quick reads and Claude's write-ups always show in full (no "More" link)
   function readNode(text, bullets, cls, plain) {
     if (state.pvStyle !== "bullets" || plain || !text) return el("p", cls, text || "");

@@ -185,12 +185,12 @@
     }
     var rc = part === "pre" ? null : recapOf(pv), rcOpen = rc && recapShown(g);
     if (rc) {
-      var rq = withSwitch(gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap"));
+      var rq = gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap");
       if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); }
       else rq.appendChild(recapGate(g));
       body.appendChild(rq);
     } else if (pv.summary) {
-      var q = withSwitch(gvCard("The quick read")); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
+      var q = gvCard("The quick read"); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
       body.appendChild(q);
     }
     if (part === "recap") {

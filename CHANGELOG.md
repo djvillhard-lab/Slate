@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.65.1 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Quick reads: the small paragraph and bullet points switch is gone from the quick read, the recap and Claude's take on team pages. You pick the style in one place now: Settings, Slate and games, Quick reads. Your saved choice stays as it was.
+
 ## 3.65.0 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - For DJ: Slate now counts how much each person uses it, for the People section of his Project status page. It counts three things: how many times the app was opened, minutes on screen, and how many times each page was shown (Slate, All games, News and so on). Nothing about which games or teams anyone looked at.

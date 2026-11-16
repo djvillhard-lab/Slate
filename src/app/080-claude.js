@@ -97,7 +97,7 @@
         box.appendChild(rb);
       } else box.appendChild(recapGate(g));
     } else if (pv.summary) {
-      var hr0 = el("div", "gv-hrow pv-hrow"); hr0.appendChild(el("b", "pv-h", "The quick read")); hr0.appendChild(styleSwitch()); box.appendChild(hr0);
+      var hr0 = el("div", "gv-hrow pv-hrow"); hr0.appendChild(el("b", "pv-h", "The quick read")); box.appendChild(hr0);
       box.appendChild(readNode(pv.summary, pv.bullets, "pv-sum"));
 
     }

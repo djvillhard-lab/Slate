@@ -23,5 +23,11 @@ Put it in the sub-page it belongs to, not on the main page. A new group of setti
 with `data-open`, a name in `SET_PAGES` and a summary line in `setPagesDraw`. All element ids stayed the same in the
 move, so code that finds a control by id needs no change.
 
+## Quick reads style (3.64.1)
+DJ (Nov 16): paragraph vs bullet points is picked only in Settings > Slate and games > Quick reads (`#pvstyle-seg`,
+saved as `state.pvStyle`). The small switch that sat on the quick read, the recap and Claude's take on team pages
+(`styleSwitch`/`withSwitch` in 070-navigation.js) is gone; `readNode` still follows the saved choice everywhere.
+Don't add a per-card switch back.
+
 ## Open
 - Notifications and Slate rules are still separate views rather than `setpg` blocks. They work the same to the eye.

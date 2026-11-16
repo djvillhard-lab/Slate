@@ -337,7 +337,6 @@
     var skey = e ? t.lg + "-" + String(e.abbr || "").toLowerCase() : null, doc = skey ? tm.docs[skey] : null;
     var cc = gvCard("Claude's take", "tm-claude");
     if (doc && doc.summary) {
-      withSwitch(cc);
       cc.appendChild(readNode(doc.summary, doc.bullets, "gv-sum"));
       var tl = Array.isArray(doc.long) ? doc.long.filter(Boolean) : [];
       if (tl.length) {
