@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Pull-down on every page (folded Duo) | src/app/285-pull-down.js (new), docs/pages/pull-down.md (new) | 2026-11-16 21:50 |
