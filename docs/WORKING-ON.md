@@ -10,3 +10,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | shared: shell.html (adds one style file line) | src/shell.html | 2026-11-16 19:58 |
 | DJ | Sign-up, log-in page and new user welcome (new) | src/boot/db-shim.js, new src/app/232-welcome.js, new src/styles/085-welcome.css, new worker/signup.js, worker/index.js (one hook line for the new routes), src/shell.html (one style line, added only after the logos thread's line lands), docs/pages/welcome.md (new) | 2026-11-16 20:05 |
 | DJ | Notifications: game preview line on live notifications and start alerts | worker/alerts.js, src/app/100-highlights.js (one small hook in the preview line), ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift, docs/pages/notifications.md | 2026-11-16 20:10 |
+| DJ | Slate: thumbs test mode (extra suggestions for testing today) | src/app/180-worth-a-look.js, src/app/185-thumbs.js | 2026-11-16 20:08 |
