@@ -1,6 +1,6 @@
 # Best bets
 Last updated: Nov 15, 2026, 3.47.0 (by the thread that built 3.40.0 to 3.47.0)
-Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section at the bottom of Tonight's Slate.
+Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section on Tonight's Slate, above Finished since 3.49.0.
 
 ## Done
 - Stat-based picks from ESPN game logs only: a player's mark over his last six games, game totals vs the over/under from

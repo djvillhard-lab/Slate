@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.49.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+Second release from the UX review.
+- The day picker and Back no longer sit on top of what you're reading. While you scroll down they step out of the way, and only the menu button stays; scroll up a little, reach the bottom or change pages and they're back. On iPhone and on the open Duo's right side.
+- Tonight's Slate: Best bets moved above Finished, so the picks aren't buried under a night of finished games.
+- Tonight's Slate has the same day picker at the bottom right as All games, On TV and Box Office (folded Duo and iPhone). The arrows at the top and swiping still work.
+
 ## 3.48.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 First of four releases from the Nov 16 UX review. Each one can be undone by itself, and the branch pre-ux-review-3 holds the app from before all four.

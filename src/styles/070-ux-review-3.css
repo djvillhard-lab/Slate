@@ -30,3 +30,9 @@ html .full-mu i { color: var(--on-accent) !important; opacity: 1 !important; }
 /* 19. Day picker labels clear 4.5 to 1 on the glass */
 html #dock-day em { color: var(--muted) !important; }
 html #dock-day b { color: color-mix(in srgb, var(--accent) 62%, #fff) !important; }
+
+/* ===== Release B (3.49.0): less in the way ===== */
+/* 5. While scrolling down, the day picker and Back step aside (html.dock-away, set in 070-navigation.js); the menu stays */
+html nav.dock .dock-day, html nav.dock .dock-back { transition: opacity .18s ease, transform .18s ease; }
+html.dock-away nav.dock .dock-day, html.dock-away nav.dock .dock-back { opacity: 0 !important; transform: translateY(14px); pointer-events: none !important; }
+@media (prefers-reduced-motion: reduce) { html nav.dock .dock-day, html nav.dock .dock-back { transition: none; } html.dock-away nav.dock .dock-day, html.dock-away nav.dock .dock-back { transform: none; } }

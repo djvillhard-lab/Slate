@@ -14,7 +14,7 @@
   function tvSwipe(step) { var i = TV_TABS.indexOf(state.tvFilter), n = TV_TABS[i + step]; if (n) tvPick(n, step > 0 ? "l" : "r"); }
   function renderDockDay() {
     var dn = $("dock-day"); if (!dn) return;
-    var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments") && !state.menuOpen;
+    var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments" || (v === "lineup" && !isDuo)) && !state.menuOpen;  // the slate too (3.49.0): the same picker under the thumb on every dated page
     var wasOn = !dn.hidden; dn.hidden = !on; if (!on) return;
     // grow in only when it appears (not every refresh, or when the page re-pins the dock while it bounces)
     if (!wasOn && !REDUCED) { dn.classList.remove("dd-in"); void dn.offsetWidth; dn.classList.add("dd-in"); clearTimeout(dn._t); dn._t = setTimeout(function () { dn.classList.remove("dd-in"); }, 300); }
@@ -178,3 +178,21 @@
     var dd = Math.round((new Date(new Date().toDateString()) - new Date(t.toDateString())) / 864e5), dw = dd === 0 ? "" : dd === 1 ? "yesterday " : t.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " ";
     return "Preview by Claude · updated " + dw + t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   }
+
+  // The day picker and Back step out of the way while you scroll down, and come back when you scroll up, reach the
+  // bottom or change pages (3.49.0). The menu button stays. Works for the page and for the open Duo's right pane.
+  (function () {
+    var root = document.documentElement, lastY = 0, lastView = null;
+    function away(on) { root.classList.toggle("dock-away", !!on); }
+    function onScroll(y, max) {
+      if (state.view !== lastView) { lastView = state.view; lastY = y; away(false); return; }
+      if (state.menuOpen || y < 60 || y >= max - 24) away(false);
+      else if (y > lastY + 8) away(true);
+      else if (y < lastY - 8) away(false);
+      else return;
+      lastY = y;
+    }
+    window.addEventListener("scroll", function () { if (!isDuo) onScroll(window.scrollY || 0, document.documentElement.scrollHeight - window.innerHeight); }, { passive: true });
+    var pr = $("pane-r"); if (pr) pr.addEventListener("scroll", function () { if (isDuo) onScroll(pr.scrollTop, pr.scrollHeight - pr.clientHeight); }, { passive: true });
+    document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("#menu-fab")) away(false); }, true);
+  })();
