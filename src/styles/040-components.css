@@ -1521,7 +1521,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .hp-play { border-left: 3px solid var(--hp-team, var(--hair)); }
 
 
-/* ---------- News (3.45.0): Claude's dashboard. Cards share one left edge; tags sit on their own line above the text ---------- */
+/* ---------- News (3.45.0, 3.46.0): Claude's dashboard. Cards share one left edge; tags sit on their own line above the text ---------- */
 .nx { display: grid; gap: 0; padding-bottom: 24px; }
 .nx-card { background: var(--card); border-radius: 8px; overflow: hidden; text-align: left; }
 .nx-sec { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 20px 2px 9px; font-size: 16px; font-weight: 800; color: var(--head); }
@@ -1530,7 +1530,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-cl svg { width: 14px; height: 14px; flex: none; }
 /* options */
 .nx-opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 12px; text-align: left; }
-.nx-opt + .nx-opt, .nx-opt + .nx-chips { border-top: 1px solid var(--line); }
+.nx-opt + .nx-opt, .nx-chips + .nx-opt { border-top: 1px solid var(--hair); }
+.nx-opts.busy { opacity: .55; pointer-events: none; }
 .nx-opt.off { opacity: .5; }
 .nx-box { width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--dim); box-sizing: border-box; flex: none; display: grid; place-items: center; }
 .nx-box svg { width: 14px; height: 14px; color: transparent; }
@@ -1539,17 +1540,18 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-ot { display: grid; gap: 3px; min-width: 0; }
 .nx-ot b { font-size: 16px; font-weight: 700; color: var(--ink); }
 .nx-ot span { font-size: 13px; color: var(--muted); }
-.nx-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 12px 14px 48px; border-top: 0 !important; margin-top: -4px; }
-.nx-chip { min-height: 38px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; font-weight: 800; color: var(--muted); }
-.nx-chip[aria-pressed="true"] { background: var(--raise); border-color: var(--accent); color: var(--ink); }
+.nx-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 12px 14px 48px; }
+.nx-chip { min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; font-weight: 800; font-stretch: 92%; color: var(--dim); }
+.nx-chip[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 12%, var(--card)); border-color: var(--accent); color: var(--ink); }
 .nx-act { display: grid; gap: 10px; margin-top: 20px; }
-.nx-go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px; border-radius: 999px; background: var(--accent-fill); color: #fff; font-size: 17px; font-weight: 800; }
+.nx-go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px; border-radius: 8px; background: var(--accent-fill); color: var(--on-accent, #fff); font-size: 17px; font-weight: 800; }
 .nx-go svg { width: 18px; height: 18px; }
 .nx-go:disabled { opacity: .45; }
 .nx-cancel { min-height: 44px; font-size: 14px; font-weight: 800; color: var(--head); }
 .nx-note { margin: 0 8px; font-size: 13px; line-height: 1.4; color: var(--muted); text-align: center; }
 .nx-busy { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 54px; font-size: 15px; font-weight: 700; color: var(--muted); }
 .nx-busy.sm { min-height: 0; font-size: 13px; justify-content: flex-end; text-align: right; }
+.nx-el { font-weight: 800; font-stretch: 78%; color: var(--head); font-variant-numeric: tabular-nums; }
 .nx-busy.pad { padding: 28px 0; }
 .nx-busy i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; animation: nxPulse 1.1s ease-in-out infinite; }
 @keyframes nxPulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
@@ -1559,22 +1561,22 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-genl { display: grid; gap: 3px; min-width: 0; }
 .nx-genl b { font-size: 14px; font-weight: 800; color: var(--ink); }
 .nx-genl span { font-size: 12px; font-weight: 700; color: var(--muted); }
-.nx-regen { flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--accent-fill); color: #fff; font-size: 13px; font-weight: 800; }
+.nx-regen { flex: none; min-height: 40px; padding: 0 14px; border-radius: 8px; background: var(--accent-fill); color: var(--on-accent, #fff); font-size: 13px; font-weight: 800; }
 /* top news */
 .nx-top { margin-top: 12px; }
 .nx-toph { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 46px; padding: 0 12px; }
 .nx-topn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--dim); }
 .nx-topn svg { width: 14px; height: 14px; transform: rotate(-90deg); }
 .nx-top.shut .nx-topn svg { transform: rotate(90deg); }
-.nx-topi { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-top: 1px solid var(--line); }
+.nx-topi { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-top: 1px solid var(--hair); }
 .nx-topi > i { width: 16px; flex: none; font-style: normal; font-size: 22px; font-weight: 800; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; }
 .nx-topt { display: grid; gap: 4px; min-width: 0; }
 .nx-topt b { font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--ink); }
 .nx-topt > span { font-size: 13px; line-height: 1.4; color: var(--muted); }
 .nx-tagrow { display: flex; gap: 6px; }
 /* tabs */
-.nx-tabs { display: flex; margin: 16px 0 2px; padding: 2px; border-radius: 999px; background: var(--card); border: 1px solid var(--hair); }
-.nx-tabs button { flex: 1; min-height: 40px; border-radius: 999px; font-size: 13px; font-weight: 800; color: var(--muted); }
+.nx-tabs { display: flex; margin: 16px 0 2px; padding: 2px; border-radius: 8px; background: var(--card); border: 1px solid var(--hair); }
+.nx-tabs button { flex: 1; min-height: 44px; border-radius: 6px; font-size: 13px; font-weight: 800; color: var(--muted); }
 .nx-tabs button[aria-selected="true"] { background: var(--raise); color: var(--ink); }
 /* game cards */
 .nx-time { display: flex; align-items: baseline; gap: 4px; margin: 16px 2px 8px; }
@@ -1582,7 +1584,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-time i { font-style: normal; font-size: 13px; font-weight: 700; color: var(--muted); }
 .nx-game + .nx-game { margin-top: 10px; }
 .nx-gh { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; }
-.nx-game .nx-gh { border-bottom: 1px solid var(--line); }
+.nx-game .nx-gh { border-bottom: 1px solid var(--hair); }
 .nx-gl { display: grid; gap: 5px; min-width: 0; }
 .nx-lg { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nx-tm { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -1599,11 +1601,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-tx { font-size: 14px; line-height: 1.38; color: var(--head); }
 .nx-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; background: var(--raise); font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .nx-tag.alert, .nx-tag.new { color: var(--live); }
-.nx-read { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 46px; padding: 8px 12px; box-sizing: border-box; border-top: 1px solid var(--line); text-decoration: none; }
+.nx-read { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 46px; padding: 8px 12px; box-sizing: border-box; border-top: 1px solid var(--hair); text-decoration: none; }
 .nx-rt { font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--head); }
 .nx-rs { flex: none; font-size: 11px; font-weight: 700; color: var(--dim); white-space: nowrap; }
 .nx-reads .nx-read:first-child { border-top: 0; }
-.nx-deep { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 46px; padding: 0 12px; border-top: 1px solid var(--line); text-align: left; }
+.nx-deep { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 46px; padding: 0 12px; border-top: 1px solid var(--hair); text-align: left; }
 .nx-deep svg { width: 15px; height: 15px; flex: none; color: var(--accent); }
 .nx-deep svg:last-child { width: 13px; height: 13px; color: var(--dim); }
 .nx-dl { font-size: 13px; font-weight: 800; color: var(--accent); }
@@ -1638,7 +1640,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-side .nx-chipt { margin-left: 0; }
 .nx-side p b { color: var(--ink); }
 .nx-row { display: flex; gap: 12px; padding: 10px 12px; }
-.nx-row + .nx-row { border-top: 1px solid var(--line); }
+.nx-row + .nx-row { border-top: 1px solid var(--hair); }
 .nx-row b { width: 52px; flex: none; padding-top: 1px; font-size: 12px; font-weight: 800; color: var(--dim); }
 .nx-row span { font-size: 14px; line-height: 1.38; color: var(--head); }
 .nx-said { display: grid; gap: 8px; padding: 14px 12px; }
@@ -1646,3 +1648,4 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-said span { font-size: 12px; font-weight: 700; color: var(--dim); }
 .nx-foot { margin: 16px 2px 4px; font-size: 12px; color: var(--dim); }
 .nx .cl-ctl { margin-top: 8px; }
+.nx > .pv-none { margin: 12px 2px 0; font-size: 14px; line-height: 1.4; }

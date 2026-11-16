@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.46.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- News: the options are now titled "Customize today's news", and you can pick specific games and specific teams. Under Today's slate every game is listed (NE @ DET · 2:30p), and under My teams every team; they all start picked, and a tap leaves one out. Left-out games reset each day; left-out teams are remembered.
+- While Claude writes, the page shows a running clock and an accurate wait: how long your last page actually took (for example "Your last page took 2:14"), or "usually 1 to 3 minutes" before there is one. Claude takes the time it needs; nothing was cut from its research. The options are locked until it finishes.
+- Fixed: the first real page (12 games, 13 teams, 4 leagues) never finished, because Claude's answer ran past its length limit. The limit is higher, Claude no longer writes extra lines for each team that the page never showed, and a too-long answer is no longer tried (and paid for) twice. If one still runs over, the page says to leave out a few games or teams.
+- News buttons, tabs and chips now have the same sharp corners as the rest of the app, and chips are full-size tap targets.
+
 ## 3.45.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Best bets disappeared from Tonight's Slate once every game was over, and a pick dropped out as soon as its game finished, so you never saw it hit or miss. Finished games move to their own group at the bottom, and Best bets was treating them as taken off the slate. Fixed: finished games count again, so picks stay with their Hit or Miss and the section shows after the last game ends. The Live-only filter no longer takes picks away either.

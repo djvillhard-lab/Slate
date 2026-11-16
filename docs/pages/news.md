@@ -1,11 +1,13 @@
 # News
-Last updated: Nov 15, 2026, 3.45.0
+Last updated: Nov 15, 2026, 3.46.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
 ## Done
-- Options screen: Today's slate, My teams, Leagues (chips), then Generate news. Picks saved on the phone (`slate-newsopts`).
+- Options screen ("Customize today's news"): Today's slate, My teams, Leagues, each with chips for the specific games,
+  teams and leagues (3.46.0), then Generate news. Saved on the phone (`slate-newsopts`: `gx` = games left out for one
+  day, `tx` = teams left out). A running clock shows while Claude writes.
 - One Claude request writes the page to `mine/news-<date>`: top (5), games, teams, leagues. Free ESPN and Athletic
   headlines are gathered in the app and sent as facts.
 - Page: Generated bar (time, how long ago, what it covered) + Regenerate (reopens the options); Top news, collapsible
@@ -16,11 +18,11 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Every generate, regenerate and breakdown goes through `/api/summary`, so testers' 10-a-day cap counts them.
 
 ## Open
-- Not yet checked with a real generation (it needs DJ's passcode and costs money). Shipped after checking sample pages
-  only. Ask DJ how the first real page read before tuning the prompts.
-- Doesn't follow docs/DESIGN.md yet (written just before the guide landed): Generate, Regenerate, the tabs and league
-  chips use 999px pills (guide: 8px), dividers use `--line` (guide: `--hair`), and the two green buttons use `#fff`
-  instead of `--on-accent`. Fix in the next News release and check with `scripts/shots.py`.
+- DJ's first real generation (Nov 15: 12 games, 13 teams, 4 leagues) failed with "Claude's answer ran too long" at
+  16,000 tokens. 3.46.0: limit 24,000, no per-team hits, no retry on a too-long answer, and the real wait (`took`) is
+  shown. Not yet confirmed that a full-size page now finishes; ask DJ. He's fine with a longer wait for quality.
+- A full slate plus all teams still takes 2 to 3 minutes (one long Claude answer). If DJ wants it faster, split the
+  page into parallel requests (top + games, teams, leagues).
 - No "Earlier" list of past days' pages. Top news stories aren't tappable.
 - Old `.nw-*` styles in `050-ux-review.css` are unused now and can go.
 

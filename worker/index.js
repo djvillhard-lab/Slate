@@ -260,9 +260,9 @@ ${RULES}
 Answer with only this JSON inside <json></json> tags:
 {"top": [{"title": "a headline in your own words, 4-9 words", "why": "one or two sentences, 15-35 words: what happened and why it matters to this person today", "tag": "one or two words: Injury, Trade, Result, Streak, Milestone, Coaching, Tonight, Record or similar", "new": true}],
  "games": [{"id": "the slate game's id", "story": "two sentences, 30-50 words: the story of this game and why to watch", "hits": [{"tag": "one or two words (Injury, Streak, Last game, Schedule, Storyline, Hot, Matchup...)", "text": "one line, 8-20 words, with the specific fact"}], "read": {"title": "...", "url": "...", "source": "ESPN"}}],
- "teams": [{"name": "the team's name exactly as given in the facts", "lg": "its league key from the facts", "chip": "its status in one to three words: Won 6, Lost 3, Injury, Back-to-back, Winless, Clinched...", "tone": "up" | "down" | "alert" | "", "line": "one line, 8-16 words: the one thing to know about this team right now", "hits": [{"tag": "...", "text": "..."}]}],
+ "teams": [{"name": "the team's name exactly as given in the facts", "lg": "its league key from the facts", "chip": "its status in one to three words: Won 6, Lost 3, Injury, Back-to-back, Winless, Clinched...", "tone": "up" | "down" | "alert" | "", "line": "one line, 8-16 words: the one thing to know about this team right now"}],
  "leagues": [{"key": "the league key from the facts", "story": "two or three sentences, 35-60 words: the state of the league right now", "hits": [{"tag": "...", "text": "..."}], "read": {"title": "...", "url": "...", "source": "ESPN"}}]}
-top: exactly 5 stories, the ones you believe this person most wants to know, most important first; stay inside what the page covers. "new" is true unless the story was already in "prev". games: every game in "games", in the order given, 2-3 hits each; [] if none. teams: every team playing in "games" plus every team in "teams", each once, 2 hits each; "tone" is up for good form, down for bad form, alert for an injury or other trouble. leagues: every league in "leagues", 4-6 hits each on the biggest stories league-wide (not just this person's teams); [] if none. read: the one provided headline (use its exact url) most worth opening for that game or league, or null; never invent a url. Inside the JSON strings, never use double quotation marks.`;
+Keep to the lengths given: with many games and teams this page is long, and an answer that runs over is lost. top: exactly 5 stories, the ones you believe this person most wants to know, most important first; stay inside what the page covers. "new" is true unless the story was already in "prev". games: every game in "games", in the order given, 2-3 hits each; [] if none. teams: every team playing in "games" plus every team in "teams", each once; "tone" is up for good form, down for bad form, alert for an injury or other trouble. leagues: every league in "leagues", 4-6 hits each on the biggest stories league-wide (not just this person's teams); [] if none. read: the one provided headline (use its exact url) most worth opening for that game or league, or null; never invent a url. Inside the JSON strings, never use double quotation marks.`;
   if (p.kind === "deep") {
     const type = p.key[0], shape = type === "g" ? `{"verdict": "your watchability call in two to five words, such as Must watch, Worth the first half, Background game",
  "take": ["two paragraphs, 90-140 words in all: your honest read on this game: form, stakes, what makes it interesting or not"],
@@ -404,7 +404,8 @@ async function askClaude(env, text, big, searches) {
     out += (body.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
     // a long search turn can pause; hand the partial answer back so Claude finishes it
     if (body.stop_reason === "pause_turn") { msgs.push({ role: "assistant", content: body.content }); continue; }
-    if (body.stop_reason === "max_tokens") throw new Error("Claude's answer ran too long");
+    // an answer cut off at the limit would be cut off again: hand that back instead of throwing, so the step isn't retried (and paid for) a second time
+    if (body.stop_reason === "max_tokens") return { ans: null, tooLong: true, usage };
     break;
   }
   const all = [...out.matchAll(/<json>([\s\S]*?)<\/json>/g)], m = all.length ? all[all.length - 1] : /(\{[\s\S]*\})/.exec(out);
@@ -425,9 +426,10 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const p = event.payload, t = target(p);
     try {
-      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 16000 : p.kind === "deep" ? 6000 : false, SEARCHES[p.kind]));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, SEARCHES[p.kind]));
       const ans = stripCites(res.ans || res);
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
+      if (res.tooLong) throw new Error("Claude's answer ran too long");
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
         const S = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
@@ -441,7 +443,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           const teams = (Array.isArray(ans.teams) ? ans.teams : []).filter((x) => x && x.name).slice(0, 100).map((x) => ({ name: S(x.name, 60), lg: S(x.lg, 12), chip: S(x.chip, 24), tone: ["up", "down", "alert"].includes(x.tone) ? x.tone : "", line: S(x.line, 200), hits: hits(x.hits, 3) }));
           const leagues = (Array.isArray(ans.leagues) ? ans.leagues : []).filter((x) => x && x.key && x.story).slice(0, 16).map((x) => ({ key: S(x.key, 12), story: S(x.story, 600), hits: hits(x.hits, 6), read: rd(x.read) }));
           if (!top.length && !games.length && !teams.length && !leagues.length) throw new Error("Claude's page came back empty");
-          await putDoc(this.env, t.path, { date: p.date, cover: f.cover || {}, top, games, teams, leagues, at: now, by: p.user || "dj", writing: null });
+          await putDoc(this.env, t.path, { date: p.date, cover: f.cover || {}, top, games, teams, leagues, took: Math.max(0, Math.round((Date.parse(now) - Date.parse(p.at)) / 1000)) || 0, at: now, by: p.user || "dj", writing: null });
         } else if (p.kind === "deep") {
           const type = p.key[0], pairs = (a, n, k) => (Array.isArray(a) ? a : []).filter((x) => x && x[k] && x.text).slice(0, n).map((x) => ({ [k]: S(x[k], 60), text: S(x.text, 260) }));
           const out = { key: p.key, date: p.date, type, take: strs(ans.take, 3).map((x) => x.slice(0, 1200)), number: num(ans.number), reads: (Array.isArray(ans.reads) ? ans.reads : []).map(rd).filter(Boolean).slice(0, 3), at: now, by: p.user || "dj", writing: null };

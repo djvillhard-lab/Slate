@@ -54,12 +54,15 @@
     var o = null; try { o = JSON.parse(localStorage.getItem("slate-newsopts") || "null"); } catch (e) {}
     if (!o || typeof o !== "object") o = { slate: true, teams: true, lgs: [] };
     var ok = nwLeagueKeys(); o.lgs = (Array.isArray(o.lgs) ? o.lgs : []).filter(function (k) { return ok.indexOf(k) !== -1; });
-    return { slate: o.slate !== false, teams: o.teams !== false, lgs: o.lgs, lgOn: o.lgOn !== false };
+    // gx: slate games left out, for one day only ({ d: date, ids: [] }); tx: my teams left out ("lg|name")
+    var gx = o.gx && o.gx.d === state.date && Array.isArray(o.gx.ids) ? o.gx.ids : [];
+    return { slate: o.slate !== false, teams: o.teams !== false, lgs: o.lgs, lgOn: o.lgOn !== false, gx: { d: state.date, ids: gx }, tx: Array.isArray(o.tx) ? o.tx : [] };
   }
+  function nwTKey(t) { return t.lg + "|" + String(t.name).toLowerCase(); }
   function nwOptsPut(o) { try { localStorage.setItem("slate-newsopts", JSON.stringify(o)); } catch (e) {} }
   // what a Generate would actually cover right now
   function nwCover() {
-    var o = nwOpts(), gs = nwGames(), tms = myTeamList().filter(function (t) { return bxBase(t.lg); });
+    var o = nwOpts(), gs = nwGames().filter(function (g) { return o.gx.ids.indexOf(g.id) === -1; }), tms = myTeamList().filter(function (t) { return bxBase(t.lg) && o.tx.indexOf(nwTKey(t)) === -1; });
     return { slate: o.slate && gs.length > 0, teams: o.teams && tms.length > 0, lgs: o.lgOn ? o.lgs : [], games: gs, myTeams: tms };
   }
   function nwPagePath() { return "mine/news-" + state.date; }
@@ -171,20 +174,42 @@
     var rt = el("div", "nx-gr"); rt.appendChild(el("b", null, timeText(g.start))); var tv = (g.tv || []).filter(Boolean)[0]; if (tv) rt.appendChild(el("span", null, tv)); hd.appendChild(rt);
     return hd;
   }
+  // how long Claude has been writing, counted from the tap (or the server's mark), ticking once a second
+  function nwElapsed(doc, k) {
+    var t0 = Math.max(CL_ASK[k] || 0, doc && doc.writing && !doc.writing.error ? Date.parse(doc.writing.at) || 0 : 0) || Date.now(), s = el("b", "nx-el");
+    var show = function () { var n = Math.max(0, Math.round((Date.now() - t0) / 1000)); s.textContent = Math.floor(n / 60) + ":" + ("0" + n % 60).slice(-2); };
+    show(); var iv = setInterval(function () { if (!s.isConnected) { clearInterval(iv); return; } show(); }, 1000);
+    return s;
+  }
+  // an accurate wait: how long the last page really took (saved with it by the server), or the usual range before there is one
+  function nwTookText() {
+    var t = 0; try { t = Number(localStorage.getItem("slate-newstook")) || 0; } catch (e) {}
+    return t >= 20 ? "Your last page took " + Math.floor(t / 60) + ":" + ("0" + t % 60).slice(-2) + "; more picks take longer." : "It usually takes 1 to 3 minutes, longer with more picks.";
+  }
+  function nwErr(e) { return /ran too long/i.test(String(e || "")) ? "That was too much for one page, so the last try didn't finish. Leave out a few games or teams and try again." : clErr(e); }
   // ----- the options: what to cover, then Generate -----
-  function nwRenderOpts(body, doc, busy) {
+  function nwRenderOpts(body, doc, busy, doc0) {
     var o = nwOpts(), gs = nwGames(), tms = myTeamList().filter(function (t) { return bxBase(t.lg); }), has = !!(doc && doc.at);
     var put = function () { nwOptsPut(o); keepScroll(renderNews); };
-    body.appendChild(nwSec("What should Claude cover?"));
-    var card = el("div", "nx-card nx-opts");
+    body.appendChild(nwSec(state.date === todayInHome() ? "Customize today's news" : "Customize this day's news"));
+    var card = el("div", "nx-card nx-opts" + (busy ? " busy" : ""));
+    // the specific picks under a row: every one starts picked; tap to leave one out
+    var chips = function (list, label, isOn, flip) {
+      var ch = el("div", "nx-chips");
+      list.forEach(function (x) { var on = isOn(x), c = el("button", "nx-chip", label(x)); c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false"); c.addEventListener("click", function () { flip(x, on); put(); }); ch.appendChild(c); });
+      card.appendChild(ch);
+    };
+    var nG = gs.filter(function (g) { return o.gx.ids.indexOf(g.id) === -1; }).length, nT = tms.filter(function (t) { return o.tx.indexOf(nwTKey(t)) === -1; }).length;
     var row = function (on, title, sub, off, tap) {
       var b = el("button", "nx-opt" + (off ? " off" : "")); b.type = "button"; b.setAttribute("aria-pressed", on && !off ? "true" : "false"); if (off) b.disabled = true;
       var bx = el("span", "nx-box"); bx.appendChild(icon("check")); b.appendChild(bx);
       var tx = el("span", "nx-ot"); tx.appendChild(el("b", null, title)); tx.appendChild(el("span", null, sub)); b.appendChild(tx);
       b.addEventListener("click", tap); card.appendChild(b);
     };
-    row(o.slate, state.date === todayInHome() ? "Today's slate" : "This day's slate", gs.length ? gs.length + (gs.length === 1 ? " game, " : " games, ") + gs.length * 2 + " teams" : "Nothing on the slate yet", !gs.length, function () { o.slate = !o.slate; put(); });
-    row(o.teams, "My teams", tms.length ? tms.length + (tms.length === 1 ? " team" : " teams") + ", even when they aren't playing" : "Pick your teams on the Teams page", !tms.length, function () { o.teams = !o.teams; put(); });
+    row(o.slate, state.date === todayInHome() ? "Today's slate" : "This day's slate", gs.length ? (nG === gs.length ? (gs.length === 1 ? "1 game" : "All " + gs.length + " games") : nG + " of " + gs.length + " games") + " · tap a game to leave it out" : "Nothing on the slate yet", !gs.length, function () { o.slate = !o.slate; put(); });
+    if (o.slate && gs.length) chips(gs, function (g) { return abbr(g, "away") + " @ " + abbr(g, "home") + " · " + timeText(g.start).replace(/\s*([AP])M$/i, function (m, a) { return a.toLowerCase(); }); }, function (g) { return o.gx.ids.indexOf(g.id) === -1; }, function (g, on) { if (on) o.gx.ids.push(g.id); else o.gx.ids = o.gx.ids.filter(function (x) { return x !== g.id; }); });
+    row(o.teams, "My teams", tms.length ? (nT === tms.length ? (tms.length === 1 ? "1 team" : "All " + tms.length + " teams") : nT + " of " + tms.length + " teams") + ", even when they aren't playing" : "Pick your teams on the Teams page", !tms.length, function () { o.teams = !o.teams; put(); });
+    if (o.teams && tms.length) chips(tms, function (t) { return tms.filter(function (x) { return x.name === t.name; }).length > 1 ? t.name + " · " + ((LEAGUES[t.lg] || {}).tag || t.lg) : t.name; }, function (t) { return o.tx.indexOf(nwTKey(t)) === -1; }, function (t, on) { var k = nwTKey(t); if (on) o.tx.push(k); else o.tx = o.tx.filter(function (x) { return x !== k; }); });
     row(o.lgOn, "Leagues", "The biggest stories around each one you pick", false, function () { o.lgOn = !o.lgOn; put(); });
     if (o.lgOn) {
       var mine = {}; gs.forEach(function (g) { mine[g.league] = 1; }); tms.forEach(function (t) { mine[t.lg] = 1; });
@@ -198,13 +223,13 @@
     }
     body.appendChild(card);
     var cv = nwCover(), any = cv.slate || cv.teams || cv.lgs.length > 0, act = el("div", "nx-act");
-    if (busy) { var sp = el("div", "nx-busy"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Claude is writing your news… about a minute")); act.appendChild(sp); }
+    if (busy) { var sp = el("div", "nx-busy"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Claude is writing your news…")); sp.appendChild(nwElapsed(doc0, "n:" + nwPagePath())); act.appendChild(sp); }
     else {
       var go = el("button", "nx-go"); go.type = "button"; go.appendChild(icon("sparkle")); go.appendChild(el("span", null, has ? "Regenerate news" : "Generate news")); go.disabled = !any;
       go.addEventListener("click", nwGenerate); act.appendChild(go);
       if (has) { var cn = el("button", "nx-cancel", "Keep the page from " + timeText(doc.at)); cn.type = "button"; cn.addEventListener("click", function () { nw.opts = false; renderNews(); }); act.appendChild(cn); }
     }
-    act.appendChild(el("p", "nx-note", any ? "Claude researches your picks and writes the page. It only runs when you tap, and your picks are remembered." : "Pick at least one thing to cover."));
+    act.appendChild(el("p", "nx-note", any ? (busy ? nwTookText() + " You can leave this page and come back." : "Claude researches your picks and writes the page. " + nwTookText() + " It only runs when you tap.") : "Pick at least one thing to cover."));
     body.appendChild(act);
   }
   // ----- the generated page -----
@@ -213,10 +238,10 @@
     var gen = el("div", "nx-card nx-gen"), gl = el("div", "nx-genl"), today = state.date === todayInHome();
     gl.appendChild(el("b", null, "Generated " + (today ? "today" : fmtDate(state.date, { weekday: "short", month: "short", day: "numeric" })) + " at " + timeText(doc.at)));
     gl.appendChild(el("span", null, [nwAgo(doc.at), parts.join(", ")].filter(Boolean).join(" · "))); gen.appendChild(gl);
-    if (busy) { var sp = el("span", "nx-busy sm"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Writing a new one…")); gen.appendChild(sp); }
+    if (busy) { var sp = el("span", "nx-busy sm"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Writing a new one…")); sp.appendChild(nwElapsed(doc, "n:" + nwPagePath())); gen.appendChild(sp); }
     else { var rg = el("button", "nx-regen"); rg.type = "button"; rg.appendChild(el("span", null, "Regenerate")); rg.addEventListener("click", function () { nw.opts = true; renderNews(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }); gen.appendChild(rg); }
     body.appendChild(gen);
-    if (err) body.appendChild(el("p", "pv-none cl-err", clErr(err)));
+    if (err) body.appendChild(el("p", "pv-none cl-err", nwErr(err)));
     // Top news: open until collapsed, then stays collapsed until opened again
     var top = doc.top || [];
     if (top.length) {
@@ -340,8 +365,9 @@
     var path = nwPagePath(); nwSub(path);
     var doc = nw.docs[path]; if (doc === undefined) { body.appendChild(el("p", "pv-none", "Loading…")); return; }
     var has = !!(doc && doc.at && ((doc.top || []).length || (doc.games || []).length || (doc.teams || []).length || (doc.leagues || []).length)), w = clWriting(doc, "n:" + path), busy = !!(w && w.busy), err = w && w.error;
+    if (has && doc.took) try { localStorage.setItem("slate-newstook", String(doc.took)); } catch (e) {}
     if (has) doc.regen = !!(doc.top || []).some(function (x) { return x.new === false; });
     if (!has && state.date !== todayInHome() && !busy) { body.appendChild(el("p", "pv-none", "No news was generated for " + fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + ". Go back to today to generate a page.")); return; }
-    if (!has || nw.opts) { if (err && !busy) body.appendChild(el("p", "pv-none cl-err", clErr(err))); nwRenderOpts(body, has ? doc : null, busy); return; }
+    if (!has || nw.opts) { if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err))); nwRenderOpts(body, has ? doc : null, busy, doc); return; }
     nwRenderPage(body, doc, busy, err);
   }
