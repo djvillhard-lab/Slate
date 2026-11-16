@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.39.2 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Worth a look: a live game no longer shows its line twice ("NY: Jalen Brunson has 21 points" two times). The card shows only Worth a look's own line.
+
 ## 3.39.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38)
 - Live notifications on the Lock Screen: the scores are smaller (closer to the team names), and each team's standout gets its own line under the score, with the team's abbreviation: "SA  V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK" and "UTAH  M. Bamba 26 PTS". They stay after the final too.

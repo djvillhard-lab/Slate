@@ -276,6 +276,7 @@
         walKeepSet(m);
       }, true);
       var gr0 = gameRow(s2.g, "games"), wl = whyTx ? hlLine(s2.g, whyTx, teamOfText(s2.g, whyTx), "hl " + (s2.done ? "hl-pre" : "hl-live")) : null;
+      if (wl) [].slice.call(gr0.querySelectorAll(":scope > .hl")).forEach(function (h) { h.remove(); });  // one line per card: Worth a look's own reason replaces the card's usual line (3.39.2)
       if (wl) { var trayEl = gr0.querySelector(".tray"); if (trayEl) gr0.insertBefore(wl, trayEl); else gr0.appendChild(wl); }
       c.appendChild(gr0);
       list.appendChild(c);
