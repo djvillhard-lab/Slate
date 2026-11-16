@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.44.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Page headers reworked, the same on every page. The Slate mark now sits level with the page name and is sized to it, with less space above and below the header.
+- Tonight's Slate: the date row sits right under the title, without the extra space below it.
+- Pages without a date (Teams, News, Live feed, Settings and others) get a single-line header: a smaller mark and the name on one line, with no blank second row. All games, On TV and Box Office keep their date under the name.
+
 ## 3.43.4 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Box Office, football: when a player both ran and caught (or threw and ran), each TD says which kind: "161 rec yds · 2 rec TD · 62 rush yds · 1 rush TD". A player with just one kind keeps a plain "3 TD".

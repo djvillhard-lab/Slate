@@ -84,7 +84,10 @@
     if (sub) {
       var subOn = $("title-d").hidden; sub.hidden = !subOn;
       var dd0 = v === "moments" && typeof mm !== "undefined" && mm.date ? mm.date : state.date;
-      sub.textContent = subOn && (v === "games" || v === "tv" || v === "moments") ? fmtDate(dd0, { weekday: "short" }) + ", " + fmtDate(dd0, { month: "short", day: "numeric" }) : "\u00a0";
+      var hasDay = subOn && (v === "games" || v === "tv" || v === "moments");
+      sub.textContent = hasDay ? fmtDate(dd0, { weekday: "short" }) + ", " + fmtDate(dd0, { month: "short", day: "numeric" }) : "";
+      // a page without a second line gets a one-line header: the mark sized to the name and level with it, no blank row (3.44.0)
+      sub.hidden = !hasDay; if (tl) tl.classList.toggle("one-line", !hasDay && $("title-d").hidden);
     }
     var away = Math.round((new Date(state.date + "T12:00:00") - new Date(today + "T12:00:00")) / 86400000);
     var dayText = named ? shortDate : away > 0 ? "In " + away + " days" : -away + " days ago";
