@@ -292,7 +292,11 @@
     var x = el("button", "bet-x"); x.type = "button"; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove " + (b.game ? "this game total" : b.p) + " and add the next best pick");
     x.addEventListener("click", function (e) { e.stopPropagation(); betRemove(b); });
     top.appendChild(x); r.appendChild(top);
-    if (b.game) { var ou = el("span", "badge bet-ou", b.k === "over" ? "O" : "U"); ou.setAttribute("aria-hidden", "true"); r.appendChild(ou); }
+    if (b.game) {  // a game total: both teams' badges, away over home, like a matchup card (3.52.11; it was a gray "O" box)
+      var pr = el("span", "bet-pair"); pr.setAttribute("aria-hidden", "true");
+      ["away", "home"].forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); });
+      r.appendChild(pr);
+    }
     else r.appendChild(badgeFor(abbr(g, b.sd), g[b.sd], g[b.sd + "Color"], g[b.sd + "Alt"]));
     var p = el("b", "bet-p", b.game ? vs : b.p); if (!b.game && b.pos) p.appendChild(el("i", null, b.pos)); m.appendChild(p);
     var l = el("span", "bet-l", b.lab); l.appendChild(el("span", null, " · " + (b.game ? "game total" : vs))); m.appendChild(l);

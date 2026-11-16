@@ -1,5 +1,5 @@
 # Best bets
-Last updated: Nov 15, 2026, 3.47.0 (by the thread that built 3.40.0 to 3.47.0)
+Last updated: Nov 16, 2026, 3.52.11
 Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section on Tonight's Slate, at the bottom of the slate, below Finished. (3.49.0 moved it above Finished; DJ had it moved back in 3.51.2. Don't move it up again.)
 
 ## Done
@@ -24,7 +24,14 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 - Tonight's numbers: `betResult()` reads the raw ESPN summary that `bxFetch` keeps in `bx.live[id].sum`; game totals use
   the live score. `bxRedraw` calls `betTouch()` to redraw the slate when a pick's number moves.
 
+- Game totals show both teams' badges (3.52.11); they were a gray O/U box.
+- Where the numbers come from (DJ asked, Nov 16): player props are the app's own milestones (BET_DEF rungs, the highest
+  one a player reached in 5 of 6), not sportsbook lines. Game totals use the real posted over/under from ESPN's game summary
+  (pickcenter, DraftKings), read when the picks are built (refreshed every 3 hours before a pick is locked).
+
 ## Open
+- Real player prop lines: ESPN's free odds API (sports.core.api.espn.com .../odds/<provider>/propBets) may carry them;
+  it couldn't be reached from the cloud sandbox to check. A paid feed needs DJ's OK first.
 - Sportsbook prices for the props (none yet: the picks are stat-based only).
 - Hit green is a fixed color; decide whether it should be the accent (see Known drift in docs/DESIGN.md).
 
