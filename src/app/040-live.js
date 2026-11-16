@@ -139,6 +139,7 @@
       var changed = false, norm = function (x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]/g, ""); };
       res.forEach(function (r) {
         var evs = r.j && r.j.events || [];
+        evs.forEach(function (e) { ((e.competitions && e.competitions[0] || {}).competitors || []).forEach(function (k) { var tm = k.team || {}; if (logoNote(tm.displayName, tm.logo, tm.color, tm.alternateColor)) changed = true; }); });   // team logos ride along with the scores
         list.forEach(function (g) {
           if (g.league !== r.lg) return;
           var t = new Date(g.start).getTime();
@@ -403,6 +404,7 @@
   function badgeFor(text, name, fill, ring) {
     var c = colors(name);
     if (!hexOk(fill)) { var kt = typeof teamByName === "function" ? teamByName(name) : null; if (kt && kt.c1) { fill = kt.c1; ring = kt.c2 || ring; } }
+    if (!hexOk(fill)) { var tl = teamLook(name); if (tl && hexOk(tl[1])) { fill = tl[1]; ring = tl[2] || ring; } }   // ESPN's colors (college teams had none before)
     if (hexOk(fill)) {
       var f = fill, r = hexOk(ring) ? ring : "#ffffff";
       if (lum(f) > 0.72 && hexOk(ring) && lum(ring) < 0.72) { f = ring; r = fill; }   // keep white text readable
@@ -413,7 +415,9 @@
     b.style.background = c[0]; b.style.setProperty("--ring", c[1]);
     if (lum(c[0]) > 0.72) b.style.color = "#111";
     else if (contrastRatio(c[0], "#ffffff") < 4.5 && contrastRatio(c[0], "#0C1117") > contrastRatio(c[0], "#ffffff")) b.style.color = "#0C1117";  // light golds and oranges: white text was under 4.5 to 1 (3.48.0)
-    b.setAttribute("aria-hidden", "true"); return b;
+    b.setAttribute("aria-hidden", "true");
+    if (name && name !== "custom") addLogo(b, name);
+    return b;
   }
   function isStreaming(n) { n = String(n).toLowerCase(); return STREAMING.some(function (s) { return n === s || n.indexOf(s) === 0; }); }
   function customToGame(c) {

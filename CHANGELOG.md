@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.60.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Team logos. Every team badge now shows the team's official logo from ESPN in place of the lettered box: the slate, All games, the matchup page and quick look, Betting lines, Suggested for you and Worth a look, News, Box Office, the live feed, the Teams page and team pages, Settings and the welcome team picker. Pro, college and soccer teams, and flags for national teams.
+- The colored box with the team's letters still shows for a moment while a logo loads, and stays if ESPN has no logo for that team. Nothing moves when the logo arrives.
+- Midnight uses ESPN's dark-theme logos and Sunday Paper the regular ones. Each logo is kept on the phone after its first load.
+- College teams now use their real ESPN colors. When two teams' colors are too close, or a color disappears into the theme, the live feed and box score use the team's alternate color.
+- The morning email shows team logos too.
+- International and small-college teams get their logos everywhere after the next overnight slate refresh; until then they show once the game is close to starting.
+
 ## 3.59.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Thumbs up and down learn mostly from teams now, not whole categories. A team counts from your first thumb. A league, conference or kind of game (national TV, late starts, why it was picked) only shifts after three or more thumbs the same way, and all of those together can move a game only a little. A few thumbs down on weak matchups no longer push out national TV college hoops.

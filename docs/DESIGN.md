@@ -65,7 +65,7 @@ Blend with `color-mix(in srgb, var(--accent) 10%, var(--card))` for tinted cards
 ## Parts to reuse (before making new ones)
 | Part | Where | Notes |
 |---|---|---|
-| Team chip | `badgeFor(abbr, name, color, alt)` | 42×24, team color, alternate-color stripe; readable text is handled |
+| Team chip | `badgeFor(abbr, name, color, alt)` | 42×24 box. Shows ESPN's team logo (`045-team-logos.js`) once it has loaded; until then, or if there is none, the team color with the abbreviation and alternate-color stripe. Never size a logo outside this box |
 | Game card | `gameRow(g, mode)` in `150-game-row.js` | the same card on the slate, All games, On TV |
 | Section header | `.sl-h` (button: bold title, `.count`, `icon("more")` chevron) | folds; fold state saved in `state.slateFold` |
 | Section title (not folding) | `.sec h2` + `.count` | |

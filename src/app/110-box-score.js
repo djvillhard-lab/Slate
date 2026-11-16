@@ -419,6 +419,7 @@
     return w;
   }
   function badgeColor(g, sd) {
+    var pc = pairColors(g)[sd]; if (hexOk(pc)) return pc;   // ESPN's colors, switched to the alternate when the two teams clash or it vanishes on the theme
     var c = g[sd + "Color"]; if (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c)) return c;
     var t = typeof teamByName === "function" ? teamByName(g[sd]) : null; return t && t.c1 ? t.c1 : "";
   }

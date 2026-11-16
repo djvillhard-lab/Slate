@@ -187,6 +187,9 @@ def build(lg, day, teams, old_ids):
             loc = tm.get("location") or ""
             g[s + "Short"] = ((loc if loc and len(loc) <= 18 else tm.get("shortDisplayName")) if lg in COLLEGE else tm.get("shortDisplayName") if lg in SOCCER else tm.get("name")) or tm.get("shortDisplayName") or g[s]
             g[s + "Abbr"] = ab
+            if tm.get("logo"): g[s + "Logo"] = tm["logo"]
+            if tm.get("color"): g[s + "Color"] = "#" + tm["color"].lower()
+            if tm.get("alternateColor"): g[s + "Alt"] = "#" + tm["alternateColor"].lower()
             rec = ((t.get("records") or [{}])[0] or {}).get("summary")
             if rec: g[s + "Record"] = rec
             if lg in COLLEGE:
@@ -195,9 +198,6 @@ def build(lg, day, teams, old_ids):
                 conf = (st.get(tm.get("id")) or ("", ""))[0]
                 if conf: g[s + "Conf"] = conf
             else:
-                if lg in PROS or lg in SOCCER:
-                    if tm.get("color"): g[s + "Color"] = "#" + tm["color"].lower()
-                    if tm.get("alternateColor"): g[s + "Alt"] = "#" + tm["alternateColor"].lower()
                 pos = (st.get(tm.get("id")) or ("", ""))[1]
                 if pos: g[s + "Standing"] = pos
             if is_mine(g[s], lg, teams): mine = True

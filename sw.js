@@ -1,12 +1,12 @@
 /* Slate: opens instantly from the phone's copy of the app, then updates in the background.
    A link with ?v=<build> (what the update check opens) always comes from the network. */
-var SHELL = "slate-shell-v13";
+var SHELL = "slate-shell-v13", LOGOS = "slate-logos-v1";
 self.addEventListener("install", function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(SHELL).then(function (c) { return c.addAll(["./", "supabase.js", "icon.png"]); }).catch(function () {}));
 });
 self.addEventListener("activate", function (e) {
-  e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== SHELL; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
+  e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== SHELL && k !== LOGOS; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
 });
 function fresh(req, key) {
   // a plain URL fetch: some browsers refuse to copy a page navigation into a new request
@@ -17,6 +17,13 @@ function fresh(req, key) {
 }
 self.addEventListener("fetch", function (e) {
   var req = e.request, url = new URL(req.url);
+  // team logos (ESPN's small resized copies): kept on the phone, so each logo downloads once
+  if (req.method === "GET" && url.hostname === "a.espncdn.com" && /^\/combiner\/i/.test(url.pathname) && url.search.indexOf("/teamlogos/") !== -1) {
+    e.respondWith(caches.open(LOGOS).then(function (c) { return c.match(req).then(function (hit) {
+      return hit || fetch(req).then(function (r) { if (r && r.ok) c.put(req, r.clone()); return r; });
+    }); }));
+    return;
+  }
   if (req.method !== "GET" || url.origin !== self.location.origin) return;           // Supabase, ESPN: straight to the network
   if (/version\.json$/.test(url.pathname) || /sw\.js$/.test(url.pathname)) return;    // the update check is never cached
   // only the app itself is the cached shell; other pages (like app-preview.html) load straight from the network

@@ -130,6 +130,14 @@ function lum(h) {
 const hexOk = (h) => /^#[0-9a-f]{6}$/i.test(String(h || ""));
 const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 // a team chip like the app's: the team color with its alternate color as a stripe, text that stays readable
+// ESPN's team logo (the dark-theme copy, since the email is dark), when the game carries one; the lettered chip otherwise
+function mark(g, sd) {
+  const ab = g[sd + "Abbr"] || String(g[sd] || "").slice(0, 3).toUpperCase();
+  const m = /^https:\/\/a\.espncdn\.com\/i\/teamlogos\/([a-z0-9]+)\/500(?:-dark)?\/(?:scoreboard\/)?([\w-]+\.png)$/i.exec(String(g[sd + "Logo"] || ""));
+  if (!m) return chip(ab, g[sd + "Color"], g[sd + "Alt"]);
+  const src = `https://a.espncdn.com/combiner/i?img=/i/teamlogos/${m[1].toLowerCase()}/500-dark/${m[2].toLowerCase()}&w=96&h=96`;
+  return `<img src="${src}" width="30" height="30" alt="${esc(ab)}" style="display:block;margin:0 6px;border:0;font:800 12px ${FONT};color:${C.ink}">`;
+}
 function chip(abbr, fill, ring) {
   let f = hexOk(fill) ? fill : C.raise, r = hexOk(ring) ? ring : "#ffffff";
   if (lum(f) > 0.72 && hexOk(ring) && lum(ring) < 0.72) { f = ring; r = fill; }
@@ -204,7 +212,7 @@ export async function buildEmail(env, who, nowT) {
   const row = (inner, first) => `<tr><td style="padding:12px 16px;border-top:${first ? "0" : "1px solid " + C.hair}">${inner}</td></tr>`;
   const team = (g, sd, extra) => {
     const rec = g[sd + "Record"] ? `<span style="color:${C.muted};font-weight:700;font-size:13px">&nbsp;&nbsp;${esc(g[sd + "Record"])}</span>` : "";
-    return `<tr><td width="50" style="padding:3px 8px 3px 0;vertical-align:middle">${chip(g[sd + "Abbr"] || String(g[sd] || "").slice(0, 3).toUpperCase(), g[sd + "Color"], g[sd + "Alt"])}</td>`
+    return `<tr><td width="50" style="padding:3px 8px 3px 0;vertical-align:middle">${mark(g, sd)}</td>`
       + `<td style="padding:3px 0;vertical-align:middle;font:800 16px ${FONT};color:${C.ink}">${rank(g[sd + "Rank"])}${esc(g[sd] || "")}${rec}</td>${extra || ""}</tr>`;
   };
   const sec = (title, count) => `<tr><td style="padding:24px 16px 8px;font:800 22px ${FONT};color:${C.head};letter-spacing:-.01em">${title}${count ? `<span style="font-size:15px;color:${C.dim};font-weight:700">&nbsp;&nbsp;${count}</span>` : ""}</td></tr>`;
