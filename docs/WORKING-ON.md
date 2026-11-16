@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Players to watch (quick look and matchup) | src/app/080-claude.js, src/app/140-game.js, worker/index.js | 2026-11-17 00:05 |
