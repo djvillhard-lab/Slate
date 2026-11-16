@@ -53,6 +53,12 @@ Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the
 - If a request could reasonably go two ways and a wrong guess means redoing it, ask DJ first. Otherwise build.
 
 ## Shipping a change (every time)
+**Anything that needs a new iPhone build waits for DJ's yes (DJ, Nov 16, 2026).** Apple holds new builds for review, so the web app gets ahead of the app on DJ's phone, and Drew and Dad end up further behind. A push to `main` that touches `ios/` starts an Xcode Cloud build for TestFlight by itself (its start condition is "main changed, files in `ios/`"; `ios/WEEKEND.md`), so:
+- Don't push or merge anything under `ios/` to `main`, and don't start a build any other way, until DJ has said yes to that change in so many words.
+- Do the work on your branch (`git push origin HEAD:<your branch>`), check it, then tell DJ in plain words what it is, why it needs a new build, and that it's waiting. Keep your row on `docs/WORKING-ON.md` while it waits.
+- A change with a web half and an app half: ship the web half now only if it works with the build people already have. If it doesn't, the whole change waits.
+- Web-only changes (`src/`, `worker/`, `scripts/`, docs) still ship by themselves, as below.
+
 1. `git pull --rebase origin main`. Another chat may have shipped since you started.
 2. Make the change in `src/` (or `worker/`, `scripts/`, `ios/`).
 3. Number it from the newest entry in CHANGELOG.md **as it is on main now**: fixes and tweaks bump the last number, new features the middle one. Set `SLATE_VERSION` in `src/app/010-core.js` to match.
