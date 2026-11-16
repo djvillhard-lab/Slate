@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Project status page: both versions for every person | status.html, docs/pages/status.md | 2026-11-16 23:02 |
