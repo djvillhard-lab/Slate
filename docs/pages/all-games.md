@@ -1,5 +1,5 @@
 # All games
-Last updated: Nov 16, 2026, 3.44.0
+Last updated: Nov 16, 2026, 3.52.9
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
@@ -7,6 +7,10 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - Folded and open Duo: the secondary filters (All, Best of each league, National TV) run right to left, All at the far
   right; on the folded Duo the row runs into the side column, nudged down 6 points under the clock (3.38.5, 3.38.6).
   Regular iPhone: filters stay on the left in normal order.
+- 3.52.9: on the folded Duo both filter rows stop short of the side column again (padding + a fade mask, `--strip-w`), because
+  after the compact header (3.44.0) the clock and Wi-Fi covered the right end, All included. A redraw keeps the second row's
+  scroll and scrolls the picked filter into view (240-chrome.js). shots.py can now tap a league and a filter:
+  `--league WCBB --filter "Both ranked"`.
 - One-liners on every card, the slate's own lines: pre-game note, live standout in red, top performer after the final
   (3.39.0, `agLine`). A missing line is fetched only once its card has been on screen for 300 ms (`agSeen`).
 - Worth a look reuses this card and replaces the card's line with its own, so only one line shows (3.39.2).

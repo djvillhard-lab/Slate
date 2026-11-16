@@ -5,6 +5,7 @@
     SLATE_PASS=... python3 scripts/shots.py game:Raiders feed:Raiders --sizes folded,iphone
     SLATE_PASS=... python3 scripts/shots.py lineup --scroll .sl-bets       (scroll an element into view first)
     python3 scripts/shots.py lineup tv --text xl --tomorrow --full          (no passcode: read-only, saves are blocked)
+    SLATE_PASS=... python3 scripts/shots.py games --league WCBB --filter "Both ranked"   (a league tab, then a filter in the row under it)
 
 Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds.
@@ -42,7 +43,7 @@ def main():
         print(__doc__); return
     pw = os.environ.get("SLATE_PASS", "").strip()
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
-    sizes, wait, scroll, pages, text, tomorrow, full, look = list(SIZES), 6.0, None, [], None, False, False, None
+    sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt = list(SIZES), 6.0, None, [], None, False, False, None, None, None
     i = 0
     while i < len(args):
         a = args[i]
@@ -51,6 +52,8 @@ def main():
         if a == "--scroll": scroll = args[i + 1]; i += 2; continue
         if a == "--text": text = args[i + 1].lower(); i += 2; continue
         if a == "--look": look = args[i + 1]; i += 2; continue
+        if a == "--league": league = args[i + 1]; i += 2; continue
+        if a == "--filter": filt = args[i + 1]; i += 2; continue
         if a == "--tomorrow": tomorrow = True; i += 1; continue
         if a == "--full": full = True; i += 1; continue
         pages.append(a); i += 1
@@ -128,6 +131,11 @@ def main():
                         page.evaluate("document.querySelector('.tray .full-mu').click()"); page.wait_for_timeout(2000)
                 else:
                     page.evaluate("SlateApp.go(%s)" % json.dumps(kind)); page.wait_for_timeout(2500)
+                for sel, want in (("#strip button", league), ("#substrip button", filt)):  # tap a league tab and/or a filter, by its text
+                    if not want: continue
+                    if not page.evaluate("""((S, T) => { const b = [...document.querySelectorAll(S)].find(x => x.innerText.trim().toLowerCase() === T.toLowerCase()); if (!b) return false; b.click(); return true; })(%s, %s)""" % (json.dumps(sel), json.dumps(want))):
+                        print(f"  {size}: no '{want}' button in {sel}")
+                    page.wait_for_timeout(1500)
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
                 wide = page.evaluate("document.scrollingElement.scrollWidth - innerWidth")

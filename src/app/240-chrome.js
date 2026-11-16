@@ -118,7 +118,7 @@
     sp.hidden = v !== "games" || !gs.length;
 
     // conference sub-strip (college leagues)
-    var ss = $("substrip"); ss.textContent = "";
+    var ss = $("substrip"), ssX = ss.scrollLeft; ss.textContent = "";
     var showConf = v === "games" && !!LEAGUES[state.league];
     if (v === "games" && state.league === "all") {
       if (["all", "best", "nat"].indexOf(state.conf) === -1) state.conf = "all";
@@ -158,6 +158,9 @@
       });
     }
     ss.hidden = !(showConf || v === "tv" || (v === "games" && state.league === "all")) || !ss.childNodes.length;
+    // a redraw used to snap the row back to its start, hiding the filter you'd just picked: keep the row where it was,
+    // then make sure the picked one is in view (3.52.9)
+    if (!ss.hidden) { ss.scrollLeft = ssX; var ssOn = ss.querySelector('[aria-pressed="true"]'); if (ssOn) try { ssOn.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
 
     // date strip (games)
     var ds = $("dates"); ds.textContent = "";
