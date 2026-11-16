@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 16, 2026, 3.51.1
+Last updated: Nov 16, 2026, 3.52.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -45,3 +45,6 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   writes a line for every team in the picked games.
 - Team tiles show Last (with W/L and score) and Next from ESPN's team schedule, reusing `tmLite` / `tmGameLine` from
   130-teams.js (DJ, Nov 16). Game cards keep the scores mid-card like the slate (`.nx-gh .nx-gr { min-width: 30% }`).
+- Length limits live in the worker's save step: `S(text, n)` cuts at a whole word and adds an ellipsis, `H` cuts hard
+  (ids, keys, urls). 3.52.1 after DJ saw "2 TDs of 65+ yar" and "…, 3 T": never cut mid-word; raise the cap or tell
+  Claude the length in the prompt instead. A number value over 7 characters renders stacked (`.nx-num.long`).

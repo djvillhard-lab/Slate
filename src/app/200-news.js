@@ -357,7 +357,7 @@
     var rows = function (list, key) { var c = el("div", "nx-card nx-rows"); list.forEach(function (x) { var r = el("div", "nx-row"); r.appendChild(el("b", null, x[key])); r.appendChild(el("span", null, x.text)); c.appendChild(r); }); return c; };
     sec(d.type === "l" ? "Around the league" : "Claude's take", true);
     var tk = el("div", "nx-card nx-take"); if (doc.verdict) tk.appendChild(el("span", "nx-verdict", doc.verdict)); doc.take.forEach(function (p) { tk.appendChild(el("p", null, p)); }); body.appendChild(tk);
-    if (doc.number) { sec("The number"); var nb = el("div", "nx-card nx-num"); nb.appendChild(el("b", null, doc.number.value)); nb.appendChild(el("p", null, doc.number.text)); body.appendChild(nb); }
+    if (doc.number) { sec("The number"); var nb = el("div", "nx-card nx-num" + (String(doc.number.value).length > 7 ? " long" : "")); nb.appendChild(el("b", null, doc.number.value)); nb.appendChild(el("p", null, doc.number.text)); body.appendChild(nb); }
     if (doc.latest && doc.latest.length) { sec("Latest"); var lc = el("div", "nx-card nx-pad"); lc.appendChild(nwHits(doc.latest)); body.appendChild(lc); }
     if (doc.watch && doc.watch.length) { sec("What to watch for"); var wc = el("div", "nx-card nx-pad"); wc.appendChild(nwHits(doc.watch)); body.appendChild(wc); }
     if (doc.sides && doc.sides.length) {

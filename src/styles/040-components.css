@@ -1522,7 +1522,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 
 
 /* ---------- News (3.45.0 to 3.47.1): Claude's dashboard. Cards share one left edge; tags sit on their own line above the text ---------- */
-.nx { display: grid; gap: 0; padding-bottom: 24px; }
+.nx { display: grid; gap: 0; padding-bottom: 96px; }  /* room to scroll the last rows clear of the floating Back and menu buttons */
 .nx-card { background: var(--card); border-radius: 8px; overflow: hidden; text-align: left; }
 .nx-sec { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 20px 2px 9px; font-size: 16px; font-weight: 800; color: var(--head); }
 .nx-sec span { font-size: 13px; font-weight: 700; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1651,6 +1651,9 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-verdict { padding: 3px 8px; border-radius: 4px; background: var(--accent); color: var(--bg); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .nx-num { display: flex; align-items: center; gap: 14px; padding: 14px 12px; }
 .nx-num b { flex: none; max-width: 46%; font-size: 40px; font-weight: 800; font-stretch: 80%; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* a figure with words ("2 TDs of 65+ yards") goes above its sentence, smaller, and wraps: never cut (3.52.1) */
+.nx-num.long { flex-direction: column; align-items: flex-start; gap: 8px; }
+.nx-num.long b { max-width: 100%; font-size: 28px; line-height: 1.1; overflow-wrap: break-word; }
 .nx-num p { margin: 0; font-size: 14px; line-height: 1.42; color: var(--head); }
 .nx-side { display: grid; gap: 7px; align-content: start; padding: 11px; justify-items: start; }
 .nx-side .nx-chipt { margin-left: 0; }

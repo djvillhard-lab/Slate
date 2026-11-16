@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.52.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- News breakdowns: text is no longer cut off mid-word. "The number" was being cut at 16 characters ("2 TDs of 65+ yar") and tags at 24 ("223 scrimmage yards, 3 T") when the breakdown was saved. Both limits are higher now, Claude is told to keep them short, and anything still over the limit ends at a whole word with "…".
+- A longer "number" (a figure with words) now sits above its sentence in smaller green type and wraps onto a second line if it needs to.
+- The same whole-word rule covers every tag, chip and line on the News page and in game, team and league breakdowns.
+- News pages have more room at the bottom, so the last rows (like the ESPN label on Read more) scroll clear of the Back and menu buttons.
+- Breakdowns saved before this version keep their cut text for the rest of the day; new ones are right.
+
 ## 3.52.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - New theme: Sunday Paper, a light look with warm cream pages, dark ink and a navy accent. Pick it in Settings under Look. Midnight is still there and still the default.

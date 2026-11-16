@@ -268,7 +268,7 @@ Keep to the lengths given: with many games and teams this page is long, and an a
   if (p.kind === "deep") {
     const type = p.key[0], shape = type === "g" ? `{"verdict": "your watchability call in two to five words, such as Must watch, Worth the first half, Background game",
  "take": ["two paragraphs, 90-140 words in all: your honest read on this game: form, stakes, what makes it interesting or not"],
- "number": {"value": "one striking number or score from your sources, such as 42-9", "text": "one sentence on what it is and why it matters"},
+ "number": {"value": "one striking number or score from your sources, such as 42-9: the figure alone or with one or two words, 14 characters at most", "text": "one sentence on what it is and why it matters"},
  "watch": [{"tag": "one or two words", "text": "one line: a specific thing to watch for"}],
  "sides": [{"team": "team name as given", "text": "one line: what this team needs tonight"}],
  "timeline": [{"when": "a short date like Nov 11", "text": "one line: what happened"}],
@@ -276,7 +276,7 @@ Keep to the lengths given: with many games and teams this page is long, and an a
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
 watch: exactly 3. sides: both teams, away first. timeline: 3-4 dated events that led to this game, oldest first.` : type === "t" ? `{"mood": "the mood around this team in one or two words, such as Rolling, Anxious, Rebuilding",
  "take": ["two paragraphs, 90-140 words in all: the state of this team right now and what its season turns on"],
- "number": {"value": "one striking number from your sources", "text": "one sentence on what it is and why it matters"},
+ "number": {"value": "one striking number from your sources: the figure alone or with one or two words, such as 7 straight, 14 characters at most", "text": "one sentence on what it is and why it matters"},
  "latest": [{"tag": "one or two words", "text": "one line: a recent development"}],
  "said": {"text": "one sentence paraphrasing what a coach or player said this week, quoting at most five words", "who": "who said it and where it was reported"},
  "timeline": [{"when": "a short date like Nov 11", "text": "one line: what happened"}],
@@ -285,8 +285,8 @@ watch: exactly 3. sides: both teams, away first. timeline: 3-4 dated events that
 latest: 3-4, newest first. timeline: 3-4 dated events in the team's biggest current storyline, oldest first. said: null if your sources have nothing.` : `{"take": ["two paragraphs, 90-140 words in all: what is going on around this league right now"],
  "hot": [{"team": "team name", "text": "two to four words, such as won 12 straight"}],
  "cold": [{"team": "team name", "text": "two to four words"}],
- "perf": [{"tag": "the stat line or feat in a few words, such as 43 points", "text": "one line: who did it and in what game"}],
- "number": {"value": "one striking number or milestone from your sources", "text": "one sentence on what it is and why it matters"},
+ "perf": [{"tag": "the stat line or feat in a few words, such as 43 points or 223 yards, 3 TDs: 30 characters at most", "text": "one line: who did it and in what game"}],
+ "number": {"value": "one striking number or milestone from your sources: the figure alone or with one or two words, such as 223 yards, 14 characters at most", "text": "one sentence on what it is and why it matters"},
  "injuries": ["one line each: the injuries that matter most league-wide"],
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
 hot and cold: up to 3 each. perf: 3-5 standout performances from the last two days. injuries: up to 4; [] if none.`;
@@ -434,16 +434,19 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
       if (res.tooLong) throw new Error("Claude's answer ran too long");
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
-        const S = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
-        const rd = (r) => r && r.title && /^https:\/\//.test(r.url || "") ? { title: S(r.title, 200), url: S(r.url, 600), source: S(r.source, 40) } : null;
-        const hits = (a, n) => (Array.isArray(a) ? a : []).filter((h) => h && h.text).slice(0, n).map((h) => ({ tag: S(h.tag, 24), text: S(h.text, 240) }));
-        const num = (x) => x && x.value && x.text ? { value: S(x.value, 16), text: S(x.text, 260) } : null;
+        // H cuts hard (ids, keys, urls). S is for words people read: text over the limit is cut back to a whole word
+        // and ends in an ellipsis, never mid-word ("3 T", "65+ yar").
+        const H = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
+        const S = (v, n) => { const t = String(v == null ? "" : v).trim(); if (t.length <= n) return t; const c = t.slice(0, n - 1), i = c.lastIndexOf(" "); return (i > n * 0.4 ? c.slice(0, i) : c).replace(/[\s,;:.\-]+$/, "") + "\u2026"; };
+        const rd = (r) => r && r.title && /^https:\/\//.test(r.url || "") ? { title: S(r.title, 200), url: H(r.url, 600), source: S(r.source, 40) } : null;
+        const hits = (a, n) => (Array.isArray(a) ? a : []).filter((h) => h && h.text).slice(0, n).map((h) => ({ tag: S(h.tag, 48), text: S(h.text, 260) }));
+        const num = (x) => x && x.value && x.text ? { value: S(x.value, 28), text: S(x.text, 300) } : null;
         if (p.kind === "news" && p.key === "page") {
           let f = {}; try { f = JSON.parse(p.facts || "{}"); } catch (e) {}
-          const top = (Array.isArray(ans.top) ? ans.top : []).filter((x) => x && x.title).slice(0, 5).map((x) => ({ title: S(x.title, 120), why: S(x.why, 320), tag: S(x.tag, 24), new: x.new !== false }));
-          const games = (Array.isArray(ans.games) ? ans.games : []).filter((g) => g && g.id && g.story).slice(0, 40).map((g) => ({ id: S(g.id, 60), story: S(g.story, 500), hits: hits(g.hits, 3), read: rd(g.read) }));
-          const teams = (Array.isArray(ans.teams) ? ans.teams : []).filter((x) => x && x.name).slice(0, 100).map((x) => ({ name: S(x.name, 60), lg: S(x.lg, 12), chip: S(x.chip, 24), tone: ["up", "down", "alert"].includes(x.tone) ? x.tone : "", line: S(x.line, 200), hits: hits(x.hits, 3) }));
-          const leagues = (Array.isArray(ans.leagues) ? ans.leagues : []).filter((x) => x && x.key && x.story).slice(0, 16).map((x) => ({ key: S(x.key, 12), story: S(x.story, 600), hits: hits(x.hits, 6), read: rd(x.read) }));
+          const top = (Array.isArray(ans.top) ? ans.top : []).filter((x) => x && x.title).slice(0, 5).map((x) => ({ title: S(x.title, 140), why: S(x.why, 360), tag: S(x.tag, 32), new: x.new !== false }));
+          const games = (Array.isArray(ans.games) ? ans.games : []).filter((g) => g && g.id && g.story).slice(0, 40).map((g) => ({ id: H(g.id, 60), story: S(g.story, 600), hits: hits(g.hits, 3), read: rd(g.read) }));
+          const teams = (Array.isArray(ans.teams) ? ans.teams : []).filter((x) => x && x.name).slice(0, 100).map((x) => ({ name: H(x.name, 60), lg: H(x.lg, 12), chip: S(x.chip, 24), tone: ["up", "down", "alert"].includes(x.tone) ? x.tone : "", line: S(x.line, 240), hits: hits(x.hits, 3) }));
+          const leagues = (Array.isArray(ans.leagues) ? ans.leagues : []).filter((x) => x && x.key && x.story).slice(0, 16).map((x) => ({ key: H(x.key, 12), story: S(x.story, 700), hits: hits(x.hits, 6), read: rd(x.read) }));
           if (!top.length && !games.length && !teams.length && !leagues.length) throw new Error("Claude's page came back empty");
           await putDoc(this.env, t.path, { date: p.date, cover: f.cover || {}, top, games, teams, leagues, took: Math.max(0, Math.round((Date.parse(now) - Date.parse(p.at)) / 1000)) || 0, at: now, by: p.user || "dj", writing: null });
         } else if (p.kind === "deep") {
@@ -451,7 +454,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           const out = { key: p.key, date: p.date, type, take: strs(ans.take, 3).map((x) => x.slice(0, 1200)), number: num(ans.number), reads: (Array.isArray(ans.reads) ? ans.reads : []).map(rd).filter(Boolean).slice(0, 3), at: now, by: p.user || "dj", writing: null };
           if (!out.take.length) throw new Error("Claude's breakdown came back empty");
           if (type === "g") Object.assign(out, { verdict: S(ans.verdict, 40), watch: hits(ans.watch, 3), sides: pairs(ans.sides, 2, "team"), timeline: pairs(ans.timeline, 4, "when"), hunch: S(ans.hunch, 300) });
-          else if (type === "t") Object.assign(out, { mood: S(ans.mood, 24), latest: hits(ans.latest, 4), said: ans.said && ans.said.text ? { text: S(ans.said.text, 300), who: S(ans.said.who, 120) } : null, timeline: pairs(ans.timeline, 4, "when"), next: S(ans.next, 200) });
+          else if (type === "t") Object.assign(out, { mood: S(ans.mood, 32), latest: hits(ans.latest, 4), said: ans.said && ans.said.text ? { text: S(ans.said.text, 300), who: S(ans.said.who, 120) } : null, timeline: pairs(ans.timeline, 4, "when"), next: S(ans.next, 200) });
           else Object.assign(out, { hot: pairs(ans.hot, 3, "team"), cold: pairs(ans.cold, 3, "team"), perf: hits(ans.perf, 5), injuries: strs(ans.injuries, 4).map((x) => x.slice(0, 240)) });
           await putDoc(this.env, t.path, out);
         } else if (p.kind === "news") {
