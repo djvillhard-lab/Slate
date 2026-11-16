@@ -114,7 +114,7 @@ private struct BoardGrid: View {
         let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
         LazyVGrid(columns: games.count == 1 ? [GridItem(.flexible())] : cols, spacing: gap) {
             ForEach(games, id: \.id) { g in
-                Link(destination: SlateLook.gameURL(g.id)) { BoardLine(g: g, dark: dark) }
+                Link(destination: SlateLook.gameURL(g.id)) { BoardLine(g: g, dark: dark, lines: !dark && games.count <= 2 ? 2 : 1) }
             }
         }
     }
@@ -125,6 +125,7 @@ private struct BoardGrid: View {
 private struct BoardLine: View {
     let g: SlateBoardGame
     let dark: Bool
+    var lines: Int = 1
 
     var body: some View {
         let pre = BoardLook.pre(g), fin = g.s == "post", live = g.s == "in"
@@ -153,13 +154,23 @@ private struct BoardLine: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
+            // 3.64.0: the slate card's one-liner, small and quiet (two lines on the Lock Screen when there's one row of games)
+            if let ln = g.ln, !ln.isEmpty, !fin {
+                Text(ln)
+                    .font(SlateLook.semi(10))
+                    .foregroundStyle(SlateLook.muted)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(lines)
+                    .minimumScaleFactor(0.9)
+                    .padding(.top, 1)
+            }
         }
         .foregroundStyle(SlateLook.ink)
         .padding(EdgeInsets(top: 7, leading: 6, bottom: 6, trailing: 6))
         .frame(maxWidth: .infinity)
         .background(dark ? Color.white.opacity(0.09) : SlateLook.raise, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(BoardLook.spoken(g)))
+        .accessibilityLabel(Text(BoardLook.spoken(g) + ((g.ln ?? "").isEmpty || fin ? "" : ". " + (g.ln ?? ""))))
     }
 }
 

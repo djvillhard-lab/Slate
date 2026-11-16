@@ -30,4 +30,5 @@ struct SlateBoardGame: Codable, Hashable {
     var t: Double?            // 3.30.0: kickoff, seconds since 1970 (for the countdown before a game starts)
     var tv: String?           // 3.30.0: the channel, shown beside the start time ("12:00 PM · CBS")
     var c: Bool?              // 3.30.0: kickoff is within the hour, so the Dynamic Island counts down to it
+    var ln: String?           // 3.64.0: the slate card's one-liner (the live line while it's on, the preview line before)
 }

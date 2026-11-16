@@ -217,9 +217,12 @@ function laState(s, id) {
   if (s.state === "in" || s.state === "post") for (const k of ["ap", "hp", "ox", "op", "at", "ht", "lp", "wp"]) if (s[k]) st[k] = s[k];
   // the slate's preview line for the game, while it's on (after the final it's old news)
   if (s.state === "in" && id && PVL[id]) st.pv = String(PVL[id]).slice(0, 140);
-  // 3.61.1: the slate's red live one-liner, when the phone shared one in the last 20 minutes: in place of the preview
-  // line for new builds, and as the one-liner older builds show
+  // 3.61.1: the slate's red live one-liner, the line the slate card shows while the game is on: in place of the preview
+  // line for new builds, and as the one-liner older builds show. 3.64.0: the last one shared stays until a newer one
+  // comes, so the notification never falls back to the preview line while the card shows a live one
   if (s.state === "in" && id && LVL[id]) { st.pv = String(LVL[id]).slice(0, 140); st.line = st.pv.slice(0, 60); }
+  // 3.64.0, soccer with a goal: the scorers and minutes instead (live notifications only, not the slate card)
+  if (s.state === "in" && s.gl) { st.pv = String(s.gl).slice(0, 140); st.line = st.pv.slice(0, 60); }
   return st;
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
@@ -321,7 +324,9 @@ function boardGame(id, g, s) {
     ...(st === "in" && (s.po === "away" || s.po === "home") ? { p: s.po } : {}), ...(st === "in" && s.dd ? { dd: String(s.dd).slice(0, 32) } : {}),
     // 3.30.0, before kickoff: the start (seconds), the channel, and c once it's within the hour (the Dynamic Island counts down)
     ...(st === "pre" && kick > 0 ? { t: Math.floor(kick / 1000) } : {}), ...(st === "pre" && at.channel ? { tv: String(at.channel).slice(0, 16) } : {}),
-    ...(st === "pre" && kick > 0 && kick - Date.now() <= 3600000 ? { c: true } : {}) };
+    ...(st === "pre" && kick > 0 && kick - Date.now() <= 3600000 ? { c: true } : {}),
+    // 3.64.0: the slate card's one-liner, the live line while it's on, the preview line before (builds before 41 ignore it)
+    ...(st === "in" && s.gl ? { ln: String(s.gl).slice(0, 90) } : st === "in" && LVL[id] ? { ln: String(LVL[id]).slice(0, 90) } : st !== "post" && PVL[id] ? { ln: String(PVL[id]).slice(0, 90) } : {}) };
 }
 async function runBoard(env, p, sent, la, games, sc) {
   const b = (p.liveAct || {}).board || {}; let gone = false;
@@ -341,7 +346,7 @@ async function runBoard(env, p, sent, la, games, sc) {
   // (a token from after the switch-on belongs to the one the app just started itself: keep it)
   const fresh = tok && Date.parse(tok.at) >= at - 60000;
   if (cur && cur.end && at > (cur.t || 0)) { cur = sent.board = null; if (la.board && !fresh) { delete la.board; gone = true; tok = null; } }
-  const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}-${x.p || ""}-${x.dd || ""}${x.c ? "-c" : ""}-${x.aa}${x.ac}${x.ha}${x.hc}`).join("|"), scores = {};
+  const key = list.map((x) => `${x.id}:${x.a}-${x.h}-${x.d}-${x.p || ""}-${x.dd || ""}${x.c ? "-c" : ""}-${x.aa}${x.ac}${x.ha}${x.hc}${x.ln ? "~" + x.ln : ""}`).join("|"), scores = {};
   for (const x of list) scores[x.id] = `${x.a}-${x.h}`;
   // the game the Dynamic Island shows on its own: the one that last scored, else the first one live
   let lead = cur && cur.lead ? list.findIndex((x) => x.id === cur.lead) : -1;
@@ -516,6 +521,24 @@ function alertLevel(p, sent, kind, id) {
 // ---------- live scores from ESPN ----------
 const hex = (c) => /^[0-9a-f]{6}$/i.test(String(c || "")) ? "#" + c : "";
 // early: the scoreboard's picks, looked up all day (3.33.1) so a later game shows its real abbreviations and colors from the start
+// 3.64.0, soccer: once there's a goal, the live notification's one-liner is just the scorers with their minutes, away
+// side first like the score ("NED Gakpo 23' · GER Wirtz 12', 40' pen, Ferguson 51' OG"), from ESPN's goal list.
+// An own goal counts for the other side; shootout kicks are left out.
+function goalLine(c, cs) {
+  const side = {}; for (const k of ["away", "home"]) side[String(((cs[k] || {}).team || {}).id || "")] = k;
+  const by = { away: [], home: [] };
+  for (const d of c.details || []) {
+    if (!d || !d.scoringPlay || d.shootout) continue;
+    const a = (d.athletesInvolved || [])[0] || {}, nm = String(a.shortName || a.displayName || "").split(" ").slice(-1)[0];
+    let k = side[String((d.team || {}).id || "")];
+    if (d.ownGoal && a.team && side[String(a.team.id)]) k = side[String(a.team.id)] === "away" ? "home" : "away";
+    if (!k || !nm) continue;
+    const min = String((d.clock || {}).displayValue || "").trim() + (d.ownGoal ? " OG" : d.penaltyKick ? " pen" : "");
+    const L = by[k], hit = L.find((x) => x.nm === nm); if (hit) hit.m.push(min); else L.push({ nm, m: [min] });
+  }
+  const one = (k) => by[k].length ? `${((cs[k] || {}).team || {}).abbreviation || ""} ${by[k].map((x) => `${x.nm} ${x.m.join(", ")}`).join(", ")}`.trim() : "";
+  return [one("away"), one("home")].filter(Boolean).join(" · ");
+}
 async function liveScores(games, want, now, early) {
   const leagues = {}, sc = {};
   for (const id of want) { const g = games[id]; if (!g || !g.ev || !PATHS[g.league]) continue; const t = new Date(g.start); if (t - now > (early && early.has(id) ? 14 * 3600000 : 75 * 60000) || now - t > 8 * 3600000) continue; leagues[g.league] = 1; }
@@ -555,6 +578,7 @@ async function liveScores(games, want, now, early) {
     if (dd) sc[id].dd = String(dd);
     if (pid) sc[id].po = pid === String((cs.away.team || {}).id) ? "away" : pid === String((cs.home.team || {}).id) ? "home" : "";
     if (st.state === "in" || st.state === "post") Object.assign(sc[id], islandStats(g, c, cs, sit, st.state === "post"));
+    if (SPORT[g.league] === "soccer") { const gl = goalLine(c, cs); if (gl) sc[id].gl = gl; }
   }
   return sc;
 }
@@ -663,7 +687,7 @@ export async function runAlerts(env) {
     const pre = w.prefix, subs = (docs[pre + "prefs/push"] || {}).subs || [], p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
     { const pvd = docs[pre + "prefs/pvlines"] || {}; PVL = pvd.date === D && pvd.lines && typeof pvd.lines === "object" ? pvd.lines : {};
-      LVL = pvd.date === D && pvd.live && typeof pvd.live === "object" && Date.now() - (Number(pvd.liveAt) || 0) < 20 * 60000 ? pvd.live : {}; }
+      LVL = pvd.date === D && pvd.live && typeof pvd.live === "object" ? pvd.live : {}; }
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),

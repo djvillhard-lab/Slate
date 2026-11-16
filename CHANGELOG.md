@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.64.0 (Nov 16, 2026)
+TestFlight: 3.64.0 (41)
+- The Board live notification shows each game's one-liner from the slate under its score: the red live line while the game is on, the preview line before it starts. On the Lock Screen it's two lines when the Board has one or two games, one line with three or four. Dropped after the final. Needs build 41.
+- Soccer: once a goal has been scored, the live notification's line (single game, Board and Dynamic Island) is just the goal scorers and their minutes, away side first like the score: "ITA Kean 15' · BIH Tabakovic 79'". Penalties say "pen", own goals "OG" and count for the other side; shootout kicks are left out. Before the first goal it's the usual line. The slate card is unchanged.
+- A game's live notification no longer goes back to the preview line ("Netherlands are unbeaten in their last five") when Slate hasn't been open for a while. It keeps the last live line your phone shared until a newer one comes, so it matches the slate card.
+
 ## 3.63.0 (Nov 16, 2026)
 TestFlight: 3.63.0 (40)
 - New Slate logo: a hammer with an axe blade on one side, tilted mid-swing, with a sparkle off the blade. It replaces the green S made of tiles next to every page's title, and it takes the theme's accent color (green on Midnight, dark green on Sunday Paper).
