@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.56.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Settings has a new "Send feedback" button at the top. Pick Problem, Idea or Other, write what's on your mind, and add a screenshot from Photos if it helps.
+- It sends who you are, the page you were on before Settings (and the game, on a matchup or Live feed), the app version and your phone layout, so a report doesn't need a back-and-forth. The sheet shows that line before you send.
+- Feedback is kept private: it's locked before it's stored, and only DJ's Claude project can read it. A report there each morning lists what's new.
+- Sending needs your passcode, like saving settings.
+
 ## 3.55.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - New: Morning email. In Settings, turn on "Email me my slate", enter your email address and pick a time (4 AM to noon, your phone's time zone). Every morning it sends your own slate: each game's time, channel, the two teams with their records, and which ones are your teams, then last night's final scores for your slate and teams. Tap a game to open it in Slate.

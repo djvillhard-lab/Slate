@@ -4,6 +4,7 @@
     SLATE_PASS=<test passcode> python3 scripts/shots.py lineup games
     SLATE_PASS=... python3 scripts/shots.py game:Raiders feed:Raiders --sizes folded,iphone
     SLATE_PASS=... python3 scripts/shots.py lineup --scroll .sl-bets       (scroll an element into view first)
+    SLATE_PASS=... python3 scripts/shots.py settings --click "#set-sfb"    (tap a button first, e.g. to open a sheet)
     python3 scripts/shots.py lineup tv --text xl --tomorrow --full          (no passcode: read-only, saves are blocked)
     SLATE_PASS=... python3 scripts/shots.py games --league WCBB --filter "Both ranked"   (a league tab, then a filter in the row under it)
 
@@ -43,13 +44,14 @@ def main():
         print(__doc__); return
     pw = os.environ.get("SLATE_PASS", "").strip()
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
-    sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt = list(SIZES), 6.0, None, [], None, False, False, None, None, None
+    sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
     i = 0
     while i < len(args):
         a = args[i]
         if a == "--sizes": sizes = [s.strip() for s in args[i + 1].split(",") if s.strip()]; i += 2; continue
         if a == "--wait": wait = float(args[i + 1]); i += 2; continue
         if a == "--scroll": scroll = args[i + 1]; i += 2; continue
+        if a == "--click": click = args[i + 1]; i += 2; continue
         if a == "--text": text = args[i + 1].lower(); i += 2; continue
         if a == "--look": look = args[i + 1]; i += 2; continue
         if a == "--league": league = args[i + 1]; i += 2; continue
@@ -136,6 +138,8 @@ def main():
                     if not page.evaluate("""((S, T) => { const b = [...document.querySelectorAll(S)].find(x => x.innerText.trim().toLowerCase() === T.toLowerCase()); if (!b) return false; b.click(); return true; })(%s, %s)""" % (json.dumps(sel), json.dumps(want))):
                         print(f"  {size}: no '{want}' button in {sel}")
                     page.wait_for_timeout(1500)
+                if click:
+                    page.evaluate("(s => { const e = document.querySelector(s); if (e) e.click(); })(%s)" % json.dumps(click)); page.wait_for_timeout(700)
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
                 wide = page.evaluate("document.scrollingElement.scrollWidth - innerWidth")

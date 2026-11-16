@@ -7,6 +7,7 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
 import { runMorningEmail, morningApi } from "./morning-email.js";
+import { feedbackRoute } from "./feedback.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -97,6 +98,8 @@ export default {
   },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    // Settings → Send feedback, and the daily report that reads it (worker/feedback.js)
+    if (url.pathname.startsWith("/api/feedback")) return feedbackRoute(req, env, url, { rpc, whoIs, json });
     // The Athletic FC is email-only: a small Google Apps Script in DJ's Gmail sends each morning's subject line and
     // "View Online" link here. Only DJ's passcode is accepted, and only the link and subject are stored.
     if (url.pathname === "/api/newsletter" && req.method === "POST") {
