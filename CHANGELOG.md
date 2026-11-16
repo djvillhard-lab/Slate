@@ -8,7 +8,6 @@ From 3.0.0 on, each release also says which iPhone app build in TestFlight goes 
 ## 3.40.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Box scores: every player who got into the game is listed, all the starters and the whole bench, in the quick look and the full box score, for every sport. The quick look used to show only the top 6 scorers, and the full box score folded the bench behind a button. Players who didn't play are still left out.
-- Fixed the version file, which 3.40.0 published broken. The app couldn't tell a new version was out, so it wasn't updating on its own.
 
 ## 3.40.0 (Nov 16, 2026)
 TestFlight: 3.38.0 (37), no new build (web only)
