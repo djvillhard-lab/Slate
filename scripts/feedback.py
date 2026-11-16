@@ -6,6 +6,9 @@
     python3 scripts/feedback.py --all           # the last 100, reported or not
     python3 scripts/feedback.py --shots DIR     # also save attached screenshots into DIR
     python3 scripts/feedback.py --json          # raw items
+    python3 scripts/feedback.py --open          # every item not addressed yet, with its id (check this before shipping)
+    python3 scripts/feedback.py --done ID --note "New Slate logo" --version 3.63.0   # mark one addressed
+    python3 scripts/feedback.py --reopen ID     # ...or open again
 
 The reader key is never in this repo (it's public). It comes from $SLATE_FEEDBACK_KEY, or a file named by
 $SLATE_FEEDBACK_KEY_FILE (DJ's Claude project keeps it in its project files, in feedback/.reader-key).
@@ -91,8 +94,20 @@ def main():
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--shots")
+    ap.add_argument("--open", action="store_true")
+    ap.add_argument("--done"); ap.add_argument("--reopen"); ap.add_argument("--note", default=""); ap.add_argument("--version", default="")
     a = ap.parse_args()
     k = key()
+    if a.done or a.reopen:
+        r = post("/api/feedback/done", {"key": k, "id": a.done or a.reopen, "done": bool(a.done), "note": a.note, "version": a.version, "by": "claude"})
+        print("%s: %s" % (r.get("id"), "addressed" if r.get("done") else "open again"))
+        return
+    if a.open:
+        items = [i for i in post("/api/feedback/inbox", {"key": k, "all": True}).get("items", []) if not i.get("done") and not i.get("error")]
+        for i in items:
+            print("%s  [%s] %s · %s · %s\n    \u201c%s\u201d" % (i["id"], i.get("kind"), i.get("name"), i.get("page"), when(i.get("at", "")), " ".join(str(i.get("text", "")).split())))
+        print("%d open" % len(items))
+        return
     items = post("/api/feedback/inbox", {"key": k, "all": a.all}).get("items", [])
     shots = {}
     if a.shots:

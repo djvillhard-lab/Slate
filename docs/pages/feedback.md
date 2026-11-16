@@ -18,6 +18,12 @@ Last updated: Nov 16, 2026, 3.56.0
 - Daily report: a scheduled task in DJ's Claude project ("Collect in-app feedback for review" thread) runs
   `scripts/feedback.py --mark` at 7:38 AM Central and posts new items there, grouped by type. Quiet when there's none.
 
+- Addressed or open (Nov 16, 2026): each item can carry `done: {at, note, version, by}` beside `reported`
+  (`/api/feedback/done`, reader key or an admin passcode). DJ asked for it to be automatic: the thread that ships a
+  fix marks the item with `scripts/feedback.py --done <id> --note ... --version ...` (CLAUDE.md, shipping step 8), and
+  the daily report thread checks `--open` too. DJ's Project status page shows Open / Addressed and has a manual
+  switch on each item (tap the item, then "Mark addressed" or "Open it again").
+
 ## Open
 - No in-app inbox for DJ yet (the report lives in the Claude project, as DJ asked).
 - New people from the sign-up flow can send as soon as they have a passcode.

@@ -61,7 +61,8 @@ Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the
 6. Check it: `SLATE_PASS=<test passcode> python3 scripts/shots.py <pages> [--sizes folded,open,iphone]` screenshots the pages you touched at DJ's three phone shapes and prints page errors and pages wider than the screen. Look at every screenshot. The test passcode is in the project instructions, never in the repo (it's public). Check them yourself and ship; show DJ screenshots only when DJ asks or when a request could go two ways.
 7. Commit following **Commit messages** below, then push. If the push is rejected, another chat shipped first: pull --rebase, renumber, rebuild, push.
    - On a conflict in `index.html` or `version.json`: don't merge them by hand. Resolve `src/` and CHANGELOG.md, then run `python3 build.py --force`.
-8. Start the reply to DJ with the new version number, a short description, then what changed.
+8. If the change fixes or answers something a person sent from the app (Settings → Send feedback), mark it addressed so it shows on DJ's Project status page: `python3 scripts/feedback.py --open` lists what's still open with ids, then `python3 scripts/feedback.py --done <id> --note "<what fixed it, a few words>" --version <version>`. Only after it has shipped, and only when it really covers what they wrote. (Needs the reader key in DJ's Claude project files; skip it without one.)
+9. Start the reply to DJ with the new version number, a short description, then what changed.
 
 If build.py says index.html was edited by hand, it prints those edits. Move them into `src/` before rebuilding, or they're lost.
 

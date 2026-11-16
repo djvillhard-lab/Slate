@@ -158,6 +158,9 @@ img { max-width: 100%; }
 .spark { flex: none; width: 76px; }
 .spark svg { display: block; width: 76px; height: 34px; }
 .spark div { font-size: 10px; color: var(--dim); text-align: center; font-stretch: 78%; margin-top: 2px; }
+.tgl { display: none; margin-top: 10px; min-height: 44px; padding: 0 14px; border-radius: 8px; background: var(--raise); color: var(--ink); font-size: 14px; font-weight: 800; }
+.fb.open .tgl { display: inline-block; }
+.fb.isdone .q { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -178,9 +181,9 @@ img { max-width: 100%; }
       <section>
         <h2>Feedback <span class="n" id="fb-n"></span><span class="sp"></span>
           <span class="seg" role="group" aria-label="Filter feedback" id="fb-seg">
-            <button type="button" data-k="all" aria-pressed="true">All</button>
-            <button type="button" data-k="bug" aria-pressed="false">Problems</button>
-            <button type="button" data-k="idea" aria-pressed="false">Ideas</button>
+            <button type="button" data-k="open" aria-pressed="true">Open</button>
+            <button type="button" data-k="done" aria-pressed="false">Addressed</button>
+            <button type="button" data-k="all" aria-pressed="false">All</button>
           </span>
         </h2>
         <div id="feedback"><div class="empty">Loading feedback…</div></div>
@@ -209,7 +212,7 @@ img { max-width: 100%; }
 <script>
 var TZ = "America/Chicago", REPO = "djvillhard-lab/Slate";
 var D = { web: "", build: "", buildWith: "", releases: [], hours: [], sheet: [], pages: [], waiting: [], feedback: null, asOf: null };
-var fbFilter = "all", relAll = false, shotUrls = {}, commitTimes = {}, commitEtag = "", openFb = {}, seenAt = "";
+var fbFilter = "open", relAll = false, shotUrls = {}, commitTimes = {}, commitEtag = "", openFb = {}, seenAt = "";
 try { seenAt = localStorage.getItem("slate-status-seen") || ""; } catch (e) {}
 var PAGES = [
   ["Today's Slate", "suggestions.md", ["170-slate", "050-slate", "180-worth", "190-rules", "185-thumbs"]],
@@ -255,10 +258,11 @@ function render() {
   tiles.appendChild(tile("Web", D.web || "–", last && last.at ? "Live since " + tm(last.at) : ""));
   tiles.appendChild(tile("iPhone build", bv, D.buildWith ? "TestFlight · with " + D.buildWith : "TestFlight"));
   tiles.appendChild(tile("Shipped today", String(D.releases.length), "releases"));
-  tiles.appendChild(tile("Feedback", D.feedback ? String(fb.length) : "–", D.feedback ? (newFb ? newFb + " new" : "none new") : "", newFb ? "you" : ""));
+  var openFbN = fb.filter(function (f) { return !f.done; }).length;
+  tiles.appendChild(tile("Feedback open", D.feedback ? String(openFbN) : "–", D.feedback ? (newFb ? newFb + " new · " : "") + (fb.length - openFbN) + " addressed" : "", openFbN ? "you" : ""));
   tiles.appendChild(tile("Working now", String(D.sheet.length), D.sheet.map(function (s) { return s.area; }).join(", ") || "nobody", D.sheet.length ? "hot" : ""));
   tiles.appendChild(tile("Waiting on you", String(D.waiting.length), "to do", D.waiting.length ? "you" : ""));
-  document.title = (newFb ? "(" + newFb + ") " : "") + "Project status";
+  document.title = (openFbN ? "(" + openFbN + ") " : "") + "Project status";
 
   var w = $("waiting"); w.textContent = ""; $("wait-n").textContent = D.waiting.length || "";
   D.waiting.forEach(function (x) {
@@ -329,11 +333,12 @@ function loadPeople() {
 function renderFeedback() {
   var box = $("feedback"); box.textContent = "";
   if (!D.feedback) { box.appendChild(el("div", "empty", "Loading feedback…")); $("fb-n").textContent = ""; return; }
-  var list = D.feedback.filter(function (f) { return fbFilter === "all" || f.kind === fbFilter || (fbFilter === "idea" && f.kind === "other"); });
-  $("fb-n").textContent = D.feedback.length || "";
-  if (!list.length) box.appendChild(el("div", "empty", "Nothing here yet."));
+  var list = D.feedback.filter(function (f) { return fbFilter === "all" || (fbFilter === "done") === !!f.done; });
+  var nOpen = D.feedback.filter(function (f) { return !f.done; }).length;
+  $("fb-n").textContent = nOpen + " open";
+  if (!list.length) box.appendChild(el("div", "empty", fbFilter === "open" ? "Everything has been addressed." : "Nothing here yet."));
   list.forEach(function (f) {
-    var c = el("div", "fb" + (f.at > seenAt ? " fresh" : "") + (openFb[f.id] ? " open" : "")); c.tabIndex = 0; c.setAttribute("role", "button"); c.setAttribute("aria-expanded", openFb[f.id] ? "true" : "false");
+    var c = el("div", "fb" + (f.done ? " isdone" : "") + (f.at > seenAt && !f.done ? " fresh" : "") + (openFb[f.id] ? " open" : "")); c.tabIndex = 0; c.setAttribute("role", "button"); c.setAttribute("aria-expanded", openFb[f.id] ? "true" : "false");
     var m = el("div", "main");
     m.appendChild(el("div", "q", "“" + f.text + "”"));
     var meta = el("div", "meta");
@@ -341,9 +346,19 @@ function renderFeedback() {
     meta.appendChild(el("span", f.kind === "bug" ? "chip live" : f.kind === "idea" ? "chip idea" : "chip", f.kind === "bug" ? "Problem" : f.kind === "idea" ? "Idea" : "Other"));
     meta.appendChild(el("span", null, [f.name, f.page, ago(f.at)].filter(Boolean).join(" · ")));
     m.appendChild(meta);
+    if (f.done) { var dn = el("div", "meta"); dn.appendChild(el("span", "chip idea", "✓ Addressed")); dn.appendChild(el("span", null, [f.done.note, f.done.version ? "in " + f.done.version : "", f.done.by === "claude" ? "marked by Claude" : ""].filter(Boolean).join(" · "))); m.appendChild(dn); }
     var dev = (f.device || "").replace(", side column", ""), app = f.app || "";
     app = /^iPhone app/.test(app) ? app.replace("iPhone app build", "build") : (f.version ? "Web " + f.version : app);
     m.appendChild(el("div", "dev", [f.detail, dev, app].filter(Boolean).join(" · ")));
+    var tgl = el("button", "tgl", f.done ? "Open it again" : "Mark addressed"); tgl.type = "button";
+    tgl.addEventListener("click", function (e) {
+      e.stopPropagation(); tgl.disabled = true; tgl.textContent = "Saving…";
+      api("/api/feedback/done", { pass: pass(), id: f.id, done: !f.done }).then(function (j) {
+        if (!j.ok) throw new Error(); f.done = j.done; openFb[f.id] = false; render();
+      }).catch(function () { tgl.disabled = false; tgl.textContent = "Didn't save. Try again"; });
+    });
+    tgl.addEventListener("keydown", function (e) { e.stopPropagation(); });
+    m.appendChild(tgl);
     c.appendChild(m);
     var th = null;
     if (f.shot) { th = el("div", "thumb", "pic"); c.appendChild(th); if (shotUrls[f.id]) putShot(th, f.id); }

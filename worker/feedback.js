@@ -4,6 +4,7 @@
 // POST /api/feedback/inbox  {key, all?}           → the items not reported yet (all: the last 100), decrypted
 // POST /api/feedback/mark   {key, ids: [...]}     → marks those items reported, so the next report skips them
 // POST /api/feedback/shot   {key, id}             → that item's screenshot, as a data URL
+// POST /api/feedback/done   {key, id, done, note?, version?, by?} → marks an item addressed (done: false = open again)
 //
 // Storage: the existing Supabase docs table, so there's no new table to set up. Every document there can be read
 // with the app's public key, so each item is encrypted (AES-GCM, with a key made from the worker's SUPABASE_SECRET)
@@ -76,7 +77,7 @@ export async function feedbackRoute(req, env, url, h) {
     const list = await rows(env, "feedback/i/", p.all ? "" : "&data->>reported=is.null");
     const items = [];
     for (const row of list) {
-      try { items.push(Object.assign(await open(env, row.data.enc), { reported: row.data.reported || null })); }
+      try { items.push(Object.assign(await open(env, row.data.enc), { reported: row.data.reported || null, done: row.data.done || null })); }
       catch (e) { items.push({ id: row.path.slice(11), at: row.data.at, error: "couldn't decrypt" }); }
     }
     items.sort((a, b) => String(a.at).localeCompare(String(b.at)));
@@ -89,6 +90,15 @@ export async function feedbackRoute(req, env, url, h) {
       if (r.ok) done.push(id);
     }
     return json({ ok: true, marked: done });
+  }
+  // addressed or open again: {id, done: true|false, note?, version?, by?}. Kept in the clear beside "reported" (no feedback text in it).
+  if (url.pathname === "/api/feedback/done") {
+    const id = clip(p.id, 60); if (!/^[0-9]{14}-[a-z0-9]+-[a-z0-9]+$/i.test(id)) return json({ error: "bad id" }, 400);
+    const have = await rows(env, "feedback/i/" + id);
+    if (!have.find((x) => x.path === "feedback/i/" + id)) return json({ error: "No such item" }, 404);
+    const done = p.done === false ? null : { at: new Date().toISOString(), note: clip(p.note, 140), version: clip(p.version, 20).replace(/[^0-9.]/g, ""), by: p.by === "claude" ? "claude" : "dj" };
+    const r = await rpc(env, "mirror_doc", { p_path: "feedback/i/" + id, p_data: { done }, p_merge: true });
+    return r.ok ? json({ ok: true, id, done }) : json({ error: "Couldn't save it. Try again." }, 502);
   }
   if (url.pathname === "/api/feedback/shot") {
     const list = await rows(env, "feedback/s/" + clip(p.id, 60));
