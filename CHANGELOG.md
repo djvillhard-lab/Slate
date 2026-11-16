@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.38.0 (Nov 16, 2026)
+TestFlight: 3.38.0 (37)
+- Live notifications use the room in the expanded Dynamic Island (touch and hold it). Under each team's score is its standout so far, with ESPN's full line: "V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK" in basketball, the passing, rushing or receiving leader in football ("B. Purdy 22/28, 389 YDS, 3 TD"). Across the bottom, each team's line facing the other: field goal %, threes made and tried, and rebounds in basketball, timeouts left in football. Then the last play in ESPN's words ("Derrick White defensive rebound"), and ESPN's win probability, labeled as ESPN's ("ESPN win chance: BOS 100%").
+- Everything comes from ESPN's live scoreboard while the game is on, and a line is left out when ESPN doesn't send it. Hockey and soccer keep the current view until ESPN's live numbers for them are checked during a game.
+- Needs this TestFlight build. Until you update, live notifications look the same as before.
+
 ## 3.37.0 (Nov 16, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - Live feed for basketball: NBA, WNBA and college games now have the Live feed button in the quick look (right above Full matchup) and on the matchup page. Same page as football: the game switcher (live basketball games), swiping between games, the score bar that stays on top, and updates every few seconds.

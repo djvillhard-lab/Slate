@@ -209,6 +209,8 @@ function laState(s) {
   if (s.state === "in" && (s.po === "away" || s.po === "home")) st.poss = s.po;
   // "MIN ball · 3rd & 4 at GB 35" (3.25.1: who has it, in words too, beside the football icon)
   if (s.state === "in" && s.dd) { const who = s.po === "away" ? s.aa : s.po === "home" ? s.ha : ""; st.sit = ((who ? who + " ball · " : "") + String(s.dd)).slice(0, 44); }
+  // the expanded island's extra lines (3.38.0; builds before it ignore them)
+  if (s.state === "in") for (const k of ["ap", "hp", "at", "ht", "lp", "wp"]) if (s[k]) st[k] = s[k];
   return st;
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
@@ -236,7 +238,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     // before kickoff (3.32.0): a new one starts 10 minutes early, showing 0-0 with the start time and channel
     const kick = Date.parse(s.start || g.start) || 0, soon = s.state === "pre" && kick > 0 && Date.now() >= kick - 10 * 60000 && Date.now() - kick <= 60 * 60000;
     if (s.state === "pre" && !cur && !soon) continue;
-    const st = s.state === "pre" ? preState(g, kick) : laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}`;
+    const st = s.state === "pre" ? preState(g, kick) : laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}`;
     let tok = (la.acts || {})[id];
     // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
     if (cur && !cur.off && per[id] === 0) {
@@ -539,6 +541,7 @@ async function liveScores(games, want, now, early) {
     }
     if (dd) sc[id].dd = String(dd);
     if (pid) sc[id].po = pid === String((cs.away.team || {}).id) ? "away" : pid === String((cs.home.team || {}).id) ? "home" : "";
+    if (st.state === "in") Object.assign(sc[id], islandStats(g, c, cs, sit));
   }
   return sc;
 }
@@ -566,6 +569,44 @@ export async function followNow(env, prefix, p) {
   aset.updatedAt = new Date().toISOString();
   await putDoc(env, path, aset);
   return { ok: true, changed: true };
+}
+
+// The expanded Dynamic Island's extra lines (3.38.0), only while the game is on and only what ESPN's scoreboard sends
+// (before tip-off its numbers are season averages, so nothing is taken then): each team's standout, a team line,
+// the last play and ESPN's win probability. Sports ESPN gives none of these for get nothing new.
+function islandStats(g, c, cs, sit) {
+  const sport = SPORT[g.league], out = {}, cut = (x, n) => String(x || "").replace(/\s+/g, " ").trim().slice(0, n);
+  const stat = (x, k) => { const f = (x.statistics || []).find((y) => y.name === k); return f ? String(f.displayValue || "") : ""; };
+  for (const [sd, k] of [["away", "a"], ["home", "h"]]) {
+    const x = cs[sd]; if (!x) continue;
+    if (sport === "bball") {
+      // ESPN's own pick for the team's best game so far, with the full line: "V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK"
+      const r = ((x.leaders || []).find((L) => L.name === "rating") || {}).leaders, top = r && r[0];
+      if (top && top.athlete && top.displayValue) out[k + "p"] = cut(`${top.athlete.shortName || top.athlete.displayName} ${top.displayValue}`, 48);
+      const fg = stat(x, "fieldGoalPct"), tm = stat(x, "threePointFieldGoalsMade"), ta = stat(x, "threePointFieldGoalsAttempted"), rb = stat(x, "rebounds");
+      const parts = [fg ? `FG ${Math.round(Number(fg))}%` : "", tm && ta ? `3PT ${tm}/${ta}` : "", rb ? `REB ${rb}` : ""].filter(Boolean);
+      if (parts.length) out[k + "t"] = parts.join(" · ");
+    }
+    if (sport === "football") {
+      // the game's passing, rushing and receiving leaders that play for this team (the first one ESPN lists)
+      const tid = String((x.team || {}).id || "");
+      for (const L of c.leaders || []) {
+        const top = (L.leaders || [])[0]; if (!top || !top.athlete || String((top.team || {}).id || "") !== tid) continue;
+        out[k + "p"] = cut(`${top.athlete.shortName || top.athlete.displayName} ${top.displayValue || ""}`, 48); break;
+      }
+      const to = sit[sd + "Timeouts"];
+      if (Number.isInteger(Number(to)) && to !== undefined && to !== null && to !== "") out[k + "t"] = `${to} timeout${Number(to) === 1 ? "" : "s"} left`;
+    }
+  }
+  const lp = sit.lastPlay || {};
+  if ((sport === "bball" || sport === "football") && lp.text) out.lp = cut(lp.text, 90);
+  // decision 10 (docs/NOTIFICATIONS-PLAN.md): ESPN's win probability, labeled as ESPN's, for football and basketball
+  const pr = lp.probability || {}, aw = Number(pr.awayWinPercentage), hw = Number(pr.homeWinPercentage);
+  if ((sport === "bball" || sport === "football") && aw >= 0 && hw >= 0 && aw + hw > 0) {
+    const [ab, pct] = aw >= hw ? [(cs.away.team || {}).abbreviation, aw] : [(cs.home.team || {}).abbreviation, hw];
+    if (ab) out.wp = `ESPN win chance: ${ab} ${Math.round(pct * 100)}%`;
+  }
+  return out;
 }
 
 // ---------- the minute job ----------
@@ -657,7 +698,7 @@ export async function runAlerts(env) {
   if (BC) {
     for (const [id, st] of Object.entries(BC.want)) {
       const g = BC.doc.games[id]; if (!g) continue;
-      const key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.line || ""}`;
+      const key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.line || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}`;
       if (g.end || g.k === key) continue;
       const fin = st.state === "post", scored = !String(g.k || "").startsWith(`${st.a}-${st.h}-`);
       for (const envName of ["production", "sandbox"]) {

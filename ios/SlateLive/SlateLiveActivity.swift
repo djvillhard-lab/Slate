@@ -23,12 +23,19 @@ struct SlateLiveActivity: Widget {
             let a = context.attributes, s = context.state
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    IslandTeam(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, chipFirst: true, dim: SlateLook.lost(s, away: true))
-                        .padding(.leading, 4)
+                    // each team's standout so far sits under its score (3.38.0)
+                    VStack(alignment: .leading, spacing: 3) {
+                        IslandTeam(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, chipFirst: true, dim: SlateLook.lost(s, away: true))
+                        IslandNote(text: s.ap, align: .leading)
+                    }
+                    .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    IslandTeam(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, chipFirst: false, dim: SlateLook.lost(s, away: false))
-                        .padding(.trailing, 4)
+                    VStack(alignment: .trailing, spacing: 3) {
+                        IslandTeam(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, chipFirst: false, dim: SlateLook.lost(s, away: false))
+                        IslandNote(text: s.hp, align: .trailing)
+                    }
+                    .padding(.trailing, 4)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(spacing: 3) {
@@ -49,14 +56,7 @@ struct SlateLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    // the slate's one-liner across the whole width (red while the game is on); tapping opens the matchup
-                    Text(s.line ?? "")
-                        .font(SlateLook.semi(13))
-                        .foregroundStyle(s.state == "in" ? SlateLook.live : SlateLook.muted)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.85)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 4)
+                    IslandBottom(s: s)
                 }
             } compactLeading: {
                 CompactSide(a: a, s: s, leading: true)
@@ -300,6 +300,63 @@ private struct Pill: View {
 }
 
 // Dynamic Island, expanded: each team's chip and big score beside the camera (home mirrored: score, then chip)
+// a standout's line under a team's score in the expanded island: small, up to two lines, left out when ESPN has none
+private struct IslandNote: View {
+    let text: String?
+    let align: HorizontalAlignment
+
+    var body: some View {
+        if let t = text, !t.isEmpty {
+            Text(t)
+                .font(SlateLook.semi(11))
+                .foregroundStyle(SlateLook.muted)
+                .multilineTextAlignment(align == .leading ? .leading : .trailing)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: 150, alignment: align == .leading ? .leading : .trailing)
+        }
+    }
+}
+
+// The expanded island's bottom (3.38.0): both teams' lines facing each other, then the last play (or the slate's one-liner
+// on a build or game without one), then ESPN's win probability. Each row is left out when ESPN doesn't send it.
+private struct IslandBottom: View {
+    let s: SlateGameAttributes.ContentState
+
+    var body: some View {
+        let live = s.state == "in"
+        let main = (live ? s.lp : nil).flatMap { $0.isEmpty ? nil : $0 } ?? s.line ?? ""
+        VStack(alignment: .leading, spacing: 4) {
+            if (s.at ?? "") != "" || (s.ht ?? "") != "" {
+                HStack(spacing: 8) {
+                    Text(s.at ?? "").frame(maxWidth: .infinity, alignment: .leading)
+                    Text(s.ht ?? "").frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .font(SlateLook.num(11))
+                .foregroundStyle(SlateLook.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            }
+            if !main.isEmpty {
+                Text(main)
+                    .font(SlateLook.semi(13))
+                    .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if live, let w = s.wp, !w.isEmpty {
+                Text(w)
+                    .font(SlateLook.semi(11))
+                    .foregroundStyle(SlateLook.muted)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(.horizontal, 4)
+    }
+}
+
 private struct IslandTeam: View {
     let abbr: String
     let color: String

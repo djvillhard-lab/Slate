@@ -14,6 +14,13 @@ struct SlateGameAttributes: ActivityAttributes {
         var line: String?     // optional one-liner, like the slate's ("Cade Cunningham has 41 pts")
         var poss: String?     // football: who has the ball, "away" or "home" (from ESPN, while it reports one)
         var sit: String?      // football: ESPN's down and distance, "2nd & 7 at BC 34"
+        // 3.38.0, the expanded Dynamic Island's extra room, all straight from ESPN's live scoreboard and all optional:
+        var ap: String?       // away's standout so far: "V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK", "B. Purdy 21/27, 323 YDS, 2 TD"
+        var hp: String?       // home's standout
+        var at: String?       // away team line: "FG 48% · 3PT 10/33 · REB 48" (basketball), "3 timeouts" (football)
+        var ht: String?       // home team line
+        var lp: String?       // the last play, in ESPN's words: "Dylan Harper makes free throw 2 of 2"
+        var wp: String?       // ESPN's win probability for the team ahead in it: "ESPN win chance: SA 99%"
     }
 
     var gameId: String
