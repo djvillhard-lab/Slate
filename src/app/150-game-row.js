@@ -140,6 +140,7 @@
       }
     }
     else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); }
+    else if (mode === "games" && !g.custom) { var agl = agLine(g, st.kind, row); if (agl) row.appendChild(agl); }  // All games: the same one-liners (3.39.0)
     if (openTray) row.appendChild(openTray);
     if (mode === "lineup" && isDuo && state.view === "game" && state.gameId === g.id) row.classList.add("picked");
     if (mode === "lineup" && !g.custom) {

@@ -465,6 +465,7 @@
         try { var tgt = cur.data || (state.box || {})[g.id]; if (sum && tgt && tgt.state === "pre") { var fresh = bxNorm(g.league, sum, null); if (fresh.odds) { tgt.odds = fresh.odds; bxRedraw(g); } } } catch (e) {}
         var changed = tx !== p.text; if (tx) p.tm = pvCompute.tm || ""; p.text = tx || p.text || ""; p.at = Date.now();
         if (changed && tx) { pvSave(); clearTimeout(pvT); pvT = setTimeout(function () { if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, 250); }
+        if (changed && tx) agRedraw();
       }, function () { p.at = Date.now() - 25 * 60000; }).then(function () { p.busy = false; pvRun--; pvPump(); });
     })(pvQ.shift());
   }

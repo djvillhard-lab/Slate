@@ -118,7 +118,7 @@
     bxFetch(g);
   }
   function bxRedraw(g) {
-    var cur = bx.live[g.id]; if (cur && cur.hlNew) { cur.hlNew = false; if (inLineup(g.id) && (state.view === "lineup" || isDuo)) keepScroll(renderLineup); }
+    var cur = bx.live[g.id]; if (cur && cur.hlNew) { cur.hlNew = false; if (inLineup(g.id) && (state.view === "lineup" || isDuo)) keepScroll(renderLineup); agRedraw(); }
     if (state.view === "game" && state.gameId === g.id) keepScroll(renderGame);
     if (state.openId === g.id && document.querySelector("#lineup-body .tray")) keepScroll(renderLineup);
     if (state.openId === g.id && document.querySelector("#games-body .tray")) keepScroll(renderGames);

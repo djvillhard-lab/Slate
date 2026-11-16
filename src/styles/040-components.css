@@ -123,6 +123,7 @@ main.wrap, html.corner main.wrap, html.corner.roomy main.wrap, html.duo main.wra
 .glist { border-top: 1px solid var(--hair); }
 .g { grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: center; padding: 12px 0 12px; }
 .g.gpick { grid-template-columns: minmax(0, 1fr) auto 30px; column-gap: 12px; }
+.g.gpick > .add { grid-row: 1; grid-column: 3; }  /* the + stays beside the clock when a one-liner sits under the teams (3.39.0) */
 .g-time, .g-info { display: none; }
 .g-main { gap: 3px; }
 .g-lg { font-size: 13px; font-weight: 700; color: var(--muted); gap: 4px; margin-bottom: 2px; }

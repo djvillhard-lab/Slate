@@ -107,8 +107,42 @@
       return true;
     }).sort(byStart);
   }
+  // ---- One-liners on All games (3.39.0): the slate's own lines, from what's already on the phone ----
+  // a missing or stale line is fetched only once its card has been on screen for a moment, so a long list costs nothing until you look at it
+  var agIO = null, agFn = new WeakMap(), agT = null;
+  function agSeen(row, fn) {
+    if (!("IntersectionObserver" in window)) { fn(); return; }
+    if (!agIO) agIO = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var r = e.target; clearTimeout(r._agT);
+        if (e.isIntersecting) r._agT = setTimeout(function () { var f = agFn.get(r); if (f && r.isConnected) { agIO.unobserve(r); agFn.delete(r); f(); } }, 300);
+      });
+    }, { rootMargin: "120px 0px" });
+    agFn.set(row, fn); agIO.observe(row);
+  }
+  function agLine(g, kind, row) {
+    var n = null;
+    if (kind === "live" || kind === "over") {
+      n = hlNode(g);
+      if (n) { if (kind === "live") n.classList.add("hl-live"); return n; }
+      if (!(kind === "over" && HLC[g.id])) agSeen(row, function () { bxNeed(g); });
+      // live with a score but no line yet: the game's standout so far, from the scoreboard
+      var ll = kind === "live" ? liveLeadLine(g) : "";
+      if (ll) return hlLine(g, ll, teamOfText(g, ll), "hl hl-live");
+      return kind === "live" && PV[g.id] && PV[g.id].text ? hlLine(g, PV[g.id].text, PV[g.id].tm, "hl hl-pre") : null;
+    }
+    if (kind === "upcoming") {
+      var p = PV[g.id];
+      if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) agSeen(row, function () { pvNeed(g); });
+      if (p && p.text) n = hlLine(g, p.text, p.tm, "hl hl-pre");
+    }
+    return n;
+  }
+  // a new line arrived: redraw All games once, a moment later (several lines landing together make one redraw)
+  function agRedraw() { if (state.view !== "games" && !isDuo) return; clearTimeout(agT); agT = setTimeout(function () { if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); }, 400); }
   function renderGames() {
     var body = $("games-body"); body.textContent = "";
+    if (agIO) agIO.disconnect();
     $("search").hidden = !state.showSearch && !state.q;
     if (!games().length) { if (isDuo) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
     var list = gamesFiltered();

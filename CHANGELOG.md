@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.39.0 (Nov 16, 2026)
+TestFlight: 3.38.0 (37), no new build (web only)
+- All games: every game now has the same one-liner as on Tonight's Slate. Upcoming games show the pre-game note (streaks, injuries, the line), live games show the standout so far in red, and finished games show the top performer.
+- To keep a long list light, a missing line is only fetched from ESPN once its game has been on screen for a moment. Lines already on the phone show straight away.
+
 ## 3.38.6 (Nov 16, 2026)
 TestFlight: 3.38.0 (37), no new build (web only)
 - All games on the folded iPhone Duo: the filter row now runs all the way to the right edge, into the side column, so All sits at the far right, nudged down 6 points so the clock and Wi-Fi never touch it.
