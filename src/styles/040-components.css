@@ -673,6 +673,7 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .lo-none { display: grid; gap: 12px; justify-items: start; }
 .odds-strip { display: grid; gap: 4px; margin: 4px 0 0; }
 .gv-oddsbar { margin: 0 0 12px; }
+.cl-ctl.gv-cl { margin: 0 0 14px; }
 .wp { display: flex; gap: 4px; height: 34px; border-radius: 8px; overflow: hidden; }
 .wp span { display: flex; align-items: center; padding: 0 12px; font-size: 15px; font-weight: 800; color: #fff; background: var(--raise); white-space: nowrap; min-width: 0; }
 .wp .wp-h { justify-content: flex-end; }

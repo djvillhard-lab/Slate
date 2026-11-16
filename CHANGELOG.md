@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.52.5 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Matchup page: no more Player stats section before a game starts, in every sport. It was showing on soccer (and the others) as "This season" before kickoff. Player stats now arrive with the box score once the game is on. Team stats stay.
+- Matchup page, every sport: Claude's button (Write Claude's preview, Write Claude's recap, or Regenerate) now sits right under the game's location and betting line, instead of down inside the Preview or Recap section.
+
 ## 3.52.4 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Live feed: each play tag starts with an emoji, like News. 🔥 Big play and scoring runs, 🔄 lead change, 🤝 tie, ✅ converted on 3rd or 4th down, 🛑 stopped, ⛓️ 1st down, 📈 win-probability swing, 🚩 flag, 🚨 red zone and buzzer-beater, ⏱️ two-minute drill and clutch, 💪 and-one. The play text itself has none.

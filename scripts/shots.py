@@ -112,6 +112,10 @@ def main():
                     page.evaluate("SlateApp.go('games')"); page.wait_for_timeout(2500)
                     hit = page.evaluate("""(T => { const r = [...document.querySelectorAll('#games-body .g')].find(x => x.innerText.indexOf(T) !== -1);
                         if (!r) return false; (r.querySelector('.g-main') || r).click(); return true; })(%s)""" % json.dumps(team))
+                    if not hit:  # not under the page's current filter (e.g. Your teams): look again under ALL
+                        page.evaluate("(() => { const b = [...document.querySelectorAll('#strip button')].find(x => x.innerText.trim() === 'ALL'); if (b) b.click(); })()"); page.wait_for_timeout(1500)
+                        hit = page.evaluate("""(T => { const r = [...document.querySelectorAll('#games-body .g')].find(x => x.innerText.indexOf(T) !== -1);
+                            if (!r) return false; (r.querySelector('.g-main') || r).click(); return true; })(%s)""" % json.dumps(team))
                     if not hit: print(f"  {size}: no game with '{team}' on All games"); continue
                     page.wait_for_timeout(2000)
                     if kind == "feed":

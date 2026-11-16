@@ -36,6 +36,8 @@
     var kind = status(g).kind, started = kind === "live" || kind === "over", sport = BX_SPORT[g.league] || "", b = sport ? boxFor(g) : null;
     bxNeed(g);
     var ostrip = oddsStrip(g, b); if (ostrip) { ostrip.classList.add("gv-oddsbar"); body.appendChild(ostrip); }
+    // Claude's write (or regenerate) button sits right under the location and the betting line, in every sport (DJ, 3.52.5)
+    var gcTop = gameClaudeCtl(g); if (gcTop) { gcTop.classList.add("gv-cl"); body.appendChild(gcTop); }
     var live = boxLive(b), season = !live && b && b.state === "pre" && b.season;
     state.gvSec = state.gvSec || {};
     var open = state.gvSec[g.id] || (state.gvSec[g.id] = { recap: kind === "over", box: kind === "live", team: false, pv: !started });
@@ -96,8 +98,7 @@
       var rcx = pv && recapOf(pv);
       section("recap", sport === "soccer" ? "Recap, lineups and summary" : "Recap and players", "Final", function (box) {
         // Claude's summary first, then the game's top performers, then the full box score
-        previewSections(g, pv, box, "recap");
-        if (rcx) { var gcl = gameClaudeCtl(g); if (gcl) box.appendChild(gcl); }
+        previewSections(g, pv, box, "recap", true);
         var tp = live ? boxStars(g, b) : null; if (tp) box.appendChild(tp);
         var scbF = live && boxShown(g) ? scoringBlock(g, true) : null; if (scbF) { var scfc = gvCard(null, "gv-box"); scfc.appendChild(scbF); box.appendChild(scfc); }  // the scoring timeline
         if (sport) boxFill(box);
@@ -111,16 +112,16 @@
         var scb2 = live && boxShown(g) ? scoringBlock(g, true) : null; if (scb2) { var sc2c = gvCard(null, "gv-box"); sc2c.appendChild(scb2); box.appendChild(sc2c); }
         boxFill(box); });
       if (sport) teamSec();
-      section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
-        if (!hasPre) { var gp = gvCard(null), gpc = gameClaudeCtl(g); if (gpc) { gp.appendChild(gpc); box.appendChild(gp); } }
-        else previewSections(g, pv, box, "pre");
+      section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Not written yet", function (box) {
+        previewSections(g, pv, box, "pre");
         pvExtras(box);
       });
     } else {
-      section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Tap to have Claude write one", function (box) {
+      section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Not written yet", function (box) {
         previewSections(g, pv, box); pvExtras(box);
       });
-      if (sport) { section("box", "Player stats", "This season", boxFill); teamSec(); }
+      // no player stats before the start (DJ, 3.52.5): they arrive with the box score once the game is on
+      if (sport) teamSec();
     }
   }
   // the matchup page's preview sections (odds, quick read or recap, deep dive, players, form, headlines)
@@ -166,11 +167,12 @@
     return wc;
   }
   // part: "recap" (after the final: the recap and top performers), "pre" (the pregame preview only), or nothing (all of it)
-  function previewSections(g, pv, body, part) {
+  function previewSections(g, pv, body, part, noCl) {
     if (part === "recap") {
       var rc0 = pv && recapOf(pv);
+      if (!rc0 && noCl) return;  // the matchup page has Claude's button at the top
       if (!rc0) { var np0 = gvCard(null); var c0 = gameClaudeCtl(g); if (c0) np0.appendChild(c0); body.appendChild(np0); return; }
-    } else if (!pv || !(pv.summary || (part !== "pre" && pv.recap && pv.recap.text))) { var np = gvCard(null); np.appendChild(part === "pre" ? el("p", "pv-none", "No pregame preview was written for this game.") : previewBlock(g)); body.appendChild(np); return; }
+    } else if (!pv || !(pv.summary || (part !== "pre" && pv.recap && pv.recap.text))) { var np = gvCard(null); np.appendChild(el("p", "pv-none", part === "pre" ? "No pregame preview was written for this game." : "No preview yet. Claude's button at the top writes one.")); body.appendChild(np); return; }
     // the betting line sits at the top of the matchup page, so it isn't repeated here
     var o = {};
     if (o.spread || o.total || (o.ml && o.ml.away != null)) {
@@ -190,7 +192,6 @@
     } else if (pv.summary) {
       var q = withSwitch(gvCard("The quick read")); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
       body.appendChild(q);
-      var qc = gameClaudeCtl(g); if (qc) body.appendChild(qc);
     }
     if (part === "recap") {
       var st0 = [];
