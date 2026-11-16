@@ -88,19 +88,6 @@
     });
     return { tags: out, run: run };
   }
-  // the court card: each team's shots this period on its own half court (made filled, missed hollow, the latest ringed)
-  function hpCourtSvg(shots, col, label) {
-    var arc = "M3 0 V13.9 A23.75 23.75 0 0 0 47 13.9 V0";
-    var s = '<svg viewBox="0 0 50 31" preserveAspectRatio="xMidYMid meet" role="img" aria-label="' + label + '"><rect x="0.3" y="0.3" width="49.4" height="31" rx="1.5" class="hp-fl"/>' +
-      '<path d="' + arc + '" class="hp-ln"/><rect x="17" y="0" width="16" height="19" class="hp-ln hp-key"/><circle cx="25" cy="19" r="6" class="hp-ln"/>' +
-      '<line x1="22" y1="4" x2="28" y2="4" class="hp-ln hp-bb"/><circle cx="25" cy="5.25" r="0.9" class="hp-rim"/>';
-    shots.forEach(function (sh, i) {
-      var x = Math.max(1, Math.min(49, sh.x)), y = Math.max(1, Math.min(30, sh.y + 4.75)), last = i === shots.length - 1;
-      if (last) s += '<circle cx="' + x + '" cy="' + y + '" r="2.6" class="hp-last" style="stroke:' + col + '"/>';
-      s += sh.made ? '<circle cx="' + x + '" cy="' + y + '" r="1.25" style="fill:' + col + '"/>' : '<circle cx="' + x + '" cy="' + y + '" r="1.05" class="hp-miss" style="stroke:' + col + '"/>';
-    });
-    return s + "</svg>";
-  }
   function hpFeed(body, g, sum, anchor, aTop, sc) {
     var comp = ((sum.header || {}).competitions || [])[0] || {}, cst = comp.status || {}, st = cst.type || {}, sideOf = {}, scoreOf = {}, recOf = {}, lines = {};
     (comp.competitors || []).forEach(function (k) { var id = String((k.team || {}).id || ""), sd = k.homeAway === "home" ? "home" : "away"; sideOf[id] = sd; scoreOf[sd] = k.score; recOf[sd] = ((k.record || [])[0] || {}).summary || ""; lines[sd] = (k.linescores || []).map(function (l) { return l.displayValue != null ? l.displayValue : l.value; }); });
@@ -123,40 +110,12 @@
     });
     body.appendChild(bug);
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
-    // the court card: the latest period with plays
-    var curP = 0; plays.forEach(function (p) { curP = Math.max(curP, Number((p.period || {}).number) || 0); });
-    var card = null;
-    if (curP && !over) {
-      card = el("div", "fd-field hp-card");
-      var head = el("div", "fd-dd"), reg = hpHalves(lg) ? 2 : 4, lastP = plays[plays.length - 1] || {}, mg = Math.abs(aS - hS);
-      var runTxt = TG.run.n >= 6 ? abbr(g, TG.run.sd) + " on a " + TG.run.n + "-0 run" : "";
-      head.appendChild(el("b", null, runTxt || hpPerName(lg, curP, true)));
-      head.appendChild(el("span", null, runTxt ? hpPerName(lg, curP, true) + " shots" : "Shots this " + (hpHalves(lg) && curP <= 2 ? "half" : curP > reg ? "overtime" : "quarter")));
-      if (!brk && per >= reg && hpSecs(cst.displayClock) <= 300 && mg <= 5 && st.state === "in") head.appendChild(el("em", "fd-rz", "Clutch"));
-      card.appendChild(head);
-      var courts = el("div", "hp-courts"), anyXY = false;
-      ["away", "home"].forEach(function (sd) {
-        var shots = [], fgm = 0, fga = 0, fouls = 0, tos = 0;
-        plays.forEach(function (p) {
-          if (sideOf[String((p.team || {}).id || "")] !== sd) return;
-          var ty = String((p.type || {}).text || ""), tx = String(p.text || ""), pn = Number((p.period || {}).number) || 0;
-          if (/timeout/i.test(ty) && !/official/i.test(ty)) tos++;
-          if (pn !== curP) return;
-          if (/foul/i.test(ty) && !/technical|turnover/i.test(ty)) fouls++;
-          if (p.shootingPlay && !/Free Throw/i.test(ty)) { fga++; if (p.scoringPlay) fgm++; var c = p.coordinate || {}; if (c.x != null && c.x >= 0 && c.x <= 50 && c.y >= 0 && c.y <= 50) shots.push({ x: Number(c.x), y: Number(c.y), made: !!p.scoringPlay }); }
-        });
-        // a blocked shot is listed under the shooting team: it stays a miss
-        if (shots.length) anyXY = true;
-        var col = fdTint(g, sd), w = el("div", "hp-ct hp-ct-" + sd), cap = el("div", "hp-cap");
-        var dot = el("i", "hp-dot"); dot.style.background = col; cap.appendChild(dot); cap.appendChild(el("b", null, abbr(g, sd)));
-        cap.appendChild(el("span", null, fgm + "/" + fga + " FG · " + fouls + (fouls === 1 ? " foul" : " fouls")));
-        w.appendChild(cap);
-        var box = el("div", "hp-svg"); box.innerHTML = hpCourtSvg(shots, col, abbr(g, sd) + " shots this period: " + fgm + " made of " + fga); w.appendChild(box);
-        w.setAttribute("data-xy", shots.length ? "1" : "0");
-        courts.appendChild(w);
-      });
-      if (!anyXY) courts.classList.add("hp-noxy");  // no shot locations from ESPN for this game: just the numbers
-      card.appendChild(courts);
+    // each team's leading scorer so far (3.38.1: replaces the shot graphic), with ESPN's win probability under them
+    var card = null, lead = {};
+    Object.keys(ix).forEach(function (id) { var P = ix[id], sd = sideOf[P.tid], pts = parseFloat((P.st || {}).PTS) || 0; if (sd && (!lead[sd] || pts > (parseFloat(lead[sd].st.PTS) || 0))) lead[sd] = P; });
+    if (lead.away || lead.home) {
+      card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", over ? "Top scorers" : "Top scorers so far"));
+      ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, ""); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
       body.appendChild(card);
     }
     var wp = (sum.winprobability || [])[(sum.winprobability || []).length - 1];
@@ -168,7 +127,7 @@
       wr.setAttribute("aria-label", "ESPN win probability: " + abbr(g, "away") + " " + ap + " percent, " + abbr(g, "home") + " " + hp + " percent");
       host.appendChild(el("p", "fd-wpl", "Win probability (ESPN)")); host.appendChild(wr);
     }
-    // the plays, newest first under their period; minor plays between two cards fold into one row
+    // the plays, newest first: scores and big plays as cards, everything else (misses, rebounds, fouls) as one plain line; subs left out
     FD.hpOpen = FD.hpOpen || {};
     var list = el("div", "fd-list"), items = 0, cap2 = FD.more ? 1e9 : 90, fresh = FD.seen || null, seenNow = {}, total = 0;
     // a trip to the line (same shooter, same moment) shows as one card with the last free throw
@@ -177,25 +136,8 @@
     var byP = {}, order = []; plays.forEach(function (p) { var n = Number((p.period || {}).number) || 0; if (!byP[n]) { byP[n] = []; order.push(n); } byP[n].push(p); });
     for (var oi = order.length - 1; oi >= 0 && items < cap2; oi--) {
       var pn = order[oi], ps = byP[pn].slice().reverse(), isCur = !over && pn === per && !brk;
-      var dh = el("div", "fd-drive"), dt = el("span", "fd-dt");
-      dt.appendChild(el("b", null, hpPerName(lg, pn, true) + (isCur ? " · now" : "")));
-      var la = (lines.away || [])[pn - 1], lh = (lines.home || [])[pn - 1];
-      if (la != null && lh != null) dt.appendChild(el("span", null, abbr(g, "away") + " " + la + ", " + abbr(g, "home") + " " + lh + " this " + (pn > (hpHalves(lg) ? 2 : 4) ? "overtime" : hpHalves(lg) ? "half" : "quarter")));
-      dh.appendChild(dt); list.appendChild(dh);
       var grp = null;
-      var flush = function () {
-        if (!grp) return; var G = grp; grp = null; items++;
-        var key = G.ps[0].pid, open = !!FD.hpOpen[key], w = el("div", "hp-min" + (open ? " open" : "") + (G.isNew ? " fd-new" : ""));
-        var b = el("button", "hp-mb"); b.type = "button"; b.setAttribute("aria-expanded", open ? "true" : "false");
-        var kinds = []; G.ps.forEach(function (x) { if (kinds.indexOf(x.rd.minor) < 0) kinds.push(x.rd.minor); });
-        b.appendChild(el("span", "hp-mt", (G.ps[0].clock || "") + (G.ps.length > 1 && G.ps[G.ps.length - 1].clock !== G.ps[0].clock ? "–" + G.ps[G.ps.length - 1].clock : "")));
-        b.appendChild(el("span", "hp-mk", kinds.slice(0, 4).join(" · ")));
-        b.appendChild(el("i", null, G.ps.length + (G.ps.length === 1 ? " play" : " plays")));
-        b.addEventListener("click", function () { FD.hpOpen[key] = !FD.hpOpen[key]; w.classList.toggle("open"); b.setAttribute("aria-expanded", FD.hpOpen[key] ? "true" : "false"); });
-        w.appendChild(b);
-        if (open) { var ul = el("div", "hp-ml"); G.ps.forEach(function (x) { var r = el("p"); r.appendChild(el("span", null, x.clock)); r.appendChild(document.createTextNode(String(x.pl.text || x.rd.title).replace(/\s+/g, " "))); ul.appendChild(r); }); w.appendChild(ul); }
-        list.appendChild(w);
-      };
+      var flush = function () {};  // 3.38.1: minor plays are plain one-line rows, nothing folded
       for (var pi = 0; pi < ps.length && items < cap2; pi++) {
         var pl = ps[pi], rd = hpRead(pl, ix), pid = hpPid(pl), isNew = !!(fresh && !fresh[pid]), ck = String((pl.clock || {}).displayValue || ""); seenNow[pid] = 1; total++;
         var T = tripOf[pid], tg = tags[pid], raw = String(pl.text || "").replace(/\s+/g, " ").trim();
@@ -208,7 +150,7 @@
           var tm2 = [], tseen = {}; T.forEach(function (x) { (tags[hpPid(x)] || []).forEach(function (y) { if (!tseen[y.t]) { tseen[y.t] = 1; tm2.push(y); } }); }); tg = tm2.length ? tm2.slice(0, 3) : null;
         }
         if (rd.note) { flush(); items++; list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
-        if (!rd.big) { if (!grp) grp = { ps: [], isNew: false }; grp.ps.push({ pl: pl, rd: rd, pid: pid, clock: ck }); if (isNew) grp.isNew = true; continue; }
+        if (!rd.big) { if (rd.minor === "Sub") continue; items++; var mr = el("p", "hp-row" + (isNew ? " fd-new" : "")); mr.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck)); mr.appendChild(document.createTextNode(raw || rd.title)); list.appendChild(mr); continue; }
         flush(); items++;
         var sd2 = sideOf[String((pl.team || {}).id || "")] || "";
         var c2 = el("div", "fd-play hp-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); c2.setAttribute("data-id", pid);

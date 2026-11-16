@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.38.1 (Nov 16, 2026)
+TestFlight: 3.38.0 (37), no new build (web only)
+- Live feed for basketball is simpler. The shot graphic is gone. Under the score bar you now see each team's top scorer so far (points, rebounds, assists) and ESPN's win probability, then the plays.
+- The plays are one plain list, newest first. Baskets, blocks, steals and turnovers get a card. Misses, rebounds and fouls are a single gray line each, with no folded rows to tap open. Subs and the quarter headers are left out, and ESPN's "End of the 2nd Quarter" lines mark where quarters change.
+
 ## 3.38.0 (Nov 16, 2026)
 TestFlight: 3.38.0 (37)
 - Live notifications use the room in the expanded Dynamic Island (touch and hold it). Under each team's score is its standout so far, with ESPN's full line: "V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK" in basketball, the passing, rushing or receiving leader in football ("B. Purdy 22/28, 389 YDS, 3 TD"). Across the bottom, each team's line facing the other: field goal %, threes made and tried, and rebounds in basketball, timeouts left in football. Then the last play in ESPN's words ("Derrick White defensive rebound"), and ESPN's win probability, labeled as ESPN's ("ESPN win chance: BOS 100%").
