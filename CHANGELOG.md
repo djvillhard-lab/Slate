@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.38.4 (Nov 16, 2026)
+TestFlight: 3.38.0 (37), no new build (web only)
+- All games on the iPhone Duo: the second row of filters (All / Best of each league / National TV) now really lines up on the right. 3.38.2 only did it on a regular iPhone. It ends just left of the clock and Wi-Fi, which reach down to that row.
+- All games in the app: the Live button goes all the way right, in line with the right edge of the game cards (it's below the clock and Wi-Fi, so nothing covers it).
+
 ## 3.38.3 (Nov 16, 2026)
 TestFlight: 3.38.0 (37), no new build (web only)
 - Tonight's Slate: finished games in the Finished group are the same size as the games above them again: the same team names, scores, start times and spacing, instead of a smaller, tighter version. They still drop the tags (Big night, Your team) and stay a little dimmed.
