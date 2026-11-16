@@ -78,8 +78,6 @@
     if (nw.subs[path] || !db) return; nw.subs[path] = true;
     db.doc(path).onSnapshot(function (sn) {
       nw.docs[path] = sn.exists ? sn.data() : null;
-      // a breakdown opened from a card is written on that tap, once we know nobody has written it yet today
-      var d = nw.deep; if (d && d.auto && d.path === path) { d.auto = false; var dc = nw.docs[path]; if (!(dc && dc.take && dc.take.length) && !(dc && dc.writing && !dc.writing.error)) nwAskDeep(d); }
       if (state.view === "news") keepScroll(renderNews);
     }, function () { if (nw.docs[path] === undefined) nw.docs[path] = null; if (state.view === "news") keepScroll(renderNews); });
   }
@@ -139,10 +137,10 @@
   }
   function nwTeamDoc(page, name, lg) { var n = String(name || "").toLowerCase(); return ((page || {}).teams || []).filter(function (x) { return String(x.name || "").toLowerCase() === n && (!x.lg || !lg || x.lg === lg); })[0] || null; }
   function nwOpenDeep(d) {
-    d.key = nwDeepKey(d); d.path = "newsdeep/" + state.date + "-" + d.key; d.y = paneY(); d.auto = true;
+    d.key = nwDeepKey(d); d.path = "newsdeep/" + state.date + "-" + d.key; d.y = paneY();
     nw.deep = d;
-    if (nw.subs[d.path] && nw.docs[d.path] !== undefined) { d.auto = false; var dc = nw.docs[d.path]; if (!(dc && dc.take && dc.take.length) && !clWriting(dc, "n:" + d.path)) nwAskDeep(d); }
-    else nwSub(d.path);
+    // opening never asks Claude (3.51.1): a saved breakdown shows right away, otherwise the page has a Generate button
+    nwSub(d.path);
     renderNews(); renderBack(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
     var b = $("nw-body"); if (b && !REDUCED) { b.classList.remove("push-in"); void b.offsetWidth; b.classList.add("push-in"); setTimeout(function () { b.classList.remove("push-in"); }, 320); }
   }
@@ -168,9 +166,11 @@
     a.appendChild(el("span", "nx-rt", rd.title)); a.appendChild(el("span", "nx-rs", rd.source || "Read")); return a;
   }
   function nwDeepRow(d, label) {
-    var b = el("button", "nx-deep"); b.type = "button"; b.appendChild(icon("sparkle")); b.appendChild(el("span", "nx-dl", label || "Claude's breakdown")); b.appendChild(el("span", "nx-dh", "written when you open it")); b.appendChild(icon("more"));
+    var b = el("button", "nx-deep"); b.type = "button"; b.appendChild(icon("sparkle")); b.appendChild(el("span", "nx-dl", label || "Claude's breakdown")); b.appendChild(icon("more"));
     b.addEventListener("click", function () { nwOpenDeep(d); }); return b;
   }
+  // the team schedules load on their own; draw the Teams tab again once they're in
+  function nwLiteWait() { if (nw.liteT) return; nw.liteT = setTimeout(function () { nw.liteT = 0; if (state.view === "news" && !nw.deep && nw.tab === "teams") keepScroll(renderNews); }, 1200); }
   function nwSec(title, right) { var h = el("div", "nx-sec"); h.appendChild(el("b", null, title)); if (right) h.appendChild(el("span", null, right)); return h; }
   function nwGameHead(g) {
     var hd = el("div", "nx-gh"), l = el("div", "nx-gl");
@@ -307,7 +307,15 @@
         var hd = el("div", "nx-th"); hd.appendChild(nwTeamBadge(name, g, side)); var rec = g && side ? g[side + "Record"] : ""; if (rec) hd.appendChild(el("span", "nx-rec", rec));
         if (x.chip) hd.appendChild(el("span", "nx-chipt " + (x.tone || ""), x.chip)); b.appendChild(hd);
         b.appendChild(el("b", "nx-tn", g && side ? short(g, side) : name)); b.appendChild(el("p", null, x.line));
-        var ft = el("span", "nx-tf"); ft.appendChild(el("span", null, g ? (side === "away" ? "at " + short(g, "home") : "vs " + short(g, "away")) : "Not on today's slate")); ft.appendChild(icon("more")); b.appendChild(ft);
+        // the team's last result and next game, from ESPN's schedule (the same lines as the Teams page tiles)
+        var mt = myTeamList().filter(function (t) { return t.lg === lg && String(t.name).toLowerCase() === String(name).toLowerCase(); })[0] || { name: name, lg: lg };
+        var lite = tmLite(mt), ld = lite.d, le = lite.espn, ls = ld && le ? tmGameLine(ld.last, le.id, true) : null, nx = ld && le ? tmGameLine(ld.next, le.id, false) : null;
+        if (lite.busy && !ld) nwLiteWait();
+        var lines = el("div", "nx-tl"), row = function (lab, txt, wl) { var r = el("div", "nx-tlr"); r.appendChild(el("i", null, lab)); if (wl) r.appendChild(el("b", "rk-wl " + wl.toLowerCase(), wl)); r.appendChild(el("span", null, txt)); lines.appendChild(r); };
+        row("Last", ls ? ls.t.replace(/^[WLT] /, "") : lite.busy && !ld ? "Loading…" : !ld ? "Schedule unavailable" : "No recent game", ls && state.showScores ? ls.k : "");
+        row("Next", nx ? nx.t : lite.busy && !ld ? "Loading…" : !ld ? "\u00a0" : "No games scheduled");
+        b.appendChild(lines);
+        var ft = el("span", "nx-tf"); ft.appendChild(el("span", null, "Claude's breakdown")); ft.appendChild(icon("more")); b.appendChild(ft);
         b.addEventListener("click", function () { nwOpenDeep({ type: "t", name: name, lg: lg }); });
         return b;
       };
@@ -341,8 +349,9 @@
     body.appendChild(hero);
     if (!has) {
       var wr = clWriting(doc, k);
-      if (doc === undefined || d.auto || (wr && wr.busy)) { var sp = el("div", "nx-busy pad"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, doc === undefined || d.auto ? "Opening…" : "Claude is writing this breakdown… usually under a minute")); body.appendChild(sp); return; }
-      body.appendChild(claudeCtl("deep", doc, false, { k: k, go: function () { nwAskDeep(d); } }, "Write Claude's breakdown")); return;
+      if (doc === undefined || (wr && wr.busy)) { var sp = el("div", "nx-busy pad"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, doc === undefined ? "Opening…" : "Claude is writing this breakdown… usually under a minute")); body.appendChild(sp); return; }
+      body.appendChild(claudeCtl("deep", doc, false, { k: k, go: function () { nwAskDeep(d); } }, "Generate Claude's breakdown"));
+      body.appendChild(el("p", "nx-note", "Nobody has generated this one today. Claude writes it only when you tap Generate, and then it's saved for the day.")); return;
     }
     var sec = function (title, cl) { var h = el("div", "nx-h2" + (cl ? " nx-cl" : "")); if (cl) h.appendChild(icon("sparkle")); h.appendChild(el("span", null, title)); body.appendChild(h); };
     var rows = function (list, key) { var c = el("div", "nx-card nx-rows"); list.forEach(function (x) { var r = el("div", "nx-row"); r.appendChild(el("b", null, x[key])); r.appendChild(el("span", null, x.text)); c.appendChild(r); }); return c; };

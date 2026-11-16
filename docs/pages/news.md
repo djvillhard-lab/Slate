@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 16, 2026, 3.50.1
+Last updated: Nov 16, 2026, 3.51.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -15,8 +15,8 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   headlines are gathered in the app and sent as facts.
 - Page: Generated bar (time, how long ago, what it covered) + Regenerate (reopens the options); Top news, collapsible
   and remembered (`slate-newstop`), with New tags after a regenerate; Games | Teams | Leagues tabs, leftmost first.
-- Breakdowns: "Claude's breakdown" on a game or league card, or a team tile, opens a deeper write-up. Written on that
-  tap if nobody has written it today, saved to `newsdeep/<date>-<g|t|l>-…`, shared by every account.
+- Breakdowns: "Claude's breakdown" on a game or league card, or a team tile, opens the breakdown page. A saved one shows
+  right away; otherwise the page has a Generate button and Claude writes only on that tap (3.51.1). It's saved to `newsdeep/<date>-<g|t|l>-…`, shared by every account.
 - Back (dock, swipe, or the row on top) returns from a breakdown to the page: one line in `goBack()` (070-navigation).
 - Every generate, regenerate and breakdown goes through `/api/summary`, so testers' 10-a-day cap counts them.
 
@@ -32,7 +32,8 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Old `.nw-*` styles in `050-ux-review.css` are unused now and can go.
 
 ## Decisions
-- Claude writes only on a tap: Generate for the page, and the tap that opens a breakdown. Nothing automatic (cost).
+- Claude writes only on a Generate tap: the page, and each breakdown (DJ, Nov 16: opening a team, league or game
+  must not start a breakdown by itself). Nothing automatic (cost).
 - Top news is only as fresh as the last generate; no background checking (DJ, Nov 15).
 - Tags sit on their own line above the text so every card's text starts at the same edge (DJ asked for this).
 - Breakdowns stay inside the News view (`nw.deep`), not a new view, so the iPhone app's strip needs no new build.
@@ -42,3 +43,5 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   and hits must not repeat the score (DJ, Nov 16). The facts send each game's `status` so Claude knows it's over.
 - Teams tab = only the favorites picked in the options (`cover.picked`, "lg|name"), DJ, Nov 16. Claude no longer
   writes a line for every team in the picked games.
+- Team tiles show Last (with W/L and score) and Next from ESPN's team schedule, reusing `tmLite` / `tmGameLine` from
+  130-teams.js (DJ, Nov 16). Game cards keep the scores mid-card like the slate (`.nx-gh .nx-gr { min-width: 30% }`).
