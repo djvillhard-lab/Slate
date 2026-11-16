@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Notifications: one-liners on the Board, live line always matches the slate | worker/alerts.js, shared: ios/Shared/SlateBoardAttributes.swift, ios/SlateLive/SlateBoardActivity.swift, docs/pages/notifications.md | 2026-11-16 21:09 |
+| DJ | Menu icons: Slate icon becomes an axe-hammer | src/body.html (menu icons only), shared: ios/Slate/RootView.swift, docs/pages/menu.md | 2026-11-16 21:21 |
