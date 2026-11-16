@@ -35,6 +35,10 @@ export async function usageRoute(req, env, url, h) {
   if (!me) return json({ error: "Not allowed" }, 403);
 
   if (url.pathname === "/api/usage") {
+    // The iPhone app says so in its user agent ("SlateApp/<version>", every build since 3.24), which is surer than
+    // what the page reports. A headless browser is a screenshot or test run, not the person: not counted.
+    const ua = req.headers.get("user-agent") || "", appV = (ua.match(/SlateApp\/([0-9][0-9A-Za-z.() -]{0,20})/) || [])[1] || "";
+    if (/HeadlessChrome|Playwright|Puppeteer/i.test(ua) || p.auto) return json({ ok: true, skipped: true });
     const path = "stats/use/" + String(me.id).replace(/[^a-z0-9_-]/gi, "").slice(0, 40);
     let doc = { days: {} };
     try { const cur = await getDoc(env, path); if (cur && cur.enc) doc = await open(env, cur.enc); } catch (e) { doc = { days: {} }; }
@@ -46,7 +50,9 @@ export async function usageRoute(req, env, url, h) {
     const keep = ctDay(new Date(Date.now() - 30 * 86400000));
     for (const k of Object.keys(doc.days)) if (k < keep) delete doc.days[k];
     doc.id = me.id; doc.name = me.name; doc.last = new Date().toISOString();
-    doc.where = ["app", "home", "web"].includes(p.where) ? p.where : (doc.where || "");
+    doc.where = appV ? "app" : ["app", "home", "web"].includes(p.where) ? p.where : (doc.where || "");
+    if (appV) doc.app = appV.trim() + (/^[0-9]{1,5}$/.test(String(p.build || "")) ? " (" + p.build + ")" : "");                       // the build they last used, shown beside "iPhone app"
+    doc.seen = doc.seen || {}; if (doc.where) doc.seen[doc.where] = doc.last;   // last time in each place
     const r = await putDoc(env, path, { enc: await seal(env, doc) });
     return json({ ok: !!r.ok });
   }

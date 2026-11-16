@@ -16,6 +16,10 @@ Last updated: Nov 16, 2026 (no app version: it is not part of the app)
   `state.view` was shown; polled, so it touches no shared file) and posts to `/api/usage` every two minutes and when it
   goes to the background. `worker/usage.js` keeps 30 days per person in `stats/use/<id>`, encrypted like feedback
   (the docs table is public-readable); `/api/usage/all` is admin only. No passcode, no count.
+- People, app or browser (3.65.6): the worker trusts the app's user agent (`SlateApp/<version>`, every build) over what the
+  page says, and stores the build (`doc.app`, shown beside "iPhone app"). Test and screenshot runs are not counted
+  (`navigator.webdriver` in the page, headless user agents in the worker): shots.py signs in with Drew's profile, and
+  before this fix those runs made Drew show as "Browser" and added to his numbers for Nov 16.
 - Feedback shows Open first, with Addressed and All beside it; the tile counts what's open. Tap an item for its
   screenshot, phone and the "Mark addressed" / "Open it again" switch (see docs/pages/feedback.md for the automatic part).
 - Cards (DJ, Nov 16): every section is a card. Drag the grip (or focus it and use the arrow keys) to move it, the

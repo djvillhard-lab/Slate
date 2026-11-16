@@ -325,7 +325,7 @@ function renderPeople() {
     nm.appendChild(el("span", null, p.name || p.id));
     var live = Date.now() - new Date(p.last).getTime() < 4 * 60000;
     nm.appendChild(el("span", live ? "chip live" : "chip", live ? "On now" : ago(p.last)));
-    if (p.where) nm.appendChild(el("span", "chip out", p.where === "app" ? "iPhone app" : p.where === "home" ? "Home Screen" : "Browser"));
+    if (p.where) nm.appendChild(el("span", "chip out", p.where === "app" ? "iPhone app" + (p.app ? " " + p.app : "") : p.where === "home" ? "Home Screen" : "Browser"));
     m.appendChild(nm);
     var nums = el("div", "nums");
     [[mins(t.secs), " today"], [String(t.opens || 0), t.opens === 1 ? " open" : " opens"], [String((D.claude || {})[p.id] || 0), " summaries"]].forEach(function (x, i) {

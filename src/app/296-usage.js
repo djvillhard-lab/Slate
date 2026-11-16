@@ -5,7 +5,7 @@
   (function () {
     var U = { opens: 1, secs: 0, views: {}, cur: "", last: Date.now(), hiddenAt: 0 };
     function pw() { try { return localStorage.getItem("slate-pass") || ""; } catch (e) { return ""; } }
-    function where() { try { return window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.slate ? "app" : (window.navigator.standalone ? "home" : "web"); } catch (e) { return "web"; } }
+    function where() { try { return window.SLATE_NATIVE || (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.slate) ? "app" : (window.navigator.standalone ? "home" : "web"); } catch (e) { return "web"; } }
     function tick() {
       var now = Date.now(), dt = now - U.last; U.last = now;
       if (document.visibilityState !== "visible") return;
@@ -14,8 +14,9 @@
       if (v && v !== U.cur) { U.cur = v; U.views[v] = (U.views[v] || 0) + 1; }
     }
     function send() {
+      if (navigator.webdriver) return;   // a screenshot or test run (scripts/shots.py signs in with a real profile) is not that person using Slate
       var p = pw(); if (!p || (!U.opens && U.secs < 5)) return;
-      var body = JSON.stringify({ pass: p, opens: U.opens, secs: Math.round(U.secs), views: U.views, where: where() });
+      var body = JSON.stringify({ pass: p, opens: U.opens, secs: Math.round(U.secs), views: U.views, where: where(), build: (window.SLATE_NATIVE && window.SLATE_NATIVE.build) || "" });
       U.opens = 0; U.secs = 0; U.views = {};
       try { fetch("/api/usage", { method: "POST", headers: { "content-type": "application/json" }, body: body, keepalive: true }).then(null, function () {}); } catch (e) {}
     }

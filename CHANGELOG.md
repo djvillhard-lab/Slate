@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.65.6 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Project status, People: someone using the iPhone app no longer shows as "Browser". The screenshot checks Claude runs sign in with a real profile, and they were being counted as that person using Slate in a browser. Those runs are no longer counted, the app is now recognized by the app itself (any build), and the card shows which build each person is on, like "iPhone app 3.64.1 (42)".
+
 ## 3.65.5 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - iPhone app, Duo unfolded: the pull-down works here too. With two pages side by side, pull down at the top of either one and it slides down with your finger, stiffer the further you go, and springs back when you let go, the same feel as folded. With one page on the unfolded screen it's iOS's own bounce, like the folded slate.
