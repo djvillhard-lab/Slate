@@ -20,3 +20,4 @@ Last updated: Nov 16, 2026, 3.52.8
 - A goal with no scorer name from ESPN is left out of the scorer list, not called an own goal.
 - 3.62.1: a missed or saved penalty with no name from ESPN names the team instead.
 - Not checked on a live game yet (no soccer on when it shipped); worth a look next time an own goal happens.
+- 3.62.3 (DJ: "I want to know which team missed the penalty, as well as the player"): soccer lines name player and team, as "Arsenal's Saka has missed a penalty", "an own goal by Chelsea's Smith" (the player's own team), "set up two goals for Arsenal", "Arsenal's Raya ... clean sheet". Team alone only when ESPN has no name; lines are rebuilt each refresh, so the player appears once ESPN adds him. Checked against six real games with own goals and a saved penalty (Nov 2026 EPL, Bundesliga, Serie A).

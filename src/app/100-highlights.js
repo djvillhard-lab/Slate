@@ -172,8 +172,8 @@
           goals.push({ by: by, mn: mn, nm: nm, as: an, og: og, ogBy: ogBy, before: before, pen: /penalty/i.test(tt), how: /header/i.test(String(k.text)) ? "header" : /free kick|free-kick/i.test(String(k.text) + tt) ? "free kick" : "" });
           sh0 = h; sa0 = aw;
           worst[HID] = Math.min(worst[HID], sh0 - sa0); worst[AID] = Math.min(worst[AID], sa0 - sh0);
-          // 3.60.2: an own goal reads "an own goal by Smith" and is never the subject of "has scored"; a goal with no name from ESPN is left out of the lists
-          if (og) scorers[by].push("an own goal" + (ogBy ? " by " + ogBy : "")); else if (nm) { if (!gl[nm]) scorers[by].push(nm); gl[nm] = (gl[nm] || 0) + 1; }
+          // 3.62.2: an own goal reads "an own goal by Chelsea's Smith" and is never the subject of "has scored"; a goal with no name from ESPN is left out of the lists
+          if (og) scorers[by].push("an own goal" + (ogBy ? " by " + teams[by === HID ? AID : HID].name + "'s " + ogBy : "")); else if (nm) { if (!gl[nm]) scorers[by].push(nm); gl[nm] = (gl[nm] || 0) + 1; }
           if (an) as[an] = (as[an] || 0) + 1;
         } else if (/red card|second yellow/i.test(tt)) { var rt = String((k.team || {}).id || ""); if (teams[rt]) reds.push({ nm: shortN(ps[0]), t: rt, mn: mn }); }
       });
@@ -190,11 +190,12 @@
           : nameOf(i) + (done ? "'s goals came from " : "'s goals have come from ") + (ogs.length === 2 ? "two own goals" : listAnd(ogs)), tag(i));
         else if (i === leader && diff === 1) add("solo|" + i, 42, 1, /^an own goal/.test(ls[0]) ? "A" + ls[0].slice(1) + (done ? " decided it for " : " has ") + nameOf(i) + (done ? "" : " in front") : ls[0] + (done ? "'s goal won it for " : "'s goal has ") + nameOf(i) + (done ? "" : " in front"), tag(i));
       });
-      if (scorers[HID].length && scorers[AID].length && total >= 3) add("allsc|" + total, 46 + total * 3, 0, listAnd(scorerList(HID)) + " for " + nameOf(HID) + "; " + listAnd(scorerList(AID)) + " for " + nameOf(AID), {});
+      var plFirst = function (i) { var l = scorerList(i); return listAnd(l.filter(function (x) { return !/^an own goal/.test(x); }).concat(l.filter(function (x) { return /^an own goal/.test(x); }))); }, allT = plFirst(HID) + " for " + nameOf(HID) + "; " + plFirst(AID) + " for " + nameOf(AID);
+      if (scorers[HID].length && scorers[AID].length && total >= 3) add("allsc|" + total, 46 + total * 3, 0, allT.charAt(0).toUpperCase() + allT.slice(1), {});
       // braces, hat tricks, playmakers
       Object.keys(gl).forEach(function (n) { var x = gl[n]; if (x < 2) return; var g0 = goals.filter(function (q) { return q.nm === n; })[0];
         add("brace|" + n + "|" + x, 50 + x * 14, 1, x >= 3 ? n + (done ? " scored a hat trick for " : " has a hat trick for ") + nameOf(g0.by) : n + (done ? " scored twice for " : " has scored twice for ") + nameOf(g0.by), { player: n, team: nameOf(g0.by) }); });
-      Object.keys(as).forEach(function (n) { if (as[n] >= 2) add("ast2|" + n + "|" + as[n], 48, 1, n + (done ? " set up " : " has set up ") + NUMW[Math.min(as[n], 5)] + " goals", { player: n }); });
+      Object.keys(as).forEach(function (n) { if (as[n] < 2) return; var at = (goals.filter(function (q) { return q.as === n; })[0] || {}).by; add("ast2|" + n + "|" + as[n], 48, 1, n + (done ? " set up " : " has set up ") + NUMW[Math.min(as[n], 5)] + " goals" + (at ? " for " + nameOf(at) : ""), at ? { player: n, team: nameOf(at) } : { player: n }); });
       // comebacks, late winners and equalizers, quick doubles
       [HID, AID].forEach(function (i) { var w = -worst[i], now = i === HID ? diff : -diff; if (w < 1 || now < 0) return;
         var from = w === 1 ? "behind" : NUMW[Math.min(w, 5)] + " goals down";
@@ -213,11 +214,11 @@
       // penalties: one waiting to be taken, one missed or saved
       var pens = socPens(sum, teams);
       pens.forEach(function (p, pi) {
-        if (p.k === "pm") add("pm|" + p.a + "|" + p.m, 64, -1, (p.a || nameOf(p.tid)) + (p.x === "saved" ? (done ? " had a penalty saved" : (p.a ? " has" : " have") + " had a penalty saved") : (done ? " missed a penalty" : (p.a ? " has" : " have") + " missed a penalty")) + (p.a ? " for " + nameOf(p.tid) : ""), p.a ? { player: p.a, team: nameOf(p.tid) } : tag(p.tid));
+        if (p.k === "pm") add("pm|" + p.a + "|" + p.m, 64, -1, (p.a ? nameOf(p.tid) + "'s " + p.a : nameOf(p.tid)) + (p.x === "saved" ? (done ? " had a penalty saved" : (p.a ? " has" : " have") + " had a penalty saved") : (done ? " missed a penalty" : (p.a ? " has" : " have") + " missed a penalty")), p.a ? { player: p.a, team: nameOf(p.tid) } : tag(p.tid));
         if (p.k === "pa" && !done && pi === pens.length - 1) { var after = goals.some(function (g) { return g.mn >= p.mi; }); if (!after) add("pa|" + p.m, 96, 0, "Penalty to " + nameOf(p.tid) + (p.a ? " — " + p.a + " was brought down" : ""), tag(p.tid)); }
       });
       // red cards
-      reds.forEach(function (r) { add("red|" + r.nm, 52, -1, r.nm + (done ? "'s red card left " : " was sent off, leaving ") + nameOf(r.t) + " with 10 men from the " + ORD(r.mn) + " minute", { player: r.nm, team: nameOf(r.t) }); });
+      reds.forEach(function (r) { if (!r.nm) { add("red|" + r.t + "|" + r.mn, 52, -1, nameOf(r.t) + (done ? " played with 10 men from the " : " have been down to 10 men since the ") + ORD(r.mn) + " minute", tag(r.t)); return; } add("red|" + r.nm, 52, -1, r.nm + (done ? "'s red card left " : " was sent off, leaving ") + nameOf(r.t) + " with 10 men from the " + ORD(r.mn) + " minute", { player: r.nm, team: nameOf(r.t) }); });
       // who's running the game: possession, shots, shots on target, and winning without the ball
       var tsm = {}; (box.teams || []).forEach(function (bt) { var i = String((bt.team || {}).id); if (!teams[i]) return; var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = Number(String(x.displayValue).replace("%", "")) || 0; }); tsm[i] = m; });
       if (tsm[HID] && tsm[AID]) {
@@ -236,7 +237,7 @@
       (sum.rosters || []).forEach(function (ro) { var i = String((ro.team || {}).id); if (!teams[i]) return; (ro.roster || []).forEach(function (p) {
         if (!/^G/.test((p.position || {}).abbreviation || "")) return; var sv = 0; (p.stats || []).forEach(function (x) { if (x.name === "saves") sv = Number(x.value || x.displayValue) || 0; });
         var nm = lnm[String((p.athlete || {}).id || "")] || ((p.athlete || {}).displayName) || "", cs = !teams[other(i)].score;
-        if (sv >= 4 && nm) add("sv|" + nm + "|" + sv, 28 + sv * 3 + (cs ? 10 : 0), 1, nm + (done ? " made " : " has made ") + sv + " saves" + (cs ? (done ? " for the clean sheet" : " to keep " + nameOf(other(i)) + " out") : " for " + nameOf(i)), { player: nm, team: nameOf(i) }); }); });
+        if (sv >= 4 && nm) add("sv|" + nm + "|" + sv, 28 + sv * 3 + (cs ? 10 : 0), 1, (cs ? nameOf(i) + "'s " : "") + nm + (done ? " made " : " has made ") + sv + " saves" + (cs ? (done ? " for the clean sheet" : " to keep " + nameOf(other(i)) + " out") : " for " + nameOf(i)), { player: nm, team: nameOf(i) }); }); });
     }
     curTm = "";
     // runs and comebacks from the scoring plays

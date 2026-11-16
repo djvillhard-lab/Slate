@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.62.3 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Soccer live lines name the player and the team: "Arsenal's Saka has missed a penalty", "Arsenal's Saka had a penalty saved", "an own goal by Chelsea's Smith", "Saka has set up two goals for Arsenal", "Arsenal's Raya has made 5 saves to keep Chelsea out". When ESPN hasn't named the player yet, the line names the team, and it switches to the player as soon as ESPN adds the name.
+- A red card with no name from ESPN reads "Arsenal have been down to 10 men since the 60th minute".
+
 ## 3.62.2 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Admin-only settings. Your account is the admin; everyone else gets only their own settings. Admin only: Invite someone and the list of invites, People and Remove, Try the new user setup, the Claude summaries cost line, reading the feedback people send, and The Athletic FC (the newsletter that comes from your Gmail).
