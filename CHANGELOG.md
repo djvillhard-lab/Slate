@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.57.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Thumbs up and thumbs down on Suggested for you and on Worth a look. Thumbs down hides that game (Undo at the top for a few seconds) and shows you fewer like it. Thumbs up keeps it and shows you more like it. Tap a lit thumb again to take it back.
+- Slate learns from the whole game, not just the one you rated: the teams, the league, the conference, why it was suggested (Rivalry, Close finish, Big night…), late or early starts, national TV and ranked matchups. A team you've given two thumbs up gets suggested on its own ("You gave Duke a thumbs up"); two thumbs down on a team keeps it out of both sections unless it's one of your teams.
+- Each person's thumbs are their own and saved to their account, so they follow you to any phone. Older thumbs count less as time goes by.
+- It won't box you in: a like can lift a game only so far, a game still needs its own reason to be suggested, and Suggested for you shows at most two games from one league.
+- Settings, Thumbs up and down: see what Slate has learned (More of, Fewer of) and Start over to clear it.
+- The ✕ on Worth a look and Not now on Suggested for you are replaced by the thumbs down.
+
 ## 3.56.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Settings has a new "Send feedback" button at the top. Pick Problem, Idea or Other, write what's on your mind, and add a screenshot from Photos if it helps.

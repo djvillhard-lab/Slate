@@ -170,6 +170,13 @@
       if (!wr.on) kids.querySelectorAll("button").forEach(function (bt) { bt.disabled = true; });
       ws.appendChild(kids);
     }
+    // what your thumbs on Suggested for you and Worth a look have taught (185-thumbs.js)
+    var fs = $("fb-set"), fh = $("fb-head"); if (fs && fh) {
+      $("fb-sum").textContent = fbSummary();
+      fs.hidden = !state.fbOpen; fh.setAttribute("aria-expanded", state.fbOpen ? "true" : "false");
+      if (!fh.dataset.on) { fh.dataset.on = "1"; fh.addEventListener("click", function () { state.fbOpen = !state.fbOpen; renderSettings(); }); }
+      if (state.fbOpen) fbSettings(fs);
+    }
     var sw = $("swatches"); sw.textContent = "";
     Object.keys(ACCENTS).forEach(function (k) {
       var a = ACCENTS[k], b = el("button", "sw"); b.type = "button";

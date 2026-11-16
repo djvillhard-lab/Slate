@@ -3,6 +3,7 @@
   var ACT_KEYS = ["id", "league", "start", "away", "home", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "awayAbbr", "homeAbbr", "tv", "note", "stage", "comp", "neutral"];
   function actLoad() {
     if (!db || !uid || ACT.loaded) return;
+    fbLoad();  // thumbs up and down (185-thumbs.js)
     db.collection("data/users/" + uid).doc("activity").get().then(function (sn) {
       var d = sn.exists ? sn.data() : null; ACT.log = ((d && d.log) || []).concat(ACT.pending); ACT.pending = []; ACT.loaded = true; keepScroll(render);
     }, function () { ACT.loaded = true; });
@@ -141,7 +142,10 @@
       var best = walEval(g, v, wr, aff), coll = (LEAGUES[g.league] || {}).college;
       // it must be in your Worth a look leagues and pass its filters
       var okLg = wr.leagues.indexOf(g.league) !== -1 && (!wr.nat || natFor(g)) && (!wr.ranked || !coll || g.awayRank || g.homeRank);
-      if (best && okLg) out.push(best);
+      if (!best || !okLg) return;
+      // your thumbs move it up or down; a strong thumbs down on this kind of game keeps it out
+      var fa = fbAdj(g, best.tag); if (fa.veto || fa.adj <= -20) return;
+      best.score += fa.adj; out.push(best);
     });
     out.sort(function (a, b) { return b.score - a.score; });
     var shown = kept.concat(out.slice(0, 5));
@@ -195,6 +199,8 @@
         else if (nO >= 3) add(24 + 2 * nO, "For you", "You keep opening " + nm(sd) + " games");
         (state.players || []).forEach(function (pl) { if (pl.lg === g.league && pl.team && String(pl.team).toUpperCase() === String(abbr(g, sd)).toUpperCase()) add(52, "Your player", pl.name + " plays for " + nm(sd)); });
       });
+      // a team you gave thumbs up to
+      var lk = fbLikedTeam(g); if (lk) add(40 + Math.min(8, Math.round(lk.w * 2)), "For you", "You gave " + nm(lk.side) + " a thumbs up");
       if (friendly) why = why.filter(function (x) { return x.tag === "For you" || x.tag === "Your player"; });
       if (veto || !why.length) return;
       why.sort(function (a, b) { return b.sc - a.sc; });
@@ -203,14 +209,22 @@
       var late = hourCT(g.start) >= 21, nLate = rems.filter(function (e) { return e.league === g.league && hourCT(e.start) >= 21; }).length;
       if (late && nLate >= 3) score -= 10;
       if ((aff[g.league] || 0) <= 0 && why[0].tag === "Spotlight") return;
+      // your thumbs: liked teams, leagues and kinds of games rise (at most +15), disliked ones sink (down to -40)
+      var fa = fbAdj(g, why[0].tag); if (fa.veto) return;
+      score += fa.adj;
       if (score < 45) return;
       // the best reason, plus the personal one (or the media one) when both kinds apply
       var mine = function (x) { return x.tag === "For you" || x.tag === "Your player"; }, other = why.filter(function (x) { return mine(x) !== mine(why[0]); })[0];
-      var text = why[0].text + (other ? " · " + other.text : "");
+      var fw = fa.adj >= 6 && !other && !mine(why[0]) ? fbTopWords(fa.top) : "";
+      var text = why[0].text + (other ? " · " + other.text : fw ? " · " + fw : "");
       out.push({ g: g, score: score, tag: why[0].tag, why: text });
     });
     out.sort(function (a, b) { return b.score - a.score; });
-    return out.slice(0, 3);
+    // some variety: at most two from one league while others qualify
+    var pick = [], perLg = {};
+    out.forEach(function (s2) { if (pick.length < 3 && (perLg[s2.g.league] || 0) < 2) { pick.push(s2); perLg[s2.g.league] = (perLg[s2.g.league] || 0) + 1; } });
+    out.forEach(function (s2) { if (pick.length < 3 && pick.indexOf(s2) === -1) pick.push(s2); });
+    return pick;
   }
   // a rule that would have picked most of the games DJ keeps adding by hand
   function ruleSuggestions() {
@@ -259,14 +273,8 @@
       else if (s2.tag === "Close finish") { var ll = ""; try { ll = liveLeadLine(s2.g); } catch (e) {} whyTx = ll; }
       else whyTx = s2.why + (ext ? ". " + ext : "");
       wy.appendChild(el("span", "wal-tx"));
-      { var x = el("button", "wal-x"); x.type = "button"; x.setAttribute("aria-label", "Hide this suggestion"); x.textContent = "✕"; x.addEventListener("click", function () {
-        var m = walKeep(), kk = todayInHome() + "|" + s2.g.id, was = m[kk]; delete m[kk]; walKeepSet(m); logAct("skip", s2.g, { why: s2.tag }); keepScroll(render);
-        // a small Undo at the top of the page for a few seconds (3.29.3)
-        topUndo("Removed from Worth a look", function () {
-          for (var i = ACT.log.length - 1; i >= 0; i--) { var e = ACT.log[i]; if (e.a === "skip" && e.id === s2.g.id && e.d === state.date) { ACT.log.splice(i, 1); break; } }
-          actSave(); if (was) { var m2 = walKeep(); m2[kk] = was; walKeepSet(m2); } keepScroll(render);
-        });
-      }); wy.appendChild(x); }
+      // 👍 / 👎 (3.57.0): thumbs down hides it, like the old ✕, and both teach what you want here
+      wy.appendChild(thumbPair(s2.g, "wal", s2.tag, function () { var m = walKeep(); delete m[todayInHome() + "|" + s2.g.id]; walKeepSet(m); }));
       c.appendChild(wy);
       // the game row keeps its own + / ✓ like All games; remember the reason when you add it so it stays here, ticked
       c.addEventListener("click", function (e) {
@@ -297,11 +305,9 @@
       wy.appendChild(el("span", "sugg-tx", s2.why)); c.appendChild(wy);
       c.appendChild(gameRow(s2.g, "games"));
       var bt = el("div", "sugg-bt");
-      var no = el("button", "sugg-no", "Not now"); no.type = "button"; no.setAttribute("aria-label", "Dismiss this suggestion");
-      no.addEventListener("click", function () { logAct("skip", s2.g, { why: s2.tag }); keepScroll(render); });
       var yes = el("button", "sugg-on", "Add to slate"); yes.type = "button";
       yes.addEventListener("click", function () { logAct("accept", s2.g, { why: s2.tag }); toggle(s2.g.id); });
-      bt.appendChild(no); bt.appendChild(yes); c.appendChild(bt); w.appendChild(c);
+      bt.appendChild(thumbPair(s2.g, "sugg", s2.tag)); bt.appendChild(yes); c.appendChild(bt); w.appendChild(c);
     });
     rs.forEach(function (s2) {
       var c = el("div", "sugg-r");
