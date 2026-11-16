@@ -7,6 +7,10 @@
 // POST /api/usage/marks {pass | key, set?: {id: {v, note?} | null}}  → DJ's check-offs on the status page's "Your list"
 //   (an admin's passcode reads and writes; the feedback reader key only reads, so Claude can see what DJ has tried
 //   and liked or wants changed). Ids: "rel:<version>" (v: like | work), "todo:<id>" (v: done). Kept in stats/marks.
+// POST /api/usage/app-build {}  → {build}: the newest iPhone app build someone is actually running (no passcode needed).
+//   The app's "New app version is ready" notice uses it (src/app/280-ios-bridge.js, 3.66.2): a build counts as ready only
+//   once a phone has really installed it from TestFlight, not when it's pushed (it can sit in Apple's processing or
+//   review for hours). Kept in stats/app-build, raised by the counts below.
 //
 // The app sends a small count every couple of minutes while it's open (src/app/296-usage.js): how many times it was
 // opened, seconds on screen, and how many times each page was shown. Nothing about what was looked at.
@@ -72,6 +76,11 @@ export async function usageRoute(req, env, url, h) {
     return json({ ok: !!r.ok });
   }
 
+  if (url.pathname === "/api/usage/app-build") {
+    const cur = (await getDoc(env, "stats/app-build")) || {};
+    return json({ ok: true, build: Number(cur.build) || 0 });
+  }
+
   const me = await whoIs(env, p && p.pass);
   if (!me) return json({ error: "Not allowed" }, 403);
 
@@ -96,6 +105,12 @@ export async function usageRoute(req, env, url, h) {
     if (/^\d+\.\d+\.\d+$/.test(String(p.ver || ""))) doc.web = p.ver;   // the Slate version their copy is running (a saved copy can be older than the newest)
     doc.seen = doc.seen || {}; if (doc.where) doc.seen[doc.where] = doc.last;   // last time in each place
     const r = await putDoc(env, path, { enc: await seal(env, doc) });
+    // the newest build anyone's phone is running: proof that build is out in TestFlight (see /api/usage/app-build)
+    const bn = appV && /^[0-9]{1,5}$/.test(String(p.build || "")) ? Number(p.build) : 0;
+    if (bn) {
+      const top = (await getDoc(env, "stats/app-build")) || {};
+      if (bn > (Number(top.build) || 0)) await putDoc(env, "stats/app-build", { build: bn, at: new Date().toISOString() });
+    }
     return json({ ok: !!r.ok });
   }
 

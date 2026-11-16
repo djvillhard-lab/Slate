@@ -106,20 +106,29 @@
     onPushError: function () { pushInfo.busy = false; pushInfo.checked = true; pushState(); if (pushInfo.asked) toast("Notifications weren't allowed."); }
   };
   nativeApply();
-  // A newer app build in TestFlight than the one running: the release notes' latest "TestFlight: 3.0 (N)" line,
-  // once ~35 minutes have passed since that release went out (time for Xcode Cloud and Apple to finish it).
+  // A newer app build in TestFlight than the one running. Only a build someone's phone is already running counts
+  // (the worker's /api/usage/app-build, 3.66.2): a build pushed to Xcode Cloud can sit in Apple's processing or review
+  // for hours, so the release notes alone used to announce builds nobody could install yet.
   (function () {
     var box = $("app-upd"); if (!box) return;
+    var want = 0;
+    function label(n) { var m = new RegExp("TestFlight:\\s*([\\d.]+)\\s*\\(" + n + "\\)").exec(window.SLATE_CHANGES || ""); return m ? m[1] + " (" + n + ")" : "build " + n; }
+    function show() {
+      var have = NATIVE && Number(NATIVE.build) || 0, hid = ""; try { hid = localStorage.getItem("slate-upd-hide") || ""; } catch (e) {}
+      var on = !!(have && want > have && hid !== String(want));
+      box.hidden = !on; if (on) $("au-t").textContent = "New app version " + label(want) + " is ready";
+    }
     function check() {
-      var have = NATIVE && Number(NATIVE.build) || 0, m = /TestFlight:\s*([\d.]+)\s*\((\d+)\)/.exec(window.SLATE_CHANGES || ""), want = m ? Number(m[2]) : 0;
-      var b = window.SLATE_BUILD || "", at = b ? new Date(b.slice(0, 4) + "-" + b.slice(4, 6) + "-" + b.slice(6, 8) + "T" + b.slice(8, 10) + ":" + b.slice(10, 12) + ":00").getTime() : 0;
-      var hid = ""; try { hid = localStorage.getItem("slate-upd-hide") || ""; } catch (e) {}
-      var show = !!(have && want > have && at && Date.now() - at > 35 * 60000 && hid !== String(want));
-      box.hidden = !show; if (show) $("au-t").textContent = "New app version " + m[1] + " (" + want + ") is ready";
+      if (!(NATIVE && Number(NATIVE.build))) { box.hidden = true; return; }
+      try {
+        fetch("/api/usage/app-build", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) { if (d && d.build >= 0) want = Number(d.build) || 0; show(); }, function () {});
+      } catch (e) {}
     }
     $("au-go").addEventListener("click", function () { location.href = "itms-beta://"; });
-    $("au-x").addEventListener("click", function () { var m = /TestFlight:\s*[\d.]+\s*\((\d+)\)/.exec(window.SLATE_CHANGES || ""); try { localStorage.setItem("slate-upd-hide", m ? m[1] : ""); } catch (e) {} box.hidden = true; });
-    check(); setInterval(check, 5 * 60000); document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+    $("au-x").addEventListener("click", function () { try { localStorage.setItem("slate-upd-hide", String(want)); } catch (e) {} box.hidden = true; });
+    box.hidden = true; check(); setInterval(check, 5 * 60000); document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
   })();
   if (NATIVE) { nativePost({ t: "ready", version: SLATE_VERSION }); nativePost({ t: "pass", pass: slatePass() }); setTimeout(nativeSync, 0); }
 

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.66.2 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- iPhone app: the "New app version is ready" notice no longer shows up before you can actually get the build. It used to appear about half an hour after a new build was sent to Apple, even while it was still waiting in Apple's processing or review. Now it only appears once someone's phone is already running that build, which proves it's out in TestFlight.
+
 ## 3.66.1 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - A test account for Claude's checks, so they stop signing in as Drew. It isn't counted in People on the Project status page, its feedback isn't kept, and it doesn't show in the list of people in Settings. Usage counts can also be cleared for one person, which was used to clear Drew's numbers from the test runs.
