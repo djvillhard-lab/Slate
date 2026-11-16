@@ -161,6 +161,37 @@ img { max-width: 100%; }
 .tgl { display: none; margin-top: 10px; min-height: 44px; padding: 0 14px; border-radius: 8px; background: var(--raise); color: var(--ink); font-size: 14px; font-weight: 800; }
 .fb.open .tgl { display: inline-block; }
 .fb.isdone .q { color: var(--muted); }
+
+/* cards: every section is one. Drag the grip to move, the arrow folds it, the x closes it (bring it back at the bottom). */
+.cards { margin-top: 14px; columns: 1; column-gap: 12px; }
+@media (min-width: 760px) { .cards { columns: 2; } }
+@media (min-width: 1500px) { .cards { columns: 3; } }
+.cards > section { break-inside: avoid; background: var(--card); border-radius: 8px; padding: 0 12px 10px; margin: 0 0 12px; border: 1px solid var(--hair); }
+.cards > section.wide { column-span: all; }
+.cards > section.folded { padding-bottom: 0; }
+.cards > section.folded > :not(h2) { display: none !important; }
+.cards > section.dragging { outline: 2px solid var(--accent); opacity: .85; }
+.cards > section > h2 { min-height: 44px; margin: 0; gap: 4px; }
+.cards > section > h2 .n { margin-left: 4px; }
+.cards .chart, .cards .pg, .cards .op { background: var(--raise); }
+.cards .chip:not(.you):not(.live):not(.idea):not(.out) { background: var(--bg); }
+.grip { width: 28px; height: 44px; margin-left: -8px; display: grid; place-items: center; color: var(--dim); cursor: grab; touch-action: none; flex: none; }
+.grip svg { width: 14px; height: 18px; }
+.cbtn { width: 40px; height: 44px; display: grid; place-items: center; color: var(--dim); flex: none; font-size: 18px; line-height: 1; }
+.cbtn:last-child { margin-right: -10px; }
+.cbtn svg { width: 16px; height: 16px; transition: transform .15s; }
+.folded .cbtn.fold svg { transform: rotate(-90deg); }
+.fbbar { padding: 2px 0 6px; }
+section[data-card="feedback"] > h2 { color: var(--ink); font-size: 14px; }
+section[data-card="feedback"].wide #feedback { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px; }
+section[data-card="feedback"] .fb { background: var(--raise); border-radius: 8px; border-bottom: 0; padding: 12px; margin: 0 0 8px; }
+section[data-card="feedback"].wide .fb { margin: 0; }
+section[data-card="feedback"] .fb.fresh { box-shadow: inset 0 0 0 1px var(--accent); background: var(--raise); padding: 12px; margin-left: 0; margin-right: 0; }
+section[data-card="feedback"] .fb .q { font-size: 17px; }
+section[data-card="feedback"] .empty { grid-column: 1 / -1; }
+.closed { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; font-size: 12px; color: var(--dim); }
+.closed button { min-height: 40px; padding: 0 12px; border-radius: 8px; background: var(--card); color: var(--ink); font-size: 13px; font-weight: 800; }
+.closed button.reset { background: none; color: var(--accent); }
 </style>
 </head>
 <body>
@@ -173,31 +204,26 @@ img { max-width: 100%; }
 
   <div class="tiles" id="tiles"></div>
 
-  <div class="cols">
-    <div class="col">
-      <section><h2>Waiting on you <span class="n" id="wait-n"></span></h2><div id="waiting"></div></section>
-      <section><h2>People <span class="n" id="ppl-n"></span></h2><div id="people"><div class="empty">Loading…</div></div></section>
-      <section><h2>Working now <span class="n" id="work-n"></span></h2><div id="working"></div></section>
-      <section>
-        <h2>Feedback <span class="n" id="fb-n"></span><span class="sp"></span>
-          <span class="seg" role="group" aria-label="Filter feedback" id="fb-seg">
+  <div class="cards" id="cards">
+      <section data-card="feedback"><h2>Feedback <span class="n" id="fb-n"></span></h2>
+        <div class="fbbar"><span class="seg" role="group" aria-label="Filter feedback" id="fb-seg">
             <button type="button" data-k="open" aria-pressed="true">Open</button>
             <button type="button" data-k="done" aria-pressed="false">Addressed</button>
             <button type="button" data-k="all" aria-pressed="false">All</button>
-          </span>
-        </h2>
+          </span></div>
         <div id="feedback"><div class="empty">Loading feedback…</div></div>
       </section>
-    </div>
-    <div class="col">
-      <section>
+      <section data-card="waiting"><h2>Waiting on you <span class="n" id="wait-n"></span></h2><div id="waiting"></div></section>
+      <section data-card="people"><h2>People <span class="n" id="ppl-n"></span></h2><div id="people"><div class="empty">Loading…</div></div></section>
+      <section data-card="working"><h2>Working now <span class="n" id="work-n"></span></h2><div id="working"></div></section>
+      <section data-card="shipped">
         <h2>Shipped today <span class="n" id="rel-n"></span></h2>
         <div class="chart"><svg id="bars" viewBox="0 0 240 64" preserveAspectRatio="none" role="img" aria-label="Releases per hour today"></svg>
           <div class="axis"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div></div>
         <div id="releases"></div>
       </section>
-      <section><h2>Pages</h2><div class="pages" id="pages"></div></section>
-      <section><h2>Runs on its own</h2>
+      <section data-card="pages"><h2>Pages</h2><div class="pages" id="pages"></div></section>
+      <section data-card="ops"><h2>Runs on its own</h2>
         <div class="ops">
           <div class="op">Feedback report<span>Daily 7:38 AM</span></div>
           <div class="op">Morning email<span>Each person's time</span></div>
@@ -205,8 +231,8 @@ img { max-width: 100%; }
           <div class="op">Alerts<span>Every minute</span></div>
         </div>
       </section>
-    </div>
   </div>
+  <div class="closed" id="closed" hidden></div>
 </div>
 </div>
 <script>
@@ -535,6 +561,58 @@ function gate(msg) {
   });
   document.querySelector(".wrap").appendChild(g);
 }
+
+// ---- cards: order, folded and closed are remembered in this browser ----
+var CARD_ORDER = ["feedback", "waiting", "people", "working", "shipped", "pages", "ops"], LAY = { order: CARD_ORDER.slice(), folded: {}, closed: {} };
+try { var sv = JSON.parse(localStorage.getItem("slate-status-layout") || "null"); if (sv && sv.order) { LAY.order = sv.order.filter(function (k) { return CARD_ORDER.indexOf(k) >= 0; }); CARD_ORDER.forEach(function (k) { if (LAY.order.indexOf(k) < 0) LAY.order.push(k); }); LAY.folded = sv.folded || {}; LAY.closed = sv.closed || {}; } } catch (e) {}
+function laySave() { try { localStorage.setItem("slate-status-layout", JSON.stringify(LAY)); } catch (e) {} }
+function cardEl(k) { return document.querySelector('section[data-card="' + k + '"]'); }
+function cardName(k) { var h = cardEl(k).querySelector("h2 .ct"); return h ? h.textContent : k; }
+function layApply() {
+  var box = $("cards"), shown = 0;
+  LAY.order.forEach(function (k) { var c = cardEl(k); box.appendChild(c); c.hidden = !!LAY.closed[k]; c.classList.toggle("folded", !!LAY.folded[k]); if (!c.hidden) shown++;
+    var f = c.querySelector(".cbtn.fold"); if (f) { f.setAttribute("aria-expanded", LAY.folded[k] ? "false" : "true"); } });
+  var first = LAY.order.filter(function (k) { return !LAY.closed[k]; })[0];
+  cardEl("feedback").classList.toggle("wide", first === "feedback");
+  var cl = $("closed"), gone = LAY.order.filter(function (k) { return LAY.closed[k]; }); cl.textContent = "";
+  var moved = LAY.order.join() !== CARD_ORDER.join() || gone.length || Object.keys(LAY.folded).some(function (k) { return LAY.folded[k]; });
+  cl.hidden = !moved;
+  if (gone.length) cl.appendChild(el("span", null, "Closed:"));
+  gone.forEach(function (k) { var b = el("button", null, "+ " + cardName(k)); b.type = "button"; b.onclick = function () { LAY.closed[k] = false; laySave(); layApply(); }; cl.appendChild(b); });
+  if (moved) { var r = el("button", "reset", "Reset layout"); r.type = "button"; r.onclick = function () { LAY = { order: CARD_ORDER.slice(), folded: {}, closed: {} }; laySave(); layApply(); }; cl.appendChild(r); }
+}
+(function () {
+  var ns = "http://www.w3.org/2000/svg";
+  function icon(d, vb) { var s = document.createElementNS(ns, "svg"); s.setAttribute("viewBox", vb || "0 0 16 16"); s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "2.2"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("aria-hidden", "true"); var p = document.createElementNS(ns, "path"); p.setAttribute("d", d); s.appendChild(p); return s; }
+  CARD_ORDER.forEach(function (k) {
+    var c = cardEl(k), h = c.querySelector("h2"), title = h.firstChild;
+    var ct = el("span", "ct", title.textContent.trim()); h.replaceChild(ct, title);
+    var g = el("span", "grip"); g.setAttribute("role", "button"); g.setAttribute("aria-label", "Move " + ct.textContent + ". Drag, or use the arrow keys"); g.tabIndex = 0; g.title = "Drag to move";
+    g.appendChild(icon("M5 3v0M5 9v0M5 15v0M11 3v0M11 9v0M11 15v0", "0 0 16 18")); h.insertBefore(g, h.firstChild);
+    h.appendChild(el("span", "sp"));
+    var f = el("button", "cbtn fold"); f.type = "button"; f.setAttribute("aria-label", "Fold or unfold " + ct.textContent); f.appendChild(icon("M3 6l5 5 5-5"));
+    f.onclick = function () { LAY.folded[k] = !LAY.folded[k]; laySave(); layApply(); }; h.appendChild(f);
+    var x = el("button", "cbtn"); x.type = "button"; x.setAttribute("aria-label", "Close " + ct.textContent); x.appendChild(icon("M4 4l8 8M12 4l-8 8"));
+    x.onclick = function () { LAY.closed[k] = true; laySave(); layApply(); }; h.appendChild(x);
+    function move(by) { var vis = LAY.order.filter(function (q) { return !LAY.closed[q]; }), i = vis.indexOf(k), t = vis[i + by]; if (!t) return; var a = LAY.order.indexOf(k), b = LAY.order.indexOf(t); LAY.order[a] = t; LAY.order[b] = k; laySave(); layApply(); cardEl(k).querySelector(".grip").focus(); }
+    g.addEventListener("keydown", function (e) { if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); move(-1); } if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); move(1); } });
+    // drag: the card follows the pointer by trading places with whichever card is under it
+    g.addEventListener("pointerdown", function (e) {
+      e.preventDefault(); c.classList.add("dragging"); var lastSwap = 0;
+      function mv(ev) {
+        if (ev.clientY < 70) window.scrollBy(0, -14); else if (ev.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+        if (Date.now() - lastSwap < 180) return;
+        var under = document.elementsFromPoint(ev.clientX, ev.clientY).filter(function (n) { return n.matches && n.matches(".cards > section") && n !== c; })[0];
+        if (!under) return;
+        var a = LAY.order.indexOf(k), b = LAY.order.indexOf(under.dataset.card);
+        LAY.order.splice(a, 1); LAY.order.splice(b, 0, k); lastSwap = Date.now(); layApply();
+      }
+      function up() { document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); document.removeEventListener("pointercancel", up); c.classList.remove("dragging"); laySave(); }
+      document.addEventListener("pointermove", mv); document.addEventListener("pointerup", up); document.addEventListener("pointercancel", up);
+    });
+  });
+  layApply();
+})();
 if (pass()) start(); else gate();
 </script>
 </body>

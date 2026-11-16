@@ -18,6 +18,11 @@ Last updated: Nov 16, 2026 (no app version: it is not part of the app)
   (the docs table is public-readable); `/api/usage/all` is admin only. No passcode, no count.
 - Feedback shows Open first, with Addressed and All beside it; the tile counts what's open. Tap an item for its
   screenshot, phone and the "Mark addressed" / "Open it again" switch (see docs/pages/feedback.md for the automatic part).
+- Cards (DJ, Nov 16): every section is a card. Drag the grip (or focus it and use the arrow keys) to move it, the
+  arrow folds it, the x closes it; closed cards come back from the row at the bottom, which also has Reset layout.
+  Order, folded and closed are kept per browser in `slate-status-layout`. Feedback is first by default, and while it
+  is first it runs the full width with its items side by side (DJ: "feedback should be more prominent").
+  A new section needs a `data-card` name and a place in `CARD_ORDER`.
 - Refresh: feedback every 10 seconds, the files every 30, GitHub every 2 minutes, only while the page is showing.
 - Look: Midnight in dark mode, Sunday Paper in light (the browser's setting), one column on a phone, two on a PC.
 
