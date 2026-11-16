@@ -1394,11 +1394,30 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .bet-v span { flex: 1 1 0; min-width: 0; height: 24px; display: grid; place-items: center; border-radius: 6px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--raise); color: var(--dim); }
 .bet-v span.y { background: color-mix(in srgb, #2BB673 26%, transparent); color: var(--ink); }
 /* settled picks (3.40.0): a hit gets a green edge and a green "Hit"; a miss steps back */
-.bet.won { border-color: color-mix(in srgb, #2BB673 55%, transparent); }
-.bet.won .bet-res { color: #2BB673; }
-.bet.lost { opacity: .62; }
-.bet.lost .bet-res { color: var(--muted); }
+.bet.won { border-color: color-mix(in srgb, #2BB673 60%, transparent); background: color-mix(in srgb, #2BB673 8%, var(--card)); }
+.bet.lost { border-color: color-mix(in srgb, var(--live, #E5484D) 45%, transparent); }
+.bet.lost .bet-m, .bet.lost .bet-r, .bet.lost .bet-v, .bet.lost > .badge { opacity: .6; }
+.bet.on { border-color: color-mix(in srgb, var(--live, #E5484D) 55%, transparent); }
 .bets-tally { margin: 8px 2px 0; font-size: 15px; font-weight: 800; color: var(--ink); }
+.bets-tally .bt-lv { color: var(--live, #E5484D); }
+.bets-tally .bt-hit { color: #2BB673; }
+.bets-tally .bt-miss { color: var(--muted); }
+.bets-undo { margin: 8px 2px 0; font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.bets-undo button { min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--raise); color: var(--ink); font-weight: 800; font-size: 14px; }
+/* 3.41.0: each pick's top line says where its game is, the result, and has a remove button */
+.bet-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; min-height: 28px; margin: -4px -6px -2px 0; }
+.bet-st { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 800; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bet-st.lv { color: var(--live, #E5484D); }
+.bet-st.lv i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #E5484D); }
+.bet-st.fin { color: var(--ink); }
+.bet-tag { flex: none; margin-left: auto; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.bet-tag.hit { background: #2BB673; color: #fff; }
+.bet-tag.miss { background: color-mix(in srgb, var(--live, #E5484D) 18%, transparent); color: var(--live, #E5484D); }
+.bet-tag.void { background: var(--raise); color: var(--muted); }
+.bet-x { flex: none; margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--dim); background: none; }
+.bet-tag + .bet-x { margin-left: 0; }
+.bet-x svg { width: 18px; height: 18px; }
+.bet-x:active { background: var(--raise); }
 
 /* Live feed (3.31.0): one live football game, play by play */
 .feed-go, .tray .feed-go { width: 100%; height: auto; font-size: inherit; font-weight: inherit; display: flex; align-items: center; gap: 12px; min-height: 56px; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--live, #E5484D) 10%, var(--card)); border: 1px solid color-mix(in srgb, var(--live, #E5484D) 35%, transparent); color: var(--ink); text-align: left; }

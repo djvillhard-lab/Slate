@@ -113,10 +113,11 @@
   function betKind(b) { return b.game ? "total" : b.k; }
   function betPick(g, b) { var o = {}; Object.keys(b).forEach(function (k) { o[k] = b[k]; }); o.gid = g.id; o.uid = g.id + "|" + (b.game ? "total" : b.pid || b.p); o.lg = g.league; delete o.res; return o; }
   function betPicks(gs) {
-    var day = state.date, P = PICKS[day] || (PICKS[day] = { list: [] }), on = {}, n0 = P.list.length, loading = false;
+    var day = state.date, P = PICKS[day] || (PICKS[day] = { list: [] }), on = {}, n0 = P.list.length, loading = false, gone = P.gone || {};
     gs.forEach(function (g) { on[g.id] = g; });
     P.list = P.list.filter(function (pk) { return on[pk.gid] && (pk.game || pk.pid); });  // a game taken off the slate takes its picks with it
     var changed = P.list.length !== n0, taken = {}, perG = {}, kinds = {};
+    Object.keys(gone).forEach(function (u) { taken[u] = 1; });  // picks you removed don't come back
     P.list.forEach(function (pk) { taken[pk.uid] = 1; perG[pk.gid] = (perG[pk.gid] || 0) + 1; kinds[betKind(pk)] = (kinds[betKind(pk)] || 0) + 1; });
     var cands = function (list) { var out = []; list.forEach(function (g) { ((BETS[g.id] || {}).list || []).forEach(function (b) { if ((b.game || b.pid) && !taken[g.id + "|" + (b.game ? "total" : b.pid)] && !betSat(g, b)) out.push({ g: g, b: b }); }); }); out.sort(function (x, y) { return (y.b.sc - x.b.sc) || byStart(x.g, y.g); }); return out; };
     var fill = function (list, perMax, kindMax) {
@@ -144,6 +145,21 @@
     var sum = !b.game && status(g).kind !== "upcoming" && (bx.live[g.id] || {}).sum; if (!sum) return false;
     var st = ((((sum.header || {}).competitions || [])[0] || {}).status || {}).type || {}, sport = BX_SPORT[g.league], line = betBoxLine(sum, b.pid, sport);
     return !!(line && line.dnp) || (!line && st.state === "post" && sport !== "football");
+  }
+  // removing a pick (3.41.0): it's remembered for the day so it isn't picked again, and the next best one takes its place on the redraw
+  var BET_UNDO = null;
+  function betRemove(pk) {
+    var P = PICKS[state.date]; if (!P) return;
+    var i = P.list.indexOf(pk); if (i === -1) return;
+    P.list.splice(i, 1); P.gone = P.gone || {}; P.gone[pk.uid] = 1;
+    BET_UNDO = { day: state.date, pk: pk, i: i, n: P.list.length };  // anything past n afterwards is the replacement
+    picksSave(); keepScroll(renderLineup);
+  }
+  function betUndo() {
+    var u = BET_UNDO, P = u && PICKS[u.day]; BET_UNDO = null; if (!P) return;
+    delete (P.gone || {})[u.pk.uid];
+    P.list = P.list.slice(0, u.n); P.list.splice(Math.min(u.i, P.list.length), 0, u.pk);
+    picksSave(); keepScroll(renderLineup);
   }
   // the player's line in a game's box score, keyed like the game logs
   function betBoxLine(sum, pid, sport) {
@@ -213,8 +229,17 @@
     sec.appendChild(hb);
     if (shut) return sec;
     if (!rows.length) { sec.appendChild(el("p", "bets-none", pk.loading ? "Checking recent game logs…" : "No strong player or game trends for the games on your slate.")); return sec; }
-    if (nHit + nMiss) sec.appendChild(el("p", "bets-tally", nHit + " hit, " + nMiss + " missed so far."));
-    sec.appendChild(el("p", "bets-sub", "From each player's last six games this season, and each team's last five for game totals. Tonight's numbers come from the live box score."));
+    var nLive = rows.filter(function (x) { return x.r.s === "live"; }).length;
+    if (nHit + nMiss + nLive) {
+      var ty = el("p", "bets-tally");
+      [[nLive, " live", "lv"], [nHit, " hit", "hit"], [nMiss, " missed", "miss"]].forEach(function (t) { if (!t[0]) return; if (ty.childNodes.length) ty.appendChild(document.createTextNode(" · ")); ty.appendChild(el("span", "bt-" + t[2], t[0] + t[1])); });
+      sec.appendChild(ty);
+    }
+    if (BET_UNDO && BET_UNDO.day === state.date) {
+      var un = el("p", "bets-undo", "Removed " + (BET_UNDO.pk.game ? "a game total" : BET_UNDO.pk.p) + ". "), ub = el("button", null, "Undo"); ub.type = "button";
+      ub.addEventListener("click", betUndo); un.appendChild(ub); sec.appendChild(un);
+    }
+    sec.appendChild(el("p", "bets-sub", "From each player's last six games this season, and each team's last five for game totals. Tonight's numbers come from the live box score. Tap × to swap a pick for the next best one."));
     var list = el("div", "bets");
     rows.forEach(function (x) { list.appendChild(betRow(x.g, x.p, x.r)); });
     sec.appendChild(list);
@@ -222,23 +247,30 @@
     return sec;
   }
   function betRow(g, b, res) {
-    var kind = status(g).kind, s = res.s, lv = kind === "live";
-    var r = el("div", "bet" + (s === "hit" ? " won" : s === "miss" ? " lost" : "")), m = el("div", "bet-m"), rt = el("div", "bet-r");
+    var kind = status(g).kind, s = res.s, lv = kind === "live", sc = scoreRaw(g.id) || {}, fin = kind === "over";
+    var r = el("div", "bet" + (s === "hit" ? " won" : s === "miss" ? " lost" : lv ? " on" : "")), m = el("div", "bet-m"), rt = el("div", "bet-r");
     var vs = b.game ? abbr(g, "away") + " at " + abbr(g, "home") : (b.sd === "away" ? "at " + abbr(g, "home") : "vs " + abbr(g, "away"));
+    // top line: where the game is (start time, Live with the clock, Final), the result, and remove
+    var top = el("div", "bet-top"), gst = el("span", "bet-st" + (lv ? " lv" : fin ? " fin" : ""));
+    if (lv) { gst.appendChild(el("i")); gst.appendChild(document.createTextNode("Live" + (sc.detail ? " · " + sc.detail : ""))); }
+    else gst.textContent = fin ? "Final" + (sc.detail && !/^final$/i.test(sc.detail) ? " · " + sc.detail.replace(/^final\/?/i, "").trim() : "") : "Starts " + timeText(g.start);
+    top.appendChild(gst);
+    if (s === "hit" || s === "miss" || s === "void") top.appendChild(el("span", "bet-tag " + s, s === "hit" ? "✓ Hit" : s === "miss" ? "✗ Miss" : res.why || "Push"));
+    var x = el("button", "bet-x"); x.type = "button"; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove " + (b.game ? "this game total" : b.p) + " and add the next best pick");
+    x.addEventListener("click", function (e) { e.stopPropagation(); betRemove(b); });
+    top.appendChild(x); r.appendChild(top);
     if (b.game) { var ou = el("span", "badge bet-ou", b.k === "over" ? "O" : "U"); ou.setAttribute("aria-hidden", "true"); r.appendChild(ou); }
     else r.appendChild(badgeFor(abbr(g, b.sd), g[b.sd], g[b.sd + "Color"], g[b.sd + "Alt"]));
     var p = el("b", "bet-p", b.game ? vs : b.p); if (!b.game && b.pos) p.appendChild(el("i", null, b.pos)); m.appendChild(p);
-    var when = lv ? "" : kind === "over" ? " · Final" : " · " + timeText(g.start);
-    var l = el("span", "bet-l", b.lab); l.appendChild(el("span", null, " · " + (b.game ? "game total" : vs) + when)); if (lv) l.appendChild(el("em", "bet-lv", "Live")); m.appendChild(l);
+    var l = el("span", "bet-l", b.lab); l.appendChild(el("span", null, " · " + (b.game ? "game total" : vs))); m.appendChild(l);
     r.appendChild(m);
-    // right side: the trend before the game, tonight's number once it starts, then Hit or Miss
-    var have = res.now != null ? String(res.now) : "0", say;
-    if (s === "pre") { rt.appendChild(el("b", null, b.h + "/" + b.n)); rt.appendChild(el("i", null, "last " + b.n)); say = "hit in " + b.h + " of the last " + b.n + " games"; }
-    else if (s === "live") { rt.appendChild(el("b", null, have)); rt.appendChild(el("i", null, b.game ? "line " + b.ou : b.r === 1 ? "need 1" : "of " + b.r)); say = "live, " + have + (b.game ? " total, line " + b.ou : " so far, needs " + b.r); }
-    else if (s === "void") { rt.appendChild(el("b", null, "–")); rt.appendChild(el("i", null, res.why || "Push")); say = res.why || "push"; }
-    else { rt.appendChild(el("b", "bet-res", s === "hit" ? "Hit" : "Miss")); rt.appendChild(el("i", null, (b.game ? have + " total" : (kind === "over" ? "had " : "") + have + (kind === "over" ? "" : " so far")))); say = (s === "hit" ? "hit" : "missed") + ", " + have + (b.game ? " total" : ""); }
+    // right side: the trend before the game, then tonight's number against the line
+    var have = res.now != null ? String(res.now) : "0", need = b.game ? "line " + b.ou : b.r === 1 ? "need 1" : "of " + b.r, say;
+    if (s === "pre") { rt.appendChild(el("b", null, b.h + "/" + b.n)); rt.appendChild(el("i", null, "last " + b.n)); say = "starts " + timeText(g.start) + ", hit in " + b.h + " of the last " + b.n + " games"; }
+    else if (s === "void") { rt.appendChild(el("b", null, "–")); rt.appendChild(el("i", null, need)); say = res.why || "push"; }
+    else { rt.appendChild(el("b", null, have)); rt.appendChild(el("i", null, need)); say = (s === "live" ? "live, " : (s === "hit" ? "hit, " : "missed, ") + (fin ? "final, " : "")) + have + (b.game ? " total, line " + b.ou : ", needs " + b.r); }
     r.appendChild(rt);
-    var v = el("div", "bet-v"); b.vals.forEach(function (x, i) { v.appendChild(el("span", b.hit[i] ? "y" : "", String(x))); }); r.appendChild(v);
+    var v = el("div", "bet-v"); b.vals.forEach(function (x2, i) { v.appendChild(el("span", b.hit[i] ? "y" : "", String(x2))); }); r.appendChild(v);
     r.setAttribute("aria-label", (b.game ? vs + ", " : b.p + ", ") + b.lab + ": " + say + ". Last " + b.n + " games, oldest to newest " + b.vals.join(", "));
     return r;
   }

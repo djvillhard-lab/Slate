@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.41.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Best bets: each pick has a × button. Tap it and the pick is gone for the day, and the next best one takes its place (upcoming games first, then live, then finished). An Undo button shows right after, in case of a mistaken tap.
+- Each pick now opens with a line that says where its game is: "Starts 7:20 PM", "Live · Q3 5:12" in red with a dot, or "Final". When it settles, a pill says ✓ Hit (green) or ✗ Miss (red) next to it.
+- Live picks get a red edge, hits a green edge and a light green card, and misses a red edge with the rest faded. The number on the right is tonight's stat against the line ("11 of 15"), and stays there after the final.
+- The top of the section counts them: "2 live · 3 hit · 1 missed".
+
 ## 3.40.3 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Live feed: shows just the recent plays (the last 15 in football, the last 20 lines in basketball). "Show earlier plays" brings back the rest.
