@@ -139,16 +139,17 @@
       if (g.custom || keptIds[g.id] || removed[g.id] || sk[state.date + "|" + g.id]) return;
       var v = scoreRaw(g.id); if (!v || v.state !== "in") return;
       if (inLineup(g.id)) return;  // on your slate: its card carries the tag instead
-      var best = walEval(g, v, wr, aff), coll = (LEAGUES[g.league] || {}).college;
+      var best = walEval(g, v, wr, aff), coll = (LEAGUES[g.league] || {}).college, tst = fbTest();
+      if (tst && !best) best = { g: g, score: 5, tag: "Live now", why: "", live: true };  // thumbs test mode (3.57.1)
       // it must be in your Worth a look leagues and pass its filters
       var okLg = wr.leagues.indexOf(g.league) !== -1 && (!wr.nat || natFor(g)) && (!wr.ranked || !coll || g.awayRank || g.homeRank);
-      if (!best || !okLg) return;
+      if (!best || !(okLg || tst)) return;
       // your thumbs move it up or down; a strong thumbs down on this kind of game keeps it out
       var fa = fbAdj(g, best.tag); if (fa.veto || fa.adj <= -20) return;
       best.score += fa.adj; out.push(best);
     });
     out.sort(function (a, b) { return b.score - a.score; });
-    var shown = kept.concat(out.slice(0, 5));
+    var shown = kept.concat(out.slice(0, fbTest() ? 6 : 5));
     // games that finish while shown here stay for 10 minutes, marked final
     var seen = walSeen(), now = Date.now(), t0 = todayInHome(), ids = {};
     shown.forEach(function (x) { ids[x.g.id] = 1; seen[t0 + "|" + x.g.id] = { tag: x.tag, why: x.why }; });
@@ -208,11 +209,11 @@
       var score = why[0].sc + (why[1] ? why[1].sc / 3 : 0) + Math.min(12, (aff[g.league] || 0));
       var late = hourCT(g.start) >= 21, nLate = rems.filter(function (e) { return e.league === g.league && hourCT(e.start) >= 21; }).length;
       if (late && nLate >= 3) score -= 10;
-      if ((aff[g.league] || 0) <= 0 && why[0].tag === "Spotlight") return;
+      if ((aff[g.league] || 0) <= 0 && why[0].tag === "Spotlight" && !fbTest()) return;
       // your thumbs: liked teams, leagues and kinds of games rise (at most +15), disliked ones sink (down to -40)
       var fa = fbAdj(g, why[0].tag); if (fa.veto) return;
       score += fa.adj;
-      if (score < 45) return;
+      if (score < (fbTest() ? 25 : 45)) return;
       // the best reason, plus the personal one (or the media one) when both kinds apply
       var mine = function (x) { return x.tag === "For you" || x.tag === "Your player"; }, other = why.filter(function (x) { return mine(x) !== mine(why[0]); })[0];
       var fw = fa.adj >= 6 && !other && !mine(why[0]) ? fbTopWords(fa.top) : "";
@@ -222,8 +223,9 @@
     out.sort(function (a, b) { return b.score - a.score; });
     // some variety: at most two from one league while others qualify
     var pick = [], perLg = {};
-    out.forEach(function (s2) { if (pick.length < 3 && (perLg[s2.g.league] || 0) < 2) { pick.push(s2); perLg[s2.g.league] = (perLg[s2.g.league] || 0) + 1; } });
-    out.forEach(function (s2) { if (pick.length < 3 && pick.indexOf(s2) === -1) pick.push(s2); });
+    var nMax = fbTest() ? 5 : 3;
+    out.forEach(function (s2) { if (pick.length < nMax && (perLg[s2.g.league] || 0) < 2) { pick.push(s2); perLg[s2.g.league] = (perLg[s2.g.league] || 0) + 1; } });
+    out.forEach(function (s2) { if (pick.length < nMax && pick.indexOf(s2) === -1) pick.push(s2); });
     return pick;
   }
   // a rule that would have picked most of the games DJ keeps adding by hand

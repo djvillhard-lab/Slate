@@ -120,3 +120,5 @@ html #fb-head { min-height: calc(44px / var(--z, 1)) !important; }
 .fb-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .fb-chip { padding: 4px 8px; border-radius: 4px; background: var(--raise); color: var(--ink); font-size: 13px; font-weight: 700; }
 .fb-reset { min-height: calc(44px / var(--z, 1)); margin-top: 8px; padding: 0 16px; border: 1px solid var(--line); border-radius: 8px; background: none; color: var(--ink); font: inherit; font-weight: 800; }
+.fb-reset.on { background: var(--accent-fill); color: var(--on-accent); border-color: transparent; }
+.fb-set .fb-reset { display: block; }
