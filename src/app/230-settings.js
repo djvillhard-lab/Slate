@@ -117,7 +117,7 @@
       tg.appendChild(b);
     });
     Array.prototype.forEach.call($("size-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === state.textSize ? "true" : "false"); });
-    var asn = $("auto-size-note"); if (asn) { var zz = Math.round(systemTextZoom() * 100); asn.textContent = "Auto follows your iPhone's text size (iPhone Settings > Display & Brightness > Text Size). Your iPhone is at " + zz + "% right now, so Auto shows Slate at " + zz + "% (M is 100%, S is 92%)."; }
+    var asn = $("auto-size-note"); if (asn) { var zz = Math.round(systemTextZoom() * 100); asn.textContent = "Auto matches your iPhone's text size (" + zz + "% right now). M is 100%."; }
     Array.prototype.forEach.call($("size-seg-wide").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === (state.textSizeWide || state.textSize) ? "true" : "false"); });
     if (false) Array.prototype.forEach.call([], function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.autoAdd ? "true" : "false"); });
     Array.prototype.forEach.call($("score-seg").children, function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-v") === "on") === !!state.showScores ? "true" : "false"); });

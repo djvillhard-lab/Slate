@@ -69,3 +69,29 @@ html .fd-rz { color: var(--muted) !important; background: var(--raise) !importan
 html .bet.won { border-color: color-mix(in srgb, var(--accent) 60%, transparent) !important; background: color-mix(in srgb, var(--accent) 8%, var(--card)) !important; }
 html .bets-tally .bt-hit { color: var(--accent) !important; }
 html .bet-tag.hit { background: var(--accent-fill) !important; color: var(--on-accent) !important; }
+
+/* ===== Release D (3.51.0): tighter layouts ===== */
+/* 10. Open Duo: less empty space between the slate's header and its first game (the pane is only 538 points tall) */
+html.duo #pane-l .lo-row { margin-top: 0 !important; margin-bottom: 8px !important; }
+/* 11. Box Office: in the open Duo's pane and at large text, every row is two fixed lines (the break is .rk-br from rkStats) */
+.rk-br { display: none; }
+html.duo #mm-body .rk-stats, html.bigtext #mm-body .rk-stats { max-height: none !important; white-space: normal !important; overflow: visible !important; }
+html.duo #mm-body .rk-br, html.bigtext #mm-body .rk-br { display: block; flex: 0 0 100%; height: 0; }
+html.duo #mm-body .rk-st2 b, html.bigtext #mm-body .rk-st2 b { font-size: 13px !important; color: var(--muted); }
+/* 12. On TV: the channel name gets the whole line; Live and the game count sit under it */
+html .ch-tgb { flex-wrap: wrap; row-gap: 0; align-content: center; }
+html .ch-tgb h2 { flex: 1 1 100%; }
+/* 13. Team tiles: today's line may take two lines instead of being cut off */
+html .tc-line.tc-today span { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+/* 14. The "Live scores update..." sentence and Enter passcode show once, in Settings (the slate keeps "Scores updated") */
+html:not([data-view="settings"]) #foot > span:first-child, html:not([data-view="settings"]) #foot .foot-refresh { display: none !important; }
+html[data-view="settings"] #foot .foot-refresh { min-height: calc(44px / var(--z, 1)); padding: 0 12px; }
+/* 18. Quick look of a live game: Live feed is the one big button; Full matchup under it is a plain row */
+html .tray .feed-go ~ .full-mu { background: var(--raise) !important; color: var(--ink) !important; border: 1px solid var(--line) !important; box-shadow: none !important; }
+html .tray .feed-go ~ .full-mu b, html .tray .feed-go ~ .full-mu svg { color: var(--ink) !important; }
+html .tray .feed-go ~ .full-mu i { color: var(--muted) !important; }
+/* 16. Fewer text sizes: the stray 10, 14, 17 and 20 on Best bets, the Live feed and the quick look join 11, 15, 16 and 22 */
+html .fd-pos { font-size: 11px !important; }
+html .bet-why, html .fd-px, html .bet-l, html .bet-l span, html .ta-fav, html .fd-more, html .fd-cr b, html .fd-cr span { font-size: 15px !important; }
+html .fd-boxh { font-size: 16px !important; }
+html .bet-r b { font-size: 22px !important; }

@@ -5,6 +5,17 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.51.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+Fourth and last release from the UX review: tighter layouts.
+- Open Duo: less empty space between the slate's header and its first game, so more of the slate fits on the short screen.
+- Box Office: on the open Duo's right side and at large text sizes, every player is two tidy lines (points, rebounds and assists on top, the rest smaller underneath) in place of lines that broke wherever they ran out of room.
+- On TV: a long channel name ("NBA League Pass") gets the whole line, with Live and the game count under it.
+- Teams: today's line on a tile uses the short team code ("Final L 13-21 vs SEA") and wraps to a second line when it needs to, so it's no longer cut off.
+- The "Live scores update every 10 seconds…" sentence and Enter passcode moved off every page; they're at the bottom of Settings. Tonight's Slate still says when scores last updated.
+- Quick look of a live game: Live feed is the one big button, and Full matchup is a plain row under it.
+- Best bets and the Live feed use the same text sizes as the rest of the app. Settings' Text size note is one short line.
+
 ## 3.50.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News, Games tab: each game card now shows the result itself: both scores beside the teams (the loser dimmed), with Final, the live clock in red, or the start time on the right. Same ESPN numbers as the slate.

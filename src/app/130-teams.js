@@ -146,7 +146,7 @@
       var st = status(today), sc = state.showScores ? scoreOf(today) : null, side = today.away && teamMatch(today.away, t.name, t.lg) ? "away" : "home", other = side === "away" ? "home" : "away";
       r1.classList.add("tc-today");
       // one line on the tile: my score first, then a short opponent name ("Final L 78-85 vs GTWN")
-      var opn = short(today, other); if (opn.length > 8) opn = abbr(today, other) || opn;
+      var opn = abbr(today, other) || short(today, other);  // always the short code on a tile ("vs SEA"): the full name was cut off mid-word (3.51.0)
       var vsTxt = (side === "away" ? "@ " : "vs ") + opn, mine2 = side === "away" ? sc && sc.a : sc && sc.h, theirs = side === "away" ? sc && sc.h : sc && sc.a;
       if (st.kind === "live" && sc) { r1.appendChild(el("i", "rk-dot")); r1.appendChild(el("span", null, mine2 + "-" + theirs + " " + vsTxt + (sc.detail ? " · " + sc.detail : ""))); }
       else if (st.kind === "over" && sc) r1.appendChild(el("span", null, "Final " + (mine2 > theirs ? "W " : mine2 < theirs ? "L " : "T ") + mine2 + "-" + theirs + " " + vsTxt));

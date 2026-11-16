@@ -234,10 +234,15 @@
   }
   // a ranked performance, drawn like the Real app: face with team mark, big numbers with small units, where and when
   function rkStats(line) {
-    var w = el("div", "rk-stats"), extra = [];
+    var w = el("div", "rk-stats"), extra = [], n = 0;
     String(line || "").split(" · ").forEach(function (tok, i) {
       var m = /^([+\-]?\.?\d[\d.,:\/-]*)\s*(.*)$/.exec(tok.trim());
-      if (m && w.childNodes.length < 5) { var c = el("span", "rk-st"); c.appendChild(el("b", null, m[1])); if (m[2]) c.appendChild(el("i", null, m[2].toLowerCase())); w.appendChild(c); }
+      if (m && n < 5) {
+        // the first three numbers make line one; in a narrow pane or at large text the rest drop to a quieter second line
+        // on every row alike, so rows no longer break wherever they run out of room (3.51.0)
+        if (n === 3) w.appendChild(el("span", "rk-br"));
+        var c = el("span", "rk-st" + (n >= 3 ? " rk-st2" : "")); c.appendChild(el("b", null, m[1])); if (m[2]) c.appendChild(el("i", null, m[2].toLowerCase())); w.appendChild(c); n++;
+      }
       else extra.push(tok);
     });
     if (extra.length) w.appendChild(el("span", "rk-more", extra.join(" · ")));
