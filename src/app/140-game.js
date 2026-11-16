@@ -120,8 +120,8 @@
       section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Not written yet", function (box) {
         previewSections(g, pv, box); pvExtras(box);
       });
-      // no player stats before the start (DJ, 3.52.5): they arrive with the box score once the game is on
-      if (sport) teamSec();
+      // season player stats before the start, except soccer (DJ, 3.52.7): soccer's arrive with the box score once the game is on
+      if (sport) { if (sport !== "soccer") section("box", "Player stats", "This season", boxFill); teamSec(); }
     }
   }
   // the matchup page's preview sections (odds, quick read or recap, deep dive, players, form, headlines)
