@@ -184,7 +184,10 @@ private struct LockCard: View {
         // 3.39.1: each team's standout on its own line when ESPN has them ("SF  B. Purdy 22/28, 389 YDS, 3 TD"),
         // else the slate's one-liner as before
         let stars: [(String, String)] = [(a.awayAbbr, s.ap ?? ""), (a.homeAbbr, s.hp ?? ""), (s.ox ?? "", s.op ?? "")].filter { !$0.0.isEmpty && !$0.1.isEmpty }
-        let note = stars.isEmpty ? (s.line ?? "") : ""
+        // the slate's preview line (3.58.0): the card's one-liner before kickoff, and a quiet line under the standouts during it
+        let pv = s.state == "post" ? "" : (s.pv ?? "")
+        let note = stars.isEmpty ? (pv.isEmpty ? (s.line ?? "") : pv) : ""
+        let pvUnder = !stars.isEmpty && !pv.isEmpty
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Text(a.league)
@@ -212,7 +215,7 @@ private struct LockCard: View {
 
             // the bottom of the card, full width (3.25.1, no Watch button): for live football who has the ball, the down
             // and the yard line ("MIN ball · 3rd & 4 at GB 35"), then the slate's one-liner across the whole card
-            if hasSit || !note.isEmpty || !stars.isEmpty {
+            if hasSit || !note.isEmpty || !stars.isEmpty || pvUnder {
                 VStack(alignment: .leading, spacing: 3) {
                     if hasSit {
                         HStack(spacing: 5) {
@@ -238,6 +241,13 @@ private struct LockCard: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
                         }
+                    }
+                    if pvUnder {
+                        Text(pv)
+                            .font(SlateLook.semi(12))
+                            .foregroundStyle(SlateLook.muted)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
                     // red while the game is on, plain after; two lines when there's room
                     if !note.isEmpty {
@@ -342,7 +352,11 @@ private struct IslandBottom: View {
 
     var body: some View {
         let live = s.state == "in"
-        let main = (live ? s.lp : nil).flatMap { $0.isEmpty ? nil : $0 } ?? s.line ?? ""
+        let lp = (live ? s.lp : nil).flatMap { $0.isEmpty ? nil : $0 }
+        let pv = s.state == "post" ? nil : s.pv.flatMap { $0.isEmpty ? nil : $0 }
+        // the last play, else the slate's preview line (3.58.0), else the slate's one-liner
+        let main = lp ?? pv ?? s.line ?? ""
+        let pvUnder = lp != nil && pv != nil
         VStack(alignment: .leading, spacing: 4) {
             if (s.at ?? "") != "" || (s.ht ?? "") != "" {
                 HStack(spacing: 8) {
@@ -358,7 +372,15 @@ private struct IslandBottom: View {
                 Text(main)
                     .font(SlateLook.semi(13))
                     .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
-                    .lineLimit(2)
+                    .lineLimit(pvUnder ? 1 : 2)
+                    .minimumScaleFactor(0.85)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if pvUnder, let t = pv {
+                Text(t)
+                    .font(SlateLook.semi(11))
+                    .foregroundStyle(SlateLook.muted)
+                    .lineLimit(1)
                     .minimumScaleFactor(0.85)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

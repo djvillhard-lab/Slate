@@ -201,7 +201,9 @@ function laAttrs(id, g, s) {
   for (const side of ["away", "home"]) { const r = Number(g[side + "Rank"]); if (COLLEGE[g.league] && Number.isInteger(r) && r > 0 && r < 26) at[side + "Rank"] = r; }  // a whole number, or the app can't read the notification
   return at;
 }
-function laState(s) {
+// each person's preview lines for today, shared by their phone from the slate (prefs/pvlines, 3.58.0): game id → line
+let PVL = {};
+function laState(s, id) {
   const x = (s.ld || []).slice().sort((a, b) => b.v - a.v)[0];
   const st = { a: s.a || 0, h: s.h || 0, detail: s.state === "post" ? (s.detail || "Final") : (s.detail || ""), state: s.state };
   if (x && x.n && x.d) st.line = `${x.n} ${x.d}`.slice(0, 60);
@@ -211,12 +213,16 @@ function laState(s) {
   if (s.state === "in" && s.dd) { const who = s.po === "away" ? s.aa : s.po === "home" ? s.ha : ""; st.sit = ((who ? who + " ball · " : "") + String(s.dd)).slice(0, 44); }
   // the expanded island's extra lines (3.38.0; builds before it ignore them)
   if (s.state === "in" || s.state === "post") for (const k of ["ap", "hp", "ox", "op", "at", "ht", "lp", "wp"]) if (s[k]) st[k] = s[k];
+  // the slate's preview line for the game, while it's on (after the final it's old news)
+  if (s.state === "in" && id && PVL[id]) st.pv = String(PVL[id]).slice(0, 140);
   return st;
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
-function preState(g, kick) {
+function preState(g, kick, id) {
   const tv = String((g.tv || [])[0] || ""), st = { a: 0, h: 0, detail: Date.now() >= kick ? "Starting" : clock(new Date(kick)), state: "pre" };
   if (tv) st.line = `On ${tv}`.slice(0, 60);
+  // the slate's preview line (3.58.0): its own field for new builds, and the one-liner for older ones
+  if (id && PVL[id]) { st.pv = String(PVL[id]).slice(0, 140); st.line = st.pv.slice(0, 60); }
   return st;
 }
 async function sendLive(env, tok, event, body, prio) {
@@ -238,7 +244,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     // before kickoff (3.32.0): a new one starts 10 minutes early, showing 0-0 with the start time and channel
     const kick = Date.parse(s.start || g.start) || 0, soon = s.state === "pre" && kick > 0 && Date.now() >= kick - 10 * 60000 && Date.now() - kick <= 60 * 60000;
     if (s.state === "pre" && !cur && !soon) continue;
-    const st = s.state === "pre" ? preState(g, kick) : laState(s), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}`;
+    const st = s.state === "pre" ? preState(g, kick, id) : laState(s, id), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}`;
     let tok = (la.acts || {})[id];
     // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
     if (cur && !cur.off && per[id] === 0) {
@@ -430,7 +436,9 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     if (now >= at && now - at <= 10 * 60000) {
       const orig = new Date(g.start), moved = Math.abs(orig - t) >= 60000;
       const head = lead ? `In ${Math.round(lead / 60000)} min (${clock(t)})` : "Starting now";
-      out.push(["reminders", i, head, head + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}`]);
+      // with the slate's preview line under it (3.58.0)
+      const pvl = !spoil && PVL[i] ? `\n${String(PVL[i]).slice(0, 140)}` : "";
+      out.push(["reminders", i, head, head + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}` + pvl]);
     }
   }
   if ((p.reminders || {}).lineup) for (const c of customs || []) {
@@ -631,7 +639,7 @@ export async function runAlerts(env) {
   const base = await getDocs(env, [`alertsets/${D}`]);
   const aset = base[`alertsets/${D}`]; if (!aset || !aset.people) return;
   const people = aset.people, games = aset.games || {};
-  const paths = []; for (const w of people) paths.push(w.prefix + "prefs/notify", w.prefix + "prefs/push", `${w.prefix}prefs/sent-${D}`, w.prefix + "prefs/liveacts");
+  const paths = []; for (const w of people) paths.push(w.prefix + "prefs/notify", w.prefix + "prefs/push", `${w.prefix}prefs/sent-${D}`, w.prefix + "prefs/liveacts", w.prefix + "prefs/pvlines");
   const docs = await getDocs(env, paths);
   const hasLive = (w) => { const l = docs[w.prefix + "prefs/liveacts"] || {}; return (l.start || []).length || Object.keys(l.acts || {}).length || (l.startBoard || []).length || !!l.board; };
   const active = people.filter((w) => (((docs[w.prefix + "prefs/push"] || {}).subs) || []).length || hasLive(w));
@@ -649,6 +657,7 @@ export async function runAlerts(env) {
   for (const w of active) {
     const pre = w.prefix, subs = (docs[pre + "prefs/push"] || {}).subs || [], p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
+    { const pvd = docs[pre + "prefs/pvlines"] || {}; PVL = pvd.date === D && pvd.lines && typeof pvd.lines === "object" ? pvd.lines : {}; }
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),

@@ -22,6 +22,7 @@ struct SlateGameAttributes: ActivityAttributes {
         var at: String?       // away team line: "FG 48% · 3PT 10/33 · REB 48" (basketball), "3 timeouts" (football)
         var ht: String?       // home team line
         var lp: String?       // the last play, in ESPN's words: "Dylan Harper makes free throw 2 of 2"
+        var pv: String?       // 3.58.0: the slate's preview line for the game ("Celtics have won five in a row"), before and during it
         var wp: String?       // ESPN's win probability for the team ahead in it: "ESPN win chance: SA 99%"
     }
 

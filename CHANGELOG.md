@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.58.0 (Nov 16, 2026)
+TestFlight: 3.58.0 (39)
+- Live notifications carry the game's preview line from the slate ("Celtics have won five in a row and are 6-0 at home"), in every sport. Before kickoff it's the line under the score on the Lock Screen. Once the game is on, it sits as a quiet line under the two standouts, and in the Dynamic Island held open it's under the last play. After the final it's dropped, since it's old news by then.
+- Starting now alerts have the preview line under the matchup too.
+- Where the line comes from: your phone works it out on the slate as before and now shares it with Slate's server, so it shows up once you've opened Slate that day. A game you haven't seen on your slate yet has no line.
+- The preview line before kickoff and in Starting now alerts works on the current TestFlight build. The quiet line during the game and the one in the Dynamic Island need build 39.
+
 ## 3.57.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - For testing the thumbs today: Settings, Thumbs up and down, "Show extra suggestions today, for testing". On this phone until midnight, Suggested for you shows up to five games with a lower bar, and Worth a look shows any live game that isn't on your slate, in any league ("Live now"). It turns itself off at midnight and will be taken out once testing is done.

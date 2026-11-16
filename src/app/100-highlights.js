@@ -440,9 +440,23 @@
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
   var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {}))) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
-  function pvSave() { try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "" }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
+  // the phone shares today's preview lines with Slate's server (prefs/pvlines), so live notifications and Starting now
+  // alerts can carry the same line as the slate (3.58.0). Only on a phone signed in with a passcode; only when it changed.
+  var pvShareT = null, pvShared = "";
+  function pvShare() {
+    if (pvShareT) return;  // one write at most every 8 seconds, however often the slate redraws
+    pvShareT = setTimeout(function () {
+      pvShareT = null;
+      if (!db || !uid || !state.isOwner || state.date !== todayInHome()) return;
+      var lines = {}; games().forEach(function (g) { var p = PV[g.id]; if (p && p.text) lines[g.id] = String(p.text).slice(0, 140); });
+      var js = JSON.stringify(lines); if (js === pvShared || js === "{}") return;
+      pvShared = js;
+      db.doc("prefs/pvlines").set({ date: state.date, lines: lines, updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
+    }, 8000);
+  }
+  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "" }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
   function pvNode(g) {
-    var p = PV[g.id];
+    var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
     return p && p.text ? hlLine(g, p.text, p.tm, "hl hl-pre") : null;
   }
