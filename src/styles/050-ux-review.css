@@ -225,11 +225,8 @@ html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-sh
 .nw-soon { display: grid; justify-items: center; gap: 6px; padding: 64px 16px; text-align: center; }
 .nw-soon svg { width: 34px; height: 34px; color: var(--accent); }
 .nw-soon b { font-size: 22px; font-weight: 800; } .nw-soon span { color: var(--muted); font-size: 15px; }
-/* today's finished games: their own group at the bottom, tighter rows (times stay, the one-line notes go) */
+/* today's finished games: their own group at the bottom, the same size as the games above since 3.38.3 (the one-line notes go) */
 .sl-fin { margin-top: 18px; }
-.sl-fin .tgroup { margin-top: 2px; }
-.sl-fin .tg-time b { font-size: 18px !important; } .sl-fin .tg-time i { font-size: 12px !important; }
-.sl-fin .g.panel { padding: 8px 12px !important; }
 .sl-fin-lg { margin-top: 6px; }
 .top-undo { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px); transform: translate(-50%, -12px); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--raise); border: 1px solid var(--line); box-shadow: 0 6px 18px var(--shadow); font-size: 13px; font-weight: 700; color: var(--muted); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; white-space: nowrap; }
 .top-undo.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
@@ -242,13 +239,8 @@ html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-sh
 .sl-fin-lg.shut .sl-fin-h svg { transform: rotate(0deg); }
 .sl-fin .g.panel .g-lg.g-lg { display: flex !important; }
 .sl-fin .fin-t { font-weight: 700; color: var(--muted); }
-.sl-fin .tm { min-height: 20px !important; }
-.sl-fin .tm .sc { font-size: 18px !important; }
-.sl-fin .tm .nm { font-size: 15px; }
-.sl-fin .tg-games { gap: 6px; }
 .sl-fin .g.panel .ctag { display: none !important; }
 .sl-fin .g.panel.tagged .g-side { margin-top: 0 !important; }
-.sl-fin .g-side { gap: 2px !important; }
 .ctag.upset { color: var(--live); font-weight: 800; }
 
 /* 3.21.0: an opened slate game's controls in one clean row: team stars on the left; Remove and the live-score bell on the right */
