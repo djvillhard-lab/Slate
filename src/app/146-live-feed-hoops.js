@@ -162,7 +162,7 @@
           var tm2 = [], tseen = {}; T.forEach(function (x) { (tags[hpPid(x)] || []).forEach(function (y) { if (!tseen[y.t]) { tseen[y.t] = 1; tm2.push(y); } }); }); tg = tm2.length ? tm2.slice(0, 3) : null;
         }
         if (rd.note) { flush(); items++; list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
-        if (!rd.big) { if (rd.minor === "Sub") continue; items++; var mr = el("p", "hp-row" + (isNew ? " fd-new" : "")); mr.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck)); mr.appendChild(document.createTextNode(raw || rd.title)); list.appendChild(mr); continue; }
+        if (!rd.big) { if (rd.minor === "Sub") continue; items++; var mr = el("p", "hp-row" + (isNew ? " fd-new" : "")); mr.setAttribute("data-id", pid); mr.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck)); mr.appendChild(document.createTextNode(raw || rd.title)); list.appendChild(mr); continue; }
         flush(); items++;
         var sd2 = sideOf[String((pl.team || {}).id || "")] || "";
         var c2 = el("div", "fd-play hp-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); c2.setAttribute("data-id", pid);
@@ -179,7 +179,8 @@
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game tips off." : "No plays yet."));
     body.appendChild(list);
-    if (!FD.more && plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = true; renderFeed(); }); body.appendChild(mb); }
+    if (!FD.more && plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = true; renderFeed(); }); list.appendChild(mb); }
+    fdListKeep(list);
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
@@ -196,3 +197,18 @@
     w.addEventListener("click", function () { setTimeout(function () { if (state.view === "feed") renderFeed(); }, 0); }, true);  // "Show all players" and the team switch redraw this page
     return w;
   }
+  // the plays sit in a box of fixed height that scrolls by itself (3.41.1): new plays never grow the page or push the box score.
+  // Before a redraw, remember where the box was scrolled and which play was at its top; after, put that play back in the same spot.
+  function fdListSave(body) {
+    var L = body && body.querySelector(".fd-list"); FD.ls = null; if (!L) return;
+    var top = L.scrollTop, id = null, off = 0;
+    if (top > 4) { var lr = L.getBoundingClientRect(), cs = L.querySelectorAll("[data-id]"); for (var i = 0; i < cs.length; i++) { var r = cs[i].getBoundingClientRect(); if (r.bottom > lr.top + 2) { id = cs[i].getAttribute("data-id"); off = r.top - lr.top; break; } } }
+    FD.ls = { top: top, id: id, off: off, gid: state.feedId };
+  }
+  function fdListKeep(L) {
+    var S = FD.ls; if (!S || S.gid !== state.feedId || S.top <= 4) return;
+    L.scrollTop = S.top;
+    if (S.id) { var n = L.querySelector('[data-id="' + S.id + '"]'); if (n) L.scrollTop += (n.getBoundingClientRect().top - L.getBoundingClientRect().top) - S.off; }
+  }
+  // scrolling inside the plays box counts as scrolling: an update waits until it stops (as for the page)
+  document.addEventListener("scroll", function (e) { if (state.view === "feed" && e.target && e.target.classList && e.target.classList.contains("fd-list")) FD.scrollAt = Date.now(); }, { passive: true, capture: true });
