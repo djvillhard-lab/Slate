@@ -5,7 +5,7 @@ Code: `src/styles/070-ux-review-3.css` (one block per release, loaded last) plus
 
 ## Done
 - Release A, 3.48.0 (items 1, 2, 3, 4, 19): full team names on upcoming games, Watch button, 44-point touch areas, readable light team chips (`badgeFor` in 040-live.js), Hit tag, day picker labels.
-- Release B, 3.49.0 (items 5, 6, 15): `html.dock-away` hides the day picker and Back while scrolling down (end of 070-navigation.js); Best bets above Finished (170-slate-page.js); the dock's day picker also shows on the slate when not on the open Duo (`renderDockDay`).
+- Release B, 3.49.0 (items 5, 6, 15): `html.dock-away` hides the day picker and Back while scrolling down (end of 070-navigation.js); Best bets above Finished, UNDONE in 3.51.2 at DJ's ask: it is back at the bottom (170-slate-page.js); the dock's day picker also shows on the slate when not on the open Duo (`renderDockDay`).
 - Release C, 3.50.0 (items 7, 8, 9, 17): 8-point corners; On/Off pairs in Notifications and Scores in Settings draw as the sliding switch (CSS only: still two buttons, the unchosen one covers the switch); "It lists" check boxes; Slate rules icon is sliders (body.html and `rules` in 270-wiring.js); Red zone tag gray, Hit in the accent.
 - Release D, 3.51.0 (items 10 to 14, 16, 18, 20): open Duo slate spacing; Box Office rows break after three stats in the open Duo pane and at large text (`.rk-br` from `rkStats`); On TV channel name on its own line; team tiles use the short code and may wrap; the footer sentence and Enter passcode show only in Settings; a live quick look has one big button (Live feed); stray text sizes folded in; shorter Text size note.
 
@@ -24,3 +24,5 @@ Code: `src/styles/070-ux-review-3.css` (one block per release, loaded last) plus
 - The dock stays hidden until a scroll up (like Safari's toolbar), not after a pause: coming back on a pause would cover the content again right when DJ stops to read.
 - Item 7 changed from the review: the review said to give Slate a new menu icon, which needs a new iPhone build for the strip. Giving Slate rules the new icon fixes the same clash with no build.
 - Corner overrides use `:not(#_):not(#_)` to beat the id-based `!important` rules in 050-ux-review.css.
+
+- 3.51.2: the 44-point hit area on `.lg-tab` used `::after`, which is also the selected tab's accent underline, so the line jumped to the top of the tab. The hit area is `::before` now. Before adding a `::before`/`::after` hit area to anything, grep for an existing one.

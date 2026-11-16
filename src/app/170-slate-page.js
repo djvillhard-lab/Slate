@@ -155,9 +155,6 @@
         body.appendChild(sec);
       });
     } else body.appendChild(timeGroups(lg));
-    // Best bets sits above Finished (3.49.0): late in the night the picks matter more than the finished list.
-    // It gets the whole slate: finished games and the Live-only filter must not take picks away (3.45.1).
-    if (!loading) { var bts = betsBlock(lgAll); if (bts) body.appendChild(bts); }
     if (finDone.length) {
       var fShut = !!(state.slateFold || {}).__fin, fsec = el("section", "sl-sec sl-fin" + (fShut ? " shut" : ""));
       var fh = el("button", "sl-h"); fh.type = "button"; fh.setAttribute("aria-expanded", fShut ? "false" : "true");
@@ -192,6 +189,7 @@
     if (loading) return;
     var sg = suggestionBlock("slate"); if (sg) body.appendChild(sg);
     var nlb = newsletterBlock(); if (nlb) body.appendChild(nlb);
+    var bts = betsBlock(lgAll); if (bts) body.appendChild(bts);  // the whole slate: finished games (in their own group) and the Live-only filter must not take picks away (3.45.1)
     // two actions in one panel, like the rest of the slate; Share lives in the header, Clear is a quiet link
     var acts = el("div", "slate-acts"), row = el("div", "sa-row");
     function act(label, path, fn) {

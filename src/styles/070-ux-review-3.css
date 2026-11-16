@@ -15,7 +15,8 @@ html .ch-tgb { min-height: calc(44px / var(--z, 1)); }
   content: ""; position: absolute; left: 0; right: 0; top: 50%; height: calc(44px / var(--z, 1)); transform: translateY(-50%); }
 .bet-x::after, .g .add::after { left: 50%; right: auto; width: calc(44px / var(--z, 1)); transform: translate(-50%, -50%); }
 .rlink::after { left: -6px; right: -6px; }
-.lg-tab::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100%; min-width: calc(34px / var(--z, 1)); transform: translateX(-50%); }
+/* ::before, not ::after: the selected tab's accent underline is its ::after (3.51.2) */
+.lg-tab::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 100%; min-width: calc(34px / var(--z, 1)); transform: translateX(-50%); }
 html .sl-h, html .tdd-h, html .sa-clear, html .gv-act, html .cf-tab, html .seg button, html .net, html .fd-chip, html .fd-more,
 html #nl-head, html #wal-head, html #ver-btn, html .foldrow button, html input.field, html .sizes button {
   min-height: calc(44px / var(--z, 1)) !important; }

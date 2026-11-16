@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.51.2 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Best bets is back at the bottom of the slate, below Finished.
+- All games and Box Office: the accent line is under the selected league tab again. Since 3.48.0 it sat at the top of the tab, off to the side.
+
 ## 3.51.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News: tapping a team, a league or a game no longer starts Claude writing its breakdown. The breakdown page opens with a Generate button, and Claude writes only when you tap it. A breakdown that's already been generated today still opens right away.
