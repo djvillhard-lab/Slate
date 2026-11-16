@@ -624,9 +624,14 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .gv-toggle[aria-expanded="true"] svg { transform: rotate(-90deg); }
 /* full box score, Real-app style */
 .bx-pl.real { gap: 4px; }
-.bx-tabs2 { display: grid; grid-template-columns: 1fr 1fr; margin: -2px -2px 8px; border-bottom: 1px solid var(--hair); }
-.bx-tabs2 button { height: 44px; font-size: 16px; font-weight: 800; letter-spacing: .03em; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px; }
-.bx-tabs2 button[aria-pressed="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+/* team picker for box scores (3.43.2): a segmented control, each side with its badge and name; the picked team fills with its color */
+.bx-tabs2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 2px 0 10px; padding: 4px; border-radius: 16px; background: var(--raise); border: 1px solid var(--hair); }
+.bx-tabs2 button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 10px; border-radius: 12px; border: 2px solid transparent; background: transparent; color: var(--muted); font: inherit; font-size: 16px; font-weight: 800; transition: background .15s ease, border-color .15s ease, color .15s ease; min-width: 0; }
+.bx-tabs2 button .badge { flex: none; opacity: .55; transition: opacity .15s ease; }
+.bx-tabs2 button span.bx-tn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx-tabs2 button[aria-pressed="true"] { color: var(--ink); background: color-mix(in srgb, var(--tc, var(--accent)) 30%, var(--card)); border-color: var(--tc, var(--accent)); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.bx-tabs2 button[aria-pressed="true"] .badge { opacity: 1; }
+.bx-tabs2 button[aria-pressed="false"]:active { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .bxt { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: start; padding: 8px 0 16px; border-bottom: 1px solid var(--hair); }
 .bxt-r { min-width: 0; }
 .bxt-nm { display: block; font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
@@ -706,7 +711,6 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .push-in { animation: pushIn .28s cubic-bezier(.2,.8,.2,1); }
 .gv-toggle svg, .g-main .chev { transition: transform .2s ease; }
 /* compact box score */
-.bx-tabs2 button { height: 38px; font-size: 15px; }
 .bxt { grid-template-columns: 34px minmax(0, 1fr); gap: 8px; padding: 4px 0 12px; }
 .bxt .badge, .bxt > :first-child { transform: scale(.8); transform-origin: 0 0; }
 .bxt-nm { font-size: 13px; margin-bottom: 2px; }
@@ -836,9 +840,6 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 /* live highlight under a slate game */
 .hl { grid-column: 1 / -1; margin: 8px 0 0; font-size: 13px; line-height: 1.35; font-weight: 500; color: var(--ink); opacity: .72; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 /* team tabs take the team's color */
-.bx-tabs2 button[aria-pressed="true"] { color: var(--ink) !important; border-bottom-color: var(--tc, var(--accent)) !important; }
-.bx-tabs2 button { box-shadow: inset 0 -1px 0 transparent; }
-.bx-tabs2 button[aria-pressed="true"] { background: linear-gradient(to top, color-mix(in srgb, var(--tc, var(--accent)) 22%, transparent), transparent 70%); }
 /* Moments */
 .ch-live { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 13px; font-weight: 800; color: var(--live); }
 .sec .sec-live { margin-left: 2px; margin-right: auto; align-self: center; font-size: 13px; }  /* right beside the league name */
@@ -964,8 +965,6 @@ html[data-view="games"] .day .w { font-size: 15px !important; }
 .tray .wp span { font-size: 13px; padding: 0 8px; }
 .tray .wp-note { display: none; }
 .tray .odds-strip { margin-bottom: 8px; }
-.tray .bx-tabs2 button { height: 32px !important; font-size: 13px !important; }
-.tray .bx-tabs2 { margin-bottom: 4px; }
 .tray .bxt { padding: 8px 0 8px !important; }
 .tray .bxt-nm { display: none !important; }
 .tray .bxt-cells .bxp-c b { font-size: 15px !important; }

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.43.2 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Box scores: the team picker is a bigger, clear two-way switch. Each side shows the team's badge and name ("Thunder", "Kings"), and the team you're looking at fills with its color and gets a colored outline; the other side is dimmed. Taller buttons, easier to hit. Same everywhere a box score shows: under a slate game, the quick look, the matchup page and the Live feed.
+
 ## 3.43.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Live feed: "Show earlier plays" adds one more batch each time you tap it, the same size as the first (8 more plays in football, 12 more lines in basketball), instead of the whole game at once.

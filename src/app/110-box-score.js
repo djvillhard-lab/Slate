@@ -316,8 +316,9 @@
     var sport = BX_SPORT[g.league] || "", wrap = el("div", "bx-pl"), seg = el("div", "bx-tabs2");  // same team tabs in the quick look and the full box score
     seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Pick a team");
     b.teams.forEach(function (t, i) {
-      var bt = el("button", null, t.abbr || abbr(g, i ? "home" : "away")); bt.type = "button";
+      var bt = el("button"); bt.type = "button";
       var sd = i ? "home" : "away", bdg = badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]), tc = bdg.style.background || "";
+      bdg.setAttribute("aria-hidden", "true"); bt.appendChild(bdg); bt.appendChild(el("span", "bx-tn", short(g, sd) || t.abbr || abbr(g, sd)));  // 3.43.2: badge and team name
       if (tc) bt.style.setProperty("--tc", tc);
       bt.setAttribute("aria-pressed", i === side ? "true" : "false"); bt.setAttribute("aria-label", (t.name || short(g, i ? "home" : "away")) + (season ? " season stats" : " box score"));
       bt.addEventListener("click", function (e) { e.stopPropagation(); if (state.bxSide[g.id] === i) return; state.bxSide[g.id] = i; wrap.replaceWith(bxPlayers(g, b, compact, season)); });
