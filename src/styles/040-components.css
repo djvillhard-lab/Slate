@@ -59,9 +59,11 @@ html[data-strip] #menu-fab { display: none !important; }
 html[data-native] .toprow:not(#pane-l .toprow) { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
 html[data-native] .lo-row:not(#pane-l .lo-row) { padding-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
 /* 3.36.4: in the app on the folded Duo, the page can be pulled down at the top (iOS's own bounce; it springs back) to see
-   anything under the clock and Wi-Fi at the top of iOS's right column. The slate first; every page since 3.65.4.
+   anything under the clock and Wi-Fi at the top of iOS's right column. The slate first; every page since 3.65.4; the Duo unfolded too since 3.65.5.
    A page too short to scroll gets the same pull from 285-pull-down.js */
-html[data-native].side-col:not(.duo):not([data-view="feed"]), html[data-native].side-col:not(.duo):not([data-view="feed"]) body { overscroll-behavior-y: auto; }  /* the Live feed does its own pull (145-live-feed.js) */
+html[data-native]:not(.iphone):not(.duo):not(.side-col[data-view="feed"]), html[data-native]:not(.iphone):not(.duo):not(.side-col[data-view="feed"]) body { overscroll-behavior-y: auto; }  /* the folded Live feed does its own pull (145-live-feed.js) */
+/* unfolded, two panes (3.65.5): each pane gets the pull from 285-pull-down.js, so iOS's own bounce is off there (no double pull) */
+html[data-native].duo:not(.iphone) .pane { overscroll-behavior-y: none; }
 html[data-native] nav.dock { right: calc(var(--strip-w, 0px) + 12px) !important; }
 html[data-native] #best-body .rk-day { right: calc(var(--strip-w, 0px) + 82px); }
 /* strip mode: no menu button in the page, so the day picker and Back sit side by side against the column */
