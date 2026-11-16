@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Slate: Betting lines and newsletters | 170-slate-page.js, 175-best-bets.js | 2026-11-16 22:02 |
