@@ -1,5 +1,5 @@
-# Best bets
-Last updated: Nov 16, 2026, 3.52.11
+# Betting lines (was Best bets)
+Last updated: Nov 16, 2026, 3.53.0
 Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section on Tonight's Slate, at the bottom of the slate, below Finished. (3.49.0 moved it above Finished; DJ had it moved back in 3.51.2. Don't move it up again.)
 
 ## Done
@@ -25,7 +25,7 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
   the live score. `bxRedraw` calls `betTouch()` to redraw the slate when a pick's number moves.
 
 - Game totals show both teams' badges (3.52.11); they were a gray O/U box.
-- Where the numbers come from (DJ asked, Nov 16): player props are the app's own milestones (BET_DEF rungs, the highest
+- Before 3.53.0: player props were the app's own milestones (BET_DEF rungs, the highest
   one a player reached in 5 of 6), not sportsbook lines. Game totals use the real posted over/under from ESPN's game summary
   (pickcenter, DraftKings), read when the picks are built (refreshed every 3 hours before a pick is locked).
 
@@ -38,3 +38,16 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 ## Decisions
 - The six little stat boxes were replaced by a sentence in 3.43.0: DJ found words clearer.
 - "Show all" was dropped in 3.40.0: it's always the seven.
+
+## 3.53.0: real lines, a case both ways (DJ: "Don't give recommendations, but rather show the line and make an argument either way based on stats")
+- Renamed Betting lines. No picks, no Hit/Miss: each card shows the posted line ("O/U 79.5 rushing yards"), an "Over:" and an
+  "Under:" line built from the last six games (`betCase`), the book and its opening line. Settled: "Went over" / "Went under", neutral.
+- Player lines: ESPN core odds API (sports.core.api.espn.com, CORS open, free). `betLines()` takes the provider with propBets
+  (100 = DraftKings), reads every page, keeps "Total …" types mapped in `BET_DEF[].re`. Each line appears twice (over/under); deduped.
+  NFL, NBA, WNBA, NHL only (`BET_PROPS`); college has none, so college gets game totals only.
+- Up to 12 players a game (most lines first, then biggest scoring line); athlete doc gives name, position, team.
+- Order is prominence, not lean (DJ wanted no recommendations): `BET_W` kind weight + rank of the line within its kind + a small lean tiebreak.
+  Five max, freeze, ×/undo, three a game, two of a kind all kept.
+- No player lines yet and more than 2h to start: `short`, re-checked every 30 min, and totals don't fill the spare spots meanwhile.
+- localStorage keys moved to `slate-bets3` / `slate-picks2` (old picks don't carry over).
+- Open: lines can move after a card is chosen; the card keeps the line it was chosen with.

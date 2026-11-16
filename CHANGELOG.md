@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.53.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Best bets is now Betting lines. Each card shows the sportsbook's real posted line (DraftKings, from ESPN's odds feed), like "O/U 79.5 rushing yards", and what changed since it opened.
+- No more picks. Each card makes the case both ways from the stats: "Over:" and "Under:" lines from the player's last six games (or both teams' last five for a game total), with how many went each way, the average, the last three, or the high and low.
+- Player lines for NFL, NBA, WNBA and NHL: passing, rushing and receiving yards, passing TDs, catches, points, rebounds, assists, threes and shots on goal. College games only get the game total, because the feed has no college player lines.
+- Still five at a time, the headline lines first (points, passing and rushing yards, game totals) and the biggest names, not whichever way the numbers lean. Before the game the right side shows the recent average; once it starts, tonight's number against the line. Settled lines say "Went over" or "Went under" with no win or loss color.
+- Player lines usually go up the day of the game. Until they do, the section says so and checks again every half hour.
+
 ## 3.52.12 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News, "Customize today's news": Today's slate, My teams and Leagues are now drop-downs. Tap a group's name to collapse it or open it again. A collapsed group still shows how many are picked, and your picks stay as they are.

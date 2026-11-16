@@ -1419,6 +1419,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .bet-tag.hit { background: #2BB673; color: #fff; }
 .bet-tag.miss { background: color-mix(in srgb, var(--live, #E5484D) 18%, transparent); color: var(--live, #E5484D); }
 .bet-tag.void { background: var(--raise); color: var(--muted); }
+.bet-tag.ou { background: var(--raise); color: var(--ink); }  /* 3.53.0: which way a line went, with no win or loss color */
+.bet-why b { color: var(--ink); font-weight: 800; }
+.bet-why + .bet-why { margin-top: -6px; }
+.bet-src { grid-column: 2 / -1; margin: -4px 0 0; font-size: 13px; color: var(--dim); }
+.bets-tally .bt-ou { color: var(--ink); }
 .bet-x { flex: none; margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--dim); background: none; }
 .bet-tag + .bet-x { margin-left: 0; }
 .bet-x svg { width: 18px; height: 18px; }
