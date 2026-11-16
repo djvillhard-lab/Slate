@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.39.3 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Updates: the app already moves to a new version each time it's opened or brought back. Now it also checks every 2 minutes while it stays open, and moves to the new version only while Tonight's Slate is showing and you haven't touched the screen for 20 seconds.
+
 ## 3.39.2 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Worth a look: a live game no longer shows its line twice ("NY: Jalen Brunson has 21 points" two times). The card shows only Worth a look's own line.

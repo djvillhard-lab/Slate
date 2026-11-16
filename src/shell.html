@@ -36,6 +36,14 @@
     Promise.all(p).then(go, go); setTimeout(go, 2500);
   };
   setTimeout(check, 1500);
+  // the app often stays open for a whole game: look again every 2 minutes, and move to a new version only while
+  // Tonight's Slate is showing and the screen hasn't been touched for 20 seconds, so nothing jumps under a finger (3.39.3)
+  var touched = Date.now();
+  ["touchstart", "scroll", "keydown"].forEach(function (t) { window.addEventListener(t, function () { touched = Date.now(); }, { passive: true, capture: true }); });
+  setInterval(function () {
+    if (document.hidden || Date.now() - touched < 20000 || document.documentElement.getAttribute("data-view") !== "lineup") return;
+    last = 0; check();
+  }, 120000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
   window.addEventListener("pageshow", function (e) { if (e.persisted) { last = 0; check(); } });
 })();</script>
