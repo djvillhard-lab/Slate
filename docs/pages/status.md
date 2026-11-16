@@ -11,10 +11,17 @@ Last updated: Nov 16, 2026 (no app version: it is not part of the app)
 - Everything else is read from files the site already serves: `CHANGELOG.md` (versions, today's releases, the newest
   TestFlight build), `docs/WORKING-ON.md` (working now), `docs/pages/*.md` (open items per page, the `## Open` bullets),
   `docs/status-waiting.json` (the short "Waiting on you" list). Release times come from GitHub's public commit list.
+- People (3.65.0): per person, last active, minutes and opens today, Claude summaries today, most-shown pages over 7
+  days and a 7-day minutes chart. The app counts it in `src/app/296-usage.js` (opens, seconds visible, times each
+  `state.view` was shown; polled, so it touches no shared file) and posts to `/api/usage` every two minutes and when it
+  goes to the background. `worker/usage.js` keeps 30 days per person in `stats/use/<id>`, encrypted like feedback
+  (the docs table is public-readable); `/api/usage/all` is admin only. No passcode, no count.
 - Refresh: feedback every 10 seconds, the files every 30, GitHub every 2 minutes, only while the page is showing.
 - Look: Midnight in dark mode, Sunday Paper in light (the browser's setting), one column on a phone, two on a PC.
 
 ## Open
+- Usage counts don't include features yet (adds, thumbs, summaries tapped per page). Thumbs and adds are already in each
+  person's own docs if DJ wants them shown.
 - `docs/status-waiting.json` is kept by hand: a thread that settles or adds something DJ has to do updates it
   (`title`, `tag`, `do`, `tf` true when it needs a TestFlight build). Keep it to a few short lines.
 - The page list (`PAGES` in `status.html`) is a copy of CLAUDE.md's table; add a row when a new page gets a note.

@@ -148,6 +148,16 @@ h2 .sp { flex: 1; }
 body { margin: 0; }
 img { max-width: 100%; }
 .rel .ti { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.person { padding: 10px 0; border-bottom: 1px solid var(--hair); display: flex; gap: 12px; align-items: center; min-width: 0; }
+.person:last-child { border-bottom: 0; }
+.person .main { flex: 1; min-width: 0; }
+.person .nm { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.person .nums { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.person .nums b { color: var(--ink); font-weight: 800; font-stretch: 66%; font-size: 15px; }
+.person .pgs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.spark { flex: none; width: 76px; }
+.spark svg { display: block; width: 76px; height: 34px; }
+.spark div { font-size: 10px; color: var(--dim); text-align: center; font-stretch: 78%; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -163,6 +173,7 @@ img { max-width: 100%; }
   <div class="cols">
     <div class="col">
       <section><h2>Waiting on you <span class="n" id="wait-n"></span></h2><div id="waiting"></div></section>
+      <section><h2>People <span class="n" id="ppl-n"></span></h2><div id="people"><div class="empty">Loading…</div></div></section>
       <section><h2>Working now <span class="n" id="work-n"></span></h2><div id="working"></div></section>
       <section>
         <h2>Feedback <span class="n" id="fb-n"></span><span class="sp"></span>
@@ -270,7 +281,49 @@ function render() {
     m.appendChild(mt); r.appendChild(m); wk.appendChild(r);
   });
   if (!D.sheet.length) wk.appendChild(el("div", "empty", "Nobody is signed in. Every page is free."));
-  renderFeedback(); renderReleases(); renderPages();
+  renderPeople(); renderFeedback(); renderReleases(); renderPages();
+}
+
+var VIEW = { lineup: "Slate", games: "All games", game: "Matchup", feed: "Live feed", best: "Betting lines", news: "News", tv: "On TV", teams: "Teams", team: "Team page", settings: "Settings", notify: "Notifications", rules: "Slate rules", moments: "Box Office", office: "Box Office" };
+function dayKey(off) { var d = new Date(Date.now() - off * 864e5); return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
+function mins(secs) { var m = Math.round((secs || 0) / 60); return m < 60 ? m + "m" : Math.floor(m / 60) + "h " + (m % 60) + "m"; }
+function renderPeople() {
+  var box = $("people"); if (!D.people) return;
+  box.textContent = ""; $("ppl-n").textContent = D.people.length || "";
+  if (!D.people.length) { box.appendChild(el("div", "empty", "No one has opened Slate since counting started. People show up here the next time they open it.")); return; }
+  var ns = "http://www.w3.org/2000/svg";
+  D.people.forEach(function (p) {
+    var days = p.days || {}, t = days[dayKey(0)] || { opens: 0, secs: 0, views: {} };
+    var r = el("div", "person"), m = el("div", "main"), nm = el("div", "nm");
+    nm.appendChild(el("span", null, p.name || p.id));
+    var live = Date.now() - new Date(p.last).getTime() < 4 * 60000;
+    nm.appendChild(el("span", live ? "chip live" : "chip", live ? "On now" : ago(p.last)));
+    if (p.where) nm.appendChild(el("span", "chip out", p.where === "app" ? "iPhone app" : p.where === "home" ? "Home Screen" : "Browser"));
+    m.appendChild(nm);
+    var nums = el("div", "nums");
+    [[mins(t.secs), " today"], [String(t.opens || 0), t.opens === 1 ? " open" : " opens"], [String((D.claude || {})[p.id] || 0), " summaries"]].forEach(function (x, i) {
+      if (i) nums.appendChild(document.createTextNode(" · ")); nums.appendChild(el("b", null, x[0])); nums.appendChild(document.createTextNode(x[1]));
+    });
+    m.appendChild(nums);
+    var tot = {}; for (var i = 0; i < 7; i++) { var dv = (days[dayKey(i)] || {}).views || {}; Object.keys(dv).forEach(function (k) { var n = VIEW[k] || k; tot[n] = (tot[n] || 0) + dv[k]; }); }
+    var top = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; }).slice(0, 4);
+    if (top.length) { var pg = el("div", "pgs"); top.forEach(function (k) { pg.appendChild(el("span", "chip", k + " " + tot[k])); }); m.appendChild(pg); }
+    r.appendChild(m);
+    var sp = el("div", "spark"), svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", "0 0 76 34"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "Minutes a day, last 7 days");
+    var vals = []; for (var j = 6; j >= 0; j--) vals.push(((days[dayKey(j)] || {}).secs || 0) / 60);
+    var mx = Math.max.apply(null, vals.concat([1]));
+    vals.forEach(function (v, k) {
+      var h = v ? Math.max(3, v / mx * 30) : 2, rc = document.createElementNS(ns, "rect");
+      rc.setAttribute("x", k * 11); rc.setAttribute("width", 9); rc.setAttribute("y", 32 - h); rc.setAttribute("height", h); rc.setAttribute("rx", 1.5);
+      rc.setAttribute("fill", v ? (k === 6 ? "var(--accent)" : "var(--muted)") : "var(--raise)");
+      var ti = document.createElementNS(ns, "title"); ti.textContent = Math.round(v) + " min"; rc.appendChild(ti); svg.appendChild(rc);
+    });
+    sp.appendChild(svg); sp.appendChild(el("div", null, "7 days")); r.appendChild(sp);
+    box.appendChild(r);
+  });
+}
+function loadPeople() {
+  return api("/api/usage/all", { pass: pass() }).then(function (j) { if (j.people) { D.people = j.people; D.claude = j.claude || {}; renderPeople(); } }).catch(function () {});
 }
 
 function renderFeedback() {
@@ -440,7 +493,8 @@ function start() {
   if (started) return; started = true;
   $("app").hidden = false; var g = $("gate"); if (g) g.remove();
   render();
-  loadFeedback().then(markSeen); loadRepo().then(loadCommits);
+  loadFeedback().then(markSeen); loadRepo().then(loadCommits); loadPeople();
+  timers.push(setInterval(function () { if (document.visibilityState === "visible") loadPeople(); }, 30000));
   timers.push(setInterval(function () { if (document.visibilityState === "visible") loadFeedback().then(markSeen); }, 10000));
   timers.push(setInterval(function () { if (document.visibilityState === "visible") loadRepo(); }, 30000));
   timers.push(setInterval(function () { if (document.visibilityState === "visible") loadCommits(); }, 120000));

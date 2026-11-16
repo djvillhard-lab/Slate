@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.65.0 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- For DJ: Slate now counts how much each person uses it, for the People section of his Project status page. It counts three things: how many times the app was opened, minutes on screen, and how many times each page was shown (Slate, All games, News and so on). Nothing about which games or teams anyone looked at.
+- The counts are sent every two minutes while Slate is open, kept for 30 days, stored encrypted, and only an admin passcode can read them. Someone looking around without a passcode isn't counted.
+- Nothing looks different in the app.
+
 ## 3.64.1 (Nov 16, 2026)
 TestFlight: 3.64.1 (42)
 - Menu: the hammer's head on the Slate button is always filled in, whether or not you're on the slate. It used to be an outline until you were on the slate. The iPhone app's menu changes with build 42.
