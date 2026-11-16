@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.66.1 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- A test account for Claude's checks, so they stop signing in as Drew. It isn't counted in People on the Project status page, its feedback isn't kept, and it doesn't show in the list of people in Settings. Usage counts can also be cleared for one person, which was used to clear Drew's numbers from the test runs.
+
 ## 3.66.0 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Project status page, a rework: moving cards is much easier (while you drag, every card shrinks to its title so the whole layout is on screen, each column is one big drop area, and each card has a Move menu with Up, Down, Left, Right and full width). "Waiting on you" is now "Your list": things to try with "Tested, I like it" and "Needs work", reminders, and things to think about, all with check-offs that follow you to any screen. No text is cut off anywhere; a long feedback quote gets a More button. Bigger numbers and calmer details so the key facts stand out. The Live pill shows the time of the last update and turns red if updates stop.

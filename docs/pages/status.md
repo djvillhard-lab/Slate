@@ -40,6 +40,11 @@ Last updated: Nov 16, 2026 (no app version: it is not part of the app)
   weight, muted, 14px. The page used to be bold everywhere, so nothing stood out.
 - Live pill (DJ, Nov 16): "Live, Updated 4:46:20 PM" from the last answer to the 10-second feedback check. After 45
   seconds without one, or offline, it turns red: "Not updating" or "Offline" with the last time.
+- Test account (DJ, Nov 16: "remove anything from the dashboard that wasn't actually drew - and separate drew from
+  internal testing account"): id `tester` (added with the "Add, rename or remove a person" action), passcode in
+  DJ's Claude project files (`/mnt/project-files/test-account/passcode`). `TEST_IDS` in worker/usage.js keeps it out
+  of People, feedback (accepted, not stored) and the admin's people list. `POST /api/usage/reset {key|pass, id}`
+  clears one person's counts; Drew's were cleared on Nov 16 because test runs couldn't be told from his own use.
 - People versions (DJ, Nov 16): each person shows the Slate version their copy last ran (`doc.web`, sent by
   296-usage.js) and their iPhone build (`doc.app`), outlined in red with "behind <newest>" when older.
 - Refresh: feedback every 10 seconds, the files every 30, GitHub every 2 minutes, only while the page is showing.

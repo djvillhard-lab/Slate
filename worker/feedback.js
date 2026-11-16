@@ -41,6 +41,7 @@ async function rows(env, prefix, extra) {
   return r.ok ? r.json() : [];
 }
 
+import { TEST_IDS } from "./usage.js";
 export async function feedbackRoute(req, env, url, h) {
   const { rpc, whoIs, json } = h;
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
@@ -51,6 +52,7 @@ export async function feedbackRoute(req, env, url, h) {
   if (url.pathname === "/api/feedback") {
     const me = await whoIs(env, p && p.pass);
     if (!me) return json({ error: "Sign in with your passcode to send feedback." }, 403);
+    if (TEST_IDS.includes(me.id)) return json({ ok: true, id: "test", test: true });   // the test account: accepted, never stored
     const text = clip(p.text, 4000).trim();
     if (!text) return json({ error: "Write something first." }, 400);
     const at = new Date().toISOString();

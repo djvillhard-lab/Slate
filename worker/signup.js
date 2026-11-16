@@ -17,6 +17,7 @@ async function hmac(env, s) {
   return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 // the key a passcode chosen at sign-up is stored under in users/registry
+import { TEST_IDS } from "./usage.js";
 export const passKey = async (env, pass) => "h2:" + (await hmac(env, "pass:" + pass));
 const codeKey = (env, code) => hmac(env, "invite:" + String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, ""));
 const newCode = () => [...crypto.getRandomValues(new Uint8Array(12))].map((x) => ABC[x % ABC.length]).join("");
@@ -56,7 +57,7 @@ export async function signupRoutes(req, env, url, h) {
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const by = ((((await getDoc(env, "stats/usage")) || {}).days || {})[day] || {}).by || {};
     const seen = {}, people = [];
-    Object.values(users).forEach((u) => { if (!u.id || seen[u.id]) return; seen[u.id] = 1; people.push({ id: u.id, name: u.name || u.id, admin: u.admin === true, at: u.at || "", via: u.via || "", today: Number(by[u.id]) || 0, cap: Math.min(Number(u.cap) || 10, 10) }); });
+    Object.values(users).forEach((u) => { if (!u.id || seen[u.id] || TEST_IDS.includes(u.id)) return; seen[u.id] = 1; people.push({ id: u.id, name: u.name || u.id, admin: u.admin === true, at: u.at || "", via: u.via || "", today: Number(by[u.id]) || 0, cap: Math.min(Number(u.cap) || 10, 10) }); });
     const list = Object.keys(d.list).map((k) => ({ k: k.slice(0, 10), at: d.list[k].at, note: d.list[k].note || "", state: state(d.list[k]), name: d.list[k].name || "" }))
       .sort((a, b) => (a.at < b.at ? 1 : -1));
     return json({ ok: true, code, days: DAYS, list, people });

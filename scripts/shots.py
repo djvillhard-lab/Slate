@@ -47,6 +47,9 @@ def main():
     if not args or args[0] in ("-h", "--help"):
         print(__doc__); return
     pw = os.environ.get("SLATE_PASS", "").strip()
+    if not pw:   # DJ's Claude project keeps the test account's passcode in its project files (never in this repo, which is public)
+        try: pw = open("/mnt/project-files/test-account/passcode").read().strip()
+        except Exception: pw = ""
     if "--gate" in args: pw = ""
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
