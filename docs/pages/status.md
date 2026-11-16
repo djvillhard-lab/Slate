@@ -45,6 +45,9 @@ Last updated: Nov 16, 2026 (no app version: it is not part of the app)
   DJ's Claude project files (`/mnt/project-files/test-account/passcode`). `TEST_IDS` in worker/usage.js keeps it out
   of People, feedback (accepted, not stored) and the admin's people list. `POST /api/usage/reset {key|pass, id}`
   clears one person's counts; Drew's were cleared on Nov 16 because test runs couldn't be told from his own use.
+- People versions, both always (DJ, Nov 16: "slate has a version number and then apple has a build number - I want both
+  for all users"): every person gets a "Slate x.y.z" chip and an "Apple build N" chip; an unknown one says why
+  (not opened since counting began, or in a browser) instead of being left out.
 - People versions (DJ, Nov 16): each person shows the Slate version their copy last ran (`doc.web`, sent by
   296-usage.js) and their iPhone build (`doc.app`), outlined in red with "behind <newest>" when older.
 - Refresh: feedback every 10 seconds, the files every 30, GitHub every 2 minutes, only while the page is showing.

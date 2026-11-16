@@ -400,8 +400,14 @@ function renderPeople() {
     m.appendChild(nm);
     // the two versions they last ran: Slate itself (the web part, which can be an older saved copy) and the iPhone build
     var vs = el("div", "vers");
-    if (p.web) { var wb = D.web && p.web !== D.web; vs.appendChild(el("span", wb ? "chip behind" : "chip", "Slate " + p.web + (wb ? " \u00b7 behind " + D.web : ""))); }
-    if (p.app) { var ab = D.build && p.app.indexOf("(") > 0 && p.app !== D.build; vs.appendChild(el("span", ab ? "chip behind" : "chip", "iPhone " + p.app + (ab ? " \u00b7 behind " + D.build : ""))); }
+    // always both, for everyone: "Slate 3.66.1" and "Apple build 42". Unknown ones say so instead of being left out.
+    var wb = p.web && D.web && p.web !== D.web;
+    vs.appendChild(el("span", wb ? "chip behind" : p.web ? "chip" : "chip out", p.web ? "Slate " + p.web + (wb ? " \u00b7 behind " + D.web : "") : "Slate version: next time they open it"));
+    var bm = /^(\S+)\s*\((\d+)\)/.exec(p.app || ""), newest = (/\((\d+)\)/.exec(D.build || "") || [])[1], ab = bm && newest && bm[2] !== newest;
+    vs.appendChild(el("span", ab ? "chip behind" : bm ? "chip" : "chip out",
+      bm ? "Apple build " + bm[2] + " \u00b7 app " + bm[1] + (ab ? " \u00b7 behind " + newest : "")
+         : p.app ? "Apple build not reported \u00b7 app " + p.app
+         : p.where === "app" ? "Apple build: next time they open the app" : "Apple build: none, in a browser"));
     if (vs.firstChild) m.appendChild(vs);
     var nums = el("div", "nums");
     [[mins(t.secs), " today"], [String(t.opens || 0), t.opens === 1 ? " open" : " opens"], [String((D.claude || {})[p.id] || 0), " summaries"]].forEach(function (x, i) {
