@@ -50,6 +50,24 @@
     var mark = function () { if (state.view === "feed") FD.scrollAt = Date.now(); };
     window.addEventListener("scroll", mark, { passive: true }); var pr = $("pane-r"); if (pr) pr.addEventListener("scroll", mark, { passive: true });
     document.addEventListener("touchstart", function () { FD.touch = true; }, { passive: true, capture: true });
+    // the folded Duo (3.36.6): the clock and Wi-Fi can sit on the right end of the pinned score bar. Pulling down while it's
+    // pinned slides the bar down below them (at most 56 points); it springs back when you let go. At the top of the page,
+    // the page itself pulls down (iOS's bounce)
+    var pk = null;
+    document.addEventListener("touchstart", function (e) {
+      pk = null; var h = document.documentElement;
+      if (state.view !== "feed" || e.touches.length !== 1 || !h.hasAttribute("data-native") || !h.classList.contains("side-col") || h.classList.contains("duo")) return;
+      var bug = document.querySelector("#feed-body .fd-bug"); if (!bug) return;
+      var top = parseFloat($("view-feed").style.getPropertyValue("--fd-top")) || 0, y = (isDuo ? $("pane-r").scrollTop : window.scrollY) || 0;
+      if (y > 0 && bug.getBoundingClientRect().top <= top + 1.5) pk = { bug: bug, y0: e.touches[0].clientY };
+    }, { passive: true });
+    document.addEventListener("touchmove", function (e) {
+      if (!pk || FD.drag) return; var d = e.touches[0].clientY - pk.y0;
+      pk.bug.style.transition = "none"; pk.bug.style.transform = d > 0 ? "translate3d(0," + Math.min(56, d * 0.6) + "px,0)" : "";
+    }, { passive: true });
+    ["touchend", "touchcancel"].forEach(function (n) { document.addEventListener(n, function () {
+      if (!pk) return; var b = pk.bug; pk = null; b.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; b.style.transform = ""; setTimeout(function () { b.style.transition = ""; }, 260);
+    }, { passive: true }); });
     ["touchend", "touchcancel"].forEach(function (n) { document.addEventListener(n, function () { FD.touch = false; mark(); }, { passive: true, capture: true }); });
   })();
   function fdPrefetch(g) {

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.36.6 (Nov 16, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- iPhone app, folded Duo: the Live feed gets the slate's pull-down too. At the top of the page, pull down a little to see the score bar's right end under the clock and Wi-Fi; it springs back when you let go. Further down, while the score bar is pinned, pulling down slides just the score bar down below them (it moves with your finger as you scroll back up) and it springs back when you let go. No added space anywhere.
+
 ## 3.36.5 (Nov 16, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - Live feed: scrolling no longer catches. Since the feed started checking every 4 seconds, an update could rebuild the page in the middle of a scroll, which stopped the scroll and made the score bar jump. Now an update waits until your finger is off the screen and the page has stopped moving (well under a second), then drops in.

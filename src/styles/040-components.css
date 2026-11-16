@@ -58,9 +58,9 @@ html[data-strip] #menu-fab { display: none !important; }
    edge to edge; the rows of buttons and the floating controls stop just short of it. The app sets --strip-w. */
 html[data-native] .toprow:not(#pane-l .toprow) { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
 html[data-native] .lo-row:not(#pane-l .lo-row) { padding-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
-/* 3.36.4: on the slate, in the app on the folded Duo, the page can be pulled down a little at the top (it springs back)
+/* 3.36.4: on the slate (and the Live feed since 3.36.6), in the app on the folded Duo, the page can be pulled down a little at the top (it springs back)
    to see anything under the clock and Wi-Fi at the top of iOS's right column. Every other page keeps the bounce off */
-html[data-native].side-col:not(.duo)[data-view="lineup"], html[data-native].side-col:not(.duo)[data-view="lineup"] body { overscroll-behavior-y: auto; }
+html[data-native].side-col:not(.duo):is([data-view="lineup"], [data-view="feed"]), html[data-native].side-col:not(.duo):is([data-view="lineup"], [data-view="feed"]) body { overscroll-behavior-y: auto; }  /* and the Live feed (3.36.6) */
 html[data-native] nav.dock { right: calc(var(--strip-w, 0px) + 12px) !important; }
 html[data-native] #best-body .rk-day { right: calc(var(--strip-w, 0px) + 82px); }
 /* strip mode: no menu button in the page, so the day picker and Back sit side by side against the column */
