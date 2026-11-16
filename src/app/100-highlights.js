@@ -346,7 +346,7 @@
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
       (t.injuries || []).forEach(function (x) { var n = ((x.athlete || {}).displayName) || "", stt = String(x.status || ""); if (!(lead[i] || {})[n]) return; var ln = (x.athlete || {}).lastName || n.split(" ").slice(1).join(" ") || n;
         // with the position in front ("QB Wilson"), from the injury report or the team's leaders (3.29.2)
-        var pos = ((x.athlete || {}).position || {}).abbreviation || ((lead[i] || {})[n] || {}).pos || ""; if (pos) ln = pos + " " + ln;
+        var pos = ((x.athlete || {}).position || {}).abbreviation || ((lead[i] || {})[n] || {}).pos || ""; if (pos && sport === "football") ln = pos + " " + ln;  // football only (3.46.1): "QB Wilson" reads; "G Curry" in the NBA doesn't
         if (/out|reserve|suspen/i.test(stt)) outs.push(ln); else if (/question|doubt|day-to-day/i.test(stt)) q.push(ln); });
       if (outs.length) add("out|" + i, 58 + outs.length * 4, T[i].name + " are without " + outs.slice(0, 2).join(" and "));
       else if (q.length) add("q|" + i, 40, q[0] + " is " + (/doubt/i.test(JSON.stringify(t.injuries)) ? "doubtful" : "a question mark") + " for " + T[i].name); });
@@ -439,7 +439,7 @@
       });
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
-  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for /.test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {}))) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
+  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {}))) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   function pvSave() { try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "" }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
   function pvNode(g) {
     var p = PV[g.id];

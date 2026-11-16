@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.46.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Game one-liners (All games and Tonight's Slate): no more position letter before NBA and other basketball and hockey players' names. "G Curry" is now "Curry", "C Embiid is a question mark" is now "Embiid is a question mark". Football keeps it ("QB Wilson").
+- One-liners already saved on the phone with the old wording are thrown out and redone.
+
 ## 3.46.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News: the options are now titled "Customize today's news", and you can pick specific games and specific teams. Under Today's slate every game is listed (NE @ DET · 2:30p), and under My teams every team; they all start picked, and a tap leaves one out. Left-out games reset each day; left-out teams are remembered.
