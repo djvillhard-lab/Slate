@@ -169,7 +169,7 @@
         if (sd2) c2.style.setProperty("--hp-team", fdTint(g, sd2));
         var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck + (sd2 ? " · " + abbr(g, sd2) : "")));
         ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""))); c2.appendChild(ph);
-        if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), x.t)); }); c2.appendChild(tw); }
+        if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); c2.appendChild(tw); }
         c2.appendChild(el("p", "fd-pt", rd.title));
         if (raw && raw !== rd.title) c2.appendChild(el("p", "fd-px", raw));
         if (rd.P) { var P = rd.P, psd = sideOf[P.tid] || sd2 || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); if (P.pos) nmw.appendChild(el("em", "fd-pos", P.pos)); var lnx = hpLine(P, rd.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); c2.appendChild(row); }
@@ -195,4 +195,12 @@
     w.appendChild(pl);
     w.addEventListener("click", function () { setTimeout(function () { if (state.view === "feed") renderFeed(); }, 0); }, true);  // "Show all players" and the team switch redraw this page
     return w;
+  }
+  // one emoji in front of each play tag (3.52.4, DJ's request, like News): never inside the play text
+  function fdTagText(t) {
+    t = String(t || "");
+    var e = /takes the lead|lead change/i.test(t) ? "🔄" : /ties it|tie game/i.test(t) ? "🤝" : /big play/i.test(t) ? "🔥" : /-0 run$/i.test(t) ? "🔥"
+      : /^converted/i.test(t) ? "✅" : /^stopped/i.test(t) ? "🛑" : /^1st down/i.test(t) ? "⛓️" : /^\+\d+%/.test(t) ? "📈" : /^flag/i.test(t) ? "🚩"
+      : /red zone/i.test(t) ? "🚨" : /two-minute|clutch/i.test(t) ? "⏱️" : /and-one/i.test(t) ? "💪" : /buzzer/i.test(t) ? "🚨" : "";
+    return e ? e + " " + t : t;
   }

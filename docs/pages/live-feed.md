@@ -1,5 +1,5 @@
 # Live feed
-Last updated: Nov 16, 2026, 3.43.4 (checked by the basketball feed thread)
+Last updated: Nov 16, 2026, 3.52.4 (checked by the basketball feed thread)
 Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-feed-hoops.js` (basketball: `hpFeed` draws everything under the switcher; `feedBox` draws the box score for both sports), styles under "Live feed" in `src/styles/040-components.css`. Football and basketball.
 
 ## Done
@@ -11,6 +11,7 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - Basketball headlines in plain words for every ESPN play type: "Steal by A. Sengun", "Turnover: traveling", "Shot at the rim",
   "Technical foul: flopping", "Coach's challenge: call overturned". ESPN sometimes posts a turnover before labeling it (type "No Turnover"):
   a second player from the other team is the steal (3.40.2).
+- Each play tag starts with one emoji (3.52.4, DJ asked; list in docs/DESIGN.md "Emojis"; `fdTagText`).
 - Play tags beside the headline: lead change, ties, big play, 3rd/4th down, win-probability swings, runs (3.35.0, 3.35.2).
 - Short, plain play text in sentence case; players as "F. Mendoza" with position (3.34.3, 3.36.8).
 - Latest plays only (8 football, 12 basketball lines); "Show earlier plays" adds one batch per tap; resets on leaving (3.43.1).
