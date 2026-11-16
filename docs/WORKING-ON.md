@@ -6,3 +6,5 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Settings: main page with sub-pages, new user preview, People list | src/body.html (Settings section), src/app/230-settings.js, src/app/232-welcome.js, src/boot/db-shim.js, src/app/235-morning-email.js and src/app/225-feedback.js (only where their Settings rows sit), worker/signup.js, new src/styles/085-settings-pages.css | 2026-11-16 20:56 |
+| DJ | shared: shell.html (one style line), 070-navigation.js and 240-chrome.js (Back and the title for Settings sub-pages) | src/shell.html, src/app/070-navigation.js, src/app/240-chrome.js | 2026-11-16 20:56 |
