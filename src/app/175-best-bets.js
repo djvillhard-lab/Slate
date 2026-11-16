@@ -102,10 +102,11 @@
       }, function () { b.at = Date.now() - 2.5 * 3600e3; }).then(function () { b.busy = false; betRun--; betPump(); });
     })(betQ.shift());
   }
-  // ---- the seven picks (3.40.0) ----
+  // ---- the picks (3.40.0; five since 3.47.0) ----
+  // Once every game on the slate is over the picks freeze (3.47.0): results stay, nothing new is picked, not even after a remove.
   // Picks are kept per slate day. A pick stays until its game leaves the slate; a settled pick stays too, showing hit or miss.
   // An open spot is filled from upcoming games first, then live games, then finished ones (a finished game's pick still only uses the games before it).
-  var BET_MAX = 7, BET_SIG = {};
+  var BET_MAX = 5, BET_SIG = {};
   var PICKS = (function () { try { return JSON.parse(localStorage.getItem("slate-picks") || "{}"); } catch (e) { return {}; } })();
   function picksSave() { try { var keep = {}; Object.keys(PICKS).sort().slice(-3).forEach(function (d) { keep[d] = PICKS[d]; }); PICKS = keep; localStorage.setItem("slate-picks", JSON.stringify(keep)); } catch (e) {} }
   function betTier(g) { var k = status(g).kind; return k === "live" ? 1 : k === "over" ? 2 : 0; }
@@ -128,10 +129,13 @@
         P.list.push(betPick(x.g, x.b)); taken[uid] = 1; if (x.b.pid) taken["p|" + x.b.pid] = 1; perG[x.g.id] = (perG[x.g.id] || 0) + 1; kinds[k] = (kinds[k] || 0) + 1; changed = true;
       });
     };
+    if (P.list.length > BET_MAX) { P.list = P.list.slice(0, BET_MAX); changed = true; }  // seven-pick days from before 3.47.0 keep their best five
+    var frozen = gs.every(function (g) { return status(g).kind === "over"; });
+    if (frozen) { if (changed) picksSave(); return { list: P.list, loading: false, frozen: true }; }
     var tiers = [[], [], []], ready = [];
     gs.forEach(function (g) { tiers[betTier(g)].push(g); });
     for (var t = 0; t < 3 && P.list.length < BET_MAX; t++) {
-      tiers[t].forEach(betNeed);  // finished games' logs are only fetched when upcoming and live games can't fill the seven
+      tiers[t].forEach(betNeed);  // finished games' logs are only fetched when upcoming and live games can't fill the five
       if (!tiers[t].every(betDone)) { loading = true; break; }
       ready = ready.concat(tiers[t]);
       fill(tiers[t], 3, 2); fill(tiers[t], 3, BET_MAX);  // three a game, two of any one kind (points, catches, totals…) when there's enough to choose from
@@ -208,7 +212,7 @@
     if (!sig || BET_SIG[g.id] === sig) return false;
     BET_SIG[g.id] = sig; return true;
   }
-  // the section at the bottom of the slate: always seven picks (fewer only when the slate can't supply them)
+  // the section at the bottom of the slate: always five picks (fewer only when the slate can't supply them)
   function betsBlock(games) {
     var gs = games.filter(function (g) { return BET_LG[g.league] && !g.custom; });
     if (!gs.length) return null;
@@ -228,7 +232,7 @@
     hb.addEventListener("click", function () { var f = Object.assign({}, state.slateFold || {}); if (f.__bets) delete f.__bets; else f.__bets = 1; state.slateFold = f; saveSettings(); keepScroll(renderLineup); });
     sec.appendChild(hb);
     if (shut) return sec;
-    if (!rows.length) { sec.appendChild(el("p", "bets-none", pk.loading ? "Checking recent game logs…" : "No strong player or game trends for the games on your slate.")); return sec; }
+    if (!rows.length) { sec.appendChild(el("p", "bets-none", pk.loading ? "Checking recent game logs…" : pk.frozen ? "Every game on your slate is over. New picks come with the next slate." : "No strong player or game trends for the games on your slate.")); return sec; }
     var nLive = rows.filter(function (x) { return x.r.s === "live"; }).length;
     if (nHit + nMiss + nLive) {
       var ty = el("p", "bets-tally");
@@ -243,7 +247,8 @@
     var list = el("div", "bets");
     rows.forEach(function (x) { list.appendChild(betRow(x.g, x.p, x.r)); });
     sec.appendChild(list);
-    if (rows.length < BET_MAX) sec.appendChild(el("p", "bets-sub", pk.loading ? "Checking more games for the rest of the seven…" : "Only " + rows.length + " picks meet the bar on your slate right now. Add games to get more."));
+    if (pk.frozen) sec.appendChild(el("p", "bets-sub", "Every game on your slate is over, so these picks are final. No new ones until the next slate."));
+    else if (rows.length < BET_MAX) sec.appendChild(el("p", "bets-sub", pk.loading ? "Checking more games for the rest of the five…" : "Only " + rows.length + " picks meet the bar on your slate right now. Add games to get more."));
     return sec;
   }
   // ---- why a pick is a good bet, in plain words, from the same game logs (3.43.0) ----
