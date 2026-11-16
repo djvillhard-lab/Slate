@@ -156,9 +156,12 @@
     var t = teamByName(name); return t ? teamBadge(t) : badgeFor(String(name || "?").replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase(), name || "");
   }
   // quick hits: the tag on its own line above the text, so every line of text starts at the same edge
+  // emojis (3.52.2, DJ's ask): one in front of a section label or tag, never inside the text Claude wrote
+  function nwEm(e) { var s = el("span", "nx-em", e); s.setAttribute("aria-hidden", "true"); return s; }
+  function nwTag(tag, alert) { var t = el("span", "nx-tag" + (alert ? " alert" : "")); if (/injur/i.test(tag)) t.appendChild(nwEm("🚑")); t.appendChild(document.createTextNode(tag)); return t; }
   function nwHits(list) {
     var w = el("div", "nx-hits");
-    (list || []).forEach(function (h) { var r = el("div", "nx-hit"); if (h.tag) r.appendChild(el("span", "nx-tag" + (/injur|out\b|suspen|doubt/i.test(h.tag) ? " alert" : ""), h.tag)); r.appendChild(el("span", "nx-tx", h.text)); w.appendChild(r); });
+    (list || []).forEach(function (h) { var r = el("div", "nx-hit"); if (h.tag) r.appendChild(nwTag(h.tag, /injur|out\b|suspen|doubt/i.test(h.tag))); r.appendChild(el("span", "nx-tx", h.text)); w.appendChild(r); });
     return w;
   }
   function nwRead(rd) {
@@ -271,7 +274,7 @@
       var tcard = el("div", "nx-card nx-top" + (shut ? " shut" : "")); tcard.appendChild(th);
       if (!shut) top.forEach(function (x, i) {
         var r = el("div", "nx-topi"); r.appendChild(el("i", null, String(i + 1)));
-        var tx = el("div", "nx-topt"), tg = el("div", "nx-tagrow"); if (x.tag) tg.appendChild(el("span", "nx-tag" + (/injur/i.test(x.tag) ? " alert" : ""), x.tag)); if (x.new && doc.regen) tg.appendChild(el("span", "nx-tag new", "New"));
+        var tx = el("div", "nx-topt"), tg = el("div", "nx-tagrow"); if (x.tag) tg.appendChild(nwTag(x.tag, /injur/i.test(x.tag))); if (x.new && doc.regen) { var nt = el("span", "nx-tag new"); nt.appendChild(nwEm("🚨")); nt.appendChild(document.createTextNode("New")); tg.appendChild(nt); }
         if (tg.firstChild) tx.appendChild(tg); tx.appendChild(el("b", null, x.title)); if (x.why) tx.appendChild(el("span", null, x.why)); r.appendChild(tx); tcard.appendChild(r);
       });
       body.appendChild(tcard);
@@ -353,13 +356,13 @@
       body.appendChild(claudeCtl("deep", doc, false, { k: k, go: function () { nwAskDeep(d); } }, "Generate Claude's breakdown"));
       body.appendChild(el("p", "nx-note", "Nobody has generated this one today. Claude writes it only when you tap Generate, and then it's saved for the day.")); return;
     }
-    var sec = function (title, cl) { var h = el("div", "nx-h2" + (cl ? " nx-cl" : "")); if (cl) h.appendChild(icon("sparkle")); h.appendChild(el("span", null, title)); body.appendChild(h); };
+    var sec = function (title, cl, em) { var h = el("div", "nx-h2" + (cl ? " nx-cl" : "")); if (cl) h.appendChild(icon("sparkle")); if (em) h.appendChild(nwEm(em)); h.appendChild(el("span", null, title)); body.appendChild(h); };
     var rows = function (list, key) { var c = el("div", "nx-card nx-rows"); list.forEach(function (x) { var r = el("div", "nx-row"); r.appendChild(el("b", null, x[key])); r.appendChild(el("span", null, x.text)); c.appendChild(r); }); return c; };
     sec(d.type === "l" ? "Around the league" : "Claude's take", true);
     var tk = el("div", "nx-card nx-take"); if (doc.verdict) tk.appendChild(el("span", "nx-verdict", doc.verdict)); doc.take.forEach(function (p) { tk.appendChild(el("p", null, p)); }); body.appendChild(tk);
-    if (doc.number) { sec("The number"); var nb = el("div", "nx-card nx-num" + (String(doc.number.value).length > 7 ? " long" : "")); nb.appendChild(el("b", null, doc.number.value)); nb.appendChild(el("p", null, doc.number.text)); body.appendChild(nb); }
-    if (doc.latest && doc.latest.length) { sec("Latest"); var lc = el("div", "nx-card nx-pad"); lc.appendChild(nwHits(doc.latest)); body.appendChild(lc); }
-    if (doc.watch && doc.watch.length) { sec("What to watch for"); var wc = el("div", "nx-card nx-pad"); wc.appendChild(nwHits(doc.watch)); body.appendChild(wc); }
+    if (doc.number) { sec("The number", false, "🔢"); var nb = el("div", "nx-card nx-num" + (String(doc.number.value).length > 7 ? " long" : "")); nb.appendChild(el("b", null, doc.number.value)); nb.appendChild(el("p", null, doc.number.text)); body.appendChild(nb); }
+    if (doc.latest && doc.latest.length) { sec("Latest", false, "📰"); var lc = el("div", "nx-card nx-pad"); lc.appendChild(nwHits(doc.latest)); body.appendChild(lc); }
+    if (doc.watch && doc.watch.length) { sec("What to watch for", false, "👀"); var wc = el("div", "nx-card nx-pad"); wc.appendChild(nwHits(doc.watch)); body.appendChild(wc); }
     if (doc.sides && doc.sides.length) {
       sec("Each side in a line"); var sg = el("div", "nx-grid");
       doc.sides.forEach(function (x) { var c = el("div", "nx-card nx-side"); var hh = el("div", "nx-th"); hh.appendChild(nwTeamBadge(x.team)); c.appendChild(hh); c.appendChild(el("p", null, x.text)); sg.appendChild(c); });
@@ -367,16 +370,16 @@
     }
     if ((doc.hot && doc.hot.length) || (doc.cold && doc.cold.length)) {
       sec("Who's hot, who's not"); var hg = el("div", "nx-grid");
-      [["hot", "Hot", "up"], ["cold", "Cold", "down"]].forEach(function (o) { var l = doc[o[0]] || []; if (!l.length) return; var c = el("div", "nx-card nx-side"); c.appendChild(el("span", "nx-chipt " + o[2], o[1])); l.forEach(function (x) { var p = el("p"); p.appendChild(el("b", null, x.team + " ")); p.appendChild(document.createTextNode(x.text)); c.appendChild(p); }); hg.appendChild(c); });
+      [["hot", "Hot", "up", "🔥"], ["cold", "Cold", "down", "🧊"]].forEach(function (o) { var l = doc[o[0]] || []; if (!l.length) return; var c = el("div", "nx-card nx-side"); var ht2 = el("span", "nx-chipt " + o[2]); ht2.appendChild(nwEm(o[3])); ht2.appendChild(document.createTextNode(o[1])); c.appendChild(ht2); l.forEach(function (x) { var p = el("p"); p.appendChild(el("b", null, x.team + " ")); p.appendChild(document.createTextNode(x.text)); c.appendChild(p); }); hg.appendChild(c); });
       body.appendChild(hg);
     }
-    if (doc.perf && doc.perf.length) { sec("Performances"); var pc = el("div", "nx-card nx-pad"); pc.appendChild(nwHits(doc.perf)); body.appendChild(pc); }
-    if (doc.said && doc.said.text) { sec("Said"); var sc = el("div", "nx-card nx-said"); sc.appendChild(el("p", null, doc.said.text)); if (doc.said.who) sc.appendChild(el("span", null, doc.said.who)); body.appendChild(sc); }
-    if (doc.injuries && doc.injuries.length) { sec("Injuries"); var ic = el("div", "nx-card nx-pad"); ic.appendChild(nwHits(doc.injuries.map(function (t) { return { tag: "", text: t }; }))); body.appendChild(ic); }
-    if (doc.timeline && doc.timeline.length) { sec(d.type === "g" ? "How they got here" : "The timeline"); body.appendChild(rows(doc.timeline, "when")); }
-    if (doc.next) { sec("Next up"); var nc = el("div", "nx-card nx-pad"); nc.appendChild(el("p", "nx-story", doc.next)); body.appendChild(nc); }
+    if (doc.perf && doc.perf.length) { sec("Performances", false, "⭐"); var pc = el("div", "nx-card nx-pad"); pc.appendChild(nwHits(doc.perf)); body.appendChild(pc); }
+    if (doc.said && doc.said.text) { sec("Said", false, "💬"); var sc = el("div", "nx-card nx-said"); sc.appendChild(el("p", null, doc.said.text)); if (doc.said.who) sc.appendChild(el("span", null, doc.said.who)); body.appendChild(sc); }
+    if (doc.injuries && doc.injuries.length) { sec("Injuries", false, "🚑"); var ic = el("div", "nx-card nx-pad"); ic.appendChild(nwHits(doc.injuries.map(function (t) { return { tag: "", text: t }; }))); body.appendChild(ic); }
+    if (doc.timeline && doc.timeline.length) { sec(d.type === "g" ? "How they got here" : "The timeline", false, "🗓️"); body.appendChild(rows(doc.timeline, "when")); }
+    if (doc.next) { sec("Next up", false, "⏭️"); var nc = el("div", "nx-card nx-pad"); nc.appendChild(el("p", "nx-story", doc.next)); body.appendChild(nc); }
     if (doc.hunch) { sec("Claude's hunch", true); var hc = el("div", "nx-card nx-pad"); hc.appendChild(el("p", "nx-story", doc.hunch)); body.appendChild(hc); }
-    if (doc.reads && doc.reads.length) { sec("Read more"); var rc = el("div", "nx-card nx-reads"); doc.reads.forEach(function (r) { rc.appendChild(nwRead(r)); }); body.appendChild(rc); }
+    if (doc.reads && doc.reads.length) { sec("Read more", false, "📖"); var rc = el("div", "nx-card nx-reads"); doc.reads.forEach(function (r) { rc.appendChild(nwRead(r)); }); body.appendChild(rc); }
     body.appendChild(el("p", "nx-foot", "Written by Claude from ESPN's data and its own research · " + nwAgo(doc.at)));
     body.appendChild(claudeCtl("deep", doc, true, { k: k, go: function () { nwAskDeep(d); } }, "Write Claude's breakdown"));
   }

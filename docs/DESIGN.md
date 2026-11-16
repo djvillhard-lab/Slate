@@ -106,3 +106,7 @@ New styles go at the end of `040-components.css` under a comment naming the feat
 ## Known drift (bring in line when you next touch these)
 - Live feed and Best bets use plain-width big numbers; the rest of the app uses condensed numerals. (Their corners and
   the Hit color were brought in line in 3.50.0.)
+
+## Emojis
+Only on the News page, at DJ's request (Nov 16, 2026): one emoji in front of a section label or tag (🔥 Hot, 🧊 Cold,
+🚑 Injuries, 🔢 The number, ⭐ Performances, 🚨 New). Never inside body text, and not on other pages unless DJ asks.
