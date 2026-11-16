@@ -57,7 +57,12 @@ html[data-strip] #menu-fab { display: none !important; }
 /* iOS keeps a column on the right edge of iPhone Duo (the clock and, in strip mode, the menu). Pages run under it
    edge to edge; the rows of buttons and the floating controls stop just short of it. The app sets --strip-w. */
 html[data-native] .toprow:not(#pane-l .toprow) { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
-html[data-native] .lo-row:not(#pane-l .lo-row) { padding-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
+/* 3.36.1: iOS's column on the right (the folded Duo's clock, Wi-Fi and the menu) never covers the page: everything below
+   the top bar stops short of it, and so do the bars under the title (league strip, day picker) */
+html[data-native].side-col main.wrap { padding-right: calc(12px + var(--strip-w, 0px) / var(--z, 1)) !important; }
+html[data-native].side-col #pane-r > header.top > .top-inner > :not(.toprow) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)) !important; }
+html[data-native].side-col .fd-strip { margin-right: 0; padding-right: 0; }
+html[data-native].side-col .sheet { padding-right: calc(16px + var(--strip-w, 0px)); }
 html[data-native] nav.dock { right: calc(var(--strip-w, 0px) + 12px) !important; }
 html[data-native] #best-body .rk-day { right: calc(var(--strip-w, 0px) + 82px); }
 /* strip mode: no menu button in the page, so the day picker and Back sit side by side against the column */
@@ -1405,7 +1410,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-cr b { font-weight: 800; }
 .fd-chip i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--live, #E5484D); white-space: nowrap; }
 .fd-bug { position: -webkit-sticky; position: sticky; top: var(--fd-top, 0px); z-index: 3; display: grid; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; column-gap: 8px; padding: 8px 10px; border-radius: 14px; background: var(--card); border: 1px solid var(--hair); box-shadow: 0 0 0 4px var(--bg); }
-.fd-tm { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.fd-tm { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 7px; min-width: 0; }
 .fd-tm-home { flex-direction: row-reverse; }
 .fd-tm > b { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--dim); white-space: nowrap; }
 .fd-tm-home > b { flex-direction: row-reverse; }
