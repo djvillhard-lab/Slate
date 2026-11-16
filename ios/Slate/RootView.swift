@@ -111,7 +111,7 @@ private struct FloatButton: View {
         Button(action: action) {
             Group {
                 if symbol == "slate.axe" {
-                    SlateAxeIcon(filled: on).frame(width: 26, height: 26)
+                    SlateAxeIcon(filled: true).frame(width: 26, height: 26)  // the head is always solid (build 42, DJ)
                 } else {
                     Image(systemName: symbol)
                         .symbolVariant(on ? .fill : .none)
@@ -132,7 +132,7 @@ private struct FloatButton: View {
 }
 
 // Slate's own menu icon (build 40): the Slate logo, a hammer with an axe blade on one side, tilted mid-swing, with a
-// glint off the blade. An outline like the other icons, filled in on the page you're on. Drawn on a 24-point grid,
+// glint off the blade. The head is always solid, on every page. Drawn on a 24-point grid,
 // the same shape as the web page's logo (src/body.html) and the Home Screen icon (icon.svg).
 private struct SlateAxeIcon: View {
     let filled: Bool
