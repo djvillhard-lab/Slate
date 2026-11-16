@@ -32,7 +32,14 @@ Other parts of `src/`:
 
 All `src/app/*.js` files run in one shared function scope, in name order. A new file goes in by number (e.g. `205-news-briefs.js`), and code that runs at load must come after whatever it uses.
 
-Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the score/odds jobs), `sw.js` (offline copy), `ios/` (native app; `ios/WEEKEND.md`), `docs/` (plans).
+Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the score/odds jobs; `shots.py` for screenshots), `sw.js` (offline copy), `ios/` (native app; `ios/WEEKEND.md`), `docs/` (plans; `DESIGN.md` the design guide; `pages/` handoff notes).
+
+## Before you start
+- Read `docs/pages/<page>.md` if it exists: what's done, what's open, and why things are the way they are.
+- Changing anything people see? Read `docs/DESIGN.md` first and reuse its parts.
+- Only one thread works on a file at a time. Shared files (above) and `ios/` get one thread at a time across the project.
+- One request = one release. Bundle the fixes from one message into one version instead of shipping each tweak.
+- If a request could reasonably go two ways and a wrong guess means redoing it, ask DJ first. Otherwise build.
 
 ## Shipping a change (every time)
 1. `git pull --rebase origin main`. Another chat may have shipped since you started.
@@ -40,7 +47,7 @@ Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the
 3. Number it from the newest entry in CHANGELOG.md **as it is on main now**: fixes and tweaks bump the last number, new features the middle one. Set `SLATE_VERSION` in `src/app/010-core.js` to match.
 4. Add the CHANGELOG.md entry on top, in DJ's plain style, with its TestFlight line: `TestFlight: <last build>, no new build (web only)`, or the new build when `ios/` changed (see the top of CHANGELOG.md).
 5. `python3 build.py`. It embeds the changelog, stamps the build time into index.html and version.json together, and refuses if the version and changelog don't match.
-6. Check it: load the page headless and look for errors and the screens you touched.
+6. Check it: `SLATE_PASS=<test passcode> python3 scripts/shots.py <pages> [--sizes folded,open,iphone]` screenshots the pages you touched at DJ's three phone shapes and prints page errors and pages wider than the screen. Look at every screenshot. The test passcode is in the project instructions, never in the repo (it's public). For a look or layout change that's a judgment call, send DJ the screenshots before shipping, not after: shipping and then undoing costs more than asking.
 7. Commit as `X.Y.Z: what changed`, then push. If the push is rejected, another chat shipped first: pull --rebase, renumber, rebuild, push.
    - On a conflict in `index.html` or `version.json`: don't merge them by hand. Resolve `src/` and CHANGELOG.md, then run `python3 build.py --force`.
 8. Start the reply to DJ with the new version number, a short description, then what changed.
@@ -48,6 +55,7 @@ Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the
 If build.py says index.html was edited by hand, it prints those edits. Move them into `src/` before rebuilding, or they're lost.
 
 ## DJ's rules for Slate
+- One design style across the app: `docs/DESIGN.md` (theme colors only, sharp 4–8px corners, Archivo at its widths, red = live, accent = selected, 44-point targets).
 - Built for one hand, right-handed. His main phone is the iPhone Duo (folded cover screen, unfolded two panes, and the native app's side strip).
 - Any change to the Duo strip menu goes into the regular iPhone menu too, and the other way round.
 - When views or native-facing features change, keep `280-ios-bridge.js` and `ios/` (strip buttons, WebModel) in step.
@@ -59,4 +67,5 @@ If build.py says index.html was edited by hand, it prints those edits. Move them
 
 ## Keeping chats light
 - Read only the files for the page you're changing. Use grep with line numbers, then read just those lines.
-- Before a page chat gets long, write a short handoff (what's done, what's open, decisions) to `docs/pages/<page>.md`. DJ can then start a fresh chat that reads it.
+- End every thread by updating `docs/pages/<page>.md` (a few lines: what's done, what's open, decisions and why), in the same push as the change. The next thread on that page starts from it instead of re-reading the code.
+- Don't build your own screenshot or test setup: use `scripts/shots.py`, and improve it if it's missing something.
