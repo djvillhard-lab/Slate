@@ -1,6 +1,7 @@
 // Invite-only sign-up (3.55.0). DJ makes a one-time invite link in Settings; the person who opens it picks
 // their own name and passcode, and lands in users/registry like someone added with the "Add a person" action.
-//   POST /api/invite        {pass, action: "new" | "list" | "cancel", note, k}   DJ's passcode only
+//   POST /api/invite        {pass, action: "new" | "list" | "cancel" | "remove", note, k, id}   DJ's passcode only
+//                           every answer carries the invites ("list") and the people with accounts ("people")
 //   POST /api/invite-check  {code}                → {ok, note} or {error}
 //   POST /api/signup        {code, name, pass}    → {ok, id, name} or {error}
 // The docs table can be read by anyone with the page's public key, so nothing stored here can be used by itself:
@@ -46,9 +47,19 @@ export async function signupRoutes(req, env, url, h) {
       const k = Object.keys(d.list).find((x) => x.slice(0, 10) === String(p.k || ""));
       if (k && !d.list[k].used) { delete d.list[k]; await putDoc(env, "users/invites", d); }
     }
+    // the people with accounts (however they were added), with today's Claude summaries; "remove" takes one off
+    const reg = (await getDoc(env, "users/registry")) || {}, users = reg.users || {};
+    if (p.action === "remove") {
+      const gone = Object.keys(users).filter((k) => users[k].id === String(p.id || "") && users[k].id !== "dj");
+      if (gone.length) { gone.forEach((k) => delete users[k]); reg.users = users; await putDoc(env, "users/registry", reg); }
+    }
+    const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    const by = ((((await getDoc(env, "stats/usage")) || {}).days || {})[day] || {}).by || {};
+    const seen = {}, people = [];
+    Object.values(users).forEach((u) => { if (!u.id || seen[u.id]) return; seen[u.id] = 1; people.push({ id: u.id, name: u.name || u.id, at: u.at || "", via: u.via || "", today: Number(by[u.id]) || 0, cap: Math.min(Number(u.cap) || 10, 10) }); });
     const list = Object.keys(d.list).map((k) => ({ k: k.slice(0, 10), at: d.list[k].at, note: d.list[k].note || "", state: state(d.list[k]), name: d.list[k].name || "" }))
       .sort((a, b) => (a.at < b.at ? 1 : -1));
-    return json({ ok: true, code, days: DAYS, list });
+    return json({ ok: true, code, days: DAYS, list, people });
   }
 
   const d = await load(), ck = await codeKey(env, p.code), inv = d.list[ck];

@@ -1,7 +1,7 @@
 # Sign-up, log-in and the welcome walkthrough
 
 Files: `src/boot/db-shim.js` (the log-in and sign-up page, "gate"), `src/app/232-welcome.js` (walkthrough, rules from
-answers, a favorite's event, Settings > Account, DJ's invite sheet), their styles (`GATE_CSS` at the top of the gate code in `db-shim.js`), `worker/signup.js`
+answers, a favorite's event, Settings > Account, DJ's invite sheet), `src/styles/085-welcome.css`, `worker/signup.js`
 (invites and sign-up; one hook line and one import in `worker/index.js`).
 
 ## What's done (3.59.0)
@@ -30,6 +30,17 @@ answers, a favorite's event, Settings > Account, DJ's invite sheet), their style
 - Notifications step: my teams, slate games, morning brief, morning email (asks for the address, 7 AM), and the
   same "turn on for this phone" as Settings > Notifications. No new native code: no TestFlight build.
 
+## Added in 3.61.0
+- Account rows now live on Settings > Account and people (`#acct-slot`; see `docs/pages/settings.md`).
+- **Try the new user setup** (DJ only): `window.slatePreviewSignup` shows the sign-up page as a preview (nothing is
+  sent), then `wlStart(true, true, name)` runs the walkthrough blank. While `wl.preview` is on, `saveSettings`,
+  `saveNotify`, `saveLineup` and `maybeAutoAdd` do nothing (wrapped in `232-welcome.js`), and DJ's teams are put back
+  when it closes. It differs from "Welcome walkthrough", which starts from your own setup and replaces your rules.
+- **People** (DJ only): `/api/invite` answers now carry `people` (everyone in `users/registry`, with today's Claude
+  summaries); `action: "remove"` with an id takes their passcode away. Their data under `u/<id>/` stays, and the
+  sign-up code never reuses an id that has data.
+- Styles moved out of `db-shim.js` into `src/styles/085-welcome.css`.
+
 ## Why things are the way they are
 - **Passcodes chosen at sign-up are stored as an HMAC, not a plain SHA-256.** The `docs` table can be read by anyone
   with the page's public key, so a plain hash of a passcode someone picked could be guessed offline. The key comes from
@@ -38,8 +49,7 @@ answers, a favorite's event, Settings > Account, DJ's invite sheet), their style
 - Sign-up refuses a passcode that already belongs to someone without saying so, and an invite locks after 8 such
   misses, so an invite can't be used to guess other people's passcodes.
 - The walkthrough and the log-in page are laid over the app from JS (no `body.html` markup): other threads held
-  `body.html`, `shell.html` and Settings when this was built. For the same reason the styles are a list of rules in
-  `db-shim.js` (`GATE_CSS`) instead of a file in `src/styles/`: move them to a stylesheet when `shell.html` is free. Account rows are inserted above the Claude summaries row.
+  `body.html`, `shell.html` and Settings when this was built. Account rows are inserted above the Claude summaries row.
 - `scripts/shots.py` gained `--gate [invite]`, `--readonly`, `--eval` and `--name` to screenshot these.
   **The "test passcode" in the project instructions is Drew's real profile**: always use `--readonly` when a
   screenshot run taps anything that saves.

@@ -28,3 +28,6 @@ Last updated: Nov 16, 2026, 3.56.0
 - Screenshots are picked from Photos rather than captured by the app: capturing the page would need a large library
   or a new iPhone build.
 - If SUPABASE_SECRET is ever changed, older unreported items can't be decrypted (the report says so).
+
+## Settings sub-pages (3.61.0)
+Settings is now a main page of rows with sub-pages. "Send feedback" is still added to `.set-acts` on the main page; Reset the app moved to About and updates, so the row is appended last (see `docs/pages/settings.md`).

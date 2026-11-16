@@ -53,7 +53,10 @@
     return WL_LEAGUES.map(function (x) { return x[0]; }).filter(function (k) { return on[k]; });
   }
   function wlSetSize(a, size) { var S = WL_SIZE[size]; a.size = size; a.ranked = S.ranked; a.national = S.national; a.events = S.events; }
-  function wlStart(fresh) {
+  // preview (DJ, Settings > Account > Try the new user setup): the same walkthrough a new person gets, starting blank,
+  // with every save switched off (the wrappers below) and DJ's own teams put back when it closes
+  function wlStart(fresh, preview, name) {
+    wl.preview = !!preview; wl.name = name || ""; wl.keep = preview ? { teams: state.teams.slice() } : null;
     var a = { leagues: [], size: "mix", ranked: "top10", national: true, events: "all", after: 0, leaguesTouched: false, notify: { teams: true, slate: true, brief: true } };
     if (fresh) state.teams = [];  // a new person starts with no teams, not DJ's
     else {
@@ -76,6 +79,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     wl.open = false; clearInterval(wl.tick); wl.tick = null;
     document.documentElement.classList.remove("wl-on");
     var o = $("wl"); if (o) o.remove();
+    if (wl.preview) { state.teams = wl.keep.teams; wl.keep = null; wl.preview = false; computeSlate(); return; }
     try { localStorage.removeItem("slate-welcome"); } catch (e) {}
   }
   function wlMarkDone(extra) {
@@ -85,12 +89,14 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
   }
   // leave without finishing: a new person keeps the starting rules and no teams, and isn't asked again
   function wlSkip() {
-    var fresh = wl.fresh; wlClose();
+    var fresh = wl.fresh, pv = wl.preview; wlClose();
+    if (pv) { render(); toast("Preview closed. Nothing was saved."); return; }
     if (fresh) { if (!state.rules) state.rules = normRules(); saveSettings(); wlMarkDone({ skipped: true }); toast("Skipped. Settings has the welcome walkthrough when you want it.", null, 5000); }
     render();
   }
   function wlFinish() {
     var a = wl.a;
+    if (wl.preview) { wlClose(); render(); toast("That's the new user setup. Nothing was saved, and your own slate is unchanged.", null, 6000); return; }
     state.rules = wlRules(a);
     if (state.notifyLoaded) {
       var n = state.notify, t = a.notify.teams, s = a.notify.slate;
@@ -209,6 +215,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     var back = el("button", "outline quiet wl-back", "Back"); back.type = "button"; back.addEventListener("click", function () { wlGo(-1); });
     var skip = el("button", "wl-skip", wl.fresh ? "Skip for now" : "Close"); skip.type = "button"; skip.addEventListener("click", wlSkip);
     var me = ""; try { me = localStorage.getItem("slate-user-name") || ""; } catch (e) {}
+    if (wl.preview) { me = wl.name; skip.textContent = "Close preview"; top.lastChild.textContent = "Preview" + (top.lastChild.textContent ? " · " + top.lastChild.textContent : ""); }
 
     if (s === "intro") {
       body.appendChild(el("h1", "wl-big", wl.fresh && me ? "Welcome to Slate, " + me : "Welcome to Slate"));
@@ -288,7 +295,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
         else if (pushInfo.on) { txt.textContent = "Alerts are on for this phone."; pb.hidden = true; }
         else { txt.textContent = "Alerts aren't on for this phone yet. Your iPhone will ask if Slate can send notifications."; pb.hidden = false; pb.textContent = pushInfo.busy ? "Turning on…" : "Turn on notifications for this phone"; }
       };
-      pb.addEventListener("click", function () { pushTurnOn(); draw(); });
+      pb.addEventListener("click", function () { if (wl.preview) { toast("In the preview this button does nothing. For a new person, the iPhone asks to allow notifications."); return; } pushTurnOn(); draw(); });
       ph.appendChild(txt); ph.appendChild(pb); body.appendChild(ph);
       pushState(); draw(); wl.tick = setInterval(draw, 700);
       foot.appendChild(back); foot.appendChild(next);
@@ -299,8 +306,9 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       nb.appendChild(el("b", null, String(pv.n))); nb.appendChild(el("span", null, (pv.n === 1 ? "game " : "games ") + (isToday ? "today" : "that day") + " from these rules"));
       hd.appendChild(nb); card.appendChild(hd); card.appendChild(el("p", "rsum-text", pv.text)); body.appendChild(card);
       body.appendChild(el("p", "wl-p", "Slate rebuilds it every day. Add or remove any game by hand, and change the rules any time in Settings > Slate rules."));
-      if (!wl.fresh) body.appendChild(el("p", "notice", "This replaces the slate rules you have now."));
-      next.textContent = wl.fresh ? "See my slate" : "Replace my rules"; nextFn = wlFinish;
+      if (wl.preview) body.appendChild(el("p", "notice", "This is a preview. A new person would land on this slate; yours stays as it is."));
+      else if (!wl.fresh) body.appendChild(el("p", "notice", "This replaces the slate rules you have now."));
+      next.textContent = wl.preview ? "Finish preview" : wl.fresh ? "See my slate" : "Replace my rules"; nextFn = wlFinish;
       foot.appendChild(back); foot.appendChild(next);
     }
   }
@@ -324,7 +332,12 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
   }
   // runs whenever the day's games or the settings arrive, just before the slate is worked out
   var wlAutoAdd0 = maybeAutoAdd;
-  maybeAutoAdd = function () { try { if (!wl.open) wlFavEvents(false); } catch (e) {} wlAutoAdd0(); };
+  maybeAutoAdd = function () { if (wl.preview) return; try { if (!wl.open) wlFavEvents(false); } catch (e) {} wlAutoAdd0(); };
+  // during a preview nothing is saved: not the teams picked, not the slate, not notification settings
+  var wlSave0 = saveSettings, wlSaveN0 = saveNotify, wlSaveL0 = saveLineup;
+  saveSettings = function () { if (wl.preview) return; wlSave0(); };
+  saveNotify = function () { if (wl.preview) return; wlSaveN0(); };
+  saveLineup = function () { if (wl.preview) return; wlSaveL0(); };
 
   // ---------- who gets the walkthrough by itself: someone new ----------
   (function () {
@@ -403,27 +416,67 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     }
     var done = el("button", "outline quiet inv-done", "Done"); done.type = "button"; done.addEventListener("click", function () { bd.classList.remove("open"); }); sh.appendChild(done);
   }
+  var ppl = { list: null, busy: false };
+  function acctPeople() {
+    var box = $("acct-people"); if (!box) return;
+    box.textContent = "";
+    if (!ppl.list) { box.appendChild(el("p", "hint", ppl.busy ? "Loading…" : "Couldn't load the list. Open this page again to retry.")); return; }
+    if (!ppl.list.length) { box.appendChild(el("p", "hint", "No one else has an account yet.")); return; }
+    ppl.list.forEach(function (u) {
+      var r = el("div", "optrow"), t = el("div"), when = "";
+      try { if (u.at) when = new Date(u.at).toLocaleDateString("en-US", { month: "short", day: "numeric" }); } catch (e) {}
+      t.appendChild(el("b", null, u.name));
+      t.appendChild(el("span", null, (u.via === "invite" ? "Joined by invite" + (when ? " " + when : "") : "Added by you") + " · " + u.today + " of " + u.cap + " Claude summaries today"));
+      r.appendChild(t);
+      var b = el("button", "outline quiet", "Remove"); b.type = "button";
+      b.addEventListener("click", function () {
+        if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to remove"; setTimeout(function () { delete b.dataset.sure; b.textContent = "Remove"; }, 4000); return; }
+        b.disabled = true; b.textContent = "Removing…";
+        invCall({ action: "remove", id: u.id }).then(function (j) { if (j.people) { ppl.list = j.people; toast(u.name + " can't log in any more"); } else toast(j.error || "Couldn't remove. Try again."); acctPeople(); });
+      });
+      r.appendChild(b); box.appendChild(r);
+    });
+    box.appendChild(el("p", "hint", "Removing someone takes away their passcode, so they can't log in or use Claude summaries. To let them back in, send a new invite."));
+  }
+  function acctLoadPeople() {
+    if (!$("acct-people") || ppl.busy) return;
+    ppl.busy = true; acctPeople();
+    invCall({ action: "list" }).then(function (j) { ppl.busy = false; if (j.people) ppl.list = j.people; if (j.list) inv.list = j.list; acctPeople(); });
+  }
   function acctRows() {
-    var at = $("cost-row"); if (!at || !window.SLATE_SELF) return;
-    var old = $("acct"); if (old) old.remove();
+    var slot = $("acct-slot"); if (!slot || !window.SLATE_SELF) return;
+    slot.textContent = "";
     var me = "dj", name = ""; try { me = localStorage.getItem("slate-user") || "dj"; name = localStorage.getItem("slate-user-name") || ""; } catch (e) {}
     var signed = !!slatePass(), wrap = el("div", "acct"); wrap.id = "acct";
-    var h = el("div", "sec"); h.appendChild(el("h2", null, "Account")); wrap.appendChild(h);
+    var head = function (t) { var h = el("div", "sec"); h.appendChild(el("h2", null, t)); wrap.appendChild(h); };
     var row = function (title, line, label, fn) {
       var r = el("div", "optrow"), t = el("div"); t.appendChild(el("b", null, title)); t.appendChild(el("span", null, line)); r.appendChild(t);
       var b = el("button", "outline quiet", label); b.type = "button"; b.addEventListener("click", fn); r.appendChild(b); wrap.appendChild(r);
     };
-    if (signed) row("Welcome walkthrough", "Pick teams and rebuild your slate rules from a few questions.", "Start", function () { wlStart(false); });
-    if (signed && me === "dj") row("Invite someone", "A one-time link to sign up with their own passcode.", "Invite", function () {
-      inv.link = ""; inv.err = ""; invSheet(); invCall({ action: "list" }).then(function (j) { if (j.list) { inv.list = j.list; if ($("sheet-invite") && $("sheet-invite").classList.contains("open")) invSheet(); } });
-    });
+    head("This phone");
     if (signed) row("Logged in as " + (me === "dj" ? "DJ" : name || me), "Log out to use a different passcode on this phone.", "Log out", function () {
       var b = this; if (b.dataset.sure) { if (window.slateLogOut) window.slateLogOut(); return; }
       b.dataset.sure = "1"; b.textContent = "Tap again to log out"; setTimeout(function () { delete b.dataset.sure; b.textContent = "Log out"; }, 4000);
     });
     else row("Not logged in", "This phone is just looking. Log in to save teams, rules and alerts.", "Log in", function () { if (window.slateAskPass) window.slateAskPass(); });
-    at.parentNode.insertBefore(wrap, at);
+    if (signed) {
+      head("Welcome");
+      row("Welcome walkthrough", "Pick teams and rebuild your own slate rules from a few questions.", "Start", function () { wlStart(false); });
+      if (me === "dj") row("Try the new user setup", "See sign-up and the welcome exactly as a new person does, starting blank. Nothing is saved and your slate doesn't change.", "Try it", function () {
+        if (window.slatePreviewSignup) window.slatePreviewSignup(function (nm) { wlStart(true, true, nm); }); else wlStart(true, true, "");
+      });
+    }
+    if (signed && me === "dj") {
+      head("People");
+      row("Invite someone", "A one-time link to sign up with their own passcode.", "Invite", function () {
+        inv.link = ""; inv.err = ""; invSheet(); invCall({ action: "list" }).then(function (j) { if (j.list) { inv.list = j.list; if ($("sheet-invite") && $("sheet-invite").classList.contains("open")) invSheet(); } if (j.people) { ppl.list = j.people; acctPeople(); } });
+      });
+      var pb = el("div", "acct-people"); pb.id = "acct-people"; wrap.appendChild(pb);
+    }
+    slot.appendChild(wrap);
+    if (state.setPage === "account") acctLoadPeople();
   }
+  (function () { var b = document.querySelector('#view-settings [data-open="account"]'); if (b) b.addEventListener("click", function () { ppl.list = ppl.list || null; acctLoadPeople(); }); })();
   // drawn at once, then again when the phone knows whose passcode it is (a first load finds out while the page starts)
   acctRows();
   (function () { var n = 0, t = setInterval(function () { if (db || ++n > 40) { clearInterval(t); acctRows(); } }, 500); })();

@@ -41,6 +41,7 @@
   var MENU_PAGES = ["lineup", "games", "tv", "teams", "moments", "news", "settings"];
   function goBack() {
     if (state.view === "news" && typeof nwCloseDeep === "function" && nwCloseDeep()) return true;  // a News breakdown: back to the News page
+    if (typeof setPageBack === "function" && setPageBack()) return true;  // a Settings sub-page: back to the Settings main page
     var bk = state.backTo, cur = state.view, h0 = homeView();
     if (bk && bk.view && bk.view !== cur && bk.view !== h0 && MENU_PAGES.indexOf(cur) === -1 && $("view-" + bk.view)) {
       var y0 = bk.y || 0; state.backTo = bk.parent || null;
@@ -65,7 +66,7 @@
     bt.hidden = !show; renderDockDay(); renderDockSort();
     // on another day's slate the arrow points toward today: right from a past day, left from a future one
     bt.classList.toggle("fwd", !!(offDay && (state.view === "lineup" || state.view === homeView()) && state.date < todayInHome())); var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("menu-open", !!state.menuOpen);
-    if (show) { $("dock-back-t").textContent = state.view === homeView() || (isDuo && state.view === "lineup") ? "Today" : isDuo ? "All games" : "Tonight's Slate"; bt.setAttribute("aria-label", state.view === homeView() ? "Back to today" : isDuo ? "Back to All games" : "Back to tonight's slate"); }
+    if (show) { $("dock-back-t").textContent = state.view === "settings" && state.setPage ? "Settings" : state.view === homeView() || (isDuo && state.view === "lineup") ? "Today" : isDuo ? "All games" : "Tonight's Slate"; bt.setAttribute("aria-label", state.view === homeView() ? "Back to today" : isDuo ? "Back to All games" : "Back to tonight's slate"); }
   }
   // Time | League for the slate, where the day picker sits on other pages
   function renderDockSort() {

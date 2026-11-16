@@ -44,3 +44,6 @@ rendered from `230-settings.js`, styles at the end of `src/styles/070-ux-review-
 ## Open / ideas
 - Thumbs on the rule-picked slate cards themselves weren't added (they'd clutter every card); the rules decide those.
 - Forgetting a single chip in Settings (tap to remove) if DJ wants finer control.
+
+## Settings sub-page (3.61.0)
+The "Thumbs up and down" row now sits on Settings > Slate and games (see `docs/pages/settings.md`). Ids and behavior are unchanged.

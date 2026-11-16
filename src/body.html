@@ -180,50 +180,20 @@
         <span><b>Slate rules</b><span id="rules-summary">What goes on your slate each day</span></span><span class="chev">›</span></button>
       <button class="navrow sa" id="open-notify" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></i>
         <span><b>Notifications</b><span id="nt-summary"></span></span><span class="chev">›</span></button>
+      <button class="navrow sa" data-open="email" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v12H3zM3.5 6.5l8.5 6.5 8.5-6.5"/></svg></i>
+        <span><b>Morning email</b><span id="sp-email">Your slate by email every morning</span></span><span class="chev">›</span></button>
+      <button class="navrow sa" data-open="slate" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg></i>
+        <span><b>Slate and games</b><span id="sp-slate">Scores, newsletters, Worth a look, thumbs, quick reads</span></span><span class="chev">›</span></button>
+      <button class="navrow sa" data-open="look" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2.2-.5-1.4.4-2.8 1.9-2.8H18a3 3 0 0 0 3-3c0-5.5-4-10-9-10zM7.5 12h.01M9.5 8h.01M14 7h.01"/></svg></i>
+        <span><b>Look and text size</b><span id="sp-look">Phone, theme, accent color, text size</span></span><span class="chev">›</span></button>
+      <button class="navrow sa" data-open="account" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c.8-3.4 4-5 8-5s7.2 1.6 8 5"/></svg></i>
+        <span><b>Account and people</b><span id="sp-account">Log in or out, the welcome walkthrough</span></span><span class="chev">›</span></button>
       <button class="navrow sa" id="set-share" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg></i>
         <span><b>Share the slate</b><span>Today's games as text, ready to send</span></span><span class="chev">›</span></button>
-      <button class="navrow sa" id="set-reset" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></i>
-        <span><b>Reset the app</b><span>Loads the newest version fresh</span></span><span class="chev">›</span></button>
+      <button class="navrow sa" data-open="about" type="button"><i class="sa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01"/></svg></i>
+        <span><b>About and updates</b><span id="sp-about">Version, what's new, reset the app</span></span><span class="chev">›</span></button>
     </div>
-    <div class="sec"><h2>Phone</h2></div>
-    <div class="setcard">
-    <div class="seg seg2" id="device-seg" role="group" aria-label="Phone">
-      <button type="button" data-device="duo">iPhone Duo</button>
-      <button type="button" data-device="iphone">iPhone</button>
-    </div>
-    <p class="hint" id="device-hint"></p>
-    </div>
-
-    <div class="sec"><h2>Look</h2></div>
-    <div class="setcard">
-    <div class="themes" id="theme-grid" role="group" aria-label="Theme"></div>
-    <p class="hint acc-h">Accent color</p>
-    <div class="swatches" id="swatches" role="group" aria-label="Accent color"></div>
-    </div>
-
-    <div class="sec"><h2>Slate</h2></div>
-    <div class="optrow">
-      <div><b>Scores</b><span>Live scores update every 10 seconds. Hide them to avoid spoilers.</span></div>
-      <div class="seg seg2" id="score-seg" role="group" aria-label="Scores"><button type="button" data-v="on">Show</button><button type="button" data-v="off">Hide</button></div>
-    </div>
-    <div class="optrow nl-row-set">
-      <button type="button" class="nl-head" id="nl-head" aria-expanded="false" aria-controls="nl-chips"><span class="nl-hl"><b>The Athletic newsletters</b><span id="nl-sum">None</span></span><span class="nl-chev" aria-hidden="true"></span></button>
-      <div class="nl-chips" id="nl-chips" role="group" aria-label="The Athletic newsletters" hidden></div>
-    </div>
-    <div class="optrow nl-row-set">
-      <button type="button" class="nl-head" id="wal-head" aria-expanded="false" aria-controls="wal-set"><span class="nl-hl"><b>Worth a look</b><span id="wal-sum"></span></span><span class="nl-chev" aria-hidden="true"></span></button>
-      <div class="wal-set" id="wal-set" hidden></div>
-    </div>
-    <div class="optrow nl-row-set">
-      <button type="button" class="nl-head" id="fb-head" aria-expanded="false" aria-controls="fb-set"><span class="nl-hl"><b>Thumbs up and down</b><span id="fb-sum"></span></span><span class="nl-chev" aria-hidden="true"></span></button>
-      <div class="wal-set fb-set" id="fb-set" hidden></div>
-    </div>
-    <div class="optrow">
-      <div><b>Quick reads</b><span>Short previews as a paragraph or as bullet points.</span></div>
-      <div class="seg seg2" id="pvstyle-seg" role="group" aria-label="Quick read style"><button type="button" data-v="para">Paragraph</button><button type="button" data-v="bullets">Bullets</button></div>
-    </div>
-
-    <div class="sec"><h2>Morning email</h2></div>
+    <div class="setpg" data-pg="email" hidden>
     <div id="me-set">
       <div class="optrow">
         <div><b>Email me my slate</b><span id="me-sum">Every morning: today's games, where to watch, and last night's results.</span></div>
@@ -245,6 +215,47 @@
         <div><b>Send one now</b><span id="me-test-t">Today's email, to see how it looks.</span></div>
         <button type="button" class="outline quiet" id="me-test">Send</button>
       </div>
+    </div>
+
+    </div>
+    <div class="setpg" data-pg="slate" hidden>
+    <div class="optrow">
+      <div><b>Scores</b><span>Live scores update every 10 seconds. Hide them to avoid spoilers.</span></div>
+      <div class="seg seg2" id="score-seg" role="group" aria-label="Scores"><button type="button" data-v="on">Show</button><button type="button" data-v="off">Hide</button></div>
+    </div>
+    <div class="optrow nl-row-set">
+      <button type="button" class="nl-head" id="nl-head" aria-expanded="false" aria-controls="nl-chips"><span class="nl-hl"><b>The Athletic newsletters</b><span id="nl-sum">None</span></span><span class="nl-chev" aria-hidden="true"></span></button>
+      <div class="nl-chips" id="nl-chips" role="group" aria-label="The Athletic newsletters" hidden></div>
+    </div>
+    <div class="optrow nl-row-set">
+      <button type="button" class="nl-head" id="wal-head" aria-expanded="false" aria-controls="wal-set"><span class="nl-hl"><b>Worth a look</b><span id="wal-sum"></span></span><span class="nl-chev" aria-hidden="true"></span></button>
+      <div class="wal-set" id="wal-set" hidden></div>
+    </div>
+    <div class="optrow nl-row-set">
+      <button type="button" class="nl-head" id="fb-head" aria-expanded="false" aria-controls="fb-set"><span class="nl-hl"><b>Thumbs up and down</b><span id="fb-sum"></span></span><span class="nl-chev" aria-hidden="true"></span></button>
+      <div class="wal-set fb-set" id="fb-set" hidden></div>
+    </div>
+    <div class="optrow">
+      <div><b>Quick reads</b><span>Short previews as a paragraph or as bullet points.</span></div>
+      <div class="seg seg2" id="pvstyle-seg" role="group" aria-label="Quick read style"><button type="button" data-v="para">Paragraph</button><button type="button" data-v="bullets">Bullets</button></div>
+    </div>
+
+    </div>
+    <div class="setpg" data-pg="look" hidden>
+    <div class="sec"><h2>Phone</h2></div>
+    <div class="setcard">
+    <div class="seg seg2" id="device-seg" role="group" aria-label="Phone">
+      <button type="button" data-device="duo">iPhone Duo</button>
+      <button type="button" data-device="iphone">iPhone</button>
+    </div>
+    <p class="hint" id="device-hint"></p>
+    </div>
+
+    <div class="sec"><h2>Look</h2></div>
+    <div class="setcard">
+    <div class="themes" id="theme-grid" role="group" aria-label="Theme"></div>
+    <p class="hint acc-h">Accent color</p>
+    <div class="swatches" id="swatches" role="group" aria-label="Accent color"></div>
     </div>
 
     <div class="sec"><h2>Text size</h2></div>
@@ -276,6 +287,11 @@
       <div class="foldrow"><button type="button" class="outline quiet" id="fold-left">◀ Left</button><button type="button" class="outline quiet" id="fold-auto">Auto</button><button type="button" class="outline quiet" id="fold-right">Right ▶</button><span class="count" id="fold-val"></span></div>
     </div>
 
+    </div>
+    <div class="setpg" data-pg="account" hidden>
+      <div id="acct-slot"></div>
+    </div>
+    <div class="setpg" data-pg="about" hidden>
     <div class="sec a2hs"><h2>On your phone</h2></div>
     <div class="help a2hs">
       <ol>
@@ -295,6 +311,11 @@
     <div class="gv-sec rel-sec" id="rel-sec">
       <button type="button" class="gv-toggle" id="rel-tg" aria-expanded="false"><span class="gv-tt"><b>What's new</b><i>Release history</i></span></button>
       <div class="gv-sec-in rel-list" id="rel-list" hidden></div>
+    </div>
+    <div class="optrow">
+      <div><b>Reset the app</b><span>Loads the newest version fresh. Your teams and settings stay.</span></div>
+      <button type="button" class="outline quiet" id="set-reset">Reset</button>
+    </div>
     </div>
   </section>
 

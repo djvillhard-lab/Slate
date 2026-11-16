@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.61.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Settings is now a short main page with sub-pages. The main page: Slate rules, Notifications, Morning email, Slate and games, Look and text size, Account and people, Share the slate, About and updates, Send feedback. Each row says what it's set to, and Back returns to the main page.
+- Morning email has its own page instead of sitting in the middle of Settings.
+- Slate and games: scores, The Athletic newsletters, Worth a look, thumbs up and down, quick reads. Look and text size: phone, theme, accent, text size, the split on the crease. About and updates: version, what's new, Claude summaries, Reset the app.
+- New for DJ, in Account and people: "Try the new user setup". It shows the sign-up page and then the welcome exactly as a new person gets them, starting with no teams. Nothing is saved: your teams, rules, slate and alerts are untouched when it closes. ("Welcome walkthrough" is different: it starts from your own setup and really replaces your rules at the end.)
+- New for DJ: People. Everyone with an account, how they joined, and how many of their 10 Claude summaries they've used today, with Remove (tap twice). Removing someone takes away their passcode.
+
 ## 3.60.2 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Soccer live lines: own goals read properly. "Saka has scored for Arsenal, plus an own goal by Smith", or "An own goal by Smith has Arsenal in front". An own goal is never written as if it were a player who scored.

@@ -28,6 +28,7 @@
     else if (p.on) t = "On: every day at " + meClock(p.time || "07:00") + (p.last === todayInHome() && p.sentAt ? ". Today's went out at " + new Date(p.sentAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + "." : ". No email on days with no games and no results.");
     sum.textContent = t;
     ["me-on", "me-lines", "me-email", "me-time", "me-test"].forEach(function (id) { $(id).disabled = !slatePass() || !meInfo.loaded; });
+    if (typeof setPagesDraw === "function" && $("view-settings")) setPagesDraw();  // the Morning email row on the Settings main page says on or off
   }
   function meSave(patch, okMsg) {
     if (meInfo.busy) return; meInfo.busy = true;

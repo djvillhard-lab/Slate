@@ -98,7 +98,44 @@
     }
     return r;
   }
+  // ---------- Settings is a main page of rows; each row opens a sub-page inside the same view (3.61.0) ----------
+  // state.setPage: "" (the main page) or the data-pg of the block showing. Back returns to the main page (goBack asks
+  // setPageBack first), and the header shows the sub-page's name (setTitle, used by renderTop).
+  var SET_PAGES = { email: "Morning email", slate: "Slate and games", look: "Look and text size", account: "Account and people", about: "About and updates" };
+  var setPageY = 0;
+  function setScrollTo(y) { if (isDuo) $("pane-r").scrollTop = y; else window.scrollTo(0, y); }
+  function setPageOpen(pg) {
+    if (!SET_PAGES[pg]) return;
+    setPageY = isDuo ? $("pane-r").scrollTop : (window.scrollY || 0);
+    state.setPage = pg; render(); setScrollTo(0);
+    var v = $("view-settings"); if (v && !REDUCED) { v.classList.remove("push-in"); void v.offsetWidth; v.classList.add("push-in"); setTimeout(function () { v.classList.remove("push-in"); }, 320); }
+  }
+  function setPageBack() {
+    if (state.view !== "settings" || !state.setPage) return false;
+    state.setPage = ""; render(); renderBack(); var y = setPageY; setTimeout(function () { setScrollTo(y); }, 0);
+    return true;
+  }
+  function setTitle() { return SET_PAGES[state.setPage] || "Settings"; }
+  function setPagesDraw() {
+    if (state.view !== "settings" && state.setPage) state.setPage = "";  // leaving Settings: next time it opens on the main page
+    var pg = state.setPage || "", v = $("view-settings");
+    var acts = v.querySelector(".set-acts"); if (acts) acts.hidden = !!pg;
+    Array.prototype.forEach.call(v.querySelectorAll(".setpg"), function (d) { d.hidden = d.getAttribute("data-pg") !== pg; });
+    if (pg) return;
+    // what each row is set to, in a few words
+    var signed = !!slatePass(), me = "dj", nm = ""; try { me = localStorage.getItem("slate-user") || "dj"; nm = localStorage.getItem("slate-user-name") || ""; } catch (e) {}
+    var set = function (id, t) { var x = $(id); if (x) x.textContent = t; };
+    var mp = (typeof meInfo === "object" && meInfo.p) || null;
+    set("sp-email", !signed ? "Log in to get your slate by email" : mp && mp.on ? "On, every day at " + meClock(mp.time || "07:00") : mp ? "Off" : "Your slate by email every morning");
+    set("sp-slate", "Scores " + (state.showScores ? "shown" : "hidden") + " · newsletters, Worth a look, thumbs, quick reads");
+    var th = THEMES[state.look], sz = state.textSize === "auto" ? "Auto" : String(state.textSize || "m").toUpperCase();
+    set("sp-look", (deviceMode() === "duo" ? "iPhone Duo" : "iPhone") + " · " + (th ? th[0] : "Midnight") + " · text " + sz);
+    set("sp-account", !signed ? "Not logged in on this phone" : "Logged in as " + (me === "dj" ? "DJ" : nm || me) + (me === "dj" ? " · invites and people" : ""));
+    set("sp-about", "Slate " + SLATE_VERSION + " · what's new, reset the app");
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("#view-settings [data-open]"), function (b) { b.addEventListener("click", function () { setPageOpen(b.getAttribute("data-open")); }); });
   function renderSettings() {
+    setPagesDraw();
     var fn = Number(state.foldNudge) || 0; $("fold-val").textContent = fn ? (fn > 0 ? "+" : "") + fn + " pt" : "Auto";
     var dm = deviceMode();
     Array.prototype.forEach.call($("device-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-device") === dm ? "true" : "false"); });

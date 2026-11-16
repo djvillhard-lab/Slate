@@ -14,3 +14,6 @@ Each person can get their own slate by email every morning (3.55.0). Asked by DJ
 ## Open
 - Ideas: The Athletic newsletters under the slate, Claude preview lines when already written (free), links into the iPhone app instead of Safari.
 - Testing locally: `SMTP_HOST`/`SMTP_PORT`/`SMTP_PLAIN` point the sender at a stand-in mail server (never set them in Cloudflare).
+
+## Settings sub-page (3.61.0)
+The Morning email controls moved from the Settings main page to their own sub-page (Settings > Morning email, `data-pg="email"` in `body.html`; see `docs/pages/settings.md`). Ids and behavior are unchanged. `meDraw` also refreshes the row's on or off line on the main page.
