@@ -70,7 +70,8 @@ Blend with `color-mix(in srgb, var(--accent) 10%, var(--card))` for tinted cards
 | Section header | `.sl-h` (button: bold title, `.count`, `icon("more")` chevron) | folds; fold state saved in `state.slateFold` |
 | Section title (not folding) | `.sec h2` + `.count` | |
 | Dropdowns in a quick look | `.tdd` / `.tdd-h` (`dd()` in `trayBlock`) | remembers open or closed per section |
-| Segmented control | `.seg` with `aria-pressed` | selected = accent fill |
+| Segmented control | `.seg` with `aria-pressed` | a choice between two or more named options; selected = accent fill |
+| On/off switch | `.switch` (`aria-checked`); an On/Off `.seg2[data-pref]` in Notifications draws as one too | one thing that is on or off. Never a two-part pill for on/off |
 | Small toggle pill | `.lo-btn` (with `.lo-dot`, count in `b`) | live = red |
 | Status tag | `.bug` (`.bug.live` red) | "Final", "Q3 5:12" |
 | Channel link | `.net` | accent play triangle when it opens an app |
@@ -103,6 +104,5 @@ and some rules use `!important`. Don't trust one rule you read: check the comput
 New styles go at the end of `040-components.css` under a comment naming the feature and version.
 
 ## Known drift (bring in line when you next touch these)
-- Live feed and Best bets cards use 10–16px corners and plain-width big numbers; the rest of the app is 8px corners
-  with condensed numerals.
-- Best bets marks hits with a fixed green; elsewhere "good / yours" is the accent.
+- Live feed and Best bets use plain-width big numbers; the rest of the app uses condensed numerals. (Their corners and
+  the Hit color were brought in line in 3.50.0.)

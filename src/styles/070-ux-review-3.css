@@ -36,3 +36,36 @@ html #dock-day b { color: color-mix(in srgb, var(--accent) 62%, #fff) !important
 html nav.dock .dock-day, html nav.dock .dock-back { transition: opacity .18s ease, transform .18s ease; }
 html.dock-away nav.dock .dock-day, html.dock-away nav.dock .dock-back { opacity: 0 !important; transform: translateY(14px); pointer-events: none !important; }
 @media (prefers-reduced-motion: reduce) { html nav.dock .dock-day, html nav.dock .dock-back { transition: none; } html.dock-away nav.dock .dock-day, html.dock-away nav.dock .dock-back { transform: none; } }
+
+/* ===== Release C (3.50.0): one style ===== */
+/* 9. Corners: 8 points for cards, rows, buttons and segmented controls, 4 for tags (docs/DESIGN.md). The round
+      toggles (Time/League, Live), the sliding switch and the floating menu and day picker stay round. */
+/* (:not(#_) twice lifts these above the id-based !important rules in 050-ux-review.css) */
+html :is(.navrow, .setcard, .optrow, .rpanel, .rsum, #rel-sec, .lgcard, .ntm, .ntc, .fd-play, .fd-chip, .feed-go, .bet, .bets-more,
+  .fd-field, .fd-bug, .bx-tabs2, #view-settings .seg, #view-notify .seg, .pillsel, .navrow .sa-ic):not(#_):not(#_) { border-radius: 8px !important; }
+html .bx-tabs2 button, html #view-settings .seg button, html #view-notify .seg button { border-radius: 6px !important; }
+html .rk-slate, html .bet-tag, html .fd-tag, html .fd-rz { border-radius: 4px !important; }
+/* 8. One on/off switch. An On | Off pair (Notifications) and Show | Hide (Settings > Scores) draw as the sliding switch
+      from Slate rules. Still two real buttons underneath: the one that isn't chosen covers the whole switch, so a tap flips it. */
+html #view-notify .seg.seg2[data-pref], html #score-seg { position: relative; display: block !important; flex: none !important; width: 50px !important; height: 30px !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 999px !important; background: var(--line) !important; overflow: visible !important; transition: background .15s; }
+html #view-notify .seg.seg2[data-pref]:has(button[data-v="on"][aria-pressed="true"]), html #score-seg:has(button[data-v="on"][aria-pressed="true"]) { background: var(--accent-fill) !important; }
+html #view-notify .seg.seg2[data-pref]::after, html #score-seg::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .15s; pointer-events: none; }
+html #view-notify .seg.seg2[data-pref]:has(button[data-v="on"][aria-pressed="true"])::after, html #score-seg:has(button[data-v="on"][aria-pressed="true"])::after { transform: translateX(20px); }
+html #view-notify .seg.seg2[data-pref] button, html #score-seg button { position: absolute !important; left: -6px; right: -6px; top: 50%; height: calc(44px / var(--z, 1)); min-height: 0 !important; transform: translateY(-50%); width: auto !important; padding: 0 !important; background: none !important; border: 0 !important; color: transparent !important; font-size: 0 !important; border-radius: 0 !important; }
+html #view-notify .seg.seg2[data-pref] button[aria-pressed="true"], html #score-seg button[aria-pressed="true"] { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { html #view-notify .seg.seg2[data-pref], html #score-seg, html #view-notify .seg.seg2[data-pref]::after, html #score-seg::after { transition: none; } }
+html :is(#view-notify .seg.seg2[data-pref], #score-seg):not(#_):not(#_) { border-radius: 999px !important; }
+/* a two-way choice keeps the two-part control, sized to its words */
+html #pvstyle-seg, html #device-seg { width: auto !important; }
+html #pvstyle-seg button { padding: 0 12px !important; white-space: nowrap; }
+/* "It lists" (Morning brief): check boxes, like the alert grid under it */
+html #view-notify .lgchip { display: inline-flex; align-items: center; gap: 8px; min-height: calc(44px / var(--z, 1)); height: auto; padding: 0 12px 0 0; background: none !important; border: 0 !important; color: var(--ink) !important; text-decoration: none !important; }
+html #view-notify .lgchip::before { content: ""; flex: none; width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--line); background: var(--raise); }
+html #view-notify .lgchip[aria-pressed="true"]::before { content: "\2713"; display: grid; place-items: center; font-size: 15px; font-weight: 800; line-height: 1; color: var(--on-accent); background: var(--accent-fill); border-color: var(--accent-fill); }
+html #view-notify .lgchip[aria-pressed="false"] { color: var(--muted) !important; }
+/* 17. One meaning per color: Red zone is a plain tag (red stays for live and for what went wrong); a hit is the accent */
+html .fd-tag.rz { color: var(--muted) !important; }
+html .fd-rz { color: var(--muted) !important; background: var(--raise) !important; }
+html .bet.won { border-color: color-mix(in srgb, var(--accent) 60%, transparent) !important; background: color-mix(in srgb, var(--accent) 8%, var(--card)) !important; }
+html .bets-tally .bt-hit { color: var(--accent) !important; }
+html .bet-tag.hit { background: var(--accent-fill) !important; color: var(--on-accent) !important; }

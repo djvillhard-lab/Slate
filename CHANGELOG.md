@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.50.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+Third release from the UX review: one style on every page.
+- Settings, Slate rules and Notifications have the same sharp corners as the rest of the app, in place of the rounded rows and cards. So do Best bets cards, the Live feed (score bar, field, play cards, game switcher) and the box score team picker.
+- One kind of on/off switch. Notifications, Morning brief, Upset watch, Quiet hours and Scores in Settings use the same sliding switch as Slate rules, in place of the On | Off pills. A choice between two things (iPhone Duo or iPhone, Paragraph or Bullets) keeps its two-part control, and "Paragraph" now fits.
+- Notifications: "It lists" is three check boxes (My slate, My teams, Top national games), so on and off are easy to tell apart.
+- Slate rules has its own icon (sliders) in Settings and the header. The wand now means the Slate page only, in the menu and in the iPhone app's strip.
+- Colors keep one meaning: "Red zone" on the Live feed is a plain gray tag (red stays for live and for what went wrong), and a Best bets Hit uses your accent color in place of a fixed green.
 ## 3.49.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News: the red "too much for one page" message no longer hangs around. It was left over from an earlier try that failed and showed above the options for the rest of the day, so it looked like every new pick was failing. A failed try now shows with its time ("The try at 9:42 PM…"), for half an hour at most, and goes away as soon as you change a pick.
