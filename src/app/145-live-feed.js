@@ -46,6 +46,12 @@
     }, function () { FD.busy = false; FD.err = (FD.err || 0) + 1; if (state.view === "feed") FD.t = setTimeout(feedPoll, Math.min(60000, 6000 * Math.pow(2, Math.min(FD.err, 4)))); });
   }
   document.addEventListener("visibilitychange", function () { if (!document.hidden && state.view === "feed") feedPoll(); });
+  (function () {
+    var mark = function () { if (state.view === "feed") FD.scrollAt = Date.now(); };
+    window.addEventListener("scroll", mark, { passive: true }); var pr = $("pane-r"); if (pr) pr.addEventListener("scroll", mark, { passive: true });
+    document.addEventListener("touchstart", function () { FD.touch = true; }, { passive: true, capture: true });
+    ["touchend", "touchcancel"].forEach(function (n) { document.addEventListener(n, function () { FD.touch = false; mark(); }, { passive: true, capture: true }); });
+  })();
   function fdPrefetch(g) {
     var list = fdList(g), i = -1; list.forEach(function (x, j) { if (x.id === g.id) i = j; });
     [list[i - 1], list[i + 1]].forEach(function (n) {
@@ -213,7 +219,8 @@
   }
   function renderFeed(fromPoll) {
     var body = $("feed-body"); if (!body) return;
-    if (fromPoll && FD.drag) { clearTimeout(FD.rt); FD.rt = setTimeout(function () { renderFeed(true); }, 250); return; }
+    // an update never rebuilds the page under a moving finger or mid-scroll (it would stop the scroll and jolt the score bar): it waits for stillness
+    if (fromPoll && (FD.drag || FD.touch || Date.now() - (FD.scrollAt || 0) < 700)) { clearTimeout(FD.rt); FD.rt = setTimeout(function () { renderFeed(true); }, 300); return; }
     if (state.view !== "feed") { if (body.firstChild) body.textContent = ""; clearTimeout(FD.t); FD.t = null; return; }
     var g = feedGame();
     if (!g) { body.textContent = ""; body.appendChild(el("div", "notice", "That game isn't on today's list anymore.")); return; }
