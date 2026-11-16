@@ -1,4 +1,4 @@
-  // ---------- thumbs up and down on Suggested for you and Worth a look (3.57.0) ----------
+  // ---------- thumbs up and down on Suggested for you (3.57.0; Worth a look dropped them in 3.60.1) ----------
   // Each person's thumbs are saved in their own account (data/users/<uid>/feedback), so they follow them to any phone.
   // A thumb teaches the game's features, not just the one game: its teams, league, conference, the reason it was
   // suggested (Rivalry, Close finish…), a late or early start, national TV and ranked matchups. Each feature gets a
@@ -108,16 +108,16 @@
   var THUMB_D = "M7.5 10.5v9.5h-3v-9.5zM7.5 10.5l3.6-7c1.5 0 2.5 1.2 2.2 2.6l-.7 3.4h5.3c1.3 0 2.3 1.2 2 2.5l-1.5 6.5c-.2 1-1.1 1.5-2 1.5H7.5";
   function thumbBtn(dir, on) {
     var b = el("button", "thumb thumb-" + (dir > 0 ? "up" : "down") + (on ? " on" : "")); b.type = "button";
-    b.setAttribute("aria-label", dir > 0 ? "Thumbs up: more like this" : "Thumbs down: fewer like this, and hide it");
+    b.setAttribute("aria-label", dir > 0 ? "Thumbs up: add to slate, and more like this" : "Thumbs down: hide it, and fewer like this");
     b.setAttribute("aria-pressed", on ? "true" : "false");
     b.appendChild(svgIcon(THUMB_D, on)); return b;
   }
-  // 👍 keeps it and teaches; 👎 hides it for today and teaches. Tap a lit thumb again to take it back.
+  // 👍 adds it to your slate and counts as a like (3.60.1); 👎 hides it for today and counts as a dislike, with Undo.
   function thumbPair(g, src, tag, onDown) {
     var cur = fbGet(g), box = el("div", "thumbs"), up = thumbBtn(1, cur > 0), dn = thumbBtn(-1, cur < 0);
     up.addEventListener("click", function (e) {
-      e.stopPropagation(); var was = fbGet(g), nv = was > 0 ? 0 : 1; fbSet(g, nv, src, tag); keepScroll(render);
-      if (nv) topUndo("Got it. More like this", function () { fbSet(g, was, src, tag); keepScroll(render); });
+      e.stopPropagation(); fbSet(g, 1, src, tag); logAct("accept", g, { why: tag });
+      if (!inLineup(g.id)) toggle(g.id); else keepScroll(render);   // toggle says "Added to slate"; its ✓ on the slate takes it back off
     });
     dn.addEventListener("click", function (e) {
       e.stopPropagation(); var was = fbGet(g); fbSet(g, -1, src, tag); if (onDown) onDown();
@@ -138,14 +138,14 @@
       .sort(function (a, b) { return sign * ((FB_COEF[b.split(":")[0]] || 2) * w[b].w - (FB_COEF[a.split(":")[0]] || 2) * w[a].w); });
   }
   function fbSummary() {
-    var n = fbAll().length; if (!n) return "Nothing yet. Rate games with the thumbs on Suggested for you and Worth a look.";
+    var n = fbAll().length; if (!n) return "Nothing yet. Rate games with the thumbs on Suggested for you.";
     var w = fbWeights(), more = fbRank(w, 1), less = fbRank(w, -1);
     return n + (n === 1 ? " game rated" : " games rated") + (more.length ? ". More: " + w[more[0]].label : "") + (less.length ? ". Fewer: " + w[less[0]].label : "");
   }
   function fbSettings(box) {
     box.textContent = "";
     var w = fbWeights();
-    box.appendChild(el("p", "fb-help", "Thumbs on Suggested for you and Worth a look teach Slate what you like: the teams, the league, why it was picked, the start time, national TV and ranked matchups. Teams count from the first thumb. A whole league, conference or kind of game (like national TV) only shifts after three or more thumbs the same way, and only a little, so a few weak matchups don't shut out a kind of game. Older thumbs count less over time, and a game still needs its own reason to be suggested."));
+    box.appendChild(el("p", "fb-help", "Thumbs on Suggested for you teach Slate what you like (thumbs up also adds the game to your slate): the teams, the league, why it was picked, the start time, national TV and ranked matchups. Teams count from the first thumb. A whole league, conference or kind of game (like national TV) only shifts after three or more thumbs the same way, and only a little, so a few weak matchups don't shut out a kind of game. Older thumbs count less over time, and a game still needs its own reason to be suggested."));
     var list = function (title, keys) {
       if (!keys.length) return;
       var row = el("div", "fb-group"); row.appendChild(el("b", null, title));

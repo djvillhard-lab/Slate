@@ -35,6 +35,12 @@ rendered from `230-settings.js`, styles at the end of `src/styles/070-ux-review-
 - Spotlight (national TV) suggestions get +10 in a league with affinity ≥ 8, so they reach the 45 bar on their own.
   On Nov 16 that put Alcorn State at Maryland and WKU at Tulsa in DJ's Suggested for you (46 each).
 
+## Thumbs only on Suggested for you (3.60.1)
+- DJ: thumbs up should add the game to the slate, and Worth a look should keep just + and ✕. So: 👍 = fbSet(+1) +
+  logAct accept + toggle() (its "Added to slate" toast; undo = the ✓ on the slate). Add to slate button removed.
+  Worth a look's ✕ is restored as before 3.57.0 (logs "skip" only, hides for today; no learning). Its scoring still
+  uses fbAdj, so thumbs from Suggested for you shape it.
+
 ## Open / ideas
 - Thumbs on the rule-picked slate cards themselves weren't added (they'd clutter every card); the rules decide those.
 - Forgetting a single chip in Settings (tap to remove) if DJ wants finer control.

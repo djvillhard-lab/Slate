@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.60.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Suggested for you: thumbs up now adds the game to your slate right away and counts as a like, so the separate Add to slate button is gone. To take it back off, tap its ✓ on your slate. Thumbs down still hides it (with Undo) and counts as a dislike.
+- Worth a look is back to how it was: add a game with its +, or close it with the ✕. The ✕ just closes it for today and doesn't teach anything. What you've liked and disliked on Suggested for you still shapes which games show up there.
+
 ## 3.60.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Team logos. Every team badge now shows the team's official logo from ESPN in place of the lettered box: the slate, All games, the matchup page and quick look, Betting lines, Suggested for you and Worth a look, News, Box Office, the live feed, the Teams page and team pages, Settings and the welcome team picker. Pro, college and soccer teams, and flags for national teams.

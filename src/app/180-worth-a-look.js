@@ -274,8 +274,14 @@
       else if (s2.tag === "Close finish") { var ll = ""; try { ll = liveLeadLine(s2.g); } catch (e) {} whyTx = ll; }
       else whyTx = s2.why + (ext ? ". " + ext : "");
       wy.appendChild(el("span", "wal-tx"));
-      // 👍 / 👎 (3.57.0): thumbs down hides it, like the old ✕, and both teach what you want here
-      wy.appendChild(thumbPair(s2.g, "wal", s2.tag, function () { var m = walKeep(); delete m[todayInHome() + "|" + s2.g.id]; walKeepSet(m); }));
+      { var x = el("button", "wal-x"); x.type = "button"; x.setAttribute("aria-label", "Hide this suggestion"); x.textContent = "✕"; x.addEventListener("click", function () {
+        var m = walKeep(), kk = todayInHome() + "|" + s2.g.id, was = m[kk]; delete m[kk]; walKeepSet(m); logAct("skip", s2.g, { why: s2.tag }); keepScroll(render);
+        // a small Undo at the top of the page for a few seconds (3.29.3)
+        topUndo("Removed from Worth a look", function () {
+          for (var i = ACT.log.length - 1; i >= 0; i--) { var e = ACT.log[i]; if (e.a === "skip" && e.id === s2.g.id && e.d === state.date) { ACT.log.splice(i, 1); break; } }
+          actSave(); if (was) { var m2 = walKeep(); m2[kk] = was; walKeepSet(m2); } keepScroll(render);
+        });
+      }); wy.appendChild(x); }
       c.appendChild(wy);
       // the game row keeps its own + / ✓ like All games; remember the reason when you add it so it stays here, ticked
       c.addEventListener("click", function (e) {
@@ -306,9 +312,8 @@
       wy.appendChild(el("span", "sugg-tx", s2.why)); c.appendChild(wy);
       c.appendChild(gameRow(s2.g, "games"));
       var bt = el("div", "sugg-bt");
-      var yes = el("button", "sugg-on", "Add to slate"); yes.type = "button";
-      yes.addEventListener("click", function () { logAct("accept", s2.g, { why: s2.tag }); toggle(s2.g.id); });
-      bt.appendChild(thumbPair(s2.g, "sugg", s2.tag)); bt.appendChild(yes); c.appendChild(bt); w.appendChild(c);
+      // 👍 adds it to your slate and counts as a like; 👎 hides it and counts as a dislike (3.60.1)
+      bt.appendChild(thumbPair(s2.g, "sugg", s2.tag)); c.appendChild(bt); w.appendChild(c);
     });
     rs.forEach(function (s2) {
       var c = el("div", "sugg-r");
