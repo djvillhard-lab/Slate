@@ -176,6 +176,8 @@ export async function bcSave(env, doc) {
   for (const [i, g] of Object.entries(doc.games || {})) if (Date.parse(g.at || 0) > cut) games[i] = g;
   await putDoc(env, "bc/channels", { games, updatedAt: new Date().toISOString() });
 }
+// a game's channel is shared by everyone following it: keep the line someone's phone shared, if the next person has none
+function bcPick(had, st) { return had && had.pv && !st.pv ? Object.assign({}, st, { pv: had.pv, line: had.line }) : st; }
 let BC = null;  // this run's channel record, and the games whose channel needs this minute's score
 
 // same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
@@ -202,7 +204,7 @@ function laAttrs(id, g, s) {
   return at;
 }
 // each person's preview lines for today, shared by their phone from the slate (prefs/pvlines, 3.58.0): game id → line
-let PVL = {};
+let PVL = {}, LVL = {};
 function laState(s, id) {
   const x = (s.ld || []).slice().sort((a, b) => b.v - a.v)[0];
   const st = { a: s.a || 0, h: s.h || 0, detail: s.state === "post" ? (s.detail || "Final") : (s.detail || ""), state: s.state };
@@ -215,6 +217,9 @@ function laState(s, id) {
   if (s.state === "in" || s.state === "post") for (const k of ["ap", "hp", "ox", "op", "at", "ht", "lp", "wp"]) if (s[k]) st[k] = s[k];
   // the slate's preview line for the game, while it's on (after the final it's old news)
   if (s.state === "in" && id && PVL[id]) st.pv = String(PVL[id]).slice(0, 140);
+  // 3.61.1: the slate's red live one-liner, when the phone shared one in the last 20 minutes: in place of the preview
+  // line for new builds, and as the one-liner older builds show
+  if (s.state === "in" && id && LVL[id]) { st.pv = String(LVL[id]).slice(0, 140); st.line = st.pv.slice(0, 60); }
   return st;
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
@@ -244,7 +249,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     // before kickoff (3.32.0): a new one starts 10 minutes early, showing 0-0 with the start time and channel
     const kick = Date.parse(s.start || g.start) || 0, soon = s.state === "pre" && kick > 0 && Date.now() >= kick - 10 * 60000 && Date.now() - kick <= 60 * 60000;
     if (s.state === "pre" && !cur && !soon) continue;
-    const st = s.state === "pre" ? preState(g, kick, id) : laState(s, id), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}`;
+    const st = s.state === "pre" ? preState(g, kick, id) : laState(s, id), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}`;
     let tok = (la.acts || {})[id];
     // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
     if (cur && !cur.off && per[id] === 0) {
@@ -279,12 +284,12 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
         if (r === 410) { t.gone = true; gone = true; }
       }
       sent.la[id] = ch ? { k: key, n: 1, ch: 1 } : { k: key, n: 1 }; started++;
-      if (ch && BC) BC.want[id] = st;
+      if (ch && BC) BC.want[id] = bcPick(BC.want[id], st);
       continue;
     }
     if (cur.end) continue;
     // on the game's channel: the score goes out once for everyone after this loop; the final ends it there too
-    if (cur.ch) { if (BC) BC.want[id] = st; if (s.state === "post") cur.end = 1; else cur.k = key; continue; }
+    if (cur.ch) { if (BC) BC.want[id] = bcPick(BC.want[id], st); if (s.state === "post") cur.end = 1; else cur.k = key; continue; }
     if (s.state === "post") {
       // one started for a finished game has no token for a moment: wait a few minutes for it, so it can be ended properly
       if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; continue; }
@@ -657,7 +662,8 @@ export async function runAlerts(env) {
   for (const w of active) {
     const pre = w.prefix, subs = (docs[pre + "prefs/push"] || {}).subs || [], p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
-    { const pvd = docs[pre + "prefs/pvlines"] || {}; PVL = pvd.date === D && pvd.lines && typeof pvd.lines === "object" ? pvd.lines : {}; }
+    { const pvd = docs[pre + "prefs/pvlines"] || {}; PVL = pvd.date === D && pvd.lines && typeof pvd.lines === "object" ? pvd.lines : {};
+      LVL = pvd.date === D && pvd.live && typeof pvd.live === "object" && Date.now() - (Number(pvd.liveAt) || 0) < 20 * 60000 ? pvd.live : {}; }
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
@@ -721,7 +727,7 @@ export async function runAlerts(env) {
   if (BC) {
     for (const [id, st] of Object.entries(BC.want)) {
       const g = BC.doc.games[id]; if (!g) continue;
-      const key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.line || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}`;
+      const key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.line || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}`;
       if (g.end || g.k === key) continue;
       const fin = st.state === "post", scored = !String(g.k || "").startsWith(`${st.a}-${st.h}-`);
       for (const envName of ["production", "sandbox"]) {

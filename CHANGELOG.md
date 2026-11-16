@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.61.1 (Nov 16, 2026)
+TestFlight: 3.58.0 (39), no new build (web only)
+- Live notifications now carry the red live one-liner from the slate card while a game is on ("GER: Wirtz has scored twice"), not just the preview line from before the game. On the Lock Screen it's the line across the card (under the standouts when there are some), and in the Dynamic Island held open it's under the last play.
+- The line comes from your phone, like the preview line: it's shared while Slate is open and refreshed every few minutes. If Slate hasn't been open for 20 minutes, the live notification goes back to the preview line rather than show an old one.
+- When two people follow the same game, the line one of them shared is kept for both.
+
 ## 3.61.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Settings is now a short main page with sub-pages. The main page: Slate rules, Notifications, Morning email, Slate and games, Look and text size, Account and people, Share the slate, About and updates, Send feedback. Each row says what it's set to, and Back returns to the main page.

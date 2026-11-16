@@ -319,7 +319,7 @@
     // lines come from the app's own rules (free); a closing line Claude wrote earlier is kept for that game
     var cur = bx.live[g.id], h = cur && cur.hl, sv0 = ((HL.doc || {}).games || {})[g.id];
     if (sv0 && sv0.final && sv0.text && !hlScorey(sv0.text)) return hlLine(g, sv0.text, "");
-    if (h && h.text) return hlLine(g, h.text, h.tm);
+    if (h && h.text) { pvShare(); return hlLine(g, h.text, h.tm); }
     var kc = HLC[g.id]; return kc && kc.t && status(g).kind === "over" ? hlLine(g, kc.t, kc.tm) : null;
   }
   // ---- Preview line: one free line under an upcoming game, from ESPN's pre-game summary ----
@@ -447,16 +447,20 @@
   var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {}))) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   // the phone shares today's preview lines with Slate's server (prefs/pvlines), so live notifications and Starting now
   // alerts can carry the same line as the slate (3.58.0). Only on a phone signed in with a passcode; only when it changed.
-  var pvShareT = null, pvShared = "";
+  var pvShareT = null, pvShared = "", pvSharedAt = 0;
   function pvShare() {
     if (pvShareT) return;  // one write at most every 8 seconds, however often the slate redraws
     pvShareT = setTimeout(function () {
       pvShareT = null;
       if (!db || !uid || !state.isOwner || state.date !== todayInHome()) return;
-      var lines = {}; games().forEach(function (g) { var p = PV[g.id]; if (p && p.text) lines[g.id] = String(p.text).slice(0, 140); });
-      var js = JSON.stringify(lines); if (js === pvShared || js === "{}") return;
-      pvShared = js;
-      db.doc("prefs/pvlines").set({ date: state.date, lines: lines, updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
+      var lines = {}, live = {}; games().forEach(function (g) {
+        var p = PV[g.id]; if (p && p.text) lines[g.id] = String(p.text).slice(0, 140);
+        // 3.61.1: the red live one-liner too, as the card shows it ("GER: Wirtz has scored twice"), for the live notification
+        var h = (bx.live[g.id] || {}).hl; if (h && h.text && status(g).kind === "live") { try { var n = hlLine(g, h.text, h.tm); if (n && n.textContent) live[g.id] = String(n.textContent).slice(0, 140); } catch (e) {} }
+      });
+      var js = JSON.stringify([lines, live]); if (js === "[{},{}]" || js === pvShared && (!Object.keys(live).length || Date.now() - pvSharedAt < 5 * 60000)) return;
+      pvShared = js; pvSharedAt = Date.now();  // live lines are re-sent every 5 minutes while Slate is open, so the server knows they're current
+      db.doc("prefs/pvlines").set({ date: state.date, lines: lines, live: live, liveAt: Date.now(), updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
     }, 8000);
   }
   function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "" }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }

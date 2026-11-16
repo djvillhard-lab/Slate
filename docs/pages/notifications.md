@@ -1,5 +1,5 @@
 # Notifications (alerts, live notifications, Dynamic Island)
-Last updated: Nov 16, 2026, 3.58.0 (iPhone 3.58.0 (39))
+Last updated: Nov 16, 2026, 3.61.1 (iPhone 3.58.0 (39))
 Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), `ios/SlateLive/SlateLiveActivity.swift`,
 `ios/Shared/SlateGameAttributes.swift`; settings page `src/app/220-notifications.js`. Plan: `docs/NOTIFICATIONS-PLAN.md`.
 
@@ -16,7 +16,13 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   shares PV lines to prefs/pvlines (100-highlights.js pvShare); the worker reads them per person (PVL). Field pv; pre-game
   it also goes in line for older builds. Dropped after the final. Only games the phone has shown on its slate that day.
 
+- Live one-liner (the slate card's red line while a game is on) on live notifications (3.61.1, web only): pvShare also
+  sends `live` lines + `liveAt` (re-sent every 5 min while Slate is open); the worker uses them for pv and line while
+  the game is in progress if under 20 min old (LVL), else falls back to the preview line. Shared game channels keep
+  a line someone shared when the next person has none (bcPick).
 ## Open
+- The Board live notification has no one-liner field; adding one needs an app build (SlateBoardGame). DJ's Nov 16
+  "no one-liners" report may have been the Board.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.
 - Hockey and soccer: no extra lines until ESPN's live numbers are checked during a game.
 - Football's other-team leader needs ESPN's summary (about 650 KB per game). Skipped because of the worker's CPU time; Cloudflare plan unknown.
