@@ -11,7 +11,7 @@ const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
 const MODEL = "claude-sonnet-5-5";
 // web searches allowed per summary: each one adds a cent plus thousands of input tokens
-const SEARCHES = { preview: 2, team: 2, recap: 1, moments: 2, news: 3 };
+const SEARCHES = { preview: 2, team: 2, recap: 1, moments: 2, news: 4, deep: 2 };
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
@@ -56,8 +56,13 @@ async function logUsage(env, user, u, model) {
 
 const MOMENT_LGS = { nfl: "NFL", nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League", nhl: "NHL", ncaaw: "women's college basketball", ucl: "Champions League", mlb: "MLB", wnba: "WNBA" };
 // News briefs: My slate and My teams are personal (under the person's own space); league briefs are shared
-const NEWS_KEY = /^(slate|teams|nfl|ncaaf|nba|mlb|nhl|ncaam|ncaaw|wnba|mls|epl|ucl|uel|facup|laliga|seriea|bundesliga|ligue1|intl)$/;
+// The News page (3.45.0): one personal page a day ("page"), written only when its Generate button is tapped.
+// Tap-in breakdowns ("deep": g-<game id>, t-<league>-<team>, l-<league>) are written on first tap and shared by everyone.
+const DEEP_KEY = /^(g|t|l)-[a-z0-9-]{2,70}$/;
+const NEWS_KEY = /^(page|slate|teams|nfl|ncaaf|nba|mlb|nhl|ncaam|ncaaw|wnba|mls|epl|ucl|uel|facup|laliga|seriea|bundesliga|ligue1|intl)$/;
 function target(p) {
+  if (p.kind === "deep") return { path: "newsdeep/" + p.date + "-" + p.key, patch: (x) => x };
+  if (p.kind === "news" && p.key === "page") return { path: (p.user && p.user !== "dj" ? "u/" + p.user + "/" : "") + "mine/news-" + p.date, patch: (x) => x };
   if (p.kind === "news") {
     const mine = p.key === "slate" || p.key === "teams", path = mine ? (p.user && p.user !== "dj" ? "u/" + p.user + "/" : "") + "mine/newsbrief-" + p.date + "-" + p.key : "newsbrief/" + p.date + "-" + p.key;
     return { path, patch: (x) => x };
@@ -146,8 +151,8 @@ export default {
     }
     if (url.pathname === "/api/summary" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
-      if (!p || !["preview", "recap", "team", "moments", "news"].includes(p.kind)) return json({ error: "bad kind" }, 400);
-      if (p.kind === "news" ? !(NEWS_KEY.test(p.key || "") && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "moments" ? !(MOMENT_LGS[p.key] && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
+      if (!p || !["preview", "recap", "team", "moments", "news", "deep"].includes(p.kind)) return json({ error: "bad kind" }, 400);
+      if (p.kind === "deep" ? !(DEEP_KEY.test(p.key || "") && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "news" ? !(NEWS_KEY.test(p.key || "") && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "moments" ? !(MOMENT_LGS[p.key] && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
       if (!apiKey(env) || !env.SUPABASE_SECRET) return json({ error: "Summaries aren't set up yet (missing keys in Cloudflare)." }, 503);
       const me = (env.SUPABASE_SECRET && p.pass === env.SUPABASE_SECRET) ? { id: "dj", cap: 0 } : await whoIs(env, p.pass);
       if (!me) return json({ error: "Wrong passcode" }, 403);
@@ -166,14 +171,14 @@ export default {
       // anyone's already having Claude write this one (or just did, in the last 3 minutes), that's the one everyone
       // gets: no second Claude call, no second charge
       const curDoc = (await getDoc(env, t.path)) || {};
-      const entry = p.kind === "moments" ? (curDoc.leagues || {})[p.key] : (p.kind === "team" || p.kind === "news") ? curDoc : (curDoc.games || {})[p.id];
+      const entry = p.kind === "moments" ? (curDoc.leagues || {})[p.key] : (p.kind === "team" || p.kind === "news" || p.kind === "deep") ? curDoc : (curDoc.games || {})[p.id];
       const w = entry && entry.writing, nowMs = Date.now();
       if (w && w.at && !w.error && nowMs - Date.parse(w.at) < 10 * 60000) return json({ ok: true, at: w.at, shared: true }, 202);
       const last = entry && (p.kind === "recap" ? (entry.recap || {}).at : p.kind === "preview" ? entry.newsAt : entry.at);
       if (last && nowMs - Date.parse(last) < 3 * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
-        game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, p.kind === "moments" ? 60000 : 16000) };
+        game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, p.kind === "moments" ? 60000 : p.kind === "news" && p.key === "page" ? 60000 : p.kind === "deep" ? 24000 : 16000) };
       try { await env.SUMMARY.create({ params }); }
       catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind, error: "Couldn't start: " + String(e).slice(0, 120) } })); return json({ error: "Couldn't start" }, 500); }
       return json({ ok: true, at }, 202);
@@ -248,6 +253,51 @@ const RULES = `Rules for all writing: plain text only, no citation tags or marku
 
 function prompt(p) {
   const game = p.game, facts = p.facts;
+  if (p.kind === "news" && p.key === "page") return `You're writing the News page of a sports fan's app: a quick-look dashboard of everything this person would want to know today. Today is ${new Date().toDateString()}.
+Facts (JSON): "cover" (what they asked this page to cover), "games" (the games on their slate today: id, league, teams, records, start time in UTC, TV), "teams" (their favorite teams), "leagues" (leagues they picked), "headlines" (free ESPN and The Athletic headlines with url: byGame by slate game id, byTeam by team name, byLeague by league key) and "prev" (the top stories from the last time this page was written today, if any): ${facts}
+Do up to four web searches for what the headlines don't tell you: breaking news from the last day or two about these teams (injuries, trades, coaching, lineup changes), and the story behind the biggest games. Compile everything first, then decide what this person most needs to know.
+${RULES}
+Answer with only this JSON inside <json></json> tags:
+{"top": [{"title": "a headline in your own words, 4-9 words", "why": "one or two sentences, 15-35 words: what happened and why it matters to this person today", "tag": "one or two words: Injury, Trade, Result, Streak, Milestone, Coaching, Tonight, Record or similar", "new": true}],
+ "games": [{"id": "the slate game's id", "story": "two sentences, 30-50 words: the story of this game and why to watch", "hits": [{"tag": "one or two words (Injury, Streak, Last game, Schedule, Storyline, Hot, Matchup...)", "text": "one line, 8-20 words, with the specific fact"}], "read": {"title": "...", "url": "...", "source": "ESPN"}}],
+ "teams": [{"name": "the team's name exactly as given in the facts", "lg": "its league key from the facts", "chip": "its status in one to three words: Won 6, Lost 3, Injury, Back-to-back, Winless, Clinched...", "tone": "up" | "down" | "alert" | "", "line": "one line, 8-16 words: the one thing to know about this team right now", "hits": [{"tag": "...", "text": "..."}]}],
+ "leagues": [{"key": "the league key from the facts", "story": "two or three sentences, 35-60 words: the state of the league right now", "hits": [{"tag": "...", "text": "..."}], "read": {"title": "...", "url": "...", "source": "ESPN"}}]}
+top: exactly 5 stories, the ones you believe this person most wants to know, most important first; stay inside what the page covers. "new" is true unless the story was already in "prev". games: every game in "games", in the order given, 2-3 hits each; [] if none. teams: every team playing in "games" plus every team in "teams", each once, 2 hits each; "tone" is up for good form, down for bad form, alert for an injury or other trouble. leagues: every league in "leagues", 4-6 hits each on the biggest stories league-wide (not just this person's teams); [] if none. read: the one provided headline (use its exact url) most worth opening for that game or league, or null; never invent a url. Inside the JSON strings, never use double quotation marks.`;
+  if (p.kind === "deep") {
+    const type = p.key[0], shape = type === "g" ? `{"verdict": "your watchability call in two to five words, such as Must watch, Worth the first half, Background game",
+ "take": ["two paragraphs, 90-140 words in all: your honest read on this game: form, stakes, what makes it interesting or not"],
+ "number": {"value": "one striking number or score from your sources, such as 42-9", "text": "one sentence on what it is and why it matters"},
+ "watch": [{"tag": "one or two words", "text": "one line: a specific thing to watch for"}],
+ "sides": [{"team": "team name as given", "text": "one line: what this team needs tonight"}],
+ "timeline": [{"when": "a short date like Nov 11", "text": "one line: what happened"}],
+ "hunch": "one sentence: how you think it plays out, plainly marked by its wording as your opinion",
+ "reads": [{"title": "...", "url": "...", "source": "..."}]}
+watch: exactly 3. sides: both teams, away first. timeline: 3-4 dated events that led to this game, oldest first.` : type === "t" ? `{"mood": "the mood around this team in one or two words, such as Rolling, Anxious, Rebuilding",
+ "take": ["two paragraphs, 90-140 words in all: the state of this team right now and what its season turns on"],
+ "number": {"value": "one striking number from your sources", "text": "one sentence on what it is and why it matters"},
+ "latest": [{"tag": "one or two words", "text": "one line: a recent development"}],
+ "said": {"text": "one sentence paraphrasing what a coach or player said this week, quoting at most five words", "who": "who said it and where it was reported"},
+ "timeline": [{"when": "a short date like Nov 11", "text": "one line: what happened"}],
+ "next": "one line: the next game or two, with day and opponent",
+ "reads": [{"title": "...", "url": "...", "source": "..."}]}
+latest: 3-4, newest first. timeline: 3-4 dated events in the team's biggest current storyline, oldest first. said: null if your sources have nothing.` : `{"take": ["two paragraphs, 90-140 words in all: what is going on around this league right now"],
+ "hot": [{"team": "team name", "text": "two to four words, such as won 12 straight"}],
+ "cold": [{"team": "team name", "text": "two to four words"}],
+ "perf": [{"tag": "the stat line or feat in a few words, such as 43 points", "text": "one line: who did it and in what game"}],
+ "number": {"value": "one striking number or milestone from your sources", "text": "one sentence on what it is and why it matters"},
+ "injuries": ["one line each: the injuries that matter most league-wide"],
+ "reads": [{"title": "...", "url": "...", "source": "..."}]}
+hot and cold: up to 3 each. perf: 3-5 standout performances from the last two days. injuries: up to 4; [] if none.`;
+    return `You're writing a tap-in breakdown for the News page of a sports fan's app: a deeper, more creative look at one ${type === "g" ? "game" : type === "t" ? "team" : "league"} than the dashboard card they just tapped. Today is ${new Date().toDateString()}.
+Subject (JSON): ${game}
+Facts (JSON: free ESPN data and headlines with url, plus what the dashboard card already said, so go beyond it): ${facts}
+Do up to two web searches for the latest news and the story behind it (last 3 days).
+${RULES}
+Every number, date and statement must come from the facts or your searches; your opinions (the take${type === "g" ? ", the verdict and the hunch" : type === "t" ? " and the mood" : ""}) are yours and should read like a sharp friend's.
+Answer with only this JSON inside <json></json> tags:
+${shape}
+reads: 2-3 stories most worth opening, only from the provided headlines or pages your searches actually returned, with their exact url; never invent a url. Leave out any section you have no sourced material for (use null or []). Inside the JSON strings, never use double quotation marks.`;
+  }
   if (p.kind === "news" && p.key === "slate") return `You're writing the News page of a sports fan's app, built around this person's slate of games today. Today is ${new Date().toDateString()}.
 Facts (JSON): "slate" (today's games on their slate: id, league, teams, time, TV, why it's on the slate), "byGame" (ESPN and The Athletic headlines about each slate game's teams, with url), "top" (today's top headlines across all of sports, with url), and "interests" (what this person reads most): ${facts}
 Do up to three web searches: the biggest storylines behind the most important slate games, and the biggest sports stories of the last day across all sports.
@@ -345,7 +395,7 @@ async function askClaude(env, text, big, searches) {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-      body: JSON.stringify({ model: MODEL, max_tokens: big ? 10000 : 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: searches || 2 }], messages: msgs })
+      body: JSON.stringify({ model: MODEL, max_tokens: big === true ? 10000 : big || 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: searches || 2 }], messages: msgs })
     });
     const body = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error("Claude API " + r.status + ": " + ((body.error || {}).message || "").slice(0, 160));
@@ -375,12 +425,32 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const p = event.payload, t = target(p);
     try {
-      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments", SEARCHES[p.kind]));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 16000 : p.kind === "deep" ? 6000 : false, SEARCHES[p.kind]));
       const ans = stripCites(res.ans || res);
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
-        if (p.kind === "news") {
+        const S = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
+        const rd = (r) => r && r.title && /^https:\/\//.test(r.url || "") ? { title: S(r.title, 200), url: S(r.url, 600), source: S(r.source, 40) } : null;
+        const hits = (a, n) => (Array.isArray(a) ? a : []).filter((h) => h && h.text).slice(0, n).map((h) => ({ tag: S(h.tag, 24), text: S(h.text, 240) }));
+        const num = (x) => x && x.value && x.text ? { value: S(x.value, 16), text: S(x.text, 260) } : null;
+        if (p.kind === "news" && p.key === "page") {
+          let f = {}; try { f = JSON.parse(p.facts || "{}"); } catch (e) {}
+          const top = (Array.isArray(ans.top) ? ans.top : []).filter((x) => x && x.title).slice(0, 5).map((x) => ({ title: S(x.title, 120), why: S(x.why, 320), tag: S(x.tag, 24), new: x.new !== false }));
+          const games = (Array.isArray(ans.games) ? ans.games : []).filter((g) => g && g.id && g.story).slice(0, 40).map((g) => ({ id: S(g.id, 60), story: S(g.story, 500), hits: hits(g.hits, 3), read: rd(g.read) }));
+          const teams = (Array.isArray(ans.teams) ? ans.teams : []).filter((x) => x && x.name).slice(0, 100).map((x) => ({ name: S(x.name, 60), lg: S(x.lg, 12), chip: S(x.chip, 24), tone: ["up", "down", "alert"].includes(x.tone) ? x.tone : "", line: S(x.line, 200), hits: hits(x.hits, 3) }));
+          const leagues = (Array.isArray(ans.leagues) ? ans.leagues : []).filter((x) => x && x.key && x.story).slice(0, 16).map((x) => ({ key: S(x.key, 12), story: S(x.story, 600), hits: hits(x.hits, 6), read: rd(x.read) }));
+          if (!top.length && !games.length && !teams.length && !leagues.length) throw new Error("Claude's page came back empty");
+          await putDoc(this.env, t.path, { date: p.date, cover: f.cover || {}, top, games, teams, leagues, at: now, by: p.user || "dj", writing: null });
+        } else if (p.kind === "deep") {
+          const type = p.key[0], pairs = (a, n, k) => (Array.isArray(a) ? a : []).filter((x) => x && x[k] && x.text).slice(0, n).map((x) => ({ [k]: S(x[k], 60), text: S(x.text, 260) }));
+          const out = { key: p.key, date: p.date, type, take: strs(ans.take, 3).map((x) => x.slice(0, 1200)), number: num(ans.number), reads: (Array.isArray(ans.reads) ? ans.reads : []).map(rd).filter(Boolean).slice(0, 3), at: now, by: p.user || "dj", writing: null };
+          if (!out.take.length) throw new Error("Claude's breakdown came back empty");
+          if (type === "g") Object.assign(out, { verdict: S(ans.verdict, 40), watch: hits(ans.watch, 3), sides: pairs(ans.sides, 2, "team"), timeline: pairs(ans.timeline, 4, "when"), hunch: S(ans.hunch, 300) });
+          else if (type === "t") Object.assign(out, { mood: S(ans.mood, 24), latest: hits(ans.latest, 4), said: ans.said && ans.said.text ? { text: S(ans.said.text, 300), who: S(ans.said.who, 120) } : null, timeline: pairs(ans.timeline, 4, "when"), next: S(ans.next, 200) });
+          else Object.assign(out, { hot: pairs(ans.hot, 3, "team"), cold: pairs(ans.cold, 3, "team"), perf: hits(ans.perf, 5), injuries: strs(ans.injuries, 4).map((x) => x.slice(0, 240)) });
+          await putDoc(this.env, t.path, out);
+        } else if (p.kind === "news") {
           const reads = (Array.isArray(ans.reads) ? ans.reads : []).filter((r) => r && r.title && /^https:\/\//.test(r.url || "")).slice(0, 4).map((r) => ({ title: String(r.title).slice(0, 200), url: String(r.url).slice(0, 600), source: String(r.source || "").slice(0, 40), why: String(r.why || "").slice(0, 160) }));
           const watch = (Array.isArray(ans.watch) ? ans.watch : []).slice(0, 12).map((w) => ({ game: String((w || {}).game || "").slice(0, 80), why: String((w || {}).why || "").slice(0, 200) })).filter((w) => w.game);
           const games = (Array.isArray(ans.games) ? ans.games : []).filter((g) => g && g.story).slice(0, 4).map((g) => {

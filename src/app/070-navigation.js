@@ -40,6 +40,7 @@
   // All games or On TV): Back returns there, where you were. The menu's own pages go back to the home page.
   var MENU_PAGES = ["lineup", "games", "tv", "teams", "moments", "news", "settings"];
   function goBack() {
+    if (state.view === "news" && typeof nwCloseDeep === "function" && nwCloseDeep()) return true;  // a News breakdown: back to the News page
     var bk = state.backTo, cur = state.view, h0 = homeView();
     if (bk && bk.view && bk.view !== cur && bk.view !== h0 && MENU_PAGES.indexOf(cur) === -1 && $("view-" + bk.view)) {
       var y0 = bk.y || 0; state.backTo = bk.parent || null;

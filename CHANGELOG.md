@@ -5,6 +5,17 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.45.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- News is back, rebuilt as a quick-look page that Claude writes. Nothing is written until you tap Generate news.
+- Before generating, pick what it covers: today's slate, My teams (even when they aren't playing) and any leagues. Your picks are remembered.
+- The page says when it was generated and how long ago. Regenerate reopens the picks, so you can change them, and pulls in whatever is new.
+- Top news: Claude reads everything, then leads with the five stories it thinks you most want to know. It stays open until you collapse it, then stays collapsed until you open it again. After a regenerate, stories that weren't there before are marked New.
+- Three tabs. Games: a card for each slate game with the story, tagged quick hits and one article to open. Teams: a tile for every team on the slate and each of your teams, with one line and a status like Won 6 or Injury. Leagues: the biggest stories around each league you picked.
+- Tap "Claude's breakdown" on a game or league, or tap a team tile, for a deeper write-up, written the first time anyone opens it and saved for the day: Claude's take, one number that tells the story, what to watch for, a timeline of how they got here, and stories to read. Games get a watchability verdict and Claude's hunch; teams get the latest developments and what was said; leagues get who's hot and cold, top performances and injuries.
+- Every Generate, Regenerate and breakdown counts as one Claude summary, so testers' 10 a day covers them too.
+- Tags sit on their own line above the text, so every card's text lines up the same way.
+
 ## 3.44.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Page headers reworked, the same on every page. The Slate mark now sits level with the page name and is sized to it, with less space above and below the header.
