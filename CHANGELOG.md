@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.42.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Live feed: no more scroll box inside the page. It shows just the latest plays (8 in football, 12 lines in basketball), and as a new one comes in at the top, the oldest drops off, so the section stays about the same size. "Show earlier plays" (the button) brings back the rest.
+- Live feed: when you're scrolled down reading a play or the box score, it stays where it is on screen when new plays come in.
+
 ## 3.42.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - All games: live games now come first in each league, then the games still to come, then the finished ones, the same order as Tonight's Slate.

@@ -1470,7 +1470,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-wpb { flex: 1; display: flex; height: 6px; border-radius: 999px; overflow: hidden; background: var(--raise); }
 .fd-wpb i { display: block; height: 100%; }
 .fd-wpb i + i { margin-left: 2px; }
-.fd-list { margin-top: 10px; display: grid; gap: 6px; align-content: start; max-height: min(58vh, 520px); overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px; border-radius: 16px; background: color-mix(in srgb, var(--card) 45%, transparent); border: 1px solid var(--hair); }
+.fd-list { margin-top: 10px; display: grid; gap: 6px; }
 .fd-list .fd-more, .fd-list .bets-more.fd-more { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 44px; margin: 4px 0 0; padding: 0 14px; border-radius: 12px; background: var(--raise); border: 1px solid var(--hair); color: var(--ink); font: inherit; font-size: 14px; font-weight: 800; }
 .fd-list .fd-more::after { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-2px); opacity: .7; }
 .fd-drive { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 0 2px; }
