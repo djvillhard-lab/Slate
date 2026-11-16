@@ -143,9 +143,9 @@
     else if (mode === "games" && !g.custom) { var agl = agLine(g, st.kind, row); if (agl) row.appendChild(agl); }  // All games: the same one-liners (3.39.0)
     if (openTray) row.appendChild(openTray);
     if (mode === "lineup" && isDuo && state.view === "game" && state.gameId === g.id) row.classList.add("picked");
-    if (mode === "lineup" && !g.custom) {
-      // why it's on the slate: a small tab tucked into the top-right corner
-      var ws = state.why[g.id] || [];
+    if ((mode === "lineup" || (mode === "games" && st.kind !== "over")) && !g.custom) {
+      // why it's on the slate: a small tab tucked into the top-right corner (All games, 3.42.0: the same tags, upcoming and live games only, like the slate's Finished group)
+      var ws = mode === "games" ? agTags(g) : state.why[g.id] || [];
       var wst = st.kind === "live" ? walSlateTag(g) : null;  // Close finish, Upset watch, Big night: like Worth a look
       if (wst) ws = [wst.tag].concat(ws);
       if (ws.length) {

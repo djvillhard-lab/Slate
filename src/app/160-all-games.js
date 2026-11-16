@@ -105,7 +105,25 @@
         if (hay.indexOf(q) === -1) return false;
       }
       return true;
-    }).sort(byStart);
+    }).sort(function (a, b) { return (agRank(a) - agRank(b)) || byStart(a, b); });
+  }
+  // live games first, then the ones still to come, then the finished ones (the slate's order, 3.42.0)
+  function agRank(g) { var k = status(g).kind; return k === "live" ? 0 : k === "over" ? 2 : 1; }
+  // the slate's corner tags on every game: a slate game keeps its own reasons; any other game gets the tags your rules would give it,
+  // checked against every test for its league (so an off-slate game still shows Ranked, Prime time, National TV…)
+  function agTags(g) {
+    if (inLineup(g.id)) return state.why[g.id] || [];
+    var hits = [];
+    if (hasFav(g)) hits.push(["Your team", 100]);
+    (LG_OPTS[g.league] || []).forEach(function (key) {
+      if (key === "all" || !MATCH[key]) return;
+      var m = null; try { m = MATCH[key](g, "both") || MATCH[key](g, "top10") || MATCH[key](g, "any"); } catch (e) {}
+      if (m) hits.push(m);
+    });
+    if (eventOn(g)) hits.push(["Event", 60]);
+    hits.sort(function (a, c) { return c[1] - a[1]; });
+    var seen = {}, why = []; hits.forEach(function (h) { if (!seen[h[0]]) { seen[h[0]] = 1; why.push(h[0]); } });
+    return why;
   }
   // ---- One-liners on All games (3.39.0): the slate's own lines, from what's already on the phone ----
   // a missing or stale line is fetched only once its card has been on screen for a moment, so a long list costs nothing until you look at it
