@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.36.7 (Nov 16, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- Live feed: the game switcher at the top shows even when only one football game is live. Before, it disappeared, and the score box moved up under the folded Duo's clock and Wi-Fi.
+- Live feed, folded Duo: pulling down at the top of the page now works in the app. The page slides down with your finger and springs back, done by the page itself instead of relying on iOS's bounce.
+
 ## 3.36.6 (Nov 16, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - iPhone app, folded Duo: the Live feed gets the slate's pull-down too. At the top of the page, pull down a little to see the score bar's right end under the clock and Wi-Fi; it springs back when you let go. Further down, while the score bar is pinned, pulling down slides just the score bar down below them (it moves with your finger as you scroll back up) and it springs back when you let go. No added space anywhere.

@@ -60,6 +60,7 @@
       var bug = document.querySelector("#feed-body .fd-bug"); if (!bug) return;
       var top = parseFloat($("view-feed").style.getPropertyValue("--fd-top")) || 0, y = (isDuo ? $("pane-r").scrollTop : window.scrollY) || 0;
       if (y > 0 && bug.getBoundingClientRect().top <= top + 1.5) pk = { bug: bug, y0: e.touches[0].clientY };
+      else if (y <= 0) pk = { bug: $("feed-body"), y0: e.touches[0].clientY };  // at the top: the whole page slides down (iOS's own bounce doesn't always)
     }, { passive: true });
     document.addEventListener("touchmove", function (e) {
       if (!pk || FD.drag) return; var d = e.touches[0].clientY - pk.y0;
@@ -187,7 +188,7 @@
   }
   function fdStrip(g) {
     var ids = {}, list = fdList(g);
-    if (list.length < 2) return null;
+    if (!list.length) return null;  // shown even for one game (3.36.7): the page keeps the same shape, and the score box stays clear of the folded Duo's clock
     var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Live football games");
     list.forEach(function (x) { if (ids[x.id]) return; ids[x.id] = 1;
       var on = x.id === g.id, b = el("button", "fd-chip" + (on ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", on ? "true" : "false");
