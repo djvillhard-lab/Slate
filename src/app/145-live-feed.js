@@ -123,10 +123,40 @@
     return out.slice(0, 2).join(" · ");
   }
   function fdClean(t) { return String(t || "").replace(/^\s*\(\d{1,2}:\d\d\)\s*/, "").replace(/^\s*\((?:No Huddle|Shotgun|No Huddle, Shotgun|Run formation)[^)]*\)\s*/i, "").trim(); }
+  // ESPN's play text, cleaned up (3.36.8): one short line per part, in plain sentence case. "B.Purdy pass short right to
+  // C.McCaffrey for 66 yards, TOUCHDOWN. TWO-POINT CONVERSION ATTEMPT. ... ATTEMPT SUCCEEDS.PENALTY on DAL-J.Porter, ..."
+  // becomes "Purdy pass short right to McCaffrey, 66 yds" and "2-pt good: Purdy to McCaffrey". Penalties are left to the Flag tag.
+  function fdLines(raw, title) {
+    var t = String(raw || "").replace(/\s+/g, " ").trim(); if (!t) return [];
+    var nm = function (x) { return String(x || "").replace(/\b[A-Z][a-z]{0,2}\.(?=[A-Z])/g, ""); };  // "B.Purdy" -> "Purdy"
+    var low = function (x) { return String(x).replace(/\b[A-Z][A-Z'\-]{3,}\b/g, function (w) { return w.toLowerCase(); }); };  // TOUCHDOWN -> touchdown (team abbreviations stay)
+    var cap = function (x) { x = x.trim(); return x.charAt(0).toUpperCase() + x.slice(1); };
+    var out = [], m, NM = "[A-Z][a-z]{0,2}\\.[A-Za-z'\\-]+";
+    t = t.replace(new RegExp(",?\\s*Center-" + NM + ",\\s*Holder-" + NM + "\\.?", "gi"), "").replace(/(\d+) yards? field goal/gi, "$1-yard field goal");
+    // the two-point try, the extra point and penalties come off the end first
+    var two = /TWO-POINT CONVERSION ATTEMPT\.?\s*(.*?)(ATTEMPT (?:SUCCEEDS|FAILS))\.?/i.exec(t);
+    if (two) { var tw = two[1].replace(/\.$/, ""), how = (m = /([A-Z][a-z]{0,2}\.[A-Za-z'\-]+) pass to ([A-Z][a-z]{0,2}\.[A-Za-z'\-]+)/.exec(tw)) ? nm(m[1]) + " to " + nm(m[2]) : (m = /([A-Z][a-z]{0,2}\.[A-Za-z'\-]+) (?:rush|left|right|up)/.exec(tw)) ? nm(m[1]) + " run" : "";
+      t = t.replace(two[0], " "); var twoLine = "2-pt " + (/SUCCEEDS/i.test(two[2]) ? "good" : "no good") + (how ? ": " + how : ""); }
+    var xp = /([A-Z][a-z]{0,2}\.[A-Za-z'\-]+) extra point is (GOOD|NO GOOD|BLOCKED)[^.]*\.?/i.exec(t), xpLine = "";
+    if (xp) { t = t.replace(xp[0], " "); xpLine = "Extra point " + xp[2].toLowerCase() + " (" + nm(xp[1]) + ")"; }
+    t = t.replace(new RegExp("PENALTY on [A-Z]{2,4}(?:-" + NM + ")?,.*?(?:enforced (?:at [A-Z]{2,4} \\d+|between downs)|declined|offsetting|(?=PENALTY)|$)(?:\\s*-\\s*No Play)?\\.?", "gi"), " ");
+    t = t.replace(/\[[^\]]*\]/g, "").replace(/\((?:[A-Z][a-z]{0,2}\.[A-Za-z'\-]+(?:[;,]\s*)?)+\)/g, "");  // tacklers, in brackets or parentheses
+    // the rest, a sentence at a time
+    t.split(/\.\s+(?=[A-Z])|\.(?=[A-Z]{2})/).forEach(function (seg) {
+      seg = seg.replace(/\s+,/g, ",").replace(/\s{2,}/g, " ").replace(/[\s.,]+$/, "").trim(); if (!seg || /^-?\s*No Play$/i.test(seg)) return;
+      seg = seg.replace(/ for (-?\d+) yards?,? TOUCHDOWN/i, ", $1 yds, touchdown").replace(/ for (-?\d+) yards?/i, ", $1 yds").replace(/ (\d+) yards?/g, " $1 yds");
+      seg = seg.replace(/\s*FUMBLES,?\s*(?:\([^)]*\))?,?\s*/i, ", fumble, ").replace(/^, /, "").replace(/recovered by ([A-Z]{2,4})-([A-Z][a-z]{0,2}\.[A-Za-z'\-]+)/i, function (_, tm, p) { return "recovered by " + tm + " (" + nm(p) + ")"; });
+      seg = cap(low(nm(seg)));
+      if (seg && seg !== title) out.push(seg);
+    });
+    if (out.length && /No Play/i.test(String(raw))) out[0] = "No play: " + out[0];  // wiped out by a penalty
+    if (xpLine) out.push(xpLine); if (two) out.push(twoLine);
+    return out;
+  }
   // a play's title in plain words, its players (up to two) and which box-score line each one leads with
   function fdRead(pl, ix) {
     var ty = String((pl.type || {}).text || ""), tx = fdClean(pl.text), y = Number(pl.statYardage) || 0, offTid = String(((pl.start || {}).team || {}).id || "");
-    var ya = function (v) { v = Math.abs(v); return v + (v === 1 ? " yard" : " yards"); };
+    var ya = function (v) { v = Math.abs(v); return v + (v === 1 ? " yd" : " yds"); };  // short, like the lines under it (3.36.8)
     var inParens = /sack/i.test(ty), names = [], seen = {};
     var src = inParens ? tx : tx.replace(/\([^)]*\)|\[[^\]]*\]/g, " ");
     src.replace(/\b([A-Z][a-z]{0,2})\.((?:St\. ?)?[A-Z][A-Za-z'\-]+)/g, function (m, i, l) { var P = fdFind(ix, i, l, offTid); if (P && !seen[P.id]) { seen[P.id] = 1; names.push(P); } return m; });
@@ -134,8 +164,8 @@
     var a = names[0], b = names[1], m, out = { title: ty || "Play", ps: [], kind: "" };
     var lead = function (P, k) { if (P) out.ps.push({ P: P, k: k }); };
     if (/^(End Period|End of Half|End of Game|Two-minute warning|Official Timeout|Timeout|End of Regulation)/i.test(ty)) { out.note = true; out.title = /two-minute/i.test(ty) ? "Two-minute warning" : /timeout/i.test(ty) ? (/official/i.test(ty) ? "TV timeout" : "Timeout" + ((m = /Timeout #\d+ by ([A-Z]{2,4})/i.exec(tx)) ? " " + m[1] : "")) : tx.replace(/^END /, "End of ").replace(/QUARTER/i, "quarter").replace(/HALF/i, "half").replace(/GAME/i, "game"); return out; }
-    if (/Passing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "Touchdown! " + (a && b ? ln(a) + " to " + ln(b) + ", " : "") + ya(y); lead(a, "passing"); lead(b, "receiving"); }
-    else if (/Rushing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "Touchdown! " + (a ? ln(a) + " runs it in from " + ya(y) : ya(y) + " run"); lead(a, "rushing"); }
+    if (/Passing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a && b ? ln(a) + " to " + ln(b) + ", " : "pass, ") + Math.abs(y) + " yds"; lead(a, "passing"); lead(b, "receiving"); }
+    else if (/Rushing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a ? ln(a) + " run, " : "run, ") + Math.abs(y) + " yds"; lead(a, "rushing"); }
     else if (/Touchdown/i.test(ty)) { out.kind = "score"; out.title = /interception/i.test(ty) ? "Pick six!" : /fumble/i.test(ty) ? "Fumble return touchdown!" : /punt|kick/i.test(ty) ? "Return touchdown!" : "Touchdown!"; lead(b || a, /interception/i.test(ty) ? "interceptions" : "defensive"); }
     else if (/Pass Reception/i.test(ty)) { out.title = (a && b ? ln(a) + " to " + ln(b) : "Pass complete") + (y > 0 ? " for " + ya(y) : y < 0 ? ", loss of " + ya(y) : ", no gain"); lead(a, "passing"); lead(b, "receiving"); }
     else if (/Pass Incompletion/i.test(ty)) { out.title = "Incomplete" + (b ? ", intended for " + ln(b) : ""); lead(a, "passing"); lead(b, "receiving"); }
@@ -335,7 +365,7 @@
         card.appendChild(ph);
         var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), x.t)); }); card.appendChild(tw); }
         card.appendChild(el("p", "fd-pt", rd.title));
-        var raw = fdClean(pl.text); if (raw && raw !== rd.title) card.appendChild(el("p", "fd-px", raw));
+        var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); lines.forEach(function (l) { px.appendChild(el("p", null, l)); }); card.appendChild(px); }
         rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
         list.appendChild(card);
       }
