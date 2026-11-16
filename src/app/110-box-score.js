@@ -191,7 +191,7 @@
     var spec = (BX_COMPACT[sport] || {})[gr.k], cols = gr.cols || [];
     if (!spec) return gr;
     var keep = spec.cols.filter(function (c) { return cols.indexOf(c) !== -1; }), si = spec.sort.map(function (c) { return cols.indexOf(c); }).filter(function (i) { return i !== -1; });
-    var played = gr.rows.filter(function (r) { return !("dnp" in r); }).slice().sort(function (a, b) { for (var k = 0; k < si.length; k++) { var d = bxNum(b.s[si[k]]) - bxNum(a.s[si[k]]); if (d) return d; } return 0; }).slice(0, spec.n);
+    var played = gr.rows.filter(function (r) { return !("dnp" in r); }).slice().sort(function (a, b) { for (var k = 0; k < si.length; k++) { var d = bxNum(b.s[si[k]]) - bxNum(a.s[si[k]]); if (d) return d; } return 0; });  // everyone who played (3.40.1)
     return { k: gr.k, cols: keep, rows: played.map(function (r) { var c = Object.assign({}, r); c.s = keep.map(function (k) { return r.s[cols.indexOf(k)]; }); return c; }) };
   }
   // one team at a time, with a two-button switch; starts on your team when one of them is yours
@@ -341,7 +341,7 @@
     }
     groups.forEach(function (gr) {
       if (groups.length > 1) wrap.appendChild(el("b", "bxp-grp", BX_GROUP[gr.k] || gr.k));
-      wrap.appendChild(bxRows(g, compact ? bxCompactGroup(sport, gr) : gr, sport, b.state === "in", t, !compact && !season && b.state === "post" ? (sport === "football" ? (gr.k === "passing" ? 1 : 3) : 5) : 0));  // one look for every sport, quick look and full box score alike
+      wrap.appendChild(bxRows(g, compact ? bxCompactGroup(sport, gr) : gr, sport, b.state === "in", t, 0));  // everyone who played, starters and the whole bench, in the quick look and the full box score alike (3.40.1)  // one look for every sport, quick look and full box score alike
     });
     if (hidN) {
       var mo = el("button", "bx-more", state.bxAll[moreKey] ? "Hide defense and special teams" : "Show defense and special teams"); mo.type = "button";
@@ -425,7 +425,7 @@
   function boxGate(g) {
     var w = el("div", "pv-gate"); w.appendChild(el("span", null, "Scores are hidden, and the box score shows them."));
     var b = el("button", "pv-get", "Show box score"); b.type = "button";
-    b.addEventListener("click", function (e) { e.stopPropagation(); state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true; keepScroll(render); });
+    b.addEventListener("click", function (e) { e.stopPropagation(); state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true; keepScroll(renderGame); });
     w.appendChild(b); return w;
   }
   // where the game is played, once ESPN's game details have loaded
