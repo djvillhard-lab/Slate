@@ -1,0 +1,37 @@
+name: Add or remove a person
+# Gives someone their own Slate passcode (their own teams, settings and slate, 10 Claude summaries a day),
+# or takes it away. The passcode itself never goes here: only its SHA-256 hash, which is what
+# users/registry stores and what the worker (worker/index.js, whoIs) checks a typed passcode against.
+# Make the hash with:  printf %s 'THE-PASSCODE' | shasum -a 256
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "add or remove"
+        required: true
+        default: add
+        type: choice
+        options: [add, remove]
+      id:
+        description: "short id, lowercase letters (e.g. dad); their data lives under u/<id>/"
+        required: true
+      name:
+        description: "name shown in the app (e.g. Dad); only needed to add"
+        required: false
+      hash:
+        description: "SHA-256 hash of their passcode (64 characters); only needed to add"
+        required: false
+jobs:
+  person:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update users/registry
+        env:
+          SB_KEY: ${{ secrets.SUPABASE_SECRET }}
+          ACTION: ${{ inputs.action }}
+          PID: ${{ inputs.id }}
+          PNAME: ${{ inputs.name }}
+          PHASH: ${{ inputs.hash }}
+        run: python3 scripts/person.py
