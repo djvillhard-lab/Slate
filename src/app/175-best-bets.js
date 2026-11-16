@@ -118,14 +118,14 @@
     P.list = P.list.filter(function (pk) { return on[pk.gid] && (pk.game || pk.pid); });  // a game taken off the slate takes its picks with it
     var changed = P.list.length !== n0, taken = {}, perG = {}, kinds = {};
     Object.keys(gone).forEach(function (u) { taken[u] = 1; });  // picks you removed don't come back
-    P.list.forEach(function (pk) { taken[pk.uid] = 1; perG[pk.gid] = (perG[pk.gid] || 0) + 1; kinds[betKind(pk)] = (kinds[betKind(pk)] || 0) + 1; });
-    var cands = function (list) { var out = []; list.forEach(function (g) { ((BETS[g.id] || {}).list || []).forEach(function (b) { if ((b.game || b.pid) && !taken[g.id + "|" + (b.game ? "total" : b.pid)] && !betSat(g, b)) out.push({ g: g, b: b }); }); }); out.sort(function (x, y) { return (y.b.sc - x.b.sc) || byStart(x.g, y.g); }); return out; };
+    P.list.forEach(function (pk) { taken[pk.uid] = 1; if (pk.pid) taken["p|" + pk.pid] = 1; perG[pk.gid] = (perG[pk.gid] || 0) + 1; kinds[betKind(pk)] = (kinds[betKind(pk)] || 0) + 1; });
+    var cands = function (list) { var out = []; list.forEach(function (g) { ((BETS[g.id] || {}).list || []).forEach(function (b) { if ((b.game || b.pid) && !taken[g.id + "|" + (b.game ? "total" : b.pid)] && !(b.pid && taken["p|" + b.pid]) && !betSat(g, b)) out.push({ g: g, b: b }); }); }); out.sort(function (x, y) { return (y.b.sc - x.b.sc) || byStart(x.g, y.g); }); return out; };
     var fill = function (list, perMax, kindMax) {
       cands(list).forEach(function (x) {
         if (P.list.length >= BET_MAX) return;
         var k = betKind(x.b), uid = x.g.id + "|" + (x.b.game ? "total" : x.b.pid);
-        if (taken[uid] || (perG[x.g.id] || 0) >= perMax || (kinds[k] || 0) >= kindMax) return;
-        P.list.push(betPick(x.g, x.b)); taken[uid] = 1; perG[x.g.id] = (perG[x.g.id] || 0) + 1; kinds[k] = (kinds[k] || 0) + 1; changed = true;
+        if (taken[uid] || (x.b.pid && taken["p|" + x.b.pid]) || (perG[x.g.id] || 0) >= perMax || (kinds[k] || 0) >= kindMax) return;
+        P.list.push(betPick(x.g, x.b)); taken[uid] = 1; if (x.b.pid) taken["p|" + x.b.pid] = 1; perG[x.g.id] = (perG[x.g.id] || 0) + 1; kinds[k] = (kinds[k] || 0) + 1; changed = true;
       });
     };
     var tiers = [[], [], []], ready = [];
@@ -144,7 +144,7 @@
   function betSat(g, b) {
     var sum = !b.game && status(g).kind !== "upcoming" && (bx.live[g.id] || {}).sum; if (!sum) return false;
     var st = ((((sum.header || {}).competitions || [])[0] || {}).status || {}).type || {}, sport = BX_SPORT[g.league], line = betBoxLine(sum, b.pid, sport);
-    return !!(line && line.dnp) || (!line && st.state === "post" && sport !== "football");
+    return !!(line && line.dnp) || (!line && st.state === "post");  // over and not in the box: he didn't play for this team tonight (a stale depth chart or a traded season leader)
   }
   // removing a pick (3.41.0): it's remembered for the day so it isn't picked again, and the next best one takes its place on the redraw
   var BET_UNDO = null;

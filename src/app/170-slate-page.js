@@ -77,7 +77,7 @@
     var body = $("lineup-body"); body.textContent = "";
     // until your settings (rules, teams) arrive, show the loading note rather than a slate built from the defaults
     var waitMine = (!state.settingsLoaded || (uid && !state.lineupLoaded)) && state.slateStatus !== "nodb";
-    var lg = waitMine ? [] : lineupGames(), loading = (state.slateStatus !== "ready" && state.slateStatus !== "empty") || waitMine;
+    var lg = waitMine ? [] : lineupGames(), lgAll = lg, loading = (state.slateStatus !== "ready" && state.slateStatus !== "empty") || waitMine;
     if (!loading) {
       var ed = slateEdits();
       // (edits: "Back to default slate" sits with Clear slate under the slate)
@@ -189,7 +189,7 @@
     if (loading) return;
     var sg = suggestionBlock("slate"); if (sg) body.appendChild(sg);
     var nlb = newsletterBlock(); if (nlb) body.appendChild(nlb);
-    var bts = betsBlock(lg); if (bts) body.appendChild(bts);
+    var bts = betsBlock(lgAll); if (bts) body.appendChild(bts);  // the whole slate: finished games (in their own group) and the Live-only filter must not take picks away (3.45.1)
     // two actions in one panel, like the rest of the slate; Share lives in the header, Clear is a quiet link
     var acts = el("div", "slate-acts"), row = el("div", "sa-row");
     function act(label, path, fn) {

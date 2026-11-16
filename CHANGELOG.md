@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.45.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Best bets disappeared from Tonight's Slate once every game was over, and a pick dropped out as soon as its game finished, so you never saw it hit or miss. Finished games move to their own group at the bottom, and Best bets was treating them as taken off the slate. Fixed: finished games count again, so picks stay with their Hit or Miss and the section shows after the last game ends. The Live-only filter no longer takes picks away either.
+- Best bets: a player is picked only once, and a pick from a finished game is only made for a player who shows up in that game's box score (one pick had Kirk Cousins for two teams, from an out-of-date team list).
+
 ## 3.45.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News is back, rebuilt as a quick-look page that Claude writes. Nothing is written until you tap Generate news.
