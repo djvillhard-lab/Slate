@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.40.2 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Live feed for basketball: turnovers read plainly. A steal says "Steal by A. Sengun" with "Trae Young bad pass, stolen by Alperen Sengun" under it. Other turnovers say what happened: "Turnover: traveling", "Turnover: offensive foul", "Turnover: shot clock violation", and so on. Before, a turnover ESPN hadn't labeled yet showed as "Turnover: no".
+- Shot headlines fit the shot: "Shot at the rim" for a 1-foot shot (it said "Jumper"), plus Floater, Putback and Heave.
+- Technicals say why ("Technical foul: flopping"), and replay reviews and coach's challenges say how they came out ("Coach's challenge: call overturned") in a plain sentence instead of ESPN's all-caps line.
 ## 3.40.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Box scores: every player who got into the game is listed, all the starters and the whole bench, in the quick look and the full box score, for every sport. The quick look used to show only the top 6 scorers, and the full box score folded the bench behind a button. Players who didn't play are still left out.

@@ -35,7 +35,9 @@
     var ty = String((pl.type || {}).text || "").replace(/\s+/g, " "), tx = String(pl.text || "").replace(/\s+/g, " "), parts = (pl.participants || []).map(function (p) { return ix[String((p.athlete || {}).id || "")] || null; });
     var dist = (/(\d+)-foot/.exec(tx) || [])[1], three = /three point/i.test(tx) || Number(pl.scoreValue) === 3 || Number(pl.pointsAttempted) === 3;
     var o = { title: ty || "Play", big: false, kind: "", P: parts[0] || null, k: "", minor: "Play" };
-    var shot = function () { return /dunk/i.test(ty + tx) ? "Dunk" : three ? "Three-pointer" : /layup|finger roll/i.test(ty + tx) ? "Layup" : /hook/i.test(ty + tx) ? "Hook shot" : /tip/i.test(ty + tx) ? "Tip-in" : "Jumper"; };
+    // the kind of shot in plain words (3.39.3): ESPN's type first, then its text ("makes 1-foot shot" is a shot at the rim, not a jumper)
+    var shot = function () { var a = ty + " " + tx, d = Number(dist) || 0; return /dunk/i.test(a) ? "Dunk" : three ? "Three-pointer" : /putback/i.test(a) ? "Putback" : /tip/i.test(a) ? "Tip-in" : /layup|finger roll/i.test(a) ? "Layup" : /hook/i.test(a) ? "Hook shot" : /heave/i.test(a) ? "Heave" : /float/i.test(a) ? "Floater" : d && d <= 4 ? "Shot at the rim" : /jump|fade|pull ?up|step ?back|jumper/i.test(a) ? "Jumper" : "Two-pointer"; };
+    var name = function (P) { return P ? P.name : ""; };
     if (/^End (Period|Game)|End of/i.test(ty)) { o.note = true; o.title = tx.replace(/ the /, " the ") || "End of period"; return o; }
     if (/timeout/i.test(ty)) { o.note = true; o.title = /official|tv/i.test(ty + tx) ? "TV timeout" : "Timeout" + (/^(.+?)\s+(Full|20 Sec\.?|Short)?\s*timeout/i.test(tx) ? ", " + tx.replace(/\s*(Full|20 Sec\.?|Short)?\s*timeout.*$/i, "") : ""); return o; }
     if (/Free Throw/i.test(ty)) {
@@ -50,12 +52,22 @@
     }
     if (/turnover|traveling/i.test(ty) || /turnover/i.test(tx)) {
       o.big = true; o.kind = "turn";
-      if (/steals/i.test(tx) && parts[1]) { o.title = "Stolen by " + fdShort(parts[1]); o.P = parts[1]; o.k = "stl"; }
-      else o.title = "Turnover" + ((ty = ty.replace(/\s*turnover\s*/i, "").trim()) ? ": " + ty.toLowerCase() : "");
+      // what kind of turnover, from ESPN's type and text; a second player from the other team is the one ESPN credits with the steal
+      var a2 = ty + " " + tx, sub = /bad pass/i.test(a2) ? "Bad pass" : /lost ball/i.test(a2) ? "Lost ball" : /travel/i.test(a2) ? "Traveling" : /offensive foul|charge/i.test(a2) ? "Offensive foul" : /double dribble/i.test(a2) ? "Double dribble" : /shot clock/i.test(a2) ? "Shot clock violation" : /step/i.test(a2) && /out of bounds/i.test(a2) ? "Stepped out of bounds" : /goaltend/i.test(a2) ? "Offensive goaltending" : /3.?second/i.test(a2) ? "3 seconds" : /5.?second/i.test(a2) ? "5 seconds" : /8.?second/i.test(a2) ? "8 seconds" : /back ?court/i.test(a2) ? "Backcourt" : /palming|discontinued|carry/i.test(a2) ? "Carrying" : /inbound/i.test(a2) ? "Inbound turnover" : /out of bounds/i.test(a2) ? "Out of bounds" : /kicked/i.test(a2) ? "Kicked ball" : /lane/i.test(a2) ? "Lane violation" : "";
+      var P0 = parts[0], P1 = parts[1], stl = P1 && (/steal/i.test(tx) || (P0 && P1.tid !== P0.tid));
+      if (stl) { o.title = "Steal by " + fdShort(P1); o.P = P1; o.k = "stl"; o.desc = (P0 ? name(P0) + " " + (sub ? sub.toLowerCase() : "turnover") + ", " : (sub ? sub + ", " : "")) + "stolen by " + name(P1); }
+      else { o.title = sub ? "Turnover: " + sub.toLowerCase() : "Turnover"; o.desc = P0 ? name(P0) + ": " + (sub ? sub.toLowerCase() : "turnover") : (sub ? sub + " (team turnover)" : "Team turnover"); }
       return o;
     }
-    if (/technical|flagrant|ejection/i.test(ty + tx)) { o.big = true; o.kind = "turn"; o.title = /ejection|ejected/i.test(ty + tx) ? "Ejected" : /flagrant/i.test(ty + tx) ? "Flagrant foul" : "Technical foul"; o.k = "foul"; return o; }
-    if (/challenge|review/i.test(ty)) { o.big = true; o.title = "Coach's challenge"; o.P = null; return o; }
+    if (/technical|flagrant|ejection/i.test(ty + tx)) { o.big = true; o.kind = "turn"; o.k = "foul";
+      var fl = /flagrant[^0-9]*(\d)/i.exec(ty + " " + tx), why = ty.replace(/\s*technical( foul)?\s*/i, "").replace(/-/g, " ").trim().toLowerCase();
+      o.title = /ejection|ejected/i.test(ty + tx) ? "Ejected" : /flagrant/i.test(ty + tx) ? "Flagrant foul" + (fl ? " " + fl[1] : "") : "Technical foul" + (why && why !== "technical" ? ": " + why : "");
+      return o; }
+    if (/challenge|review/i.test(ty)) { o.big = true; o.P = null;
+      var res = /overturned/i.test(ty + tx) ? "call overturned" : /stands|upheld|supports/i.test(ty + tx) ? "call stands" : "", tm3 = (/\[([^\]]+)\]/.exec(tx) || /^(.+?) Coach's Challenge/i.exec(tx) || [])[1] || "";
+      o.title = (/challenge/i.test(ty) ? "Coach's challenge" : "Replay review") + (res ? ": " + res : "");
+      o.desc = /challenge/i.test(ty) ? (tm3 ? tm3 + " challenged the call" : "Coach's challenge") + (res ? "; the " + res.replace("call overturned", "call was overturned") : "") + (/retain/i.test(tx) ? ", and they keep their timeout" : /charged with a timeout/i.test(tx) ? ", and they lose a timeout" : "") : "The officials reviewed the play" + (res ? "; the " + res.replace("call overturned", "call was overturned") : "");
+      return o; }
     if (/foul/i.test(ty)) { o.title = ty; o.minor = "Foul"; o.k = "foul"; return o; }
     if (/rebound/i.test(ty)) { o.title = ty; o.minor = "Rebound"; return o; }
     if (/substitution/i.test(ty)) { o.title = "Sub"; o.minor = "Sub"; return o; }
@@ -140,7 +152,7 @@
       var flush = function () {};  // 3.38.1: minor plays are plain one-line rows, nothing folded
       for (var pi = 0; pi < ps.length && items < cap2; pi++) {
         var pl = ps[pi], rd = hpRead(pl, ix), pid = hpPid(pl), isNew = !!(fresh && !fresh[pid]), ck = String((pl.clock || {}).displayValue || ""); seenNow[pid] = 1; total++;
-        var T = tripOf[pid], tg = tags[pid], raw = String(pl.text || "").replace(/\s+/g, " ").trim();
+        var T = tripOf[pid], tg = tags[pid], raw = rd.desc || String(pl.text || "").replace(/\s+/g, " ").trim();
         if (T && T.length > 1) {
           if (hpPid(T[T.length - 1]) !== pid) continue;
           var made = T.filter(function (x) { return x.scoringPlay; }).length, n3 = T.length;
