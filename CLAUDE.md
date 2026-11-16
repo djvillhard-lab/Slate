@@ -35,6 +35,17 @@ All `src/app/*.js` files run in one shared function scope, in name order. A new 
 Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the score/odds jobs; `shots.py` for screenshots), `sw.js` (offline copy), `ios/` (native app; `ios/WEEKEND.md`), `docs/` (plans; `DESIGN.md` the design guide; `pages/` handoff notes).
 
 ## Before you start
+**Who you work for.** In DJ's Claude projects, it's the person named in your session context. In Claude Code that someone runs on their own, it's whoever is running it: Drew starts each session with "I'm Drew", and his session may also show his GitHub login. If you can't tell, ask before you claim or commit. Where this file says "ask DJ", ask the person you work for. Their name, GitHub login and commit author are in **People** below.
+
+**Claim the page first (`docs/WORKING-ON.md`).** DJ and Drew run separate Claudes that can't see each other, so this sheet is how they avoid clashing:
+1. `git pull --rebase origin main`, then read `docs/WORKING-ON.md`.
+2. If the page or area you need (from the table above), or any file you'll change, is already on the sheet: **stop**. Tell the person who asked who has it and since when. Don't work on it anyway.
+3. If it's free, add one row (who asked, page or area, the files, start time in UTC), commit it with a first line like `Drew: started News page`, and push to main **right away, before writing any code**.
+4. If that push is rejected, someone else pushed at the same moment: `git pull --rebase origin main`, read the sheet again, and go back to step 2.
+5. Shared files (`010-core.js`, `240-chrome.js`, `280-ios-bridge.js`, `styles/040-components.css`, `ios/`, and the other shared files listed above) need their own row with "shared" in the page column, e.g. `shared: 240-chrome.js`. Only one person holds each one.
+6. When the work ships, remove your row in the same push. A row older than 24 hours counts as abandoned: remove it and say so in the commit (`DJ: cleared Drew's stale News page claim from Monday`).
+7. Before every push to main, pull the latest main and renumber the version if the other side shipped first (steps 1, 3 and 7 below).
+
 - Read `docs/pages/<page>.md` if it exists: what's done, what's open, and why things are the way they are.
 - Changing anything people see? Read `docs/DESIGN.md` first and reuse its parts.
 - Only one thread works on a file at a time. Shared files (above) and `ios/` get one thread at a time across the project.
@@ -56,11 +67,19 @@ If build.py says index.html was edited by hand, it prints those edits. Move them
 
 ## Commit messages (DJ and Drew read the feed)
 DJ and his brother Drew each run their own Claude on this repo and follow each other's work in the commit feed on GitHub (`/commits/main`). Every commit that lands on main, including a squash or merge commit, must read well there:
-- **Author = the person who asked.** Commit with `--author="<Name> <<github-id>+<login>@users.noreply.github.com>"`, using the requester's GitHub login and numeric user id from your session context (DJ: `DJ <269000479+djvillhard-lab@users.noreply.github.com>`). GitHub then shows that person's account on the commit, with Claude as co-author. Only ever use this GitHub noreply address, never a real email, and never a token.
+- **Author = the person who asked.** Commit with `--author="<Name> <<github-id>+<login>@users.noreply.github.com>"`, for the person you work for (see **People** below). GitHub then shows that person's account on the commit, with Claude as co-author. Only ever use this GitHub noreply address, never a real email, and never a token.
 - **First line in plain English**, for someone who doesn't code: who asked, the page, and what changed for the person using the app. Format: `<Name>: <Page>: <what changed>`, e.g. `DJ: All games: the filters are back on the left side`. No file names, function names or jargon. Under about 70 characters.
 - **Below a blank line:** the version (`Web 3.53.2`, or `no app change`), then the technical detail, then the required trailer lines.
 - Non-app work (docs, scripts, worker) uses the same shape, e.g. `DJ: GitHub feed: commits now show who asked and say what changed in plain words`.
 - Squash-merging a pull request: set the squash title and author the same way (the PR's own title follows the same rule).
+
+## People
+| Name | GitHub login | Commit author (`--author=`) | First-line prefix |
+|---|---|---|---|
+| DJ | `djvillhard-lab` | `DJ <269000479+djvillhard-lab@users.noreply.github.com>` | `DJ:` |
+| Drew | not added yet | `Drew <id+login@users.noreply.github.com>` (DJ's Claude fills this in when Drew joins; Drew's id is the `id` at `https://api.github.com/users/<login>`) | `Drew:` |
+
+Only GitHub noreply addresses go here, never a real email. Setup for a new person: `docs/SETUP-DREW.md`.
 
 ## DJ's rules for Slate
 - One design style across the app: `docs/DESIGN.md` (theme colors only, sharp 4–8px corners, Archivo at its widths, red = live, accent = selected, 44-point targets).

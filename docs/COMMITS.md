@@ -12,7 +12,7 @@ The rule for every commit is in CLAUDE.md under "Commit messages". This note say
 - The first line reads `<Name>: <Page>: <what changed>` in plain words. The version and technical
   detail go in the lines below it, which GitHub hides behind the "..." button in the feed.
 - Older commits keep their old look; history isn't rewritten.
-- For Drew: his Claude uses Drew's own GitHub login and id from its session, e.g.
-  `Drew <id+login@users.noreply.github.com>`.
+- For Drew: his Claude uses Drew's own address from the People table in CLAUDE.md and starts lines
+  with `Drew:`. Setup for Drew: docs/SETUP-DREW.md. Who's working on what: docs/WORKING-ON.md.
 
 Example of a feed line: `DJ: News: game cards open and close like drop-downs`.
