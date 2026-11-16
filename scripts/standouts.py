@@ -100,6 +100,12 @@ def football(groups):
         n = num(it.get("INT")); sc += 3 * n
         if n: parts.append((3 * n, f"{fmt(n)} INT"))
     parts.sort(key=lambda x: -x[0])
+    # more than one of passing, rushing and receiving: each TD says which kind ("2 rec TD · 1 rush TD")
+    yp = [i for i, (_, t) in enumerate(parts) if re.search(r" (pass|rush|rec) yds", t)]
+    if len(yp) > 1:
+        for i in yp:
+            v, t = parts[i]; k = re.search(r" (pass|rush|rec) yds", t).group(1)
+            parts[i] = (v, re.sub(r"^([^·]+· \d+) TD", lambda m: m.group(1) + " " + k + " TD", t))
     # the headline numbers first: each part's yards (and TD), biggest part first, then the details
     head, tail = [], []
     for _, t in parts:

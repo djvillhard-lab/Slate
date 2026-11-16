@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.43.4 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Box Office, football: when a player both ran and caught (or threw and ran), each TD says which kind: "161 rec yds · 2 rec TD · 62 rush yds · 1 rush TD". A player with just one kind keeps a plain "3 TD".
+
 ## 3.43.3 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Box Office, football: the bold line leads with what a player did best, whatever his position. Christian McCaffrey now reads "161 rec yds · 2 TD · 62 rush yds · 1 TD · 4 rec", and the details (targets, long, carries, yards per carry) move to the gray line. A quarterback who also ran shows his rushing yards in the bold line too. Receiving reads "161 rec yds" like rushing's "62 rush yds". Saved rankings pick this up at the next hourly refresh.

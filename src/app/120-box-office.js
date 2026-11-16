@@ -54,6 +54,9 @@
     if (d) { var tk = rkNum(d.TOT), sk = rkNum(d.SACKS), tfl = rkNum(d.TFL), pd = rkNum(d.PD), qh = rkNum(d["QB HTS"]), v4 = 0.3 * tk + 2 * sk; if (sk || tk >= 8) add(v4, rkF(tk) + " TKL" + (sk ? " · " + rkF(sk) + " sacks" : "") + (tfl ? " · " + rkF(tfl) + " TFL" : "") + (qh ? " · " + rkF(qh) + " QB hits" : "") + (pd ? " · " + rkF(pd) + " PD" : "")); else sc += v4; }
     if (it) { var ni = rkNum(it.INT); if (ni) add(3 * ni, rkF(ni) + " INT"); }
     parts.sort(function (a, b) { return b[0] - a[0]; });
+    // more than one of passing, rushing and receiving: each TD says which kind ("2 rec TD · 1 rush TD", 3.43.4)
+    var yp = parts.filter(function (x) { return / (pass|rush|rec) yds/.test(x[1]); });
+    if (yp.length > 1) yp.forEach(function (x) { var k = / (pass|rush|rec) yds/.exec(x[1])[1]; x[1] = x[1].replace(/^([^·]+· \d+) TD/, "$1 " + k + " TD"); });
     // the headline numbers first: each part's yards (and TD), biggest part first, then the details
     var head = [], tail = [];
     parts.forEach(function (x) { var t = x[1].split(" · "), k = /TD$/.test(t[1] || "") ? 2 : 1; head = head.concat(t.slice(0, k)); tail = tail.concat(t.slice(k)); });
