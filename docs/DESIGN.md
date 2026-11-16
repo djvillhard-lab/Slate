@@ -110,3 +110,4 @@ New styles go at the end of `040-components.css` under a comment naming the feat
 ## Emojis
 Only on the News page, at DJ's request (Nov 16, 2026): one emoji in front of a section label or tag (🔥 Hot, 🧊 Cold,
 🚑 Injuries, 🔢 The number, ⭐ Performances, 🚨 New). Never inside body text, and not on other pages unless DJ asks.
+Hot tags on News are red (`--live`) with their 🔥, DJ's approved exception to "red = live" (Nov 16, 2026).

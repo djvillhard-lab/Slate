@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.52.3 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- News: every Hot tag now has the 🔥 and is red. Before, only the Hot label in a league breakdown had it; a tag Claude wrote as "Hot" on a game card, in the quick hits or on a team card was plain gray.
+- Cold tags get the 🧊 the same way.
+
 ## 3.52.2 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News breakdowns have emojis on their labels: 🔥 Hot and 🧊 Cold, 🔢 The number, ⭐ Performances, 🚑 Injuries, 📰 Latest, 👀 What to watch for, 💬 Said, 🗓️ the timeline, ⏭️ Next up and 📖 Read more.

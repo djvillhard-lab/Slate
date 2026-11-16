@@ -158,7 +158,14 @@
   // quick hits: the tag on its own line above the text, so every line of text starts at the same edge
   // emojis (3.52.2, DJ's ask): one in front of a section label or tag, never inside the text Claude wrote
   function nwEm(e) { var s = el("span", "nx-em", e); s.setAttribute("aria-hidden", "true"); return s; }
-  function nwTag(tag, alert) { var t = el("span", "nx-tag" + (alert ? " alert" : "")); if (/injur/i.test(tag)) t.appendChild(nwEm("🚑")); t.appendChild(document.createTextNode(tag)); return t; }
+  // a tag Claude wrote as Hot (or Red-hot, On fire, Heating up) gets the 🔥 and red; Cold gets the 🧊 (3.52.3)
+  var NW_HOT = /^(red[- ]?hot|hot|on fire|heating up)\b/i, NW_COLD = /^(ice[- ]?cold|cold|cooling off)\b/i;
+  function nwTag(tag, alert) {
+    var hot = NW_HOT.test(tag), t = el("span", "nx-tag" + (hot ? " hot" : alert ? " alert" : ""));
+    var e = hot ? "🔥" : NW_COLD.test(tag) ? "🧊" : /injur/i.test(tag) ? "🚑" : ""; if (e) t.appendChild(nwEm(e));
+    t.appendChild(document.createTextNode(tag)); return t;
+  }
+  function nwChip(chip, tone) { var hot = NW_HOT.test(chip), c = el("span", "nx-chipt " + (hot ? "hot" : tone || "")); if (hot || NW_COLD.test(chip)) c.appendChild(nwEm(hot ? "🔥" : "🧊")); c.appendChild(document.createTextNode(chip)); return c; }
   function nwHits(list) {
     var w = el("div", "nx-hits");
     (list || []).forEach(function (h) { var r = el("div", "nx-hit"); if (h.tag) r.appendChild(nwTag(h.tag, /injur|out\b|suspen|doubt/i.test(h.tag))); r.appendChild(el("span", "nx-tx", h.text)); w.appendChild(r); });
@@ -308,7 +315,7 @@
         var x = nwTeamDoc(doc, name, lg); if (!x) return null;
         var b = el("button", "nx-card nx-tile" + (x.tone === "alert" ? " alert" : "")); b.type = "button";
         var hd = el("div", "nx-th"); hd.appendChild(nwTeamBadge(name, g, side)); var rec = g && side ? g[side + "Record"] : ""; if (rec) hd.appendChild(el("span", "nx-rec", rec));
-        if (x.chip) hd.appendChild(el("span", "nx-chipt " + (x.tone || ""), x.chip)); b.appendChild(hd);
+        if (x.chip) hd.appendChild(nwChip(x.chip, x.tone)); b.appendChild(hd);
         b.appendChild(el("b", "nx-tn", g && side ? short(g, side) : name)); b.appendChild(el("p", null, x.line));
         // the team's last result and next game, from ESPN's schedule (the same lines as the Teams page tiles)
         var mt = myTeamList().filter(function (t) { return t.lg === lg && String(t.name).toLowerCase() === String(name).toLowerCase(); })[0] || { name: name, lg: lg };
@@ -347,7 +354,7 @@
     if (d.type === "g") { var g = nwGames().filter(function (x) { return x.id === d.id; })[0]; if (g) hero.appendChild(nwGameHead(g)); else hero.appendChild(el("b", "nx-hn", "Game")); }
     else if (d.type === "t") {
       var hr = el("div", "nx-hrow"); hr.appendChild(nwTeamBadge(d.name)); var ht = el("div"); ht.appendChild(el("b", "nx-hn", d.name)); ht.appendChild(el("span", "nx-hs", (LEAGUES[d.lg] || {}).name || "")); hr.appendChild(ht);
-      var mood = has && doc.mood ? doc.mood : (nwTeamDoc(page, d.name, d.lg) || {}).chip; if (mood) hr.appendChild(el("span", "nx-chipt", mood)); hero.appendChild(hr);
+      var mood = has && doc.mood ? doc.mood : (nwTeamDoc(page, d.name, d.lg) || {}).chip; if (mood) hr.appendChild(nwChip(mood, "")); hero.appendChild(hr);
     } else { var hl = el("div", "nx-hrow"), h2 = el("div"); h2.appendChild(el("b", "nx-hn", (LEAGUES[d.lg] || {}).name || d.lg)); var ng = nwGames().filter(function (x) { return x.league === d.lg; }).length; h2.appendChild(el("span", "nx-hs", ng ? ng + (ng === 1 ? " game" : " games") + " on your slate" : "League news")); hl.appendChild(h2); hero.appendChild(hl); }
     body.appendChild(hero);
     if (!has) {
@@ -370,7 +377,7 @@
     }
     if ((doc.hot && doc.hot.length) || (doc.cold && doc.cold.length)) {
       sec("Who's hot, who's not"); var hg = el("div", "nx-grid");
-      [["hot", "Hot", "up", "🔥"], ["cold", "Cold", "down", "🧊"]].forEach(function (o) { var l = doc[o[0]] || []; if (!l.length) return; var c = el("div", "nx-card nx-side"); var ht2 = el("span", "nx-chipt " + o[2]); ht2.appendChild(nwEm(o[3])); ht2.appendChild(document.createTextNode(o[1])); c.appendChild(ht2); l.forEach(function (x) { var p = el("p"); p.appendChild(el("b", null, x.team + " ")); p.appendChild(document.createTextNode(x.text)); c.appendChild(p); }); hg.appendChild(c); });
+      [["hot", "Hot", "hot", "🔥"], ["cold", "Cold", "down", "🧊"]].forEach(function (o) { var l = doc[o[0]] || []; if (!l.length) return; var c = el("div", "nx-card nx-side"); var ht2 = el("span", "nx-chipt " + o[2]); ht2.appendChild(nwEm(o[3])); ht2.appendChild(document.createTextNode(o[1])); c.appendChild(ht2); l.forEach(function (x) { var p = el("p"); p.appendChild(el("b", null, x.team + " ")); p.appendChild(document.createTextNode(x.text)); c.appendChild(p); }); hg.appendChild(c); });
       body.appendChild(hg);
     }
     if (doc.perf && doc.perf.length) { sec("Performances", false, "⭐"); var pc = el("div", "nx-card nx-pad"); pc.appendChild(nwHits(doc.perf)); body.appendChild(pc); }

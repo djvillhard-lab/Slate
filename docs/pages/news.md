@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 16, 2026, 3.52.2
+Last updated: Nov 16, 2026, 3.52.3
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -50,3 +50,4 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   Claude the length in the prompt instead. A number value over 7 characters renders stacked (`.nx-num.long`).
 - Emojis (DJ, Nov 16): one in front of a breakdown section label, the Hot/Cold chips, and the New and Injury tags
   (`nwEm`, `nwTag`). Never in Claude's text. Recorded in DESIGN.md as a News-only exception.
+- Hot tags and chips are red with 🔥 wherever they render (`NW_HOT` in `nwTag` / `nwChip`), DJ, Nov 16.
