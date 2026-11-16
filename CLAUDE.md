@@ -48,11 +48,19 @@ Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the
 4. Add the CHANGELOG.md entry on top, in DJ's plain style, with its TestFlight line: `TestFlight: <last build>, no new build (web only)`, or the new build when `ios/` changed (see the top of CHANGELOG.md).
 5. `python3 build.py`. It embeds the changelog, stamps the build time into index.html and version.json together, and refuses if the version and changelog don't match.
 6. Check it: `SLATE_PASS=<test passcode> python3 scripts/shots.py <pages> [--sizes folded,open,iphone]` screenshots the pages you touched at DJ's three phone shapes and prints page errors and pages wider than the screen. Look at every screenshot. The test passcode is in the project instructions, never in the repo (it's public). Check them yourself and ship; show DJ screenshots only when DJ asks or when a request could go two ways.
-7. Commit as `X.Y.Z: what changed`, then push. If the push is rejected, another chat shipped first: pull --rebase, renumber, rebuild, push.
+7. Commit following **Commit messages** below, then push. If the push is rejected, another chat shipped first: pull --rebase, renumber, rebuild, push.
    - On a conflict in `index.html` or `version.json`: don't merge them by hand. Resolve `src/` and CHANGELOG.md, then run `python3 build.py --force`.
 8. Start the reply to DJ with the new version number, a short description, then what changed.
 
 If build.py says index.html was edited by hand, it prints those edits. Move them into `src/` before rebuilding, or they're lost.
+
+## Commit messages (DJ and Drew read the feed)
+DJ and his brother Drew each run their own Claude on this repo and follow each other's work in the commit feed on GitHub (`/commits/main`). Every commit that lands on main, including a squash or merge commit, must read well there:
+- **Author = the person who asked.** Commit with `--author="<Name> <<github-id>+<login>@users.noreply.github.com>"`, using the requester's GitHub login and numeric user id from your session context (DJ: `DJ <269000479+djvillhard-lab@users.noreply.github.com>`). GitHub then shows that person's account on the commit, with Claude as co-author. Only ever use this GitHub noreply address, never a real email, and never a token.
+- **First line in plain English**, for someone who doesn't code: who asked, the page, and what changed for the person using the app. Format: `<Name>: <Page>: <what changed>`, e.g. `DJ: All games: the filters are back on the left side`. No file names, function names or jargon. Under about 70 characters.
+- **Below a blank line:** the version (`Web 3.53.2`, or `no app change`), then the technical detail, then the required trailer lines.
+- Non-app work (docs, scripts, worker) uses the same shape, e.g. `DJ: GitHub feed: commits now show who asked and say what changed in plain words`.
+- Squash-merging a pull request: set the squash title and author the same way (the PR's own title follows the same rule).
 
 ## DJ's rules for Slate
 - One design style across the app: `docs/DESIGN.md` (theme colors only, sharp 4–8px corners, Archivo at its widths, red = live, accent = selected, 44-point targets).
