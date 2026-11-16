@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.47.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- News: nothing is picked when you open "Customize today's news". The checkmarks for Today's slate, My teams and Leagues are gone; you pick each game, team and league yourself. Each group shows how many are picked and has an All / Clear button.
+- Each slate game shows its league and start time above the two team badges with their abbreviations. Your teams show as a team badge with its league.
+- Picked games start fresh each day. Picked teams and leagues are remembered. Picks made before this version are cleared.
+
 ## 3.47.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Best bets shows five picks instead of seven. A day that already had seven keeps its best five.

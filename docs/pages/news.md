@@ -1,13 +1,15 @@
 # News
-Last updated: Nov 15, 2026, 3.46.0
+Last updated: Nov 16, 2026, 3.47.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
 ## Done
-- Options screen ("Customize today's news"): Today's slate, My teams, Leagues, each with chips for the specific games,
-  teams and leagues (3.46.0), then Generate news. Saved on the phone (`slate-newsopts`: `gx` = games left out for one
-  day, `tx` = teams left out). A running clock shows while Claude writes.
+- Options screen ("Customize today's news", 3.47.1): three groups, Today's slate, My teams, Leagues. No group
+  checkmarks and nothing picked to start; the user picks each game, team and league (chips), with "n of N picked" and
+  All / Clear per group. Game chip = league tag and time above the two team badges; team chip = badge + league tag.
+  Saved on the phone (`slate-newspicks`: `gs` = picked game ids for one day, `ts` = picked teams, `lgs` = leagues).
+  A running clock shows while Claude writes.
 - One Claude request writes the page to `mine/news-<date>`: top (5), games, teams, leagues. Free ESPN and Athletic
   headlines are gathered in the app and sent as facts.
 - Page: Generated bar (time, how long ago, what it covered) + Regenerate (reopens the options); Top news, collapsible
@@ -31,3 +33,5 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Top news is only as fresh as the last generate; no background checking (DJ, Nov 15).
 - Tags sit on their own line above the text so every card's text starts at the same edge (DJ asked for this).
 - Breakdowns stay inside the News view (`nw.deep`), not a new view, so the iPhone app's strip needs no new build.
+- Picks are opt-in, nothing pre-picked, no group checkmarks (DJ, Nov 16). "Team logos" = the app's team badges with
+  abbreviations (`badgeFor` / `teamBadge`); Slate has no logo images.

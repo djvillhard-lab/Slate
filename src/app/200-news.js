@@ -50,20 +50,20 @@
   // ----- what to cover: remembered on this phone -----
   function nwLeagueKeys() { return NW_LGS.filter(function (k) { return LEAGUES[k] && bxBase(k); }); }
   function nwGames() { return lineupGames().filter(function (g) { return !g.custom && g.league && bxBase(g.league); }); }
+  // picks (3.47.1): nothing is picked to start. gs: the slate games picked, for one day only ({ d: date, ids: [] });
+  // ts: my teams picked ("lg|name"); lgs: leagues picked
   function nwOpts() {
-    var o = null; try { o = JSON.parse(localStorage.getItem("slate-newsopts") || "null"); } catch (e) {}
-    if (!o || typeof o !== "object") o = { slate: true, teams: true, lgs: [] };
-    var ok = nwLeagueKeys(); o.lgs = (Array.isArray(o.lgs) ? o.lgs : []).filter(function (k) { return ok.indexOf(k) !== -1; });
-    // gx: slate games left out, for one day only ({ d: date, ids: [] }); tx: my teams left out ("lg|name")
-    var gx = o.gx && o.gx.d === state.date && Array.isArray(o.gx.ids) ? o.gx.ids : [];
-    return { slate: o.slate !== false, teams: o.teams !== false, lgs: o.lgs, lgOn: o.lgOn !== false, gx: { d: state.date, ids: gx }, tx: Array.isArray(o.tx) ? o.tx : [] };
+    var o = null; try { o = JSON.parse(localStorage.getItem("slate-newspicks") || "null"); } catch (e) {}
+    if (!o || typeof o !== "object") o = {};
+    var ok = nwLeagueKeys(), gs = o.gs && o.gs.d === state.date && Array.isArray(o.gs.ids) ? o.gs.ids : [];
+    return { gs: { d: state.date, ids: gs }, ts: Array.isArray(o.ts) ? o.ts : [], lgs: (Array.isArray(o.lgs) ? o.lgs : []).filter(function (k) { return ok.indexOf(k) !== -1; }) };
   }
   function nwTKey(t) { return t.lg + "|" + String(t.name).toLowerCase(); }
-  function nwOptsPut(o) { try { localStorage.setItem("slate-newsopts", JSON.stringify(o)); } catch (e) {} }
+  function nwOptsPut(o) { try { localStorage.setItem("slate-newspicks", JSON.stringify(o)); } catch (e) {} }
   // what a Generate would actually cover right now
   function nwCover() {
-    var o = nwOpts(), gs = nwGames().filter(function (g) { return o.gx.ids.indexOf(g.id) === -1; }), tms = myTeamList().filter(function (t) { return bxBase(t.lg) && o.tx.indexOf(nwTKey(t)) === -1; });
-    return { slate: o.slate && gs.length > 0, teams: o.teams && tms.length > 0, lgs: o.lgOn ? o.lgs : [], games: gs, myTeams: tms };
+    var o = nwOpts(), gs = nwGames().filter(function (g) { return o.gs.ids.indexOf(g.id) !== -1; }), tms = myTeamList().filter(function (t) { return bxBase(t.lg) && o.ts.indexOf(nwTKey(t)) !== -1; });
+    return { slate: gs.length > 0, teams: tms.length > 0, lgs: o.lgs, games: gs, myTeams: tms };
   }
   function nwPagePath() { return "mine/news-" + state.date; }
   function nwSlug(x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48); }
@@ -191,37 +191,34 @@
   function nwRenderOpts(body, doc, busy, doc0) {
     var o = nwOpts(), gs = nwGames(), tms = myTeamList().filter(function (t) { return bxBase(t.lg); }), has = !!(doc && doc.at);
     var put = function () { nwOptsPut(o); keepScroll(renderNews); };
-    body.appendChild(nwSec(state.date === todayInHome() ? "Customize today's news" : "Customize this day's news"));
-    var card = el("div", "nx-card nx-opts" + (busy ? " busy" : ""));
-    // the specific picks under a row: every one starts picked; tap to leave one out
-    var chips = function (list, label, isOn, flip) {
-      var ch = el("div", "nx-chips");
-      list.forEach(function (x) { var on = isOn(x), c = el("button", "nx-chip", label(x)); c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false"); c.addEventListener("click", function () { flip(x, on); put(); }); ch.appendChild(c); });
-      card.appendChild(ch);
-    };
-    var nG = gs.filter(function (g) { return o.gx.ids.indexOf(g.id) === -1; }).length, nT = tms.filter(function (t) { return o.tx.indexOf(nwTKey(t)) === -1; }).length;
-    var row = function (on, title, sub, off, tap) {
-      var b = el("button", "nx-opt" + (off ? " off" : "")); b.type = "button"; b.setAttribute("aria-pressed", on && !off ? "true" : "false"); if (off) b.disabled = true;
-      var bx = el("span", "nx-box"); bx.appendChild(icon("check")); b.appendChild(bx);
-      var tx = el("span", "nx-ot"); tx.appendChild(el("b", null, title)); tx.appendChild(el("span", null, sub)); b.appendChild(tx);
-      b.addEventListener("click", tap); card.appendChild(b);
-    };
-    row(o.slate, state.date === todayInHome() ? "Today's slate" : "This day's slate", gs.length ? (nG === gs.length ? (gs.length === 1 ? "1 game" : "All " + gs.length + " games") : nG + " of " + gs.length + " games") + " · tap a game to leave it out" : "Nothing on the slate yet", !gs.length, function () { o.slate = !o.slate; put(); });
-    if (o.slate && gs.length) chips(gs, function (g) { return abbr(g, "away") + " @ " + abbr(g, "home") + " · " + timeText(g.start).replace(/\s*([AP])M$/i, function (m, a) { return a.toLowerCase(); }); }, function (g) { return o.gx.ids.indexOf(g.id) === -1; }, function (g, on) { if (on) o.gx.ids.push(g.id); else o.gx.ids = o.gx.ids.filter(function (x) { return x !== g.id; }); });
-    row(o.teams, "My teams", tms.length ? (nT === tms.length ? (tms.length === 1 ? "1 team" : "All " + tms.length + " teams") : nT + " of " + tms.length + " teams") + ", even when they aren't playing" : "Pick your teams on the Teams page", !tms.length, function () { o.teams = !o.teams; put(); });
-    if (o.teams && tms.length) chips(tms, function (t) { return tms.filter(function (x) { return x.name === t.name; }).length > 1 ? t.name + " · " + ((LEAGUES[t.lg] || {}).tag || t.lg) : t.name; }, function (t) { return o.tx.indexOf(nwTKey(t)) === -1; }, function (t, on) { var k = nwTKey(t); if (on) o.tx.push(k); else o.tx = o.tx.filter(function (x) { return x !== k; }); });
-    row(o.lgOn, "Leagues", "The biggest stories around each one you pick", false, function () { o.lgOn = !o.lgOn; put(); });
-    if (o.lgOn) {
-      var mine = {}; gs.forEach(function (g) { mine[g.league] = 1; }); tms.forEach(function (t) { mine[t.lg] = 1; });
-      var keys = nwLeagueKeys().sort(function (a, b) { return (mine[b] ? 1 : 0) - (mine[a] ? 1 : 0) || NW_LGS.indexOf(a) - NW_LGS.indexOf(b); });
-      var ch = el("div", "nx-chips");
-      keys.forEach(function (k) {
-        var on = o.lgs.indexOf(k) !== -1, c = el("button", "nx-chip", (LEAGUES[k] || {}).name || k); c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false");
-        c.addEventListener("click", function () { if (on) o.lgs = o.lgs.filter(function (x) { return x !== k; }); else o.lgs.push(k); put(); }); ch.appendChild(c);
+    var ttl = el("div", "nx-ptitle"); ttl.appendChild(el("b", null, state.date === todayInHome() ? "Customize today's news" : "Customize this day's news")); ttl.appendChild(el("span", null, "Pick the games, teams and leagues to cover.")); body.appendChild(ttl);
+    var wrap = el("div", "nx-picks" + (busy ? " busy" : ""));
+    // one group: its name, how many are picked, All / Clear, then a chip for each thing (nothing picked to start)
+    var group = function (title, list, cls, key, picked, setPicked, fill, empty) {
+      var keys = list.map(key), n = keys.filter(function (k) { return picked.indexOf(k) !== -1; }).length;
+      var hd = el("div", "nx-ph"), hl = el("div"); hl.appendChild(el("b", null, title)); hl.appendChild(el("span", null, list.length ? n + " of " + list.length + " picked" : empty)); hd.appendChild(hl);
+      if (list.length > 1) { var all = el("button", "nx-all", n === list.length ? "Clear" : "All"); all.type = "button"; all.addEventListener("click", function () { setPicked(n === list.length ? [] : keys); put(); }); hd.appendChild(all); }
+      wrap.appendChild(hd); if (!list.length) return;
+      var ch = el("div", "nx-chips " + cls);
+      list.forEach(function (x) {
+        var k = key(x), on = picked.indexOf(k) !== -1, c = el("button", "nx-chip"); c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false"); fill(c, x);
+        c.addEventListener("click", function () { setPicked(on ? picked.filter(function (y) { return y !== k; }) : picked.concat([k])); put(); }); ch.appendChild(c);
       });
-      card.appendChild(ch);
-    }
-    body.appendChild(card);
+      wrap.appendChild(ch);
+    };
+    group(state.date === todayInHome() ? "Today's slate" : "This day's slate", gs, "g", function (g) { return g.id; }, o.gs.ids, function (v) { o.gs.ids = v; }, function (c, g) {
+      c.setAttribute("aria-label", g.away + " at " + g.home + ", " + info(g).name + ", " + timeText(g.start));
+      c.appendChild(el("span", "nx-cm", info(g).tag + " · " + timeText(g.start)));
+      var r = el("span", "nx-cr"); r.appendChild(nwTeamBadge(g.away, g, "away")); r.appendChild(el("i", null, "@")); r.appendChild(nwTeamBadge(g.home, g, "home")); c.appendChild(r);
+    }, "Nothing on the slate yet");
+    group("My teams", tms, "t", nwTKey, o.ts, function (v) { o.ts = v; }, function (c, t) {
+      c.setAttribute("aria-label", t.name + ", " + ((LEAGUES[t.lg] || {}).name || t.lg));
+      c.appendChild(nwTeamBadge(t.name)); c.appendChild(el("span", "nx-cm", (LEAGUES[t.lg] || {}).tag || t.lg));
+    }, "Pick your teams on the Teams page");
+    var mine = {}; gs.forEach(function (g) { mine[g.league] = 1; }); tms.forEach(function (t) { mine[t.lg] = 1; });
+    var lks = nwLeagueKeys().sort(function (a, b) { return (mine[b] ? 1 : 0) - (mine[a] ? 1 : 0) || NW_LGS.indexOf(a) - NW_LGS.indexOf(b); });
+    group("Leagues", lks, "l", function (k) { return k; }, o.lgs, function (v) { o.lgs = v; }, function (c, k) { c.appendChild(el("span", "nx-cn", (LEAGUES[k] || {}).name || k)); }, "");
+    body.appendChild(wrap);
     var cv = nwCover(), any = cv.slate || cv.teams || cv.lgs.length > 0, act = el("div", "nx-act");
     if (busy) { var sp = el("div", "nx-busy"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Claude is writing your news…")); sp.appendChild(nwElapsed(doc0, "n:" + nwPagePath())); act.appendChild(sp); }
     else {
@@ -229,7 +226,7 @@
       go.addEventListener("click", nwGenerate); act.appendChild(go);
       if (has) { var cn = el("button", "nx-cancel", "Keep the page from " + timeText(doc.at)); cn.type = "button"; cn.addEventListener("click", function () { nw.opts = false; renderNews(); }); act.appendChild(cn); }
     }
-    act.appendChild(el("p", "nx-note", any ? (busy ? nwTookText() + " You can leave this page and come back." : "Claude researches your picks and writes the page. " + nwTookText() + " It only runs when you tap.") : "Pick at least one thing to cover."));
+    act.appendChild(el("p", "nx-note", any ? (busy ? nwTookText() + " You can leave this page and come back." : "Claude researches your picks and writes the page. " + nwTookText() + " It only runs when you tap.") : "Nothing is picked yet. Pick at least one game, team or league."));
     body.appendChild(act);
   }
   // ----- the generated page -----
