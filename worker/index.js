@@ -36,10 +36,12 @@ import { signupRoutes, passKey } from "./signup.js";  // invite-only sign-up; ke
 async function whoIs(env, pass) {
   pass = String(pass || ""); if (pass.length < 8) return null;
   const chk = await rpc(env, "save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString(), via: "worker" }, p_pass: pass, p_merge: false }, PUB);
-  if (chk.ok && !/not allowed|error/i.test(chk.text)) return { id: "dj", name: "DJ", cap: 0 };
+  // admin: may invite and remove people and use the other admin-only actions. The owner's passcode always is one;
+  // anyone else only if their users/registry entry says admin: true (nobody does today, and nothing in the app sets it).
+  if (chk.ok && !/not allowed|error/i.test(chk.text)) return { id: "dj", name: "DJ", cap: 0, admin: true };
   const reg = (await getDoc(env, "users/registry")) || {}, u = (reg.users || {})[await sha(pass)] || (reg.users || {})[await passKey(env, pass)];  // the second: a passcode chosen at sign-up (signup.js)
   // everyone but DJ gets at most 10 Claude summaries a day (a lower cap in the registry still applies)
-  return u && u.id ? { id: u.id, name: u.name || u.id, cap: Math.min(Number(u.cap) || 10, 10) } : null;
+  return u && u.id ? { id: u.id, name: u.name || u.id, cap: Math.min(Number(u.cap) || 10, 10), admin: u.admin === true } : null;
 }
 const ctDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 // running cost log: stats/usage {days: {D: {n, in, out, search, usd, by: {user: n}}}}
@@ -106,7 +108,7 @@ export default {
     if (url.pathname === "/api/newsletter" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       const me = await whoIs(env, p && p.pass);
-      if (!me || me.id !== "dj") return json({ error: "Wrong passcode" }, 403);
+      if (!me || !me.admin) return json({ error: "Wrong passcode" }, 403);
       if (!p || p.key !== "fc" || !/^https:\/\/(links\.e1\.nytimes\.com|www\.nytimes\.com)\//.test(String(p.url || ""))) return json({ error: "bad newsletter" }, 400);
       const at = String(p.at || new Date().toISOString()).slice(0, 30), title = String(p.title || "The Athletic FC").slice(0, 200);
       const doc = (await getDoc(env, "news/email-dj")) || {}, items = { ...(doc.items || {}) };
@@ -225,7 +227,7 @@ export default {
     // a quick check that the server can reach Apple's broadcast channel host (DJ only)
     if (url.pathname === "/api/bc-probe" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
-      const me = await whoIs(env, p && p.pass); if (!me || me.id !== "dj") return json({ error: "no" }, 403);
+      const me = await whoIs(env, p && p.pass); if (!me || !me.admin) return json({ error: "no" }, 403);
       if (p.channel && p.state) return json({ send: await bcTest(env, String(p.channel), p.state) });
       return json({ prod: await bcRequest(env, "production", "GET", "/all-channels"), sandbox: await bcRequest(env, "sandbox", "GET", "/all-channels") });
     }
@@ -246,7 +248,7 @@ export default {
     if (url.pathname === "/api/whoami" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
       const me = await whoIs(env, p && p.pass);
-      return me ? json({ id: me.id, name: me.name }) : json({ error: "Wrong passcode" }, 403);
+      return me ? json({ id: me.id, name: me.name, admin: !!me.admin }) : json({ error: "Wrong passcode" }, 403);
     }
     // saves for everyone but DJ: only inside their own u/<id>/ space
     if (url.pathname === "/api/save" && req.method === "POST") {

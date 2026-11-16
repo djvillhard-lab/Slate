@@ -44,7 +44,7 @@
     var installed = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || !!window.SLATE_NATIVE;
     Array.prototype.forEach.call(document.querySelectorAll(".a2hs"), function (x) { x.hidden = installed; });
     var me = ""; try { me = localStorage.getItem("slate-user") || "dj"; } catch (e) {}
-    if (!db || me !== "dj") return;
+    if (!db || !isAdmin()) return;
     db.doc("stats/usage").get().then(function (sn) {
       var d = sn.exists ? sn.data() : null, mo = todayInHome().slice(0, 7), n = 0, usd = 0, by = {};
       Object.keys((d && d.days) || {}).forEach(function (k) { if (k.slice(0, 7) !== mo) return; var x = d.days[k]; n += x.n || 0; usd += x.usd || 0; Object.keys(x.by || {}).forEach(function (u) { by[u] = (by[u] || 0) + x.by[u]; }); });

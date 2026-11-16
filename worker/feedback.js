@@ -69,7 +69,7 @@ export async function feedbackRoute(req, env, url, h) {
   }
 
   // reading: the reader key or DJ's passcode
-  const reader = (p.key && (await sha(p.key)) === READER_HASH) || (p.pass && (await whoIs(env, p.pass) || {}).id === "dj");
+  const reader = (p.key && (await sha(p.key)) === READER_HASH) || (p.pass && (await whoIs(env, p.pass) || {}).admin === true);
   if (!reader) return json({ error: "Not allowed" }, 403);
 
   if (url.pathname === "/api/feedback/inbox") {

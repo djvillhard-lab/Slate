@@ -81,3 +81,4 @@ html.side-col:not(.duo) .sheet.inv { padding-right: calc(16px + var(--strip-w, 0
 #view-settings .setpg > .sec:first-child { margin-top: 4px; }
 .acct-people .hint, #acct .hint { margin: 8px 0 0; }
 .acct .optrow .outline { white-space: nowrap; }
+.acct-tag { flex: none; padding: 4px 8px; border-radius: 4px; background: var(--raise); font-size: 13px; font-weight: 800; font-stretch: 88%; color: var(--muted); }

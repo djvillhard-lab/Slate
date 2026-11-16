@@ -41,6 +41,16 @@ answers, a favorite's event, Settings > Account, DJ's invite sheet), `src/styles
   sign-up code never reuses an id that has data.
 - Styles moved out of `db-shim.js` into `src/styles/085-welcome.css`.
 
+## Admin (3.62.2)
+- `whoIs` (worker/index.js) returns `admin: true` for the owner's passcode, and for a `users/registry` entry with
+  `admin: true` (nobody has it; nothing in the app sets it, so adding an admin means editing that entry by hand).
+  `/api/whoami` passes it on and the phone keeps it as `slate-admin`; `isAdmin()` in `232-welcome.js` decides which rows show.
+- Admin only, on the server and in the app: `/api/invite` (new, list, cancel, people, remove), reading `/api/feedback`,
+  `/api/newsletter` and `/api/bc-probe`; in the app also Try the new user setup, the Claude summaries cost line, and
+  The Athletic FC newsletter (its link comes from DJ's Gmail). An admin can't be removed from People.
+- The many other `id === "dj"` checks are not permissions: the owner's data lives at the top level and everyone
+  else's under `u/<id>/`.
+
 ## Why things are the way they are
 - **Passcodes chosen at sign-up are stored as an HMAC, not a plain SHA-256.** The `docs` table can be read by anyone
   with the page's public key, so a plain hash of a passcode someone picked could be guessed offline. The key comes from

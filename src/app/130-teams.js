@@ -395,13 +395,13 @@
     ["peak", "Peak", "The mental side of sports"], ["primetire", "Prime Tire", "F1"], ["fulltime", "Full Time", "Women's soccer"], ["nooffseason", "No Offseason", "Women's basketball"],
     ["fc", "The Athletic FC", "Soccer, from your email", "mine"]];
   // newsletters that only come by email (The Athletic FC): your own Gmail sends the link, so only you see them
-  function nlList() { return NL_LIST.filter(function (n) { return !n[3] || state.isOwner; }); }
+  function nlList() { return NL_LIST.filter(function (n) { return !n[3] || isAdmin(); }); }
   var NLE = null;
   var NLD = null;
   function nlWatch() {
     if (NLD || !db) return; NLD = { items: {} };
     db.doc("news/newsletters").onSnapshot(function (snap) { NLD = snap.exists ? snap.data() : { items: {} }; if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, function () {});
-    if (state.isOwner) { NLE = { items: {} }; db.doc("news/email-dj").onSnapshot(function (snap) { NLE = snap.exists ? snap.data() : { items: {} }; if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, function () {}); }
+    if (isAdmin()) { NLE = { items: {} }; db.doc("news/email-dj").onSnapshot(function (snap) { NLE = snap.exists ? snap.data() : { items: {} }; if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, function () {}); }
   }
   // editions you've opened, grayed out like a finished game (kept on this phone for a week)
   function nlRead() {

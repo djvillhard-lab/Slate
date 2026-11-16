@@ -18,8 +18,9 @@
         function () { return { status: 0, error: "No connection. Check your signal and try again." }; });
   }
   function mk(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
-  function signedIn(passcode, id, name, fresh) {
+  function signedIn(passcode, id, name, fresh, admin) {
     try {
+      if (typeof admin === "boolean") localStorage.setItem("slate-admin", admin ? "1" : ""); else localStorage.removeItem("slate-admin");
       localStorage.setItem("slate-pass", passcode); localStorage.setItem("slate-user", id); localStorage.setItem("slate-user-name", name || "");
       localStorage.removeItem("slate-view-only"); if (fresh) localStorage.setItem("slate-welcome", "1");
     } catch (e) {}
@@ -58,7 +59,7 @@
       box.addEventListener("submit", function (e) {
         e.preventDefault(); var v = pw.value.trim(); if (!v) { pw.focus(); return; }
         run("Logging in…", post("/api/whoami", { pass: v }), function (j) {
-          if (j.id) { signedIn(v, j.id, j.name, false); return ""; }
+          if (j.id) { signedIn(v, j.id, j.name, false, j.admin); return ""; }
           return j.status === 403 ? "That passcode didn't work. Check it and try again." : j.status === 0 ? j.error : "Couldn't check that just now. Try again.";
         });
       });
@@ -119,10 +120,13 @@
   }
   // Settings > Account > Try the new user setup (DJ): the sign-up page as a preview, then done(name)
   window.slatePreviewSignup = function (done) { gate("signup", "", done); };
+  // Is this phone logged in as an admin? The server says so at each start (whoami) and checks again on every admin
+  // action, so this only decides which rows to show. Until the first answer, the owner's own phone counts.
+  window.slateIsAdmin = function () { try { var a = localStorage.getItem("slate-admin"); return !!pass() && (a === "1" || (a === null && who() === "dj")); } catch (e) { return false; } };
   window.slateAskPass = function () { asked = false; gate("login"); };
   // Settings > Log out: this phone forgets the passcode and its saved copies, then shows the log-in page
   window.slateLogOut = function () {
-    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf("slate-doc:") === 0) localStorage.removeItem(k); }); ["slate-pass", "slate-user", "slate-user-name", "slate-view-only", "slate-welcome"].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf("slate-doc:") === 0) localStorage.removeItem(k); }); ["slate-pass", "slate-user", "slate-user-name", "slate-view-only", "slate-welcome", "slate-admin"].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
     location.reload();
   };
   // who this phone belongs to: "dj" (the main passcode) or another person's id from users/registry, found by the worker
@@ -210,7 +214,7 @@
   var ready = Promise.resolve();
   if (pass()) {
     var check = whoami().then(function (w) {
-      if (w && w.id) { var was = known; try { localStorage.setItem("slate-user", w.id); localStorage.setItem("slate-user-name", w.name || ""); } catch (e) {} if (was && was !== w.id) location.reload(); return; }
+      if (w && w.id) { var was = known; try { localStorage.setItem("slate-user", w.id); localStorage.setItem("slate-user-name", w.name || ""); if (typeof w.admin === "boolean") localStorage.setItem("slate-admin", w.admin ? "1" : ""); } catch (e) {} if (was && was !== w.id) location.reload(); return; }
       // no answer: wrong passcode or offline; Supabase tells the two apart
       return sb.rpc("save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString() }, p_pass: pass(), p_merge: false }).then(function (r) {
         if (r.error && /not allowed/.test(r.error.message)) { try { localStorage.removeItem("slate-pass"); localStorage.removeItem("slate-user"); } catch (e) {} try { sessionStorage.setItem("slate-gate-msg", "That passcode didn't work. Check it and try again."); } catch (e) {} location.reload(); }

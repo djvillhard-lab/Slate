@@ -416,6 +416,9 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     }
     var done = el("button", "outline quiet inv-done", "Done"); done.type = "button"; done.addEventListener("click", function () { bd.classList.remove("open"); }); sh.appendChild(done);
   }
+  // admin-only rows (invites, People, the new user preview): shown to an admin, and the server checks every one of
+  // their actions again (whoIs in worker/index.js)
+  function isAdmin() { return !!(window.slateIsAdmin && window.slateIsAdmin()); }
   var ppl = { list: null, busy: false };
   function acctPeople() {
     var box = $("acct-people"); if (!box) return;
@@ -428,6 +431,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       t.appendChild(el("b", null, u.name));
       t.appendChild(el("span", null, (u.via === "invite" ? "Joined by invite" + (when ? " " + when : "") : "Added by you") + " · " + u.today + " of " + u.cap + " Claude summaries today"));
       r.appendChild(t);
+      if (u.admin) { r.appendChild(el("span", "acct-tag", "Admin")); box.appendChild(r); return; }
       var b = el("button", "outline quiet", "Remove"); b.type = "button";
       b.addEventListener("click", function () {
         if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to remove"; setTimeout(function () { delete b.dataset.sure; b.textContent = "Remove"; }, 4000); return; }
@@ -462,11 +466,11 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     if (signed) {
       head("Welcome");
       row("Welcome walkthrough", "Pick teams and rebuild your own slate rules from a few questions.", "Start", function () { wlStart(false); });
-      if (me === "dj") row("Try the new user setup", "See sign-up and the welcome exactly as a new person does, starting blank. Nothing is saved and your slate doesn't change.", "Try it", function () {
+      if (isAdmin()) row("Try the new user setup", "See sign-up and the welcome exactly as a new person does, starting blank. Nothing is saved and your slate doesn't change.", "Try it", function () {
         if (window.slatePreviewSignup) window.slatePreviewSignup(function (nm) { wlStart(true, true, nm); }); else wlStart(true, true, "");
       });
     }
-    if (signed && me === "dj") {
+    if (signed && isAdmin()) {
       head("People");
       row("Invite someone", "A one-time link to sign up with their own passcode.", "Invite", function () {
         inv.link = ""; inv.err = ""; invSheet(); invCall({ action: "list" }).then(function (j) { if (j.list) { inv.list = j.list; if ($("sheet-invite") && $("sheet-invite").classList.contains("open")) invSheet(); } if (j.people) { ppl.list = j.people; acctPeople(); } });

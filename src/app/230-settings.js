@@ -130,7 +130,7 @@
     set("sp-slate", "Scores " + (state.showScores ? "shown" : "hidden") + " · newsletters, Worth a look, thumbs, quick reads");
     var th = THEMES[state.look], sz = state.textSize === "auto" ? "Auto" : String(state.textSize || "m").toUpperCase();
     set("sp-look", (deviceMode() === "duo" ? "iPhone Duo" : "iPhone") + " · " + (th ? th[0] : "Midnight") + " · text " + sz);
-    set("sp-account", !signed ? "Not logged in on this phone" : "Logged in as " + (me === "dj" ? "DJ" : nm || me) + (me === "dj" ? " · invites and people" : ""));
+    set("sp-account", !signed ? "Not logged in on this phone" : "Logged in as " + (me === "dj" ? "DJ" : nm || me) + (isAdmin() ? " · invites and people" : ""));
     set("sp-about", "Slate " + SLATE_VERSION + " · what's new, reset the app");
   }
   Array.prototype.forEach.call(document.querySelectorAll("#view-settings [data-open]"), function (b) { b.addEventListener("click", function () { setPageOpen(b.getAttribute("data-open")); }); });

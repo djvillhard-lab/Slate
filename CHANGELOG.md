@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.62.2 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Admin-only settings. Your account is the admin; everyone else gets only their own settings. Admin only: Invite someone and the list of invites, People and Remove, Try the new user setup, the Claude summaries cost line, reading the feedback people send, and The Athletic FC (the newsletter that comes from your Gmail).
+- The server checks each of those too, so hiding the rows isn't the only lock: an invite, a removal or the feedback list is refused for anyone who isn't an admin.
+- The Athletic FC used to be offered to anyone logged in. It's now yours only, since its link comes from your email.
+- Admin is a flag on the account, not your name. No one else has it, and nothing in the app can hand it out.
+
 ## 3.62.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Soccer live lines: when ESPN hasn't named who missed a penalty, the line names the team instead ("Arsenal have missed a penalty") rather than starting with a blank.
