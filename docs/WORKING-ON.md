@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Notifications: one-liners on the Board, live line always matches the slate | worker/alerts.js, shared: ios/Shared/SlateBoardAttributes.swift, ios/SlateLive/SlateBoardActivity.swift, docs/pages/notifications.md | 2026-11-16 21:09 |
+| DJ | Soccer live one-liners: name the player and the team | src/app/100-highlights.js (soccer part only) | 2026-11-16 21:10 |
