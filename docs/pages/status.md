@@ -20,11 +20,17 @@ Last updated: Nov 16, 2026 (no app version: it is not part of the app)
   screenshot, phone and the "Mark addressed" / "Open it again" switch (see docs/pages/feedback.md for the automatic part).
 - Cards (DJ, Nov 16): every section is a card. Drag the grip (or focus it and use the arrow keys) to move it, the
   arrow folds it, the x closes it; closed cards come back from the row at the bottom, which also has Reset layout.
-  Order, folded and closed are kept per browser in `slate-status-layout`. Feedback is first by default, and while it
-  is first it runs the full width with its items side by side (DJ: "feedback should be more prominent").
-  A new section needs a `data-card` name and a place in `CARD_ORDER`.
+- Layout (DJ, Nov 16: "locks cards in place until moved, other cards can then be moved around it"): a snap grid of
+  zones, a full-width top row plus 1, 2 or 3 columns (under 760px, under 1300px, wider). A card belongs to one zone
+  and one position and stays there; while dragging, a floating copy follows the finger and an outlined slot shows
+  exactly where it will land, and only the cards in that zone shift. Each column count keeps its own arrangement.
+  Saved per browser in `slate-status-grid` (`LAY`); defaults are `DEF`; a new section needs a `data-card` name and
+  a place in `CARDS`. Feedback sits in the top row by default (DJ: "feedback should be more prominent").
+  The earlier CSS-columns layout reflowed every card after a move, which DJ found unintuitive; don't go back to it.
 - Refresh: feedback every 10 seconds, the files every 30, GitHub every 2 minutes, only while the page is showing.
-- Look: Midnight in dark mode, Sunday Paper in light (the browser's setting), one column on a phone, two on a PC.
+- Look (DJ, Nov 16: "in the same style as Slate"): docs/DESIGN.md tokens, Archivo at Slate's widths, sentence case,
+  4px chips and 8px cards, red = live, the axe-hammer mark in the header. It follows the theme and accent picked in
+  Slate when this browser has them saved (`slate-doc:*/settings`), otherwise Midnight in dark mode and Sunday Paper in light.
 
 ## Open
 - Usage counts don't include features yet (adds, thumbs, summaries tapped per page). Thumbs and adds are already in each
