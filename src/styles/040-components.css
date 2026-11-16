@@ -1599,6 +1599,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-rec { font-size: 13px; color: var(--dim); white-space: nowrap; }
 .nx-gr { display: grid; gap: 4px; justify-items: end; flex: none; text-align: right; }
 .nx-gr b { font-size: 13px; font-weight: 800; color: var(--head); }
+.nx-gr b.live { color: var(--live); }
+.nx-game .nx-gl { flex: 1; }
+.nx-sc { margin-left: auto; padding-left: 8px; font-size: 20px; font-weight: 800; font-stretch: 80%; font-variant-numeric: tabular-nums; color: var(--ink); }
+.nx-sc.lose { color: var(--dim); }
 .nx-gr span { font-size: 13px; font-weight: 800; color: var(--muted); max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nx-bd { display: grid; gap: 12px; padding: 12px; }
 .nx-pad { padding: 12px; }

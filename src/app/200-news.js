@@ -99,9 +99,9 @@
     CL_ASK[k] = Date.now(); nw.opts = false; keepScroll(renderNews); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
     var want = {}; if (cv.slate) cv.games.forEach(function (g) { want[g.league] = 1; }); if (cv.teams) cv.myTeams.forEach(function (t) { want[t.lg] = 1; }); cv.lgs.forEach(function (l) { want[l] = 1; });
     Promise.all(Object.keys(want).map(function (lg) { return nwFeed(lg).then(null, function () { return []; }); })).then(function () {
-      var facts = { cover: { slate: cv.slate, teams: cv.teams, leagues: cv.lgs }, games: [], teams: [], leagues: [], headlines: { byGame: {}, byTeam: {}, byLeague: {} } };
+      var facts = { cover: { slate: cv.slate, teams: cv.teams, leagues: cv.lgs, picked: cv.myTeams.map(nwTKey) }, games: [], teams: [], leagues: [], headlines: { byGame: {}, byTeam: {}, byLeague: {} } };
       if (cv.slate) cv.games.forEach(function (g) {
-        facts.games.push({ id: g.id, lg: g.league, league: info(g).name, away: g.away, home: g.home, awayRecord: g.awayRecord || "", homeRecord: g.homeRecord || "", start: g.start, tv: (g.tv || []).slice(0, 2).join(", "), note: g.note || "" });
+        facts.games.push({ id: g.id, lg: g.league, league: info(g).name, away: g.away, home: g.home, awayRecord: g.awayRecord || "", homeRecord: g.homeRecord || "", start: g.start, status: ({ live: "live now", over: "finished", upcoming: "not started" })[status(g).kind] || "", tv: (g.tv || []).slice(0, 2).join(", "), note: g.note || "" });
         var seen = {}, hs = nwTeamHeads(g.away, g.league, 2).concat(nwTeamHeads(g.home, g.league, 2)).filter(function (a) { if (seen[a.url]) return false; seen[a.url] = 1; return true; });
         if (hs.length) facts.headlines.byGame[g.id] = hs.slice(0, 4);
       });
@@ -175,9 +175,20 @@
   function nwGameHead(g) {
     var hd = el("div", "nx-gh"), l = el("div", "nx-gl");
     l.appendChild(el("span", "nx-lg", info(g).tag + (g.note ? " · " + g.note : "")));
-    ["away", "home"].forEach(function (sd) { var r = el("div", "nx-tm"); r.appendChild(nwTeamBadge(g[sd], g, sd)); r.appendChild(el("span", "nx-nm", short(g, sd))); if (g[sd + "Record"]) r.appendChild(el("span", "nx-rec", g[sd + "Record"])); l.appendChild(r); });
+    // the result is the card's job (3.50.1): each team's score beside it once the game is live or over, and Final, the
+    // live clock or the start time on the right, the same free ESPN numbers as the slate
+    var st = status(g), sc = state.showScores ? scoreOf(g) : null;
+    ["away", "home"].forEach(function (sd) {
+      var r = el("div", "nx-tm"); r.appendChild(nwTeamBadge(g[sd], g, sd)); r.appendChild(el("span", "nx-nm", short(g, sd))); if (g[sd + "Record"]) r.appendChild(el("span", "nx-rec", g[sd + "Record"]));
+      if (sc) { var mine = Number(sd === "away" ? sc.a : sc.h), other = Number(sd === "away" ? sc.h : sc.a); r.appendChild(el("b", "nx-sc" + (sc.state === "post" && mine < other ? " lose" : ""), String(sd === "away" ? sc.a : sc.h))); }
+      l.appendChild(r);
+    });
     hd.appendChild(l);
-    var rt = el("div", "nx-gr"); rt.appendChild(el("b", null, timeText(g.start))); var tv = (g.tv || []).filter(Boolean)[0]; if (tv) rt.appendChild(el("span", null, tv)); hd.appendChild(rt);
+    var rt = el("div", "nx-gr"), tv = (g.tv || []).filter(Boolean)[0];
+    if (st.kind === "live") { rt.appendChild(el("b", "live", sc && sc.detail ? sc.detail : "Live")); if (tv) rt.appendChild(el("span", null, tv)); }
+    else if (st.kind === "over") { rt.appendChild(el("b", null, st.final ? (sc && sc.detail && /OT|SO|\//.test(sc.detail) ? sc.detail : "Final") : "Likely over")); rt.appendChild(el("span", null, timeText(g.start))); }
+    else { rt.appendChild(el("b", null, timeText(g.start))); if (tv) rt.appendChild(el("span", null, tv)); }
+    hd.appendChild(rt);
     return hd;
   }
   // how long Claude has been writing, counted from the tap (or the server's mark), ticking once a second
@@ -265,9 +276,11 @@
       });
       body.appendChild(tcard);
     }
-    // Games | Teams | Leagues: only the ones this page has; the leftmost opens first
+    // Games | Teams | Leagues: only the ones this page has; the leftmost opens first. Teams is only the favorite teams
+    // picked in the options (3.50.1; cover.picked), not every team in the picked games; older pages have no list of
+    // picks, so they show the favorites they wrote about.
     var gmap = {}; nwGames().forEach(function (g) { gmap[g.id] = g; });
-    var dg = (doc.games || []).filter(function (x) { return gmap[x.id]; }), dt = doc.teams || [], dl = (doc.leagues || []).filter(function (x) { return LEAGUES[x.key]; });
+    var dg = (doc.games || []).filter(function (x) { return gmap[x.id]; }), pk = cov.picked || myTeamList().map(nwTKey), dt = (doc.teams || []).filter(function (x) { return pk.indexOf((x.lg || "") + "|" + String(x.name).toLowerCase()) !== -1; }), dl = (doc.leagues || []).filter(function (x) { return LEAGUES[x.key]; });
     var tabs = []; if (dg.length) tabs.push(["games", "Games"]); if (dt.length) tabs.push(["teams", "Teams"]); if (dl.length) tabs.push(["leagues", "Leagues"]);
     if (!tabs.length) return;
     if (!tabs.some(function (t) { return t[0] === nw.tab; })) nw.tab = tabs[0][0];
@@ -288,8 +301,8 @@
         body.appendChild(c);
       });
     } else if (nw.tab === "teams") {
-      var used = {}, tile = function (name, lg, g, side) {
-        var x = nwTeamDoc(doc, name, lg); if (!x) return null; used[String(x.name).toLowerCase() + "|" + (x.lg || "")] = 1;
+      var tile = function (name, lg, g, side) {
+        var x = nwTeamDoc(doc, name, lg); if (!x) return null;
         var b = el("button", "nx-card nx-tile" + (x.tone === "alert" ? " alert" : "")); b.type = "button";
         var hd = el("div", "nx-th"); hd.appendChild(nwTeamBadge(name, g, side)); var rec = g && side ? g[side + "Record"] : ""; if (rec) hd.appendChild(el("span", "nx-rec", rec));
         if (x.chip) hd.appendChild(el("span", "nx-chipt " + (x.tone || ""), x.chip)); b.appendChild(hd);
@@ -298,16 +311,12 @@
         b.addEventListener("click", function () { nwOpenDeep({ type: "t", name: name, lg: lg }); });
         return b;
       };
-      nwGames().forEach(function (g) {
-        var a = tile(g.away, g.league, g, "away"), h = tile(g.home, g.league, g, "home"); if (!a && !h) return;
-        body.appendChild(nwSec(timeText(g.start) + " · " + info(g).tag, (g.tv || []).filter(Boolean)[0] || ""));
-        var gr = el("div", "nx-grid"); if (a) gr.appendChild(a); if (h) gr.appendChild(h); body.appendChild(gr);
+      var gr = el("div", "nx-grid");
+      dt.forEach(function (x) {
+        var g = null, sd = null; nwGames().some(function (y) { if (y.league !== x.lg) return false; var n = String(x.name).toLowerCase(); sd = String(y.away).toLowerCase() === n ? "away" : String(y.home).toLowerCase() === n ? "home" : null; if (sd) g = y; return !!sd; });
+        var t = tile(x.name, x.lg, g, sd); if (t) gr.appendChild(t);
       });
-      var rest = dt.filter(function (x) { return !used[String(x.name).toLowerCase() + "|" + (x.lg || "")]; });
-      if (rest.length) {
-        body.appendChild(nwSec("My teams", "not on today's slate")); var gr2 = el("div", "nx-grid");
-        rest.forEach(function (x) { var t = tile(x.name, x.lg, null, null); if (t) gr2.appendChild(t); }); body.appendChild(gr2);
-      }
+      body.appendChild(gr);
     } else {
       dl.forEach(function (x) {
         var n = nwGames().filter(function (g) { return g.league === x.key; }).length;

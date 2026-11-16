@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.50.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- News, Games tab: each game card now shows the result itself: both scores beside the teams (the loser dimmed), with Final, the live clock in red, or the start time on the right. Same ESPN numbers as the slate.
+- Claude's short summary and quick hits for a game no longer repeat that game's score. For a finished game they say how it was won and what it means. This applies to pages generated from now on.
+- News, Teams tab: only the favorite teams you picked under My teams, not every team from the games you picked. A team playing today still shows who it plays.
+
 ## 3.50.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 Third release from the UX review: one style on every page.

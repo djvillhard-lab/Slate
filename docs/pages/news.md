@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 16, 2026, 3.49.1
+Last updated: Nov 16, 2026, 3.50.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -38,3 +38,7 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Breakdowns stay inside the News view (`nw.deep`), not a new view, so the iPhone app's strip needs no new build.
 - Picks are opt-in, nothing pre-picked, no group checkmarks (DJ, Nov 16). "Team logos" = the app's team badges with
   abbreviations (`badgeFor` / `teamBadge`); Slate has no logo images.
+- Game cards show the score and Final / live clock / start time from ESPN (`scoreOf`, `status`); Claude's game story
+  and hits must not repeat the score (DJ, Nov 16). The facts send each game's `status` so Claude knows it's over.
+- Teams tab = only the favorites picked in the options (`cover.picked`, "lg|name"), DJ, Nov 16. Claude no longer
+  writes a line for every team in the picked games.
