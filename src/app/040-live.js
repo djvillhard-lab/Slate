@@ -96,7 +96,8 @@
       var cand = ld.filter(function (L) { return /^(passing|rushing|receiving)Yards$/.test(L.c); }).map(function (L) { var y = Number((/(\d+) YDS/.exec(L.d) || [])[1]) || L.v || 0, td = Number((/(\d+) TD/.exec(L.d) || [])[1]) || 0; return { L: L, y: y, td: td, w: y * (L.c === "passingYards" ? 0.5 : 1) + td * 25 }; }).sort(function (a, b) { return b.w - a.w; })[0];
       return cand && cand.y ? (cand.L.full || cand.L.n) + " " + cand.y + (cand.L.c === "passingYards" ? " passing" : cand.L.c === "rushingYards" ? " rushing" : " receiving") + " yds" + (cand.td ? ", " + cand.td + " TD" : "") : "";
     }
-    if (sp === "hockey" || sp === "soccer") { var gl = top(/^goals$/); return gl && Number(gl.v || gl.d) > 0 ? (gl.full || gl.n) + (Number(gl.v || gl.d) > 1 ? " has " + (gl.v || gl.d) + " goals" : " scored") : ""; }
+    // hockey and soccer: never "Own Goal scored" (3.60.2): an own goal is no one's standout
+    if (sp === "hockey" || sp === "soccer") { ld = ld.filter(function (L) { return (L.full || L.n) && !/own goal/i.test(L.full || L.n); }); var gl = top(/^goals$/); return gl && Number(gl.v || gl.d) > 0 ? (gl.full || gl.n) + (Number(gl.v || gl.d) > 1 ? " has " + (gl.v || gl.d) + " goals" : " scored") : ""; }
     return "";
   }
   function liveLeaders(c) {

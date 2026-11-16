@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.60.2 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Soccer live lines: own goals read properly. "Saka has scored for Arsenal, plus an own goal by Smith", or "An own goal by Smith has Arsenal in front". An own goal is never written as if it were a player who scored.
+- An own goal no longer shows up as a team's standout scorer, and a goal ESPN hasn't put a name on yet is left out of the scorer list instead of being guessed.
+
 ## 3.60.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Suggested for you: thumbs up now adds the game to your slate right away and counts as a like, so the separate Add to slate button is gone. To take it back off, tap its ✓ on your slate. Thumbs down still hides it (with Undo) and counts as a dislike.

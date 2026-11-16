@@ -168,22 +168,27 @@
           var m = /(\d+), .*? (\d+)\./.exec(String(k.text || "")), h = m ? +m[1] : sh0, aw = m ? +m[2] : sa0, by;
           if (m && h > sh0) by = HID; else if (m && aw > sa0) by = AID; else { by = String((k.team || {}).id || ""); if (!m) { if (by === HID) h++; else aw++; } }
           if (by !== HID && by !== AID) return;
-          var before = by === HID ? sh0 - sa0 : sa0 - sh0, nm = og ? "" : shortN(ps[0]), an = og ? "" : shortN(ps[1]);
-          goals.push({ by: by, mn: mn, nm: nm, as: an, og: og, before: before, pen: /penalty/i.test(tt), how: /header/i.test(String(k.text)) ? "header" : /free kick|free-kick/i.test(String(k.text) + tt) ? "free kick" : "" });
+          var before = by === HID ? sh0 - sa0 : sa0 - sh0, nm = og ? "" : shortN(ps[0]), an = og ? "" : shortN(ps[1]), ogBy = og ? shortN(ps[0]) : "";
+          goals.push({ by: by, mn: mn, nm: nm, as: an, og: og, ogBy: ogBy, before: before, pen: /penalty/i.test(tt), how: /header/i.test(String(k.text)) ? "header" : /free kick|free-kick/i.test(String(k.text) + tt) ? "free kick" : "" });
           sh0 = h; sa0 = aw;
           worst[HID] = Math.min(worst[HID], sh0 - sa0); worst[AID] = Math.min(worst[AID], sa0 - sh0);
-          if (nm) { if (!gl[nm]) scorers[by].push(nm); gl[nm] = (gl[nm] || 0) + 1; } else scorers[by].push("an own goal");
+          // 3.60.2: an own goal reads "an own goal by Smith" and is never the subject of "has scored"; a goal with no name from ESPN is left out of the lists
+          if (og) scorers[by].push("an own goal" + (ogBy ? " by " + ogBy : "")); else if (nm) { if (!gl[nm]) scorers[by].push(nm); gl[nm] = (gl[nm] || 0) + 1; }
           if (an) as[an] = (as[an] || 0) + 1;
         } else if (/red card|second yellow/i.test(tt)) { var rt = String((k.team || {}).id || ""); if (teams[rt]) reds.push({ nm: shortN(ps[0]), t: rt, mn: mn }); }
       });
       var nameOf = function (i) { return teams[i].name; }, diff = teams[HID].score - teams[AID].score, leader = diff > 0 ? HID : diff < 0 ? AID : null, total = teams[HID].score + teams[AID].score;
       var tag = function (i) { return { team: nameOf(i) }; };
-      var scorerList = function (i) { var seen = {}, out = []; scorers[i].forEach(function (n) { if (n === "an own goal") { out.push(n); return; } if (seen[n]) return; seen[n] = 1; out.push(n + (gl[n] >= 3 ? " (3)" : gl[n] === 2 ? " (2)" : "")); }); return out; };
+      var scorerList = function (i) { var seen = {}, out = []; scorers[i].forEach(function (n) { if (/^an own goal/.test(n)) { out.push(n); return; } if (seen[n]) return; seen[n] = 1; out.push(n + (gl[n] >= 3 ? " (3)" : gl[n] === 2 ? " (2)" : "")); }); return out; };
       // who scored: every scorer, not just the latest
       [HID, AID].forEach(function (i) {
         var goalsI = teams[i].score, ls = scorerList(i); if (!goalsI || !ls.length) return;
-        if (goalsI >= 2) add("scorers|" + i + "|" + goalsI, 44 + goalsI * 7 + (i === leader ? 6 : 0), 1, listAnd(ls) + (done ? " scored for " : " have scored for ") + nameOf(i), tag(i));
-        else if (i === leader && diff === 1) add("solo|" + i, 42, 1, ls[0] === "an own goal" ? "An own goal " + (done ? "decided it for " : "has ") + nameOf(i) + (done ? "" : " in front") : ls[0] + (done ? "'s goal won it for " : "'s goal has ") + nameOf(i) + (done ? "" : " in front"), tag(i));
+        // players are the ones who "scored"; own goals are added after them ("Saka scored for Arsenal, plus an own goal by Smith")
+        var pl = ls.filter(function (x) { return !/^an own goal/.test(x); }), ogs = ls.filter(function (x) { return /^an own goal/.test(x); });
+        if (goalsI >= 2) add("scorers|" + i + "|" + goalsI, 44 + goalsI * 7 + (i === leader ? 6 : 0), 1, pl.length
+          ? listAnd(pl) + (done ? " scored for " : (pl.length === 1 ? " has scored for " : " have scored for ")) + nameOf(i) + (ogs.length ? ", plus " + listAnd(ogs) : "")
+          : nameOf(i) + (done ? "'s goals came from " : "'s goals have come from ") + (ogs.length === 2 ? "two own goals" : listAnd(ogs)), tag(i));
+        else if (i === leader && diff === 1) add("solo|" + i, 42, 1, /^an own goal/.test(ls[0]) ? "A" + ls[0].slice(1) + (done ? " decided it for " : " has ") + nameOf(i) + (done ? "" : " in front") : ls[0] + (done ? "'s goal won it for " : "'s goal has ") + nameOf(i) + (done ? "" : " in front"), tag(i));
       });
       if (scorers[HID].length && scorers[AID].length && total >= 3) add("allsc|" + total, 46 + total * 3, 0, listAnd(scorerList(HID)) + " for " + nameOf(HID) + "; " + listAnd(scorerList(AID)) + " for " + nameOf(AID), {});
       // braces, hat tricks, playmakers
@@ -193,7 +198,7 @@
       // comebacks, late winners and equalizers, quick doubles
       [HID, AID].forEach(function (i) { var w = -worst[i], now = i === HID ? diff : -diff; if (w < 1 || now < 0) return;
         var from = w === 1 ? "behind" : NUMW[Math.min(w, 5)] + " goals down";
-        var thru = scorerList(i).filter(function (x) { return x !== "an own goal"; }), via = thru.length && thru.length <= 3 ? " through " + listAnd(thru) : "";
+        var thru = scorerList(i).filter(function (x) { return !/^an own goal/.test(x); }), via = thru.length && thru.length <= 3 ? " through " + listAnd(thru) : "";
         if (now > 0) add("cb|" + i + "|" + w, 62 + w * 12, 1, nameOf(i) + (done ? " came from " + from + " to win" : " have come from " + from + " to lead") + via, tag(i));
         else add("cbd|" + i + "|" + w, 48 + w * 12, 1, nameOf(i) + (done ? " fought back from " + from + " for a draw" : " have fought back from " + from + " to level it"), tag(i)); });
       var lastG = goals[goals.length - 1];
