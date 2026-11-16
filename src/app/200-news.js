@@ -181,6 +181,15 @@
   }
   // the team schedules load on their own; draw the Teams tab again once they're in
   function nwLiteWait() { if (nw.liteT) return; nw.liteT = setTimeout(function () { nw.liteT = 0; if (state.view === "news" && !nw.deep && nw.tab === "teams") keepScroll(renderNews); }, 1200); }
+  // which game and league cards are open on the page: all start collapsed, and what you open stays open for that
+  // day's page on this phone (slate-newsopen: { d: date, k: [keys] })
+  function nwOpenSet() { var o = null; try { o = JSON.parse(localStorage.getItem("slate-newsopen") || "null"); } catch (e) {} return o && o.d === state.date && Array.isArray(o.k) ? o.k : []; }
+  function nwIsOpen(k) { return nwOpenSet().indexOf(k) !== -1; }
+  function nwFoldBtn(hd, k, open, label) {
+    hd.setAttribute("role", "button"); hd.tabIndex = 0; hd.setAttribute("aria-expanded", open ? "true" : "false"); hd.setAttribute("aria-label", label + (open ? ", collapse" : ", expand"));
+    var go = function () { var l = nwOpenSet().filter(function (y) { return y !== k; }); if (!open) l.push(k); try { localStorage.setItem("slate-newsopen", JSON.stringify({ d: state.date, k: l })); } catch (e) {} keepScroll(renderNews); };
+    hd.addEventListener("click", go); hd.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  }
   function nwSec(title, right) { var h = el("div", "nx-sec"); h.appendChild(el("b", null, title)); if (right) h.appendChild(el("span", null, right)); return h; }
   function nwGameHead(g) {
     var hd = el("div", "nx-gh"), l = el("div", "nx-gl");
@@ -310,10 +319,14 @@
       dg.sort(function (a, b) { return String(gmap[a.id].start).localeCompare(String(gmap[b.id].start)); }).forEach(function (x) {
         var g = gmap[x.id], tt = timeText(g.start);
         if (tt !== lastT) { lastT = tt; var m = /^(.*?)\s*([AP]M)$/i.exec(tt), th2 = el("div", "nx-time"); th2.appendChild(el("b", null, m ? m[1] : tt)); if (m) th2.appendChild(el("i", null, m[2].toLowerCase())); body.appendChild(th2); }
-        var c = el("div", "nx-card nx-game"); c.appendChild(nwGameHead(g));
-        var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwHits(x.hits)); c.appendChild(bd);
-        if (x.read) c.appendChild(nwRead(x.read));
-        c.appendChild(nwDeepRow({ type: "g", id: g.id }));
+        // each game is a drop-down (3.53.1): the matchup and score show, a tap opens Claude's summary under it
+        var ok = "g:" + g.id, open = nwIsOpen(ok), c = el("div", "nx-card nx-game nx-dd" + (open ? "" : " shut")), gh = nwGameHead(g);
+        gh.appendChild(icon("more")); nwFoldBtn(gh, ok, open, short(g, "away") + " at " + short(g, "home")); c.appendChild(gh);
+        if (open) {
+          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwHits(x.hits)); c.appendChild(bd);
+          if (x.read) c.appendChild(nwRead(x.read));
+          c.appendChild(nwDeepRow({ type: "g", id: g.id }));
+        }
         body.appendChild(c);
       });
     } else if (nw.tab === "teams") {
@@ -344,10 +357,15 @@
     } else {
       dl.forEach(function (x) {
         var n = nwGames().filter(function (g) { return g.league === x.key; }).length;
-        body.appendChild(nwSec((LEAGUES[x.key] || {}).name || x.key, n ? n + (n === 1 ? " game" : " games") + " on your slate" : ""));
-        var c = el("div", "nx-card"), bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwHits(x.hits)); c.appendChild(bd);
-        if (x.read) c.appendChild(nwRead(x.read));
-        c.appendChild(nwDeepRow({ type: "l", lg: x.key }));
+        // each league is a drop-down too: its name shows, a tap opens the write-up
+        var ok = "l:" + x.key, open = nwIsOpen(ok), c = el("div", "nx-card nx-lgc nx-dd" + (open ? "" : " shut")), lh = el("div", "nx-lh"), lt = el("div", "nx-lt");
+        lt.appendChild(el("b", null, (LEAGUES[x.key] || {}).name || x.key)); if (n) lt.appendChild(el("span", null, n + (n === 1 ? " game" : " games") + " on your slate")); lh.appendChild(lt);
+        lh.appendChild(icon("more")); nwFoldBtn(lh, ok, open, (LEAGUES[x.key] || {}).name || x.key); c.appendChild(lh);
+        if (open) {
+          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwHits(x.hits)); c.appendChild(bd);
+          if (x.read) c.appendChild(nwRead(x.read));
+          c.appendChild(nwDeepRow({ type: "l", lg: x.key }));
+        }
         body.appendChild(c);
       });
     }

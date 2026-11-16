@@ -1609,6 +1609,17 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-game + .nx-game { margin-top: 10px; }
 .nx-gh { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; }
 .nx-game .nx-gh { border-bottom: 1px solid var(--hair); }
+/* game and league cards are drop-downs (3.53.1): the header is the button, the arrow turns when it's open */
+.nx-dd > [role="button"] { cursor: pointer; min-height: 56px; -webkit-tap-highlight-color: transparent; }
+.nx-dd > [role="button"] > svg { width: 14px; height: 14px; flex: none; color: var(--dim); transform: rotate(-90deg); }
+.nx-dd.shut > [role="button"] > svg { transform: rotate(90deg); }
+.nx-dd.shut > .nx-gh, .nx-dd.shut > .nx-lh { border-bottom: 0; }
+.nx-dd .nx-gh .nx-gr { min-width: 24%; }
+.nx-lgc + .nx-lgc { margin-top: 10px; }
+.nx-lh { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--hair); }
+.nx-lt { display: grid; gap: 2px; min-width: 0; }
+.nx-lt b { font-size: 16px; font-weight: 800; color: var(--ink); }
+.nx-lt span { font-size: 13px; font-weight: 700; color: var(--dim); }
 .nx-gl { display: grid; gap: 5px; min-width: 0; }
 .nx-lg { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nx-tm { display: flex; align-items: center; gap: 8px; min-width: 0; }

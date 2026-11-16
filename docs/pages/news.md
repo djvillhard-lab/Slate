@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 16, 2026, 3.52.12
+Last updated: Nov 16, 2026, 3.53.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -55,6 +55,10 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Options groups (Today's slate, My teams, Leagues) collapse and expand from their header; state in `slate-newsfold`
   ({g, t, l}: 1 = collapsed). DJ, Nov 16: "make games and leagues sections drop downs"; read as the options screen,
   since the page's Games and Leagues are tabs.
+
+- Games and Leagues tabs: each card is a drop-down, closed to start (DJ, Nov 16: this is what he meant, not the
+  options screen; the options groups from 3.52.12 still fold too). Open cards are kept per day in `slate-newsopen`
+  (`nwIsOpen`, `nwFoldBtn`).
 
 ## The Athletic Newsletters (under the slate, not the News page)
 Code: `worker/newsletters.js` (the cron that finds editions in The Athletic's RSS feeds, doc `news/newsletters`) and
