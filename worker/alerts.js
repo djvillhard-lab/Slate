@@ -324,9 +324,9 @@ function boardGame(id, g, s) {
     ...(st === "in" && (s.po === "away" || s.po === "home") ? { p: s.po } : {}), ...(st === "in" && s.dd ? { dd: String(s.dd).slice(0, 32) } : {}),
     // 3.30.0, before kickoff: the start (seconds), the channel, and c once it's within the hour (the Dynamic Island counts down)
     ...(st === "pre" && kick > 0 ? { t: Math.floor(kick / 1000) } : {}), ...(st === "pre" && at.channel ? { tv: String(at.channel).slice(0, 16) } : {}),
-    ...(st === "pre" && kick > 0 && kick - Date.now() <= 3600000 ? { c: true } : {}),
-    // 3.64.0: the slate card's one-liner, the live line while it's on, the preview line before (builds before 41 ignore it)
-    ...(st === "in" && s.gl ? { ln: String(s.gl).slice(0, 90) } : st === "in" && LVL[id] ? { ln: String(LVL[id]).slice(0, 90) } : st !== "post" && PVL[id] ? { ln: String(PVL[id]).slice(0, 90) } : {}) };
+    ...(st === "pre" && kick > 0 && kick - Date.now() <= 3600000 ? { c: true } : {}) };
+  // no one-liner (ln) on the Board: DJ wants those only on single-game live notifications (3.65.8; the app still
+  // reads ln if it's ever sent again)
 }
 async function runBoard(env, p, sent, la, games, sc) {
   const b = (p.liveAct || {}).board || {}; let gone = false;

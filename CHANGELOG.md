@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.65.8 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- The Board live notification no longer shows a one-liner under each game. One-liners (the preview line, the live line, soccer goal scorers) stay on live notifications for single games only.
+
 ## 3.65.7 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Filters: the second row of filters now looks like the league tabs above it, only smaller. Same wide bold letters, gray until you pick one, dark when picked, with the same green bar under the word. That's the conferences and "Top-10 team" row on All games, All / National TV / Streaming on On TV, and Ranked teams in Box Office. They still read left to right with All first.

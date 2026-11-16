@@ -1,5 +1,5 @@
 # Notifications (alerts, live notifications, Dynamic Island)
-Last updated: Nov 16, 2026, 3.64.0 (iPhone 3.64.0 (41))
+Last updated: Nov 16, 2026, 3.65.8
 Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), `ios/SlateLive/SlateLiveActivity.swift`,
 `ios/Shared/SlateGameAttributes.swift`; settings page `src/app/220-notifications.js`. Plan: `docs/NOTIFICATIONS-PLAN.md`.
 
@@ -21,7 +21,7 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   the game is in progress (LVL). 3.64.0: no 20-minute cutoff any more (DJ saw the preview line while his slate card
   showed the live line); the last shared live line stays. Shared game channels keep
   a line someone shared when the next person has none (bcPick).
-- Board one-liners (3.64.0, build 41): SlateBoardGame.ln, live line else preview line, not after the final; 2 lines on the
+- Board one-liners (3.64.0, build 41), TAKEN OFF in 3.65.8 at DJ's ask (single games only; the server sends no ln): SlateBoardGame.ln, live line else preview line, not after the final; 2 lines on the
   Lock Screen with 1-2 games, 1 line otherwise and in the island. The Board the phone starts itself has no ln until the
   server's first update.
 - Soccer scorers line (3.64.0): goalLine() from the ESPN scoreboard's competitions[0].details (scoringPlay, not
