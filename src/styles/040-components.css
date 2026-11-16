@@ -180,7 +180,7 @@ main.wrap, html.corner main.wrap, html.corner.roomy main.wrap, html.duo main.wra
 .substrip { gap: 16px; }
 /* 3.38.2: All games, right-handed: the Live button sits on the right; the secondary filters (All / Best of each
    league / National TV) line up on the right too, ending left of iOS's column on the folded Duo so the clock never covers them */
-#pane-r .substrip > :first-child { margin-left: auto; }  /* every phone, the Duo included (3.38.4) */
+html:not(.iphone) #pane-r .substrip { flex-direction: row-reverse; }  /* iPhone Duo only (3.38.5): the first choice (All) at the far right under the thumb, the rest leftward */
 html[data-native].side-col .substrip { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)) !important; }  /* this row is level with the bottom of the clock and Wi-Fi */
 html[data-native] #games-body .lo-row { padding-right: 0 !important; }  /* Live sits below the clock and Wi-Fi: all the way right, in line with the cards */
 .cf-tab { background: none; padding: 8px 0; border-radius: 0; }

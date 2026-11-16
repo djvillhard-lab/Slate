@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.38.5 (Nov 16, 2026)
+TestFlight: 3.38.0 (37), no new build (web only)
+- All games on the iPhone Duo: the second row of filters runs right to left. All sits at the far right under your thumb, then Best of each league to its left, then National TV (a league's conferences work the same way). On a regular iPhone the row is back on the left, in the usual order.
+
 ## 3.38.4 (Nov 16, 2026)
 TestFlight: 3.38.0 (37), no new build (web only)
 - All games on the iPhone Duo: the second row of filters (All / Best of each league / National TV) now really lines up on the right. 3.38.2 only did it on a regular iPhone. It ends just left of the clock and Wi-Fi, which reach down to that row.
