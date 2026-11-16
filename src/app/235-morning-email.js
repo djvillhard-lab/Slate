@@ -6,6 +6,12 @@
   function meTzName(tz) { try { var x = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longGeneric" }).formatToParts(new Date()).filter(function (q) { return q.type === "timeZoneName"; })[0]; return x ? x.value : tz; } catch (e) { return tz; } }
   function meTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"; } catch (e) { return "America/Chicago"; } }
   function meClock(t) { var h = Number(t.slice(0, 2)), m = t.slice(3); return (h % 12 || 12) + ":" + m + (h < 12 ? " AM" : " PM"); }
+  // the email is drawn in this phone's theme and accent: its colors go along with every save and test
+  function meLook() {
+    var cs = getComputedStyle(document.documentElement), v = function (n) { return String(cs.getPropertyValue(n) || "").trim(); }, th = THEMES[state.look];
+    return { bg: v("--bg"), card: v("--card"), raise: v("--raise"), line: v("--line"), hair: v("--hair"), ink: v("--ink"), muted: v("--muted"), dim: v("--dim"),
+      head: v("--head"), accent: v("--accent"), fill: v("--accent-fill"), on: v("--on-accent"), live: v("--live"), dark: !th || th[1] !== "light" };
+  }
   function meCall(body) {
     var pass = slatePass(); if (!pass) return Promise.reject(new Error("Sign in with your passcode first."));
     body.pass = pass;
@@ -32,7 +38,7 @@
   }
   function meSave(patch, okMsg) {
     if (meInfo.busy) return; meInfo.busy = true;
-    patch.action = "save"; patch.tz = meTz();
+    patch.action = "save"; patch.tz = meTz(); patch.look = meLook();
     meCall(patch).then(function (j) { meInfo.busy = false; meInfo.p = j.prefs; meDraw(); if (okMsg) toast(okMsg); },
       function (e) { meInfo.busy = false; meDraw(); toast(e.message); });
   }
@@ -59,7 +65,7 @@
       var b = $("me-test"); if (b.disabled) return;
       if (!((meInfo.p || {}).email)) { toast("Add your email address first."); $("me-email").focus(); return; }
       b.disabled = true; b.textContent = "Sending…";
-      meCall({ action: "test" }).then(function () { b.textContent = "Send"; b.disabled = false; toast("Sent. Check your inbox."); },
+      meCall({ action: "test", look: meLook() }).then(function () { b.textContent = "Send"; b.disabled = false; toast("On its way. It takes a minute or two while Claude writes yesterday's recaps."); },
         function (e) { b.textContent = "Send"; b.disabled = false; toast(e.message); });
     });
     // load when Settings opens

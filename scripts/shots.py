@@ -12,7 +12,7 @@
 
 Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
---eval "js" (run in the page just before each screenshot, e.g. to tap something), --name label (added to the file names),
+--eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
 --readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite).
 
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
@@ -158,7 +158,9 @@ def main():
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.click(); })(%s)" % json.dumps(click)); page.wait_for_timeout(700)
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
-                if ev: page.evaluate(ev); page.wait_for_timeout(1200)
+                if ev:
+                    r = page.evaluate(ev); page.wait_for_timeout(1200)
+                    if r is not None: print(r)  # whatever the script returns (e.g. computed styles)
                 wide = page.evaluate("document.scrollingElement.scrollWidth - innerWidth")
                 path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}{'-' + name if name else ''}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{'-tomorrow' if tomorrow else ''}.png")
                 page.screenshot(path=path, full_page=full)

@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.62.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Morning email now looks like the slate page. Today's slate comes in the same cards, grouped by time: the league line, the tag in the corner ("Your team", "Heavyweights", "Prime time"), team logos, names with your star and records, the time and channel, and the one-line preview under each game, worked out the same way the slate does it.
+- New second section, Your teams yesterday: each of your teams' games from yesterday with the final score and Claude's recap. Slate has Claude write any missing recap about 45 minutes before your email (the same recap the app shows, so it's there in the app too). These don't count toward anyone's 10 summaries a day.
+- Last night is the rest of yesterday's slate as final-score cards.
+- The email uses your phone's theme and accent color (Midnight or Sunday Paper). It updates whenever you change a Morning email setting or tap Send.
+- "Send one now" takes a minute or two, so Claude can finish the recaps first.
+
 ## 3.61.1 (Nov 16, 2026)
 TestFlight: 3.58.0 (39), no new build (web only)
 - Live notifications now carry the red live one-liner from the slate card while a game is on ("GER: Wirtz has scored twice"), not just the preview line from before the game. On the Lock Screen it's the line across the card (under the standouts when there are some), and in the Dynamic Island held open it's under the last play.

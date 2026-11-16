@@ -1,30 +1,38 @@
-// The morning email (3.55.0): each person who turns it on in Settings gets their own slate by email every morning,
-// from DJ's Gmail. Today's games (time, TV, the matchup, optionally the betting line) and last night's results.
+// The morning email (3.55.0, redone in 3.62.0 to look like the slate page): each person who turns it on in Settings
+// gets their own slate by email every morning, from DJ's Gmail.
+//   1. Today's slate: the same cards as the slate page, in time groups: league line, the corner tag ("Your team",
+//      "Heavyweights", "All NBA"), team logos, names and records, the time and channel, and the one-line preview.
+//   2. Your teams yesterday: each of their final games with the score and Claude's recap.
+//   3. Last night: the rest of yesterday's slate, final scores.
+// It's drawn in the person's own theme and accent (the phone sends its colors when they save the setting).
+// The tag and preview line come from the app's own code (worker/slate-kit.js, copied by scripts/email_kit.py).
 //
 // Sending: Gmail's mail server (smtp.gmail.com, port 465) over a Workers TCP socket, signed in with a Gmail app password.
 // Set in Cloudflare (Workers > slate > Settings > Variables and Secrets), never in the repo:
 //   GMAIL_USER          the Gmail address it sends from
 //   GMAIL_APP_PASSWORD  a Google app password (needs 2-Step Verification on that account)
 //
-// Settings live in mail/schedule {people: {<id>: {on, time "07:00", tz, lines, name, email (encrypted), last, ...}}}.
+// Settings live in mail/schedule {people: {<id>: {on, time "07:00", tz, lines, name, look, email (encrypted), last, ...}}}.
 // The data is readable with the app's public key, so the address is stored encrypted with a key only the server has
-// (derived from SUPABASE_SECRET). The minute cron reads that one doc; a person is due once their local time reaches
-// their time. "last" (their local date) is written before sending, with a 10-minute lease, so a day goes out once.
-// What goes in it comes from alertsets/<date> (each person's slate and teams, written by the tick job), slates/<date>
-// (records and colors), previews/<date> (the lines) and scores/<yesterday>.
+// (derived from SUPABASE_SECRET). The minute cron reads that one doc. 45 minutes before a person's time it asks Claude
+// for recaps of their teams' games from yesterday (shared with the app, like a tapped recap; logged as "email" so they
+// don't count toward anyone's 10 a day). At their time it sends, waiting up to 20 minutes for a recap still being
+// written. "last" (their local date) and a 10-minute lease make a day go out once.
 
 import { connect } from "cloudflare:sockets";
+import { slateKit } from "./slate-kit.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const APP = "https://slate.djvillhard.workers.dev";
 const DOC = "mail/schedule";
-const LG = { nfl: "NFL", ncaaf: "College Football", nba: "NBA", wnba: "WNBA", ncaam: "Men's College Hoops", ncaaw: "Women's College Hoops", nhl: "NHL", mlb: "MLB", mls: "MLS",
-  epl: "Premier League", ucl: "Champions League", uel: "Europa League", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "International" };
 const COLLEGE = { ncaaf: 1, ncaam: 1, ncaaw: 1 };
-// Slate's Midnight look
-const C = { bg: "#121821", card: "#1A2230", raise: "#232D3C", hair: "#283243", ink: "#ECF1F7", muted: "#A0ACBD", dim: "#8794A8", head: "#CAD3DF", accent: "#45A85E", fill: "#3E9E5A", on: "#0C0C0C" };
+const RECAPS_A_DAY = 6;  // Claude recaps started for one person's morning email, at most
+// Midnight, Slate's default look; a person's saved look replaces it
+const MIDNIGHT = { bg: "#121821", card: "#1A2230", raise: "#232D3C", line: "#2B3647", hair: "#283243", ink: "#ECF1F7", muted: "#A0ACBD", dim: "#8794A8",
+  head: "#CAD3DF", accent: "#45A85E", fill: "#3E9E5A", on: "#0C0C0C", live: "#FF5A5F", dark: true };
 const FONT = "Archivo,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
-const NARROW = "'Archivo Narrow','Arial Narrow',Archivo,-apple-system,Helvetica,Arial,sans-serif";
+// condensed numerals (times, scores): Archivo's narrow width where the mail app loads it, a condensed system face otherwise
+const NARROW = "Archivo,'Avenir Next Condensed','Arial Narrow','Roboto Condensed',-apple-system,Helvetica,Arial,sans-serif";
 
 // ---------- small helpers ----------
 const sbH = (env) => ({ apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET });
@@ -121,7 +129,16 @@ export async function sendGmail(env, to, subject, text, html) {
   finally { clearTimeout(timer); try { await sock.close(); } catch {} }
 }
 
-// ---------- what goes in it ----------
+
+// ---------- the look ----------
+const COLOR = /^(#[0-9a-f]{6}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/i;
+// the colors the phone sent (Settings, on save), checked one by one; Midnight for anything missing
+export function cleanLook(x) {
+  const o = {}; if (!x || typeof x !== "object") return null;
+  for (const k of Object.keys(MIDNIGHT)) if (k !== "dark" && typeof x[k] === "string" && COLOR.test(x[k].trim())) o[k] = x[k].trim();
+  if (Object.keys(o).length < 6) return null;
+  o.dark = x.dark !== false; return o;
+}
 function lum(h) {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(h || "")); if (!m) return 0;
   const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
@@ -129,162 +146,266 @@ function lum(h) {
 }
 const hexOk = (h) => /^#[0-9a-f]{6}$/i.test(String(h || ""));
 const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-// a team chip like the app's: the team color with its alternate color as a stripe, text that stays readable
-// ESPN's team logo (the dark-theme copy, since the email is dark), when the game carries one; the lettered chip otherwise
-function mark(g, sd) {
-  const ab = g[sd + "Abbr"] || String(g[sd] || "").slice(0, 3).toUpperCase();
-  const m = /^https:\/\/a\.espncdn\.com\/i\/teamlogos\/([a-z0-9]+)\/500(?:-dark)?\/(?:scoreboard\/)?([\w-]+\.png)$/i.exec(String(g[sd + "Logo"] || ""));
-  if (!m) return chip(ab, g[sd + "Color"], g[sd + "Alt"]);
-  const src = `https://a.espncdn.com/combiner/i?img=/i/teamlogos/${m[1].toLowerCase()}/500-dark/${m[2].toLowerCase()}&w=96&h=96`;
-  return `<img src="${src}" width="30" height="30" alt="${esc(ab)}" style="display:block;margin:0 6px;border:0;font:800 12px ${FONT};color:${C.ink}">`;
+
+// ---------- the cards, drawn like the slate page's ----------
+function painter(T, kit, tz) {
+  const time = (t) => new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(new Date(t));
+  // the team chip: ESPN's logo (the theme's copy) when the game has one, the lettered team-color chip otherwise (badgeFor)
+  const badge = (g, sd) => {
+    const ab = kit.abbr(g, sd);
+    const m = /\/i\/teamlogos\/([a-z0-9]+)\/500(?:-dark)?\/(?:scoreboard\/)?([\w-]+\.png)/i.exec(String(g[sd + "Logo"] || ""));
+    if (m) return `<img src="https://a.espncdn.com/combiner/i?img=/i/teamlogos/${m[1].toLowerCase()}/${T.dark ? "500-dark" : "500"}/${m[2].toLowerCase()}&amp;w=96&amp;h=96" width="28" height="28" alt="${esc(ab)}" style="display:block;margin:0 auto;border:0;width:28px;height:28px;font:800 11px ${FONT};color:${T.muted}">`;
+    let f = hexOk(g[sd + "Color"]) ? g[sd + "Color"] : T.raise, r = hexOk(g[sd + "Alt"]) ? g[sd + "Alt"] : "#ffffff";
+    if (lum(f) > 0.72 && hexOk(g[sd + "Alt"]) && lum(r) < 0.72) { const x = f; f = r; r = x; }
+    if (r.toLowerCase() === f.toLowerCase()) r = "#ffffff";
+    const ink = lum(f) > 0.72 ? "#111111" : contrast(f, "#ffffff") < 4.5 && contrast(f, "#0C1117") > contrast(f, "#ffffff") ? "#0C1117" : "#ffffff";
+    return `<span style="display:block;width:36px;height:20px;line-height:20px;margin:0 auto;text-align:center;border-radius:4px;background:${f};box-shadow:inset 0 -2px 0 ${r};color:${ink};font:800 ${ab.length > 3 ? 10 : 12}px ${NARROW};font-stretch:78%">${esc(ab)}</span>`;
+  };
+  const icon = (lg) => {
+    const k = kit.SPORT[lg] || (kit.LEAGUES[lg] ? "soc" : null), d = k && kit.SPORT_PATH[k]; if (!d) return "";
+    return `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="${d}"/></svg>`;
+  };
+  const star = `<span style="color:${T.accent};font-size:11px">&nbsp;&#9733;</span>`;
+  // one card: league line and corner tag, a row per team (chip, name, star, record, score), the side (time or Final, channel), then extra lines
+  const card = (g, o) => {
+    const over = !!o.sc, sc = o.sc || {}, url = `${APP}/?game=${encodeURIComponent(g.id)}`;
+    const lgColor = over ? T.dim : T.muted, tag = o.tag ? `<td align="right" valign="top" style="padding:0"><span style="display:inline-block;padding:3px 8px 4px;border-radius:0 8px 0 8px;background:${T.raise};color:${over ? T.dim : T.muted};font:700 11px/13px ${FONT};white-space:nowrap">${o.tagStar ? `<span style="color:${T.accent}">&#9733;</span> ` : ""}${esc(o.tag)}</span></td>` : `<td></td>`;
+    const lg = `<td style="padding:12px 0 0 12px;font:700 13px/17px ${FONT};color:${lgColor}">${icon(g.league)}${esc(kit.info(g).name)}${g.note ? `<span style="color:${T.dim}">&nbsp;&nbsp;${esc(g.note)}</span>` : ""}</td>`;
+    const tv = (g.tv || []).filter(Boolean).slice(0, 2);
+    const sides = kit.sideOrder(g);
+    const rows = sides.map((sd, i) => {
+      const mineS = over ? Number(sd === "away" ? sc.a : sc.h) : 0, oth = over ? Number(sd === "away" ? sc.h : sc.a) : 0, lose = over && mineS < oth;
+      const nmColor = over ? (lose ? T.dim : T.head) : T.ink;
+      const rk = g[sd + "Rank"] ? `<span style="font:800 13px ${NARROW};font-stretch:80%;color:${T.muted}">${esc(g[sd + "Rank"])}&nbsp;</span>` : "";
+      const fav = o.favs && o.favs(g, sd) ? star : "";
+      const rec = g[sd + "Record"] ? `<span style="font:400 13px ${FONT};color:${T.dim}">&nbsp;${esc(g[sd + "Record"])}</span>` : "";
+      const score = over ? `<td width="30" align="right" style="padding:0 0 0 6px;font:800 22px/1 ${NARROW};font-stretch:66%;color:${lose ? T.dim : T.head}">${esc(sd === "away" ? sc.a : sc.h)}</td>` : "";
+      const side = i === 0
+        ? (over ? `<span style="font:800 15px ${NARROW};font-stretch:78%;color:${T.dim}">${esc(/OT|SO|\//.test(sc.detail || "") ? sc.detail : "Final")}</span>` : `<span style="font:700 13px ${FONT};color:${T.muted}">${esc(time(g.start))}</span>`)
+        : (!over && tv[0] ? `<span style="font:800 13px ${FONT};font-stretch:92%;color:${T.head};white-space:nowrap"><span style="color:${T.accent};font-size:9px">&#9654;</span>&nbsp;${esc(tv[0])}</span>` : "");
+      return `<tr><td width="40" style="padding:4px 12px 4px 0;vertical-align:middle">${badge(g, sd)}</td>`
+        + `<td style="padding:4px 0;vertical-align:middle;font:700 16px/21px ${FONT};color:${nmColor}">${rk}${esc(kit.short(g, sd))}${fav}${rec}</td>${score}`
+        + `<td align="right" style="padding:4px 0 4px 8px;vertical-align:middle;white-space:nowrap">${side}</td></tr>`;
+    }).join("");
+    const extra = (o.lines || []).filter(Boolean).join("");
+    return `<tr><td style="padding:0 0 8px"><a href="${url}" style="text-decoration:none;color:${T.ink};display:block">`
+      + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${T.card};border-radius:8px;border-collapse:separate">`
+      + `<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${lg}${tag}</tr></table></td></tr>`
+      + `<tr><td style="padding:4px 12px ${extra ? 0 : 12}px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>`
+      + (extra ? `<tr><td style="padding:0 12px 12px">${extra}</td></tr>` : "")
+      + `</table></a></td></tr>`;
+  };
+  const preview = (t) => `<div style="margin-top:8px;font:500 13px/17px ${FONT};color:${T.muted}">${esc(t)}</div>`;
+  const recap = (r) => `<div style="margin-top:10px"><div style="font:800 13px ${FONT};color:${T.muted};margin-bottom:4px">Recap</div><div style="font:400 15px/1.45 ${FONT};color:${T.ink}">${esc(r)}</div></div>`;
+  const small = (t) => `<div style="margin-top:6px;font:700 13px ${FONT};color:${T.dim}">${esc(t)}</div>`;
+  // the slate's time header: "6:00" in condensed numerals, "pm" small beside it
+  const timeHead = (t) => {
+    const s = time(t), m = /^(\d+:\d\d)\s*([AP]M)$/i.exec(s);
+    return `<tr><td style="padding:16px 0 8px"><span style="font:800 22px/1 ${NARROW};font-stretch:66%;color:${T.ink}">${esc(m ? m[1] : s)}</span>${m ? `<span style="font:700 13px ${FONT};color:${T.muted}">&nbsp;${m[2].toLowerCase()}</span>` : ""}</td></tr>`;
+  };
+  const sec = (title, count) => `<tr><td style="padding:28px 0 4px;font:800 22px ${FONT};font-stretch:112%;color:${T.head};letter-spacing:-.01em">${esc(title)}${count ? `<span style="font:700 15px ${FONT};color:${T.dim}">&nbsp;&nbsp;${count}</span>` : ""}</td></tr>`;
+  return { card, preview, recap, small, timeHead, sec, time };
 }
-function chip(abbr, fill, ring) {
-  let f = hexOk(fill) ? fill : C.raise, r = hexOk(ring) ? ring : "#ffffff";
-  if (lum(f) > 0.72 && hexOk(ring) && lum(ring) < 0.72) { f = ring; r = fill; }
-  if (r.toLowerCase() === f.toLowerCase()) r = "#ffffff";
-  const ink = lum(f) > 0.72 ? "#111111" : contrast(f, "#ffffff") < 4.5 && contrast(f, "#0C1117") > contrast(f, "#ffffff") ? "#0C1117" : "#ffffff";
-  const t = String(abbr || "").slice(0, 4);
-  return `<span style="display:inline-block;width:42px;height:22px;line-height:22px;text-align:center;border-radius:4px;background:${f};border-bottom:2px solid ${r};color:${ink};font:800 ${t.length > 3 ? 11 : 12}px ${FONT};letter-spacing:.02em">${esc(t)}</span>`;
+
+// ---------- what goes in it ----------
+const pool = async (items, n, fn) => { const out = new Array(items.length); let i = 0; await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; try { out[k] = await fn(items[k]); } catch { out[k] = null; } } })); return out; };
+
+// everything the email needs, for one person on their local date: today's slate, yesterday's teams and the rest of last night
+async function gather(env, who, date) {
+  const prefix = prefixOf(who.id), prev = prevDay(date);
+  const base = await getDocs(env, [`alertsets/${date}`, `alertsets/${prev}`, `scores/${prev}`, `slates/${date}`, `slates/${prev}`, `previews/${date}`, `previews/${prev}`,
+    `${prefix}mine/user-settings`, `${prefix}mine/user-lineup-${date}`, ...(who.id === "dj" ? ["prefs/pvlines"] : [])]);
+  const aset = base[`alertsets/${date}`];
+  if (!aset || !Array.isArray(aset.people)) return { wait: "today's slate isn't ready yet" };
+  const me = aset.people.find((p) => p && p.prefix === prefix);
+  if (!me) return { skip: "no slate for this person yet" };
+  const sett = base[`${prefix}mine/user-settings`] || {};
+  const pa = base[`alertsets/${prev}`] || {}, pme = (pa.people || []).find((p) => p && p.prefix === prefix) || {};
+  // full game details (records, colors, logos) from the day documents; college games are in their own ones
+  const games = aset.games || {}, pg = pa.games || {};
+  const ids = (me.slate || []).filter((i) => games[i]), pids = [...new Set([...(pme.slate || []), ...(pme.mine || [])])].filter((i) => pg[i]);
+  const need = [];
+  for (const [d, list, gs] of [[date, ids, games], [prev, pids, pg]]) for (const l of new Set(list.map((i) => gs[i].league).filter((l) => COLLEGE[l]))) need.push(`slates/${d}-${l}`);
+  const cdocs = need.length ? await getDocs(env, need) : {};
+  const full = (d, id, slim) => {
+    for (const p of [`slates/${d}`, `slates/${d}-${slim.league}`]) { const x = ((base[p] || cdocs[p] || {}).games || []).find((g) => g && g.id === id); if (x) return Object.assign({}, x, slim, { id }); }
+    return Object.assign({ id }, slim);
+  };
+  return { date, prev, me, pme, sett, added: new Set(((base[`${prefix}mine/user-lineup-${date}`] || {}).added) || []), today: ids.map((i) => full(date, i, games[i])), yday: pids.map((i) => full(prev, i, pg[i])),
+    scores: ((base[`scores/${prev}`] || {}).games) || {}, odds: ((base[`previews/${date}`] || {}).games) || {}, recaps: ((base[`previews/${prev}`] || {}).games) || {},
+    pvlines: (base["prefs/pvlines"] || {}).date === date ? (base["prefs/pvlines"].lines || {}) : {} };
 }
-const rank = (n) => (Number(n) > 0 && Number(n) <= 25 ? `<span style="color:${C.dim};font-weight:700;font-size:12px">${Number(n)}&nbsp;</span>` : "");
+// team logos for games whose day document came out before logos were saved (the app does the same, 3.60.0):
+// ESPN's team list per league, kept at the edge for a week; national teams come from the game's own summary
+const LOGO_FEEDS = { nfl: "football/nfl", nba: "basketball/nba", wnba: "basketball/wnba", nhl: "hockey/nhl", mlb: "baseball/mlb",
+  ncaaf: "football/college-football", ncaam: "basketball/mens-college-basketball", ncaaw: "basketball/womens-college-basketball",
+  mls: "soccer/usa.1", epl: "soccer/eng.1", laliga: "soccer/esp.1", seriea: "soccer/ita.1", bundesliga: "soccer/ger.1", ligue1: "soccer/fra.1",
+  ucl: "soccer/uefa.champions", uel: "soccer/uefa.europa" };
+const logoNorm = (n) => String(n || "").toLowerCase().replace(/\s*\((men's basketball|women's basketball|football)\)$/, "").replace(/[^a-z0-9]/g, "");
+async function logoList(lg) {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/${LOGO_FEEDS[lg]}/teams?limit=1000`, cache = typeof caches !== "undefined" ? caches.default : null;
+  const key = new Request("https://slate.cache/logos/" + lg);
+  let j = null;
+  const hit = cache ? await cache.match(key) : null;
+  if (hit) j = await hit.json();
+  else {
+    const r = await fetch(url, { headers: { "user-agent": "slate-email" } }).catch(() => null); if (!r || !r.ok) return {};
+    const raw = await r.json().catch(() => null), ts = raw && raw.sports && raw.sports[0] && raw.sports[0].leagues && raw.sports[0].leagues[0] && raw.sports[0].leagues[0].teams;
+    j = {}; for (const x of ts || []) { const tm = x.team || {}, h = ((tm.logos || [])[0] || {}).href; if (h && tm.displayName) j[logoNorm(tm.displayName)] = h; }
+    if (cache) await cache.put(key, new Response(JSON.stringify(j), { headers: { "cache-control": "max-age=604800" } }));
+  }
+  return j || {};
+}
+async function fillLogos(list) {
+  const lgs = [...new Set(list.filter((g) => !g.awayLogo || !g.homeLogo).map((g) => g.league).filter((l) => LOGO_FEEDS[l]))];
+  const maps = Object.fromEntries(await Promise.all(lgs.map(async (l) => [l, await logoList(l).catch(() => ({}))])));
+  for (const g of list) for (const sd of ["away", "home"]) if (!g[sd + "Logo"]) { const h = (maps[g.league] || {})[logoNorm(g[sd])]; if (h) g[sd + "Logo"] = h; }
+}
+const finals = (d) => d.yday.filter((g) => { const s = d.scores[g.id]; return s && s.state === "post" && s.a != null && s.h != null; });
+const favFinals = (d) => { const m = new Set(d.pme.mine || []); return finals(d).filter((g) => m.has(g.id)); };
+const writingNow = (e) => e && e.writing && !e.writing.error && Date.now() - Date.parse(e.writing.at) < 12 * 60000;
+
+// Claude's recaps of the person's teams' games from yesterday: started here when one is missing (the same shared recap a tap
+// in the app writes). Returns how many are still being written.
+export async function startRecaps(env, who, date) {
+  const d = await gather(env, who, date); if (d.wait || d.skip || !env.SUMMARY) return 0;
+  const kit = slateKit({}), todo = favFinals(d).filter((g) => !((d.recaps[g.id] || {}).recap || {}).text && !writingNow(d.recaps[g.id])).slice(0, RECAPS_A_DAY);
+  await pool(todo, 3, async (g) => {
+    const sum = g.ev ? await kit.rkFetch(kit.bxSummaryUrl(g.league, g.ev)) : null;
+    const facts = sum ? kit.trimEspn(sum, g, "recap") : {}, at = new Date().toISOString();
+    await mergeDoc(env, `previews/${d.prev}`, { games: { [g.id]: { writing: { at, kind: "recap" } } } });
+    await env.SUMMARY.create({ params: { user: "email", kind: "recap", date: d.prev, id: g.id, key: null, at,
+      game: JSON.stringify(kit.clGame(g)).slice(0, 6000), facts: JSON.stringify(facts).slice(0, 16000) } });
+  });
+  return todo.length + favFinals(d).filter((g) => writingNow(d.recaps[g.id])).length;
+}
 
 export async function buildEmail(env, who, nowT) {
-  const tz = okTz(who.tz) ? who.tz : "America/Chicago", prefix = prefixOf(who.id);
-  const date = local(nowT || new Date(), tz).date, prev = prevDay(date);
-  const base = await getDocs(env, [`alertsets/${date}`, `alertsets/${prev}`, `scores/${prev}`, `slates/${date}`, `previews/${date}`]);
-  const aset = base[`alertsets/${date}`];
-  if (!aset || !Array.isArray(aset.people)) return { wait: true, why: "today's slate isn't ready yet" };
-  const me = aset.people.find((p) => p && p.prefix === prefix);
-  if (!me) return { skip: true, why: "no slate for this person yet" };
-  const games = aset.games || {}, mine = new Set(me.mine || []);
-  const ids = [...new Set([...(me.slate || []), ...(me.mine || [])])].filter((i) => games[i]);
-  // records, standings and colors from the day's games (college games are in their own documents)
-  const more = {}, need = [...new Set(ids.map((i) => games[i].league).filter((l) => COLLEGE[l]))].map((l) => `slates/${date}-${l}`);
-  const cdocs = need.length ? await getDocs(env, need) : {};
-  for (const d of [base[`slates/${date}`], ...Object.values(cdocs)]) for (const g of (d && d.games) || []) if (g && g.id) more[g.id] = g;
-  const odds = ((base[`previews/${date}`] || {}).games) || {};
-  const today = ids.map((id) => Object.assign({ id, mine: mine.has(id) }, more[id] || {}, games[id]))
-    .sort((a, b) => Date.parse(a.start) - Date.parse(b.start) || (b.mine ? 1 : 0) - (a.mine ? 1 : 0));
-  // last night: their slate and teams that day, with the final score
-  const pa = base[`alertsets/${prev}`] || {}, pme = (pa.people || []).find((p) => p && p.prefix === prefix) || {}, pg = pa.games || {}, sc = ((base[`scores/${prev}`] || {}).games) || {};
-  const pmine = new Set(pme.mine || []), pmore = {};
-  for (const g of (((await getDocs(env, [`slates/${prev}`]))[`slates/${prev}`] || {}).games) || []) if (g && g.id) pmore[g.id] = g;
-  const results = [...new Set([...(pme.slate || []), ...(pme.mine || [])])]
-    .filter((i) => pg[i] && sc[i] && sc[i].state === "post" && sc[i].a != null && sc[i].h != null)
-    .map((id) => Object.assign({ id, mine: pmine.has(id), s: sc[id] }, pmore[id] || {}, pg[id]))
-    .sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || Date.parse(a.start) - Date.parse(b.start)).slice(0, 12);
-  if (!today.length && !results.length) return { skip: true, why: "no games and no results" };
+  const tz = okTz(who.tz) ? who.tz : "America/Chicago", date = local(nowT || new Date(), tz).date;
+  const d = await gather(env, who, date);
+  if (d.wait) return { wait: true, why: d.wait };
+  if (d.skip) return { skip: true, why: d.skip };
+  const T = Object.assign({}, MIDNIGHT, cleanLook(who.look) || {});
+  const mineT = Object.fromEntries((d.me.mine || []).map((i) => [i, 1])), mineY = Object.fromEntries((d.pme.mine || []).map((i) => [i, 1]));
+  const kit = slateKit({ rules: d.sett.rules, mine: mineT }), kitY = slateKit({ rules: d.sett.rules, mine: mineY }), P = painter(T, kit, tz);
+  // the star next to a name: that team is one of yours (from the day's team list; the side is the one whose name matches)
+  const teams = (d.sett.teams || []).map((t) => String(t).toLowerCase());
+  const favSide = (m) => (g, sd) => !!m[g.id] && teams.some((t) => { const n = String(g[sd] || "").toLowerCase(); return n === t || n.indexOf(t) === 0 || t.indexOf(n) === 0; });
 
-  const lineOf = (g) => {
-    const o = (odds[g.id] || {}).odds; if (!who.lines || !o) return "";
-    const p = [o.spread ? String(o.spread) : "", o.total ? "O/U " + o.total : ""].filter(Boolean); return p.join(" · ");
-  };
+  // 1. today's slate, in time order, with the slate's own tag and preview line
+  const today = d.today.slice().sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  const lines = await pool(today, 6, async (g) => {
+    const sum = g.ev && kit.BX_SPORT[g.league] ? await kit.rkFetch(kit.bxSummaryUrl(g.league, g.ev)) : null;
+    for (const c of ((((sum && sum.header || {}).competitions || [])[0] || {}).competitors) || []) { const sd = c.homeAway, h = ((c.team || {}).logos || [])[0] || {}; if ((sd === "away" || sd === "home") && !g[sd + "Logo"] && (h.href || (c.team || {}).logo)) g[sd + "Logo"] = h.href || c.team.logo; }
+    if (d.pvlines[g.id]) return d.pvlines[g.id];  // the line DJ's phone is showing right now
+    if (!sum) return "";
+    const q = await kit.pvQB(g.league, sum).catch(() => []);
+    return kit.pvCompute(g.league, sum, q) || "";
+  });
+  const tagOf = (k, g, added) => { const w = k.ruleHits(g).why; return w.length ? w[0] : added ? "Added" : ""; };
+  const odds = (g) => { const o = (d.odds[g.id] || {}).odds; if (!who.lines || !o) return ""; return [o.spread || "", o.total ? "O/U " + o.total : ""].filter(Boolean).join(" · "); };
+  // 2. yesterday's games for your teams, with Claude's recap; 3. the rest of last night's slate
+  const fav = favFinals(d).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  const favIds = new Set(fav.map((g) => g.id));
+  const rest = finals(d).filter((g) => !favIds.has(g.id) && (d.pme.slate || []).includes(g.id)).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  if (!today.length && !fav.length && !rest.length) return { skip: true, why: "no games and no results" };
+  await fillLogos([...today, ...fav, ...rest]);
+  const pending = fav.filter((g) => !((d.recaps[g.id] || {}).recap || {}).text && writingNow(d.recaps[g.id])).length;
+
   const name = String(who.name || "").trim(), wd = dayName(date, { weekday: "long" }), md = dayName(date, { month: "short", day: "numeric" });
-  const top = today.find((g) => g.mine) || today[0];
-  const nm = (g, sd) => g[sd + "Short"] || g[sd] || "";
-  const subject = today.length
-    ? `${wd}: ${nm(top, "away")} at ${nm(top, "home")}${today.length > 1 ? ` and ${today.length - 1} more` : ""} on your slate`
-    : `${wd}: no games on your slate, plus last night's results`;
-  const lead = today.length
-    ? `${today.length} game${today.length === 1 ? "" : "s"} on your slate today, the first at ${clock(today[0].start, tz)}.`
-    : "No games on your slate today.";
+  const top = today.find((g) => mineT[g.id]) || today[0];
+  const pair = (g) => kit.short(g, kit.sideOrder(g)[0]) + kit.sep(g).replace(" @ ", " at ") + kit.short(g, kit.sideOrder(g)[1]);
+  const subject = today.length ? `${wd}: ${pair(top)}${today.length > 1 ? ` and ${today.length - 1} more` : ""} on your slate` : `${wd}: no games on your slate, plus last night`;
+  const lead = today.length ? `${today.length} game${today.length === 1 ? "" : "s"} on your slate today, the first at ${P.time(today[0].start)}.` : "No games on your slate today.";
 
-  // ---- plain text ----
+  let h = "", prevT = "";
+  if (today.length) {
+    h += P.sec("Today's slate", today.length);
+    today.forEach((g, i) => {
+      const t = P.time(g.start); if (t !== prevT) { h += P.timeHead(g.start); prevT = t; }
+      h += P.card(g, { tag: tagOf(kit, g, d.added.has(g.id)), tagStar: !!mineT[g.id], favs: favSide(mineT), lines: [lines[i] ? P.preview(lines[i]) : "", odds(g) ? P.small(odds(g)) : ""] });
+    });
+  }
+  if (fav.length) {
+    h += P.sec("Your teams yesterday", "");
+    for (const g of fav) {
+      const r = ((d.recaps[g.id] || {}).recap || {}).text;
+      h += P.card(g, { sc: d.scores[g.id], tag: "Your team", tagStar: true, favs: favSide(mineY), lines: [r ? P.recap(r) : ""] });
+    }
+  }
+  if (rest.length) {
+    h += P.sec("Last night", rest.length);
+    for (const g of rest) h += P.card(g, { sc: d.scores[g.id], tag: tagOf(kitY, g, false), favs: favSide(mineY) });
+  }
+  const pre = today.length ? today.slice(0, 3).map((g) => `${pair(g)} ${P.time(g.start)}`).join(" · ") : fav.concat(rest).slice(0, 3).map((g) => `${kit.short(g, "away")} ${d.scores[g.id].a}, ${kit.short(g, "home")} ${d.scores[g.id].h}`).join(" · ");
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="${T.dark ? "dark" : "light"} only"><meta name="supported-color-schemes" content="${T.dark ? "dark" : "light"}"><title>${esc(subject)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;display=swap" rel="stylesheet">
+<style>:root{color-scheme:${T.dark ? "dark" : "light"} only}body{margin:0;padding:0;background:${T.bg}}a{color:${T.accent}}</style></head>
+<body style="margin:0;padding:0;background:${T.bg};-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${T.bg}">${esc(pre)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg}"><tr><td align="center" style="padding:16px 12px 32px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;font-family:${FONT};color:${T.ink}">
+<tr><td style="padding:4px 0 0;font:800 28px/1.1 ${FONT};font-stretch:112%;color:${T.ink};letter-spacing:-.01em">${esc(wd)}, ${esc(md)}</td></tr>
+<tr><td style="padding:8px 0 0;font:700 15px/1.4 ${FONT};color:${T.muted}">${name ? "Good morning, " + esc(name) + ". " : ""}${esc(lead)}</td></tr>
+${h}
+<tr><td style="padding:20px 0 0"><a href="${APP}" style="display:block;background:${T.fill};color:${T.on};text-decoration:none;border-radius:8px;padding:14px 16px;font:800 16px ${FONT};text-align:center">Open Slate</a></td></tr>
+<tr><td style="padding:16px 0 0;font:700 13px/1.5 ${FONT};color:${T.dim}">${who.lines ? "Lines are DraftKings', from ESPN. " : ""}${fav.length ? "Recaps by Claude. " : ""}Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings &gt; Morning email.</td></tr>
+</table></td></tr></table></body></html>`;
+
+  // plain text, for mail apps that don't show the designed version
   const tx = [`${name ? "Good morning, " + name + ". " : ""}${lead}`, ""];
   if (today.length) {
-    tx.push("TODAY");
-    for (const g of today) {
-      const ln = lineOf(g);
-      tx.push(`${clock(g.start, tz)}  ${g.away} at ${g.home}${g.mine ? "  (your team)" : ""}`);
-      tx.push(`        ${[LG[g.league] || "", (g.tv || [])[0] || ""].filter(Boolean).join(" · ")}${ln ? " · " + ln : ""}`);
-      tx.push(`        ${APP}/?game=${encodeURIComponent(g.id)}`);
-    }
+    tx.push("TODAY'S SLATE");
+    today.forEach((g, i) => tx.push(`${P.time(g.start)}  ${pair(g)}${(g.tv || [])[0] ? "  " + g.tv[0] : ""}`, ...(lines[i] ? ["        " + lines[i]] : []), `        ${APP}/?game=${encodeURIComponent(g.id)}`));
     tx.push("");
   }
-  if (results.length) {
-    tx.push("LAST NIGHT");
-    for (const g of results) tx.push(`${nm(g, "away")} ${g.s.a}, ${nm(g, "home")} ${g.s.h} (${g.s.detail || "Final"})`);
-    tx.push("");
-  }
+  const res = (g) => { const s = d.scores[g.id]; return `${kit.short(g, "away")} ${s.a}, ${kit.short(g, "home")} ${s.h} (${s.detail || "Final"})`; };
+  if (fav.length) { tx.push("YOUR TEAMS YESTERDAY"); for (const g of fav) { tx.push(res(g)); const r = ((d.recaps[g.id] || {}).recap || {}).text; if (r) tx.push(r); tx.push(""); } }
+  if (rest.length) { tx.push("LAST NIGHT"); for (const g of rest) tx.push(res(g)); tx.push(""); }
   tx.push(`Open Slate: ${APP}`, "", "Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings > Morning email.");
-
-  // ---- html ----
-  const row = (inner, first) => `<tr><td style="padding:12px 16px;border-top:${first ? "0" : "1px solid " + C.hair}">${inner}</td></tr>`;
-  const team = (g, sd, extra) => {
-    const rec = g[sd + "Record"] ? `<span style="color:${C.muted};font-weight:700;font-size:13px">&nbsp;&nbsp;${esc(g[sd + "Record"])}</span>` : "";
-    return `<tr><td width="50" style="padding:3px 8px 3px 0;vertical-align:middle">${mark(g, sd)}</td>`
-      + `<td style="padding:3px 0;vertical-align:middle;font:800 16px ${FONT};color:${C.ink}">${rank(g[sd + "Rank"])}${esc(g[sd] || "")}${rec}</td>${extra || ""}</tr>`;
-  };
-  const sec = (title, count) => `<tr><td style="padding:24px 16px 8px;font:800 22px ${FONT};color:${C.head};letter-spacing:-.01em">${title}${count ? `<span style="font-size:15px;color:${C.dim};font-weight:700">&nbsp;&nbsp;${count}</span>` : ""}</td></tr>`;
-  let h = "";
-  if (today.length) {
-    h += sec("Today", today.length);
-    h += `<tr><td style="padding:0 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.card};border-radius:8px">`;
-    today.forEach((g, i) => {
-      const meta = [LG[g.league] || "", (g.tv || [])[0] || ""].filter(Boolean).map(esc).join(" · "), ln = lineOf(g), url = `${APP}/?game=${encodeURIComponent(g.id)}`;
-      const tag = g.mine ? `<span style="display:inline-block;margin-left:8px;padding:0 6px;border-radius:4px;background:${C.fill};color:${C.on};font:800 11px/18px ${FONT}">Your team</span>` : "";
-      h += row(`<a href="${url}" style="text-decoration:none;color:${C.ink};display:block">`
-        + `<div style="font:800 15px ${NARROW};color:${C.ink};margin-bottom:6px">${esc(clock(g.start, tz))}<span style="font:700 13px ${FONT};color:${C.muted}">&nbsp;&nbsp;${meta}</span>${tag}</div>`
-        + `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${team(g, "away")}${team(g, "home")}</table>`
-        + (ln ? `<div style="margin-top:6px;font:700 13px ${FONT};color:${C.dim}">${esc(ln)}</div>` : "")
-        + `</a>`, i === 0);
-    });
-    h += `</table></td></tr>`;
-  }
-  if (results.length) {
-    h += sec("Last night", "");
-    h += `<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.card};border-radius:8px">`;
-    results.forEach((g, i) => {
-      const aw = g.s.a > g.s.h, hw = g.s.h > g.s.a;
-      const score = (v, win) => `<td align="right" style="padding:3px 0;vertical-align:middle;font:800 20px ${NARROW};color:${win ? C.ink : C.muted};width:44px">${esc(v)}</td>`;
-      h += row(`<div style="font:700 13px ${FONT};color:${C.muted};margin-bottom:6px">${esc(g.s.detail || "Final")}<span style="color:${C.dim}">&nbsp;&nbsp;${esc(LG[g.league] || "")}</span>${g.mine ? `<span style="display:inline-block;margin-left:8px;padding:0 6px;border-radius:4px;background:${C.fill};color:${C.on};font:800 11px/18px ${FONT}">Your team</span>` : ""}</div>`
-        + `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${team(g, "away", score(g.s.a, aw))}${team(g, "home", score(g.s.h, hw))}</table>`, i === 0);
-    });
-    h += `</table></td></tr>`;
-  }
-  const pre = today.length ? today.slice(0, 3).map((g) => `${nm(g, "away")} at ${nm(g, "home")} ${clock(g.start, tz)}`).join(" · ") : results.slice(0, 3).map((g) => `${nm(g, "away")} ${g.s.a}, ${nm(g, "home")} ${g.s.h}`).join(" · ");
-  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark light"><meta name="supported-color-schemes" content="dark light"><title>${esc(subject)}</title>
-<style>:root{color-scheme:dark light;supported-color-schemes:dark light}body{margin:0;padding:0;background:${C.bg}}a{color:${C.accent}}</style></head>
-<body style="margin:0;padding:0;background:${C.bg};-webkit-text-size-adjust:100%">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${C.bg}">${esc(pre)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg}"><tr><td align="center" style="padding:16px 12px 32px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;font-family:${FONT};color:${C.ink}">
-<tr><td style="padding:8px 16px 0;font:800 13px ${FONT};color:${C.accent};letter-spacing:.04em">SLATE</td></tr>
-<tr><td style="padding:4px 16px 0;font:800 28px ${FONT};color:${C.ink};letter-spacing:-.01em">${esc(wd)}, ${esc(md)}</td></tr>
-<tr><td style="padding:8px 16px 0;font:700 16px/1.4 ${FONT};color:${C.muted}">${name ? "Good morning, " + esc(name) + ". " : ""}${esc(lead)}</td></tr>
-${h}
-<tr><td style="padding:24px 16px 0"><a href="${APP}" style="display:block;background:${C.fill};color:${C.on};text-decoration:none;border-radius:8px;padding:14px 16px;font:800 16px ${FONT};text-align:center">Open Slate</a></td></tr>
-<tr><td style="padding:16px 16px 0;font:700 13px/1.5 ${FONT};color:${C.dim}">${who.lines ? "Lines are DraftKings', from ESPN. " : ""}Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings &gt; Morning email.</td></tr>
-</table></td></tr></table></body></html>`;
-  return { date, subject, text: tx.join("\n"), html, games: today.length, results: results.length };
+  return { date, subject, text: tx.join("\n"), html, games: today.length, results: fav.length + rest.length, pending };
 }
 
 // ---------- the minute job ----------
+async function sendNow(env, p, out) {
+  const to = await unseal(env, p.email); if (!to) throw new Error("the saved address can't be read; enter it again in Settings");
+  await sendGmail(env, to, out.subject, out.text, out.html);
+}
 export async function runMorningEmail(env) {
   if (!env.SUPABASE_SECRET || !gmailReady(env)) return;
   const now = new Date(), doc = (await getDocs(env, [DOC]))[DOC] || {}, people = doc.people || {};
   for (const [id, p] of Object.entries(people)) {
-    if (!p || !p.on || !p.email) continue;
+    if (!p || !p.email) continue;
     const tz = okTz(p.tz) ? p.tz : "America/Chicago", lt = local(now, tz), at = hm(p.time);
-    if (at < 0 || p.last === lt.date || lt.min < at || lt.min > at + 240) continue;  // due from their time until four hours after it
-    if (p.sending && now - Date.parse(p.sending) < 10 * 60000) continue;           // another run is on it
+    const testAge = p.testAt ? (now - Date.parse(p.testAt)) / 60000 : -1, testDue = testAge >= 0 && testAge < 15;
+    const daily = p.on && at >= 0 && p.last !== lt.date && lt.min >= at - 45 && lt.min <= at + 240;
+    if (!testDue && !daily) continue;
+    if (p.sending && now - Date.parse(p.sending) < 10 * 60000) continue;  // another run is on it
+    // 45 minutes ahead (or right after "Send one now", or on turning it on late): have Claude write the missing recaps, once a day
+    if (p.prepDay !== lt.date) {
+      await mergeDoc(env, DOC, { people: { [id]: { prepDay: lt.date } } });
+      try { await startRecaps(env, Object.assign({ id }, p), lt.date); } catch (e) { console.log("morning email recaps", id, String(e)); }
+      continue;
+    }
+    if (!testDue && lt.min < at) continue;
     await mergeDoc(env, DOC, { people: { [id]: { sending: now.toISOString() } } });
     let patch;
     try {
+      // a recap still being written: wait for it, 20 minutes at most (5 for a test)
       const out = await buildEmail(env, Object.assign({ id }, p), now);
-      if (out.wait) patch = lt.min > at + 180 ? { last: lt.date, note: out.why } : { note: out.why };
+      if (out.pending && (testDue ? testAge < 5 : lt.min < at + 20)) patch = { note: "waiting for Claude's recaps" };
+      else if (testDue) {
+        if (out.wait || out.skip) patch = { testAt: "", note: "test not sent: " + out.why };
+        else { await sendNow(env, p, out); patch = { testAt: "", note: `test sent: ${out.games} games, ${out.results} results`, err: "" }; }
+      } else if (out.wait) patch = lt.min > at + 180 ? { last: lt.date, note: out.why } : { note: out.why };
       else if (out.skip) patch = { last: lt.date, note: "skipped: " + out.why };
-      else {
-        const to = await unseal(env, p.email); if (!to) throw new Error("the saved address can't be read; enter it again in Settings");
-        await sendGmail(env, to, out.subject, out.text, out.html);
-        patch = { last: lt.date, sentAt: now.toISOString(), note: `sent: ${out.games} games, ${out.results} results`, err: "" };
-      }
+      else { await sendNow(env, p, out); patch = { last: lt.date, sentAt: now.toISOString(), note: `sent: ${out.games} games, ${out.results} results`, err: "" }; }
     } catch (e) {
       // try again on the next minutes, three times a day at most
       const fails = (p.failDay === lt.date ? Number(p.fails) || 0 : 0) + 1;
       patch = { failDay: lt.date, fails, err: String(e && e.message || e).slice(0, 200) };
-      if (fails >= 3) patch.last = lt.date;
+      if (fails >= 3) { if (testDue) patch.testAt = ""; else patch.last = lt.date; }
       console.log("morning email", id, patch.err);
     }
     await mergeDoc(env, DOC, { people: { [id]: Object.assign({ sending: "" }, patch) } });
@@ -296,12 +417,13 @@ const EMAIL = /^[^\s@<>()"',;:]{1,64}@[A-Za-z0-9.-]{1,180}\.[A-Za-z]{2,24}$/;
 export async function morningApi(env, me, p) {
   const doc = (await getDocs(env, [DOC]))[DOC] || {}, cur = (doc.people || {})[me.id] || {};
   const view = async (x) => ({ on: !!x.on, time: x.time || "07:00", tz: x.tz || "", lines: !!x.lines, email: await unseal(env, x.email), last: x.last || "",
-    sentAt: x.sentAt || "", err: x.err || "", note: x.note || "", ready: gmailReady(env) });
+    sentAt: x.sentAt || "", err: x.err || "", note: x.note || "", ready: gmailReady(env), testing: !!(x.testAt && Date.now() - Date.parse(x.testAt) < 15 * 60000) });
   if (p.action === "get") return { ok: true, prefs: await view(cur) };
   if (p.action === "save") {
     const patch = { name: me.name || me.id };
     if (typeof p.on === "boolean") patch.on = p.on;
     if (typeof p.lines === "boolean") patch.lines = p.lines;
+    if (p.look) { const lk = cleanLook(p.look); if (lk) patch.look = lk; }
     if (p.time !== undefined) { const m = hm(p.time); if (m < 4 * 60 || m > 12 * 60 || m % 15) return { error: "Pick a time between 4 AM and noon." }; patch.time = String(p.time); }
     if (p.tz !== undefined) { if (!okTz(String(p.tz))) return { error: "Unknown time zone" }; patch.tz = String(p.tz); }
     if (p.email !== undefined) {
@@ -315,18 +437,21 @@ export async function morningApi(env, me, p) {
     await mergeDoc(env, DOC, { people: { [me.id]: patch } });
     return { ok: true, prefs: await view(Object.assign({}, cur, patch)) };
   }
-  if (p.action === "test" || p.action === "preview") {
-    const out = await buildEmail(env, Object.assign({ id: me.id }, cur, { name: me.name, lines: typeof p.lines === "boolean" ? p.lines : !!cur.lines }), new Date());
-    if (out.wait || out.skip) return { error: out.wait ? "Today's slate isn't ready yet. Try again in a few minutes." : "Nothing to send today: no games on your slate and no results from last night." };
-    if (p.action === "preview") return { ok: true, subject: out.subject, html: out.html, text: out.text };
+  if (p.action === "preview") {
+    const out = await buildEmail(env, Object.assign({ id: me.id }, cur, { name: me.name, look: p.look || cur.look, lines: typeof p.lines === "boolean" ? p.lines : !!cur.lines }), new Date());
+    if (out.wait || out.skip) return { error: out.why };
+    return { ok: true, subject: out.subject, html: out.html, text: out.text, pending: out.pending };
+  }
+  if (p.action === "test") {
+    // queued for the minute job, which first has Claude write any missing recaps (a minute or two), then sends
     if (!gmailReady(env)) return { error: "Sending isn't set up yet. DJ needs to connect his Gmail." };
-    const to = await unseal(env, cur.email); if (!to) return { error: "Add your email address first." };
-    // a few test sends a day, so a stuck button can't flood an inbox
+    if (!cur.email) return { error: "Add your email address first." };
     const day = local(new Date(), "America/Chicago").date, n = cur.testDay === day ? Number(cur.tests) || 0 : 0;
     if (n >= 5) return { error: "That's five test emails today. Try again tomorrow." };
-    await mergeDoc(env, DOC, { people: { [me.id]: { testDay: day, tests: n + 1 } } });
-    try { await sendGmail(env, to, out.subject, out.text, out.html); } catch (e) { return { error: "Couldn't send: " + String(e && e.message || e) }; }
-    return { ok: true, sent: true };
+    const patch = { testDay: day, tests: n + 1, testAt: new Date().toISOString() };
+    if (p.look) { const lk = cleanLook(p.look); if (lk) patch.look = lk; }
+    await mergeDoc(env, DOC, { people: { [me.id]: patch } });
+    return { ok: true, queued: true };
   }
   return { error: "bad request" };
 }
