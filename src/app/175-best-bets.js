@@ -388,7 +388,7 @@
   }
   function betRow(g, b, res) {
     var kind = status(g).kind, s = res.s, lv = kind === "live", sc = scoreRaw(g.id) || {}, fin = kind === "over", over = b.lean > 0, ok = betRight(b, res);
-    var r = el("div", "bet" + (ok === true ? " won" : ok === false ? " lost" : lv && s === "live" ? " on" : "")), m = el("div", "bet-m"), rt = el("div", "bet-r");
+    var r = el("div", "bet" + (ok === true ? " won" : ok === false ? " lost" : lv && s === "live" ? " on" : "")), m = el("div", "bet-m");
     var vs = b.game ? abbr(g, "away") + " at " + abbr(g, "home") : (b.sd === "away" ? "at " + abbr(g, "home") : "vs " + abbr(g, "away"));
     var noun = betNoun(b), lineTxt = (over ? "Over " : "Under ") + b.line + " " + noun;
     // top line: where the game is (start time, Live with the clock, Final), the lean or how it went, and remove
@@ -396,9 +396,11 @@
     if (lv) { gst.appendChild(el("i")); gst.appendChild(document.createTextNode("Live" + (sc.detail ? " · " + sc.detail : ""))); }
     else gst.textContent = fin ? "Final" + (sc.detail && !/^final$/i.test(sc.detail) ? " · " + sc.detail.replace(/^final\/?/i, "").trim() : "") : "Starts " + timeText(g.start);
     top.appendChild(gst);
-    if (ok === true || ok === false) top.appendChild(el("span", "bet-tag " + (ok ? "hit" : "miss"), (ok ? "✓ Went " : "✗ Went ") + s));
-    else if (s === "void") top.appendChild(el("span", "bet-tag void", res.why || "Push"));
-    else top.appendChild(el("span", "bet-tag lean", (over ? "▲ Leans over" : "▼ Leans under")));
+    var tg = null;
+    if (ok === true || ok === false) tg = el("span", "bet-tag " + (ok ? "hit" : "miss"), (ok ? "✓ Went " : "✗ Went ") + s);
+    else if (s === "void") tg = el("span", "bet-tag void", res.why || "Push");
+    else tg = el("span", "bet-tag lean", (over ? "▲ Leans over" : "▼ Leans under"));
+    top.insertBefore(tg, gst);  // the tag leads, on the left: the card's right edge can sit under the folded Duo's clock or the menu button
     var x = el("button", "bet-x"); x.type = "button"; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove " + (b.game ? "this game total" : b.p) + " and show the next line");
     x.addEventListener("click", function (e) { e.stopPropagation(); betRemove(b); });
     top.appendChild(x); r.appendChild(top);
@@ -411,12 +413,11 @@
     var p = el("b", "bet-p", b.game ? vs : b.p); if (!b.game && b.pos) p.appendChild(el("i", null, b.pos)); m.appendChild(p);
     var l = el("span", "bet-l", lineTxt); if (!b.game) l.appendChild(el("span", null, " · " + vs)); m.appendChild(l);
     r.appendChild(m);
-    // right side: the recent average before the game, then tonight's number against the line
-    var vals = b.vals || [], avg = 0, big = b.line >= 40, say; vals.forEach(function (v) { avg += v; }); avg = vals.length ? avg / vals.length : 0;
-    if (s === "pre") { rt.appendChild(el("b", null, betAvg(avg, big))); rt.appendChild(el("i", null, "avg last " + vals.length)); say = "starts " + timeText(g.start); }
-    else if (s === "void") { rt.appendChild(el("b", null, "–")); rt.appendChild(el("i", null, "line " + b.line)); say = res.why || "push"; }
-    else { var have = res.now != null ? String(res.now) : "0"; rt.appendChild(el("b", null, have)); rt.appendChild(el("i", null, "line " + b.line)); say = (s === "live" ? "live, " : "went " + s + (ok ? ", the lean was right, " : ", the lean was wrong, ")) + have + " so far"; }
-    r.appendChild(rt);
+    // tonight's number against the line, once the game starts (3.54.1: it was a column on the right; before the game the stats line has the average)
+    var say;
+    if (s === "pre") say = "starts " + timeText(g.start);
+    else if (s === "void") say = res.why || "push";
+    else { var have = res.now != null ? String(res.now) : "0"; r.appendChild(el("p", "bet-now", (fin ? "Final: " : "Tonight so far: ") + have + " " + noun + ", line " + b.line)); say = (s === "live" ? "live, " : "went " + s + (ok ? ", the lean was right, " : ", the lean was wrong, ")) + have + " so far"; }
     // the case: the numbers first, then up to three things beyond them that point the same way
     var why = el("div", "bet-why"), cs = betCase(b, over);
     why.appendChild(el("p", null, cs));

@@ -1386,7 +1386,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .bets-sub, .bets-none { margin: 8px 2px 0; font-size: 13px; line-height: 1.35; color: var(--dim); }
 .bets-none { font-size: 15px; color: var(--muted); padding: 8px 0; }
 .bets { display: grid; gap: 8px; margin-top: 10px; }
-.bet { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; row-gap: 10px; align-items: center; padding: 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--hair); }
+.bet { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 10px; align-items: center; padding: 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--hair); }
 .bet-pair { display: grid; gap: 4px; align-self: center; }
 .bet-m { min-width: 0; display: grid; gap: 2px; }
 .bet-p { font-size: 16px; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1397,7 +1397,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .bet-r { text-align: right; line-height: 1.05; }
 .bet-r b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
 .bet-r i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--dim); }
-.bet-why { grid-column: 2 / -1; margin: 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
+.bet-why { grid-column: 1 / -1; margin: 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
 /* settled picks (3.40.0): a hit gets a green edge and a green "Hit"; a miss steps back */
 .bet.won { border-color: color-mix(in srgb, #2BB673 60%, transparent); background: color-mix(in srgb, #2BB673 8%, var(--card)); }
 .bet.lost { border-color: color-mix(in srgb, var(--live, #E5484D) 45%, transparent); }
@@ -1425,9 +1425,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .bet-why p:first-child { color: var(--ink); }
 .bet-fx { position: relative; padding-left: 14px; }
 .bet-fx::before { content: ""; position: absolute; left: 2px; top: .55em; width: 5px; height: 5px; border-radius: 1px; background: var(--accent); }
-.bet-src { grid-column: 2 / -1; margin: -4px 0 0; font-size: 13px; color: var(--dim); }
+.bet-src { grid-column: 1 / -1; margin: -4px 0 0; font-size: 13px; color: var(--dim); }
 .bet-x { flex: none; margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--dim); background: none; }
-.bet-tag + .bet-x { margin-left: 0; }
+.bet-top .bet-tag { margin-left: 0; }  /* 3.54.1: the tag leads on the left, the status follows it */
+.bet-now { grid-column: 1 / -1; margin: 0; font-size: 15px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
 .bet-x svg { width: 18px; height: 18px; }
 .bet-x:active { background: var(--raise); }
 

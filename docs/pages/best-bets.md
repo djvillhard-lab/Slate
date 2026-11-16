@@ -1,5 +1,5 @@
 # Betting lines (was Best bets)
-Last updated: Nov 16, 2026, 3.54.0
+Last updated: Nov 16, 2026, 3.54.1
 Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section on Tonight's Slate, at the bottom of the slate, below Finished. (3.49.0 moved it above Finished; DJ had it moved back in 3.51.2. Don't move it up again.)
 
 ## Done
@@ -61,3 +61,8 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 - Order: strongest lean first (edge×20) plus a little prominence. Two a game first pass, three if needed. Settled: green "✓ Went over" when the lean was right.
 - localStorage keys `slate-bets4` / `slate-picks3`.
 - Ideas not built: opponent defense vs position (no free per-position data found), revenge games (no former-team data).
+
+## 3.54.1 (DJ: "Not using enough of the card")
+- Card body (stats line, reasons, source) spans the full card from the left edge; only the name and line sit beside the badge.
+- The lean / result tag leads the top row on the left; the right-hand number column is gone (the folded Duo clock and the menu button covered it).
+  Tonight's number is its own line (`.bet-now`) once the game starts. Keep important things off the card's right edge.
