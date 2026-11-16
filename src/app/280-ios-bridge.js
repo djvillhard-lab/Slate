@@ -24,7 +24,7 @@
     var k = JSON.stringify(m); if (k === nativeLast) return; nativeLast = k; nativePost(m);
   }
   // the folded Duo: iOS's clock and Wi-Fi sit at the top of the right column and reach about 162 points down the screen,
-  // past the bottom of the top bar. The page starts (and the Live feed pins its score bar) below them; it stays full width (3.36.2)
+  // past the bottom of the top bar. The Live feed pins its score bar below them (3.36.3); the rest of the page is pulled down to see under them
   var SC_BOTTOM = 162;
   function scFit() {
     var h = document.documentElement, hd = document.querySelector("#pane-r > header.top");
