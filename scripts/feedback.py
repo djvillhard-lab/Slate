@@ -45,34 +45,43 @@ def post(path, body):
 def when(at):
     try:
         t = datetime.fromisoformat(at.replace("Z", "+00:00")).astimezone(ZoneInfo("America/Chicago"))
-        return t.strftime("%a %b %-d, %-I:%M %p CT")
+        return t.strftime("%a %b %-d, %-I:%M %p")
     except Exception:
         return at
 
 
-def report(items, shots):
+def short_device(i):
+    """The phone in a few words: "iPhone Duo, folded · app build 38" (the web version only for the browser)."""
+    dev = (i.get("device") or "").replace(", side column", "")
+    app = i.get("app") or ""
+    app = app.replace("iPhone app build", "app build") if app.startswith("iPhone app") else ("Web " + i["version"] if i.get("version") else app)
+    return " · ".join(x for x in (dev, app) if x)
+
+
+def report(items, shots, new=True):
+    """Easy to skim in a chat: a heading per type, then each item as its quote in bold, with who, where and when
+    on one line under it and the phone on the next."""
     if not items:
         return ""
-    out = ["**%d new feedback item%s**" % (len(items), "" if len(items) == 1 else "s")]
+    out = ["%d %sfeedback item%s" % (len(items), "new " if new else "", "" if len(items) == 1 else "s")]
+    n = 0
     for k, title in KINDS:
         group = [i for i in items if (i.get("kind") or "other") == k]
         if not group:
             continue
-        out.append("\n**%s (%d)**" % (title, len(group)))
+        out.append("\n### %s" % title)
         for i in group:
+            n += 1
             if i.get("error"):
-                out.append("- %s: couldn't be read (%s)" % (when(i.get("at", "")), i["error"]))
+                out.append("\n**%d.** Couldn't be read (sent %s)" % (n, when(i.get("at", ""))))
                 continue
+            text = " ".join(str(i.get("text", "")).split())
             page = i.get("page") or "unknown page"
             if i.get("detail"):
                 page += " (%s)" % i["detail"]
-            text = " ".join(str(i.get("text", "")).split())
-            out.append("- **%s**, from %s, %s: %s" % (i.get("name") or i.get("who"), page, when(i.get("at", "")), text))
-            bits = ["Web " + i["version"] if i.get("version") else "", i.get("app", ""), i.get("device", ""), i.get("screen", "")]
-            extra = " · ".join(b for b in bits if b)
-            if i.get("shot"):
-                extra += " · screenshot attached" + (" (%s)" % shots.get(i["id"]) if shots.get(i["id"]) else "")
-            out.append("  %s" % extra)
+            out.append("\n**%d. \u201c%s\u201d**" % (n, text))
+            out.append("%s · %s · %s" % (i.get("name") or i.get("who"), page, when(i.get("at", ""))))
+            out.append("_%s%s_" % (short_device(i), " · screenshot attached" if i.get("shot") else ""))
     return "\n".join(out)
 
 
@@ -99,7 +108,7 @@ def main():
     if a.json:
         print(json.dumps(items, indent=2))
     else:
-        print(report(items, shots) or "No new feedback.")
+        print(report(items, shots, not a.all) or "No new feedback.")
     if a.mark:
         ids = [i["id"] for i in items if i.get("id") and not i.get("reported")]
         if ids:
