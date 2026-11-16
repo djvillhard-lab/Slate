@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Betting lines (slate) | src/app/175-best-bets.js, bet styles in 040-components.css | 2026-11-16 19:40 |
