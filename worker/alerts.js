@@ -210,7 +210,7 @@ function laState(s) {
   // "MIN ball · 3rd & 4 at GB 35" (3.25.1: who has it, in words too, beside the football icon)
   if (s.state === "in" && s.dd) { const who = s.po === "away" ? s.aa : s.po === "home" ? s.ha : ""; st.sit = ((who ? who + " ball · " : "") + String(s.dd)).slice(0, 44); }
   // the expanded island's extra lines (3.38.0; builds before it ignore them)
-  if (s.state === "in") for (const k of ["ap", "hp", "at", "ht", "lp", "wp"]) if (s[k]) st[k] = s[k];
+  if (s.state === "in" || s.state === "post") for (const k of ["ap", "hp", "ox", "op", "at", "ht", "lp", "wp"]) if (s[k]) st[k] = s[k];
   return st;
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
@@ -541,7 +541,7 @@ async function liveScores(games, want, now, early) {
     }
     if (dd) sc[id].dd = String(dd);
     if (pid) sc[id].po = pid === String((cs.away.team || {}).id) ? "away" : pid === String((cs.home.team || {}).id) ? "home" : "";
-    if (st.state === "in") Object.assign(sc[id], islandStats(g, c, cs, sit));
+    if (st.state === "in" || st.state === "post") Object.assign(sc[id], islandStats(g, c, cs, sit, st.state === "post"));
   }
   return sc;
 }
@@ -574,7 +574,7 @@ export async function followNow(env, prefix, p) {
 // The expanded Dynamic Island's extra lines (3.38.0), only while the game is on and only what ESPN's scoreboard sends
 // (before tip-off its numbers are season averages, so nothing is taken then): each team's standout, a team line,
 // the last play and ESPN's win probability. Sports ESPN gives none of these for get nothing new.
-function islandStats(g, c, cs, sit) {
+function islandStats(g, c, cs, sit, fin) {
   const sport = SPORT[g.league], out = {}, cut = (x, n) => String(x || "").replace(/\s+/g, " ").trim().slice(0, n);
   const stat = (x, k) => { const f = (x.statistics || []).find((y) => y.name === k); return f ? String(f.displayValue || "") : ""; };
   for (const [sd, k] of [["away", "a"], ["home", "h"]]) {
@@ -598,6 +598,20 @@ function islandStats(g, c, cs, sit) {
       if (Number.isInteger(Number(to)) && to !== undefined && to !== null && to !== "") out[k + "t"] = `${to} timeout${Number(to) === 1 ? "" : "s"} left`;
     }
   }
+  // football: ESPN's scoreboard has only three leaders for the whole game (passing, rushing, receiving), so one team can
+  // have none. Then the next one listed fills in as a second standout, with its own team's abbreviation (ox, op).
+  if (sport === "football" && (!out.ap || !out.hp)) {
+    const ab = {}; for (const x of Object.values(cs)) ab[String((x.team || {}).id || "")] = (x.team || {}).abbreviation || "";
+    const used = [out.ap, out.hp].filter(Boolean), yds = (t) => Number((/(\d+) YDS/.exec(t) || [])[1]) || 0, cand = [];
+    for (const L of c.leaders || []) {
+      const top = (L.leaders || [])[0]; if (!top || !top.athlete) continue;
+      const t = cut(`${top.athlete.shortName || top.athlete.displayName} ${top.displayValue || ""}`, 48), tm = ab[String((top.team || {}).id || "")];
+      if (tm && !used.includes(t)) cand.push([tm, t]);
+    }
+    cand.sort((x, y) => yds(y[1]) - yds(x[1]));  // the bigger game of the rest
+    if (cand.length) { out.ox = cand[0][0]; out.op = cand[0][1]; }
+  }
+  if (fin) return { ap: out.ap, hp: out.hp, ox: out.ox, op: out.op };  // after the final: each team's standout stays on the Lock Screen (3.39.1)
   const lp = sit.lastPlay || {};
   if ((sport === "bball" || sport === "football") && lp.text) out.lp = cut(lp.text, 90);
   // decision 10 (docs/NOTIFICATIONS-PLAN.md): ESPN's win probability, labeled as ESPN's, for football and basketball

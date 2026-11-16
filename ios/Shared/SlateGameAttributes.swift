@@ -17,6 +17,8 @@ struct SlateGameAttributes: ActivityAttributes {
         // 3.38.0, the expanded Dynamic Island's extra room, all straight from ESPN's live scoreboard and all optional:
         var ap: String?       // away's standout so far: "V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK", "B. Purdy 21/27, 323 YDS, 2 TD"
         var hp: String?       // home's standout
+        var ox: String?       // football, when a team has no leader in ESPN's scoreboard: the next standout's team ("SF")
+        var op: String?       // and its line ("C. McCaffrey 4 REC, 161 YDS, 2 TD")
         var at: String?       // away team line: "FG 48% · 3PT 10/33 · REB 48" (basketball), "3 timeouts" (football)
         var ht: String?       // home team line
         var lp: String?       // the last play, in ESPN's words: "Dylan Harper makes free throw 2 of 2"

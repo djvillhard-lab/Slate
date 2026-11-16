@@ -181,7 +181,10 @@ private struct LockCard: View {
     var body: some View {
         let live = s.state == "in"
         let hasSit = live && !(s.sit ?? "").isEmpty
-        let note = s.line ?? ""
+        // 3.39.1: each team's standout on its own line when ESPN has them ("SF  B. Purdy 22/28, 389 YDS, 3 TD"),
+        // else the slate's one-liner as before
+        let stars: [(String, String)] = [(a.awayAbbr, s.ap ?? ""), (a.homeAbbr, s.hp ?? ""), (s.ox ?? "", s.op ?? "")].filter { !$0.0.isEmpty && !$0.1.isEmpty }
+        let note = stars.isEmpty ? (s.line ?? "") : ""
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Text(a.league)
@@ -209,7 +212,7 @@ private struct LockCard: View {
 
             // the bottom of the card, full width (3.25.1, no Watch button): for live football who has the ball, the down
             // and the yard line ("MIN ball · 3rd & 4 at GB 35"), then the slate's one-liner across the whole card
-            if hasSit || !note.isEmpty {
+            if hasSit || !note.isEmpty || !stars.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
                     if hasSit {
                         HStack(spacing: 5) {
@@ -221,6 +224,19 @@ private struct LockCard: View {
                                 .foregroundStyle(SlateLook.ink)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
+                        }
+                    }
+                    ForEach(Array(stars.enumerated()), id: \.offset) { _, st in
+                        HStack(spacing: 6) {
+                            Text(st.0)
+                                .font(SlateLook.bold(11))
+                                .foregroundStyle(SlateLook.muted)
+                                .frame(width: 34, alignment: .leading)
+                            Text(st.1)
+                                .font(SlateLook.semi(13))
+                                .foregroundStyle(live ? SlateLook.live : SlateLook.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
                         }
                     }
                     // red while the game is on, plain after; two lines when there's room
@@ -270,12 +286,13 @@ private struct ScoreRow: View {
                 }
             }
             Spacer(minLength: 6)
+            // 3.39.1: smaller, closer to the team name's size (it was 32)
             Text("\(score)")
-                .font(SlateLook.num(32))
+                .font(SlateLook.num(24))
                 .lineLimit(1)
-                .frame(minWidth: 44, alignment: .trailing)
+                .frame(minWidth: 36, alignment: .trailing)
         }
-        .frame(height: 28)
+        .frame(height: 26)
         .opacity(dim ? 0.5 : 1)
     }
 }

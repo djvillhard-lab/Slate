@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.39.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38)
+- Live notifications on the Lock Screen: the scores are smaller (closer to the team names), and each team's standout gets its own line under the score, with the team's abbreviation: "SA  V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK" and "UTAH  M. Bamba 26 PTS". They stay after the final too.
+- Football: ESPN's live scoreboard lists only three leaders for the whole game, so sometimes one team has none. Then the next biggest game of the three shows instead, with its own team's abbreviation ("SF  C. McCaffrey 4 REC, 161 YDS, 2 TD").
+- Needs this TestFlight build. The new lines need build 38; the expanded Dynamic Island stats came with build 37.
+
 ## 3.39.0 (Nov 16, 2026)
 TestFlight: 3.38.0 (37), no new build (web only)
 - All games: every game now has the same one-liner as on Tonight's Slate. Upcoming games show the pre-game note (streaks, injuries, the line), live games show the standout so far in red, and finished games show the top performer.
