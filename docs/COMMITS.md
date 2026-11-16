@@ -14,3 +14,5 @@ The rule for every commit is in CLAUDE.md under "Commit messages". This note say
 - Older commits keep their old look; history isn't rewritten.
 - For Drew: his Claude uses Drew's own GitHub login and id from its session, e.g.
   `Drew <id+login@users.noreply.github.com>`.
+
+Example of a feed line: `DJ: News: game cards open and close like drop-downs`.
