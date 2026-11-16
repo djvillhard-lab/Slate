@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.49.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- News: the red "too much for one page" message no longer hangs around. It was left over from an earlier try that failed and showed above the options for the rest of the day, so it looked like every new pick was failing. A failed try now shows with its time ("The try at 9:42 PM…"), for half an hour at most, and goes away as soon as you change a pick.
+- Tested for real on the test profile: 3 games, 4 teams and 4 leagues wrote in about a minute; 12 games, 13 teams and 4 leagues in about a minute and a half.
+- Your picked games are remembered too. Reopen the options the same day and they're still picked; on a new day, games with the teams from the games you picked last time start picked. Someone new still starts with nothing picked.
+- Regenerate right after a page was written now writes a new page with your new picks, instead of handing back the page from a moment ago.
+- A try that fails because the answer ran too long no longer uses up one of a tester's 10 for the day.
+
 ## 3.49.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 Second release from the UX review.

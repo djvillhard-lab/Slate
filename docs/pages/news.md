@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 16, 2026, 3.47.1
+Last updated: Nov 16, 2026, 3.49.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -8,7 +8,8 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Options screen ("Customize today's news", 3.47.1): three groups, Today's slate, My teams, Leagues. No group
   checkmarks and nothing picked to start; the user picks each game, team and league (chips), with "n of N picked" and
   All / Clear per group. Game chip = league tag and time above the two team badges; team chip = badge + league tag.
-  Saved on the phone (`slate-newspicks`: `gs` = picked game ids for one day, `ts` = picked teams, `lgs` = leagues).
+  Saved on the phone (`slate-newspicks`: `gs` = picked game ids for one day, `gt` = the teams of those games, so their games start
+  picked on a new day (3.49.1), `ts` = picked teams, `lgs` = leagues).
   A running clock shows while Claude writes.
 - One Claude request writes the page to `mine/news-<date>`: top (5), games, teams, leagues. Free ESPN and Athletic
   headlines are gathered in the app and sent as facts.
@@ -20,10 +21,12 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Every generate, regenerate and breakdown goes through `/api/summary`, so testers' 10-a-day cap counts them.
 
 ## Open
-- DJ's first real generation (Nov 15: 12 games, 13 teams, 4 leagues) failed with "Claude's answer ran too long" at
-  16,000 tokens. 3.46.0: limit 24,000, no per-team hits, no retry on a too-long answer, and the real wait (`took`) is
-  shown. Not yet confirmed that a full-size page now finishes; ask DJ. He's fine with a longer wait for quality.
-- A full slate plus all teams still takes 2 to 3 minutes (one long Claude answer). If DJ wants it faster, split the
+- Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
+  both inside the 24,000-token limit. DJ's Nov 16 "it fails on a small selection" report was the old failure's
+  `writing.error` still showing; 3.49.1 shows a failure for 30 minutes at most and hides it once a pick changes.
+  The worker no longer returns the 3-minute-old page for a News regenerate, and a too-long failure isn't counted
+  toward a tester's 10 (`stats/usage` day.fail).
+- A full slate (26 games) plus all teams is untested and may take 2 to 3 minutes (one long Claude answer). If DJ wants it faster, split the
   page into parallel requests (top + games, teams, leagues).
 - No "Earlier" list of past days' pages. Top news stories aren't tappable.
 - Old `.nw-*` styles in `050-ux-review.css` are unused now and can go.

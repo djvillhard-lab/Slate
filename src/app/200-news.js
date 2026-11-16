@@ -50,16 +50,22 @@
   // ----- what to cover: remembered on this phone -----
   function nwLeagueKeys() { return NW_LGS.filter(function (k) { return LEAGUES[k] && bxBase(k); }); }
   function nwGames() { return lineupGames().filter(function (g) { return !g.custom && g.league && bxBase(g.league); }); }
-  // picks (3.47.1): nothing is picked to start. gs: the slate games picked, for one day only ({ d: date, ids: [] });
-  // ts: my teams picked ("lg|name"); lgs: leagues picked
+  // picks (3.47.1): nothing is picked to start. gs: the slate games picked ({ d: date, ids: [] }); ts: my teams picked
+  // ("lg|name"); lgs: leagues picked. All remembered (3.47.2). The slate changes every day, so gt keeps the teams of the
+  // games picked last time ("lg|name"), and on a new day their games start picked.
+  function nwGKeys(g) { return [g.league + "|" + String(g.away).toLowerCase(), g.league + "|" + String(g.home).toLowerCase()]; }
   function nwOpts() {
     var o = null; try { o = JSON.parse(localStorage.getItem("slate-newspicks") || "null"); } catch (e) {}
     if (!o || typeof o !== "object") o = {};
-    var ok = nwLeagueKeys(), gs = o.gs && o.gs.d === state.date && Array.isArray(o.gs.ids) ? o.gs.ids : [];
-    return { gs: { d: state.date, ids: gs }, ts: Array.isArray(o.ts) ? o.ts : [], lgs: (Array.isArray(o.lgs) ? o.lgs : []).filter(function (k) { return ok.indexOf(k) !== -1; }) };
+    var ok = nwLeagueKeys(), gt = Array.isArray(o.gt) ? o.gt : [], gs;
+    if (o.gs && o.gs.d === state.date && Array.isArray(o.gs.ids)) gs = o.gs.ids;
+    else gs = nwGames().filter(function (g) { var k = nwGKeys(g); return gt.indexOf(k[0]) !== -1 || gt.indexOf(k[1]) !== -1; }).map(function (g) { return g.id; });
+    return { gs: { d: state.date, ids: gs }, gt: gt, ts: Array.isArray(o.ts) ? o.ts : [], lgs: (Array.isArray(o.lgs) ? o.lgs : []).filter(function (k) { return ok.indexOf(k) !== -1; }) };
   }
   function nwTKey(t) { return t.lg + "|" + String(t.name).toLowerCase(); }
-  function nwOptsPut(o) { try { localStorage.setItem("slate-newspicks", JSON.stringify(o)); } catch (e) {} }
+  function nwOptsPut(o) {
+    var gt = []; nwGames().forEach(function (g) { if (o.gs.ids.indexOf(g.id) !== -1) gt = gt.concat(nwGKeys(g)); }); o.gt = gt;
+    try { localStorage.setItem("slate-newspicks", JSON.stringify(o)); } catch (e) {} }
   // what a Generate would actually cover right now
   function nwCover() {
     var o = nwOpts(), gs = nwGames().filter(function (g) { return o.gs.ids.indexOf(g.id) !== -1; }), tms = myTeamList().filter(function (t) { return bxBase(t.lg) && o.ts.indexOf(nwTKey(t)) !== -1; });
@@ -186,11 +192,15 @@
     var t = 0; try { t = Number(localStorage.getItem("slate-newstook")) || 0; } catch (e) {}
     return t >= 20 ? "Your last page took " + Math.floor(t / 60) + ":" + ("0" + t % 60).slice(-2) + "; more picks take longer." : "It usually takes 1 to 3 minutes, longer with more picks.";
   }
-  function nwErr(e) { return /ran too long/i.test(String(e || "")) ? "That was too much for one page, so the last try didn't finish. Leave out a few games or teams and try again." : clErr(e); }
+  function nwErr(e, at) {
+    var when = !!at && !isNaN(Date.parse(at));
+    if (/ran too long/i.test(String(e || ""))) return (when ? "The try at " + timeText(at) + " was" : "That was") + " too much for one page, so it didn't finish. Leave out a few games or teams and try again.";
+    return /credit balance|limit of/i.test(String(e || "")) || !when ? clErr(e) : "The try at " + timeText(at) + " didn't finish. Try again.";
+  }
   // ----- the options: what to cover, then Generate -----
   function nwRenderOpts(body, doc, busy, doc0) {
     var o = nwOpts(), gs = nwGames(), tms = myTeamList().filter(function (t) { return bxBase(t.lg); }), has = !!(doc && doc.at);
-    var put = function () { nwOptsPut(o); keepScroll(renderNews); };
+    var put = function () { nwOptsPut(o); var d0 = nw.docs[nwPagePath()]; if (d0 && d0.writing && d0.writing.error) nw.errSeen = d0.writing.at; keepScroll(renderNews); };
     var ttl = el("div", "nx-ptitle"); ttl.appendChild(el("b", null, state.date === todayInHome() ? "Customize today's news" : "Customize this day's news")); ttl.appendChild(el("span", null, "Pick the games, teams and leagues to cover.")); body.appendChild(ttl);
     var wrap = el("div", "nx-picks" + (busy ? " busy" : ""));
     // one group: its name, how many are picked, All / Clear, then a chip for each thing (nothing picked to start)
@@ -230,7 +240,7 @@
     body.appendChild(act);
   }
   // ----- the generated page -----
-  function nwRenderPage(body, doc, busy, err) {
+  function nwRenderPage(body, doc, busy, err, errAt) {
     var cov = doc.cover || {}, parts = []; if (cov.slate) parts.push("Slate"); if (cov.teams) parts.push("My teams"); (cov.leagues || []).forEach(function (k) { parts.push((LEAGUES[k] || {}).tag || k); });
     var gen = el("div", "nx-card nx-gen"), gl = el("div", "nx-genl"), today = state.date === todayInHome();
     gl.appendChild(el("b", null, "Generated " + (today ? "today" : fmtDate(state.date, { weekday: "short", month: "short", day: "numeric" })) + " at " + timeText(doc.at)));
@@ -238,7 +248,7 @@
     if (busy) { var sp = el("span", "nx-busy sm"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Writing a new one…")); sp.appendChild(nwElapsed(doc, "n:" + nwPagePath())); gen.appendChild(sp); }
     else { var rg = el("button", "nx-regen"); rg.type = "button"; rg.appendChild(el("span", null, "Regenerate")); rg.addEventListener("click", function () { nw.opts = true; renderNews(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }); gen.appendChild(rg); }
     body.appendChild(gen);
-    if (err) body.appendChild(el("p", "pv-none cl-err", nwErr(err)));
+    if (err) body.appendChild(el("p", "pv-none cl-err", nwErr(err, errAt)));
     // Top news: open until collapsed, then stays collapsed until opened again
     var top = doc.top || [];
     if (top.length) {
@@ -365,6 +375,10 @@
     if (has && doc.took) try { localStorage.setItem("slate-newstook", String(doc.took)); } catch (e) {}
     if (has) doc.regen = !!(doc.top || []).some(function (x) { return x.new === false; });
     if (!has && state.date !== todayInHome() && !busy) { body.appendChild(el("p", "pv-none", "No news was generated for " + fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + ". Go back to today to generate a page.")); return; }
-    if (!has || nw.opts) { if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err))); nwRenderOpts(body, has ? doc : null, busy, doc); return; }
-    nwRenderPage(body, doc, busy, err);
+    // a failed try is shown with its time, only for half an hour, and goes away once the picks change (3.47.2: an old
+    // failure used to sit above the options for the rest of the day and read like a new one)
+    var wat = doc && doc.writing && doc.writing.at, errAt = wat ? Date.parse(wat) : 0;
+    if (err && !CL_ASK["n:" + path] && (!errAt || Date.now() - errAt > 30 * 60000 || nw.errSeen === wat)) err = null;
+    if (!has || nw.opts) { if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err, wat))); nwRenderOpts(body, has ? doc : null, busy, doc); return; }
+    nwRenderPage(body, doc, busy, err, wat);
   }

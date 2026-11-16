@@ -42,7 +42,7 @@ const ctDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicag
 // running cost log: stats/usage {days: {D: {n, in, out, search, usd, by: {user: n}}}}
 const PRICE = { in: 2 / 1e6, out: 10 / 1e6, search: 10 / 1000 };
 const HAIKU = { in: 1 / 1e6, out: 5 / 1e6 };
-async function logUsage(env, user, u, model) {
+async function logUsage(env, user, u, model, failed) {
   const d = ctDay(), doc = (await getDoc(env, "stats/usage")) || { days: {} }, day = (doc.days || {})[d] || { n: 0, in: 0, out: 0, search: 0, usd: 0, by: {} };
   const inT = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), outT = u.output_tokens || 0, sr = ((u.server_tool_use || {}).web_search_requests) || 0;
   day.n += 1; day.in += inT; day.out += outT; day.search += sr;
@@ -50,7 +50,8 @@ async function logUsage(env, user, u, model) {
   day.usd = Math.round((day.usd + inT * pr.in + outT * pr.out + sr * PRICE.search) * 10000) / 10000;
   day.by = day.by || {};
   // Haiku lines (free-tier helpers) don't count toward anyone's daily summary limit
-  if (model === "haiku") { day.hl = (day.hl || 0) + 1; day.n -= 1; } else day.by[user] = (Number(day.by[user]) || 0) + 1;
+  // a request that failed (an answer that ran too long) is still paid for, so its cost is logged, but it doesn't use up one of the person's 10
+  if (model === "haiku") { day.hl = (day.hl || 0) + 1; day.n -= 1; } else if (failed) day.fail = (day.fail || 0) + 1; else day.by[user] = (Number(day.by[user]) || 0) + 1;
   await mergeDoc(env, "stats/usage", { days: { [d]: day } });
 }
 
@@ -175,7 +176,8 @@ export default {
       const w = entry && entry.writing, nowMs = Date.now();
       if (w && w.at && !w.error && nowMs - Date.parse(w.at) < 10 * 60000) return json({ ok: true, at: w.at, shared: true }, 202);
       const last = entry && (p.kind === "recap" ? (entry.recap || {}).at : p.kind === "preview" ? entry.newsAt : entry.at);
-      if (last && nowMs - Date.parse(last) < 3 * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
+      // (a person's own News page is the exception: Regenerate with different picks must write a new page)
+      if (last && !(p.kind === "news" && p.key === "page") && nowMs - Date.parse(last) < 3 * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
         game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, p.kind === "moments" ? 60000 : p.kind === "news" && p.key === "page" ? 60000 : p.kind === "deep" ? 24000 : 16000) };
@@ -428,7 +430,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
     try {
       const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, SEARCHES[p.kind]));
       const ans = stripCites(res.ans || res);
-      await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}); } catch (e) {} return true; });
+      await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, null, !!res.tooLong); } catch (e) {} return true; });
       if (res.tooLong) throw new Error("Claude's answer ran too long");
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
