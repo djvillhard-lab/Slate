@@ -1393,7 +1393,12 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .bet-v { grid-column: 2 / -1; display: flex; gap: 4px; }
 .bet-v span { flex: 1 1 0; min-width: 0; height: 24px; display: grid; place-items: center; border-radius: 6px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--raise); color: var(--dim); }
 .bet-v span.y { background: color-mix(in srgb, #2BB673 26%, transparent); color: var(--ink); }
-.bets-more { display: block; margin: 10px auto 0; min-height: 44px; padding: 0 18px; border-radius: 999px; background: var(--raise); color: var(--ink); font-weight: 800; font-size: 15px; }
+/* settled picks (3.40.0): a hit gets a green edge and a green "Hit"; a miss steps back */
+.bet.won { border-color: color-mix(in srgb, #2BB673 55%, transparent); }
+.bet.won .bet-res { color: #2BB673; }
+.bet.lost { opacity: .62; }
+.bet.lost .bet-res { color: var(--muted); }
+.bets-tally { margin: 8px 2px 0; font-size: 15px; font-weight: 800; color: var(--ink); }
 
 /* Live feed (3.31.0): one live football game, play by play */
 .feed-go, .tray .feed-go { width: 100%; height: auto; font-size: inherit; font-weight: inherit; display: flex; align-items: center; gap: 12px; min-height: 56px; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--live, #E5484D) 10%, var(--card)); border: 1px solid color-mix(in srgb, var(--live, #E5484D) 35%, transparent); color: var(--ink); text-align: left; }

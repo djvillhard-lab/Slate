@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.40.0 (Nov 16, 2026)
+TestFlight: 3.38.0 (37), no new build (web only)
+- Best bets is now always seven picks. They stay put once chosen, so the list doesn't reshuffle while you watch.
+- Take a game off your slate and its picks go with it; the open spots are filled from the games still on it: upcoming games first, then live games, then finished ones. A pick from a game that already started still only uses the games before it.
+- Once a game starts, each pick shows tonight's number from the live box score (for example "14 of 20" points, or the game total against the line). It turns into Hit (green) as soon as it's reached, or Miss after the final. A player who doesn't play shows "Didn't play" instead of a result.
+- Settled picks stay in the list with their result, and the top of the section counts how many hit and missed so far. Live picks come first, then upcoming, then settled.
+- "Show all" is gone: it's always the seven.
 ## 3.39.3 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Updates: the app already moves to a new version each time it's opened or brought back. Now it also checks every 2 minutes while it stays open, and moves to the new version only while Tonight's Slate is showing and you haven't touched the screen for 20 seconds.
