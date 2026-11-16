@@ -213,7 +213,7 @@
       // penalties: one waiting to be taken, one missed or saved
       var pens = socPens(sum, teams);
       pens.forEach(function (p, pi) {
-        if (p.k === "pm") add("pm|" + p.a + "|" + p.m, 64, -1, p.a + (p.x === "saved" ? (done ? " had a penalty saved" : " has had a penalty saved") : (done ? " missed a penalty" : " has missed a penalty")) + " for " + nameOf(p.tid), { player: p.a, team: nameOf(p.tid) });
+        if (p.k === "pm") add("pm|" + p.a + "|" + p.m, 64, -1, (p.a || nameOf(p.tid)) + (p.x === "saved" ? (done ? " had a penalty saved" : (p.a ? " has" : " have") + " had a penalty saved") : (done ? " missed a penalty" : (p.a ? " has" : " have") + " missed a penalty")) + (p.a ? " for " + nameOf(p.tid) : ""), p.a ? { player: p.a, team: nameOf(p.tid) } : tag(p.tid));
         if (p.k === "pa" && !done && pi === pens.length - 1) { var after = goals.some(function (g) { return g.mn >= p.mi; }); if (!after) add("pa|" + p.m, 96, 0, "Penalty to " + nameOf(p.tid) + (p.a ? " — " + p.a + " was brought down" : ""), tag(p.tid)); }
       });
       // red cards

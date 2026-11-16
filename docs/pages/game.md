@@ -18,4 +18,5 @@ Last updated: Nov 16, 2026, 3.52.8
 ## Soccer live one-liners (3.60.2)
 - Own goals are written as "an own goal by <player>" (ESPN's keyEvent participant is the player who put it in his own net). They're never the subject of "has scored" and never a team's standout: liveLeadLine drops any leader named "own goal".
 - A goal with no scorer name from ESPN is left out of the scorer list, not called an own goal.
+- 3.62.1: a missed or saved penalty with no name from ESPN names the team instead.
 - Not checked on a live game yet (no soccer on when it shipped); worth a look next time an own goal happens.

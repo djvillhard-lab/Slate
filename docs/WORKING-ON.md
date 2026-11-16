@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Soccer live one-liners: missed penalty with no name | src/app/100-highlights.js (soccer penalty line only) | 2026-11-16 21:06 |
