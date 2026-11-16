@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.43.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Live feed: "Show earlier plays" adds one more batch each time you tap it, the same size as the first (8 more plays in football, 12 more lines in basketball), instead of the whole game at once.
+- Live feed: when you leave the page and come back, it starts with just the latest plays again.
+
 ## 3.43.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Best bets: each card now says in words why it's a good bet, in place of the row of six little stat boxes. For example: "Siakam has had 15 or more points in five of the last six games, averaging 20.8, 5.8 above the line. Hit in each of the last three." Game totals say how many of both teams' last five games went over (or under) and by how much on average.

@@ -141,7 +141,7 @@
     }
     // the plays, newest first: scores and big plays as cards, everything else (misses, rebounds, fouls) as one plain line; subs left out
     FD.hpOpen = FD.hpOpen || {};
-    var list = el("div", "fd-list"), items = 0, cap2 = FD.more ? 1e9 : 12, fresh = FD.seen || null, seenNow = {}, total = 0;
+    var list = el("div", "fd-list"), items = 0, cap2 = 12 * (1 + (+FD.more || 0)), fresh = FD.seen || null, seenNow = {}, total = 0;
     // a trip to the line (same shooter, same moment) shows as one card with the last free throw
     var trips = {}, tripOf = {};
     plays.forEach(function (p) { if (!/Free Throw/i.test(String((p.type || {}).text || ""))) return; var a = ((p.participants || [])[0] || {}).athlete || {}, k = ((p.period || {}).number) + "|" + ((p.clock || {}).displayValue) + "|" + a.id; (trips[k] = trips[k] || []).push(p); tripOf[hpPid(p)] = trips[k]; });
@@ -179,7 +179,7 @@
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game tips off." : "No plays yet."));
     body.appendChild(list);
-    if (!FD.more && plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = true; renderFeed(); }); list.appendChild(mb); }
+    if (plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); list.appendChild(mb); }
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
