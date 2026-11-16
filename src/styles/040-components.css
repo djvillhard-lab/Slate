@@ -1542,9 +1542,13 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-ptitle span { font-size: 14px; color: var(--muted); }
 .nx-picks.busy { opacity: .55; pointer-events: none; }
 .nx-ph { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 20px 2px 9px; min-height: 44px; }
-.nx-ph > div { display: grid; gap: 2px; min-width: 0; }
+.nx-pt { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; min-height: 44px; text-align: left; }
+.nx-ptx { display: grid; gap: 2px; min-width: 0; }
 .nx-ph b { font-size: 16px; font-weight: 800; color: var(--head); }
-.nx-ph span { font-size: 13px; font-weight: 700; color: var(--dim); }
+.nx-ptx span { font-size: 13px; font-weight: 700; color: var(--dim); }
+.nx-pt svg { width: 14px; height: 14px; flex: none; color: var(--dim); transform: rotate(-90deg); }
+.nx-ph.shut .nx-pt svg { transform: rotate(90deg); }
+.nx-ph.shut { margin-bottom: 0; padding-bottom: 8px; border-bottom: 1px solid var(--hair); }
 .nx-all { min-height: 44px; min-width: 64px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); font-size: 13px; font-weight: 800; color: var(--ink); flex: none; }
 .nx-chips { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
 .nx-chips.g { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }

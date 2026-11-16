@@ -227,9 +227,15 @@
     // one group: its name, how many are picked, All / Clear, then a chip for each thing (nothing picked to start)
     var group = function (title, list, cls, key, picked, setPicked, fill, empty) {
       var keys = list.map(key), n = keys.filter(function (k) { return picked.indexOf(k) !== -1; }).length;
-      var hd = el("div", "nx-ph"), hl = el("div"); hl.appendChild(el("b", null, title)); hl.appendChild(el("span", null, list.length ? n + " of " + list.length + " picked" : empty)); hd.appendChild(hl);
-      if (list.length > 1) { var all = el("button", "nx-all", n === list.length ? "Clear" : "All"); all.type = "button"; all.addEventListener("click", function () { setPicked(n === list.length ? [] : keys); put(); }); hd.appendChild(all); }
-      wrap.appendChild(hd); if (!list.length) return;
+      // each group folds: tap its name to collapse or expand it; remembered on this phone (3.52.12, slate-newsfold)
+      var fold = {}; try { fold = JSON.parse(localStorage.getItem("slate-newsfold") || "{}") || {}; } catch (e) {}
+      var shut = !!fold[cls] && list.length > 0;
+      var hd = el("div", "nx-ph" + (shut ? " shut" : "")), hl = el("button", "nx-pt"); hl.type = "button"; hl.setAttribute("aria-expanded", shut ? "false" : "true");
+      var ht = el("span", "nx-ptx"); ht.appendChild(el("b", null, title)); ht.appendChild(el("span", null, list.length ? n + " of " + list.length + " picked" : empty)); hl.appendChild(ht);
+      if (list.length) { hl.appendChild(icon("more")); hl.addEventListener("click", function () { fold[cls] = shut ? 0 : 1; try { localStorage.setItem("slate-newsfold", JSON.stringify(fold)); } catch (e) {} keepScroll(renderNews); }); }
+      hd.appendChild(hl);
+      if (list.length > 1 && !shut) { var all = el("button", "nx-all", n === list.length ? "Clear" : "All"); all.type = "button"; all.addEventListener("click", function () { setPicked(n === list.length ? [] : keys); put(); }); hd.appendChild(all); }
+      wrap.appendChild(hd); if (!list.length || shut) return;
       var ch = el("div", "nx-chips " + cls);
       list.forEach(function (x) {
         var k = key(x), on = picked.indexOf(k) !== -1, c = el("button", "nx-chip"); c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false"); fill(c, x);
