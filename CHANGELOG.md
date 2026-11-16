@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.52.6 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- The Athletic Newsletters: Monday's The Pulse was missing from under the slate. Slate only looks for a newsletter on the weekdays it has learned it comes out, and it had wrongly dropped Monday for The Pulse (The Athletic's feed only reaches back a few days, so a day with no edition in view got forgotten). The edition was out at 5:12 a.m. Central and was never looked for.
+- A newsletter's learned days are no longer forgotten that way, and every newsletter is also looked for on its "off" days, every two hours, so a wrong guess can't hide an edition again.
+
 ## 3.52.5 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Matchup page: no more Player stats section before a game starts, in every sport. It was showing on soccer (and the others) as "This season" before kickoff. Player stats now arrive with the box score once the game is on. Team stats stay.

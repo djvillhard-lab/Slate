@@ -51,3 +51,11 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Emojis (DJ, Nov 16): one in front of a breakdown section label, the Hot/Cold chips, and the New and Injury tags
   (`nwEm`, `nwTag`). Never in Claude's text. Recorded in DESIGN.md as a News-only exception.
 - Hot tags and chips are red with 🔥 wherever they render (`NW_HOT` in `nwTag` / `nwChip`), DJ, Nov 16.
+
+## The Athletic Newsletters (under the slate, not the News page)
+Code: `worker/newsletters.js` (the cron that finds editions in The Athletic's RSS feeds, doc `news/newsletters`) and
+`newsletterBlock()` in `src/app/130-teams.js`. Nov 16 (3.52.6): The Pulse's Monday edition was never looked for
+because its learned schedule had lost Monday. Learned days are now only added between weekly full looks, and
+off-schedule newsletters are still looked for every two hours (`offAt`). To check: compare
+`/api/athletic?slug=nfl` (or news, nba, mlb) with the `news/newsletters` doc.
+

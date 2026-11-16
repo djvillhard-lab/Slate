@@ -39,7 +39,11 @@ export async function runNewsletters(env, getDoc, putDoc) {
   if (have.day === c.day && now - at < 29 * 60000) return;
   const found = have.day === c.day ? { ...(have.found || {}) } : {};
   const sched = { ...(have.sched || {}) }, schedAt = Date.parse(have.schedAt || "") || 0, refresh = now - schedAt > 7 * 86400000;
-  const todo = Object.keys(NEWSLETTERS).filter((k) => found[k] !== c.day && (refresh || !sched[k] || sched[k].includes(c.wd)));
+  // A learned schedule can be wrong: the feeds only reach back a few days, so a day with no edition in view was
+  // dropped (The Pulse lost its Mondays and its Nov 16 edition was never looked for). So every newsletter not yet found
+  // today is also looked for on its "off" days, every two hours instead of every 30 minutes.
+  const offAt = Date.parse(have.offAt || "") || 0, off = now - offAt > 115 * 60000;
+  const todo = Object.keys(NEWSLETTERS).filter((k) => found[k] !== c.day && (refresh || off || !sched[k] || sched[k].includes(c.wd)));
   if (!todo.length) { if (have.day !== c.day) await putDoc(env, "news/newsletters", { ...have, day: c.day, found: {}, updatedAt: new Date(now).toISOString() }); return; }
   const feeds = {}, items = { ...(have.items || {}) };
   for (const key of todo) {
@@ -54,7 +58,8 @@ export async function runNewsletters(env, getDoc, putDoc) {
     out.sort((a, b) => b.at - a.at);
     if (!out.length) continue;
     const days = [...new Set(out.filter((x) => x.at && now - x.at < 42 * 86400000).map((x) => ct(new Date(x.at)).wd))].sort();
-    if (days.length) sched[key] = days;
+    // days are only added between the weekly full looks, never dropped because the feed no longer reaches back to them
+    if (days.length) sched[key] = refresh ? days : [...new Set([...(sched[key] || []), ...days])].sort();
     // keep two weeks of editions (newest first), so an earlier day's slate still links its newsletter
     const fresh = out.map((x) => ({ title: x.title, url: x.url, at: x.at ? new Date(x.at).toISOString().replace(/\.\d+Z$/, "Z") : "" }));
     const urls = new Set(fresh.map((x) => x.url));
@@ -63,5 +68,5 @@ export async function runNewsletters(env, getDoc, putDoc) {
     if (out[0].at && ct(new Date(out[0].at)).day === c.day) found[key] = c.day;
   }
   // keep any newsletter this job doesn't handle (the email-only ones arrive by another route)
-  await putDoc(env, "news/newsletters", { ...have, updatedAt: new Date(now).toISOString(), day: c.day, found, items, sched, schedAt: refresh ? new Date(now).toISOString() : have.schedAt });
+  await putDoc(env, "news/newsletters", { ...have, updatedAt: new Date(now).toISOString(), day: c.day, found, items, sched, schedAt: refresh ? new Date(now).toISOString() : have.schedAt, offAt: off ? new Date(now).toISOString() : have.offAt });
 }
