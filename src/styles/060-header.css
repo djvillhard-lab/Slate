@@ -15,3 +15,8 @@ html.duo #toprow-r + #strip { margin-top: 0 !important; }
 .title.has-brand.one-line > .t { align-self: center !important; }
 /* the date row takes only the room its text needs; its buttons keep their full-size tap area, overlapping the padding */
 .title.has-brand > .d { height: 26px !important; min-height: 0 !important; overflow: visible; }
+/* the Slate logo (3.63.0): the axe-hammer, in the theme's accent color; square, so it's as wide as it is tall */
+.title.has-brand > svg.brand { color: var(--accent); width: 42px !important; height: 42px !important; margin: 0 -4px 0 -2px; }
+.title.has-brand.one-line > svg.brand { width: 30px !important; height: 30px !important; }
+/* the Slate menu icon fills in on the page you're on */
+.mi[aria-current="page"] svg .axe-head { fill: currentColor; }

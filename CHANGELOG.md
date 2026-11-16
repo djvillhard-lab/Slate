@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.63.0 (Nov 16, 2026)
+TestFlight: 3.63.0 (40)
+- New Slate logo: a hammer with an axe blade on one side, tilted mid-swing, with a sparkle off the blade. It replaces the green S made of tiles next to every page's title, and it takes the theme's accent color (green on Midnight, dark green on Sunday Paper).
+- Menu: the Slate button is the new logo in place of the wand. It's an outline like the other buttons and fills in when you're on the slate. On TV is an outline now too, to match the rest.
+- Home Screen: the app's icon is the new logo. The iPhone app's icon and its menu change with build 40.
+- iPhone app menu on Sunday Paper: the page you're on is white on a solid dark green circle. Green on cream was too faint to see (Drew's feedback).
+
 ## 3.62.4 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Team logos: NFL logos could be missing. Logos for teams whose game had not been refreshed yet waited on a team list downloaded from ESPN, one per league, and if that one download failed the whole league showed lettered boxes for an hour.
