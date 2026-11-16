@@ -1,5 +1,5 @@
-"""Add or remove a person in users/registry (run by .github/workflows/person.yml).
-Env: SB_KEY, ACTION (add/remove), PID, PNAME, PHASH (SHA-256 of the passcode, never the passcode)."""
+"""Add, rename or remove a person in users/registry (run by .github/workflows/person.yml).
+Env: SB_KEY, ACTION (add/rename/remove), PID, PNAME, PHASH (SHA-256 of the passcode, never the passcode)."""
 import json, os, re, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from sb import get, put
@@ -14,6 +14,11 @@ if act == "add":
     if h in users: sys.exit("that passcode is already in use")
     if any(u.get("id") == pid for u in users.values()): sys.exit(f"{pid} already has a passcode; remove it first to change it")
     users[h] = {"id": pid, "name": name or pid.title(), "cap": 10}
+elif act == "rename":
+    # only the shown name changes: the id (and so their data under u/<id>/) and the passcode stay
+    hit = [u for u in users.values() if u.get("id") == pid]
+    if not hit or not name: sys.exit(f"need a name, and someone with id {pid}")
+    for u in hit: u["name"] = name
 elif act == "remove":
     gone = [k for k, u in users.items() if u.get("id") == pid]
     if not gone: sys.exit(f"no one with id {pid}")

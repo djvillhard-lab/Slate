@@ -111,7 +111,7 @@ A single `docs` table holds JSON documents, one per path:
 
 Anyone with the app's public key can read. Only the app (with your passcode) can save your settings, and only the scripts and tasks (with the secret key) can write everything else.
 
-Other people (DJ's brother, his dad) each have their own passcode, so their teams, settings and slate are their own (under `u/<id>/`) and they get 10 Claude summaries a day. `users/registry` lists them by the SHA-256 hash of their passcode, never the passcode itself. To add or remove someone, run the "Add or remove a person" GitHub action (`.github/workflows/person.yml`) with their id, name and passcode hash.
+Other people (DJ's brother, his dad) each have their own passcode, so their teams, settings and slate are their own (under `u/<id>/`) and they get 10 Claude summaries a day. `users/registry` lists them by the SHA-256 hash of their passcode, never the passcode itself. To add, rename or remove someone, run the "Add, rename or remove a person" GitHub action (`.github/workflows/person.yml`) with their id, name and passcode hash.
 
 ### 3. The GitHub script (`scripts/tick.py`, every 10 minutes, free)
 All the number work, no AI: it reads your settings, works out your slate with the same rules as the app, and then:
