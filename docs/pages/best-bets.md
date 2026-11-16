@@ -1,6 +1,6 @@
 # Betting lines (was Best bets)
-Last updated: Nov 16, 2026, 3.54.1
-Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section on Tonight's Slate, at the bottom of the slate, below Finished. (3.49.0 moved it above Finished; DJ had it moved back in 3.51.2. Don't move it up again.)
+Last updated: Nov 16, 2026, 3.65.3
+Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section on Tonight's Slate, at the bottom of the slate, below Finished. (3.49.0 moved it above Finished; DJ had it moved back in 3.51.2. Don't move it up again.) Since 3.65.3 The Athletic newsletters sit under it (DJ).
 
 ## Done
 - Stat-based picks from ESPN game logs only: a player's mark over his last six games, game totals vs the over/under from
@@ -66,3 +66,8 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 - Card body (stats line, reasons, source) spans the full card from the left edge; only the name and line sit beside the badge.
 - The lean / result tag leads the top row on the left; the right-hand number column is gone (the folded Duo clock and the menu button covered it).
   Tonight's number is its own line (`.bet-now`) once the game starts. Keep important things off the card's right edge.
+
+## 3.65.3: closed by default, newsletters under it (DJ: "make betting line defaulted to close until opened", "once opened, it's always open for the user until closed")
+- Open/closed is `state.slateFold.__betsOpen` (was `__bets` = closed, now dropped on the next tap). slateFold is saved in the person's
+  Supabase settings, so the choice follows them across days and devices. Picks still load while closed, so the count shows on the header.
+- `newsletterBlock()` moved below `betsBlock()` in 170-slate-page.js. Both appear only on the slate page.

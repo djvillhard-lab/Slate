@@ -343,10 +343,11 @@
     var rank = function (x) { return x.r.s === "live" ? 0 : x.r.s === "pre" ? 1 : status(x.g).kind === "live" ? 2 : 3; };
     rows.sort(function (x, y) { return (rank(x) - rank(y)) || byStart(x.g, y.g) || (y.p.sc - x.p.sc); });
     var cnt = function (s) { return rows.filter(function (x) { return x.r.s === s; }).length; };
-    var shut = !!(state.slateFold || {}).__bets, sec = el("section", "sl-sec sl-bets" + (shut ? " shut" : ""));
+    // closed until the person opens it; then it stays open for them (saved with their settings) until they close it (DJ, 3.65.3)
+    var shut = !(state.slateFold || {}).__betsOpen, sec = el("section", "sl-sec sl-bets" + (shut ? " shut" : ""));
     var hb = el("button", "sl-h"); hb.type = "button"; hb.setAttribute("aria-expanded", shut ? "false" : "true");
     hb.appendChild(el("b", null, "Betting lines")); if (rows.length) hb.appendChild(el("span", "count", String(rows.length))); hb.appendChild(icon("more"));
-    hb.addEventListener("click", function () { var f = Object.assign({}, state.slateFold || {}); if (f.__bets) delete f.__bets; else f.__bets = 1; state.slateFold = f; saveSettings(); keepScroll(renderLineup); });
+    hb.addEventListener("click", function () { var f = Object.assign({}, state.slateFold || {}); delete f.__bets; if (f.__betsOpen) delete f.__betsOpen; else f.__betsOpen = 1; state.slateFold = f; saveSettings(); keepScroll(renderLineup); });
     sec.appendChild(hb);
     if (shut) return sec;
     if (!rows.length) { sec.appendChild(el("p", "bets-none", pk.loading ? "Getting tonight's lines and recent game logs…" : pk.frozen ? "Every game on your slate is over. New lines come with the next slate." : pk.waiting ? "Player lines aren't posted yet for your slate. They usually go up the day of the game." : "No lines posted for the games on your slate yet.")); return sec; }

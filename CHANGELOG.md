@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.65.3 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Slate: The Athletic newsletters now sit under Betting lines at the bottom of the slate.
+- Slate: Betting lines starts closed. Tap its header to open it. Once you open it, it stays open for you (every day, on every device you sign in on) until you tap it closed again.
+
 ## 3.65.2 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - iPhone app, folded Duo: every page now has the slate's pull-down. At the top of any page (All games, On TV, News, a matchup, Box Office, Teams, Settings and the rest), pull down to slide the page down with your finger and see anything under the clock and Wi-Fi; it springs back when you let go. No added space anywhere.
