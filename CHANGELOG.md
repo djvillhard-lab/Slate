@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.37.0 (Nov 16, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- Live feed for basketball: NBA, WNBA and college games now have the Live feed button in the quick look (right above Full matchup) and on the matchup page. Same page as football: the game switcher (live basketball games), swiping between games, the score bar that stays on top, and updates every few seconds.
+- In place of the football field, a court card: each team's shots this quarter on its own half court (filled for made, hollow for missed, the latest one circled), field goals and team fouls this quarter, any scoring run of 6-0 or more, a Clutch label in the last 5 minutes of a close game, and ESPN's win probability. Shot spots and fouls come straight from ESPN's play-by-play.
+- Plays are grouped under their quarter with that quarter's score. Baskets, free throws, blocks, steals, turnovers and technicals get a card with ESPN's description and the player's line so far (points, rebounds, assists). Misses, rebounds, fouls and subs in between fold into one short row; tap it to see them.
+- Tags on the right of a card: Lead change, Tie game, a run (like "BOS 10-0 run"), And-one, Buzzer-beater, Clutch, and big swings in ESPN's win probability.
+
 ## 3.36.8 (Nov 16, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - Live feed: play descriptions are short and readable. ESPN's one long run-on text (often in capitals) is split into a line per part, in plain sentence case, with first initials dropped: "Purdy pass short right to McCaffrey, 66 yds, touchdown", then "2-pt good: Purdy to McCaffrey" or "Extra point good (Moody)". Tacklers, snapper and holder are left out, and penalties stay in the yellow Flag tag instead of the text. A play wiped out by a penalty starts "No play:". Fumbles read "Fumble, recovered by DAL (Lamb) at DAL 29".

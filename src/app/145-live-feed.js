@@ -7,7 +7,7 @@
     b.setAttribute("aria-label", "Open the live feed for " + g.away + " at " + g.home);
     b.addEventListener("click", function (e) { e.stopPropagation(); openFeed(g); }); return b;
   }
-  function feedOk(g) { return !!g && !g.custom && BX_SPORT[g.league] === "football" && status(g).kind === "live"; }
+  function feedOk(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball") && status(g).kind === "live"; }  // basketball since 3.37.0 (146-live-feed-hoops.js)
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;  // opening the feed is asking to see the score
@@ -23,7 +23,7 @@
   }
   function fdSig(sum) {  // what's on screen: the newest play, the clock, the score and the win probability
     var comp = ((sum.header || {}).competitions || [])[0] || {}, st = comp.status || {}, dr = sum.drives || {}, cur = dr.current || (dr.previous || [])[(dr.previous || []).length - 1] || {}, pl = (cur.plays || [])[(cur.plays || []).length - 1] || {};
-    return [(dr.previous || []).length, cur.id, (cur.plays || []).length, pl.id, pl.awayScore, pl.homeScore, st.displayClock, st.period, (st.type || {}).state, (comp.competitors || []).map(function (k) { return k.score; }).join("-"), (sum.winprobability || []).length].join("|");
+    return [(dr.previous || []).length, cur.id, (cur.plays || []).length, pl.id, pl.awayScore, pl.homeScore, st.displayClock, st.period, (st.type || {}).state, (comp.competitors || []).map(function (k) { return k.score; }).join("-"), (sum.winprobability || []).length, (sum.plays || []).length, hpPid((sum.plays || [])[(sum.plays || []).length - 1] || {})].join("|");
   }
   function feedPoll(now) {
     clearTimeout(FD.t); FD.t = null;
@@ -187,7 +187,7 @@
   function fdJersey(g, sd, P) { var j = el("span", "fd-jer", P.jer ? P.jer : "•"), c = badgeColor(g, sd) || "#555"; j.style.background = c; if (lum(c) > 0.62) j.style.color = "#111"; j.setAttribute("aria-hidden", "true"); return j; }
   // the live games in the switcher's order: your slate's first, then by start time
   function fdList(g) {
-    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !(feedOk(x) || x.id === g.id)) return false; ids[x.id] = 1; return true; });
+    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedOk(x) && BX_SPORT[x.league] === BX_SPORT[g.league]) || x.id === g.id)) return false; ids[x.id] = 1; return true; });
     list.sort(function (a, b) { return (inLineup(b.id) - inLineup(a.id)) || byStart(a, b); });
     return list;
   }
@@ -208,6 +208,7 @@
     (comp.competitors || []).forEach(function (k) { hd[k.homeAway === "home" ? "h" : "a"] = Number(k.score); });
     if (hd.a == null || isNaN(hd.a) || hd.h == null || isNaN(hd.h)) return null;
     var dr = sum.drives || {}, ds = (dr.previous || []).concat(dr.current ? [dr.current] : []), p = null;
+    if (!ds.length && sum.plays) ds = [{ plays: sum.plays }];  // basketball: one flat list of plays
     ds.forEach(function (d) { (d.plays || []).forEach(function (pl) { if (pl.awayScore != null && pl.homeScore != null) p = { a: Number(pl.awayScore), h: Number(pl.homeScore) }; }); });
     FD.hold = FD.hold || {};
     if (!p || (p.a === hd.a && p.h === hd.h)) { delete FD.hold[id]; return hd; }
@@ -219,7 +220,7 @@
   function fdStrip(g) {
     var ids = {}, list = fdList(g);
     if (!list.length) return null;  // shown even for one game (3.36.7): the page keeps the same shape, and the score box stays clear of the folded Duo's clock
-    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Live football games");
+    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", BX_SPORT[g.league] === "bball" ? "Live basketball games" : "Live football games");
     list.forEach(function (x) { if (ids[x.id]) return; ids[x.id] = 1;
       var on = x.id === g.id, b = el("button", "fd-chip" + (on ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", on ? "true" : "false");
       var v = scoreRaw(x.id) || {}, c1 = bx.live[x.id], fs = c1 && c1.sum && Date.now() - (c1.sumAt || 0) < 120000 ? fdSumScore(x.id, c1.sum) : null;
@@ -281,6 +282,7 @@
     var strip = fdStrip(g); if (strip) body.appendChild(strip);
     var sum = FD.id === g.id ? FD.sum : null;
     if (!sum) { body.appendChild(el("p", "pv-none bx-wait fd-wait", "Loading the play-by-play…")); return; }
+    if (BX_SPORT[g.league] === "bball") return hpFeed(body, g, sum, anchor, aTop, sc);  // basketball draws its own court and plays
     var comp = ((sum.header || {}).competitions || [])[0] || {}, st = (comp.status || {}).type || {}, sideOf = {}, abOf = {}, scoreOf = {}, recOf = {};
     (comp.competitors || []).forEach(function (k) { var id = String((k.team || {}).id || ""), sd = k.homeAway === "home" ? "home" : "away"; sideOf[id] = sd; abOf[String((k.team || {}).abbreviation || "").toUpperCase()] = sd; scoreOf[sd] = k.score; recOf[sd] = ((k.record || [])[0] || {}).summary || ""; });
     var ix = fdIndex(sum), drives = [], byId = {};

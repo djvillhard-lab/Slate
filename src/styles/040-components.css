@@ -1482,3 +1482,30 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-new { animation: fdIn .6s ease-out; }
 @keyframes fdIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .fd-new { animation: none; } }
+/* Live feed for basketball (3.37.0): the court card and the folded minor plays */
+.hp-courts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hp-ct { min-width: 0; }
+.hp-cap { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.hp-cap b { font-weight: 800; color: var(--ink); }
+.hp-dot { flex: none; align-self: center; width: 8px; height: 8px; border-radius: 50%; }
+.hp-svg svg { display: block; width: 100%; height: auto; max-height: 96px; }
+.hp-noxy .hp-svg { display: none; }
+.hp-fl { fill: color-mix(in srgb, #C68A4E 16%, var(--raise)); stroke: none; }
+.hp-ln { fill: none; stroke: var(--dim); stroke-width: .35; opacity: .7; }
+.hp-key { fill: color-mix(in srgb, var(--dim) 10%, transparent); }
+.hp-bb { stroke-width: .6; opacity: .9; }
+.hp-rim { fill: none; stroke: #E8762D; stroke-width: .4; }
+.hp-miss { fill: none; stroke-width: .45; }
+.hp-last { fill: none; stroke-width: .35; opacity: .9; }
+.hp-play { border-left: 3px solid var(--hp-team, var(--hair)); }
+.hp-min { border-radius: 10px; background: color-mix(in srgb, var(--card) 55%, transparent); border: 1px dashed var(--hair); }
+.hp-mb { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 4px 10px; background: none; border: 0; color: var(--muted); text-align: left; font: inherit; }
+.hp-mt { flex: none; font-size: 11px; font-weight: 700; color: var(--dim); font-variant-numeric: tabular-nums; }
+.hp-mk { flex: 1; min-width: 0; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hp-mb i { flex: none; font-style: normal; font-size: 11px; font-weight: 700; color: var(--dim); }
+.hp-mb i::after { content: " \25BE"; }
+.hp-min.open .hp-mb i::after { content: " \25B4"; }
+.hp-ml { padding: 0 10px 6px; display: grid; gap: 3px; }
+.hp-ml p { margin: 0; font-size: 13px; line-height: 1.3; color: var(--ink); opacity: .85; }
+.hp-ml p span { display: inline-block; min-width: 38px; margin-right: 6px; font-size: 11px; font-weight: 700; color: var(--dim); font-variant-numeric: tabular-nums; }
+
