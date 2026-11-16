@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.59.1 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Thumbs up and down learn mostly from teams now, not whole categories. A team counts from your first thumb. A league, conference or kind of game (national TV, late starts, why it was picked) only shifts after three or more thumbs the same way, and all of those together can move a game only a little. A few thumbs down on weak matchups no longer push out national TV college hoops.
+- "College games with no ranked team" is no longer something Slate learns, because that's most college games.
+- Suggested for you: national TV games in a league you follow closely (your teams, your rules, what you add) now reach the bar on their own, like a Monday night's college hoops on ESPN or BTN.
+- Settings, Thumbs up and down shows only what actually changes your suggestions.
+
 ## 3.59.0 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - New: invites. Slate is now invite only for new people. In Settings > Account, "Invite someone" makes a link to send. It works once and lasts 7 days. The person picks their own name and passcode, and gets their own teams, rules, alerts and 10 Claude summaries a day. The same sheet lists your invites: waiting, used (and by whom) or ran out, with Cancel.

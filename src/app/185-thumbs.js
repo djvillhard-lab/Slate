@@ -3,11 +3,18 @@
   // A thumb teaches the game's features, not just the one game: its teams, league, conference, the reason it was
   // suggested (Rivalry, Close finish…), a late or early start, national TV and ranked matchups. Each feature gets a
   // weight (up +1, down −1, fading by half every 45 days) and a suggestion's score moves by those weights.
+  // Specific beats broad (3.58.2): a team counts from the first thumb, but a whole category (a league, a conference,
+  // why it was picked, start time, national TV, ranked matchups) only moves after more than two net thumbs the same
+  // way, and all categories together move a game by at most 8, so a few thumbs on weak matchups never shut out a kind of game.
   // Kept from narrowing: likes can lift a game by at most 15 (a game still needs its own reason to be suggested),
   // dislikes can sink one by up to 40, and Suggested for you shows at most two games from one league.
   var FB = { list: [], loaded: false, timer: null, pending: [] };
   var FB_HALF = 45, FB_KEEP = 300;
-  var FB_COEF = { tm: 6, why: 5, cf: 3, lg: 3, time: 3, tv: 2, rk: 3 };
+  var FB_COEF = { tm: 6, why: 2, cf: 2, lg: 2, time: 2, tv: 1, rk: 2 };
+  var FB_FREE = 2, FB_BROAD_CAP = 8;   // net thumbs a category ignores, and the most all categories can move a game
+  function fbBroad(k) { return k.split(":")[0] !== "tm"; }
+  // how much one feature's weight counts: a team from the first thumb (+2 / −3 at most); a category only past FB_FREE (±2 at most)
+  function fbEff(k, w) { if (!fbBroad(k)) return w > 0 ? Math.min(w, 2) : Math.max(w, -3); var a = Math.abs(w) - FB_FREE; return a <= 0 ? 0 : (w > 0 ? 1 : -1) * Math.min(a, 2); }
   function fbLoad() {
     if (!db || !uid || FB.loaded) return;
     db.collection("data/users/" + uid).doc("feedback").get().then(function (sn) {
@@ -52,7 +59,7 @@
     if (h >= 21) put("time:late", "Late starts (9 PM or later)"); else if (h && h < 17) put("time:early", "Early starts (before 5 PM)");
     if (x.nat) put("tv:nat", "Games on national TV");
     var ra = Number(x.awayRank) || 0, rh = Number(x.homeRank) || 0;
-    if (L.college) { if (ra && rh) put("rk:both", "Ranked vs ranked"); else if (!ra && !rh) put("rk:none", "College games with no ranked team"); }
+    if (L.college && ra && rh) put("rk:both", "Ranked vs ranked");
     // the same feature twice (both teams in one conference) counts once
     var seen = {}; return out.filter(function (f) { if (seen[f[0]]) return false; seen[f[0]] = 1; return true; });
   }
@@ -70,13 +77,15 @@
   }
   // how much the thumbs move this game's score, and the biggest liked feature (for the reason line)
   function fbAdj(g, tag) {
-    var w = fbWeights(), sum = 0, top = null;
+    var w = fbWeights(), sum = 0, broad = 0, top = null;
     var x = { league: g.league, start: g.start, away: g.away, home: g.home, awayShort: short(g, "away"), homeShort: short(g, "home"), awayConf: g.awayConf, homeConf: g.homeConf, awayRank: g.awayRank, homeRank: g.homeRank, nat: natFor(g) ? 1 : 0 };
     fbFeats(x, tag).forEach(function (f) {
       var o = w[f[0]]; if (!o) return;
-      var c = FB_COEF[f[0].split(":")[0]] || 2, v = o.w > 0 ? Math.min(o.w, 2) : Math.max(o.w, -3), d = c * v;
-      sum += d; if (d > 0 && (!top || d > top.d)) top = { d: d, key: f[0], label: f[1] };
+      var c = FB_COEF[f[0].split(":")[0]] || 2, d = c * fbEff(f[0], o.w);
+      if (fbBroad(f[0])) broad += d; else sum += d;
+      if (d > 0 && (!top || d > top.d)) top = { d: d, key: f[0], label: f[1] };
     });
+    sum += Math.max(-FB_BROAD_CAP, Math.min(FB_BROAD_CAP, broad));
     return { adj: Math.max(-40, Math.min(15, sum)), top: top, veto: fbVeto(g, w) };
   }
   // two net thumbs down on a team (not one of yours) keeps its games out of both sections
@@ -124,7 +133,8 @@
   // ---------- Settings: what the thumbs have taught, and starting over ----------
   // strongest first, the specific ones (a team) ahead of the broad ones (a league) at the same strength
   function fbRank(w, sign) {
-    return Object.keys(w).filter(function (k) { return sign > 0 ? w[k].w >= 0.75 : w[k].w <= -0.75; })
+    // only what actually moves suggestions: a team from about one thumb, a category once it's past its free thumbs
+    return Object.keys(w).filter(function (k) { var e = fbBroad(k) ? fbEff(k, w[k].w) : (Math.abs(w[k].w) >= 0.75 ? w[k].w : 0); return sign > 0 ? e > 0 : e < 0; })
       .sort(function (a, b) { return sign * ((FB_COEF[b.split(":")[0]] || 2) * w[b].w - (FB_COEF[a.split(":")[0]] || 2) * w[a].w); });
   }
   function fbSummary() {
@@ -135,7 +145,7 @@
   function fbSettings(box) {
     box.textContent = "";
     var w = fbWeights();
-    box.appendChild(el("p", "fb-help", "Thumbs on Suggested for you and Worth a look teach Slate what you like: the teams, the league, why it was picked, the start time, national TV and ranked matchups. Older thumbs count less over time, and a game still needs its own reason to be suggested, so you keep seeing some variety."));
+    box.appendChild(el("p", "fb-help", "Thumbs on Suggested for you and Worth a look teach Slate what you like: the teams, the league, why it was picked, the start time, national TV and ranked matchups. Teams count from the first thumb. A whole league, conference or kind of game (like national TV) only shifts after three or more thumbs the same way, and only a little, so a few weak matchups don't shut out a kind of game. Older thumbs count less over time, and a game still needs its own reason to be suggested."));
     var list = function (title, keys) {
       if (!keys.length) return;
       var row = el("div", "fb-group"); row.appendChild(el("b", null, title));

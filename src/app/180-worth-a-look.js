@@ -188,7 +188,7 @@
       if (pa >= 0.62 && ph >= 0.62 && !(LEAGUES[g.league] || {}).college) add(40 + Math.round((pa + ph) * 10), "Good teams", "Two of the better teams: " + nm("away") + " (" + g.awayRecord + ") and " + nm("home") + " (" + g.homeRecord + ")");
       if (MATCH.bigclubs(g, "both") || MATCH.bigsix(g, "both")) add(46, "Big clubs", nm("away") + " vs " + nm("home") + ", two of the biggest clubs around");
       if (MATCH.bignations(g, "both")) add(46, "Heavyweights", nm("away") + " vs " + nm("home"));
-      if (natFor(g) && (g.league === "nba" || g.league === "nhl" || (LEAGUES[g.league] || {}).college)) { var tvn = (g.tv || []).filter(function (n) { return NATIONAL_TV.indexOf(n) !== -1; })[0]; if (tvn) add(26, "Spotlight", "Picked for national TV on " + (NET_SHORT[tvn] || tvn)); }
+      if (natFor(g) && (g.league === "nba" || g.league === "nhl" || (LEAGUES[g.league] || {}).college)) { var tvn = (g.tv || []).filter(function (n) { return NATIONAL_TV.indexOf(n) !== -1; })[0]; if (tvn) add(26 + ((aff[g.league] || 0) >= 8 ? 10 : 0), "Spotlight", "Picked for national TV on " + (NET_SHORT[tvn] || tvn)); }  // a league you follow closely: its national TV games reach the bar (3.58.2)
       // from how DJ uses the app
       ["away", "home"].forEach(function (sd) {
         var t = g[sd]; if (!t) return;

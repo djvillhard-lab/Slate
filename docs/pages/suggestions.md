@@ -27,6 +27,14 @@ rendered from `230-settings.js`, styles at the end of `src/styles/070-ux-review-
   game) taught: fewer college games with no ranked team, men's college hoops, NHL and "Spotlight" picks; more women's
   hoops and late starts. A conference can net to zero when one team in it is liked and another disliked (Big Ten here).
 
+## Specific beats broad (3.59.1)
+- DJ didn't want a few thumbs down on weak national-TV men's college games to stop those games being suggested.
+  Now: teams count from the first thumb (coef 6); categories (league, conf, reason tag, time, TV, ranked) ignore the
+  first 2 net thumbs (FB_FREE), count at most ±2 after that, coef 2 (TV 1), and all categories together are capped at
+  ±8 (FB_BROAD_CAP). "No ranked team" was dropped as a feature. Settings lists only features that actually bite.
+- Spotlight (national TV) suggestions get +10 in a league with affinity ≥ 8, so they reach the 45 bar on their own.
+  On Nov 16 that put Alcorn State at Maryland and WKU at Tulsa in DJ's Suggested for you (46 each).
+
 ## Open / ideas
 - Thumbs on the rule-picked slate cards themselves weren't added (they'd clutter every card); the rules decide those.
 - Forgetting a single chip in Settings (tap to remove) if DJ wants finer control.
