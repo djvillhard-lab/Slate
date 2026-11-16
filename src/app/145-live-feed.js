@@ -252,7 +252,7 @@
     });
     body.appendChild(bug);
     // the scorebug stays on screen under the top bar while the plays scroll
-    var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", ((hdr ? hdr.offsetHeight : 0) + (parseFloat(document.documentElement.style.getPropertyValue("--sc-gap")) || 0)) + "px");  // and below the folded Duo's clock and Wi-Fi
+    var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
     // the field: the away team's end zone on the left; the ball, the line of scrimmage and the yellow line to gain
     if (!over && spot) {
       var E = spot.e, pt = String(E.possessionText || ""), pm = /^([A-Z]{2,4})\s+(\d+)$/.exec(pt), x = null;

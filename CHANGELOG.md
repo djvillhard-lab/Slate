@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.36.4 (Nov 16, 2026)
+TestFlight: 3.33.1 (36), no new build (web only)
+- iPhone app, folded Duo: everything is back to how it was in 3.36.0. No gutter on the right, no extra space at the top, and the Live feed's score bar pins right under the top bar again.
+- The one change kept: on Tonight's Slate, you can pull the page down a little at the top to see anything under the clock and Wi-Fi; it springs back when you let go. Other pages work as before.
+
 ## 3.36.3 (Nov 16, 2026)
 TestFlight: 3.33.1 (36), no new build (web only)
 - iPhone app, folded Duo: pages start right under the top bar again, with no empty space for the clock and Wi-Fi. To see what's under them, pull the page down at the top; it springs back when you let go.

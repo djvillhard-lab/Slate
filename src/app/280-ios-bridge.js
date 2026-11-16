@@ -23,17 +23,6 @@
     var m = { t: "state", view: state.view, date: state.date, today: todayInHome(), look: look, menuOpen: !!state.menuOpen, duo: !!isDuo, device: deviceMode(), back: backKind() };
     var k = JSON.stringify(m); if (k === nativeLast) return; nativeLast = k; nativePost(m);
   }
-  // the folded Duo: iOS's clock and Wi-Fi sit at the top of the right column and reach about 162 points down the screen,
-  // past the bottom of the top bar. The Live feed pins its score bar below them (3.36.3); the rest of the page is pulled down to see under them
-  var SC_BOTTOM = 162;
-  function scFit() {
-    var h = document.documentElement, hd = document.querySelector("#pane-r > header.top");
-    var on = h.hasAttribute("data-native") && h.classList.contains("side-col") && !h.classList.contains("duo");
-    var gap = on && hd ? Math.max(0, Math.round(SC_BOTTOM - hd.getBoundingClientRect().height)) : 0;
-    if (h.style.getPropertyValue("--sc-gap") !== gap + "px") { h.style.setProperty("--sc-gap", gap + "px"); if (state.view === "feed" && typeof renderFeed === "function") renderFeed(true); }
-  }
-  if (typeof ResizeObserver === "function") { var scHd = document.querySelector("#pane-r > header.top"); if (scHd) new ResizeObserver(scFit).observe(scHd); }
-  window.addEventListener("resize", scFit);
   window.SlateApp = {
     version: SLATE_VERSION,
     // the strip's buttons: the same things the menu does
@@ -107,7 +96,7 @@
       r.setProperty("--ma-r", Math.max(0, Math.round(window.innerWidth - cx - 26)) + "px");
       r.setProperty("--ma-b", Math.max(0, Math.round(window.innerHeight - Number(y) + 12)) + "px");
     },
-    setInset: function (px) { var w = Math.max(0, Math.round(Number(px) || 0)); document.documentElement.style.setProperty("--strip-w", w + "px"); document.documentElement.classList.toggle("side-col", w > 0); applyLook(); fitTitle($("title-t")); repinDock(); scFit(); },
+    setInset: function (px) { var w = Math.max(0, Math.round(Number(px) || 0)); document.documentElement.style.setProperty("--strip-w", w + "px"); document.documentElement.classList.toggle("side-col", w > 0); applyLook(); fitTitle($("title-t")); repinDock(); },
     // push alerts through Apple's push service (the app), saved alongside web push subscriptions
     onPushStatus: function (st) { pushInfo.native = st; pushInfo.checked = true; pushInfo.busy = false; pushInfo.on = st === "granted" && !!pushInfo.token; pushState(); },
     onPushToken: function (tok, env) {
