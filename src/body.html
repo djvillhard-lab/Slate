@@ -219,6 +219,30 @@
       <div class="seg seg2" id="pvstyle-seg" role="group" aria-label="Quick read style"><button type="button" data-v="para">Paragraph</button><button type="button" data-v="bullets">Bullets</button></div>
     </div>
 
+    <div class="sec"><h2>Morning email</h2></div>
+    <div id="me-set">
+      <div class="optrow">
+        <div><b>Email me my slate</b><span id="me-sum">Every morning: today's games, where to watch, and last night's results.</span></div>
+        <button type="button" class="switch" id="me-on" role="switch" aria-checked="false" aria-label="Email me my slate"><span class="knob"></span></button>
+      </div>
+      <div class="optrow col">
+        <div><b>Send to</b></div>
+        <input class="field" id="me-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="you@gmail.com" aria-label="Your email address" style="width:100%;box-sizing:border-box;margin-top:0">
+      </div>
+      <div class="optrow">
+        <div><b>Arrives at</b><span id="me-tz"></span></div>
+        <select class="sel" id="me-time" aria-label="Morning email time"></select>
+      </div>
+      <div class="optrow">
+        <div><b>Betting lines</b><span>The spread and total under each game.</span></div>
+        <button type="button" class="switch" id="me-lines" role="switch" aria-checked="false" aria-label="Betting lines in the email"><span class="knob"></span></button>
+      </div>
+      <div class="optrow">
+        <div><b>Send one now</b><span id="me-test-t">Today's email, to see how it looks.</span></div>
+        <button type="button" class="outline quiet" id="me-test">Send</button>
+      </div>
+    </div>
+
     <div class="sec"><h2>Text size</h2></div>
     <p class="hint duo-only">Set it separately for the cover screen (folded) and the big screen (unfolded).</p>
     <p class="hint" id="auto-size-note"></p>

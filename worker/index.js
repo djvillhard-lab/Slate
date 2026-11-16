@@ -6,6 +6,7 @@
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
+import { runMorningEmail, morningApi } from "./morning-email.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -89,6 +90,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runAlerts(env).catch((e) => console.log("alerts error", String(e))));
     ctx.waitUntil(runNewsletters(env, getDoc, putDoc).catch((e) => console.log("newsletters error", String(e))));
+    ctx.waitUntil(runMorningEmail(env).catch((e) => console.log("morning email error", String(e))));  // the morning email (worker/morning-email.js)
     // the number job (scripts/tick.py on GitHub) every 10 minutes, started from here: GitHub's own schedule only
     // ran it every few hours at night. Needs a GitHub token (Actions: read and write on this repo) saved in Cloudflare as GH_TOKEN.
     if (env.GH_TOKEN && new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 3) ctx.waitUntil(startTick(env).catch((e) => console.log("tick error", String(e))));
@@ -229,6 +231,13 @@ export default {
       const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
       if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
       return json(await followNow(env, me.id === "dj" ? "" : "u/" + me.id + "/", p));
+    }
+    // the morning email's settings, test send and preview (worker/morning-email.js)
+    if (url.pathname === "/api/morning-email" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
+      if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
+      try { const out = await morningApi(env, me, p); return json(out, out.error ? 400 : 200); } catch (e) { return json({ error: String(e && e.message || e).slice(0, 200) }, 500); }
     }
     if (url.pathname === "/api/whoami" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
