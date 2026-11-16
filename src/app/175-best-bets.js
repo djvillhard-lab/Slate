@@ -239,12 +239,40 @@
       var un = el("p", "bets-undo", "Removed " + (BET_UNDO.pk.game ? "a game total" : BET_UNDO.pk.p) + ". "), ub = el("button", null, "Undo"); ub.type = "button";
       ub.addEventListener("click", betUndo); un.appendChild(ub); sec.appendChild(un);
     }
-    sec.appendChild(el("p", "bets-sub", "From each player's last six games this season, and each team's last five for game totals. Tonight's numbers come from the live box score. Tap × to swap a pick for the next best one."));
+    sec.appendChild(el("p", "bets-sub", "Picked from each player's last six games this season, and each team's last five for game totals. Tonight's numbers come from the live box score. Tap × to swap a pick for the next best one."));
     var list = el("div", "bets");
     rows.forEach(function (x) { list.appendChild(betRow(x.g, x.p, x.r)); });
     sec.appendChild(list);
     if (rows.length < BET_MAX) sec.appendChild(el("p", "bets-sub", pk.loading ? "Checking more games for the rest of the seven…" : "Only " + rows.length + " picks meet the bar on your slate right now. Add games to get more."));
     return sec;
+  }
+  // ---- why a pick is a good bet, in plain words, from the same game logs (3.43.0) ----
+  var BET_NOUN = { pts: "points", reb: "rebounds", ast: "assists", "3pm": "threes", pt: "points", sog: "shots on goal", ptd: "passing TDs", pyd: "passing yards", ryd: "rushing yards", rec: "catches", cyd: "receiving yards" };
+  var BET_NUM = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  function betNum(n) { return BET_NUM[n] || String(n); }
+  function betAvg(x, big) { return big ? String(Math.round(x)) : String(Math.round(x * 10) / 10); }
+  function betLast(name) { var w = String(name || "").split(" ").filter(function (x) { return !/^(jr\.?|sr\.?|ii|iii|iv)$/i.test(x); }); return w.length > 1 ? w.slice(1).join(" ") : w[0] || ""; }
+  function betWhy(g, b) {
+    var vals = b.vals || [], n = vals.length, hit = b.hit || [], sum = 0, run = 0;
+    vals.forEach(function (x) { sum += x; });
+    for (var i = hit.length - 1; i >= 0 && hit[i]; i--) run++;  // the current streak, newest game last
+    var avg = n ? sum / n : 0, miss = vals.filter(function (x, i2) { return !hit[i2]; });
+    var streak = run >= 3 && run < n ? " Hit in each of the last " + betNum(run) + "." : "";
+    if (b.game) {
+      var over = b.k === "over";
+      return "In both teams' last five games, " + betNum(b.h) + " of " + betNum(n) + " went " + (over ? "over " : "under ") + b.ou + " total points, averaging " + betAvg(avg) + " combined" + (over ? ", " + betAvg(avg - b.ou) + " above" : ", " + betAvg(b.ou - avg) + " below") + " tonight's line." + streak;
+    }
+    var who = betLast(b.p) || b.p, of = b.h === n ? "every one of the last " + betNum(n) + " games" : betNum(b.h) + " of the last " + betNum(n) + " games";
+    if (b.k === "td" || b.k === "g") {
+      var word = b.k === "td" ? "touchdown" : "goal";
+      return who + " has scored a " + word + " in " + of + ", " + sum + " " + word + (sum === 1 ? "" : "s") + " in all." + streak;
+    }
+    if (b.k === "pt" && b.r === 1) return who + " has a point in " + of + ", " + sum + " points in all." + streak;
+    var noun = BET_NOUN[b.k] || "", big = /yards/.test(noun), r = b.r;
+    var out = who + " has had " + r + " or more " + noun + " in " + of + ", averaging " + betAvg(avg, big) + ", " + betAvg(avg - r, big) + " above the line.";
+    if (streak) out += streak;
+    else if (miss.length === 1) out += " The one miss was " + miss[0] + ".";
+    return out;
   }
   function betRow(g, b, res) {
     var kind = status(g).kind, s = res.s, lv = kind === "live", sc = scoreRaw(g.id) || {}, fin = kind === "over";
@@ -270,7 +298,7 @@
     else if (s === "void") { rt.appendChild(el("b", null, "–")); rt.appendChild(el("i", null, need)); say = res.why || "push"; }
     else { rt.appendChild(el("b", null, have)); rt.appendChild(el("i", null, need)); say = (s === "live" ? "live, " : (s === "hit" ? "hit, " : "missed, ") + (fin ? "final, " : "")) + have + (b.game ? " total, line " + b.ou : ", needs " + b.r); }
     r.appendChild(rt);
-    var v = el("div", "bet-v"); b.vals.forEach(function (x2, i) { v.appendChild(el("span", b.hit[i] ? "y" : "", String(x2))); }); r.appendChild(v);
-    r.setAttribute("aria-label", (b.game ? vs + ", " : b.p + ", ") + b.lab + ": " + say + ". Last " + b.n + " games, oldest to newest " + b.vals.join(", "));
+    r.appendChild(el("p", "bet-why", betWhy(g, b)));  // why it's a good bet, in words (3.43.0; it was six little boxes)
+    r.setAttribute("aria-label", (b.game ? vs + ", " : b.p + ", ") + b.lab + ": " + say + ". " + betWhy(g, b));
     return r;
   }

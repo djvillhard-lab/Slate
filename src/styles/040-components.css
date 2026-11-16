@@ -1390,13 +1390,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .bet-r { text-align: right; line-height: 1.05; }
 .bet-r b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
 .bet-r i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--dim); }
-.bet-v { grid-column: 2 / -1; display: flex; gap: 4px; }
-.bet-v span { flex: 1 1 0; min-width: 0; height: 24px; display: grid; place-items: center; border-radius: 6px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--raise); color: var(--dim); }
-.bet-v span.y { background: color-mix(in srgb, #2BB673 26%, transparent); color: var(--ink); }
+.bet-why { grid-column: 2 / -1; margin: 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
 /* settled picks (3.40.0): a hit gets a green edge and a green "Hit"; a miss steps back */
 .bet.won { border-color: color-mix(in srgb, #2BB673 60%, transparent); background: color-mix(in srgb, #2BB673 8%, var(--card)); }
 .bet.lost { border-color: color-mix(in srgb, var(--live, #E5484D) 45%, transparent); }
-.bet.lost .bet-m, .bet.lost .bet-r, .bet.lost .bet-v, .bet.lost > .badge { opacity: .6; }
+.bet.lost .bet-m, .bet.lost .bet-r, .bet.lost .bet-why, .bet.lost > .badge { opacity: .6; }
 .bet.on { border-color: color-mix(in srgb, var(--live, #E5484D) 55%, transparent); }
 .bets-tally { margin: 8px 2px 0; font-size: 15px; font-weight: 800; color: var(--ink); }
 .bets-tally .bt-lv { color: var(--live, #E5484D); }
