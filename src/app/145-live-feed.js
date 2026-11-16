@@ -347,7 +347,7 @@
       var wl = el("p", "fd-wpl", "Win probability (ESPN)"); wpHost.appendChild(wl); wpHost.appendChild(wr);
     }
     // the plays, newest first, under their drives
-    var list = el("div", "fd-list"), shown = 0, cap = FD.more ? 1e9 : 60, fresh = FD.seen ? FD.seen : null, seenNow = {};
+    var list = el("div", "fd-list"), shown = 0, cap = FD.more ? 1e9 : 15, fresh = FD.seen ? FD.seen : null, seenNow = {};
     for (var di = drives.length - 1; di >= 0 && shown < cap; di--) {
       var d2 = drives[di], dsd = sideOf[String((d2.team || {}).id || "")] || "", isCur = dr.current && d2.id === dr.current.id && !over && !d2.displayResult && (!posSide || dsd === posSide);  // a punt or turnover ends it before ESPN opens the next drive
       var dh = el("div", "fd-drive"); if (dsd) dh.appendChild(badgeFor(abbr(g, dsd), g[dsd], g[dsd + "Color"], g[dsd + "Alt"]));
@@ -375,6 +375,7 @@
     if (!allPlays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game kicks off." : "No plays yet."));
     body.appendChild(list);
     if (!FD.more && allPlays.length > shown && shown >= cap) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = true; renderFeed(); }); body.appendChild(mb); }
+    var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);  // the box score under the plays (3.40.3)
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     if (anchor) requestAnimationFrame(function () { var n2 = body.querySelector('.fd-play[data-id="' + anchor + '"]'); if (!n2) return; var dlt = n2.getBoundingClientRect().top - aTop; if (Math.abs(dlt) > 1) { if (sc) sc.scrollTop += dlt; else window.scrollBy(0, dlt); } });

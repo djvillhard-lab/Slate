@@ -1494,6 +1494,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 @keyframes fdIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .fd-new { animation: none; } }
 /* Live feed for basketball (3.37.0): the court card and the folded minor plays */
+.fd-box { margin-top: 16px; }
+.fd-boxh { margin: 0 2px 8px; font-size: 17px; font-weight: 800; color: var(--head); }
 .hp-top { display: grid; gap: 6px; }
 .hp-top .hp-tl { margin: 0; }
 .hp-row { margin: 0; padding: 2px 10px; font-size: 13px; line-height: 1.35; color: var(--muted); }
