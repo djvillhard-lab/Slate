@@ -5,6 +5,16 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.59.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- New: invites. Slate is now invite only for new people. In Settings > Account, "Invite someone" makes a link to send. It works once and lasts 7 days. The person picks their own name and passcode, and gets their own teams, rules, alerts and 10 Claude summaries a day. The same sheet lists your invites: waiting, used (and by whom) or ran out, with Cancel.
+- New: a log-in page. A phone with no passcode now opens on a real page (Log in, I have an invite, Just look around) instead of the pop-up box.
+- New: the welcome walkthrough. Someone new gets it once: what Slate is, then five quick steps: pick your teams, pick your leagues, how big a slate (just the big ones, a good mix, lots of games), a few preferences (ranked college games, national TV, rivalries and big events, earliest start) and notifications (my teams, slate games, morning brief, morning email, and turning alerts on for this phone). The last step shows the rules in plain words and how many games they put on today's slate.
+- Slate rules are built from those answers. Nothing is locked in: every part can be changed in Settings > Slate rules.
+- Already using Slate? Nothing changes for you. Settings > Account has "Welcome walkthrough" to run it yourself; it replaces your rules only when you tap "Replace my rules" on the last step.
+- When one of your teams plays in an event (a college basketball tournament, a bowl, a cup) that your rules weren't showing, that event is switched on for you, so its other games go on your slate too. Switch it off under Big events in Slate rules and it stays off.
+- Settings > Account also shows who's logged in on this phone, with Log out.
+
 ## 3.58.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - The "Show extra suggestions today, for testing" switch is gone from Settings, Thumbs up and down. Testing is done, and Suggested for you and Worth a look are back to their usual bar. Your thumbs from the test stay and keep counting.

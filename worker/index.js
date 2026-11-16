@@ -31,12 +31,13 @@ async function getDoc(env, path) {
   const rows = r.ok ? await r.json() : []; return rows[0] ? rows[0].data : null;
 }
 async function sha(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
+import { signupRoutes, passKey } from "./signup.js";  // invite-only sign-up; kept down here, next to the one place that uses passKey
 // who a passcode belongs to: DJ (the Supabase passcode) or someone listed (by passcode hash) in users/registry
 async function whoIs(env, pass) {
   pass = String(pass || ""); if (pass.length < 8) return null;
   const chk = await rpc(env, "save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString(), via: "worker" }, p_pass: pass, p_merge: false }, PUB);
   if (chk.ok && !/not allowed|error/i.test(chk.text)) return { id: "dj", name: "DJ", cap: 0 };
-  const reg = (await getDoc(env, "users/registry")) || {}, u = (reg.users || {})[await sha(pass)];
+  const reg = (await getDoc(env, "users/registry")) || {}, u = (reg.users || {})[await sha(pass)] || (reg.users || {})[await passKey(env, pass)];  // the second: a passcode chosen at sign-up (signup.js)
   // everyone but DJ gets at most 10 Claude summaries a day (a lower cap in the registry still applies)
   return u && u.id ? { id: u.id, name: u.name || u.id, cap: Math.min(Number(u.cap) || 10, 10) } : null;
 }
@@ -259,6 +260,8 @@ export default {
       const r = await rpc(env, "mirror_doc", { p_path: path, p_data: p.data || {}, p_merge: !!p.merge });
       return r.ok ? json({ ok: true }) : fail("Couldn't save " + r.status, 502);
     }
+    // invite-only sign-up (signup.js)
+    if (url.pathname === "/api/invite" || url.pathname === "/api/invite-check" || url.pathname === "/api/signup") return signupRoutes(req, env, url, { json, whoIs, getDoc, putDoc });
     return env.ASSETS.fetch(req);
   }
 };

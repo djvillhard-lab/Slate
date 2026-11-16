@@ -7,9 +7,13 @@
     SLATE_PASS=... python3 scripts/shots.py settings --click "#set-sfb"    (tap a button first, e.g. to open a sheet)
     python3 scripts/shots.py lineup tv --text xl --tomorrow --full          (no passcode: read-only, saves are blocked)
     SLATE_PASS=... python3 scripts/shots.py games --league WCBB --filter "Both ranked"   (a league tab, then a filter in the row under it)
+    python3 scripts/shots.py lineup --gate                                  (the log-in page; --gate invite = the sign-up page)
+    SLATE_PASS=... python3 scripts/shots.py settings --readonly --name welcome-2 --eval "document.querySelector('#acct button').click(); document.querySelector('.wl-next').click()"
 
 Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --tomorrow (the slate's next day:
-upcoming games), --full (the whole page, not just the first screen), --wait seconds.
+upcoming games), --full (the whole page, not just the first screen), --wait seconds,
+--eval "js" (run in the page just before each screenshot, e.g. to tap something), --name label (added to the file names),
+--readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite).
 
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
 plus game:<team> (that game's matchup page), look:<team> (its quick look on All games) and feed:<team> (its Live feed), found on All games by team name.
@@ -43,8 +47,10 @@ def main():
     if not args or args[0] in ("-h", "--help"):
         print(__doc__); return
     pw = os.environ.get("SLATE_PASS", "").strip()
+    if "--gate" in args: pw = ""
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
+    ev, name, readonly, gate = None, "", False, None
     i = 0
     while i < len(args):
         a = args[i]
@@ -58,6 +64,13 @@ def main():
         if a == "--filter": filt = args[i + 1]; i += 2; continue
         if a == "--tomorrow": tomorrow = True; i += 1; continue
         if a == "--full": full = True; i += 1; continue
+        if a == "--eval": ev = args[i + 1]; i += 2; continue
+        if a == "--name": name = args[i + 1]; i += 2; continue
+        if a == "--readonly": readonly = True; i += 1; continue
+        if a == "--gate":
+            gate = "login"; i += 1
+            if i < len(args) and args[i] == "invite": gate = "invite"; i += 1
+            continue
         pages.append(a); i += 1
     bad = [s for s in sizes if s not in SIZES]
     if bad: sys.exit("Unknown size: " + ", ".join(bad) + " (folded, open, iphone)")
@@ -104,9 +117,12 @@ def main():
             page.route(re.compile(r".*/version\.json.*"), lambda r: r.fulfill(path=ver, content_type="application/json"))
             page.route(re.compile(r"^https://site\.api\.espn\.com/.*"), espn)
             page.route(re.compile(r".*supabase\.co/rest/v1/docs.*user-settings.*"), settings_for(S["device"]))
-            if not pw:  # read-only: nothing this run does can be saved
-                page.route("**/*", lambda r: r.abort() if r.request.method not in ("GET", "HEAD", "OPTIONS") else r.fallback())
-            page.goto(SITE + ("#pass=" + pw if pw else ""))
+            if not pw or readonly:  # read-only: nothing this run does can be saved (the passcode check itself still goes through)
+                page.route("**/*", lambda r: r.abort() if r.request.method not in ("GET", "HEAD", "OPTIONS") and "/api/whoami" not in r.request.url else r.fallback())
+            if not pw and not gate:  # no passcode: just looking, without the log-in page on top
+                page.add_init_script("try{localStorage.setItem('slate-view-only','1')}catch(e){}")
+            if gate == "invite": page.route("**/api/invite-check", lambda r: r.fulfill(body='{"ok":true}', content_type="application/json"))
+            page.goto(SITE + ("#pass=" + pw if pw else "#invite=SHOTS2TEST234" if gate == "invite" else ""))
             page.wait_for_timeout(int(wait * 1000))
             if S["inset"]: page.evaluate("SlateApp.setInset(%d)" % S["inset"]); page.wait_for_timeout(400)
             if tomorrow: page.evaluate("document.getElementById('l-day-next').click()"); page.wait_for_timeout(int(wait * 1000))
@@ -142,8 +158,9 @@ def main():
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.click(); })(%s)" % json.dumps(click)); page.wait_for_timeout(700)
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
+                if ev: page.evaluate(ev); page.wait_for_timeout(1200)
                 wide = page.evaluate("document.scrollingElement.scrollWidth - innerWidth")
-                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{'-tomorrow' if tomorrow else ''}.png")
+                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}{'-' + name if name else ''}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{'-tomorrow' if tomorrow else ''}.png")
                 page.screenshot(path=path, full_page=full)
                 print(f"{path}  ({size}: {mode})" + (f"  WIDER THAN THE SCREEN by {wide}px" if wide > 1 else ""))
             for e in errors: print(f"  page error ({size}): {e}")
