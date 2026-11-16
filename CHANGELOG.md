@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.54.0 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Betting lines now lean one way. Each card says "Leans over" or "Leans under" up top and reads "Over 23.5 points" (or Under), with one line of stats for that side instead of a case for both.
+- Under the stats, up to three things beyond the player's own numbers that point the same way, each from ESPN's data for that game: the second night of a back-to-back, a few days of rest, a key teammate out (like a team's top scorer, so more shots go to the rest, or a starting QB out for his receivers), minutes going up or down, home and road splits, the last game against tonight's opponent, a game total above or below these teams' recent games, a big spread (starters sit in a blowout), the line moving since it opened, and wind or cold at outdoor football games.
+- Game totals lean too, using both teams' last five, a team on a back-to-back, a key player out and the wind.
+- Lines too close to call aren't shown. The five are the strongest leans, two a game at most when there are enough, with headline lines (points, passing and rushing yards) and the biggest names a little ahead.
+- After the game: "✓ Went over" in green when the lean was right, "✗ Went under" when it wasn't, and the top counts how many leaned right and wrong.
+
 ## 3.53.1 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - News, Games tab: each game is now a drop-down. The card shows the matchup, score and result; tap it to open Claude's summary, quick hits, the article link and the breakdown, and tap again to close it.

@@ -1,5 +1,5 @@
 # Betting lines (was Best bets)
-Last updated: Nov 16, 2026, 3.53.0
+Last updated: Nov 16, 2026, 3.54.0
 Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section on Tonight's Slate, at the bottom of the slate, below Finished. (3.49.0 moved it above Finished; DJ had it moved back in 3.51.2. Don't move it up again.)
 
 ## Done
@@ -51,3 +51,13 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 - No player lines yet and more than 2h to start: `short`, re-checked every 30 min, and totals don't fill the spare spots meanwhile.
 - localStorage keys moved to `slate-bets3` / `slate-picks2` (old picks don't carry over).
 - Open: lines can move after a card is chosen; the card keeps the line it was chosen with.
+
+## 3.54.0: one lean per card, plus context (DJ: "make it obvious whether the stats favor the over or the under", creative one-liners like back-to-backs)
+- `betJudge`: stats lean (`betLean`, -2..2) + weighted facts from `betFacts`; under 0.4 total = too close, not shown. Card shows only the lean side's stats (`betCase`) and up to 3 facts that agree.
+- Facts (all from ESPN, never guessed): back-to-back / 3–6 days rest (gamelog dates), key teammate out (injuries × team season leaders via `seasonFetch`),
+  minutes trend (bball), home/road split, last game vs tonight's opponent (gamelog atVs/opponent), game total vs teams' recent totals (pace),
+  spread ≥12 bball / ≥14 NFL, line move since open, wind ≥20 mph / ≤25° (NFL weather). Totals: back-to-back teams, key player out, wind.
+- DJ's "Tatum vs Brown" example was read as the teammate angle: one star out, the others' usage goes up.
+- Order: strongest lean first (edge×20) plus a little prominence. Two a game first pass, three if needed. Settled: green "✓ Went over" when the lean was right.
+- localStorage keys `slate-bets4` / `slate-picks3`.
+- Ideas not built: opponent defense vs position (no free per-position data found), revenge games (no former-team data).

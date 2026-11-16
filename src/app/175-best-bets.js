@@ -27,8 +27,8 @@
   var BET_W = { pts: 20, pyd: 20, pt: 18, ryd: 16, cyd: 16, sog: 14, reb: 10, ast: 10, rec: 10, ptd: 10, "3pm": 6, hast: 6 };  // how much of a headline each kind of line is
   var BET_TOT = { football: "points", bball: "points", hockey: "goals" };
   function betN(x) { var n = parseFloat(x); return isNaN(n) ? 0 : n; }
-  var BETS = (function () { try { return JSON.parse(localStorage.getItem("slate-bets3") || "{}"); } catch (e) { return {}; } })(), betQ = [], betRun = 0, betT = null, GLOG = {};
-  function betSave() { try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(BETS).forEach(function (k) { if (BETS[k].at > cut && BETS[k].list) keep[k] = { at: BETS[k].at, list: BETS[k].list, short: BETS[k].short }; }); localStorage.setItem("slate-bets3", JSON.stringify(keep)); } catch (e) {} }
+  var BETS = (function () { try { return JSON.parse(localStorage.getItem("slate-bets4") || "{}"); } catch (e) { return {}; } })(), betQ = [], betRun = 0, betT = null, GLOG = {};
+  function betSave() { try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(BETS).forEach(function (k) { if (BETS[k].at > cut && BETS[k].list) keep[k] = { at: BETS[k].at, list: BETS[k].list, short: BETS[k].short }; }); localStorage.setItem("slate-bets4", JSON.stringify(keep)); } catch (e) {} }
   // a player's games this season, newest first: [{ at, v: { statName: value } }] (an old season's log counts as nothing)
   function glGames(gl, before) {
     if (!gl) return [];
@@ -37,7 +37,7 @@
     (st.categories || []).forEach(function (c) { (c.events || []).forEach(function (e) {
       var id = String(e.eventId || ""); if (!id || seen[id]) return; seen[id] = 1;
       var info = (gl.events || {})[id] || {}, at = Date.parse(info.gameDate || "") || 0; if (!at || (before && at >= before - 3600e3)) return;
-      var v = {}; names.forEach(function (n, i) { v[n] = (e.stats || [])[i]; }); out.push({ at: at, v: v }); }); });
+      var v = {}; names.forEach(function (n, i) { v[n] = (e.stats || [])[i]; }); out.push({ at: at, v: v, away: info.atVs === "@", opp: String((info.opponent || {}).id || "") }); }); });
     out.sort(function (a, b) { return b.at - a.at; });
     return out.length && Date.now() - out[0].at < 75 * 864e5 ? out : [];
   }
@@ -69,10 +69,74 @@
     });
   }
   // how hard a stretch of games leans to one side of a line (it orders the cards; it isn't a pick)
+  // the stats' own lean: + toward the over, - toward the under (how many went each way, and how far the average sits from the line)
   function betLean(vals, line) {
     var n = vals.length, o = 0, u = 0, sum = 0;
     vals.forEach(function (x) { sum += x; if (x > line) o++; else if (x < line) u++; });
-    return Math.abs(o - u) / n * 100 + Math.min(25, Math.abs(sum / n - line) / Math.max(line, 1) * 50);
+    return (o - u) / n + Math.max(-1, Math.min(1, (sum / n - line) / Math.max(line, 1) * 3));
+  }
+  // ---- context beyond the player's own numbers (3.54.0) ----
+  // Each fact is [words, +1 for the over or -1 for the under, weight]. Every one comes from ESPN data for this game; nothing is guessed.
+  var BET_MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var BET_PACE = { pts: 1, "3pm": 1, ast: 1, pyd: 1, cyd: 1, rec: 1, pt: 1, sog: 1 };  // lines that rise and fall with how much scoring is expected
+  function betDay(at) { var d = new Date(at); return BET_MON[d.getMonth()] + " " + d.getDate(); }
+  function betSurname(name) { var w = String(name || "").split(" ").filter(function (x) { return !/^(jr\.?|sr\.?|ii|iii|iv)$/i.test(x); }); return w.length > 1 ? w.slice(1).join(" ") : w[0] || ""; }
+  function betFacts(c, x, d, all) {
+    var f = [], sport = c.sport, L = x.line, big = L >= 40, k = x.k, fmt = function (v) { return betAvg(v, big); };
+    var mean = function (list) { var t = 0; list.forEach(function (gm) { t += d.val(gm.v); }); return list.length ? t / list.length : 0; };
+    // rest: the second night of a back-to-back, or a few days off (basketball and hockey)
+    if (all[0] && (sport === "bball" || sport === "hockey")) {
+      var hrs = (c.start - all[0].at) / 3600e3, days = Math.floor(hrs / 24);
+      if (hrs < 30) f.push(["Second night of a back-to-back: played last night.", -1, 0.5]);
+      else if (days >= 3 && days <= 6) f.push([betNum(days).replace(/^./, function (m) { return m.toUpperCase(); }) + " days of rest since the last game.", 1, 0.25]);
+    }
+    // a key teammate is out
+    (c.out[c.tid] || []).forEach(function (o) {
+      if (o.id === x.pid) return;
+      if (sport === "bball" && o.grp === "scoring" && /^(pts|3pm|ast)$/.test(k)) f.push([betSurname(o.name) + " is out (" + o.val + " points a game), so more shots go to the rest.", 1, 0.6]);
+      else if (sport === "football" && o.grp === "passing" && /^(rec|cyd)$/.test(k)) f.push(["Starting QB " + betSurname(o.name) + " is out, so a backup is throwing.", -1, 0.6]);
+      else if (sport === "football" && o.grp === "rushing" && k === "ryd") f.push([betSurname(o.name) + ", the top rusher, is out: more carries to go around.", 1, 0.6]);
+      else if (sport === "football" && o.grp === "receiving" && /^(rec|cyd)$/.test(k)) f.push([betSurname(o.name) + ", a top target, is out: more passes to go around.", 1, 0.5]);
+      else if (sport === "hockey" && o.grp === "scoring" && /^(pt|sog|hast)$/.test(k)) f.push([betSurname(o.name) + " is out (" + o.val + " points), leaving more chances for the rest.", 1, 0.5]);
+    });
+    // minutes trend (basketball)
+    if (sport === "bball" && all.length >= 6) {
+      var m3 = 0, p3 = 0; all.slice(0, 3).forEach(function (gm) { m3 += betN(gm.v.minutes); }); all.slice(3, 6).forEach(function (gm) { p3 += betN(gm.v.minutes); }); m3 /= 3; p3 /= 3;
+      if (Math.abs(m3 - p3) >= 4) f.push(["Minutes " + (m3 > p3 ? "up" : "down") + ": " + Math.round(m3) + " a game the last three, from " + Math.round(p3) + " before.", m3 > p3 ? 1 : -1, 0.4]);
+    }
+    // home and road this season
+    var home = all.filter(function (gm) { return !gm.away; }), road = all.filter(function (gm) { return gm.away; });
+    if (home.length >= 3 && road.length >= 3) {
+      var hA = mean(home), rA = mean(road), away = c.sd === "away", here = away ? rA : hA, there = away ? hA : rA;
+      if (Math.abs(here - there) >= Math.max(big ? 10 : 1, 0.15 * Math.max(here, there)) && (here > L) === (here > there))
+        f.push([fmt(hA) + " a game at home, " + fmt(rA) + " on the road. Tonight is " + (away ? "on the road." : "at home."), here > L ? 1 : -1, 0.35]);
+    }
+    // the last time against tonight's opponent this season
+    var vs = all.filter(function (gm) { return gm.opp && gm.opp === c.oppTid; })[0];
+    if (vs) { var vv = d.val(vs.v); if (vv !== L) f.push(["Had " + vv + " against " + c.oppAb + " on " + betDay(vs.at) + ".", vv > L ? 1 : -1, 0.25]); }
+    // how much scoring tonight's game total expects, against these teams' recent games
+    if (BET_PACE[k] && c.ou && c.recTot) {
+      var ratio = c.ou / c.recTot;
+      if (ratio >= 1.04) f.push(["The game total (" + c.ou + ") is above these teams' recent " + Math.round(c.recTot) + ": more scoring expected.", 1, 0.4]);
+      else if (ratio <= 0.96) f.push(["The game total (" + c.ou + ") is below these teams' recent " + Math.round(c.recTot) + ": less scoring expected.", -1, 0.4]);
+    }
+    // a big spread: starters can sit late in a blowout
+    if (c.spread && ((sport === "bball" && c.spread >= 12) || (sport === "football" && c.spread >= 14))) f.push(["A " + c.spread + "-point spread: in a blowout, starters sit late.", -1, 0.3]);
+    // the line moved since it opened
+    if (x.open != null && Math.abs(L - x.open) >= Math.max(1, L * 0.04)) f.push(["The line moved " + (L > x.open ? "up" : "down") + " from " + x.open + " since it opened.", L > x.open ? 1 : -1, 0.3]);
+    // weather at an outdoor football game
+    if (sport === "football" && c.wx) {
+      if (betN(c.wx.gust) >= 20 && /^(pyd|cyd|rec)$/.test(k)) f.push(["Wind gusts up to " + c.wx.gust + " mph at kickoff.", -1, 0.5]);
+      if (c.wx.temperature != null && betN(c.wx.temperature) <= 25 && k === "pyd") f.push([c.wx.temperature + "° at kickoff.", -1, 0.3]);
+    }
+    return f;
+  }
+  // the lean: the stats plus the facts. Too close to call returns null (the line isn't shown).
+  function betJudge(vals, line, facts) {
+    var t = betLean(vals, line); facts.forEach(function (x) { t += x[1] * x[2]; });
+    if (Math.abs(t) < 0.4) return null;
+    var side = t > 0 ? 1 : -1;
+    return { lean: side, edge: Math.abs(t), facts: facts.filter(function (x) { return x[1] === side; }).sort(function (a, c) { return c[2] - a[2]; }).slice(0, 3).map(function (x) { return x[0]; }) };
   }
   function betNeed(g) {
     var b = BETS[g.id];
@@ -85,12 +149,28 @@
       var cur = bx.live[g.id] || (bx.live[g.id] = {}), lg = g.league, sport = BX_SPORT[lg], start = Date.parse(g.start) || Date.now(), short = false, src = "";
       (cur.sum && Date.now() - (cur.sumAt || 0) < 30 * 60000 ? Promise.resolve(cur.sum) : (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) { if (!ev) return null; cur.ev = ev; return rkFetch(bxSummaryUrl(lg, ev)); })).then(function (sum) {
         if (!sum) return null; cur.sum = cur.sum || sum;
-        var comp = ((sum.header || {}).competitions || [])[0] || {}, side = {}, hurt = {}, out = [], ev = String(comp.id || (sum.header || {}).id || cur.ev || "");
+        var comp = ((sum.header || {}).competitions || [])[0] || {}, side = {}, hurt = {}, hurtBy = {}, out = [], ev = String(comp.id || (sum.header || {}).id || cur.ev || "");
         var stt = ((comp.status || {}).type || {}).state || "pre";
         (comp.competitors || []).forEach(function (k) { side[String((k.team || {}).id || "")] = k.homeAway === "home" ? "home" : "away"; });
-        (sum.injuries || []).forEach(function (t) { (t.injuries || []).forEach(function (x) { if (/out|reserve|suspen|doubt/i.test(String(x.status || ""))) hurt[String((x.athlete || {}).id || "")] = 1; }); });
+        (sum.injuries || []).forEach(function (t) { var tid = String((t.team || {}).id || ""); (t.injuries || []).forEach(function (x) { if (/out|reserve|suspen|doubt/i.test(String(x.status || ""))) { var id = String((x.athlete || {}).id || ""); hurt[id] = 1; (hurtBy[tid] = hurtBy[tid] || {})[id] = 1; } }); });
+        // the game's own context: the spread, the total against both teams' recent games, the weather, and who's out
+        var pk = (sum.pickcenter || [])[0] || {}, ou = parseFloat(pk.overUnder), tot = [], seenEv = {}, lastAt = {};
+        (sum.lastFiveGames || []).forEach(function (t) { var tid = String((t.team || {}).id || ""); (t.events || []).forEach(function (e) {
+          var at = Date.parse(e.gameDate) || 0; if (at && at < start - 3600e3 && at > (lastAt[tid] || 0)) lastAt[tid] = at;
+          if (seenEv[e.id]) return; seenEv[e.id] = 1; var a = parseFloat(e.homeTeamScore), h = parseFloat(e.awayTeamScore); if (!isNaN(a) && !isNaN(h)) tot.push({ at: at, v: a + h }); }); });
+        var recTot = 0; tot.forEach(function (x) { recTot += x.v; }); recTot = tot.length >= 6 ? recTot / tot.length : 0;
+        var wx = (sum.gameInfo || {}).weather || null, spread = Math.abs(parseFloat(pk.spread)) || 0, keyOut = {};
+        var outs = Object.keys(side).filter(function (tid) { return hurtBy[tid]; }).map(function (tid) {
+          return seasonFetch(lg, tid).then(function (S) {
+            var grp = { game: ["scoring", 3], passing: ["passing", 1], rushing: ["rushing", 1], receiving: ["receiving", 2] };
+            ((S && S.results) || []).forEach(function (r, ri) {
+              var gp = grp[r.name] || (sport === "hockey" && ri === 0 ? ["scoring", 3] : null); if (!gp) return;
+              (r.leaders || []).slice(0, gp[1]).forEach(function (L) { var id = String((L.athlete || {}).id || ""); if (hurtBy[tid][id]) (keyOut[tid] = keyOut[tid] || []).push({ id: id, name: (L.athlete || {}).displayName || "", grp: gp[0], val: L.displayValue || "" }); });
+            });
+          }, function () {});
+        });
         var props = BET_PROPS[lg] && ev ? betLines(lg, ev) : Promise.resolve(null);
-        return props.then(function (L) {
+        return Promise.all(outs).then(function () { return props; }).then(function (L) {
           var lines = (L && L.list) || [];
           if (BET_PROPS[lg] && !lines.length && stt === "pre" && start - Date.now() > 2 * 3600e3) short = true;  // lines usually go up the day of the game: look again in half an hour
           src = (L && L.src) || "";
@@ -102,26 +182,31 @@
             return Promise.all([glFetch(lg, aid), rkFetch(by[aid][0].ref)]).then(function (r) {
               var gl = r[0], a = r[1] || {}, tm = /teams\/(\d+)/.exec(((a.team || {}).$ref) || ""), tid = tm ? tm[1] : "";
               if (!side[tid]) return;
-              var games = glGames(gl, start).slice(0, 6), names = (gl && gl.names) || [];
+              var all = glGames(gl, start), games = all.slice(0, 6), names = (gl && gl.names) || [];
               if (games.length < 4) return;
+              var sd = side[tid], oSd = sd === "home" ? "away" : "home", oppTid = Object.keys(side).filter(function (t) { return t !== tid; })[0] || "";
+              var c = { sport: sport, start: start, sd: sd, tid: tid, oppTid: oppTid, oppAb: abbr(g, oSd), ou: isNaN(ou) ? 0 : ou, recTot: recTot, spread: spread, wx: wx, out: keyOut };
               by[aid].forEach(function (x) {
                 var d = (BET_DEF[sport] || []).filter(function (d) { return d.k === x.k; })[0];
                 if (!d || !d.has.some(function (h) { return names.indexOf(h) !== -1; })) return;
                 var vals = games.map(function (gm) { return d.val(gm.v); }).reverse();  // oldest first
-                out.push({ k: x.k, line: x.line, open: x.open, src: src, vals: vals, lean: betLean(vals, x.line), pid: aid, p: a.displayName || a.fullName || "", pos: ((a.position || {}).abbreviation) || "", sd: side[tid] });
+                var j = betJudge(vals, x.line, betFacts(c, x, d, all)); if (!j) return;
+                out.push({ k: x.k, line: x.line, open: x.open, src: src, vals: vals, lean: j.lean, edge: j.edge, facts: j.facts, pid: aid, p: a.displayName || a.fullName || "", pos: ((a.position || {}).abbreviation) || "", sd: sd });
               });
             }, function () {});
           }));
         }, function () {}).then(function () {
-          // the order: the headline lines first (points, passing and rushing yards…), the biggest of each kind first (the stars), and how far the recent numbers lean only to break ties
+          // the order: the strongest lean first, with the headline lines (points, passing and rushing yards…) and the stars a little ahead
           var rk = {}; out.forEach(function (x) { (rk[x.k] = rk[x.k] || []).push(x.line); }); Object.keys(rk).forEach(function (k) { rk[k].sort(function (a, c) { return c - a; }); });
-          out.forEach(function (x) { x.sc = (BET_W[x.k] || 5) + Math.max(0, 30 - rk[x.k].indexOf(x.line) * 6) + Math.min(10, x.lean / 10); });
-          // the game total: tonight's posted over/under against both teams' last five games
-          var pk = (sum.pickcenter || [])[0] || {}, ou = parseFloat(pk.overUnder), tot = [], seenEv = {};
-          if (!isNaN(ou)) (sum.lastFiveGames || []).forEach(function (t) { (t.events || []).forEach(function (e) { if (seenEv[e.id]) return; seenEv[e.id] = 1; var a = parseFloat(e.homeTeamScore), h = parseFloat(e.awayTeamScore); if (!isNaN(a) && !isNaN(h)) tot.push({ at: Date.parse(e.gameDate) || 0, v: a + h }); }); });
-          if (tot.length >= 6) {
-            tot.sort(function (a, c) { return a.at - c.at; }); var vals = tot.map(function (x) { return x.v; });
-            out.push({ k: "total", game: 1, line: ou, src: ((pk.provider || {}).name) || src || "", vals: vals, sc: 42 + Math.min(10, betLean(vals, ou) / 10) });
+          out.forEach(function (x) { x.sc = Math.min(3, x.edge) * 20 + ((BET_W[x.k] || 5) + Math.max(0, 30 - rk[x.k].indexOf(x.line) * 6)) * 0.3; });
+          // the game total: tonight's posted over/under against both teams' last five games, plus rest and weather
+          if (!isNaN(ou) && tot.length >= 6) {
+            tot.sort(function (a, c) { return a.at - c.at; }); var vals = tot.map(function (x) { return x.v; }), f = [];
+            if (sport === "bball" || sport === "hockey") Object.keys(lastAt).forEach(function (tid) { if (side[tid] && start - lastAt[tid] < 30 * 3600e3) f.push([abbr(g, side[tid]) + " played last night: tired legs.", -1, 0.35]); });
+            Object.keys(keyOut).forEach(function (tid) { keyOut[tid].forEach(function (o) { if (o.grp === "scoring" || o.grp === "passing") f.push([betSurname(o.name) + " is out for " + abbr(g, side[tid]) + ".", -1, 0.3]); }); });
+            if (sport === "football" && wx && betN(wx.gust) >= 20) f.push(["Wind gusts up to " + wx.gust + " mph at kickoff.", -1, 0.5]);
+            var j = betJudge(vals, ou, f);
+            if (j) out.push({ k: "total", game: 1, line: ou, src: ((pk.provider || {}).name) || src || "", vals: vals, lean: j.lean, edge: j.edge, facts: j.facts, sc: Math.min(3, j.edge) * 20 + 12 });
           }
           out.sort(function (a, c) { return c.sc - a.sc; });
           return out;
@@ -137,8 +222,8 @@
   // Kept per slate day. A line stays until its game leaves the slate; a settled one stays too, showing which way it went.
   // An open spot is filled from upcoming games first, then live games, then finished ones (a finished game's line still only uses the games before it).
   var BET_MAX = 5, BET_SIG = {};
-  var PICKS = (function () { try { return JSON.parse(localStorage.getItem("slate-picks2") || "{}"); } catch (e) { return {}; } })();
-  function picksSave() { try { var keep = {}; Object.keys(PICKS).sort().slice(-3).forEach(function (d) { keep[d] = PICKS[d]; }); PICKS = keep; localStorage.setItem("slate-picks2", JSON.stringify(keep)); } catch (e) {} }
+  var PICKS = (function () { try { return JSON.parse(localStorage.getItem("slate-picks3") || "{}"); } catch (e) { return {}; } })();
+  function picksSave() { try { var keep = {}; Object.keys(PICKS).sort().slice(-3).forEach(function (d) { keep[d] = PICKS[d]; }); PICKS = keep; localStorage.setItem("slate-picks3", JSON.stringify(keep)); } catch (e) {} }
   function betTier(g) { var k = status(g).kind; return k === "live" ? 1 : k === "over" ? 2 : 0; }
   function betDone(g) { var b = BETS[g.id]; return !!b && (!!b.list || (b.at > 0 && !b.busy && !b.queued)); }
   function betKind(b) { return b.game ? "total" : b.k; }
@@ -169,7 +254,7 @@
       tiers[t].forEach(betNeed);  // finished games are only looked at when upcoming and live games can't fill the five
       if (!tiers[t].every(betDone)) { loading = true; break; }
       ready = ready.concat(tiers[t]);
-      fill(tiers[t], 3, 2); fill(tiers[t], 3, BET_MAX);  // three a game, two of any one kind (points, catches, totals…) when there's enough to choose from
+      fill(tiers[t], 2, 2); fill(tiers[t], 3, BET_MAX);  // two a game (three if needed), two of any one kind (points, catches, totals…) when there's enough to choose from
     }
     if (!loading && P.list.length < BET_MAX) fill(ready, BET_MAX, BET_MAX);
     if (changed) picksSave();
@@ -235,6 +320,7 @@
     if (done) betKeep(pk, out);
     return out;
   }
+  function betRight(pk, r) { return r.s === "over" ? pk.lean > 0 : r.s === "under" ? pk.lean < 0 : null; }  // did the lean call it
   function betKeep(pk, out) { var o = pk.res || {}; if (o.s !== out.s || o.now !== out.now || o.why !== out.why) { pk.res = out; picksSave(); } }
   // a live box score came in: redraw the slate only if one of this game's lines moved
   function betTouch(g) {
@@ -264,17 +350,17 @@
     sec.appendChild(hb);
     if (shut) return sec;
     if (!rows.length) { sec.appendChild(el("p", "bets-none", pk.loading ? "Getting tonight's lines and recent game logs…" : pk.frozen ? "Every game on your slate is over. New lines come with the next slate." : pk.waiting ? "Player lines aren't posted yet for your slate. They usually go up the day of the game." : "No lines posted for the games on your slate yet.")); return sec; }
-    var nLive = cnt("live"), nOver = cnt("over"), nUnder = cnt("under");
-    if (nLive + nOver + nUnder) {
+    var nLive = cnt("live"), nRight = rows.filter(function (x) { return betRight(x.p, x.r) === true; }).length, nWrong = rows.filter(function (x) { return betRight(x.p, x.r) === false; }).length;
+    if (nLive + nRight + nWrong) {
       var ty = el("p", "bets-tally");
-      [[nLive, " live", "lv"], [nOver, " went over", "ou"], [nUnder, " went under", "ou"]].forEach(function (t) { if (!t[0]) return; if (ty.childNodes.length) ty.appendChild(document.createTextNode(" · ")); ty.appendChild(el("span", "bt-" + t[2], t[0] + t[1])); });
+      [[nLive, " live", "lv"], [nRight, " leaned right", "hit"], [nWrong, " leaned wrong", "miss"]].forEach(function (t) { if (!t[0]) return; if (ty.childNodes.length) ty.appendChild(document.createTextNode(" · ")); ty.appendChild(el("span", "bt-" + t[2], t[0] + t[1])); });
       sec.appendChild(ty);
     }
     if (BET_UNDO && BET_UNDO.day === state.date) {
       var un = el("p", "bets-undo", "Removed " + (BET_UNDO.pk.game ? "a game total" : BET_UNDO.pk.p) + ". "), ub = el("button", null, "Undo"); ub.type = "button";
       ub.addEventListener("click", betUndo); un.appendChild(ub); sec.appendChild(un);
     }
-    sec.appendChild(el("p", "bets-sub", "The sportsbook's posted lines, with what each player's last six games (or both teams' last five) say for the over and the under. No side is picked. The headline lines and the biggest names come first. Tap × to swap one for the next."));
+    sec.appendChild(el("p", "bets-sub", "The sportsbook's posted lines, and which way the numbers lean: each player's last six games (both teams' last five for a game total), plus rest, injuries, matchups, the spread and the weather. The strongest lean comes first. Tap × to swap one for the next."));
     var list = el("div", "bets");
     rows.forEach(function (x) { list.appendChild(betRow(x.g, x.p, x.r)); });
     sec.appendChild(list);
@@ -301,16 +387,18 @@
     return s1 + ", " + s2 + ".";
   }
   function betRow(g, b, res) {
-    var kind = status(g).kind, s = res.s, lv = kind === "live", sc = scoreRaw(g.id) || {}, fin = kind === "over";
-    var r = el("div", "bet" + (lv && s === "live" ? " on" : "")), m = el("div", "bet-m"), rt = el("div", "bet-r");
+    var kind = status(g).kind, s = res.s, lv = kind === "live", sc = scoreRaw(g.id) || {}, fin = kind === "over", over = b.lean > 0, ok = betRight(b, res);
+    var r = el("div", "bet" + (ok === true ? " won" : ok === false ? " lost" : lv && s === "live" ? " on" : "")), m = el("div", "bet-m"), rt = el("div", "bet-r");
     var vs = b.game ? abbr(g, "away") + " at " + abbr(g, "home") : (b.sd === "away" ? "at " + abbr(g, "home") : "vs " + abbr(g, "away"));
-    var noun = betNoun(b), lineTxt = "O/U " + b.line + " " + noun;
-    // top line: where the game is (start time, Live with the clock, Final), which way it went, and remove
+    var noun = betNoun(b), lineTxt = (over ? "Over " : "Under ") + b.line + " " + noun;
+    // top line: where the game is (start time, Live with the clock, Final), the lean or how it went, and remove
     var top = el("div", "bet-top"), gst = el("span", "bet-st" + (lv ? " lv" : fin ? " fin" : ""));
     if (lv) { gst.appendChild(el("i")); gst.appendChild(document.createTextNode("Live" + (sc.detail ? " · " + sc.detail : ""))); }
     else gst.textContent = fin ? "Final" + (sc.detail && !/^final$/i.test(sc.detail) ? " · " + sc.detail.replace(/^final\/?/i, "").trim() : "") : "Starts " + timeText(g.start);
     top.appendChild(gst);
-    if (s === "over" || s === "under" || s === "void") top.appendChild(el("span", "bet-tag ou", s === "over" ? "Went over" : s === "under" ? "Went under" : res.why || "Push"));
+    if (ok === true || ok === false) top.appendChild(el("span", "bet-tag " + (ok ? "hit" : "miss"), (ok ? "✓ Went " : "✗ Went ") + s));
+    else if (s === "void") top.appendChild(el("span", "bet-tag void", res.why || "Push"));
+    else top.appendChild(el("span", "bet-tag lean", (over ? "▲ Leans over" : "▼ Leans under")));
     var x = el("button", "bet-x"); x.type = "button"; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove " + (b.game ? "this game total" : b.p) + " and show the next line");
     x.addEventListener("click", function (e) { e.stopPropagation(); betRemove(b); });
     top.appendChild(x); r.appendChild(top);
@@ -325,14 +413,17 @@
     r.appendChild(m);
     // right side: the recent average before the game, then tonight's number against the line
     var vals = b.vals || [], avg = 0, big = b.line >= 40, say; vals.forEach(function (v) { avg += v; }); avg = vals.length ? avg / vals.length : 0;
-    if (s === "pre") { rt.appendChild(el("b", null, betAvg(avg, big))); rt.appendChild(el("i", null, "avg last " + vals.length)); say = "starts " + timeText(g.start) + ", averaging " + betAvg(avg, big) + " over the last " + vals.length; }
+    if (s === "pre") { rt.appendChild(el("b", null, betAvg(avg, big))); rt.appendChild(el("i", null, "avg last " + vals.length)); say = "starts " + timeText(g.start); }
     else if (s === "void") { rt.appendChild(el("b", null, "–")); rt.appendChild(el("i", null, "line " + b.line)); say = res.why || "push"; }
-    else { var have = res.now != null ? String(res.now) : "0"; rt.appendChild(el("b", null, have)); rt.appendChild(el("i", null, "line " + b.line)); say = (s === "live" ? "live, " : "went " + s + ", " + (fin ? "final, " : "")) + have + " so far"; }
+    else { var have = res.now != null ? String(res.now) : "0"; rt.appendChild(el("b", null, have)); rt.appendChild(el("i", null, "line " + b.line)); say = (s === "live" ? "live, " : "went " + s + (ok ? ", the lean was right, " : ", the lean was wrong, ")) + have + " so far"; }
     r.appendChild(rt);
-    var co = betCase(b, true), cu = betCase(b, false);
-    [["Over", co], ["Under", cu]].forEach(function (c) { var w = el("p", "bet-why"); w.appendChild(el("b", null, c[0] + ": ")); w.appendChild(document.createTextNode(c[1])); r.appendChild(w); });
+    // the case: the numbers first, then up to three things beyond them that point the same way
+    var why = el("div", "bet-why"), cs = betCase(b, over);
+    why.appendChild(el("p", null, cs));
+    (b.facts || []).forEach(function (t) { why.appendChild(el("p", "bet-fx", t)); });
+    r.appendChild(why);
     var srcTxt = (b.src ? b.src + " line" : "Posted line") + (b.open != null && b.open !== b.line ? ", opened at " + b.open : "");
     r.appendChild(el("p", "bet-src", srcTxt));
-    r.setAttribute("aria-label", (b.game ? vs + ", " : b.p + ", ") + lineTxt + ": " + say + ". Over: " + co + " Under: " + cu + " " + srcTxt + ".");
+    r.setAttribute("aria-label", (b.game ? vs + ", " : b.p + ", ") + "leans " + lineTxt + ": " + say + ". " + cs + " " + (b.facts || []).join(" ") + " " + srcTxt + ".");
     return r;
   }
