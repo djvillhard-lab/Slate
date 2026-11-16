@@ -44,14 +44,20 @@
     ex.sort(function (x, y) { return y[0] - x[0]; }); if (ex.length) parts.push(ex[0][1]);
     return [3 * g + 2 * a + 0.5 * pm + 0.3 * sog + 0.1 * (rkNum(s.HT) + rkNum(s.BS)), parts.join(" · ")];
   }
+  // a football player's line (3.43.3): each part (passing, rushing, receiving, defense) carries its own weight, and the
+  // biggest leads, whatever the position: a back with 161 receiving yards and 62 rushing leads with the receiving
   function rkFootball(gr) {
-    var sc = 0, parts = [], p = gr.passing, r = gr.rushing, w = gr.receiving, d = gr.defensive, it = gr.interceptions;
-    if (p) { var ca = String(p["C/ATT"] || "0/0"), y = rkNum(p.YDS), td = rkNum(p.TD), i = rkNum(p.INT); sc += 0.04 * y + 4 * td - 2 * i; if (y >= 100 || td) parts.push(rkF(y) + " pass yds · " + rkF(td) + " TD" + (i ? " · " + rkF(i) + " INT" : "") + " · " + ca + " cmp" + (rkNum(p.RTG) ? " · " + p.RTG + " RTG" : "")); }
-    if (r) { var ry = rkNum(r.YDS), rt = rkNum(r.TD), rc = rkNum(r.CAR); sc += 0.1 * ry + 6 * rt; if (ry >= 40 || rt) parts.push(rkF(ry) + " rush yds" + (rt ? " · " + rkF(rt) + " TD" : "") + (rc ? " · " + rkF(rc) + " car" : "") + (rc >= 5 ? " · " + (ry / rc).toFixed(1) + " ypc" : "")); }
-    if (w) { var n = rkNum(w.REC), wy = rkNum(w.YDS), wt = rkNum(w.TD), tg = rkNum(w.TGTS), lo = rkNum(w.LONG); sc += 0.5 * n + 0.1 * wy + 6 * wt; if (wy >= 40 || wt) parts.push(rkF(n) + " rec · " + rkF(wy) + " yds" + (wt ? " · " + rkF(wt) + " TD" : "") + (tg ? " · " + rkF(tg) + " tgt" : "") + (lo ? " · " + rkF(lo) + " long" : "")); }
-    if (d) { var tk = rkNum(d.TOT), sk = rkNum(d.SACKS), tfl = rkNum(d.TFL), pd = rkNum(d.PD), qh = rkNum(d["QB HTS"]); sc += 0.3 * tk + 2 * sk; if (sk || tk >= 8) parts.push(rkF(tk) + " TKL" + (sk ? " · " + rkF(sk) + " sacks" : "") + (tfl ? " · " + rkF(tfl) + " TFL" : "") + (qh ? " · " + rkF(qh) + " QB hits" : "") + (pd ? " · " + rkF(pd) + " PD" : "")); }
-    if (it) { var ni = rkNum(it.INT); sc += 3 * ni; if (ni) parts.push(rkF(ni) + " INT"); }
-    return parts.length ? [sc, parts.join(" · ")] : null;
+    var sc = 0, parts = [], p = gr.passing, r = gr.rushing, w = gr.receiving, d = gr.defensive, it = gr.interceptions, add = function (v, t) { sc += v; parts.push([v, t]); };
+    if (p) { var ca = String(p["C/ATT"] || "0/0"), y = rkNum(p.YDS), td = rkNum(p.TD), i = rkNum(p.INT), v1 = 0.04 * y + 4 * td - 2 * i; if (y >= 100 || td) add(v1, rkF(y) + " pass yds · " + rkF(td) + " TD" + (i ? " · " + rkF(i) + " INT" : "") + " · " + ca + " cmp" + (rkNum(p.RTG) ? " · " + p.RTG + " RTG" : "")); else sc += v1; }
+    if (r) { var ry = rkNum(r.YDS), rt = rkNum(r.TD), rc = rkNum(r.CAR), v2 = 0.1 * ry + 6 * rt; if (ry >= 40 || rt) add(v2, rkF(ry) + " rush yds" + (rt ? " · " + rkF(rt) + " TD" : "") + (rc ? " · " + rkF(rc) + " car" : "") + (rc >= 5 ? " · " + (ry / rc).toFixed(1) + " ypc" : "")); else sc += v2; }
+    if (w) { var n = rkNum(w.REC), wy = rkNum(w.YDS), wt = rkNum(w.TD), tg = rkNum(w.TGTS), lo = rkNum(w.LONG), v3 = 0.5 * n + 0.1 * wy + 6 * wt; if (wy >= 40 || wt) add(v3, rkF(wy) + " rec yds" + (wt ? " · " + rkF(wt) + " TD" : "") + " · " + rkF(n) + " rec" + (tg ? " · " + rkF(tg) + " tgt" : "") + (lo ? " · " + rkF(lo) + " long" : "")); else sc += v3; }
+    if (d) { var tk = rkNum(d.TOT), sk = rkNum(d.SACKS), tfl = rkNum(d.TFL), pd = rkNum(d.PD), qh = rkNum(d["QB HTS"]), v4 = 0.3 * tk + 2 * sk; if (sk || tk >= 8) add(v4, rkF(tk) + " TKL" + (sk ? " · " + rkF(sk) + " sacks" : "") + (tfl ? " · " + rkF(tfl) + " TFL" : "") + (qh ? " · " + rkF(qh) + " QB hits" : "") + (pd ? " · " + rkF(pd) + " PD" : "")); else sc += v4; }
+    if (it) { var ni = rkNum(it.INT); if (ni) add(3 * ni, rkF(ni) + " INT"); }
+    parts.sort(function (a, b) { return b[0] - a[0]; });
+    // the headline numbers first: each part's yards (and TD), biggest part first, then the details
+    var head = [], tail = [];
+    parts.forEach(function (x) { var t = x[1].split(" · "), k = /TD$/.test(t[1] || "") ? 2 : 1; head = head.concat(t.slice(0, k)); tail = tail.concat(t.slice(k)); });
+    return parts.length ? [sc, head.concat(tail).join(" · ")] : null;
   }
   function rkBaseball(group, s) {
     if (group === "pitching") { var ip = rkNum(s.IP); if (ip < 3) return null; var k = rkNum(s.K), er = rkNum(s.ER); return [1.5 * ip + k - 2 * er - 0.5 * (rkNum(s.H) + rkNum(s.BB)), s.IP + " IP · " + rkF(k) + " K · " + rkF(er) + " ER · " + rkF(rkNum(s.H)) + " H · " + rkF(rkNum(s.BB)) + " BB"]; }

@@ -74,30 +74,38 @@ def hockey(group, g, final=True):
     return score, " · ".join(parts), s.get("TOI", "") and f"{s.get('TOI')} TOI"
 
 def football(groups):
-    """groups: {group name: stats dict} for one player"""
+    """groups: {group name: stats dict} for one player. Each part carries its own weight and the biggest leads,
+    whatever the position (a back with 161 receiving yards and 62 rushing leads with the receiving)."""
     sc, parts = 0.0, []
     p = groups.get("passing")
     if p:
         c, a = (p.get("C/ATT", "0/0").split("/") + ["0"])[:2]
         y, td, it = num(p.get("YDS")), num(p.get("TD")), num(p.get("INT"))
-        sc += 0.04 * y + 4 * td - 2 * it
-        if y >= 100 or td: parts.append(f"{fmt(y)} pass yds · {fmt(td)} TD" + (f" · {fmt(it)} INT" if it else "") + f" · {c}/{a} cmp" + (f" · {p.get('RTG')} RTG" if num(p.get("RTG")) else ""))
+        v = 0.04 * y + 4 * td - 2 * it; sc += v
+        if y >= 100 or td: parts.append((v, f"{fmt(y)} pass yds · {fmt(td)} TD" + (f" · {fmt(it)} INT" if it else "") + f" · {c}/{a} cmp" + (f" · {p.get('RTG')} RTG" if num(p.get("RTG")) else "")))
     r = groups.get("rushing")
     if r:
-        y, td, car = num(r.get("YDS")), num(r.get("TD")), num(r.get("CAR")); sc += 0.1 * y + 6 * td
-        if y >= 40 or td: parts.append(f"{fmt(y)} rush yds" + (f" · {fmt(td)} TD" if td else "") + (f" · {fmt(car)} car" if car else "") + (f" · {y / car:.1f} ypc" if car >= 5 else ""))
+        y, td, car = num(r.get("YDS")), num(r.get("TD")), num(r.get("CAR")); v = 0.1 * y + 6 * td; sc += v
+        if y >= 40 or td: parts.append((v, f"{fmt(y)} rush yds" + (f" · {fmt(td)} TD" if td else "") + (f" · {fmt(car)} car" if car else "") + (f" · {y / car:.1f} ypc" if car >= 5 else "")))
     w = groups.get("receiving")
     if w:
-        n, y, td, tg, lo = (num(w.get(x)) for x in ("REC", "YDS", "TD", "TGTS", "LONG")); sc += 0.5 * n + 0.1 * y + 6 * td
-        if y >= 40 or td: parts.append(f"{fmt(n)} rec · {fmt(y)} yds" + (f" · {fmt(td)} TD" if td else "") + (f" · {fmt(tg)} tgt" if tg else "") + (f" · {fmt(lo)} long" if lo else ""))
+        n, y, td, tg, lo = (num(w.get(x)) for x in ("REC", "YDS", "TD", "TGTS", "LONG")); v = 0.5 * n + 0.1 * y + 6 * td; sc += v
+        if y >= 40 or td: parts.append((v, f"{fmt(y)} rec yds" + (f" · {fmt(td)} TD" if td else "") + f" · {fmt(n)} rec" + (f" · {fmt(tg)} tgt" if tg else "") + (f" · {fmt(lo)} long" if lo else "")))
     d = groups.get("defensive")
     if d:
-        tk, sk, tfl, qh, pd = (num(d.get(x)) for x in ("TOT", "SACKS", "TFL", "QB HTS", "PD")); sc += 0.3 * tk + 2 * sk
-        if sk or tk >= 8: parts.append(f"{fmt(tk)} TKL" + (f" · {fmt(sk)} sacks" if sk else "") + (f" · {fmt(tfl)} TFL" if tfl else "") + (f" · {fmt(qh)} QB hits" if qh else "") + (f" · {fmt(pd)} PD" if pd else ""))
+        tk, sk, tfl, qh, pd = (num(d.get(x)) for x in ("TOT", "SACKS", "TFL", "QB HTS", "PD")); v = 0.3 * tk + 2 * sk; sc += v
+        if sk or tk >= 8: parts.append((v, f"{fmt(tk)} TKL" + (f" · {fmt(sk)} sacks" if sk else "") + (f" · {fmt(tfl)} TFL" if tfl else "") + (f" · {fmt(qh)} QB hits" if qh else "") + (f" · {fmt(pd)} PD" if pd else "")))
     it = groups.get("interceptions")
     if it:
         n = num(it.get("INT")); sc += 3 * n
-        if n: parts.append(f"{fmt(n)} INT")
+        if n: parts.append((3 * n, f"{fmt(n)} INT"))
+    parts.sort(key=lambda x: -x[0])
+    # the headline numbers first: each part's yards (and TD), biggest part first, then the details
+    head, tail = [], []
+    for _, t in parts:
+        bits = t.split(" · "); k = 2 if len(bits) > 1 and bits[1].endswith("TD") else 1
+        head += bits[:k]; tail += bits[k:]
+    parts = head + tail
     return sc, " · ".join(parts), ""
 
 def baseball(group, g):
