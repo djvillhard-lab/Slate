@@ -6,7 +6,7 @@
     SLATE_PASS=... python3 scripts/shots.py lineup --scroll .sl-bets       (scroll an element into view first)
     python3 scripts/shots.py lineup tv --text xl --tomorrow --full          (no passcode: read-only, saves are blocked)
 
-Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --tomorrow (the slate's next day:
+Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds.
 
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
@@ -42,7 +42,7 @@ def main():
         print(__doc__); return
     pw = os.environ.get("SLATE_PASS", "").strip()
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
-    sizes, wait, scroll, pages, text, tomorrow, full = list(SIZES), 6.0, None, [], None, False, False
+    sizes, wait, scroll, pages, text, tomorrow, full, look = list(SIZES), 6.0, None, [], None, False, False, None
     i = 0
     while i < len(args):
         a = args[i]
@@ -50,6 +50,7 @@ def main():
         if a == "--wait": wait = float(args[i + 1]); i += 2; continue
         if a == "--scroll": scroll = args[i + 1]; i += 2; continue
         if a == "--text": text = args[i + 1].lower(); i += 2; continue
+        if a == "--look": look = args[i + 1]; i += 2; continue
         if a == "--tomorrow": tomorrow = True; i += 1; continue
         if a == "--full": full = True; i += 1; continue
         pages.append(a); i += 1
@@ -79,6 +80,7 @@ def main():
                     if isinstance(row, dict) and isinstance(row.get("data"), dict):
                         row["data"]["device"] = device
                         if text: row["data"]["textSize"] = text; row["data"]["textSizeWide"] = text
+                        if look: row["data"]["look"] = look; row["data"]["accent"] = {"paper": "navy"}.get(look, "green")
                 route.fulfill(response=r, body=json.dumps(d))
             except Exception:
                 route.continue_()
@@ -123,7 +125,7 @@ def main():
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
                 wide = page.evaluate("document.scrollingElement.scrollWidth - innerWidth")
-                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}-{size}{'-' + text if text else ''}{'-tomorrow' if tomorrow else ''}.png")
+                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{'-tomorrow' if tomorrow else ''}.png")
                 page.screenshot(path=path, full_page=full)
                 print(f"{path}  ({size}: {mode})" + (f"  WIDER THAN THE SCREEN by {wide}px" if wide > 1 else ""))
             for e in errors: print(f"  page error ({size}): {e}")

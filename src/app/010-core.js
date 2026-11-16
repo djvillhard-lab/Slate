@@ -1,7 +1,7 @@
   "use strict";
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
   // It must match the newest entry in CHANGELOG.md (build.py checks), and the iPhone app's builds read it from index.html.
-  var SLATE_VERSION = "3.51.2";
+  var SLATE_VERSION = "3.52.0";
 
   var HOME_TZ = "America/Chicago";
   var DEFAULT_TEAMS = ["St. Louis Blues", "St. Louis Cardinals", "Manchester United", "St. Louis City SC"];
@@ -24,12 +24,15 @@
     sky: { name: "Sky", text: "#5CB8F5", fill: "#3AA2E8", deep: "#1C5F8F", on: "#06192A" },
     coral: { name: "Coral", text: "#FF8A70", fill: "#F2704F", deep: "#93402A", on: "#1E0C06" },
     gold: { name: "Gold", text: "#E9B949", fill: "#DCA72E", deep: "#7A5A12", on: "#1A1203" },
-    silver: { name: "Silver", text: "#C9D3DF", fill: "#B8C3D1", deep: "#4F5B6B", on: "#11161D" }
+    silver: { name: "Silver", text: "#C9D3DF", fill: "#B8C3D1", deep: "#4F5B6B", on: "#11161D" },
+    navy: { name: "Navy", text: "#8FA8FF", fill: "#2A4BA8", deep: "#1F3A8A", on: "#FFFFFF" }
   };
   // Whole-page themes, all built off Midnight: background, panels, text and a matching accent. [name, base look, accent, vars]
   // vars: bg, card, raise, line, hair, ink, muted, dim, head, nav-sel, glass, glass-line
   var THEMES = {
-    dark: ["Midnight", "dark", "green", ["#121821", "#1A2230", "#232D3C", "#2B3647", "rgba(148,163,184,.13)", "#ECF1F7", "#A0ACBD", "#8794A8", "#CAD3DF", "#232D3C", "rgba(26,34,48,.88)", "rgba(255,255,255,.10)"]]
+    dark: ["Midnight", "dark", "green", ["#121821", "#1A2230", "#232D3C", "#2B3647", "rgba(148,163,184,.13)", "#ECF1F7", "#A0ACBD", "#8794A8", "#CAD3DF", "#232D3C", "rgba(26,34,48,.88)", "rgba(255,255,255,.10)"]],
+    // Sunday Paper (3.52.0): the one light theme. Warm cream, dark ink, navy accent.
+    paper: ["Sunday Paper", "light", "navy", ["#F1EBDD", "#FBF7EE", "#EAE2D0", "#D6CCB6", "rgba(60,50,30,.16)", "#1D1B16", "#5A5447", "#6A6456", "#3A362D", "#EAE2D0", "rgba(251,247,238,.92)", "rgba(0,0,0,.10)"]]
   };
   var THEME_VARS = ["--bg", "--card", "--raise", "--line", "--hair", "--ink", "--muted", "--dim", "--head", "--nav-sel", "--glass", "--glass-line"];
 

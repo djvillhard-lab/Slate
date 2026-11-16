@@ -26,3 +26,8 @@ Code: `src/styles/070-ux-review-3.css` (one block per release, loaded last) plus
 - Corner overrides use `:not(#_):not(#_)` to beat the id-based `!important` rules in 050-ux-review.css.
 
 - 3.51.2: the 44-point hit area on `.lg-tab` used `::after`, which is also the selected tab's accent underline, so the line jumped to the top of the tab. The hit area is `::before` now. Before adding a `::before`/`::after` hit area to anything, grep for an existing one.
+
+## Themes
+- 3.52.0: Sunday Paper (`paper` in `THEMES`, 010-core.js), the one light theme, with a new Navy accent. DJ picked it from mockups; he found dark tints of Midnight (blue, purple, deeper navy) too close to Midnight, so don't offer those again. Midnight stays the default.
+- Check a theme with `scripts/shots.py <pages> --look paper`.
+- Open: `ios/Slate/RootView.swift` `slateBackground("light")` is still #F2F4F7, so the native strip is a cooler gray than the cream page. Change it to #F1EBDD with the next iPhone build.
