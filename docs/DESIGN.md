@@ -57,8 +57,9 @@ Blend with `color-mix(in srgb, var(--accent) 10%, var(--card))` for tinted cards
     nothing may sit under it);
   - **open** iPhone Duo, sideways: two panes, the slate on the left, every other page on the right;
   - **iphone**: a regular iPhone, the page's own floating menu bottom right.
-- Every page's header is the same: the Slate mark, the page name, a second line (the slate's date picker, a day, or
-  blank), then the hairline. Only the name and second line change (3.31.0).
+- Every page's header is the same (3.44.0, `src/styles/060-header.css`): the Slate mark level with the page name,
+  then the hairline. A second line only where there is one (the slate's date picker; the day on All games, On TV and
+  Box Office); other pages get a one-line header with a smaller mark. No blank second row, no extra space on top.
 - Nothing important under the clock and Wi-Fi at the top of the folded Duo's side column.
 
 ## Parts to reuse (before making new ones)
