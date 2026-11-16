@@ -1,5 +1,5 @@
 # Best bets
-Last updated: Nov 15, 2026, 3.43.4 (written from the changelog; the thread that next works on it should correct anything off)
+Last updated: Nov 15, 2026, 3.45.1 (by the thread that built 3.40.0 to 3.45.1)
 Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-components.css`. Its own section at the bottom of Tonight's Slate.
 
 ## Done
@@ -9,6 +9,18 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 - Live picks show tonight's number from the box score and settle as Hit or Miss; the top counts live/hit/missed (3.40.0, 3.41.0).
 - × removes a pick for the day and the next best fills in, with Undo (3.41.0).
 - Each card explains the pick in words instead of six stat boxes (3.43.0).
+- Finished games count as on the slate (3.45.1). The slate page moves finished games into their own group and used to pass
+  Best bets only the rest, so picks vanished as games ended and the section was gone after the last game. `betsBlock` now gets
+  the whole slate (`lgAll` in 170-slate-page.js), Live-only filter included.
+- A player is picked once; a pick from a finished game needs the player in that game's box score (3.45.1).
+
+## How it works (for the next thread)
+- Picks live in localStorage `slate-picks`, per slate day: `{ list: [...], gone: {uid: 1} }`. `gone` = removed with ×.
+- `betPicks()` drops picks whose game left the slate, then fills to 7: upcoming games first, then live, then finished,
+  three a game and two of a kind first. A tier is only used once every game in it (and the tiers before) has loaded.
+- Games that started use the team's season leaders (summary leaders turn into tonight's leaders once a game starts).
+- Tonight's numbers: `betResult()` reads the raw ESPN summary that `bxFetch` keeps in `bx.live[id].sum`; game totals use
+  the live score. `bxRedraw` calls `betTouch()` to redraw the slate when a pick's number moves.
 
 ## Open
 - Sportsbook prices for the props (none yet: the picks are stat-based only).
