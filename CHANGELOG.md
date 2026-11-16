@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.52.10 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- All games on the iPhone Duo: the second row of filters is back on the left and reads left to right (All first), the same as on a regular iPhone.
+- All games on the folded Duo: the Live button stops just left of the side column, so the clock and Wi-Fi no longer cover it on any tab.
+- The league tabs fade out a little more gently before the side column.
+
 ## 3.52.9 (Nov 16, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Folded iPhone Duo: the second row of filters (All, Best of each league, a league's conferences and Ranked choices) no longer runs under the clock and Wi-Fi. Both filter rows now stop just left of the side column, like the other rows of buttons, and fade out there while you scroll them. All still sits at the right end of its row.

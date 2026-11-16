@@ -1,12 +1,12 @@
 # All games
-Last updated: Nov 16, 2026, 3.52.9
+Last updated: Nov 16, 2026, 3.52.10
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
 - Live button on the right, in line with the cards (3.38.2, 3.38.4).
-- Folded and open Duo: the secondary filters (All, Best of each league, National TV) run right to left, All at the far
-  right; on the folded Duo the row runs into the side column, nudged down 6 points under the clock (3.38.5, 3.38.6).
-  Regular iPhone: filters stay on the left in normal order.
+- Secondary filters read left to right on every phone, All first (3.52.10, DJ asked; 3.38.5 to 3.52.9 ran them right to
+  left on the Duo with All at the far right).
+- Folded Duo: the Live button stops left of the side column (3.52.10): the clock and Wi-Fi reach that row since 3.44.0.
 - 3.52.9: on the folded Duo both filter rows stop short of the side column again (padding + a fade mask, `--strip-w`), because
   after the compact header (3.44.0) the clock and Wi-Fi covered the right end, All included. A redraw keeps the second row's
   scroll and scrolls the picked filter into view (240-chrome.js). shots.py can now tap a league and a filter:

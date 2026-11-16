@@ -181,15 +181,16 @@ main.wrap, html.corner main.wrap, html.corner.roomy main.wrap, html.duo main.wra
 .substrip { gap: 16px; }
 /* 3.38.2: All games, right-handed: the Live button sits on the right; the secondary filters (All / Best of each
    league / National TV) line up on the right too, ending left of iOS's column on the folded Duo so the clock never covers them */
-html:not(.iphone) #pane-r .substrip { flex-direction: row-reverse; }  /* iPhone Duo only (3.38.5): the first choice (All) at the far right under the thumb, the rest leftward */
+/* 3.38.5 ran this row right to left on the Duo (All at the far right); DJ asked for it back on the left, reading left to right (3.52.10) */
 /* folded iPhone Duo (3.52.9): both filter rows stop short of the side column, like the other rows of buttons, so the clock and Wi-Fi
    never cover a filter (3.38.6 ran the second row into the column, and it ended up under them). All stays at the right end of its row. */
 html[data-native].side-col:not(.duo) #pane-r .substrip { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)) !important; }
 html[data-native].side-col:not(.duo) #pane-r .strip { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
 /* and while a row is scrolled, filters fade out before the column instead of sliding under the clock and Wi-Fi */
-html[data-native].side-col:not(.duo) #pane-r :is(.strip, .substrip) { --cut: calc(var(--strip-w, 0px) / var(--z, 1)); -webkit-mask-image: linear-gradient(to left, transparent var(--cut), #000 calc(var(--cut) + 16px)); mask-image: linear-gradient(to left, transparent var(--cut), #000 calc(var(--cut) + 16px)); }
+html[data-native].side-col:not(.duo) #pane-r :is(.strip, .substrip) { --cut: calc(var(--strip-w, 0px) / var(--z, 1)); -webkit-mask-image: linear-gradient(to left, transparent var(--cut), #000 calc(var(--cut) + 28px)); mask-image: linear-gradient(to left, transparent var(--cut), #000 calc(var(--cut) + 28px)); }
 .substrip { scroll-padding-inline: 16px; }  /* the picked filter is scrolled fully into view, not flush with the edge (3.52.9) */
-html[data-native] #games-body .lo-row { padding-right: 0 !important; }  /* Live sits below the clock and Wi-Fi: all the way right, in line with the cards */
+html[data-native] #games-body .lo-row { padding-right: 0 !important; }  /* Live sits all the way right, in line with the cards */
+html[data-native].side-col:not(.duo) #games-body .lo-row { padding-right: calc(var(--strip-w, 0px) / var(--z, 1)) !important; }  /* folded Duo (3.52.10): the clock and Wi-Fi now reach this row, so Live stops just left of the side column */
 .cf-tab { background: none; padding: 8px 0; border-radius: 0; }
 .cf-tab[aria-pressed="true"] { background: none; color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent-fill); }
 .ch-head .chwatch { background: none; padding: 0; height: auto; color: var(--head); }
