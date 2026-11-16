@@ -1,0 +1,5 @@
+[
+  {"title": "Check live notifications", "tag": "On your Duo", "tf": true, "do": "Build 41: Board lines, soccer scorers"},
+  {"title": "Drew and Doug to internal testers", "tag": "App Store Connect", "tf": false, "do": "They lag a build behind"},
+  {"title": "Drew's setup", "tag": "Paused · Nov 25", "tf": false, "do": "Needs his Pro plan + GitHub name"}
+]
