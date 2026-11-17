@@ -404,6 +404,29 @@
       else if (sm && who && ss.type !== "head-to-head" && +sm[2] >= 2) add("ser", 30, T[who].name + " lead the season series " + sm[2] + "-" + sm[3]); }
     // quieter form: four or five wins from the last five without a current streak
     ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five"); });
+    // 3.91.2 (DJ: "Pistons (8-4) at Pelicans (5-10)" is not informative): quieter facts that only win when nothing above stands out
+    // a slump: one or no wins in the last five, without a current four-game skid
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five"); });
+    // the division race (pro leagues; ESPN's summary carries each team's division): first place by how much, or last place
+    if (/^(nba|wnba|nhl|nfl|mlb)$/.test(lg)) (((sum.standings || {}).groups) || []).forEach(function (gr) {
+      var es = ((gr.standings || {}).entries || []), dv = String(gr.header || "").replace(/^\d{4}(-\d{2,4})?\s+/, "").replace(/\s+Standings$/i, "").trim();
+      if (es.length < 4 || !dv || dv.length > 20) return;
+      var st = function (e, ab) { var s = (e.stats || []).filter(function (x) { return x.abbreviation === ab; })[0]; return s ? s.displayValue : ""; };
+      var gp = function (e) { return (+st(e, "W") || 0) + (+st(e, "L") || 0); };
+      es.forEach(function (e, n) { var i = String(e.id || ""); if (!T[i] || gp(e) < 8) return;
+        if (n === 0) { var gb2 = parseFloat(st(es[1], "GB")); if (!(gb2 > 0)) return;
+          add("div|" + i, 38, T[i].name + " lead the " + dv + " by " + (gb2 === 1 ? "a game" : gb2 === 0.5 ? "half a game" : gb2 + " games")); }
+        else if (n === es.length - 1 && parseFloat(st(e, "GB")) >= 3) add("divlast|" + i, 30, T[i].name + " are last in the " + dv); }); });
+    // a strong home or road record that the perfect-record line above doesn't cover
+    ids.forEach(function (i) { var w = String(T[i].rec[i === H ? "home" : "road"] || "").split("-"), W = +w[0], Lw = +w[1];
+      if (sport !== "soccer" && w.length >= 2 && Lw > 0 && W + Lw >= 6 && W / (W + Lw) >= 0.7) add("good|" + i, 30, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); });
+    // ESPN's predictor leaning one way without being lopsided
+    if (pr && pr.homeTeam && pr.awayTeam) { var ph2 = parseFloat(pr.homeTeam.gameProjection), pa2 = parseFloat(pr.awayTeam.gameProjection);
+      if (!isNaN(ph2) && !isNaN(pa2) && Math.abs(ph2 - pa2) > 8 && Math.max(ph2, pa2) < 85) { var pf2 = ph2 > pa2 ? H : A, pp2 = Math.round(Math.max(ph2, pa2)); add("pred", 22, "ESPN gives " + T[pf2].name + (/^(8\d|11|18)$/.test(String(pp2)) ? " an " : " a ") + pp2 + "% chance"); } }
+    // the better team's top scorer (basketball)
+    if (sport === "bball") { var bt = (parseFloat(String(T[A].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[A].rec.total).split("-")[1]) || 0) >= (parseFloat(String(T[H].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[H].rec.total).split("-")[1]) || 0) ? A : H;
+      (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
+        var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
     // ESPN's preview headline: a solid fallback
     var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90) add("art", 33, hd);
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
@@ -469,7 +492,7 @@
       });
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
-  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g4) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
+  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g4 || (m[k] || {}).fb) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   // the phone shares today's preview lines with Slate's server (prefs/pvlines), so live notifications and Starting now
   // alerts can carry the same line as the slate (3.58.0). Only on a phone signed in with a passcode; only when it changed.
   var pvShareT = null, pvShared = "", pvSharedAt = 0;

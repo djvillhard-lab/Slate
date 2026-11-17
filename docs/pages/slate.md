@@ -55,3 +55,6 @@ Last updated: Nov 17, 2026, 3.77.0
 
 ## Decisions
 - Keep one shared score column (3.31.0) rather than per-card positions, so scores line up down the page.
+
+## One-liner fallback facts (3.91.2)
+When no strong fact exists, pvCompute (100-highlights.js) now tries quieter facts before the plain records line: a slump (1 or 0 wins in the last five), division leader by N games or last in the division (pro leagues only, 8+ games played, from the summary's standings groups), a .700+ home/road record (6+ games), ESPN's predictor at 58–84%, and the better team's top scorer (basketball). Cached records-only lines (fb) are dropped on load so they recompute.

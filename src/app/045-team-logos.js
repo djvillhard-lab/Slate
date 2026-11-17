@@ -110,7 +110,8 @@
   function addLogo(b, name) {
     var hit = teamLook(name); if (!hit || !hit[0]) { b.setAttribute("data-lg-wait", name); return; }
     var seg = hit[0], dark = themeIsDark(), light = logoUrl(seg, false), url = dark && LOGO_PICK[seg] !== "l" ? logoUrl(seg, true) : light;
-    if (LOGO_BAD[url]) { if (!dark || LOGO_BAD[url = light]) return; }
+    var bad = function (u) { return LOGO_BAD[u] && Date.now() - LOGO_BAD[u] < 120000; };   // 3.91.2: a failed download is tried again two minutes later
+    if (bad(url)) { if (!dark || bad(url = light)) return; }
     var im = document.createElement("img"); im.className = "badge-logo"; im.alt = ""; im.decoding = "async"; im.draggable = false; im.crossOrigin = "anonymous";
     var done = false;
     if (LOGO_OK[url]) {                                 // loaded on this phone before: show it straight away, no letters flashing first
@@ -131,9 +132,13 @@
       }
     };
     im.onerror = function () {
-      LOGO_BAD[url] = 1; delete LOGO_OK[url];
-      if (url !== light && !LOGO_BAD[light]) { url = light; im.src = light; return; }   // no dark version: try the regular one
-      done = true; b.classList.remove("lg"); im.remove();
+      LOGO_BAD[url] = Date.now(); delete LOGO_OK[url];
+      if (url !== light && !bad(light)) { url = light; im.src = light; return; }   // no dark version: try the regular one
+      // 3.91.2 (DJ: the Thunder showed "OKC"): one dropped download on the phone used to leave the letters for the whole visit.
+      // Try once more a few seconds later; the letters stay meanwhile
+      b.classList.remove("lg");
+      if (!im._again) { im._again = 1; setTimeout(function () { if (!im.isConnected) return; delete LOGO_BAD[url]; im.src = url + "&t=" + (Date.now() % 100000); }, 4000); return; }
+      done = true; im.remove();
     };
     im.src = url; b.appendChild(im);
   }

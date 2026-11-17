@@ -29,3 +29,6 @@ Files: `src/app/045-team-logos.js`, `src/styles/080-team-logos.css`, `badgeFor` 
 ## Decisions
 - Logo replaces the abbreviation in the chip rather than sitting next to it: no room on the folded Duo for both.
 - No worker proxy for logos: the phone's own cache plus ESPN's CDN is enough, and it costs nothing.
+
+## Retry (3.91.2)
+A failed logo download is retried once after 4 s (cache-busted), and LOGO_BAD entries expire after 2 minutes, so one dropped download on the phone (DJ's Thunder "OKC" chip) no longer leaves letters for the whole visit. The Thunder logo itself loads fine from ESPN in both versions.
