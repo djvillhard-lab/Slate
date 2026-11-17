@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Claude cost cuts (summaries) | worker/index.js, docs/pages/security.md | 2026-11-17 15:27 |

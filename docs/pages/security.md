@@ -7,9 +7,11 @@ Full review: Claude Doc "Slate safety, security and scaling review" (Nov 17, 202
 
 - 3.83.1: the app reads every non-shared document through `/api/docs` (src/boot/db-shim.js `SHARED` list = what stays public), batched, and polls its own documents every 15 s while on screen (they no longer arrive over the live channel once the lockdown SQL runs). `scripts/shots.py` intercepts `/api/docs` for the Phone setting. The `SHARED` regex in db-shim.js and the policy in lockdown.sql must list the same paths.
 
+- 3.85.0 (cost cuts): `SHARE_MIN` share windows per kind, `LEAN` per kind (effort low/medium, `web_search_20260209`; recaps on `claude-haiku-5-5` with Sonnet fallback). A 400 with the lean settings retries the old way (see worker logs "lean settings refused"). News/deep untouched (News thread owns them). Next levers: News page from shared pieces, Batch overnight.
+
 ## Waiting on DJ
 - Database lockdown: `docs/security/lockdown.sql`, run in Supabase's SQL editor now safe to run (3.83.1 is live). Until it runs, the data is still public.
-- New passcodes for Drew (`bro`) and Doug (`dad`): their registry entries are plain SHA-256 and were public. DJ chose to do this on Nov 18. Use `setpass` (admin), then tell them.
+- Drew (`bro`) and Doug (`dad`): DJ does NOT want their access reset or their passcodes changed, and they keep the saved passcode on their phones. Later they create real profiles linked to their existing ids (data, settings, rules kept), and the plain-hash entries are retired then.
 - `SLATE_PASS` GitHub secret (iPhone CI screenshots, pushed to the public `ios-screenshots` branch): should be the test account's passcode.
 
 ## Decisions

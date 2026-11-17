@@ -80,12 +80,13 @@ const guardWho = (ip) => async (env, pass) => {
 const ctDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 // running cost log: stats/usage {days: {D: {n, in, out, search, usd, by: {user: n}}}}
 const PRICE = { in: 2 / 1e6, out: 10 / 1e6, search: 10 / 1000 };
-const HAIKU = { in: 1 / 1e6, out: 5 / 1e6 };
+const HAIKU = { in: 1 / 1e6, out: 5 / 1e6 };   // the old Haiku helper lines (none run today)
+const HAIKU55 = { in: 0.1 / 1e6, out: 0.5 / 1e6 };  // Claude Haiku 5.5: recaps since 3.85.0
 async function logUsage(env, user, u, model, failed) {
   const d = ctDay(), doc = (await getDoc(env, "stats/usage")) || { days: {} }, day = (doc.days || {})[d] || { n: 0, in: 0, out: 0, search: 0, usd: 0, by: {} };
   const inT = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), outT = u.output_tokens || 0, sr = ((u.server_tool_use || {}).web_search_requests) || 0;
   day.n += 1; day.in += inT; day.out += outT; day.search += sr;
-  const pr = model === "haiku" ? HAIKU : PRICE;
+  const pr = model === "haiku" ? HAIKU : model === "haiku55" ? HAIKU55 : PRICE;
   day.usd = Math.round((day.usd + inT * pr.in + outT * pr.out + sr * PRICE.search) * 10000) / 10000;
   day.by = day.by || {};
   // Haiku lines (free-tier helpers) don't count toward anyone's daily summary limit
@@ -102,6 +103,14 @@ async function budgetAlert(env, capUsd) {
   const doc = (await getDoc(env, "prefs/push")) || {};
   for (const sub of doc.subs || []) await (sub.apns ? sendApns : sendPush)(env, sub, { title: " ", body: "Today's Claude budget ($" + capUsd + ") is used up. Summaries for others are paused until tomorrow.", tag: "budget" }).catch(() => {});
 }
+// Claude cost cuts (3.85.0, security and cost review). How long one write-up is handed to everyone who asks, in
+// minutes: a second tap within this time gets the same write-up instead of a new (paid) one. News and tap-in
+// breakdowns keep 3 minutes (the News page's own rules).
+const SHARE_MIN = { preview: 360, team: 720, recap: 720, moments: 360 };
+// How each kind is written: the newer web search (it filters results before Claude reads them, so far fewer input
+// tokens), and less thinking for short write-ups. Recaps are written by Claude Haiku 5.5 (a twentieth of the price)
+// from ESPN's facts plus one search; if Haiku can't, Sonnet writes it as before. News and tap-ins are unchanged.
+const LEAN = { preview: { effort: "low" }, team: { effort: "low" }, moments: { effort: "medium" }, recap: { effort: "low", model: "claude-haiku-5-5" } };
 const MOMENT_LGS = { nfl: "NFL", nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League", nhl: "NHL", ncaaw: "women's college basketball", ucl: "Champions League", mlb: "MLB", wnba: "WNBA" };
 // News briefs: My slate and My teams are personal (under the person's own space); league briefs are shared
 // The News page (3.45.0): one personal page a day ("page"), written only when its Generate button is tapped.
@@ -239,7 +248,7 @@ export default {
       if (w && w.at && !w.error && nowMs - Date.parse(w.at) < 10 * 60000) return json({ ok: true, at: w.at, shared: true }, 202);
       const last = entry && (p.kind === "recap" ? (entry.recap || {}).at : p.kind === "preview" ? entry.newsAt : entry.at);
       // (a person's own News page is the exception: Regenerate with different picks must write a new page)
-      if (last && !(p.kind === "news" && p.key === "page") && nowMs - Date.parse(last) < 3 * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
+      if (last && !(p.kind === "news" && p.key === "page") && nowMs - Date.parse(last) < (SHARE_MIN[p.kind] || 3) * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
         game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, p.kind === "moments" ? 60000 : p.kind === "news" && p.key === "page" ? 60000 : p.kind === "deep" ? 24000 : 16000) };
@@ -476,16 +485,19 @@ function fixJson(t) {
   }
   return out;
 }
-async function askClaude(env, text, big, searches) {
+async function askClaude(env, text, big, searches, lean) {
+  if (lean && lean.model) { try { const r = await askClaude(env, text, big, searches, { effort: lean.effort, model: lean.model, only: true }); r.model = "haiku55"; return r; } catch (e) { console.log("lean model failed, Sonnet instead", String(e).slice(0, 160)); lean = { effort: lean.effort }; } }
   const msgs = [{ role: "user", content: text }], usage = { input_tokens: 0, output_tokens: 0, server_tool_use: { web_search_requests: 0 } };
   let out = "";
   for (let turn = 0; turn < 4; turn++) {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: Object.assign({ Authorization: "Bearer " + apiKey(env).trim(), "anthropic-version": "2023-06-01", "content-type": "application/json" }, env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } : {}),
-      body: JSON.stringify({ model: MODEL, max_tokens: big === true ? 10000 : big || 4000, tools: [{ type: "web_search_20250305", name: "web_search", max_uses: searches || 2 }], messages: msgs })
+      body: JSON.stringify(Object.assign({ model: (lean && lean.model) || MODEL, max_tokens: big === true ? 10000 : big || 4000, tools: [{ type: lean && !lean.model ? "web_search_20260209" : "web_search_20250305", name: "web_search", max_uses: searches || 2 }], messages: msgs }, lean && lean.effort ? { output_config: { effort: lean.effort } } : {}))
     });
     const body = await r.json().catch(() => ({}));
+    // a request the API won't take with the 3.85.0 settings (newer search, effort) goes again the old way
+    if (!r.ok && r.status === 400 && lean && !lean.only) { console.log("lean settings refused, old way", ((body.error || {}).message || "").slice(0, 160)); return askClaude(env, text, big, searches, null); }
     if (!r.ok) throw new Error("Claude API " + r.status + ": " + ((body.error || {}).message || "").slice(0, 160));
     const u = body.usage || {}; usage.input_tokens += (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0); usage.output_tokens += u.output_tokens || 0;
     usage.server_tool_use.web_search_requests += ((u.server_tool_use || {}).web_search_requests) || 0;
@@ -514,9 +526,9 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const p = event.payload, t = target(p);
     try {
-      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, p.kind === "deep" && p.key[0] === "l" ? 3 : SEARCHES[p.kind]));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, p.kind === "deep" && p.key[0] === "l" ? 3 : SEARCHES[p.kind], LEAN[p.kind]));
       const ans = stripCites(res.ans || res);
-      await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, null, !!res.tooLong); } catch (e) {} return true; });
+      await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, res.model || null, !!res.tooLong); } catch (e) {} return true; });
       if (res.tooLong) throw new Error("Claude's answer ran too long");
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {

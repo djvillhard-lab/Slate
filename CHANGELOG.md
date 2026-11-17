@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.85.0 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- Claude summaries cost less. Previews, team pages and Box Office use Claude's newer web search, which reads only the useful parts of each page, and think less for short write-ups. Recaps are written by Claude Haiku, about a twentieth of the price; if Haiku can't, Claude Sonnet writes it as before.
+- A write-up is now shared for longer: once anyone has a game's preview, everyone gets that one for 6 hours (Box Office 6 hours, team pages and recaps 12 hours), instead of a new one being written after 3 minutes.
+- The cost line now prices Haiku correctly.
+- News and the tap-in breakdowns are unchanged.
+
 ## 3.84.1 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - News, Press Box: the notes on each game card no longer have a logo, team name or league pill in the top left. Each note keeps its team's color, and its tag (Streak, Injury...) sits in the top right with the note beside it.
