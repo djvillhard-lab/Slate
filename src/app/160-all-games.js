@@ -142,11 +142,11 @@
     var n = null;
     if (kind === "live" || kind === "over") {
       n = hlNode(g);
-      if (n) { if (kind === "live") n.classList.add("hl-live"); return n; }
+      if (n) { if (kind === "live") { n.classList.add("hl-live"); hlTeamInk(g, n); } return n; }  // 3.71.2: in the team's color, like the slate (3.71.0)
       if (!(kind === "over" && HLC[g.id])) agSeen(row, function () { bxNeed(g); });
       // live with a score but no line yet: the game's standout so far, from the scoreboard
       var ll = kind === "live" ? liveLeadLine(g) : "";
-      if (ll) return hlLine(g, ll, teamOfText(g, ll), "hl hl-live");
+      if (ll) { var lk = hlLine(g, ll, teamOfText(g, ll), "hl hl-live"); if (lk) hlTeamInk(g, lk); return lk; }
       return kind === "live" && PV[g.id] && PV[g.id].text ? hlLine(g, PV[g.id].text, PV[g.id].tm, "hl hl-pre") : null;
     }
     if (kind === "upcoming") {

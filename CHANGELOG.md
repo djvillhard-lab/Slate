@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.71.2 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- All games: a live game's one-liner is now in the color of the team it's about, the same as Today's Slate ("CHI: Tre Jones has 14 pts" in Bulls red). A line about both teams stays live red, and team colors are lightened on Midnight and darkened on Sunday Paper so they're easy to read.
+
 ## 3.71.1 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Morning email: preview lines use the card's current poll rank too ("No. 9 UCLA", not last week's "No. 7"), same as the slate.
