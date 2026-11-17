@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.9 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live feed: the "Last play" timer now starts from 0 the moment a new play shows up on the page, counted on your phone's own clock. It used to start around 30 to 40 seconds, because it counted from the time ESPN logged the play, and ESPN's feed runs that far behind.
+
 ## 3.68.8 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate: team names are no longer cut short in a narrow card, like Worth a look on the open Duo's left pane ("St. Tho…"). A card whose name doesn't fit drops both records first, then shows both teams' abbreviations (STMN, LIU), the same as All games.

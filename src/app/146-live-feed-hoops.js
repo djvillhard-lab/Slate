@@ -222,7 +222,7 @@
       flush();
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game tips off." : "No plays yet."));
-    fdAgo(list, sum, st.state === "in"); body.appendChild(list);
+    fdAgo(list, sum, st.state === "in", g.id); body.appendChild(list);
     if (plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); list.appendChild(mb); }
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
@@ -265,12 +265,18 @@
   // shown while the game is live, ticking every second
   function fdLastAt(sum) {
     var ps = (sum.plays || []).slice(), dr = sum.drives || {}; (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { (d && d.plays || []).forEach(function (p) { ps.push(p); }); });
-    var best = 0; ps.forEach(function (p) { var t = Date.parse(p.wallclock || ""); if (t > best) best = t; }); return best;
+    var best = 0; ps.forEach(function (p) { var t = Date.parse(p.wallclock || ""); if (t > best) best = t; });
+    var lastP = ps[ps.length - 1]; return { t: best, key: ps.length + "|" + (lastP ? String(lastP.id || lastP.sequenceNumber || "") : "") };
   }
+  // 3.68.9 (DJ: "I expect it to reset to zero after a new play arrives"): ESPN's feed runs about 40 seconds behind its own clock, so the
+  // timer counts from the moment a new play shows up on this page. Only the first look at a game, before any new play, uses ESPN's time.
+  var FD_AGO = {};
   function fdAgoText(t) { var s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? s + "s ago" : s < 3600 ? Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2) + " ago" : ""; }
   // 3.66.10 (DJ): it sits small at the top left, directly above the newest play, and starts again from 0 when a new play comes in
-  function fdAgo(list, sum, live) {
-    var t = live ? fdLastAt(sum) : 0; if (!t || Date.now() - t > 3600000) return;
+  function fdAgo(list, sum, live, gid) {
+    if (!live) return; var L = fdLastAt(sum), o = FD_AGO[gid];
+    if (!o) o = FD_AGO[gid] = { key: L.key, t: L.t }; else if (o.key !== L.key) { o.key = L.key; o.t = Date.now(); }
+    var t = o.t; if (!t || Date.now() - t > 3600000) return;
     var x = el("p", "fd-ago", "Last play " + fdAgoText(t)); x.setAttribute("data-t", String(t));
     x.style.cssText = "margin:0 0 2px 2px;text-align:left;font-size:11px;font-weight:600;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums";
     list.insertBefore(x, list.firstChild);

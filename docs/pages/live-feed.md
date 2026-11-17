@@ -59,3 +59,6 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 
 ## 3.68.4: the switcher is the slate's live games
 - DJ changed 3.66.9's rule: `fdList` (strip and swipe) is now the live football/basketball games on the slate (`inLineup`), plus the game the page was opened from (`FD.from`), which sorts first; the rest by start time. Not favorite teams any more.
+
+## 3.68.9: the timer counts from when a play appears
+- ESPN's feed is 30 to 40 seconds behind the `wallclock` it stamps on plays, so the timer "reset" to ~40s. `fdAgo` now keeps `FD_AGO[gameId] = {key, t}`: when the newest play changes (play count + last id), `t` = the device's clock. Only the first look at a game uses ESPN's time. DJ expects 0 on every new play.
