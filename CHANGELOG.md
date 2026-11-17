@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.73.1 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live feed: fixed the score banner getting stuck. It could freeze on an old clock, leave a gap above itself and sit on top of the field after you scrolled. The page had lost track of your finger lifting when the spot you were touching was redrawn mid-touch, so it kept waiting and never updated. It now always notices.
+- Football feed: the down and distance ("2nd & 8") moved out from under the clock. It now sits with the football, next to the score of the team that has the ball.
+- Football feed: more room for plays, mainly for the folded Duo. The Leaders card is folded away behind a Leaders button on the "Last play" line (tap to open it right there; it stays how you left it). The field lost its heading line, since the down is in the score bar now, and the win probability is one row.
+- Football feed: team codes read like the scoreboard. "Timeout BLT" is now "Timeout BAL" (also HST to HOU, CLV to CLE, ARZ to ARI), in the play text too.
+
 ## 3.73.0 (Nov 17, 2026)
 TestFlight: 3.68.5 (44), no new build (web only)
 - Box Office: each league tab now shows how many games that league has on the day you're looking at, in small numbers beside its name ("NBA 8", "CBB 33"). Postponed and canceled games aren't counted. Today's numbers match All games; earlier days come straight from ESPN's schedule.

@@ -103,3 +103,10 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - Jersey numbers use `fdNumInk` (black or white by contrast, not a brightness cutoff). The jersey fill stays the true team color.
 - Watch moved (DJ, with a screenshot): `fdWatch` now returns a small "▶ ESPN" link that goes inside `.fd-mid` under the quarter (`.fd-mw`), and the 3.70.1 row under the score bar is gone. Don't bring the row back.
 - Football scoring cards (`.fd-k-score` with `--fd-team`) take the team's color for headline, outline and tint in place of the accent. Same boxes in the quick look's Scoring (`fdPlayCard`).
+
+## 3.73.1: stuck score banner (DJ, Nov 17)
+- Cause: a touch whose target is removed from the page mid-touch (any non-poll `renderFeed`, e.g. from the app's `render()`) ends on the removed element only, so the document never saw `touchend`. `FD.touch` stayed true (poll redraws wait for it: stale clock) and the folded Duo pull-down (`pk`) kept its transform (gap above the banner, banner over the field).
+- Fix: `touchend`/`touchcancel` are also listened for on the touched element (`fdLetGo`), each new touch runs `fdPeekEnd` first, and `FD.touch` older than 10 seconds (`FD.touchAt`, refreshed by touchmove) no longer blocks redraws. Keep all three.
+- Down and distance now lives in the possession team's block (`.fd-poss` inside `.fd-tm.fd-has`), not in `.fd-mid`.
+- `fdAb` maps the NFL's codes in ESPN play text (BLT, HST, CLV, ARZ) to the scoreboard's; `fdClean` runs it.
+- Compact top (DJ, folded Duo: no plays visible without scrolling): the football Leaders card is closed by default behind a `Leaders` button in `.fd-bar` (`localStorage["slate-feed-leaders"]`), opens inside the list under the bar. The field card's heading shows only when there's no down (kickoff). Win probability is one row (`hp-wp1`). Don't add new always-open cards above the plays.

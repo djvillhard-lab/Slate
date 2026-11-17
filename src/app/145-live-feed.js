@@ -115,13 +115,22 @@
   (function () {
     var mark = function () { if (state.view === "feed") FD.scrollAt = Date.now(); };
     window.addEventListener("scroll", mark, { passive: true }); var pr = $("pane-r"); if (pr) pr.addEventListener("scroll", mark, { passive: true });
-    document.addEventListener("touchstart", function () { FD.touch = true; }, { passive: true, capture: true });
+    // 3.73.1 (DJ: "the score banner gets stuck sometimes when scrolling"): when the thing under your finger is redrawn mid-touch, the browser sends the
+    // touch's end only to that removed element, never to the document. The page then believed a finger was still down forever: updates stopped (a stale
+    // clock) and the pull-down below stayed pulled (a gap above the banner). So the end is also listened for on the touched element itself, every
+    // new touch first lets go of anything left over, and a "finger down" older than 10 seconds no longer holds updates back.
+    var fdLetGo = function () { FD.touch = false; fdPeekEnd(); };
+    document.addEventListener("touchstart", function (e) { fdPeekEnd(); FD.touch = true; FD.touchAt = Date.now();
+      var t = e.target; if (t && t.addEventListener) ["touchend", "touchcancel"].forEach(function (n) { t.addEventListener(n, function () { if (!document.documentElement.contains(t)) fdLetGo(); }, { passive: true, once: true }); });
+    }, { passive: true, capture: true });
+    document.addEventListener("touchmove", function () { FD.touchAt = Date.now(); }, { passive: true, capture: true });
     // the folded Duo (3.36.6): the clock and Wi-Fi can sit on the right end of the pinned score bar. Pulling down while it's
     // pinned slides the bar down below them (at most 56 points); it springs back when you let go. At the top of the page,
     // the page itself pulls down (iOS's bounce)
     var pk = null;
+    function fdPeekEnd() { if (!pk) return; var b = pk.bug; pk = null; b.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; b.style.transform = ""; setTimeout(function () { b.style.transition = ""; }, 260); }
     document.addEventListener("touchstart", function (e) {
-      pk = null; var h = document.documentElement;
+      var h = document.documentElement;
       if (state.view !== "feed" || e.touches.length !== 1 || !h.hasAttribute("data-native") || !h.classList.contains("side-col") || h.classList.contains("duo")) return;
       var bug = document.querySelector("#feed-body .fd-bug"); if (!bug) return;
       var top = parseFloat($("view-feed").style.getPropertyValue("--fd-top")) || 0, y = (isDuo ? $("pane-r").scrollTop : window.scrollY) || 0;
@@ -132,9 +141,7 @@
       if (!pk || FD.drag) return; var d = e.touches[0].clientY - pk.y0;
       pk.bug.style.transition = "none"; pk.bug.style.transform = d > 0 ? "translate3d(0," + Math.min(56, d * 0.6) + "px,0)" : "";
     }, { passive: true });
-    ["touchend", "touchcancel"].forEach(function (n) { document.addEventListener(n, function () {
-      if (!pk) return; var b = pk.bug; pk = null; b.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; b.style.transform = ""; setTimeout(function () { b.style.transition = ""; }, 260);
-    }, { passive: true }); });
+    ["touchend", "touchcancel"].forEach(function (n) { document.addEventListener(n, fdPeekEnd, { passive: true }); });
     ["touchend", "touchcancel"].forEach(function (n) { document.addEventListener(n, function () { FD.touch = false; mark(); }, { passive: true, capture: true }); });
   })();
   function fdPrefetch(g) {
@@ -193,7 +200,10 @@
     if (!out.length) return first === "receiving" ? "0 rec" : first === "rushing" ? "0 car" : first === "passing" ? "0/0, 0 yds" : first === "defensive" ? "0 tkl" : first === "interceptions" ? "0 INT" : "";
     return out.slice(0, 2).join(" · ");
   }
-  function fdClean(t) { return String(t || "").replace(/^\s*\(\d{1,2}:\d\d\)\s*/, "").replace(/^\s*\((?:No Huddle|Shotgun|No Huddle, Shotgun|Run formation)[^)]*\)\s*/i, "").trim(); }
+  // the NFL's own team codes in ESPN's play text, turned into the ones on the scoreboard (3.73.1, DJ: "Timeout BLT" should read BAL)
+  var FD_NFL_AB = { BLT: "BAL", HST: "HOU", CLV: "CLE", ARZ: "ARI" };
+  function fdAb(t) { return String(t || "").replace(/\b(BLT|HST|CLV|ARZ)\b/g, function (m) { return FD_NFL_AB[m]; }); }
+  function fdClean(t) { return fdAb(t).replace(/^\s*\(\d{1,2}:\d\d\)\s*/, "").replace(/^\s*\((?:No Huddle|Shotgun|No Huddle, Shotgun|Run formation)[^)]*\)\s*/i, "").trim(); }
   // ESPN's play text, cleaned up (3.36.8): one short line per part, in plain sentence case. "B.Purdy pass short right to
   // C.McCaffrey for 66 yards, TOUCHDOWN. TWO-POINT CONVERSION ATTEMPT. ... ATTEMPT SUCCEEDS.PENALTY on DAL-J.Porter, ..."
   // becomes "Purdy pass short right to McCaffrey, 66 yds" and "2-pt good: Purdy to McCaffrey". Penalties are left to the Flag tag.
@@ -312,6 +322,7 @@
   function fdHT(tag) { var b = el(tag, "fd-ht"); b.appendChild(el("span", "fd-htd")); b.appendChild(document.createTextNode("HT")); b.setAttribute("aria-label", "Halftime"); return b; }
   // football's leaders card (3.70.0, DJ: the NFL feed had nothing like basketball's top-rated card). ESPN gives football no player rating, so nothing is
   // ranked here: these are ESPN's own leaders from the game summary, each team's passer, rusher and receiver, with ESPN's stat line.
+  function fdLdOpen() { try { return localStorage.getItem("slate-feed-leaders") === "1"; } catch (e) { return false; } }
   function fdLeaders(g, sum, sideOf, over) {
     var want = [["passingYards", "PASS"], ["rushingYards", "RUSH"], ["receivingYards", "REC"]], cols = {}, any = false;
     (sum.leaders || []).forEach(function (t) { var sd = sideOf[String((t.team || {}).id || "")]; if (!sd) return; var col = el("div", "fd-ldc");
@@ -433,6 +444,7 @@
   function renderFeed(fromPoll) {
     var body = $("feed-body"); if (!body) return;
     // an update never rebuilds the page under a moving finger or mid-scroll (it would stop the scroll and jolt the score bar): it waits for stillness
+    if (FD.touch && Date.now() - (FD.touchAt || 0) > 10000) FD.touch = false;
     if (fromPoll && (FD.drag || FD.touch || Date.now() - (FD.scrollAt || 0) < 700)) { clearTimeout(FD.rt); FD.rt = setTimeout(function () { renderFeed(true); }, 300); return; }
     if (state.view !== "feed") { FD.more = 0; FD.scOnly = false; if (body.firstChild) body.textContent = "";  // leaving the page: earlier plays fold back up (3.43.1)
       clearTimeout(FD.t); FD.t = null; return; }
@@ -467,10 +479,14 @@
     ["away", "mid", "home"].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = !over && fdIsHT(st.shortDetail || st.detail, g.league);
         var sd0 = spot && !over ? Number(spot.e.down) || 0 : 0;
-        if (ht) mid.appendChild(fdHT("b")); else { mid.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); } if (sd0 && spot.e.shortDownDistanceText) mid.appendChild(el("em", "fd-mdd", String(spot.e.shortDownDistanceText))); var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
+        if (ht) mid.appendChild(fdHT("b")); else { mid.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); } var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
-      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); if (!over && posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball"); nm.appendChild(bl); } tm.appendChild(nm);
+      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); if (!over && posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball");
+        // 3.73.1 (DJ): the down and distance sits with the ball, beside the score of the team that has it (it was under the clock)
+        var ddT = spot && Number(spot.e.down) && spot.e.shortDownDistanceText ? String(spot.e.shortDownDistanceText) : "";
+        if (ddT) { var ps = el("span", "fd-poss"); ps.appendChild(bl); ps.appendChild(el("em", "fd-mdd", ddT)); tm.classList.add("fd-has"); }
+        else nm.appendChild(bl); } tm.appendChild(nm); if (ps && tm.classList.contains("fd-has") && !ps.parentNode) tm.appendChild(ps);
       var scn = el("b", "fd-sc" + ((sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
@@ -486,7 +502,7 @@
       dd.appendChild(el("b", null, down ? String(E.shortDownDistanceText || "") : (last && /kickoff/i.test(((last.type || {}).text) || "") ? "Kickoff" : " ")));
       dd.appendChild(el("span", null, pt ? (posSide ? abbr(g, posSide) + " ball · " : "") + pt.replace(/^([A-Z]{2,4})/, function (a2) { return abOf[a2] ? abbr(g, abOf[a2]) : a2; }) : ""));
       var y2e = Number(E.yardsToEndzone); if (down && y2e > 0 && y2e <= 20) dd.appendChild(el("em", "fd-rz", "Red zone"));
-      fld.appendChild(dd);
+      if (!down) fld.appendChild(dd);  /* 3.73.1 (DJ: too much above the plays on the folded Duo): the down and distance is in the score bar now, and the field shows the spot */
       var pitch = el("div", "fd-pitch"); pitch.setAttribute("aria-hidden", "true");
       ["away", "home"].forEach(function (sd) { var ez = el("span", "fd-ez fd-ez-" + sd, abbr(g, sd)); ez.style.background = badgeColor(g, sd) || "var(--raise)"; if (lum(badgeColor(g, sd) || "#333333") > 0.62) ez.style.color = "#111"; pitch.appendChild(ez); });
       var at = function (v) { return (8 + Math.max(0, Math.min(100, v)) * 0.84) + "%"; };
@@ -510,9 +526,8 @@
       var bar = el("span", "fd-wpb"), ba = el("i"), bh = el("i"); ba.style.width = ap + "%"; ba.style.background = fdTint(g, "away"); bh.style.width = hp + "%"; bh.style.background = fdTint(g, "home"); bar.appendChild(ba); bar.appendChild(bh); wr.appendChild(bar);
       wr.appendChild(el("span", null, hp + "% " + abbr(g, "home")));
       wr.setAttribute("aria-label", "ESPN win probability: " + abbr(g, "away") + " " + ap + " percent, " + abbr(g, "home") + " " + hp + " percent");
-      var wl = el("p", "fd-wpl", "Win probability (ESPN)"); wpHost.appendChild(wl); wpHost.appendChild(wr);
+      var wl = el("p", "fd-wpl hp-wpl1", "Win prob. (ESPN)"); wr.classList.add("hp-wp1"); wr.insertBefore(wl, wr.firstChild); wpHost.appendChild(wr);  /* one row, like basketball */
     }
-    var ldc = fdLeaders(g, sum, sideOf, over); if (ldc) body.appendChild(ldc);
     // the plays, newest first, under their drives
     // 3.69.1 (DJ): the Scoring button shows only the scoring plays (all of them, under their drives)
     var scOnly = !!FD.scOnly, isScore = function (p) { return fdRead(p, ix).kind === "score"; };
@@ -536,6 +551,13 @@
     if (!allPlays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game kicks off." : "No plays yet."));
     else if (scOnly && !shown) list.appendChild(el("p", "pv-none", "No scoring plays yet."));
     fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
+    // 3.73.1 (DJ: the top of the page left no room for plays on the folded Duo): the leaders card is folded away behind a Leaders button on the
+    // "Last play" line, and opens right under that line. Open or closed is remembered on this phone.
+    var ldBar = list.querySelector(".fd-bar");
+    if (ldBar && (sum.leaders || []).length) { var ldOn = fdLdOpen(), lb = el("button", "fd-scf fd-ldb" + (ldOn ? " on" : ""), "Leaders"); lb.type = "button"; lb.setAttribute("aria-expanded", ldOn ? "true" : "false");
+      lb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-leaders", ldOn ? "0" : "1"); } catch (e) {} fdKeepY(renderFeed); });
+      var ago0 = ldBar.querySelector(".fd-ago"); ldBar.insertBefore(lb, ago0 ? ago0.nextSibling : ldBar.firstChild);
+      if (ldOn) { var ldc = fdLeaders(g, sum, sideOf, over), aft = list.querySelector(".fd-dlrow") || ldBar; if (ldc) list.insertBefore(ldc, aft.nextSibling); } }
     fdMoreRow(list, !scOnly && allPlays.length > shown && shown >= cap, scOnly);
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);  // the box score under the plays (3.40.3)
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
