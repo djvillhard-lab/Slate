@@ -61,3 +61,6 @@ When no strong fact exists, pvCompute (100-highlights.js) now tries quieter fact
 
 ## Last season's games in "last five" (3.91.3)
 ESPN's lastFiveGames pads early-season lists with last season's games (Central Michigan's March loss on a 4-0 team). `l5Season(events, gameDate)` in 080-claude.js keeps this season only (cut at a 60+ day gap, drop anything 60+ days old). Used by trimEspn (Claude facts: `last5[].newestFirst`, dated), pvCompute form, Best bets totals, slate-kit (regenerated with email_kit.py) and tick.py (`season_only`). The worker RULES now make Claude check every result and "last game" against the record. Old previews keep their text until regenerated.
+
+## Color edge order (3.91.6)
+`teamStripe(box, g, order)` paints the top half with the color of the team listed on top: `sideOrder(g)` by default (soccer lists home first), or an explicit order (Betting lines game totals pass ["away","home"] because their badges are away over home).

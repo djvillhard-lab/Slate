@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.91.6 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Matchup cards: the team-color edge now follows the order the teams are listed. Soccer cards list the home side on top, and the edge had the colors the other way round (Wales on top showed Portugal's color). The top half is always the top team's color, on every card with the edge.
+
 ## 3.91.5 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Soccer live feed: a goal now shows as a proper goal box the moment it comes in, with the scorer and the assist, and the scorer is added to the list under the score right away. For the first minute or so after a goal ESPN sends only the sentence ("Goal! Wales 2, Portugal 2. Pedro Neto..."), without marking it as a goal, so it was showing as a gray line and the scorer was missing from the list until ESPN caught up.
