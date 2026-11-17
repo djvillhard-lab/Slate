@@ -351,15 +351,29 @@ export async function buildEmail(env, who, nowT) {
   const teams = (d.sett.teams || []).map((t) => String(t).toLowerCase());
   const favSide = (m) => (g, sd) => !!m[g.id] && teams.some((t) => { const n = String(g[sd] || "").toLowerCase(); return n === t || n.indexOf(t) === 0 || t.indexOf(n) === 0; });
 
+  // 3.71.1: the card's own ranks win in a preview line, as on the slate (ESPN's text can carry last week's poll: "No. 7
+  // UCLA" on a card that says 9). Lines worked out here get them from pvCompute; a saved line from DJ's phone is fixed here.
+  const cardRanks = (g, t) => {
+    if (!(Number(g.awayRank) > 0 || Number(g.homeRank) > 0)) return t;
+    for (const sd of ["away", "home"]) {
+      const r = Number(g[sd + "Rank"]), rk = r > 0 && r <= 25 ? `No. ${r} ` : "";
+      const names = [String(g[sd] || ""), kit.short(g, sd), kit.abbr(g, sd)].filter((w) => w && w.length >= 2).sort((x, y) => y.length - x.length);
+      for (const n of names) {
+        const re = new RegExp(`(^|[^A-Za-z])No\\. \\d{1,2} (?=${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^A-Za-z]|$))`, "g");
+        if (re.test(t)) { t = t.replace(re, `$1${rk}`); break; }
+      }
+    }
+    return t;
+  };
   // 1. today's slate, in time order, with the slate's own tag and preview line
   const today = d.today.slice().sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
   const lines = await pool(today, 6, async (g) => {
     const sum = g.ev && kit.BX_SPORT[g.league] ? await kit.rkFetch(kit.bxSummaryUrl(g.league, g.ev)) : null;
     for (const c of ((((sum && sum.header || {}).competitions || [])[0] || {}).competitors) || []) { const sd = c.homeAway, h = ((c.team || {}).logos || [])[0] || {}; if ((sd === "away" || sd === "home") && !g[sd + "Logo"] && (h.href || (c.team || {}).logo)) g[sd + "Logo"] = h.href || c.team.logo; }
-    if (d.pvlines[g.id]) return d.pvlines[g.id];  // the line DJ's phone is showing right now
+    if (d.pvlines[g.id]) return cardRanks(g, d.pvlines[g.id]);  // the line DJ's phone is showing, with the card's ranks
     if (!sum) return "";
     const q = await kit.pvQB(g.league, sum).catch(() => []);
-    return kit.pvCompute(g.league, sum, q) || "";
+    return kit.pvCompute(g.league, sum, q, g) || "";
   });
   const tagOf = (k, g, added) => { const w = k.ruleHits(g).why; return w.length ? w[0] : added ? "Added" : ""; };
   const odds = (g) => { const o = (d.odds[g.id] || {}).odds; if (!who.lines || !o) return ""; return [o.spread || "", o.total ? "O/U " + o.total : ""].filter(Boolean).join(" · "); };

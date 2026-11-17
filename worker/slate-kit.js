@@ -188,13 +188,16 @@ export function slateKit(opts) {
   function bxSummaryUrl(lg, ev) { return BX_SPORT[lg] === "soccer" ? "https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary?event=" + ev : bxApi(lg, "summary?event=" + ev); }
   function bxApi(lg, rest) { return "https://site.api.espn.com/apis/site/v2/sports/" + bxBase(lg) + "/" + rest; }
   // ---- from src/app/100-highlights.js
-  function pvCompute(lg, sum, qbx) {
+  function pvCompute(lg, sum, qbx, g) {
     pvCompute.fb = false; pvCompute.tm = "";
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
       var rec = {}; (k.record || []).forEach(function (r) { rec[r.type] = r.summary || r.displayValue || ""; });
       var rk = (k.curatedRank || {}).current; T[id] = { id: id, name: (sport === "soccer" ? tm.shortDisplayName : tm.nickname || tm.name) || tm.shortDisplayName || tm.displayName || "", full: tm.displayName || "", abbr: tm.abbreviation || "", side: k.homeAway, rec: rec, rank: rk && rk <= 25 ? rk : (k.rank && k.rank <= 25 ? k.rank : 0) }; });
     if (ids.length !== 2) return null;
+    // 3.71.0: the card's own ranks win. ESPN's game summary can still carry last week's poll (UCLA "No. 7" on a card that
+    // says 9 the Monday a new poll came out), so when the card has ranks, the line uses the same ones
+    if (g && (Number(g.awayRank) > 0 || Number(g.homeRank) > 0)) ids.forEach(function (i) { var r = Number(g[T[i].side + "Rank"]); T[i].rank = r > 0 && r <= 25 ? r : 0; });
     ids.forEach(function (i) { if (T[i].rank) T[i].name = "No. " + T[i].rank + " " + T[i].name; });
     var H = ids.filter(function (i) { return T[i].side === "home"; })[0] || ids[1], A = ids[0] === H ? ids[1] : ids[0], oth = function (i) { return i === H ? A : H; };
     var nm = function (i) { return (T[i].rank ? "No. " + T[i].rank + " " : "") + T[i].name; };

@@ -48,3 +48,6 @@ The Morning email controls moved from the Settings main page to their own sub-pa
 ## 3.69.1: light design
 - Two tries at locking the dark design (3.68.6, 3.68.11) didn't change Outlook iOS: a gray wash over everything. Decision (coordinator, after DJ's report): the email is always drawn light. `paperLook()` swaps a dark phone look for Sunday Paper's colors plus the person's accent, deepened to 4.5:1 on the cards; the button is the deepened fill with white text. Light phone looks pass through unchanged.
 - Kept: color classes, bgcolor, font longhands, the ratio-sign colon in times.
+
+## 3.71.1: preview ranks
+- pvCompute gets the game (slate 3.71.0), so its lines use the card's ranks; DJ's saved phone lines (prefs/pvlines) go through `cardRanks()`, which swaps "No. N <team>" for the card's rank (or drops it). Kit regenerated.
