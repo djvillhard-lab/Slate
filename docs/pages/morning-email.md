@@ -39,3 +39,8 @@ The Morning email controls moved from the Settings main page to their own sub-pa
 - Times and dates in the text get an invisible joiner (`&#8204;`) so iOS and Outlook don't turn them into links; plus the format-detection meta and `a[x-apple-data-detectors]` CSS. Plain-text part is unchanged.
 - Theme colors are turned into plain hex (rgba blended on the background) before drawing.
 - Decision: lock the email to the phone's own theme rather than let mail apps invert it. Gmail's app can still force its own dark mode; nothing in an email can fully stop that.
+
+## 3.68.11: Outlook on iPhone, second try
+- 3.68.6's `[data-ogsc]` locks did nothing in Outlook iOS (DJ checked a fresh send). Now, for dark themes only, every background also gets `background-image:linear-gradient(c,c)`, which Outlook doesn't repaint. Not for light themes: Outlook would lighten the dark text on a locked light background.
+- Times use U+2236 (ratio sign) in place of the colon in the HTML; the zero-width joiner alone didn't stop Outlook's links. Plain text keeps real colons.
+- Can't render Outlook here; check with a Send from Settings. Fallback if it's still off: a light theme, which Outlook darkens cleanly.

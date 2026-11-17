@@ -166,14 +166,17 @@ function solidLook(T) {
 // class that Outlook's dark mode ([data-ogsc] text, [data-ogsb] backgrounds) is told to leave alone, tables and cells
 // get bgcolor, font shorthands are spelled out (Outlook drops "font:" and with it the weights), and times and dates get
 // an invisible joiner so the phone doesn't see them as something to link.
-function emailize(html) {
+// 3.68.7: Outlook on iPhone ignored all that. Dark themes now also paint each background as an image (a one-color
+// gradient), which Outlook's dark mode doesn't repaint, and times use the look-alike ratio sign (U+2236) for the colon,
+// which no link finder reads as a time. The plain-text part keeps real colons.
+function emailize(html, dark) {
   const ids = new Map(), cls = (c) => { if (!ids.has(c)) ids.set(c, ids.size); return ids.get(c); };
   const out = html.replace(/<(\w+)((?:\s[^>]*?)?)\sstyle="([^"]*)"/g, (all, tag, attrs, st) => {
     st = st.replace(/(^|;)\s*font:\s*(\d{3})\s+(\d+)px(?:\/([\d.]+(?:px)?))?\s+([^;]+)/g, (m, pre, w, sz, lh, fam) =>
       `${pre}font-weight:${w};font-size:${sz}px;${lh ? `line-height:${lh};` : ""}font-family:${fam.trim()}`);
     const add = [], c = /(?:^|;)\s*color:\s*(#[0-9a-f]{6})/i.exec(st), b = /(?:^|;)\s*background:\s*(#[0-9a-f]{6})/i.exec(st);
     if (c) add.push("oc" + cls(c[1].toUpperCase()));
-    if (b) { add.push("ob" + cls(b[1].toUpperCase())); st = st.replace(/(^|;)(\s*)background:\s*(#[0-9a-f]{6})/i, "$1$2background:$3;background-color:$3"); }
+    if (b) { add.push("ob" + cls(b[1].toUpperCase())); st = st.replace(/(^|;)(\s*)background:\s*(#[0-9a-f]{6})/i, dark ? "$1$2background:$3;background-color:$3;background-image:linear-gradient($3,$3)" : "$1$2background:$3;background-color:$3"); }
     let a = attrs;
     if (b && /^(table|td|body)$/i.test(tag) && !/\sbgcolor=/i.test(a)) a += ` bgcolor="${b[1]}"`;
     if (add.length) a = /\sclass="/.test(a) ? a.replace(/\sclass="/, ` class="${add.join(" ")} `) : a + ` class="${add.join(" ")}"`;
@@ -183,7 +186,7 @@ function emailize(html) {
   for (const [c, i] of ids) rules.push(`[data-ogsc] .oc${i}{color:${c}!important}`, `[data-ogsb] .ob${i}{background-color:${c}!important}`, `[data-ogsc] .ob${i}{background-color:${c}!important}`);
   // times ("1:45 pm", "6:00") and dates ("Nov 17") in the text, never inside tags or links' addresses
   const M = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December";
-  const text = (t) => t.replace(/(\d{1,2}):(\d\d)/g, "$1&#8204;:&#8204;$2").replace(new RegExp(`\\b(${M})\\.?\\s(\\d{1,2})\\b`, "g"), "$1&#8204; &#8204;$2");
+  const text = (t) => t.replace(/(\d{1,2}):(\d\d)/g, "$1&#8758;$2").replace(new RegExp(`\\b(${M})\\.?\\s(\\d{1,2})\\b`, "g"), "$1&#8204; &#8204;$2");
   const body = out.replace(/>([^<]+)</g, (m, t) => ">" + text(t) + "<");
   return body.replace("</style>", rules.join("") + "</style>");
 }
@@ -409,7 +412,7 @@ ${h}
   if (fav.length) { tx.push("YOUR TEAMS YESTERDAY"); for (const g of fav) { tx.push(res(g)); const r = ((d.recaps[g.id] || {}).recap || {}).text; if (r) tx.push(r); tx.push(""); } }
   if (rest.length) { tx.push("LAST NIGHT"); for (const g of rest) tx.push(res(g)); tx.push(""); }
   tx.push(`Open Slate: ${APP}`, "", "Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings > Morning email.");
-  return { date, subject, text: tx.join("\n"), html: emailize(html), games: today.length, results: fav.length + rest.length, pending };
+  return { date, subject, text: tx.join("\n"), html: emailize(html, T.dark), games: today.length, results: fav.length + rest.length, pending };
 }
 
 // ---------- the minute job ----------
