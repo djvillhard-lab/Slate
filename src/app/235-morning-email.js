@@ -68,6 +68,20 @@
       meCall({ action: "test", look: meLook() }).then(function () { b.textContent = "Send"; b.disabled = false; toast("On its way. It takes a minute or two while Claude writes yesterday's recaps."); },
         function (e) { b.textContent = "Send"; b.disabled = false; toast(e.message); });
     });
+    // DJ's set-up link for someone else (3.62.1): #mail-for=<id>&email=<address>&at=06:00. It's kept for this tab until
+    // a passcode is in (the log-in page may come first), then saved once on the server under that person's own settings.
+    try {
+      var mh = /[#&]mail-for=([a-z0-9-]{2,40})&email=([^&]+)&at=(\d\d:\d\d)/.exec(location.hash);
+      if (mh) { sessionStorage.setItem("slate-mail-for", JSON.stringify({ id: mh[1], email: decodeURIComponent(mh[2]), at: mh[3] })); history.replaceState(null, "", location.pathname + location.search); }
+    } catch (e) {}
+    var mfTries = 0, mfT = setInterval(function () {
+      var job = null; try { job = JSON.parse(sessionStorage.getItem("slate-mail-for") || "null"); } catch (e) {}
+      if (!job || ++mfTries > 300) { clearInterval(mfT); return; }
+      if (!slatePass()) return;
+      clearInterval(mfT); try { sessionStorage.removeItem("slate-mail-for"); } catch (e) {}
+      meCall({ action: "save", for: job.id, email: job.email, on: true, time: job.at, tz: "America/Chicago" })
+        .then(function (j) { toast("Morning email is on for " + (j.prefs && j.prefs.email ? j.prefs.email : job.id) + " at " + meClock(job.at)); }, function (e) { toast(e.message); });
+    }, 2000);
     // load when Settings opens
     var view = $("view-settings"), seen = false;
     var check = function () { if (view.hidden) { seen = false; return; } if (!seen) { seen = true; meLoad(); } };

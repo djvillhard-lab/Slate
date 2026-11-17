@@ -20,6 +20,10 @@ Each person can get their own slate by email every morning (3.55.0). Asked by DJ
 - Theme: the phone sends its computed colors (`look`) with every save and test; Midnight if none.
 - Not in the email: the live countdown ("in 3h") and the bell, which only make sense in the app.
 
+## 3.67.1
+- Subject: "Today's Slate, Mon, Nov 17: <first game> and N more" (DJ).
+- DJ-only set-up for someone else: `/api/morning-email` takes `for: <registry id>` (get and save only, DJ's passcode). The app reads a link `#mail-for=<id>&email=<address>&at=06:00`, keeps it for the tab until a passcode is in, then saves it once. It lands in that person's own settings (Doug = `dad`, set up for 6:00 AM Central on Nov 17).
+
 ## Open
 - Ideas: The Athletic newsletters under the slate, Claude preview lines when already written (free), links into the iPhone app instead of Safari.
 - Testing locally: `SMTP_HOST`/`SMTP_PORT`/`SMTP_PLAIN` point the sender at a stand-in mail server (never set them in Cloudflare).

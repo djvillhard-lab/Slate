@@ -315,7 +315,8 @@ export async function buildEmail(env, who, nowT) {
   const name = String(who.name || "").trim(), wd = dayName(date, { weekday: "long" }), md = dayName(date, { month: "short", day: "numeric" });
   const top = today.find((g) => mineT[g.id]) || today[0];
   const pair = (g) => kit.short(g, kit.sideOrder(g)[0]) + kit.sep(g).replace(" @ ", " at ") + kit.short(g, kit.sideOrder(g)[1]);
-  const subject = today.length ? `${wd}: ${pair(top)}${today.length > 1 ? ` and ${today.length - 1} more` : ""} on your slate` : `${wd}: no games on your slate, plus last night`;
+  // "Today's Slate, Mon, Nov 17: Magic at Celtics and 7 more" (DJ, Nov 17)
+  const subject = `Today's Slate, ${dayName(date, { weekday: "short" })}, ${md}: ` + (today.length ? `${pair(top)}${today.length > 1 ? ` and ${today.length - 1} more` : ""}` : "no games, plus last night's results");
   const lead = today.length ? `${today.length} game${today.length === 1 ? "" : "s"} on your slate today, the first at ${P.time(today[0].start)}.` : "No games on your slate today.";
 
   let h = "", prevT = "";
@@ -415,6 +416,14 @@ export async function runMorningEmail(env) {
 // ---------- Settings: POST /api/morning-email {pass, action: "get" | "save" | "test" | "preview", ...} ----------
 const EMAIL = /^[^\s@<>()"',;:]{1,64}@[A-Za-z0-9.-]{1,180}\.[A-Za-z]{2,24}$/;
 export async function morningApi(env, me, p) {
+  // DJ can set it up for someone else in the family ({for: "<their id>"}); they see it and change it in their own Settings
+  if (p.for !== undefined && p.for !== me.id) {
+    if (me.id !== "dj") return { error: "Only DJ can set this up for someone else." };
+    if (!["get", "save"].includes(p.action)) return { error: "bad request" };
+    const reg = (await getDocs(env, ["users/registry"]))["users/registry"] || {}, u = Object.values(reg.users || {}).find((x) => x && x.id === String(p.for));
+    if (!u) return { error: "No one with that id." };
+    me = { id: u.id, name: u.name || u.id }; delete p.look;  // their email is drawn in their own look, once they save from their phone
+  }
   const doc = (await getDocs(env, [DOC]))[DOC] || {}, cur = (doc.people || {})[me.id] || {};
   const view = async (x) => ({ on: !!x.on, time: x.time || "07:00", tz: x.tz || "", lines: !!x.lines, email: await unseal(env, x.email), last: x.last || "",
     sentAt: x.sentAt || "", err: x.err || "", note: x.note || "", ready: gmailReady(env), testing: !!(x.testAt && Date.now() - Date.parse(x.testAt) < 15 * 60000) });
