@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.2 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Unfolded Duo, one menu: the app's menu and Back now always work the right side. The two sides no longer have their own menu buttons, so nothing sits under the app's menu any more, and picking a page from the menu changes the right side.
+- The left side stays put: tapping a game, a Live feed or a team on the left opens it on the right.
+- After you slide the right page over to the left, the menu picks the new right side again.
+
 ## 3.81.1 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - All games: each matchup's channel is now a watch link, the same as on Today's Slate ("▶ ESPN"). Tap it to open that channel's app, or pick one when there's more than one way to watch. Up to two channels per card, with the ones you can watch first.

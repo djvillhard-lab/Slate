@@ -17,9 +17,14 @@ right, so I can have two live feeds at once."
 - The grip on the fold (`.pn-grip`, 44x88): drag left or tap = the right frame slides left; drag right = the other way.
   Frames swap by grid column (no reload), then the side that was left shows the picker (`SlateApp.panePick`): live games
   first (Live feed where `feedOk`, else the matchup), then the menu's pages (icons cloned from `#nav-*`), then "Keep ...".
+- One menu (3.81.2, DJ after trying 3.80.0 on the Duo): the app's menu and Back (and the strip's buttons) always go to
+  the right side. The right pane gets `data-float` when the app draws its own menu, so it hides its menu button and
+  Back (like the folded phone with the app's floating menu); in a browser it keeps its own. The left pane
+  (`html.pn-left`) has no menu or Back. A game, Live feed or team opened from a list on the left opens on the right
+  (`slatePaneOpen`); inside a matchup or Live feed that was slid over to the left, switching games stays left.
 - iPhone app: panes talk to it through the host (`slateHostPost`; "state"/"ready" are dropped). The strip's buttons
-  (`go`, `back`, `today`, `day`, `toggleMenu`, `openGame`, `watch`) go to the side touched last (`slatePaneTouch`), and
-  the strip is told that side's state. Panes draw their own menu and Back (no strip inside a pane). No iOS change.
+  (`go`, `back`, `today`, `day`, `toggleMenu`, `openGame`, `watch`) go to the right side, and the app is told the
+  right side's state (its Back and lit menu button). No iOS change.
 - Settings: when one side saves settings or notifications, the other side and the host take the same values
   (`slatePaneSaved`, `PN_SET_KEYS`), so neither side later saves an old copy over the change.
 - New versions: a pane reloads itself on its own page; the host never auto-reloads while the panes are up.

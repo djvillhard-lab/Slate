@@ -3,10 +3,11 @@
   // (?pane=a / ?pane=b), so each side has its own page, Back, menu, scroll and live updates, and any page works on
   // either side: two Live feeds at once, the slate beside Box Office, and so on. The copy of the page around them
   // (the "host") waits behind, laid out like the folded phone, and comes back when the phone is folded.
-  // The grip on the fold: drag it left (or tap it) and the right page slides over to the left side, and the right side
-  // asks which page to show next. Drag it right for the other way round. Each side's page is remembered while the
+  // One menu (DJ, Nov 17): the menu and Back always work the right side, and a game, Live feed or team tapped on the
+  // left opens on the right; the left side stays put. The grip on the fold: drag it left (or tap it) and the right
+  // page slides over to the left side, and the right side asks which page to show next. Drag it right for the other way round. Each side's page is remembered while the
   // app is open, so a quick fold and unfold puts both back.
-  var PN = { on: false, el: null, frames: {}, left: "a", active: "b", drag: null, routes: {} };
+  var PN = { on: false, el: null, frames: {}, left: "a", drag: null, routes: {} };
   var PN_KEY = "slate-panes";
   var PN_PAGES = [["lineup", "Tonight's Slate"], ["games", "All games"], ["moments", "Box Office"], ["tv", "On TV"], ["news", "News"], ["teams", "Teams"], ["settings", "Settings"]];
   // the settings both sides share: when one side saves, the other side (and the host) take the same values,
@@ -20,14 +21,14 @@
   }
   function pnOther(id) { return id === "a" ? "b" : "a"; }
   function pnWin(id) { var f = PN.frames[id]; try { return f && f.contentWindow && f.contentWindow.SlateApp ? f.contentWindow : null; } catch (e) { return null; } }
-  function pnSave() { try { sessionStorage.setItem(PN_KEY, JSON.stringify({ left: PN.left, active: PN.active, routes: PN.routes })); } catch (e) {} }
+  function pnSave() { try { sessionStorage.setItem(PN_KEY, JSON.stringify({ left: PN.left, routes: PN.routes })); } catch (e) {} }
   function pnLoad() { try { return JSON.parse(sessionStorage.getItem(PN_KEY) || "null") || {}; } catch (e) { return {}; } }
 
   // ---- the host: builds the two frames and the grip ----
   function enterPanes() {
     if (PN.on) return;
     var sv = pnLoad(); PN.on = true;
-    PN.left = sv.left === "b" ? "b" : "a"; PN.active = sv.active === "a" || sv.active === "b" ? sv.active : pnOther(PN.left);
+    PN.left = sv.left === "b" ? "b" : "a";
     PN.routes = sv.routes && typeof sv.routes === "object" ? sv.routes : {};
     if (!PN.routes[PN.left]) PN.routes[PN.left] = "lineup";
     if (!PN.routes[pnOther(PN.left)]) PN.routes[pnOther(PN.left)] = "games";
@@ -37,6 +38,7 @@
     ["a", "b"].forEach(function (id) {
       var f = document.createElement("iframe"); f.className = "pn-frame"; f.id = "pn-" + id;
       f.src = location.pathname + "?pane=" + id + "#go=" + encodeURIComponent(PN.routes[id] || "lineup");
+      f.addEventListener("load", function () { pnMark(); setTimeout(pnMark, 500); });
       PN.frames[id] = f; box.appendChild(f);
     });
     var hinge = el("div", "pn-hinge");
@@ -63,7 +65,23 @@
       var f = PN.frames[id], left = PN.left === id;
       f.style.gridColumn = left ? "1" : "3";
       f.title = left ? "Left side" : "Right side";
-      f.classList.toggle("pn-act", PN.active === id);
+    });
+    pnMark();
+  }
+  // DJ (Nov 17): one menu. The menu and Back (the app's own capsule, or the right side's buttons in a browser) always
+  // work the right side; the left side keeps no menu or Back of its own and stays put until a page is slid over.
+  function pnRight() { return pnOther(PN.left); }
+  function pnMark() {
+    if (!PN.on) return;
+    var nm = !!(NATIVE && (NATIVE.float || NATIVE.strip));
+    ["a", "b"].forEach(function (id) {
+      var f = PN.frames[id], d; try { d = f.contentDocument && f.contentDocument.documentElement; } catch (e) { d = null; }
+      if (!d) return;
+      var left = PN.left === id;
+      d.classList.toggle("pn-left", left); d.classList.toggle("pn-right", !left);
+      // the app draws the menu capsule over the right side: that side hides its own, like the app's floating menu does
+      if (!left && nm) d.setAttribute("data-float", ""); else d.removeAttribute("data-float");
+      var w = pnWin(id); if (left && w && w.SlateApp.paneMenu) w.SlateApp.paneMenu(false);
     });
   }
   // the grip on the fold: drag a page across, or tap to bring the right page left
@@ -115,9 +133,8 @@
       [L, R].forEach(function (f) { f.style.transition = "none"; f.style.transform = ""; f.classList.remove("pn-moving", "pn-dim"); });
       PN.el.classList.remove("pn-dragging");
       PN.left = dir < 0 ? moverId : pnOther(moverId);
-      PN.active = pnOther(moverId);
-      pnPlace(); pnSave();
-      var w = pnWin(PN.active); if (w && w.SlateApp.panePick) w.SlateApp.panePick(dir < 0 ? "right" : "left");
+            pnPlace(); pnSave();
+      var w = pnWin(pnOther(moverId)); if (w && w.SlateApp.panePick) w.SlateApp.panePick(dir < 0 ? "right" : "left");
       if (typeof nativeSync === "function") nativeSync();
     };
     if (REDUCED) { fin(); return; }
@@ -128,19 +145,19 @@
   }
   // what the active side reports to the iPhone app's strip (its Back and menu work that side)
   function paneSyncMsg() {
-    var w = pnWin(PN.active); if (!w || !w.SlateApp.paneState) return null;
+    var w = pnWin(pnRight()); if (!w || !w.SlateApp.paneState) return null;
     try { var m = JSON.parse(w.SlateApp.paneState()); m.duo = true; return m; } catch (e) { return null; }
   }
   window.slatePaneSync = function (id) {
     if (!PN.on) return;
     var w = pnWin(id);
     if (w && w.SlateApp.paneRoute) { var r = w.SlateApp.paneRoute(); if (r !== PN.routes[id]) { PN.routes[id] = r; pnSave(); } }
-    if (id === PN.active && typeof nativeSync === "function") nativeSync();
+    pnMark();
+    if (id === pnRight() && typeof nativeSync === "function") nativeSync();
   };
-  window.slatePaneTouch = function (id) {
-    if (!PN.on || PN.active === id) return;
-    var w0 = pnWin(PN.active); if (w0 && w0.SlateApp.paneMenu) w0.SlateApp.paneMenu(false);
-    PN.active = id; pnPlace(); pnSave(); if (typeof nativeSync === "function") nativeSync();
+  // the left side opened a game, Live feed or team from its list: it opens on the right side instead
+  window.slatePaneOpen = function (route) {
+    var w = PN.on ? pnWin(pnRight()) : null; if (w && w.SlateApp.paneGo) w.SlateApp.paneGo(route);
   };
   window.slatePaneNudge = function (n) { state.foldNudge = Number(n) || 0; applyLayout(true); };
   // one side saved its settings: the other side and this copy take the same values
@@ -153,14 +170,19 @@
     PN_SET_KEYS.forEach(function (k) { if (k in d) state[k] = d[k]; });
     applyLook();
   }
-  // the iPhone app's strip buttons reach whichever side was touched last
+  // the iPhone app's menu and Back reach the right side
   ["go", "today", "back", "openGame", "day", "toggleMenu", "watch"].forEach(function (k) {
     var f0 = window.SlateApp[k];
     window.SlateApp[k] = function () {
-      var w = PN.on ? pnWin(PN.active) : null;
+      var w = PN.on ? pnWin(pnRight()) : null;
       if (w) return w.SlateApp[k].apply(w.SlateApp, arguments);
       return f0.apply(window.SlateApp, arguments);
     };
+  });
+  // the app's floating menu or side-column menu turning on or off: the right side hides or shows its own
+  ["setFloat", "setStrip"].forEach(function (k) {
+    var f0 = window.SlateApp[k];
+    window.SlateApp[k] = function () { var r = f0.apply(window.SlateApp, arguments); pnMark(); return r; };
   });
   ["liveShowing", "liveGone"].forEach(function (k) {
     var f0 = window.SlateApp[k];
@@ -204,16 +226,25 @@
     var pnSaveSet0 = saveSettings, pnSaveNt0 = saveNotify;
     saveSettings = function () { pnSaveSet0.apply(null, arguments); try { window.parent.slatePaneSaved(PANE, pnSnap()); } catch (e) {} };
     saveNotify = function () { pnSaveNt0.apply(null, arguments); try { window.parent.slatePaneSaved(PANE, pnSnap()); } catch (e) {} };
-    // touching a side makes it the one the iPhone app's strip buttons work
-    window.addEventListener("pointerdown", function () { try { window.parent.slatePaneTouch(PANE); } catch (e) {} }, { capture: true, passive: true });
-    window.addEventListener("focus", function () { try { window.parent.slatePaneTouch(PANE); } catch (e) {} });
+    // on the left side, a game, Live feed or team tapped in a list opens on the right side (the left stays put).
+    // Inside a matchup or Live feed that was slid over to the left, switching games stays on the left.
+    var pnLeft = function () { return document.documentElement.classList.contains("pn-left") && state.view !== "feed" && state.view !== "game" && state.view !== "team"; };
+    var pnToRight = function (r) { try { window.parent.slatePaneOpen(r); return true; } catch (e) { return false; } };
+    var pnOpenM0 = openMatchup, pnOpenF0 = openFeed, pnOpenT0 = openTeam;
+    openMatchup = function (g) { if (g && pnLeft() && pnToRight("game:" + g.id)) return; return pnOpenM0.apply(null, arguments); };
+    openFeed = function (g) { if (g && pnLeft() && pnToRight("feed:" + g.id)) return; return pnOpenF0.apply(null, arguments); };
+    openTeam = function (name, lg) { if (pnLeft() && pnToRight("team:" + JSON.stringify([name, lg || ""]))) return; return pnOpenT0.apply(null, arguments); };
+    // the menu (or Back) closes the page picker
+    ["go", "back", "today"].forEach(function (k) { var f0 = window.SlateApp[k]; window.SlateApp[k] = function () { pnPickClose(); return f0.apply(window.SlateApp, arguments); }; });
     // open the page this side had (#go=feed:<game>, game:<game>, or a menu page)
     var pnGo = function (r) {
+      var t = /^team:(.+)$/.exec(r || "");
+      if (t) { try { var tt = JSON.parse(t[1]); pnOpenT0(tt[0], tt[1] || ""); } catch (e) {} return; }
       var m = /^(feed|game):(.+)$/.exec(r || ""), tries = 0;
       if (m) {
         (function look() {
           var g = games().filter(function (x) { return String(x.id) === m[2]; })[0];
-          if (g) { if (m[1] === "feed" && feedOk(g)) openFeed(g); else openMatchup(g); window.scrollTo(0, 0); return; }
+          if (g) { pnPickClose(); if (m[1] === "feed" && feedOk(g)) pnOpenF0(g); else pnOpenM0(g); window.scrollTo(0, 0); return; }
           if (++tries < 30) setTimeout(look, 500);
         })();
         return;
@@ -221,6 +252,7 @@
       if (r === "best") { menuGo("best"); return; }
       if (r && r !== "lineup" && PN_PAGES.some(function (p) { return p[0] === r; })) window.SlateApp.go(r);
     };
+    window.SlateApp.paneGo = pnGo;
     var pnStart = /[#&]go=([^&]+)/.exec(location.hash);
     if (pnStart) setTimeout(function () { pnGo(decodeURIComponent(pnStart[1])); }, 0);
 

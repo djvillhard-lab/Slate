@@ -39,3 +39,5 @@ html.pn-picking nav.dock, html.pn-picking #menu-fab { display: none !important; 
 .pn-pk-keep { display: block; width: 100%; min-height: 48px; margin-top: 24px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .pn-pick.pn-in { animation: none; } .pn-grip i { transition: none; } }
 .pn-pick:focus { outline: none; }
+/* one menu (3.81.2): the left side has no menu or Back of its own; the menu and Back work the right side */
+html.in-pane.pn-left #menu-fab, html.in-pane.pn-left #menu-pop, html.in-pane.pn-left #menu-scrim, html.in-pane.pn-left #dock-back { display: none !important; }
