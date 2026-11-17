@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.72.2 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Betting lines are saved for each day. Go back to an earlier day on Today's Slate and its lines are still there, each marked "Went over" or "Went under" and whether the lean was right, with the count of right and wrong at the top. They're kept for 60 days on the phone and 45 in your account, so they show up on any phone you sign in on. Days from before this update only have what this phone still had (the last three days).
+
 ## 3.72.1 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed: team colors now read on every theme. The colored edge on a play (and the win probability bar) is lightened on the dark themes or darkened on Sunday Paper until it stands out, the same check the slate's live one-liners use. White and yellow teams like the Nets were nearly invisible on Sunday Paper, and dark ones like the Ravens were faint on Midnight.

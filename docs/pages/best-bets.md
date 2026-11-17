@@ -79,3 +79,7 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 - Same-position starter out (bball, team top-6 scorer, position letter matches, from the injury entry's position): +0.7 over for pts/reb (ast for guards),
   and `facts.damp` scales the stats lean by 0.3, since recent games were a smaller role and the posted line already moved.
 - Questionable: "Listed as questionable tonight." (-0.3). Out/doubtful players are still left out entirely.
+
+## 3.72.2: each day saved (DJ: "save completed betting lines for a day")
+- PICKS (localStorage `slate-picks3`) now keeps 60 days instead of 3, and syncs to the account doc `data/users/<uid>/betlines` ({v, days}) for 45 days (worker save cap is 400 KB). `betLoad()` runs from `betsBlock` once per session; per day the copy with more settled lines wins (`betDayScore`).
+- A past day with nothing saved says "No betting lines were saved for this day."; a saved past day says "Saved from this day, with how each one finished."

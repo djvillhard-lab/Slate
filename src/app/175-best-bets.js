@@ -232,7 +232,34 @@
   // An open spot is filled from upcoming games first, then live games, then finished ones (a finished game's line still only uses the games before it).
   var BET_MAX = 5, BET_SIG = {};
   var PICKS = (function () { try { return JSON.parse(localStorage.getItem("slate-picks3") || "{}"); } catch (e) { return {}; } })();
-  function picksSave() { try { var keep = {}; Object.keys(PICKS).sort().slice(-3).forEach(function (d) { keep[d] = PICKS[d]; }); PICKS = keep; localStorage.setItem("slate-picks3", JSON.stringify(keep)); } catch (e) {} }
+  // 3.72.2 (DJ: "save completed betting lines for a day"): each day's lines and how they did are kept for 60 days, on this phone and in
+  // the person's account (data/users/<uid>/betlines), so going back to a day on any phone shows them with their results.
+  var BET_DAYS = 60, BETL = { loaded: false, busy: false, timer: null };
+  function picksTrim() { var keep = {}; Object.keys(PICKS).sort().slice(-BET_DAYS).forEach(function (d) { if (PICKS[d] && (PICKS[d].list || []).length) keep[d] = PICKS[d]; }); return keep; }
+  function picksSave() { try { PICKS = picksTrim(); localStorage.setItem("slate-picks3", JSON.stringify(PICKS)); } catch (e) {} betSync(); }
+  function betSync() {
+    clearTimeout(BETL.timer);
+    BETL.timer = setTimeout(function () {
+      if (typeof db === "undefined" || !db || !uid || !BETL.loaded) return;
+      var days = {}, cut = shiftDate(todayInHome(), -45);  // the account keeps 45 days (a save is capped at 400 KB)
+      Object.keys(PICKS).forEach(function (d) { if (d >= cut && PICKS[d] && (PICKS[d].list || []).length) days[d] = { list: PICKS[d].list, gone: PICKS[d].gone || {} }; });
+      db.collection("data/users/" + uid).doc("betlines").set({ v: 1, days: days }).then(null, function () {});
+    }, 2000);
+  }
+  // a settled line counts for more than an open one when the phone and the account disagree about a day
+  function betDayScore(P) { return ((P && P.list) || []).reduce(function (n, pk) { return n + 1 + (pk.res && pk.res.s !== "live" && pk.res.s !== "pre" ? 2 : 0); }, 0); }
+  function betLoad() {
+    if (BETL.loaded || BETL.busy || typeof db === "undefined" || !db || !uid) return;
+    BETL.busy = true;
+    db.collection("data/users/" + uid).doc("betlines").get().then(function (sn) {
+      var d = sn.exists ? sn.data() : null, days = (d && d.days) || {}, moved = false;
+      Object.keys(days).forEach(function (k) { if (betDayScore(days[k]) > betDayScore(PICKS[k])) { PICKS[k] = days[k]; moved = true; } });
+      BETL.loaded = true; BETL.busy = false;
+      try { PICKS = picksTrim(); localStorage.setItem("slate-picks3", JSON.stringify(PICKS)); } catch (e) {}
+      betSync();
+      if (moved && (state.view === "lineup" || isDuo)) keepScroll(renderLineup);
+    }, function () { BETL.busy = false; BETL.loaded = true; });
+  }
   function betTier(g) { var k = status(g).kind; return k === "live" ? 1 : k === "over" ? 2 : 0; }
   function betDone(g) { var b = BETS[g.id]; return !!b && (!!b.list || (b.at > 0 && !b.busy && !b.queued)); }
   function betKind(b) { return b.game ? "total" : b.k; }
@@ -350,6 +377,7 @@
   }
   // the section at the bottom of the slate: five lines (fewer only when the slate can't supply them)
   function betsBlock(games) {
+    betLoad();
     var gs = games.filter(function (g) { return BET_LG[g.league] && !g.custom; });
     if (!gs.length) return null;
     var pk = betPicks(gs), on = {}, rows = [];
@@ -369,7 +397,7 @@
     hb.addEventListener("click", function () { var f = Object.assign({}, state.slateFold || {}); delete f.__bets; if (f.__betsOpen) delete f.__betsOpen; else f.__betsOpen = 1; state.slateFold = f; saveSettings(); keepScroll(renderLineup); });
     sec.appendChild(hb);
     if (shut) return sec;
-    if (!rows.length) { sec.appendChild(el("p", "bets-none", pk.loading ? "Getting tonight's lines and recent game logs…" : pk.frozen ? "Every game on your slate is over. New lines come with the next slate." : pk.waiting ? "Player lines aren't posted yet for your slate. They usually go up the day of the game." : "No lines posted for the games on your slate yet.")); return sec; }
+    if (!rows.length) { sec.appendChild(el("p", "bets-none", pk.loading ? "Getting tonight's lines and recent game logs…" : pk.frozen ? (state.date < todayInHome() ? "No betting lines were saved for this day." : "Every game on your slate is over. New lines come with the next slate.") : pk.waiting ? "Player lines aren't posted yet for your slate. They usually go up the day of the game." : "No lines posted for the games on your slate yet.")); return sec; }
     var nLive = cnt("live"), nRight = rows.filter(function (x) { return betRight(x.p, x.r) === true; }).length, nWrong = rows.filter(function (x) { return betRight(x.p, x.r) === false; }).length;
     if (nLive + nRight + nWrong) {
       var ty = el("p", "bets-tally");
@@ -384,7 +412,7 @@
     var list = el("div", "bets");
     rows.forEach(function (x) { list.appendChild(betRow(x.g, x.p, x.r)); });
     sec.appendChild(list);
-    if (pk.frozen) sec.appendChild(el("p", "bets-sub", "Every game on your slate is over, so these are final. No new ones until the next slate."));
+    if (pk.frozen) sec.appendChild(el("p", "bets-sub", state.date < todayInHome() ? "Saved from this day, with how each one finished." : "Every game on your slate is over, so these are final. No new ones until the next slate."));
     else if (rows.length < BET_MAX) sec.appendChild(el("p", "bets-sub", pk.loading ? "Checking more games for the rest of the five…" : pk.waiting ? "Player lines for some games aren't posted yet. More show up once they are." : "Only " + rows.length + " lines are posted for your slate right now. Add games to get more."));
     return sec;
   }
