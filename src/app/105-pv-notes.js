@@ -4,19 +4,25 @@
   // "hits" and per team "line"), the game's News breakdown (newsdeep/<date>-g-<id>: number, watch) and the game's Claude preview
   // (state.previews[id].bullets). A note wins over the stats line only when it scores higher (see pvNoteScore); otherwise the
   // stats line stays as it was.
-  var PVN = { docs: {}, at: {} };
+  // 3.90.2 (DJ: "I want them automatically update as new news pages are generated"): each source is watched live, so the
+  // moment a News page (or a league briefing) is written or rewritten, the lines are rebuilt from it and every open card redraws.
+  // A line from the older page is gone with it; a line that's still the best one stays the same.
+  var PVN = { docs: {}, subs: {} };
+  function pvnRedraw() {
+    clearTimeout(pvT); pvT = setTimeout(function () { if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, 250);
+    if (typeof agRedraw === "function") agRedraw();
+  }
   function pvnGet(path) {
-    if (typeof nw !== "undefined" && nw.docs && nw.docs[path] !== undefined) return nw.docs[path];   // News already has it open
-    if (!db || !uid) return null;
-    if (!PVN.at[path] || Date.now() - PVN.at[path] > 10 * 60000) {
-      PVN.at[path] = Date.now();
-      db.doc(path).get().then(function (sn) {
+    if (!db || !uid) return (typeof nw !== "undefined" && nw.docs && nw.docs[path]) || null;
+    if (!PVN.subs[path]) {
+      PVN.subs[path] = true;
+      db.doc(path).onSnapshot(function (sn) {
         var d = sn.exists ? sn.data() : null, was = JSON.stringify(PVN.docs[path] || null);
         PVN.docs[path] = d;
-        if (JSON.stringify(d || null) !== was) { clearTimeout(pvT); pvT = setTimeout(function () { if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, 250); if (typeof agRedraw === "function") agRedraw(); }
-      }, function () {});
+        if (JSON.stringify(d || null) !== was) pvnRedraw();
+      }, function () { PVN.subs[path] = false; });
     }
-    return PVN.docs[path] || null;
+    return PVN.docs[path] || (typeof nw !== "undefined" && nw.docs && nw.docs[path]) || null;
   }
   var PVN_SKIP = /^(schedule|record|ranking|rankings|matchup|home|away|tv|aggregate|standings|series|odds|tip|kickoff)$/i;
   var PVN_TOP = /^(last game|final game|staff|coaching|coach|storyline|milestone|debut|return|returning|injury|injuries|trade|suspension|firing|fired|rivalry|revenge|history|farewell|news)$/i;
@@ -51,12 +57,12 @@
   // and by team; a card then only looks itself up there. Sources: this person's News page (game notes, top stories, team lines,
   // league notes), the league briefings (latest news, injuries) for the leagues on screen, a game breakdown News already has open,
   // and the game's Claude preview. Nothing new is asked of Claude.
-  var PVN_IX = { key: "", ix: null };
+  var PVN_IX = { key: [], ix: null };
   function pvnFirst(t) { t = String(t || ""); var m = /^(.{20,130}?[.!?])(\s|$)/.exec(t); return m ? m[1] : t; }
   function pvNewsIndex(lgs) {
     var day = state.date, page = pvnGet("mine/news-" + day), briefs = lgs.map(function (lg) { return pvnGet("newsdeep/" + day + "-l-" + lg); });
-    var key = day + "|" + lgs.join(",") + "|" + (page ? page.at || 1 : 0) + "|" + briefs.map(function (x) { return x ? x.at || 1 : 0; }).join(",");
-    if (PVN_IX.key === key && PVN_IX.ix) return PVN_IX.ix;
+    var key = [day, lgs.join(","), page].concat(briefs);   // rebuilt whenever any source is a new snapshot
+    if (PVN_IX.ix && PVN_IX.key.length === key.length && PVN_IX.key.every(function (x, i) { return x === key[i]; })) return PVN_IX.ix;
     var ix = { game: {}, team: [] }, team = function (name, tag, text, lg) { if (name && text) ix.team.push({ name: name, tag: tag, text: pvnFirst(text), lg: lg || "" }); };
     if (page) {
       (page.games || []).forEach(function (x) { if (x && x.id) ix.game[x.id] = (x.hits || []).map(function (h) { return { tag: h.tag, text: h.text, team: h.team }; }); });
