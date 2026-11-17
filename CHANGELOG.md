@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.77.1 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Today's Slate: the Feed button now shows only while a game is live. Finished games no longer have it; their feed is still a tap away from the matchup page.
+
 ## 3.77.0 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate: the small bell in a card's bottom corner is gone. In its place is a Feed button that opens that game's live feed in one tap (a red dot while the game is live). It shows on live and finished football and basketball games, the ones that have a feed. Swiping in the feed still goes through the games on your slate.

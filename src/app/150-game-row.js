@@ -129,7 +129,7 @@
     // 3.77.0 (DJ): no bell on the slate's cards. In its corner, a quick button straight to the game's live feed (live and finished
     // games that have one). A game's notifications are still in its quick look: Live notification and Game alerts.
     var bellEl = sideEl.querySelector(".g-bell"); if (bellEl) bellEl.remove();
-    if (mode === "lineup" && feedOk(g)) {
+    if (mode === "lineup" && feedOk(g) && status(g).kind === "live") {   // 3.77.1: live games only (DJ)
       var fl = status(g).kind === "live", fb = el("button", "g-feed" + (fl ? " on" : "")); fb.type = "button";
       if (fl) fb.appendChild(el("i", "g-feed-dot")); fb.appendChild(el("span", null, "Feed")); fb.appendChild(el("i", "g-feed-chev"));
       fb.setAttribute("aria-label", "Open the " + (fl ? "live" : "game") + " feed for " + g.away + " at " + g.home);

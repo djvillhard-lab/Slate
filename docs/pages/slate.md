@@ -28,6 +28,7 @@ Last updated: Nov 17, 2026, 3.77.0
 - 3.75.0 (DJ): no big numbers; the right side holds up to three tags (tpTags(sport, v, over) for basketball, hockey,
   baseball, soccer; tpFootTags for football's summed groups), fd-tag pills. Under 340px wide the tags drop under the
   stat line (container query on .gv-watch). Box Office reuses tpTags and the tp- classes.
+- 3.77.1 (DJ): Feed button on live games only, not finished ones (DJ, Nov 17).
 - 3.77.0 (DJ): no bell on slate cards; a Feed button in its corner opens openFeed(g) (feedOk: live or final football and
   basketball). Notifications stay in the quick look. The Athletic Newsletters fold like Betting lines (slNlFold wraps
   newsletterBlock from 130-teams.js; slateFold.__nlShut, open by default).
