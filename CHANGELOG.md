@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.5 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Unfolded Duo: hold the bar on the fold to lock the two sides apart. A small lock shows on the bar. While locked, each side works on its own: the left side gets its own menu and Back again, and a game or Live feed you pick on the left opens on the left. That's the easy way to watch two Live feeds at once.
+- Tapping the bar still swaps the sides while locked. Hold it again to unlock, and a game picked on the left opens on the right again.
+- The app's menu still works the right side.
+
 ## 3.81.4 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Unfolded Duo: the bar on the fold now just swaps the two sides. Drag it either way (or tap it) and the right page moves to the left while the left page moves to the right. The "Pick a page" screen is gone; use the menu to change the right side.

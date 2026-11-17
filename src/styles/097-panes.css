@@ -18,3 +18,10 @@ html.panes body > :not(#panes) { display: none !important; }
 
 /* one menu (3.81.2): the left side has no menu or Back of its own; the menu and Back work the right side */
 html.in-pane.pn-left #menu-fab, html.in-pane.pn-left #menu-pop, html.in-pane.pn-left #menu-scrim, html.in-pane.pn-left #dock-back { display: none !important; }
+/* the lock (3.81.5): hold the bar; a small lock sits on it while the two sides work on their own */
+.pn-grip { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.pn-lock { display: none; position: absolute; left: 50%; top: 0; width: 16px; height: 16px; margin-left: -8px; color: var(--accent); }
+.pn-locked .pn-lock { display: block; }
+.pn-tip { position: absolute; z-index: 5; top: calc(50% + 52px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 220px; padding: 8px 12px; border-radius: 8px; background: var(--raise); color: var(--ink); box-shadow: 0 0 0 1px var(--line), 0 8px 24px var(--shadow); font-size: 13px; font-weight: 700; text-align: center; opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.pn-tip.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .pn-tip { transition: none; } }

@@ -21,13 +21,13 @@
   }
   function pnOther(id) { return id === "a" ? "b" : "a"; }
   function pnWin(id) { var f = PN.frames[id]; try { return f && f.contentWindow && f.contentWindow.SlateApp ? f.contentWindow : null; } catch (e) { return null; } }
-  function pnSave() { try { sessionStorage.setItem(PN_KEY, JSON.stringify({ left: PN.left, routes: PN.routes })); } catch (e) {} }
+  function pnSave() { try { sessionStorage.setItem(PN_KEY, JSON.stringify({ left: PN.left, routes: PN.routes, lock: !!PN.lock })); } catch (e) {} }
   function pnLoad() { try { return JSON.parse(sessionStorage.getItem(PN_KEY) || "null") || {}; } catch (e) { return {}; } }
 
   // ---- the host: builds the two frames and the grip ----
   function enterPanes() {
     if (PN.on) return;
-    var sv = pnLoad(); PN.on = true;
+    var sv = pnLoad(); PN.on = true; PN.lock = !!sv.lock;
     PN.left = sv.left === "b" ? "b" : "a";
     PN.routes = sv.routes && typeof sv.routes === "object" ? sv.routes : {};
     if (!PN.routes[PN.left]) PN.routes[PN.left] = "lineup";
@@ -45,10 +45,15 @@
     var grip = el("button", "pn-grip"); grip.type = "button";
     grip.setAttribute("aria-label", "Swap the two sides");
     grip.appendChild(el("i"));
+    // the lock (hold the bar): both sides work on their own
+    var lk = document.createElementNS("http://www.w3.org/2000/svg", "svg"); lk.setAttribute("viewBox", "0 0 24 24"); lk.setAttribute("class", "pn-lock"); lk.setAttribute("aria-hidden", "true");
+    lk.innerHTML = '<rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>';
+    grip.appendChild(lk);
+    hinge.appendChild(el("div", "pn-tip"));
     hinge.appendChild(grip); box.appendChild(hinge);
     box.appendChild(el("div", "pn-shield"));
     document.body.appendChild(box); PN.el = box;
-    pnPlace(); pnGrip(grip);
+    pnPlace(); pnGrip(grip); if (PN.lock) box.classList.add("pn-locked");
     if (typeof nativeSync === "function") setTimeout(nativeSync, 0);
   }
   function exitPanes() {
@@ -78,7 +83,8 @@
       var f = PN.frames[id], d; try { d = f.contentDocument && f.contentDocument.documentElement; } catch (e) { d = null; }
       if (!d) return;
       var left = PN.left === id;
-      d.classList.toggle("pn-left", left); d.classList.toggle("pn-right", !left);
+      // locked: the left side keeps its own menu and Back and opens things on its own side
+      d.classList.toggle("pn-left", left && !PN.lock); d.classList.toggle("pn-right", !left);
       // the app draws the menu capsule over the right side: that side hides its own, like the app's floating menu does
       if (!left && nm) d.setAttribute("data-float", ""); else d.removeAttribute("data-float");
       var w = pnWin(id); if (left && w && w.SlateApp.paneMenu) w.SlateApp.paneMenu(false);
@@ -94,14 +100,16 @@
     }
     grip.addEventListener("pointerdown", function (e) {
       if (!PN.on || PN.drag) return;
-      PN.drag = { x: e.clientX, dx: 0, moved: false, id: e.pointerId };
+      PN.drag = { x: e.clientX, dx: 0, moved: false, id: e.pointerId, held: false };
+      var d0 = PN.drag;
+      d0.t = setTimeout(function () { if (PN.drag === d0 && !d0.moved) { d0.held = true; pnLock(!PN.lock); } }, 550);
       try { grip.setPointerCapture(e.pointerId); } catch (er) {}
       PN.el.classList.add("pn-dragging");
       var fs = frames(); [fs.L, fs.R].forEach(function (f) { f.style.transition = "none"; });
       e.preventDefault();
     });
     grip.addEventListener("pointermove", function (e) {
-      var d = PN.drag; if (!d || e.pointerId !== d.id) return;
+      var d = PN.drag; if (!d || e.pointerId !== d.id || d.held) return;
       d.dx = e.clientX - d.x; if (Math.abs(d.dx) > 8) d.moved = true;
       var fs = frames(), dx = Math.max(-fs.span, Math.min(fs.span, d.dx));
       var mover = dx < 0 ? fs.R : fs.L, stay = mover === fs.R ? fs.L : fs.R;
@@ -114,6 +122,8 @@
       PN.drag = null;
       var fs = frames();
       if (cancel) { reset(true); return; }
+      clearTimeout(d.t);
+      if (d.held) { reset(false); return; }
       if (!d.moved) { reset(false); pnMove(-1); return; }
       if (Math.abs(d.dx) > fs.span * 0.3) pnMove(d.dx < 0 ? -1 : 1); else reset(true);
     }
@@ -121,6 +131,16 @@
     grip.addEventListener("pointercancel", function (e) { end(e, true); });
     grip.addEventListener("keydown", function (e) { if (e.key === "ArrowRight") { e.preventDefault(); pnMove(1); } else if (e.key === "ArrowLeft") { e.preventDefault(); pnMove(-1); } });
     grip.addEventListener("click", function (e) { if (e.detail === 0) pnMove(-1); });  // keyboard / VoiceOver activation
+  }
+  // DJ (Nov 17): hold the bar to lock or unlock. Locked, the two sides are fully separate: each has its own menu and
+  // Back (the app's menu still works the right side), and a game or Live feed tapped on the left opens on the left.
+  function pnLock(on) {
+    PN.lock = !!on; pnSave(); pnMark();
+    PN.el.classList.toggle("pn-locked", PN.lock);
+    var tip = PN.el.querySelector(".pn-tip");
+    if (tip) { tip.textContent = PN.lock ? "Sides locked: each works on its own" : "Unlocked: the left opens things on the right"; tip.classList.add("on"); clearTimeout(tip._t); tip._t = setTimeout(function () { tip.classList.remove("on"); }, 2200); }
+    var g = PN.el.querySelector(".pn-grip"); if (g) g.setAttribute("aria-label", "Swap the two sides" + (PN.lock ? ". Sides locked: hold to unlock" : ". Hold to lock the sides apart"));
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
   }
   // DJ (Nov 17): the grip swaps the two sides: the right page goes left and the left page goes right (no picker).
   // The menu then sets the new right side.
