@@ -495,7 +495,32 @@ export async function runMorningEmail(env) {
   }
 }
 
-// ---------- Settings: POST /api/morning-email {pass, action: "get" | "save" | "test" | "preview", ...} ----------
+// ---------- confirming a new address (3.86.0) ----------
+const PEND_HOURS = 48;
+const shaHex = async (t) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(t))))].map((x) => x.toString(16).padStart(2, "0")).join("");
+async function pendingEmail(env, x) { return x && x.pending && x.pendAt && Date.now() - Date.parse(x.pendAt) < PEND_HOURS * 3600000 ? unseal(env, x.pending) : ""; }
+const confirmText = (name, link) => `Someone (probably you${name ? ", " + name : ""}) asked Slate to send a morning email with the day's games to this address.\n\nTo say yes, open this link and tap Confirm:\n${link}\n\nIf this wasn't you, ignore this email and nothing will be sent. The link works for ${PEND_HOURS} hours.`;
+const confirmHtml = (name, link) => `<div style="font:16px/1.5 -apple-system,Helvetica,Arial,sans-serif;color:#1d232c;max-width:480px">
+<p>Someone (probably you${name ? ", " + esc(name) : ""}) asked <b>Slate</b> to send a morning email with the day's games to this address.</p>
+<p><a href="${esc(link)}" style="display:inline-block;background:#2f7d45;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:700">Confirm my email</a></p>
+<p style="color:#5b6573;font-size:14px">If this wasn't you, ignore this email and nothing will be sent. The link works for ${PEND_HOURS} hours.</p></div>`;
+const page = (title, body, form) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>
+<style>body{margin:0;background:#121821;color:#ECF1F7;font:17px/1.5 -apple-system,Helvetica,Arial,sans-serif;display:grid;place-items:center;min-height:100vh}main{max-width:420px;padding:24px}h1{font-size:24px;margin:0 0 8px}p{color:#A0ACBD}button{font:inherit;font-weight:700;background:#45A85E;color:#0C0C0C;border:0;border-radius:6px;padding:12px 22px;min-height:44px}</style></head>
+<body><main><h1>${esc(title)}</h1><p>${esc(body)}</p>${form || ""}</main></body></html>`, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" } });
+// GET shows a Confirm button (mail apps open links on their own to check them, so a GET alone never confirms); POST confirms
+export async function confirmEmail(env, req, url) {
+  let u = url.searchParams.get("u") || "", t = url.searchParams.get("t") || "";
+  if (req.method === "POST") { try { const f = await req.formData(); u = String(f.get("u") || ""); t = String(f.get("t") || ""); } catch {} }
+  if (!/^[a-z0-9-]{2,40}$/.test(u) || !/^[0-9a-f]{36}$/.test(t)) return page("That link isn't right", "Open the link from the email again, or enter your address in Slate once more.");
+  const doc = (await getDocs(env, [DOC]))[DOC] || {}, x = (doc.people || {})[u] || {};
+  const ok = x.pendTok && x.pendTok === await shaHex(t) && (await pendingEmail(env, x));
+  if (!ok) return page("This link has expired", "Enter your address in Slate (Settings > Morning email) again and we'll send a new one.");
+  if (req.method !== "POST") return page("Confirm your email", "Tap Confirm to get Slate's morning email at this address.", `<form method="post"><input type="hidden" name="u" value="${esc(u)}"><input type="hidden" name="t" value="${esc(t)}"><button type="submit">Confirm</button></form>`);
+  await mergeDoc(env, DOC, { people: { [u]: { email: x.pending, pending: "", pendTok: "", pendAt: "", err: "" } } });
+  return page("Email confirmed", "Slate's morning email will come to this address. You can change the time or turn it off in Slate: Settings > Morning email.");
+}
+
+// ---------- Settings: POST /api/morning-email// ---------- Settings: POST /api/morning-email {pass, action: "get" | "save" | "test" | "preview", ...} ----------
 const EMAIL = /^[^\s@<>()"',;:]{1,64}@[A-Za-z0-9.-]{1,180}\.[A-Za-z]{2,24}$/;
 export async function morningApi(env, me, p) {
   // DJ's Family list (3.67.2): everyone else's morning email, to turn it on for them
@@ -504,7 +529,7 @@ export async function morningApi(env, me, p) {
     const docs = await getDocs(env, ["users/registry", DOC]), reg = (docs["users/registry"] || {}).users || {}, ppl = ((docs[DOC] || {}).people) || {};
     const list = Object.values(reg).filter((u) => u && u.id && u.id !== "dj" && u.id !== "tester").sort((a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id)));
     const out = [];
-    for (const u of list) { const x = ppl[u.id] || {}; out.push({ id: u.id, name: u.name || u.id, on: !!x.on, time: x.time || "06:00", email: await unseal(env, x.email), tz: x.tz || "" }); }
+    for (const u of list) { const x = ppl[u.id] || {}; out.push({ id: u.id, name: u.name || u.id, on: !!x.on, time: x.time || "06:00", email: (await pendingEmail(env, x)) || await unseal(env, x.email), pending: !!(await pendingEmail(env, x)), tz: x.tz || "" }); }
     return { ok: true, people: out };
   }
   // DJ can set it up for someone else in the family ({for: "<their id>"}); they see it and change it in their own Settings
@@ -516,7 +541,7 @@ export async function morningApi(env, me, p) {
     me = { id: u.id, name: u.name || u.id }; delete p.look;  // their email is drawn in their own look, once they save from their phone
   }
   const doc = (await getDocs(env, [DOC]))[DOC] || {}, cur = (doc.people || {})[me.id] || {};
-  const view = async (x) => ({ on: !!x.on, time: x.time || "07:00", tz: x.tz || "", lines: !!x.lines, email: await unseal(env, x.email), last: x.last || "",
+  const view = async (x) => ({ on: !!x.on, time: x.time || "07:00", tz: x.tz || "", lines: !!x.lines, email: (await pendingEmail(env, x)) || await unseal(env, x.email), pending: !!(await pendingEmail(env, x)), last: x.last || "",
     sentAt: x.sentAt || "", err: x.err || "", note: x.note || "", ready: gmailReady(env), testing: !!(x.testAt && Date.now() - Date.parse(x.testAt) < 15 * 60000) });
   if (p.action === "get") return { ok: true, prefs: await view(cur) };
   if (p.action === "save") {
@@ -529,10 +554,23 @@ export async function morningApi(env, me, p) {
     if (p.email !== undefined) {
       const e = String(p.email || "").trim();
       if (e && !EMAIL.test(e)) return { error: "That email address doesn't look right." };
-      patch.email = e ? await seal(env, e) : "";
-      if (!e) patch.on = false;
+      // 3.86.0: a new address gets a confirmation email first, so Slate only ever mails someone who said yes.
+      // Until it's confirmed, the morning email keeps going to the old address (if there was one).
+      if (!e) { patch.email = ""; patch.pending = ""; patch.pendTok = ""; patch.on = false; }
+      else if (e.toLowerCase() === (await unseal(env, cur.email)).toLowerCase()) { patch.pending = ""; patch.pendTok = ""; }
+      else if (e.toLowerCase() !== String(await pendingEmail(env, cur)).toLowerCase()) {
+        if (!gmailReady(env)) return { error: "Sending isn't set up yet. DJ needs to connect his Gmail." };
+        const day = local(new Date(), "America/Chicago").date, n = cur.confDay === day ? Number(cur.confs) || 0 : 0;
+        if (n >= 3) return { error: "That's three confirmation emails today. Try again tomorrow." };
+        const tok = [...crypto.getRandomValues(new Uint8Array(18))].map((x) => x.toString(16).padStart(2, "0")).join("");
+        const link = `${APP}/api/morning-email/confirm?u=${encodeURIComponent(me.id)}&t=${tok}`;
+        try { await sendGmail(env, e, "Confirm your email for Slate", confirmText(me.name, link), confirmHtml(me.name, link)); }
+        catch (x) { return { error: "Couldn't send the confirmation email: " + String(x && x.message || x).slice(0, 120) }; }
+        Object.assign(patch, { pending: await seal(env, e), pendTok: await shaHex(tok), pendAt: new Date().toISOString(), confDay: day, confs: n + 1 });
+      }
     }
-    if (patch.on && !(patch.email !== undefined ? patch.email : cur.email)) return { error: "Add your email address first." };
+    // on with only an unconfirmed address is fine: the minute job sends only to a confirmed one, so it starts once they tap Confirm
+    if (patch.on && !(patch.email !== undefined ? patch.email : cur.email) && !(patch.pending || await pendingEmail(env, cur))) return { error: "Add your email address first." };
     // changing the time to later today, after today's went out, doesn't send a second one: "last" stays
     await mergeDoc(env, DOC, { people: { [me.id]: patch } });
     return { ok: true, prefs: await view(Object.assign({}, cur, patch)) };

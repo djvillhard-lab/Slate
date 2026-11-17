@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.94.0 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Morning email: a new address now has to be confirmed before Slate sends anything to it. Saving a new address sends one short email from Slate with a Confirm button; morning emails start once it's tapped. The link works for 48 hours, and Slate sends at most 3 of these a day per person. Addresses already set up keep working as they are.
+- Setting up a family member's morning email from your list works the same way: they get the confirm email, and the list shows "Waiting for <name> to confirm" until they tap it.
+
 ## 3.93.4 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - Live feed on the unfolded Duo: when the feed is on the right side, the score bar, the row of games and the card under the score bar now stop short of the island, the same as on the folded phone. The feed on the left side and every other page stay as they are.

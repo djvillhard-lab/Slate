@@ -51,3 +51,8 @@ The Morning email controls moved from the Settings main page to their own sub-pa
 
 ## 3.71.1: preview ranks
 - pvCompute gets the game (slate 3.71.0), so its lines use the card's ranks; DJ's saved phone lines (prefs/pvlines) go through `cardRanks()`, which swaps "No. N <team>" for the card's rank (or drops it). Kit regenerated.
+
+## Address check (Web 3.94.0, Nov 17, 2026)
+- A new or changed address is stored as `pending` (sealed) with a hashed token; Slate emails a confirm link (`/api/morning-email/confirm?u=<id>&t=<token>`, GET shows a Confirm button, POST confirms). 48-hour window, 3 confirm emails per person per day.
+- Sends go only to the confirmed `email`. Addresses saved before 3.94.0 were grandfathered as confirmed.
+- Why: the security review found Slate could send from DJ's Gmail to any unverified address.

@@ -6,7 +6,7 @@
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
-import { runMorningEmail, morningApi } from "./morning-email.js";
+import { runMorningEmail, morningApi, confirmEmail } from "./morning-email.js";
 import { feedbackRoute } from "./feedback.js";
 import { usageRoute } from "./usage.js";
 
@@ -152,6 +152,8 @@ export default {
   },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    // the link in a morning-email confirmation (worker/morning-email.js, 3.86.0): no passcode, a one-time token
+    if (url.pathname === "/api/morning-email/confirm") return confirmEmail(env, req, url);
     // every passcode check below goes through the login limit (see guardWho)
     const ip = req.headers.get("cf-connecting-ip") || "", whoIs = guardWho(ip);
     if (url.pathname.startsWith("/api/") && req.method === "POST" && (await failCount(ip)) >= FAIL_MAX)
