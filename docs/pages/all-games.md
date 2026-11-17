@@ -46,3 +46,6 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - `agFitNames` re-runs 120 ms after each draw and after fonts load, and treats any scrollWidth > clientWidth as cut (Chargers was off by 1px).
 
 3.91.4 (DJ, Nov 17): live game cards on All games carry the same quick "Feed" button as the slate (`g-feed` in `150-game-row.js`, now for mode "games" as well as "lineup"). Live games only, every sport with a feed.
+
+## 3.93.1: header counts line up
+- On a league tab, the My teams header (it folds, so it has a chevron) put "1 game" toward the middle: the Live tag and the chevron both had auto margins and split the space. Now the count takes the auto margin, and plain headers on a page that has a folding one keep 26px on the right for the missing chevron, so every count ends at the same spot (measured equal on folded and iPhone).

@@ -782,6 +782,10 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .sec.sec-tg { width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; display: flex; align-items: baseline; gap: 8px; padding-right: 2px; }
 .sec.sec-tg svg { width: 16px; height: 16px; margin-left: auto; align-self: center; transform: rotate(-90deg); transition: transform .2s ease; color: var(--dim); }
 .sec.sec-tg.shut svg { transform: rotate(90deg); }
+.sec.sec-tg .count { margin-left: auto; }  /* count sits at the right, beside the chevron (3.93.1) */
+.sec.sec-tg .sec-live { margin-right: 0; }
+.sec.sec-tg .count + svg { margin-left: 0; }
+#games-body:has(.sec-tg) .sec:not(.sec-tg) { padding-right: 26px; }  /* plain headers leave room for the chevron so every count lines up */
 .sec.sec-tg.shut + .glist { display: none; }
 .trow.ford { grid-template-columns: 28px 1fr 44px 44px; }
 .ford-n { color: var(--dim); font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; }
