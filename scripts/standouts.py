@@ -13,6 +13,7 @@ LEAGUES = {  # key: (path, extra query, kind)
     "mlb": ("baseball/mlb", "", "baseball"),
 }
 TOP = 25
+TOP_COLLEGE = 80
 
 def get(url):
     for _ in range(3):
@@ -188,7 +189,7 @@ def run(day):
             p, x, k = LEAGUES[lg]
             rows = [r for f in [ex.submit(game_rows, lg, p, k, e) for e in lst] for r in f.result()]
             rows.sort(key=lambda r: -r["score"])
-            top = rows[:TOP]
+            top = rows[:TOP_COLLEGE if lg.startswith("ncaa") else TOP]   # college keeps more, so Power conferences only still fills a top 20
             for i, r in enumerate(top): r["rank"] = i + 1
             out["leagues"][lg] = [{k: r[k] for k in ("rank", "name", "id", "pos", "jer", "st", "team", "teamName", "color", "opp", "home", "result", "line", "score", "ev", "live", "detail") if r.get(k) not in (None, "", False)} for r in top]
             out["games"][lg] = len(lst)

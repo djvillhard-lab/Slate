@@ -1,5 +1,5 @@
 # Box Office (and Player rankings)
-Last updated: Nov 17, 2026, 3.78.0
+Last updated: Nov 17, 2026, 3.79.0
 
 Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMoments`; Player rankings = the `best` view, `renderBest`, not in the menu). Styles: `src/styles/095-box-office.css` (plus older `rk-`/`mm-` rules in 040-components.css).
 
@@ -10,7 +10,10 @@ Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMomen
 - Rows carry `jer` (jersey) and `st` (ESPN box score labels → values; football keys are "group.LABEL", e.g. "passing.YDS"): scripts/standouts.py saves them, and the live rows (`rkGameRows`) add them too. Claude's over/under rows borrow color, jersey and `st` from the night's rankings by player id (or team) with `mmLookup`.
 - Player rankings (`best` view) still uses the old `bestRow` and isn't in the menu.
 
+- Power conferences (3.79.0, college tabs): "All / Power conferences" row (`mmPowerBar`, remembered in localStorage `slate-bo-power`). `MM_POWER` = ESPN conferenceIds (hoops ACC 2, Big East 4, Big Ten 7, Big 12 8, SEC 23; CFB ACC 1, Big 12 4, Big Ten 5, SEC 8). A row's conference comes from that day's ESPN scoreboard (`gcBoard`, by team abbreviation or `#id`), which also gives the power game count (games with a power team). Filters top performers (re-ranked), leader tags, over/underachievers. The heading drops the live count when Power is on (it's league-wide). College keeps the top 80 players a night (standouts.py TOP_COLLEGE, RK_TOP_COLLEGE) so the filtered list still fills 20.
+
 ## Open
+- Wild finishes don't follow the Power filter yet.
 - Best plus-minus tag: offered, DJ didn't pick it (3.78.0). Football/hockey season highs not built (only basketball points).
 - Nights saved before 3.76.0 have no stat maps, so no leader tags. Could re-run standouts.py for recent nights if DJ wants them filled.
 - "+12 vs avg" on over/underachievers needs season averages, which Box Office doesn't load yet (ESPN's athlete pages have them). Not built: DJ's rule is only stats a source provides.

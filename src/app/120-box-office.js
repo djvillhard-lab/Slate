@@ -1,6 +1,6 @@
   // ---------- player rankings: individual performances by league and day (ESPN box scores) ----------
   var BEST_ORDER = ["nba", "nhl", "nfl", "ncaam", "ncaaw", "ncaaf", "mlb", "wnba"];
-  var RK_TOP = 25;
+  var RK_TOP = 25, RK_TOP_COLLEGE = 80;  // college keeps more players, so Power conferences only still fills a top 20
   var RK_PATH = { nba: "basketball/nba", wnba: "basketball/wnba", ncaam: "basketball/mens-college-basketball&groups=50&limit=500", ncaaw: "basketball/womens-college-basketball&groups=50&limit=500", nhl: "hockey/nhl", nfl: "football/nfl", ncaaf: "football/college-football&groups=80&limit=500", mlb: "baseball/mlb" };
   var RK_KIND = { nba: "bball", wnba: "bball", ncaam: "bball", ncaaw: "bball", nhl: "hockey", nfl: "football", ncaaf: "football", mlb: "baseball" };
   var rk = { date: null, doc: null, docDate: null, unsub: null, live: {}, sum: {}, timer: null, busy: false, busyK: {}, fav: {}, sb: {} };
@@ -151,7 +151,7 @@
       return Promise.all([next(), next(), next(), next(), next(), next()]).then(function () {
         out.sort(function (a, b) { return b.score - a.score; });
         var nLive = Object.keys(evs).filter(function (id) { return ((evs[id].status || {}).type || {}).state === "in" && !rkOver(evs[id]); }).length;
-        rk.live[key] = { rows: out.slice(0, RK_TOP), games: Object.keys(evs).length, live: nLive, final: !nLive && day < todayInHome(), at: Date.now() };
+        rk.live[key] = { rows: out.slice(0, /^ncaa/.test(lg) ? RK_TOP_COLLEGE : RK_TOP), games: Object.keys(evs).length, live: nLive, final: !nLive && day < todayInHome(), at: Date.now() };
       });
     }).then(function () { rk.busyK[key] = false; if (state.view === "best") keepScroll(renderBest); if (state.view === "moments") keepScroll(renderMoments); }, function () { rk.busyK[key] = false; });
   }
@@ -376,27 +376,60 @@
   // All games shows; any other day asks ESPN's scoreboard once (free) and keeps the answer. Postponed and canceled games don't count.
   var GC_PATH = { epl: "soccer/eng.1", ucl: "soccer/uefa.champions" }, gc = {};
   var GC_OFF = /postpon|cancel|suspend|forfeit/i;
-  function lgGameCount(day, lg) {
-    if (lg === "all") return null;
-    if (day === state.date && (state.slateStatus === "ready" || state.slateStatus === "empty")) {
-      var n = 0; games().forEach(function (g) { if (g.league !== lg) return; var sc0 = scoreRaw(g.id); if (sc0 && GC_OFF.test(sc0.detail || "")) return; n++; });
-      return n;
-    }
+  // the power conferences by ESPN conference id (DJ, 3.79.0): basketball ACC 2, Big East 4, Big Ten 7, Big 12 8, SEC 23;
+  // football ACC 1, Big 12 4, Big Ten 5, SEC 8
+  var MM_POWER = { ncaam: { 2: 1, 4: 1, 7: 1, 8: 1, 23: 1 }, ncaaw: { 2: 1, 4: 1, 7: 1, 8: 1, 23: 1 }, ncaaf: { 1: 1, 4: 1, 5: 1, 8: 1 } };
+  // ESPN's scoreboard for one league and day, kept: { n: games, p: games with a power-conference team, conf: { team abbreviation or id: conference id } }
+  function gcBoard(day, lg) {
     var key = day + "|" + lg; if (key in gc) return gc[key];
     var path = RK_PATH[lg] || GC_PATH[lg]; if (!path) return null;
     gc[key] = null;
     var url = function (add) { var p = path.split("&"); return "https://site.api.espn.com/apis/site/v2/sports/" + p[0] + "/scoreboard?dates=" + rkEtDay(day, add) + (p.length > 1 ? "&" + p.slice(1).join("&") : ""); };
     Promise.all([rkFetch(url(0)), rkFetch(url(1))]).then(function (sbs) {
       if (!sbs[0] && !sbs[1]) { delete gc[key]; return; }
-      var seen = {};
-      sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { var t = (e.status || {}).type || {}; if (GC_OFF.test((t.name || "") + " " + (t.description || ""))) return; if (rkCentral(new Date(e.date).getTime()) === day) seen[e.id] = 1; }); });
-      gc[key] = Object.keys(seen).length;
+      var seen = {}, pw = {}, conf = {}, P = MM_POWER[lg] || {};
+      sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) {
+        var t = (e.status || {}).type || {}; if (GC_OFF.test((t.name || "") + " " + (t.description || ""))) return; if (rkCentral(new Date(e.date).getTime()) !== day) return;
+        seen[e.id] = 1;
+        (((e.competitions || [])[0] || {}).competitors || []).forEach(function (c) { var tm = c.team || {}, ci = tm.conferenceId; if (!ci) return; if (tm.abbreviation) conf[tm.abbreviation] = ci; if (tm.id) conf["#" + tm.id] = ci; if (P[ci]) pw[e.id] = 1; });
+      }); });
+      gc[key] = { n: Object.keys(seen).length, p: Object.keys(pw).length, conf: conf };
       if (state.view === "moments") keepScroll(renderMoments); else if (state.view === "best") keepScroll(renderBest);
     });
     return null;
   }
+  // how many games a league has on a Box Office day; power = only games with a power-conference team. The day the app has
+  // loaded counts the games All games shows; other days (and the power count) come from ESPN's scoreboard. Postponed and canceled don't count.
+  function lgGameCount(day, lg, power) {
+    if (lg === "all") return null;
+    if (!power && day === state.date && (state.slateStatus === "ready" || state.slateStatus === "empty")) {
+      var n = 0; games().forEach(function (g) { if (g.league !== lg) return; var sc0 = scoreRaw(g.id); if (sc0 && GC_OFF.test(sc0.detail || "")) return; n++; });
+      return n;
+    }
+    var b = gcBoard(day, lg); return b ? (power ? b.p : b.n) : null;
+  }
+  // Power conferences only (college tabs): on or off, remembered on this phone
+  function mmPowerOn(lg) { if (!MM_POWER[lg]) return false; try { return localStorage.getItem("slate-bo-power") === "1"; } catch (e) { return false; } }
+  function mmPowerSet(on) { try { localStorage.setItem("slate-bo-power", on ? "1" : "0"); } catch (e) {} }
+  // is this player's team in a power conference? null while the day's conferences are still loading
+  function mmIsPower(r, day, lg) {
+    var P = MM_POWER[lg], b = gcBoard(day, lg); if (!P) return true; if (!b) return null;
+    var ci = (r.tid && b.conf["#" + r.tid]) || b.conf[r.team]; return !!(ci && P[ci]);
+  }
+  function mmPowerOnly(rows, day, lg) { if (!mmPowerOn(lg)) return rows; return rows.filter(function (r) { return mmIsPower(r, day, lg) === true; }); }
+  function mmPowerBar(lg) {
+    if (!MM_POWER[lg]) return null;
+    var on = mmPowerOn(lg), sub = el("div", "substrip mm-pw");
+    [["all", "All"], ["power", "Power conferences"]].forEach(function (o) {
+      var b = el("button", "cf-tab", o[1]); b.type = "button"; b.setAttribute("aria-pressed", (o[0] === "power") === on ? "true" : "false");
+      b.addEventListener("click", function () { mmPowerSet(o[0] === "power"); mm.pick = null; keepScroll(renderMoments); });
+      sub.appendChild(b);
+    });
+    return sub;
+  }
   // the game count in a section heading: "8 games", "8 games · 1 live"
-  function gamesLine(day, lg, live) { var n = lgGameCount(day, lg); return (n ? n + (n === 1 ? " game" : " games") : "") + (live ? (n ? " · " : "") + live + " live" : ""); }
+  function gamesLine(day, lg, live) { var pw = mmPowerOn(lg), n = lgGameCount(day, lg, pw); if (pw) live = 0;  // the live count is the whole league's
+    return (n ? n + (n === 1 ? " game" : " games") : "") + (live ? (n ? " · " : "") + live + " live" : ""); }
   function rkPick(k, dir) {
     if (state.bestLeague === k) return;
     state.bestLeague = k; state.bestAuto = false; state.bestConf = "all";
@@ -648,13 +681,15 @@
       rk.date = day; rkSub();  // safe to repeat: it only subscribes once per day, and retries if the database wasn't ready yet
       if (MM_SOCCER[mm.lg]) { body.appendChild(el("div", "notice", "Live player rankings aren't available for soccer. Tonight's finishes show up tomorrow morning.")); return; }
       rkPollL(mm.lg, false);
-      var dk = rkData(mm.lg), rows = dk ? dk.rows : [];
+      var dk = rkData(mm.lg), rows = mmPowerOnly(dk ? dk.rows : [], day, mm.lg);
+      var pwT = mmPowerBar(mm.lg); if (pwT) body.appendChild(pwT);
       // until this league's live numbers arrive (or 8 seconds pass), it's loading, not empty
       var wk = mm.lg + "|" + day; mm.wait = mm.wait || {};
       // loading until this league's live check has come back (the saved copy can be an empty list from earlier)
       var lkey = day + "|" + mm.lg, checked = !!rk.live[lkey];
       if (!checked && !mm.wait[wk]) { mm.wait[wk] = Date.now(); setTimeout(function () { if (state.view === "moments") keepScroll(renderMoments); }, 15100); }
       var stillLoading = !rk.loaded || (!checked && (rk.busyK[lkey] || Date.now() - (mm.wait[wk] || 0) < 15000));
+      if (!rows.length && mmPowerOn(mm.lg) && dk && dk.rows.length) { body.appendChild(el("div", "notice", gcBoard(day, mm.lg) ? "No players from the power conferences yet today. Tap All for everyone." : "Loading…")); return; }
       if (!rows.length) { body.appendChild(el("div", "notice", stillLoading ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
       var topT = rows.slice(0, 20);
       body.appendChild(mmSec("Top performers", gamesLine(day, mm.lg, dk.live) || "Top " + topT.length));
@@ -684,7 +719,9 @@
     if (L && L.none) { body.appendChild(el("div", "notice", "No " + name + " games in the week before this night.")); return; }
     // 1. top performers: the night's ranking from the box scores (free). EPL's come from Claude's write-up.
     var sp = "standouts/" + night; if (!MM_SOCCER[mm.lg]) mmWatch(sp);
-    var all = MM_SOCCER[mm.lg] ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), top = all.slice(0, 20);
+    var pwN = mmPowerBar(mm.lg); if (pwN) body.appendChild(pwN);
+    var all = mmPowerOnly(MM_SOCCER[mm.lg] ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), night, mm.lg), top = all.slice(0, 20);
+    if (!top.length && mmPowerOn(mm.lg) && !MM_SOCCER[mm.lg] && (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []).length) body.appendChild(el("div", "notice", gcBoard(night, mm.lg) ? "No top performers from the power conferences this night. Tap All for everyone." : "Loading…"));
     if (top.length) {
       body.appendChild(mmSec("Top performers", gamesLine(night, mm.lg, 0) || "Top " + top.length));
       var tl = el("div", "bs-list mm-top mm-cards"), lk0 = MM_SOCCER[mm.lg] ? mmLookup(mm.lg, night) : null, ld0 = mmTags(all, top, mm.lg, night);
@@ -718,8 +755,8 @@
       }
     }
     var lk = wrote ? mmLookup(mm.lg, night) : null;
-    if (wrote && (L.over || []).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list mm-cards"); L.over.forEach(function (r) { ol.appendChild(mmCard(r, "▲", "over", lk)); }); ol.style.setProperty("--rows", Math.ceil(L.over.length / 2)); body.appendChild(ol); }
-    if (wrote && (L.under || []).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list mm-cards"); L.under.forEach(function (r) { ul.appendChild(mmCard(r, "▼", "under", lk)); }); ul.style.setProperty("--rows", Math.ceil(L.under.length / 2)); body.appendChild(ul); }
+    if (wrote && mmPowerOnly(L.over || [], night, mm.lg).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list mm-cards"); mmPowerOnly(L.over, night, mm.lg).forEach(function (r) { ol.appendChild(mmCard(r, "▲", "over", lk)); }); ol.style.setProperty("--rows", Math.ceil(L.over.length / 2)); body.appendChild(ol); }
+    if (wrote && mmPowerOnly(L.under || [], night, mm.lg).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list mm-cards"); mmPowerOnly(L.under, night, mm.lg).forEach(function (r) { ul.appendChild(mmCard(r, "▼", "under", lk)); }); ul.style.setProperty("--rows", Math.ceil(L.under.length / 2)); body.appendChild(ul); }
     var fins = wrote && (L.games || []).length ? L.games : ((L && L.auto && L.auto.games) || []);
     if (fins.length) {
       body.appendChild(mmSec("Wild finishes", "Upsets and close calls"));

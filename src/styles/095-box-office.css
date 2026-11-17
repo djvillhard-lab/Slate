@@ -18,3 +18,5 @@
 #mm-body .mm-card .rk-face i { font-size: 15px; }
 #mm-body .mm-card .rk-face img { width: 62px; }
 #mm-body .mm-card .rk-mark { transform: scale(.45); right: -7px; bottom: -4px; }
+/* Power conferences only (3.79.0): the All / Power conferences row on the college tabs, the same row as All games filters */
+#mm-body .mm-pw { margin: 4px -16px 8px; }
