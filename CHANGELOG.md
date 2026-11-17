@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.90.1 (Nov 17, 2026)
+TestFlight: 3.68.5 (44), no new build (web only)
+- Box Office: the small team badge on each player's headshot now uses the logo from that night's ESPN scoreboard directly. Last night's college players (Kentucky, UCLA, Saint Mary's, Southeastern Louisiana) showed lettered chips on DJ's phone because the badge went through the app's shared logo lookup. The lettered chip only shows now if ESPN has no logo for the team, or it fails to load.
+
 ## 3.90.0 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - All games: upcoming matchup cards now get the same 📰 News line as the slate.

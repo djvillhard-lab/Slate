@@ -134,7 +134,7 @@
     Promise.all([rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 0))), rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 1)))]).then(function (sbs) {
       var evs = {};
       sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { var s = (e.status || {}).type || {}; if ((s.state === "in" || s.state === "post") && rkCentral(new Date(e.date).getTime()) === day) evs[e.id] = e;
-        (((e.competitions || [])[0] || {}).competitors || []).forEach(function (c) { var tm = c.team || {}; if (tm.logo && tm.displayName) logoNote(tm.displayName, tm.logo, tm.color, tm.alternateColor); }); }); });
+        (((e.competitions || [])[0] || {}).competitors || []).forEach(function (c) { var tm = c.team || {}; if (tm.logo && tm.displayName) logoNote(tm.displayName, tm.logo, tm.color, tm.alternateColor); mmLogoNote(lg, tm); }); }); });
       var doc = rk.docDate === day ? rk.doc : null, savedFinal = {}, saved = [];
       if (doc && doc.events && doc.events[lg] && doc.leagues && doc.leagues[lg]) {
         doc.events[lg].forEach(function (id) { savedFinal[id] = 1; });
@@ -314,6 +314,10 @@
   }
   // a player's ESPN headshot in a circle of his team's color, initials underneath until it loads, the team badge at the corner.
   // Shared: Box Office's cards and Player rankings use it, and any page can (p = { id, name, team, teamName, color }, lg = the league key).
+  // team logos from the scoreboards Box Office reads, by league and team (abbreviation, or "#" + ESPN id): the logo file's segment
+  var MM_LOGO = {};
+  function mmLogoNote(lg, tm) { var sg = logoSeg(tm && tm.logo); if (!sg) return; if (tm.abbreviation) MM_LOGO[lg + "|" + tm.abbreviation] = sg; if (tm.id) MM_LOGO[lg + "|#" + tm.id] = sg; }
+  function mmLogoFor(lg, p) { return (p.tid && MM_LOGO[lg + "|#" + p.tid]) || (p.team && MM_LOGO[lg + "|" + p.team]) || ""; }
   function playerFace(p, lg) {
     var face = el("span", "rk-face"), tc = typeof teamByName === "function" ? teamByName(p.teamName) : null;
     face.style.background = (hexOk(p.color) ? p.color : (tc && tc.c1) || "#2a3442");
@@ -321,7 +325,17 @@
     var dir = BX_HEAD[lg];
     if (p.id && dir) { var im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + p.id + ".png&w=140&h=102"; im.onerror = function () { im.remove(); }; face.appendChild(im); }
     var wrapF = el("span", "rk-fw"); wrapF.appendChild(face);
-    var mark = badgeFor(p.team || "", p.teamName || "", p.color); mark.classList.add("rk-mark"); wrapF.appendChild(mark);
+    // the team's logo straight from that night's ESPN scoreboard when Box Office has it (DJ, 3.90.1: on his phone most college
+    // badges stayed letters through the shared logo lookup); the lettered chip only if there's no logo or it fails to load
+    var seg = lg && mmLogoFor(lg, p), mark = badgeFor(p.team || "", seg ? "" : (p.teamName || ""), p.color);
+    mark.classList.add("rk-mark");
+    if (seg) {
+      var lim = document.createElement("img"); lim.className = "badge-logo"; lim.alt = ""; lim.decoding = "async"; lim.draggable = false;
+      lim.onload = function () { mark.classList.add("lg"); };
+      lim.onerror = function () { lim.remove(); if (p.teamName) addLogo(mark, p.teamName); };
+      lim.src = logoUrl(seg, false); mark.appendChild(lim);
+    }
+    wrapF.appendChild(mark);
     return wrapF;
   }
   function bestRow(r, rank, lgx) {
@@ -396,6 +410,7 @@
           // every team that played that day hands its logo to the logo helper (DJ, 3.89.4: Box Office had no logos for last night's
           // college teams when the phone's team list didn't have them; the slate's own games only cover the day the app has loaded)
           if (tm.logo && tm.displayName) logoNote(tm.displayName, tm.logo, tm.color, tm.alternateColor);
+          mmLogoNote(lg, tm);
           if (!ci) return; if (tm.abbreviation) conf[tm.abbreviation] = ci; if (tm.id) conf["#" + tm.id] = ci; if (P[ci]) pw[e.id] = 1; });
       }); });
       gc[key] = { n: Object.keys(seen).length, p: Object.keys(pw).length, conf: conf };
@@ -614,7 +629,7 @@
     var tc = ""; try { tc = hlInk(badgeColor(g, "away") || ""); } catch (e) {} if (hexOk(tc)) c.style.setProperty("--tp-team", tc);
     if (mark) c.appendChild(el("span", "mm-rank" + (typeof mark === "number" && mark <= 3 ? " top" : ""), String(mark)));
     // the player's headshot (DJ, 3.76.1: liked these more than the jerseys)
-    var jj = playerFace({ id: r.id, name: r.name, team: r.team, teamName: teamName, color: color }, lg);
+    var jj = playerFace({ id: r.id, name: r.name, team: r.team, tid: r.tid || byId.tid, teamName: teamName, color: color }, lg);
     c.appendChild(jj);
     var m = el("div", "tp-m"), top = el("div", "tp-top"), nm = String(r.name || ""), parts = nm.split(" ");
     top.appendChild(el("b", "tp-n", parts.length > 1 ? parts[0].charAt(0) + ". " + parts.slice(1).join(" ") : nm));

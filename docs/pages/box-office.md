@@ -1,5 +1,5 @@
 # Box Office (and Player rankings)
-Last updated: Nov 17, 2026, 3.89.4
+Last updated: Nov 17, 2026, 3.90.1
 
 Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMoments`; Player rankings = the `best` view, `renderBest`, not in the menu). Styles: `src/styles/095-box-office.css` (plus older `rk-`/`mm-` rules in 040-components.css).
 
@@ -13,6 +13,8 @@ Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMomen
 - Power conferences (3.79.0, college tabs): "All / Power conferences" row (`mmPowerBar`, remembered in localStorage `slate-bo-power`). `MM_POWER` = ESPN conferenceIds (hoops ACC 2, Big East 4, Big Ten 7, Big 12 8, SEC 23; CFB ACC 1, Big 12 4, Big Ten 5, SEC 8). A row's conference comes from that day's ESPN scoreboard (`gcBoard`, by team abbreviation or `#id`), which also gives the power game count (games with a power team). Filters top performers (re-ranked), leader tags, over/underachievers. The heading drops the live count when Power is on (it's league-wide). College keeps the top 80 players a night (standouts.py TOP_COLLEGE, RK_TOP_COLLEGE) so the filtered list still fills 20.
 
 - Team logos (3.89.4): every scoreboard Box Office reads (`gcBoard` for the shown day and league, and the live poll) passes each team's logo to `logoNote`, so badges don't depend on the phone's weekly team list (which missed some of last night's college teams on DJ's phone).
+
+- Headshot badge logo (3.90.1): `playerFace` uses the logo straight from Box Office's scoreboards (`MM_LOGO` via `mmLogoNote`, by league + abbreviation or #id) as a plain img; only falls back to the lettered chip / shared `addLogo` when there's none or it fails. DJ's phone showed lettered chips for most college teams through the shared lookup even after 3.89.4; not reproducible in a browser.
 
 ## Open
 - Wild finishes don't follow the Power filter yet.
