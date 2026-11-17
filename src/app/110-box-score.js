@@ -96,6 +96,9 @@
     if (BX_SPORT[g.league] === "soccer") return null;  // soccer: the match summary carries the goals
     if (!sc || !sc.length || !state.showScores) return null;
     var w = el("div", "scs"); w.appendChild(el("p", "scs-h", "Scoring"));
+    // 3.72.0 (DJ): football shows each scoring play as the live feed's box (team edge, goalposts or emoji, jerseys, stat lines, score)
+    var fl = null; try { fl = fdScoringList(g, cur.sum); } catch (e) {}
+    if (fl) { w.appendChild(fl); return w; }
     sc.forEach(function (p) {
       var r = el("div", "scs-r");
       r.appendChild(el("span", "scs-t", p.q + (p.ck ? " " + p.ck : "")));

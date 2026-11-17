@@ -253,6 +253,35 @@
     else if (/Extra Point|Two-Point|2pt/i.test(ty)) { out.title = ty; }
     return out;
   }
+  // one football play's box (3.72.0: its own function so the quick look's Scoring can show the same boxes)
+  function fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew) {
+    var card = el("div", "fd-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); card.setAttribute("data-id", pid);
+    // 3.70.1 (DJ: make it obvious which team made the play, like basketball): the card's left edge is that team's color. The offense by default;
+    // the defense for a sack, interception, fumble it recovered or safety; the scorer's team on a return touchdown. Penalties and kickoffs get none.
+    if (!rd.noTeam) { var osd = sideOf[rd.offTid] || "", tsd = rd.teamP ? sideOf[rd.teamP.tid] || "" : rd.def && osd ? (osd === "away" ? "home" : "away") : osd; if (tsd) card.style.setProperty("--fd-team", fdTint(g, tsd)); }
+    var ph = el("div", "fd-ph"), q = ((pl.period || {}).number) || 0, ss = pl.start || {};
+    ph.appendChild(el("span", null, (q ? (q > 4 ? "OT" : "Q" + q) + " " : "") + ((pl.clock || {}).displayValue || "") + (ss.down ? " · " + (ss.downDistanceText || ss.shortDownDistanceText || "") : "")));
+    var scs = el("span", "fd-psc"); scs.textContent = abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""); ph.appendChild(scs);
+    card.appendChild(ph);
+    var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); card.appendChild(tw); }
+    card.appendChild(fdTitle(rd.title));
+    var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); lines.forEach(function (l) { px.appendChild(el("p", null, l)); }); card.appendChild(px); }
+    rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
+    return card;
+  }
+  // the quick look's Scoring (3.72.0, DJ: "match the score boxes from the live feed"): every scoring play as the feed's box,
+  // oldest first, from the summary the quick look already has. Football only for now.
+  function fdScoringList(g, sum) {
+    if (!sum || BX_SPORT[g.league] !== "football") return null;
+    var comp = ((sum.header || {}).competitions || [])[0] || {}, sideOf = {};
+    (comp.competitors || []).forEach(function (k) { sideOf[String((k.team || {}).id || "")] = k.homeAway === "home" ? "home" : "away"; });
+    var dr = sum.drives || {}, seen = {}, allPlays = [];
+    (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { if (!d || !d.id || seen[d.id]) return; seen[d.id] = 1; (d.plays || []).forEach(function (p2) { allPlays.push(p2); }); });
+    if (!allPlays.length) return null;
+    var ix = fdIndex(sum), tags = fdTags(allPlays, sum, g, sideOf), list = el("div", "fd-list scs-fd"), n = 0;
+    allPlays.forEach(function (pl, k) { var rd = fdRead(pl, ix); if (rd.kind !== "score") return; n++; list.appendChild(fdPlayCard(g, pl, rd, String(pl.id || pl.sequenceNumber || k), sideOf, tags, false)); });
+    return n ? list : null;
+  }
   // a team's color that shows on a dark card: black or near-black gives way to the team's second color (or a neutral gray)
   function fdTint(g, sd) { var c = badgeColor(g, sd); if (c && lum(c) >= 0.06) return c; var a2 = g[sd + "Alt"]; return hexOk(a2) && lum(a2) >= 0.06 ? a2 : "#8A94A6"; }
   // 3.70.0 (DJ: "look more like a football jersey"): the player's number on a football jersey in the team's color (wide shoulders, short sleeves, a V neck),
@@ -260,7 +289,7 @@
   function fdJersey(g, sd, P) {
     var c = badgeColor(g, sd) || "#555", ink = lum(c) > 0.62 ? "#111" : "#fff", j = el("span", "fd-jer fd-jer-fb"), n = String(P.jer || "");
     j.style.cssText = "position:relative;flex:none;width:30px;height:27px;display:grid;place-items:center;background:none;border-radius:0;box-shadow:none";
-    j.innerHTML = '<svg viewBox="0 0 30 27" width="30" height="27" style="position:absolute;inset:0" aria-hidden="true"><path d="M10 1.5H12.6Q15 5 17.4 1.5H20L28 5.2L28.6 12L23.6 13V24.6Q23.6 25.5 22.7 25.5H7.3Q6.4 25.5 6.4 24.6V13L1.4 12L2 5.2Z" fill="' + c + '" stroke="rgba(127,127,127,.5)" stroke-width="1" stroke-linejoin="round"/><path d="M2.3 9.2L6.4 10M27.7 9.2L23.6 10" fill="none" stroke="' + ink + '" stroke-opacity=".55" stroke-width="1.4"/></svg>';
+    j.innerHTML = '<svg viewBox="0 0 30 27" width="30" height="27" style="position:absolute;inset:0;width:30px;height:27px" aria-hidden="true"><path d="M10 1.5H12.6Q15 5 17.4 1.5H20L28 5.2L28.6 12L23.6 13V24.6Q23.6 25.5 22.7 25.5H7.3Q6.4 25.5 6.4 24.6V13L1.4 12L2 5.2Z" fill="' + c + '" stroke="rgba(127,127,127,.5)" stroke-width="1" stroke-linejoin="round"/><path d="M2.3 9.2L6.4 10M27.7 9.2L23.6 10" fill="none" stroke="' + ink + '" stroke-opacity=".55" stroke-width="1.4"/></svg>';
     var nb = el("b", null, n || "•"); nb.style.cssText = "position:relative;margin-top:4px;font-size:" + (n.length > 1 ? "10.5" : "11.5") + "px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:" + ink; j.appendChild(nb);
     j.setAttribute("aria-hidden", "true"); return j;
   }
@@ -496,18 +525,7 @@
         var isNew = fresh && !fresh[pid];
         if (rd.note) { list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
         shown++;
-        var card = el("div", "fd-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); card.setAttribute("data-id", pid);
-        // 3.70.1 (DJ: make it obvious which team made the play, like basketball): the card's left edge is that team's color. The offense by default;
-        // the defense for a sack, interception, fumble it recovered or safety; the scorer's team on a return touchdown. Penalties and kickoffs get none.
-        if (!rd.noTeam) { var osd = sideOf[rd.offTid] || "", tsd = rd.teamP ? sideOf[rd.teamP.tid] || "" : rd.def && osd ? (osd === "away" ? "home" : "away") : osd; if (tsd) card.style.setProperty("--fd-team", fdTint(g, tsd)); }
-        var ph = el("div", "fd-ph"), q = ((pl.period || {}).number) || 0, ss = pl.start || {};
-        ph.appendChild(el("span", null, (q ? (q > 4 ? "OT" : "Q" + q) + " " : "") + ((pl.clock || {}).displayValue || "") + (ss.down ? " · " + (ss.downDistanceText || ss.shortDownDistanceText || "") : "")));
-        var scs = el("span", "fd-psc"); scs.textContent = abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""); ph.appendChild(scs);
-        card.appendChild(ph);
-        var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); card.appendChild(tw); }
-        card.appendChild(fdTitle(rd.title));
-        var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); lines.forEach(function (l) { px.appendChild(el("p", null, l)); }); card.appendChild(px); }
-        rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
+        var card = fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew);
         list.appendChild(card);
       }
     }
