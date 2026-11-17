@@ -7,4 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Notifications: tag in the live notification header (app part, waiting for DJ) | shared: ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift | 2026-11-17 01:26 |
-| DJ | Live feed: filters to reach any live game, swipe by league | src/app/145-live-feed.js, src/app/146-live-feed-hoops.js, shared: src/styles/040-components.css (fd- feed rules only) | 2026-11-17 02:48 |
+| DJ | Live feed: Watch button, football plays in team colors | src/app/145-live-feed.js, src/app/146-live-feed-hoops.js, shared: src/styles/040-components.css (fd- feed rules only) | 2026-11-17 02:48 |

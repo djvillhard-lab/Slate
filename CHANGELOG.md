@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.70.0 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live feed: you can now reach any live game from the feed. A row of filters sits above the games at the top: My slate, All live, and each league that has a live game right now. Tap one and the games at the top (and the swipe) switch to it. If the game you're on isn't part of it, its first game opens.
+- The feed starts on the filter that matches where you came from. Opened from your slate: the live games on your slate, as before. Opened from All games on a league's tab, like NBA: just the live NBA games. Opened from All games on All, Live or My teams: every live game.
+- Football and basketball only for now, since those are the sports with a feed.
+- Football feed: a "Leaders so far" card at the top, like basketball's. Each team's leading passer, rusher and receiver with their line, straight from ESPN. ESPN doesn't rate football players the way it does basketball players, so these are its leaders, not a rating.
+- Football feed: player numbers now sit on a football jersey in the team's color (wide shoulders, sleeves) in place of the circle.
+- Halftime: the score bar and the game's box at the top show a red dot and "HT". That covers the moment ESPN still says "End of 2nd Quarter". Basketball too.
+
 ## 3.69.4 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - The live feed no longer disappears when a game ends. A finished football or basketball game has a "Game feed" button where "Live feed" was, on the quick look and the matchup page.

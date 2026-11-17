@@ -85,3 +85,11 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - Nothing is saved: ESPN's summary keeps `plays`/`drives` after the game, and the page reads it back. Football opens with `FD.scOnly` on; basketball opens as usual (newest 12 = the final minutes).
 - Open idea told to DJ: a "key plays" filter for basketball (lead changes, last two minutes). Not built.
 - Made field goals show Slate's own goalposts drawing (`fdGoalposts`, inline SVG, `.fd-gp`), because no goalpost emoji exists and DJ didn't want the hockey net or the touchdown football. `fdTitleText` returns the private-use marker `\uE0F0` for it and `fdTitle` swaps in the drawing; always draw headlines with `fdTitle`.
+
+## 3.70.0: filters, any live game (DJ, Nov 17)
+- `FD.scope` = "slate", "all" or a league key. `openFeed` sets it when you enter the page: All games on a league tab = that league; All games on All/Live/My teams = "all"; anywhere else = "slate" if the game is on the slate, else its league.
+- `fdFilters` draws the row above the switcher (`.fd-strip.fd-filt`, `cf-tab` buttons like All games' secondary filters): My slate, All live, each league with a live feed game. Picking one clears `FD.from` and opens that set's first game when the game on screen isn't in it.
+- `fdList` = live games in the scope (`fdIn`) + the game on screen + `FD.from`. The swipe uses the same list.
+- Football leaders card: `fdLeaders` reads `sum.leaders` (each team's passingYards / rushingYards / receivingYards leader and ESPN's `displayValue`). ESPN has no football rating, so nothing is ranked or picked by Slate. Sacks and tackles leaders exist in the same data but aren't shown.
+- `fdJersey` is now a football jersey SVG (basketball keeps `hpJersey`).
+- Halftime: `fdIsHT` + `fdHT` draw a red dot and "HT" in the score bar and the switcher chip, including "End of 2nd Quarter" and men's college "End of 1st Half".

@@ -15,7 +15,10 @@
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;
-    if (state.view !== "feed") FD.from = g.id;  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
+    if (state.view !== "feed") { FD.from = g.id;
+      // 3.70.0 (DJ): which live games the switcher and the swipe go through depends on where you opened the feed. All games on a league's tab: that league.
+      // All games on All, Live or My teams: every live game. Anywhere else: your slate when the game is on it, else the game's league.
+      FD.scope = state.view === "games" ? (LEAGUES[state.league] ? state.league : "all") : inLineup(g.id) ? "slate" : g.league; }  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
     if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; clearTimeout(FD.dt); FD.bufs = FD.bufs || {}; Object.keys(FD.bufs).forEach(function (k) { if (k !== g.id) delete FD.bufs[k]; });
       FD.sum = fdDelay(g.id) ? ((FD.last || {})[g.id] || null) : ((c0 && c0.sum) || null); /* a delayed game comes back where you left it, not at ESPN's latest */ FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.scOnly = BX_SPORT[g.league] === "football" && status(g).kind === "over"; /* a finished football game opens on its scoring plays */ FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
     if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; FD.scOnly = BX_SPORT[g.league] === "football" && status(g).kind === "over"; openSub("feed"); }  // coming back to the page starts folded up
@@ -252,15 +255,60 @@
   }
   // a team's color that shows on a dark card: black or near-black gives way to the team's second color (or a neutral gray)
   function fdTint(g, sd) { var c = badgeColor(g, sd); if (c && lum(c) >= 0.06) return c; var a2 = g[sd + "Alt"]; return hexOk(a2) && lum(a2) >= 0.06 ? a2 : "#8A94A6"; }
-  function fdJersey(g, sd, P) { var j = el("span", "fd-jer", P.jer ? P.jer : "•"), c = badgeColor(g, sd) || "#555"; j.style.background = c; if (lum(c) > 0.62) j.style.color = "#111"; j.setAttribute("aria-hidden", "true"); return j; }
+  // 3.70.0 (DJ: "look more like a football jersey"): the player's number on a football jersey in the team's color (wide shoulders, short sleeves, a V neck),
+  // in place of the numbered circle. Basketball's is hpJersey, a tank top.
+  function fdJersey(g, sd, P) {
+    var c = badgeColor(g, sd) || "#555", ink = lum(c) > 0.62 ? "#111" : "#fff", j = el("span", "fd-jer fd-jer-fb"), n = String(P.jer || "");
+    j.style.cssText = "position:relative;flex:none;width:30px;height:27px;display:grid;place-items:center;background:none;border-radius:0;box-shadow:none";
+    j.innerHTML = '<svg viewBox="0 0 30 27" width="30" height="27" style="position:absolute;inset:0" aria-hidden="true"><path d="M10 1.5H12.6Q15 5 17.4 1.5H20L28 5.2L28.6 12L23.6 13V24.6Q23.6 25.5 22.7 25.5H7.3Q6.4 25.5 6.4 24.6V13L1.4 12L2 5.2Z" fill="' + c + '" stroke="rgba(127,127,127,.5)" stroke-width="1" stroke-linejoin="round"/><path d="M2.3 9.2L6.4 10M27.7 9.2L23.6 10" fill="none" stroke="' + ink + '" stroke-opacity=".55" stroke-width="1.4"/></svg>';
+    var nb = el("b", null, n || "•"); nb.style.cssText = "position:relative;margin-top:4px;font-size:" + (n.length > 1 ? "10.5" : "11.5") + "px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:" + ink; j.appendChild(nb);
+    j.setAttribute("aria-hidden", "true"); return j;
+  }
+  // halftime (3.70.0, DJ): a red dot and "HT", on the score bar and on the game's box in the switcher. ESPN says "End of 2nd Quarter" for a moment
+  // before "Halftime" (and "End of 1st Half" in men's college basketball); all of those read HT.
+  function fdIsHT(det, lg) { det = String(det || ""); return /half ?time/i.test(det) || /^end of (the )?1st half/i.test(det) || (!hpHalves(lg) && /^end of (the )?2nd/i.test(det)); }
+  function fdHT(tag) { var b = el(tag, "fd-ht"); b.appendChild(el("span", "fd-htd")); b.appendChild(document.createTextNode("HT")); b.setAttribute("aria-label", "Halftime"); return b; }
+  // football's leaders card (3.70.0, DJ: the NFL feed had nothing like basketball's top-rated card). ESPN gives football no player rating, so nothing is
+  // ranked here: these are ESPN's own leaders from the game summary, each team's passer, rusher and receiver, with ESPN's stat line.
+  function fdLeaders(g, sum, sideOf, over) {
+    var want = [["passingYards", "PASS"], ["rushingYards", "RUSH"], ["receivingYards", "REC"]], cols = {}, any = false;
+    (sum.leaders || []).forEach(function (t) { var sd = sideOf[String((t.team || {}).id || "")]; if (!sd) return; var col = el("div", "fd-ldc");
+      want.forEach(function (w) { var L = (t.leaders || []).filter(function (x) { return x.name === w[0]; })[0], top = L && (L.leaders || [])[0], a = top && top.athlete; if (!a || !top.displayValue) return;
+        var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, { jer: a.jersey || "" }));
+        var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, a.shortName || a.displayName || "")); nmw.appendChild(el("em", "fd-pos", w[1]));
+        nmw.appendChild(el("i", null, String(top.displayValue).replace(/\bYDS\b/g, "yds").replace(/\bCAR\b/g, "car").replace(/\bREC\b/g, "rec"))); row.appendChild(nmw); col.appendChild(row); any = true; });
+      if (col.firstChild) cols[sd] = col; });
+    if (!any) return null;
+    var card = el("div", "fd-field hp-top fd-ld"); card.appendChild(el("p", "fd-wpl hp-tl", "Leaders" + (over ? "" : " so far")));
+    var two = el("div", "hp-two"); ["away", "home"].forEach(function (sd) { var hd = el("div", "fd-ldc"); if (cols[sd]) { cols[sd].insertBefore(el("p", "fd-ldt", abbr(g, sd)), cols[sd].firstChild); two.appendChild(cols[sd]); } else two.appendChild(hd); });
+    card.appendChild(two); return card;
+  }
   // the live games in the switcher's order: your slate's first, then by start time
+  function fdIn(x, sc) { return feedLive(x) && (sc === "all" || (sc === "slate" ? inLineup(x.id) : x.league === sc)); }
   function fdList(g) {
-    // 3.68.4 (DJ): the switcher and the swipe go between the live games on your slate (football and basketball), plus the game you
-    // opened the page from. (3.66.9 had your teams' games; DJ changed it to the slate.)
-    var from = FD.from || g.id;
-    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedLive(x) && inLineup(x.id)) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
+    // The switcher and the swipe go between the live games (football and basketball) in the chosen filter, plus the game on screen and the one
+    // you opened the page from. History: your teams' games (3.66.9), then the slate's (3.68.4, DJ), then filters for any league (3.70.0, DJ).
+    var from = FD.from || g.id, sc = FD.scope || "slate";
+    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !(fdIn(x, sc) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
     list.sort(function (a, b) { return ((b.id === from) - (a.id === from)) || byStart(a, b); });
     return list;
+  }
+  // the filters above the switcher (3.70.0): My slate, All live, then each league with a live game that has a feed. Picking one whose games
+  // don't include the game on screen opens its first game.
+  function fdFilters(g) {
+    var sc = FD.scope || "slate", lgs = {}, opts = [["slate", "My slate"], ["all", "All live"]];
+    games().forEach(function (x) { if (feedLive(x)) lgs[x.league] = 1; });
+    if (LEAGUES[sc]) lgs[sc] = 1;
+    Object.keys(LEAGUES).forEach(function (k) { if (lgs[k]) opts.push([k, LEAGUES[k].tag || LEAGUES[k].name]); });
+    var w = el("div", "fd-strip fd-filt"); w.setAttribute("role", "group"); w.setAttribute("aria-label", "Which live games to show");
+    opts.forEach(function (o) {
+      var n = games().filter(function (x) { return fdIn(x, o[0]); }).length, b = el("button", "cf-tab" + (n ? "" : " cf-empty"), o[1]); b.type = "button"; b.setAttribute("aria-pressed", sc === o[0] ? "true" : "false");
+      b.addEventListener("click", function () { if (FD.scope === o[0]) return; FD.scope = o[0]; FD.from = null;
+        var l = games().filter(function (x) { return fdIn(x, o[0]); }).sort(byStart);
+        if (l.length && !l.some(function (x) { return x.id === g.id; })) openFeed(l[0]); else fdKeepY(renderFeed); });
+      w.appendChild(b); });
+    var old = document.querySelector("#feed-body .fd-filt"), x0 = old ? old.scrollLeft : 0; if (x0) requestAnimationFrame(function () { w.scrollLeft = x0; });
+    return w;
   }
   // a sideways swipe on the page moves to the next (left) or previous (right) game in the switcher; false when there's none that way
   function fdSwipe(step) {
@@ -291,7 +339,7 @@
   function fdStrip(g) {
     var ids = {}, list = fdList(g);
     if (!list.length) return null;  // shown even for one game (3.36.7): the page keeps the same shape, and the score box stays clear of the folded Duo's clock
-    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Live games on your slate");
+    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Live games");
     list.forEach(function (x) { if (ids[x.id]) return; ids[x.id] = 1;
       var on = x.id === g.id, b = el("button", "fd-chip" + (on ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", on ? "true" : "false");
       var v = scoreRaw(x.id) || {}, c1 = bx.live[x.id], fs = c1 && c1.sum && Date.now() - (c1.sumAt || 0) < 120000 ? fdSumScore(x.id, c1.sum) : null;
@@ -300,12 +348,12 @@
         v = dfs ? { a: dfs.a, h: dfs.h, detail: dst.shortDetail || dst.detail || "Live" } : { detail: "Delayed" }; }  // 3.69.0: no score ahead of the delay
       var show = boxShown(x) && v.a != null && !isNaN(v.a);
       ["away", "home"].forEach(function (sd) { var r = el("span", "fd-cr"); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });
-      b.appendChild(el("i", null, v.detail || "Live"));
+      b.appendChild(fdIsHT(v.detail, x.league) ? fdHT("i") : el("i", null, v.detail || "Live"));
       b.setAttribute("aria-label", x.away + " at " + x.home + (show ? ", " + v.a + " to " + v.h : "") + ", " + (v.detail || "live"));
       if (!on) b.addEventListener("click", function () { openFeed(x); });
       w.appendChild(b); });
     // the switcher keeps its place between updates; the chosen game slides into view only when it's off screen
-    var old = document.querySelector("#feed-body .fd-strip"), x0 = old ? old.scrollLeft : null;
+    var old = document.querySelector("#feed-body .fd-strip:not(.fd-filt)"), x0 = old ? old.scrollLeft : null;
     requestAnimationFrame(function () { if (x0 != null) w.scrollLeft = x0; var c = w.querySelector(".fd-chip.on"); if (!c || w.scrollWidth <= w.clientWidth) return;
       var l = c.offsetLeft - 16, r = c.offsetLeft + c.offsetWidth + 16 - w.clientWidth;
       if (x0 == null) w.scrollLeft = Math.max(0, l); else if (w.scrollLeft > l || w.scrollLeft < r) w.scrollTo({ left: Math.max(0, w.scrollLeft > l ? l : r), behavior: REDUCED ? "auto" : "smooth" }); });
@@ -354,6 +402,7 @@
     // 3.41.2: a play, a basketball line or the box score below can be the anchor
     if (fromPoll && y0 > 60) { var cs = body.querySelectorAll(".fd-play[data-id], .hp-row[data-id], .fd-box[data-id]");  for (var i = 0; i < cs.length; i++) { var rc = cs[i].getBoundingClientRect(); if (rc.bottom > 140) { anchor = cs[i].getAttribute("data-id"); aTop = rc.top; break; } } }
     body.textContent = "";
+    body.appendChild(fdFilters(g));
     var strip = fdStrip(g); if (strip) body.appendChild(strip);
     var sum = FD.id === g.id ? FD.sum : null;
     if (!sum) { body.appendChild(el("p", "pv-none bx-wait fd-wait", "Loading the play-by-play…")); return; }
@@ -374,9 +423,9 @@
     var shown = fdSumScore(g.id, sum); if (shown) { scoreOf.away = shown.a; scoreOf.home = shown.h; }
     var bug = el("div", "fd-bug"), aS = Number(scoreOf.away), hS = Number(scoreOf.home);
     ["away", "mid", "home"].forEach(function (sd) {
-      if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = /half/i.test(String(st.shortDetail || ""));
+      if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = !over && fdIsHT(st.shortDetail || st.detail, g.league);
         var sd0 = spot && !over ? Number(spot.e.down) || 0 : 0;
-        mid.appendChild(el("b", null, over ? "Final" : ht ? "Half" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, ht ? "Halftime" : per > 4 ? "OT" : per ? ordN(per) : "")); if (sd0 && spot.e.shortDownDistanceText) mid.appendChild(el("em", "fd-mdd", String(spot.e.shortDownDistanceText))); bug.appendChild(mid); return; }
+        if (ht) mid.appendChild(fdHT("b")); else { mid.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); } if (sd0 && spot.e.shortDownDistanceText) mid.appendChild(el("em", "fd-mdd", String(spot.e.shortDownDistanceText))); bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); if (!over && posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball"); nm.appendChild(bl); } tm.appendChild(nm);
@@ -421,6 +470,7 @@
       wr.setAttribute("aria-label", "ESPN win probability: " + abbr(g, "away") + " " + ap + " percent, " + abbr(g, "home") + " " + hp + " percent");
       var wl = el("p", "fd-wpl", "Win probability (ESPN)"); wpHost.appendChild(wl); wpHost.appendChild(wr);
     }
+    var ldc = fdLeaders(g, sum, sideOf, over); if (ldc) body.appendChild(ldc);
     // the plays, newest first, under their drives
     // 3.69.1 (DJ): the Scoring button shows only the scoring plays (all of them, under their drives)
     var scOnly = !!FD.scOnly, isScore = function (p) { return fdRead(p, ix).kind === "score"; };

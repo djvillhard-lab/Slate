@@ -129,9 +129,9 @@
     var bug = el("div", "fd-bug"), aS = Number(scoreOf.away), hS = Number(scoreOf.home);
     ["away", "mid", "home"].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid");
-        mid.appendChild(el("b", null, over ? "Final" : /halftime/i.test(det) ? "Half" : /^end/i.test(det) ? "End" : st.state === "pre" ? timeText(g.start) : (cst.displayClock || "")));
-        if (!over && st.state !== "pre" && !/halftime/i.test(det)) mid.appendChild(el("i", null, per ? hpPerName(lg, per) : ""));
-        else if (/halftime/i.test(det)) mid.appendChild(el("i", null, "Halftime"));
+        var ht = !over && fdIsHT(det, lg);  /* 3.70.0: a red dot and HT at halftime */
+        if (ht) mid.appendChild(fdHT("b")); else mid.appendChild(el("b", null, over ? "Final" : /^end/i.test(det) ? "End" : st.state === "pre" ? timeText(g.start) : (cst.displayClock || "")));
+        if (!over && !ht && st.state !== "pre") mid.appendChild(el("i", null, per ? hpPerName(lg, per) : ""));
         bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
