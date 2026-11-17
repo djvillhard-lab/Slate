@@ -21,8 +21,13 @@
     return Math.round(base + (Number(state.foldNudge) || 0));
   }
   function applyLayout(force) {
-    var root = document.documentElement, split = deviceMode() === "duo" && mqSplit.matches, big = mqBig.matches, corner = !split;
+    var root = document.documentElement, split = deviceMode() === "duo" && mqSplit.matches, big = mqBig.matches;
+    // 3.80.0: unfolded, the screen holds two panes that each run their own page (292-panes.js); this copy of the page
+    // waits behind them, laid out like the folded phone, and comes back when the phone is folded
+    var host = split && panesOK();
     root.style.setProperty("--fold-shift", (split ? foldShift() : 0) + "px");
+    if (host) { split = false; big = false; enterPanes(); } else if (panesOn()) exitPanes();
+    var corner = !split;
     if (!force && split === isDuo && corner === isCorner && big === isBig && root.classList.contains("iphone") === (deviceMode() !== "duo") && root.classList.contains("duo") === split && root.classList.contains("corner") === corner) return;
     var folded = split !== isDuo;
     isDuo = split; isCorner = corner; isBig = big;
@@ -54,14 +59,14 @@
     vp.setAttribute("content", base + ", minimum-scale=1"); setTimeout(function () { if (!SHORT_GAP) document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); vp.setAttribute("content", base); window.scrollTo(0, window.scrollY); applyLayout(true); alignSides($("lineup-body")); alignSides($("games-body")); repinDock(); }, 60);
   }
   // iPhone sometimes keeps the old width after a turn, a fold, or coming back to the app: re-fit a few times as it settles
-  function refit() { [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); [300, 1600].forEach(function (ms) { setTimeout(checkShort, ms); }); }
+  function refit() { if (PANE) return; [80, 400, 1000].forEach(function (ms) { setTimeout(fitWidth, ms); }); [300, 1600].forEach(function (ms) { setTimeout(checkShort, ms); }); }
   // iPhone's Home Screen apps sometimes keep a too-short screen after a turn; when the visible area is clearly
   // smaller than the screen and re-fitting didn't help, a quick reload puts it right (at most once a minute)
   // self-calibrating: remember the tallest the screen has been at this width. If iPhone later hands the app a
   // shorter window (it does after some turns), stretch the layout to the known height instead of leaving a gap.
   var SHORT_GAP = 0, SHORT_KEY = "", SHORT_BEST = 0;
   function checkShort() {
-    if (document.hidden) return;
+    if (document.hidden || PANE) return;
     var w = window.innerWidth, h = window.innerHeight, key = "slate-maxh-" + (w > h ? "L" : "P") + "-" + Math.round(w / 20);
     var best = 0; try { best = Number(localStorage.getItem(key)) || 0; } catch (e) {}
     if (h > best) { try { localStorage.setItem(key, String(h)); } catch (e) {} best = h; }
@@ -84,7 +89,11 @@
   window.addEventListener("pageshow", refit);
   window.addEventListener("focus", refit);
   if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener("change", refit);
-  function nudgeFold(d) { state.foldNudge = d === 0 ? 0 : (Number(state.foldNudge) || 0) + d; saveSettings(); applyLayout(true); toast(isDuo ? "Split moved" : "Applies when the phone is open and sideways"); }
+  function nudgeFold(d) {
+    state.foldNudge = d === 0 ? 0 : (Number(state.foldNudge) || 0) + d; saveSettings(); applyLayout(true);
+    if (PANE) { try { window.parent.slatePaneNudge(state.foldNudge); } catch (e) {} toast("Split moved"); return; }
+    toast(isDuo ? "Split moved" : "Applies when the phone is open and sideways");
+  }
   $("fold-left").addEventListener("click", function () { nudgeFold(-4); });
   $("fold-right").addEventListener("click", function () { nudgeFold(4); });
   $("fold-auto").addEventListener("click", function () { nudgeFold(0); });

@@ -15,6 +15,8 @@
 </script>
 <script>window.SLATE_CHANGES = {{CHANGES}};</script>
 <script>window.SLATE_BUILD = "{{BUILD}}";
+// two-pane mode on the unfolded Duo (3.80.0): each side is this same page in a frame, marked ?pane=a or ?pane=b
+window.SLATE_PANE = (function () { try { var m = /[?&]pane=([ab])\b/.exec(location.search); return m && window.parent !== window ? m[1] : ""; } catch (e) { return ""; } })();
 (function () {
   // a new version on GitHub: reload onto it without waiting for the phone's cached copy to expire
   var last = 0;
@@ -24,6 +26,9 @@
       if (!v || !v.build || v.build === window.SLATE_BUILD) return;
       // tried this version in the last 2 minutes (GitHub still publishing): don't loop, but try again later
       try { var tr = JSON.parse(localStorage.getItem("slate-tried") || "{}"); if (tr.b === v.build && Date.now() - tr.at < 120000) return; localStorage.setItem("slate-tried", JSON.stringify({ b: v.build, at: Date.now() })); } catch (e) {}
+      // a pane reloads on its own page; the two-pane screen itself waits until it is folded (it would reset both sides)
+      if (window.SLATE_PANE) { location.replace(location.pathname + "?pane=" + window.SLATE_PANE + "&v=" + v.build + (location.hash || "")); return; }
+      if (document.documentElement.classList.contains("panes")) return;
       location.replace(location.pathname + "?v=" + v.build);
     }, function () {});
   }
@@ -41,7 +46,7 @@
   var touched = Date.now();
   ["touchstart", "scroll", "keydown"].forEach(function (t) { window.addEventListener(t, function () { touched = Date.now(); }, { passive: true, capture: true }); });
   setInterval(function () {
-    if (document.hidden || Date.now() - touched < 20000 || document.documentElement.getAttribute("data-view") !== "lineup") return;
+    if (document.hidden || Date.now() - touched < 20000 || document.documentElement.getAttribute("data-view") !== "lineup" || document.documentElement.classList.contains("panes")) return;
     last = 0; check();
   }, 120000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
@@ -63,6 +68,7 @@
 {{styles/085-welcome.css}}
 {{styles/090-filter-rows.css}}
 {{styles/095-box-office.css}}
+{{styles/097-panes.css}}
 </style>
 </head>
 <body>

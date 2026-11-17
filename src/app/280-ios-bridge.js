@@ -2,8 +2,15 @@
   // The shell sets window.SLATE_NATIVE before the page runs. On iPhone Duo its own controls sit in Apple's
   // right-side strip ("strip" mode), so the page hides its floating menu button there. ?native=strip fakes the
   // shell for the in-browser preview (app-preview.html), which talks to the page the same way the app does.
-  var NATIVE = window.SLATE_NATIVE || (/[?&]native=strip\b/.test(location.search) ? { platform: "preview", strip: true } : null);
+  var PANE = window.SLATE_PANE || "";
+  // a pane of the two-pane Duo screen (292-panes.js): it talks to the iPhone app through the page around it, and draws
+  // its own menu and Back (the app's strip buttons reach whichever side was touched last)
+  var NATIVE = PANE ? (function () { try { var h = window.parent.slateHostNative && window.parent.slateHostNative(); return h ? { platform: h.platform, app: h.app, liveNow: h.liveNow } : null; } catch (e) { return null; } })()
+    : window.SLATE_NATIVE || (/[?&]native=strip\b/.test(location.search) ? { platform: "preview", strip: true } : null);
+  window.slateHostNative = function () { return NATIVE; };
+  window.slateHostPost = function (m) { nativePost(m); };
   function nativePost(m) {
+    if (PANE) { if (m && m.t !== "state" && m.t !== "ready") try { window.parent.slateHostPost(m); } catch (e) {} return; }
     try { if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.slate) { window.webkit.messageHandlers.slate.postMessage(m); return; } } catch (e) {}
     try { if (NATIVE && NATIVE.platform === "preview" && window.parent !== window) window.parent.postMessage({ slate: m }, location.origin); } catch (e) {}
   }
@@ -18,7 +25,9 @@
   // the Back button's state for the app's strip: "" (not needed), "back", or "fwd" (to today from a past day)
   function backKind() { var bt = $("dock-back"); if (!bt || !NATIVE) return ""; var offDay = state.date && state.date !== todayInHome() && (state.view === "lineup" || isDuo); if (!(state.view !== homeView() || offDay)) return ""; return offDay && (state.view === "lineup" || state.view === homeView()) && state.date < todayInHome() ? "fwd" : "back"; }
   function nativeSync() {
+    if (PANE) { try { window.parent.slatePaneSync(PANE); } catch (e) {} return; }
     if (!NATIVE) return;
+    if (panesOn()) { var pm = paneSyncMsg(); if (pm) { var pk = JSON.stringify(pm); if (pk !== nativeLast) { nativeLast = pk; nativePost(pm); } } return; }
     var look = document.documentElement.getAttribute("data-look") || "dark";
     var m = { t: "state", view: state.view, date: state.date, today: todayInHome(), look: look, menuOpen: !!state.menuOpen, duo: !!isDuo, device: deviceMode(), back: backKind() };
     var k = JSON.stringify(m); if (k === nativeLast) return; nativeLast = k; nativePost(m);

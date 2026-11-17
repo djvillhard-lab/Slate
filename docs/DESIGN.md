@@ -55,7 +55,9 @@ Blend with `color-mix(in srgb, var(--accent) 10%, var(--card))` for tinted cards
 - Check every look change at all three shapes (`scripts/shots.py`):
   - **folded** iPhone Duo: narrow, with the app's side column on the right (the menu capsule lives there, and
     nothing may sit under it);
-  - **open** iPhone Duo, sideways: two panes, the slate on the left, every other page on the right;
+  - **open** iPhone Duo, sideways: two panes (3.80.0), each its own copy of the app laid out like the folded phone,
+    with its own menu and Back. The slate on the left and All games on the right to start; the grip on the fold moves a
+    page across (`288-panes.js`, `docs/pages/panes.md`). A page that fits the folded phone fits a pane;
   - **iphone**: a regular iPhone, the page's own floating menu bottom right.
 - Every page's header is the same (3.44.0, `src/styles/060-header.css`): the Slate mark level with the page name,
   then the hairline. A second line only where there is one (the slate's date picker; the day on All games, On TV and

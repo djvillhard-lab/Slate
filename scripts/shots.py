@@ -13,6 +13,7 @@
 Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
 --eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
+--pane left|right (open Duo: which side the page, game, filters and --click go to; default right; --eval runs on the whole screen),
 --readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite).
 
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
@@ -20,7 +21,7 @@ plus game:<team> (that game's matchup page), look:<team> (its quick look on All 
 
 Sizes (--sizes, default all three):
     folded  iPhone Duo folded: 466 x 678, the app's side column on the right (strip mode, 84-point inset)
-    open    iPhone Duo unfolded and sideways: 765 x 538, slate on the left, pages on the right
+    open    iPhone Duo unfolded and sideways: 765 x 538, two panes (3.80.0), each its own page: the slate on the left, pages on the right
     iphone  a regular iPhone: 390 x 844
 The page is told which phone it's on, so the test profile's own Phone setting doesn't matter (nothing is saved).
 
@@ -53,10 +54,12 @@ def main():
     if "--gate" in args: pw = ""
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
+    pane = "right"
     ev, name, readonly, gate = None, "", False, None
     i = 0
     while i < len(args):
         a = args[i]
+        if a == "--pane": pane = args[i + 1]; i += 2; continue
         if a == "--sizes": sizes = [s.strip() for s in args[i + 1].split(",") if s.strip()]; i += 2; continue
         if a == "--wait": wait = float(args[i + 1]); i += 2; continue
         if a == "--scroll": scroll = args[i + 1]; i += 2; continue
@@ -134,7 +137,17 @@ def main():
             if S["inset"]: page.evaluate("SlateApp.setInset(%d)" % S["inset"]); page.wait_for_timeout(400)
             if tomorrow: page.evaluate("document.getElementById('l-day-next').click()"); page.wait_for_timeout(int(wait * 1000))
             mode = page.evaluate("document.documentElement.className")
+            # open Duo (3.80.0): two panes, each its own copy of the page in a frame. Pages, games, filters and clicks
+            # go to the right side (--pane left for the left one); --eval and the screenshot stay on the whole screen.
+            host = page
+            def tgt():
+                if "panes" not in mode: return page
+                side = page.evaluate("(w => { const a = document.getElementById('pn-a'); if (!a) return ''; const l = a.style.gridColumn === '1' ? 'a' : 'b'; return w === 'left' ? l : (l === 'a' ? 'b' : 'a'); })(%s)" % json.dumps(pane))
+                for fr in page.frames:
+                    if ("pane=" + side) in fr.url: return fr
+                return page
             for pg in pages or ["lineup"]:
+                page = tgt()
                 kind, _, team = pg.partition(":")
                 if kind in ("game", "feed", "look"):
                     page.evaluate("SlateApp.go('games')"); page.wait_for_timeout(2500)
@@ -165,10 +178,11 @@ def main():
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.click(); })(%s)" % json.dumps(click)); page.wait_for_timeout(700)
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
+                page = host
                 if ev:
                     r = page.evaluate(ev); page.wait_for_timeout(1200)
                     if r is not None: print(r)  # whatever the script returns (e.g. computed styles)
-                wide = page.evaluate("document.scrollingElement.scrollWidth - innerWidth")
+                wide = max([page.evaluate("document.scrollingElement.scrollWidth - innerWidth")] + [fr.evaluate("document.scrollingElement.scrollWidth - innerWidth") for fr in page.frames[1:] if "pane=" in fr.url])
                 path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}{'-' + name if name else ''}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{'-tomorrow' if tomorrow else ''}.png")
                 page.screenshot(path=path, full_page=full)
                 print(f"{path}  ({size}: {mode})" + (f"  WIDER THAN THE SCREEN by {wide}px" if wide > 1 else ""))

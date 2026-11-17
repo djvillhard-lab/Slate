@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.80.0 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Unfolded Duo: the screen is now two separate sides, one on each side of the fold. Each side has its own page, its own menu and Back, and keeps its own live scores, so you can follow two Live feeds at once, or keep the slate open next to Box Office.
+- It starts with Tonight's Slate on the left and All games on the right, like before. Any page now works on either side.
+- To bring the right page over to the left: drag the small bar on the fold to the left (or tap it). The right side then asks which page to show: live games first (straight to their Live feed), then every page, or keep what it had. Drag the bar to the right to do the opposite.
+- The menu and Back buttons in the app's side column work on the side you touched last.
+- Changing a setting on one side (teams, theme, rules) changes it on the other side too.
+- Folding the phone goes to the slate, as before. Unfolding again brings back the two pages you had.
 ## 3.79.2 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Team logos: on Midnight, a team whose dark-background logo is a plain white mark now shows its full-color logo when that one stands out on the card. Clemson's orange paw, Texas, Tennessee, Xavier and the Raptors, for example. Duke and the Yankees keep their white logos, because their navy would disappear.

@@ -109,6 +109,7 @@
     return out.slice(0, 8);
   }
   function livePoll() {
+    if (panesOn()) return;  // 3.80.0: unfolded, the two panes each keep their own scores; the page behind them rests
     try { laLogos(); } catch (e) {}
     if (!window.SLATE_SELF || livePolling || document.hidden || !state.date) return;
     if (LIVE_DATE !== state.date) LIVE_AT = {};
