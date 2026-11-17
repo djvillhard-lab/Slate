@@ -17,7 +17,9 @@
       return ((d || {}).articles || []).map(function (a) {
         var teams = (a.categories || []).filter(function (x) { return x.type === "team" && x.description; }).map(function (x) { return x.description; });
         var evs = (a.categories || []).filter(function (x) { return x.type === "event" && x.description; }).map(function (x) { return x.description.toLowerCase(); });
-        return { title: a.headline, desc: a.description || "", url: ((a.links || {}).web || {}).href || "", at: a.published || a.lastModified || "", src: "ESPN", lg: lg, teams: teams, events: evs };
+        (a.categories || []).forEach(function (x) { var id = x.athleteId || (x.athlete || {}).id; if (x.type === "athlete" && id && x.description) nwAthPut(lg, x.description, id); });
+        var img = ((a.images || []).filter(function (m) { return m && /^https:\/\//.test(m.url || "") && !/stitcher/.test(m.url); })[0] || {}).url || "";
+        return { title: a.headline, desc: a.description || "", url: ((a.links || {}).web || {}).href || "", at: a.published || a.lastModified || "", src: "ESPN", lg: lg, teams: teams, events: evs, img: img };
       });
     }, function () { return []; });
     var ath = ATH_SLUG[lg] ? fetch("/api/athletic?slug=" + ATH_SLUG[lg]).then(function (r) { return r.ok ? r.json() : { items: [] }; }).then(function (j) {
@@ -168,9 +170,15 @@
   var NW_HOT = /^(red[- ]?hot|hot|on fire|heating up)\b/i, NW_COLD = /^(ice[- ]?cold|cold|cooling off)\b/i;
   function nwTag(tag, alert) {
     var hot = NW_HOT.test(tag), t = el("span", "nx-tag" + (hot ? " hot" : alert ? " alert" : ""));
-    var e = hot ? "🔥" : NW_COLD.test(tag) ? "🧊" : /injur/i.test(tag) ? "🚑" : ""; if (e) t.appendChild(nwEm(e));
+    var e = hot ? "🔥" : NW_COLD.test(tag) ? "🧊" : nwCatEm(tag); if (e) t.appendChild(nwEm(e));
     t.appendChild(document.createTextNode(tag)); return t;
   }
+  // one emoji per tag, by what kind of story it is (3.82.0; DJ asked for emojis on News tags, never in the text)
+  var NW_CATS = [[/injur|hurt|out\b|doubt|questionable|ir\b/i, "🚑"], [/trade|deal|swap|transfer/i, "🔁"], [/sign|contract|extension|agree/i, "✍️"], [/fire|coach|hire|staff/i, "📋"],
+    [/upset|stun|shock/i, "😱"], [/record|milestone|history|career|season[- ]high/i, "📈"], [/streak|run\b|rolling|won \d/i, "🔥"], [/slump|skid|lost \d|losing/i, "🧊"], [/suspen|ban|fine|discipline/i, "⛔"],
+    [/rumou?r|report|buzz|watch/i, "👀"], [/draft|prospect|recruit|portal/i, "🎓"], [/rank|poll|standing|playoff|bracket|seed/i, "📊"], [/return|back\b|activated/i, "💪"], [/debut|rookie|breakout/i, "🌟"],
+    [/result|final|win|won|beat|loss|lost/i, "🏁"], [/tonight|schedule|matchup|preview|game/i, "🗓️"], [/quote|said/i, "💬"], [/storyline|story|news/i, "📰"]];
+  function nwCatEm(tag) { var t = String(tag || ""); for (var i = 0; i < NW_CATS.length; i++) if (NW_CATS[i][0].test(t)) return NW_CATS[i][1]; return t ? "📰" : ""; }
   function nwChip(chip, tone) { var hot = NW_HOT.test(chip), c = el("span", "nx-chipt " + (hot ? "hot" : tone || "")); if (hot || NW_COLD.test(chip)) c.appendChild(nwEm(hot ? "🔥" : "🧊")); c.appendChild(document.createTextNode(chip)); return c; }
   function nwHits(list) {
     var w = el("div", "nx-hits");
@@ -179,7 +187,10 @@
   }
   function nwRead(rd) {
     var a = el("a", "nx-read"); a.href = safeUrl(rd.url); a.target = "_blank"; a.rel = "noopener";
-    a.appendChild(el("span", "nx-rt", rd.title)); a.appendChild(el("span", "nx-rs", rd.source || "Read")); return a;
+    // ESPN's picture beside it when the story is in a league feed already loaded (3.82.0)
+    var it = null; Object.keys(nw.feeds).some(function (k) { it = nwItem(k, rd.url); return !!it; });
+    if (it && it.img) { var im = document.createElement("img"); im.className = "nx-rimg"; im.alt = ""; im.loading = "lazy"; im.src = it.img; im.onerror = function () { im.remove(); }; a.appendChild(im); a.classList.add("pic"); }
+    var tx = el("span", "nx-rw"); tx.appendChild(el("span", "nx-rt", rd.title)); tx.appendChild(el("span", "nx-rs", (rd.source || "Read") + (it && it.at ? " · " + nwAgo(it.at) : ""))); a.appendChild(tx); return a;
   }
   function nwDeepRow(d, label) {
     var b = el("button", "nx-deep"); b.type = "button"; b.appendChild(icon("sparkle")); b.appendChild(el("span", "nx-dl", label || "Claude's breakdown")); b.appendChild(icon("more"));
@@ -195,6 +206,46 @@
     hd.setAttribute("role", "button"); hd.tabIndex = 0; hd.setAttribute("aria-expanded", open ? "true" : "false"); hd.setAttribute("aria-label", label + (open ? ", collapse" : ", expand"));
     var go = function () { var l = nwOpenSet().filter(function (y) { return y !== k; }); if (!open) l.push(k); try { localStorage.setItem("slate-newsopen", JSON.stringify({ d: state.date, k: l })); } catch (e) {} keepScroll(renderNews); };
     hd.addEventListener("click", go); hd.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  }
+  // ----- the live feed's look on News (3.82.0, DJ: "match the live feed designs, be creative") -----
+  // a team named by Claude ("Philadelphia 76ers", "76ers") → the app's team (colors, abbreviation, logo)
+  function nwTeam(name, lg) {
+    if (!name) return null; var t = teamByName(name); if (t) return t;
+    var hit = teamSearch(name), want = lg && LEAGUES[lg] ? (LEAGUES[lg].college ? "College" : LEAGUES[lg].name) : "";
+    return hit.filter(function (x) { return !want || x.lg === want || (want === "Premier League" && x.lg === "Premier League"); })[0] || null;
+  }
+  // the colored edge (and a light tint) that every feed box carries, in the team's color
+  function nwTint(node, t) { if (t && hexOk(t.c1)) node.style.setProperty("--nx-team", t.c1); return node; }
+  function nwMark(t, name) { var b = t ? teamBadge(t) : badgeFor(String(name || "?").replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase(), name || ""); b.classList.add("nx-mk"); return b; }
+  function nwPill(text, cls, em) { var p = el("span", "nx-pill" + (cls ? " " + cls : "")), e = em === undefined ? (NW_HOT.test(text) ? "🔥" : NW_COLD.test(text) ? "🧊" : nwCatEm(text)) : em; if (NW_HOT.test(text)) p.classList.add("hot"); if (e) p.appendChild(nwEm(e)); p.appendChild(document.createTextNode(text)); return p; }
+  // players' ESPN ids, so a name Claude writes gets its headshot: from the ids ESPN tags its stories with, else the team's roster
+  nw.ath = {}; nw.rost = {};
+  function nwAthPut(lg, name, id) { var m = nw.ath[lg] = nw.ath[lg] || {}; m[pwKey(name)] = String(id); }
+  function nwAthId(lg, name, t) {
+    var m = nw.ath[lg] || {}, k = pwKey(name); if (m[k]) return m[k];
+    if (t && t.abbr && bxBase(lg) && !nw.rost[lg + "|" + t.abbr]) {
+      nw.rost[lg + "|" + t.abbr] = 1;
+      rkFetch(bxApi(lg, "teams/" + String(t.abbr).toLowerCase() + "/roster")).then(function (d) {
+        var any = 0, add = function (a) { if (a && a.id && a.displayName) { nwAthPut(lg, a.displayName, a.id); any = 1; } };
+        ((d || {}).athletes || []).forEach(function (a) { if (a && Array.isArray(a.items)) a.items.forEach(add); else add(a); });
+        if (any) nwRedraw();
+      }, function () {});
+    }
+    return "";
+  }
+  function nwRedraw() { if (nw.rdT) return; nw.rdT = setTimeout(function () { nw.rdT = 0; if (state.view === "news") keepScroll(renderNews); }, 400); }
+  function nwFace(name, team, lg) {
+    var t = nwTeam(team, lg), f = playerFace({ name: name, id: nwAthId(lg, name, t), teamName: t ? t.name : team, team: t ? t.abbr : "", color: t && t.c1 }, lg);
+    f.classList.add("nx-face"); return f;
+  }
+  // the newest headlines' pictures and links (free ESPN), found by url
+  function nwItem(lg, url) { return url ? ((((nw.feeds[lg] || {}).items) || []).filter(function (a) { return a.url === url; })[0] || null) : null; }
+  // a feed box: the team's edge, a meta row (logo, team, pills on the right), then the text
+  function nwBox(t, team, pills, cls) {
+    var b = nwTint(el("div", "nx-box" + (cls ? " " + cls : "")), t), m = el("div", "nx-bm");
+    if (t || team) { var tm = el("span", "nx-bt"); tm.appendChild(nwMark(t, team)); tm.appendChild(el("b", null, t ? t.name : team)); m.appendChild(tm); }
+    var pr = el("span", "nx-bp"); (pills || []).forEach(function (p) { if (p) pr.appendChild(p); }); if (pr.firstChild) m.appendChild(pr);
+    if (m.firstChild) b.appendChild(m); return b;
   }
   function nwSec(title, right) { var h = el("div", "nx-sec"); h.appendChild(el("b", null, title)); if (right) h.appendChild(el("span", null, right)); return h; }
   function nwGameHead(g) {
@@ -300,12 +351,13 @@
       var tc = el("span", "nx-topn", String(top.length)); tc.appendChild(icon("more")); th.appendChild(tc);
       th.addEventListener("click", function () { try { localStorage.setItem("slate-newstop", shut ? "1" : "0"); } catch (e) {} keepScroll(renderNews); });
       var tcard = el("div", "nx-card nx-top" + (shut ? " shut" : "")); tcard.appendChild(th);
-      if (!shut) top.forEach(function (x, i) {
-        var r = el("div", "nx-topi"); r.appendChild(el("i", null, String(i + 1)));
-        var tx = el("div", "nx-topt"), tg = el("div", "nx-tagrow"); if (x.tag) tg.appendChild(nwTag(x.tag, /injur/i.test(x.tag))); if (x.new && doc.regen) { var nt = el("span", "nx-tag new"); nt.appendChild(nwEm("🚨")); nt.appendChild(document.createTextNode("New")); tg.appendChild(nt); }
-        if (tg.firstChild) tx.appendChild(tg); tx.appendChild(el("b", null, x.title)); if (x.why) tx.appendChild(el("span", null, x.why)); r.appendChild(tx); tcard.appendChild(r);
-      });
       body.appendChild(tcard);
+      // each story is a feed box (3.82.0): its rank, the team's color and logo when Claude named one, the tag and NEW
+      if (!shut) { var tw = el("div", "nx-boxes nx-tops"); top.forEach(function (x, i) {
+        var t = nwTeam(x.team, x.lg), b = nwBox(t, x.team, [x.tag ? nwPill(x.tag) : null, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain");
+        var hl = el("div", "nx-th2"); hl.appendChild(el("i", "nx-rank", String(i + 1))); hl.appendChild(el("b", null, x.title)); b.appendChild(hl);
+        if (x.why) b.appendChild(el("p", "nx-bx", x.why)); tw.appendChild(b);
+      }); body.appendChild(tw); }
     }
     // Games | Teams | Leagues: only the ones this page has; the leftmost opens first. Teams is only the favorite teams
     // picked in the options (3.50.1; cover.picked), not every team in the picked games; older pages have no list of
@@ -327,6 +379,9 @@
         if (tt !== lastT) { lastT = tt; var m = /^(.*?)\s*([AP]M)$/i.exec(tt), th2 = el("div", "nx-time"); th2.appendChild(el("b", null, m ? m[1] : tt)); if (m) th2.appendChild(el("i", null, m[2].toLowerCase())); body.appendChild(th2); }
         // each game is a drop-down (3.53.1): the matchup and score show, a tap opens Claude's summary under it
         var ok = "g:" + g.id, open = nwIsOpen(ok), c = el("div", "nx-card nx-game nx-dd" + (open ? "" : " shut")), gh = nwGameHead(g);
+        // the edge carries both teams' colors, away on top (3.82.0)
+        var hx = function (v) { v = String(v || ""); return hexOk(v) ? v : hexOk("#" + v) ? "#" + v : ""; };
+        ["away", "home"].forEach(function (sd) { var v = hx(g[sd + "Color"]) || ((nwTeam(g[sd], g.league) || {}).c1) || ""; if (hexOk(v)) c.style.setProperty(sd === "away" ? "--nx-a" : "--nx-h", v); });
         gh.appendChild(icon("more")); nwFoldBtn(gh, ok, open, short(g, "away") + " at " + short(g, "home")); c.appendChild(gh);
         if (open) {
           var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwHits(x.hits)); c.appendChild(bd);
@@ -338,7 +393,7 @@
     } else if (nw.tab === "teams") {
       var tile = function (name, lg, g, side) {
         var x = nwTeamDoc(doc, name, lg); if (!x) return null;
-        var b = el("button", "nx-card nx-tile" + (x.tone === "alert" ? " alert" : "")); b.type = "button";
+        var b = nwTint(el("button", "nx-card nx-tile" + (x.tone === "alert" ? " alert" : "")), nwTeam(name, lg)); b.type = "button";
         var hd = el("div", "nx-th"); hd.appendChild(nwTeamBadge(name, g, side)); var rec = g && side ? g[side + "Record"] : ""; if (rec) hd.appendChild(el("span", "nx-rec", rec));
         if (x.chip) hd.appendChild(nwChip(x.chip, x.tone)); b.appendChild(hd);
         b.appendChild(el("b", "nx-tn", g && side ? short(g, side) : name)); b.appendChild(el("p", null, x.line));
@@ -399,26 +454,72 @@
     }
     var sec = function (title, cl, em) { var h = el("div", "nx-h2" + (cl ? " nx-cl" : "")); if (cl) h.appendChild(icon("sparkle")); if (em) h.appendChild(nwEm(em)); h.appendChild(el("span", null, title)); body.appendChild(h); };
     var rows = function (list, key) { var c = el("div", "nx-card nx-rows"); list.forEach(function (x) { var r = el("div", "nx-row"); r.appendChild(el("b", null, x[key])); r.appendChild(el("span", null, x.text)); c.appendChild(r); }); return c; };
+    var lg = d.lg || (d.type === "g" ? ((nwGames().filter(function (x) { return x.id === d.id; })[0] || {}).league) : ""), dteam = d.type === "t" ? nwTeam(d.name, lg) : null;
+    if (lg && !nw.feeds[lg]) nwFeed(lg).then(nwRedraw, function () {});  // free: the story pictures and the players' ids
+    // the big story (a league briefing): ESPN's picture when Claude named the headline, the team's color, a tap opens it
+    if (doc.lead && doc.lead.title) {
+      var lt = nwTeam(doc.lead.team, lg), it = nwItem(lg, doc.lead.url), ld = nwTint(el(doc.lead.url ? "a" : "div", "nx-lead"), lt);
+      if (doc.lead.url) { ld.href = safeUrl(doc.lead.url); ld.target = "_blank"; ld.rel = "noopener"; }
+      if (it && it.img) { var im = document.createElement("img"); im.className = "nx-limg"; im.alt = ""; im.loading = "lazy"; im.src = it.img; im.onerror = function () { im.remove(); }; ld.appendChild(im); }
+      var lb = el("div", "nx-lbody"), lm = el("div", "nx-bm"); var lp = el("span", "nx-bt"); if (lt) { lp.appendChild(nwMark(lt)); lp.appendChild(el("b", null, lt.name)); } lm.appendChild(lp);
+      var lpr = el("span", "nx-bp"); lpr.appendChild(nwPill("The big story", "lead", "🗞️")); lm.appendChild(lpr); lb.appendChild(lm);
+      lb.appendChild(el("b", "nx-lt", doc.lead.title)); if (doc.lead.text) lb.appendChild(el("p", null, doc.lead.text));
+      if (it) lb.appendChild(el("span", "nx-lsrc", it.src + " · " + nwAgo(it.at))); ld.appendChild(lb); body.appendChild(ld);
+    }
     sec(d.type === "l" ? "Around the league" : "Claude's take", true);
-    var tk = el("div", "nx-card nx-take"); if (doc.verdict) tk.appendChild(el("span", "nx-verdict", doc.verdict)); doc.take.forEach(function (p) { tk.appendChild(el("p", null, p)); }); body.appendChild(tk);
-    // a league's newest stories come right after the take (3.80.0); a team's stay below the number
-    if (d.type === "l" && doc.latest && doc.latest.length) { sec("Latest", false, "📰"); var ll = el("div", "nx-card nx-pad"); ll.appendChild(nwHits(doc.latest)); body.appendChild(ll); }
-    if (doc.number) { sec("The number", false, "🔢"); var nb = el("div", "nx-card nx-num" + (String(doc.number.value).length > 7 ? " long" : "")); nb.appendChild(el("b", null, doc.number.value)); nb.appendChild(el("p", null, doc.number.text)); body.appendChild(nb); }
-    if (d.type !== "l" && doc.latest && doc.latest.length) { sec("Latest", false, "📰"); var lc = el("div", "nx-card nx-pad"); lc.appendChild(nwHits(doc.latest)); body.appendChild(lc); }
-    if (doc.watch && doc.watch.length) { sec("What to watch for", false, "👀"); var wc = el("div", "nx-card nx-pad"); wc.appendChild(nwHits(doc.watch)); body.appendChild(wc); }
+    var tk = nwTint(el("div", "nx-card nx-take"), dteam); if (doc.verdict) tk.appendChild(el("span", "nx-verdict", doc.verdict)); doc.take.forEach(function (p) { tk.appendChild(el("p", null, p)); }); body.appendChild(tk);
+    // the newest stories, one feed box each: the team's color and logo, what kind of story it is, NEW when it's today's
+    var latest = function () {
+      sec("Latest", false, "📰"); var w = el("div", "nx-boxes");
+      doc.latest.forEach(function (x) { var t = nwTeam(x.team, lg) || dteam, b = nwBox(t, x.team, [x.tag ? nwPill(x.tag) : null, x.fresh ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain"); b.appendChild(el("p", "nx-bx", x.text)); w.appendChild(b); });
+      body.appendChild(w);
+    };
+    if (d.type === "l" && doc.latest && doc.latest.length) latest();
+    if (doc.number) {
+      sec("The number", false, "🔢"); var nt = nwTeam(doc.number.team, lg) || dteam, nb = nwTint(el("div", "nx-card nx-num" + (String(doc.number.value).length > 7 ? " long" : "")), nt);
+      nb.appendChild(el("b", null, doc.number.value)); var np = el("div", "nx-nt"); if (nt) np.appendChild(nwMark(nt)); np.appendChild(el("p", null, doc.number.text)); nb.appendChild(np); body.appendChild(nb);
+    }
+    if (d.type !== "l" && doc.latest && doc.latest.length) latest();
+    if (doc.watch && doc.watch.length) { sec("What to watch for", false, "👀"); var wc = el("div", "nx-boxes"); doc.watch.forEach(function (x) { var b = nwBox(null, "", [x.tag ? nwPill(x.tag) : null], "plain"); b.appendChild(el("p", "nx-bx", x.text)); wc.appendChild(b); }); body.appendChild(wc); }
     if (doc.sides && doc.sides.length) {
       sec("Each side in a line"); var sg = el("div", "nx-grid");
-      doc.sides.forEach(function (x) { var c = el("div", "nx-card nx-side"); var hh = el("div", "nx-th"); hh.appendChild(nwTeamBadge(x.team)); c.appendChild(hh); c.appendChild(el("p", null, x.text)); sg.appendChild(c); });
+      doc.sides.forEach(function (x) { var t = nwTeam(x.team, lg), c = nwTint(el("div", "nx-card nx-side"), t); var hh = el("div", "nx-th"); hh.appendChild(t ? nwMark(t) : nwTeamBadge(x.team)); hh.appendChild(el("b", "nx-sn", t ? t.name : x.team)); c.appendChild(hh); c.appendChild(el("p", null, x.text)); sg.appendChild(c); });
       body.appendChild(sg);
     }
+    // who's hot and who's not: two columns, each team a row with its logo, red for hot and blue for cold
     if ((doc.hot && doc.hot.length) || (doc.cold && doc.cold.length)) {
-      sec("Who's hot, who's not"); var hg = el("div", "nx-grid");
-      [["hot", "Hot", "hot", "🔥"], ["cold", "Cold", "down", "🧊"]].forEach(function (o) { var l = doc[o[0]] || []; if (!l.length) return; var c = el("div", "nx-card nx-side"); var ht2 = el("span", "nx-chipt " + o[2]); ht2.appendChild(nwEm(o[3])); ht2.appendChild(document.createTextNode(o[1])); c.appendChild(ht2); l.forEach(function (x) { var p = el("p"); p.appendChild(el("b", null, x.team + " ")); p.appendChild(document.createTextNode(x.text)); c.appendChild(p); }); hg.appendChild(c); });
+      sec("Who's hot, who's not", false, "🌡️"); var hg = el("div", "nx-grid nx-hc");
+      [["hot", "Hot", "🔥"], ["cold", "Cold", "🧊"]].forEach(function (o) {
+        var l = doc[o[0]] || []; if (!l.length) return; var c = el("div", "nx-card nx-temp " + o[0]); c.appendChild(nwPill(o[1], o[0], o[2]));
+        l.forEach(function (x) { var t = nwTeam(x.team, lg), r = nwTint(el("div", "nx-tr"), t); r.appendChild(nwMark(t, x.team)); var tx = el("div"); tx.appendChild(el("b", null, t ? t.name : x.team)); tx.appendChild(el("span", null, x.text)); r.appendChild(tx); c.appendChild(r); });
+        hg.appendChild(c);
+      });
       body.appendChild(hg);
     }
-    if (doc.perf && doc.perf.length) { sec("Performances", false, "⭐"); var pc = el("div", "nx-card nx-pad"); pc.appendChild(nwHits(doc.perf)); body.appendChild(pc); }
-    if (doc.said && doc.said.text) { sec("Said", false, "💬"); var sc = el("div", "nx-card nx-said"); sc.appendChild(el("p", null, doc.said.text)); if (doc.said.who) sc.appendChild(el("span", null, doc.said.who)); body.appendChild(sc); }
-    if (doc.injuries && doc.injuries.length) { sec("Injuries", false, "🚑"); var ic = el("div", "nx-card nx-pad"); ic.appendChild(nwHits(doc.injuries.map(function (t) { return { tag: "", text: t }; }))); body.appendChild(ic); }
+    // standout performances: Box Office's player cards (headshot in the team's color, the stat line as a tag)
+    if (doc.perf && doc.perf.length) {
+      sec("Performances", false, "⭐"); var pw = el("div", "nx-boxes");
+      doc.perf.forEach(function (x) {
+        var t = nwTeam(x.team, lg), c = nwTint(el("div", "nx-pc"), t);
+        if (x.player) c.appendChild(nwFace(x.player, x.team, lg));
+        var tx = el("div", "nx-pt"), nm = el("div", "nx-pn"); if (x.player) nm.appendChild(el("b", null, x.player)); if (t && t.abbr) nm.appendChild(el("span", "nx-ab", t.abbr)); if (nm.firstChild) tx.appendChild(nm);
+        if (x.tag) tx.appendChild(nwPill(x.tag, "stat", "⭐")); tx.appendChild(el("p", null, x.text)); c.appendChild(tx); pw.appendChild(c);
+      });
+      body.appendChild(pw);
+    }
+    if (doc.said && doc.said.text) { sec("Said", false, "💬"); var sc = nwTint(el("div", "nx-card nx-said"), dteam); sc.appendChild(el("p", null, doc.said.text)); if (doc.said.who) sc.appendChild(el("span", null, doc.said.who)); body.appendChild(sc); }
+    // injuries: the live feed's red timeout boxes, with the player's headshot and a status tag
+    if (doc.injuries && doc.injuries.length) {
+      sec("Injuries", false, "🚑"); var iw = el("div", "nx-boxes");
+      doc.injuries.forEach(function (x) {
+        if (typeof x === "string") x = { text: x };
+        var t = nwTeam(x.team, lg), c = nwTint(el("div", "nx-inj"), t);
+        if (x.player) c.appendChild(nwFace(x.player, x.team, lg));
+        var tx = el("div", "nx-pt"), nm = el("div", "nx-pn"); if (x.player) nm.appendChild(el("b", null, x.player)); if (t && t.abbr) nm.appendChild(el("span", "nx-ab", t.abbr)); if (x.status) nm.appendChild(nwPill(x.status, "inj", "🚑")); if (nm.firstChild) tx.appendChild(nm);
+        tx.appendChild(el("p", null, x.text)); c.appendChild(tx); iw.appendChild(c);
+      });
+      body.appendChild(iw);
+    }
     if (doc.timeline && doc.timeline.length) { sec(d.type === "g" ? "How they got here" : "The timeline", false, "🗓️"); body.appendChild(rows(doc.timeline, "when")); }
     if (doc.next) { sec("Next up", false, "⏭️"); var nc = el("div", "nx-card nx-pad"); nc.appendChild(el("p", "nx-story", doc.next)); body.appendChild(nc); }
     if (doc.hunch) { sec("Claude's hunch", true); var hc = el("div", "nx-card nx-pad"); hc.appendChild(el("p", "nx-story", doc.hunch)); body.appendChild(hc); }
@@ -440,6 +541,14 @@
   function nwPickLg(lg) {
     nw.lg = lg; renderNews();
     if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
+  }
+  // a sideways swipe on News moves between Press Box and the league tabs (3.82.0, DJ: never Back); at either end it
+  // springs back. The swipe code itself is in 280-ios-bridge.js (mode "news").
+  function nwSwipe(step) {
+    var list = [null].concat(nwBriefLgs()), i = list.indexOf(nw.lg), n = i < 0 ? undefined : list[i + step];
+    if (n === undefined) return false;
+    nw.lg = n; nw.stripX = null; renderNews(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
+    slideIn($("nw-body"), step > 0 ? "l" : "r"); return true;
   }
   function nwStrip(body) {
     var strip = el("div", "strip nx-strip"), list = [[null, NW_HOME]].concat(nwBriefLgs().map(function (k) { return [k, (LEAGUES[k] || {}).tag || k]; }));

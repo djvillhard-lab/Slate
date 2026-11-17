@@ -280,7 +280,7 @@ Facts (JSON): "cover" (what they asked this page to cover), "games" (the games o
 Do up to four web searches for what the headlines don't tell you: breaking news from the last day or two about these teams (injuries, trades, coaching, lineup changes), and the story behind the biggest games. Compile everything first, then decide what this person most needs to know.
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
-{"top": [{"title": "a headline in your own words, 4-9 words", "why": "one or two sentences, 15-35 words: what happened and why it matters to this person today", "tag": "one or two words: Injury, Trade, Result, Streak, Milestone, Coaching, Tonight, Record or similar", "new": true}],
+{"top": [{"title": "a headline in your own words, 4-9 words", "why": "one or two sentences, 15-35 words: what happened and why it matters to this person today", "tag": "one or two words: Injury, Trade, Result, Streak, Milestone, Coaching, Tonight, Record or similar", "team": "the one team the story is mainly about, its full name as in the facts (such as Philadelphia 76ers), or empty", "lg": "that team's league key from the facts, or empty", "new": true}],
  "games": [{"id": "the slate game's id", "story": "two sentences, 30-50 words: the story of this game and why to watch", "hits": [{"tag": "one or two words (Injury, Streak, Last game, Schedule, Storyline, Hot, Matchup...)", "text": "one line, 8-20 words, with the specific fact"}], "read": {"title": "...", "url": "...", "source": "ESPN"}}],
  "teams": [{"name": "the team's name exactly as given in the facts", "lg": "its league key from the facts", "chip": "its status in one to three words: Won 6, Lost 3, Injury, Back-to-back, Winless, Clinched...", "tone": "up" | "down" | "alert" | "", "line": "one line, 8-16 words: the one thing to know about this team right now"}],
  "leagues": [{"key": "the league key from the facts", "story": "two or three sentences, 35-60 words: the state of the league right now", "hits": [{"tag": "...", "text": "..."}], "read": {"title": "...", "url": "...", "source": "ESPN"}}]}
@@ -302,15 +302,16 @@ watch: exactly 3. sides: both teams, away first. timeline: 3-4 dated events that
  "timeline": [{"when": "a short date like Nov 11", "text": "one line: what happened"}],
  "next": "one line: the next game or two, with day and opponent",
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
-latest: 3-4, newest first. timeline: 3-4 dated events in the team's biggest current storyline, oldest first. said: null if your sources have nothing.` : `{"take": ["two paragraphs, 90-140 words in all: what is going on around this league right now, the newest news first"],
- "latest": [{"tag": "one or two words, such as Trade, Injury, Fired, Upset", "text": "one line: a specific development from the last day or two"}],
+latest: 3-4, newest first. timeline: 3-4 dated events in the team's biggest current storyline, oldest first. said: null if your sources have nothing.` : `{"lead": {"title": "the single biggest story right now, as a headline in your own words, 5-10 words", "text": "two sentences, 25-45 words: what happened and why it matters", "team": "the team it is about, full name such as Philadelphia 76ers, or empty", "url": "the exact url of the provided headline about it, or empty"},
+ "take": ["two paragraphs, 90-140 words in all: what is going on around this league right now, the newest news first; don't just repeat the lead"],
+ "latest": [{"tag": "one or two words: Trade, Injury, Result, Upset, Coaching, Signing, Record, Streak, Suspension, Rumor, Rankings or similar", "team": "the team it is mainly about, full name, or empty", "fresh": true, "text": "one line: a specific development from the last day or two"}],
  "hot": [{"team": "team name", "text": "two to four words, such as won 12 straight"}],
  "cold": [{"team": "team name", "text": "two to four words"}],
- "perf": [{"tag": "the stat line or feat in a few words, such as 43 points or 223 yards, 3 TDs: 30 characters at most", "text": "one line: who did it and in what game"}],
- "number": {"value": "one striking number or milestone from your sources: the figure alone or with one or two words, such as 223 yards, 14 characters at most", "text": "one sentence on what it is and why it matters"},
- "injuries": ["one line each: the injuries that matter most league-wide"],
+ "perf": [{"player": "the player's full name, such as Joel Embiid", "team": "his or her team, full name", "tag": "the stat line or feat in a few words, such as 43 points or 223 yards, 3 TDs: 30 characters at most", "text": "one line: the game and why it stood out"}],
+ "number": {"value": "one striking number or milestone from your sources: the figure alone or with one or two words, such as 223 yards, 14 characters at most", "text": "one sentence on what it is and why it matters", "team": "the team it belongs to, full name, or empty"},
+ "injuries": [{"player": "full name", "team": "team, full name", "status": "one or two words: Out, Out for season, Day-to-day, Questionable, Returning", "text": "one line: the injury and how long"}],
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
-latest: 4-6 of the newest stories (last 48 hours), newest first, each a different story. hot and cold: up to 3 each. perf: 3-5 standout performances from the last two days. injuries: up to 4; [] if none.`;
+lead: never null. latest: 4-6 of the newest stories (last 48 hours), newest first, each a different story and not the lead; "fresh" is true only for news from today. hot and cold: up to 3 each. perf: 3-5 standout performances from the last two days. injuries: up to 4; [] if none.`;
     return `${type === "l" ? "You're writing a league news briefing for the News page of a sports fan's app: the most up-to-date news around one league, the kind a fan taps to catch up in a minute. Lead with what happened most recently." : `You're writing a tap-in breakdown for the News page of a sports fan's app: a deeper, more creative look at one ${type === "g" ? "game" : "team"} than the dashboard card they just tapped.`} Today is ${new Date().toDateString()}.
 Subject (JSON): ${game}
 Facts (JSON: free ESPN data and headlines with url, plus what the dashboard card already said, so go beyond it): ${facts}
@@ -461,10 +462,10 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
         const S = (v, n) => { const t = String(v == null ? "" : v).trim(); if (t.length <= n) return t; const c = t.slice(0, n - 1), i = c.lastIndexOf(" "); return (i > n * 0.4 ? c.slice(0, i) : c).replace(/[\s,;:.\-]+$/, "") + "\u2026"; };
         const rd = (r) => r && r.title && /^https:\/\//.test(r.url || "") ? { title: S(r.title, 200), url: H(r.url, 600), source: S(r.source, 40) } : null;
         const hits = (a, n) => (Array.isArray(a) ? a : []).filter((h) => h && h.text).slice(0, n).map((h) => ({ tag: S(h.tag, 48), text: S(h.text, 260) }));
-        const num = (x) => x && x.value && x.text ? { value: S(x.value, 28), text: S(x.text, 300) } : null;
+        const num = (x) => x && x.value && x.text ? { value: S(x.value, 28), text: S(x.text, 300), team: H(x.team, 60) } : null;
         if (p.kind === "news" && p.key === "page") {
           let f = {}; try { f = JSON.parse(p.facts || "{}"); } catch (e) {}
-          const top = (Array.isArray(ans.top) ? ans.top : []).filter((x) => x && x.title).slice(0, 5).map((x) => ({ title: S(x.title, 140), why: S(x.why, 360), tag: S(x.tag, 32), new: x.new !== false }));
+          const top = (Array.isArray(ans.top) ? ans.top : []).filter((x) => x && x.title).slice(0, 5).map((x) => ({ title: S(x.title, 140), why: S(x.why, 360), tag: S(x.tag, 32), team: H(x.team, 60), lg: H(x.lg, 12), new: x.new !== false }));
           const games = (Array.isArray(ans.games) ? ans.games : []).filter((g) => g && g.id && g.story).slice(0, 40).map((g) => ({ id: H(g.id, 60), story: S(g.story, 600), hits: hits(g.hits, 3), read: rd(g.read) }));
           const teams = (Array.isArray(ans.teams) ? ans.teams : []).filter((x) => x && x.name).slice(0, 100).map((x) => ({ name: H(x.name, 60), lg: H(x.lg, 12), chip: S(x.chip, 24), tone: ["up", "down", "alert"].includes(x.tone) ? x.tone : "", line: S(x.line, 240), hits: hits(x.hits, 3) }));
           const leagues = (Array.isArray(ans.leagues) ? ans.leagues : []).filter((x) => x && x.key && x.story).slice(0, 16).map((x) => ({ key: H(x.key, 12), story: S(x.story, 700), hits: hits(x.hits, 6), read: rd(x.read) }));
@@ -476,7 +477,11 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           if (!out.take.length) throw new Error("Claude's breakdown came back empty");
           if (type === "g") Object.assign(out, { verdict: S(ans.verdict, 40), watch: hits(ans.watch, 3), sides: pairs(ans.sides, 2, "team"), timeline: pairs(ans.timeline, 4, "when"), hunch: S(ans.hunch, 300) });
           else if (type === "t") Object.assign(out, { mood: S(ans.mood, 32), latest: hits(ans.latest, 4), said: ans.said && ans.said.text ? { text: S(ans.said.text, 300), who: S(ans.said.who, 120) } : null, timeline: pairs(ans.timeline, 4, "when"), next: S(ans.next, 200) });
-          else Object.assign(out, { latest: hits(ans.latest, 6), hot: pairs(ans.hot, 3, "team"), cold: pairs(ans.cold, 3, "team"), perf: hits(ans.perf, 5), injuries: strs(ans.injuries, 4).map((x) => x.slice(0, 240)) });
+          else Object.assign(out, { lead: ans.lead && ans.lead.title ? { title: S(ans.lead.title, 140), text: S(ans.lead.text, 400), team: H(ans.lead.team, 60), url: /^https:\/\//.test(ans.lead.url || "") ? H(ans.lead.url, 600) : "" } : null,
+            latest: (Array.isArray(ans.latest) ? ans.latest : []).filter((h) => h && h.text).slice(0, 6).map((h) => ({ tag: S(h.tag, 48), team: H(h.team, 60), fresh: h.fresh === true, text: S(h.text, 260) })),
+            perf: (Array.isArray(ans.perf) ? ans.perf : []).filter((h) => h && h.text).slice(0, 5).map((h) => ({ player: H(h.player, 60), team: H(h.team, 60), tag: S(h.tag, 48), text: S(h.text, 260) })),
+            injuries: (Array.isArray(ans.injuries) ? ans.injuries : []).filter((x) => x && (x.text || typeof x === "string")).slice(0, 5).map((x) => typeof x === "string" ? { text: S(x, 240) } : { player: H(x.player, 60), team: H(x.team, 60), status: S(x.status, 24), text: S(x.text, 240) }),
+            hot: pairs(ans.hot, 3, "team"), cold: pairs(ans.cold, 3, "team") });
           await putDoc(this.env, t.path, out);
         } else if (p.kind === "news") {
           const reads = (Array.isArray(ans.reads) ? ans.reads : []).filter((r) => r && r.title && /^https:\/\//.test(r.url || "")).slice(0, 4).map((r) => ({ title: String(r.title).slice(0, 200), url: String(r.url).slice(0, 600), source: String(r.source || "").slice(0, 40), why: String(r.why || "").slice(0, 160) }));

@@ -337,3 +337,82 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
   .gv-watch > .tp > .tp-tags { grid-column: 2; display: flex; flex-wrap: wrap; justify-content: flex-start; margin-top: 4px; }
   .gv-watch > .tp > .tp-tags:empty { display: none; }
 }
+/* News redesign (3.82.0, DJ: "match the live feed designs, be creative"): every story is a live-feed box with a 4px
+   edge in its team's color (--nx-team) and a light tint of it, a meta row (logo + team on the left, tag pills on the
+   right, one emoji each), players as Box Office headshots in team-color circles, injuries as the feed's red timeout
+   boxes. Team colors only ever tint; text stays theme ink. */
+.nx { --nx-red: var(--live, #E5484D); --nx-blue: #4C9BF5; }
+.nx-boxes { display: grid; gap: 8px; }
+.nx-box, .nx-pc, .nx-inj, .nx-lead { position: relative; display: block; border-radius: 8px; background: var(--card); border: 1px solid var(--hair); border-left: 4px solid var(--nx-team, var(--accent-fill)); padding: 9px 11px 10px; text-align: left; color: var(--ink); text-decoration: none; }
+.nx-box[style*="--nx-team"], .nx-pc[style*="--nx-team"] { background: color-mix(in srgb, var(--nx-team) 9%, var(--card)); border-color: color-mix(in srgb, var(--nx-team) 32%, var(--hair)); border-left-color: var(--nx-team); }
+.nx-box.plain { border-left-color: var(--hair); }
+.nx-bm { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; }
+.nx-bt { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.nx-bt b { font-size: 13px; font-weight: 800; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nx-bp { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin-left: auto; }
+.nx .nx-mk { flex: none; transform: scale(.8); transform-origin: 0 50%; margin-right: -8px; }
+.nx-bx { margin: 5px 0 0; font-size: 15px; font-weight: 600; line-height: 1.38; color: var(--ink); }
+/* tag pills: the live feed's (rounded, raised, one emoji), red for hot, injuries and NEW */
+.nx-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 800; line-height: 20px; padding: 0 8px; border-radius: 999px; background: var(--raise); color: var(--muted); white-space: nowrap; }
+.nx-pill .nx-em { margin: 0; font-size: 12px; }
+.nx-pill.hot, .nx-pill.new, .nx-pill.inj { background: color-mix(in srgb, var(--nx-red) 18%, transparent); color: var(--ink); }
+.nx-pill.cold { background: color-mix(in srgb, var(--nx-blue) 18%, transparent); color: var(--ink); }
+.nx-pill.lead { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--ink); }
+.nx-pill.stat { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); justify-self: start; }
+/* the older square tags (quick hits on Press Box cards) become the same pills */
+.nx .nx-tag { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; line-height: 20px; border-radius: 999px; letter-spacing: 0; text-transform: none; font-size: 11.5px; }
+.nx .nx-tag.alert, .nx .nx-tag.hot, .nx .nx-tag.new { background: color-mix(in srgb, var(--nx-red) 18%, transparent); color: var(--ink); }
+.nx .nx-hit .nx-tx { font-size: 14px; line-height: 1.4; }
+/* the big story: ESPN's picture on top, then the headline */
+.nx-lead { padding: 0; overflow: hidden; margin-top: 12px; }
+.nx-lead[style*="--nx-team"] { background: color-mix(in srgb, var(--nx-team) 10%, var(--card)); border-color: color-mix(in srgb, var(--nx-team) 35%, var(--hair)); border-left-color: var(--nx-team); }
+.nx-limg { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--raise); }
+.nx-lbody { display: grid; gap: 6px; padding: 10px 12px 12px; }
+.nx-lt { font-size: 20px; font-weight: 800; font-stretch: 112%; line-height: 1.2; color: var(--ink); }
+.nx-lbody p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--head); }
+.nx-lsrc { font-size: 12px; font-weight: 700; color: var(--dim); }
+.nx-take[style*="--nx-team"] { border-left: 4px solid var(--nx-team); }
+/* Press Box's top stories: a rank in the accent, the headline, the why */
+.nx-tops { margin-top: 8px; }
+.nx-top.shut + .nx-tops { display: none; }
+.nx-th2 { display: flex; gap: 8px; align-items: baseline; margin-top: 4px; }
+.nx-th2 b { font-size: 16px; font-weight: 800; line-height: 1.25; color: var(--ink); }
+.nx-rank { flex: none; font-style: normal; font-size: 18px; font-weight: 800; font-stretch: 80%; color: var(--accent); font-variant-numeric: tabular-nums; }
+.nx-tops .nx-bx { font-weight: 500; font-size: 14px; color: var(--head); }
+/* the number: the figure in the team's color when there is one */
+.nx-num[style*="--nx-team"] { border-left: 4px solid var(--nx-team); background: color-mix(in srgb, var(--nx-team) 9%, var(--card)); }
+.nx-nt { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.nx-num.long .nx-nt { align-items: flex-start; }
+/* hot and cold: a column each, a row per team with its logo and edge */
+.nx-temp { display: grid; gap: 6px; padding: 10px; align-content: start; justify-items: start; }
+.nx-temp.hot { background: color-mix(in srgb, var(--nx-red) 8%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nx-red) 30%, transparent); }
+.nx-temp.cold { background: color-mix(in srgb, var(--nx-blue) 8%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nx-blue) 30%, transparent); }
+.nx-tr { display: flex; align-items: center; gap: 8px; width: 100%; padding: 4px 0 4px 8px; border-left: 3px solid var(--nx-team, var(--hair)); box-sizing: border-box; }
+.nx-tr > div { display: grid; gap: 1px; min-width: 0; }
+.nx-tr b { font-size: 13px; font-weight: 800; color: var(--ink); line-height: 1.2; }
+.nx-tr span { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+/* players: Box Office's headshot cards */
+.nx-pc, .nx-inj { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 11px; align-items: center; }
+.nx .nx-face.rk-fw { width: 46px; height: 46px; }
+.nx .nx-face .rk-face img { width: 64px; }
+.nx .nx-face .rk-face i { font-size: 15px; font-style: normal; font-weight: 800; color: #fff; }
+.nx .nx-face .rk-mark { transform: scale(.45); right: -7px; bottom: -4px; }
+.nx-pt { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.nx-pn { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; }
+.nx-pn b { font-size: 15px; font-weight: 800; color: var(--ink); }
+.nx-ab { font-size: 12px; font-weight: 800; color: var(--dim); letter-spacing: .03em; }
+.nx-pt p { margin: 0; font-size: 13.5px; line-height: 1.38; color: var(--head); }
+/* injuries: the live feed's red timeout box */
+.nx-inj { border-color: color-mix(in srgb, var(--nx-red) 55%, transparent); border-left-color: var(--nx-red); background: color-mix(in srgb, var(--nx-red) 10%, var(--card)); }
+/* read more: ESPN's picture beside the title when there is one */
+.nx-read.pic { justify-content: flex-start; align-items: center; min-height: 68px; }
+.nx-rimg { flex: none; width: 84px; height: 52px; object-fit: cover; border-radius: 6px; background: var(--raise); }
+.nx-rw { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.nx-rw .nx-rs { white-space: normal; }
+/* Press Box cards: a game's edge carries both teams' colors (away on top); a team tile is tinted in its color */
+.nx-game[style*="--nx-a"], .nx-game[style*="--nx-h"] { position: relative; padding-left: 4px; }
+.nx-game[style*="--nx-a"]::before, .nx-game[style*="--nx-h"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(to bottom, var(--nx-a, var(--hair)) 0 50%, var(--nx-h, var(--hair)) 50% 100%); }
+.nx-tile[style*="--nx-team"] { border-left: 4px solid var(--nx-team); background: color-mix(in srgb, var(--nx-team) 9%, var(--card)); }
+.nx-side[style*="--nx-team"] { border-left: 4px solid var(--nx-team); background: color-mix(in srgb, var(--nx-team) 8%, var(--card)); }
+.nx-sn { font-size: 13px; font-weight: 800; color: var(--ink); }
+.nx-side .nx-th { display: flex; align-items: center; gap: 2px; }

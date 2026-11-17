@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.80.0
+Last updated: Nov 17, 2026, 3.82.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -17,6 +17,18 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   tap re-fetches the ESPN and Athletic headlines (`nwFeed(lg, true)`), sends 20 of them plus today's league games
   (slate first). Worker prompt for `l-` keys is a briefing ("newest first", up to 3 searches) and adds `latest`
   (4-6 newest stories, rendered right after the take).
+- Redesign (3.82.0, DJ: "match the live feed designs, be creative"): styles in `050-ux-review.css` ("News redesign"),
+  overriding the older `nx-` rules in 040. Every story is a feed box (`nwBox`): 4px edge + light tint in the team's color
+  (`--nx-team` via `nwTint`), meta row with logo + team (`nwTeam` matches Claude's team name to the app's teams) and tag
+  pills on the right (`nwPill`, one emoji from `nwCatEm`'s list; 🚨 NEW for today's). Players are Box Office headshots
+  (`nwFace` → `playerFace`); ids come from ESPN's athlete tags on the news feed, else the team roster
+  (`teams/<abbr>/roster`, pro leagues; college often misses and shows initials). Briefings: The big story (ESPN photo
+  when Claude names the headline url), Latest boxes, the number, hot (red) / cold (blue) columns, Performances cards,
+  Injuries as red timeout boxes, Read more with photos. Press Box: top five as feed boxes, game cards with both teams'
+  colors on the edge, team tiles tinted. Worker: briefing adds `lead`, team on latest/number, player+team on perf,
+  injuries as {player, team, status, text} (old string injuries still render); Press Box top items carry team + lg.
+- Swipe (3.82.0, DJ): sideways on News moves between Press Box and the league tabs, never Back (mode "news" in
+  280-ios-bridge.js, `nwSwipe`); ends spring back; a breakdown page has no swipe. Works per pane on the open Duo.
 - On Press Box, a league card's button is "<TAG> briefing" and switches to that league's tab.
 - Options screen ("Customize today's news", 3.47.1): three groups, Today's slate, My teams, Leagues. No group
   checkmarks and nothing picked to start; the user picks each game, team and league (chips), with "n of N picked" and

@@ -5,6 +5,16 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.82.0 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- News: swipe sideways to move between Press Box and the league tabs. A swipe never takes you back to the last page any more. On the first or last tab it just springs back.
+- News has the live feed's look now. Every story is a box with a stripe and light tint in its team's color, the team's logo, and a tag on the right with one emoji (🔁 Trade, 🚑 Injury, 🏁 Result, 😱 Upset, 📋 Coaching and so on), plus 🚨 NEW for today's news.
+- League briefings open with The big story: ESPN's photo when Claude names the headline, then the headline and why it matters. Tap it to read the story.
+- Performances are Box Office-style player cards with the player's headshot in a team-color circle and the stat line as a tag. Injuries are the live feed's red boxes with the player's headshot and a status tag (Out, Day-to-day...). Who's hot and who's not are a red column and a blue column, with each team's logo.
+- Read more shows ESPN's photo beside each story when there is one.
+- Press Box: the top five stories are feed boxes too, with their team's color and logo. Game cards carry both teams' colors on their edge, and team cards are tinted in the team's color.
+- Briefings written before this update still show, in the new look, without the photos and headshots.
+
 ## 3.81.13 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Unfolded Duo: pages with just a name in the header (Teams, News, Settings, Live feed, Matchup) now show a bigger name and the full-size Slate mark, centered in the header, so they fill the same space as a page with a date under its name. The line under the header still sits at the same height on both sides.

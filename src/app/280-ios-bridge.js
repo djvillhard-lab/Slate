@@ -165,7 +165,8 @@
       if (state.view === "best" && !target.closest(".rk-day, nav.dock, .menu-pop") && (belowStrip(".rk-strip", t) || target.closest("#view-best"))) return "rk";
       if (state.view === "moments" && !target.closest("nav.dock, .menu-pop") && (belowStrip(".mm-strip", t) || target.closest("#view-moments"))) return "mm";
       if (state.view === "tv" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#substrip", t) || target.closest("#view-tv"))) return "tv";
-      if (state.view === "feed") return "feed";  // left: next live game; right: the game before, or back from the first one
+      if (state.view === "feed") return "feed";
+      if (state.view === "news") return nw.deep ? null : "news";  // 3.82.0 (DJ): News swipes between its tabs, never Back  // left: next live game; right: the game before, or back from the first one
       if (state.view !== homeView() && state.view !== "lineup") return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
@@ -190,6 +191,7 @@
       if (mode === "mm") return slideKids($("mm-body"));
       if (mode === "tv") return slideKids($("tv-body"));
       if (mode === "feed") return fdKids();
+      if (mode === "news") return slideKids($("nw-body"));
       if (mode === "back") { var v = $("view-" + state.view); return v ? [v] : []; }
       return [];
     }
@@ -200,7 +202,7 @@
       each(list, function (el2) { el2.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s"; el2.style.transform = ""; el2.style.opacity = ""; });
       setTimeout(function () { clearDrag(list); }, 200);
     }
-    function where() { return [state.view, state.date, state.league, state.bestLeague, state.tvFilter, mm.lg, mm.date, state.feedId].join("|"); }
+    function where() { return [state.view, state.date, state.league, state.bestLeague, state.tvFilter, mm.lg, mm.date, state.feedId, nw.lg].join("|"); }
     document.addEventListener("touchmove", function (e) {
       if (x0 === null || REDUCED) return;
       var t = e.touches[0], dx = t.clientX - x0, dy = t.clientY - y0;
@@ -232,6 +234,7 @@
         else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
         else if (mode === "mm") mmSwipe(dx < 0 ? 1 : -1);
         else if (mode === "tv") tvSwipe(dx < 0 ? 1 : -1);
+        else if (mode === "news") nwSwipe(dx < 0 ? 1 : -1);
         else if (mode === "feed") { if (!fdSwipe(dx < 0 ? 1 : -1) && dx > 0) goBack(); }
         else { slideDir = dir; setDate(shiftDate(state.date, dx < 0 ? 1 : -1)); }
       }
