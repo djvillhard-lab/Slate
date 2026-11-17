@@ -307,11 +307,15 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .tp-n { min-width: 0; font-size: 15px; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tp-top > .fd-pos, .tp-top > .tp-t { flex: none; }
 .tp-t { font-size: 11px; font-weight: 800; letter-spacing: .05em; color: var(--dim); }
-.tp-td { margin-top: 4px; font-size: 11px; font-weight: 800; line-height: 18px; padding: 0 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--ink); white-space: nowrap; }
 .tp-l { margin-top: 2px; font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--muted); font-variant-numeric: tabular-nums; }
-.tp-hero { display: grid; justify-items: end; text-align: right; }
-.tp-hero b { font-size: 26px; font-weight: 800; font-stretch: 66%; line-height: 1; color: var(--tp-team, var(--ink)); font-variant-numeric: tabular-nums; }
-.tp-hero i { margin-top: 2px; font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .05em; color: var(--dim); white-space: nowrap; }
+.tp-tags { display: grid; justify-items: end; align-content: center; gap: 4px; }
 .tp-num { flex: none; width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: var(--raise); color: var(--ink); font-variant-numeric: tabular-nums; }
 .tray .tp svg { width: auto; height: auto; }
 
+/* a narrow card (the regular iPhone's quick look): the tags move under the stat line so names and stats keep their room */
+.gv-watch { container-type: inline-size; }
+@container (max-width: 340px) {
+  .gv-watch > .tp { grid-template-columns: auto minmax(0, 1fr); }
+  .gv-watch > .tp > .tp-tags { grid-column: 2; display: flex; flex-wrap: wrap; justify-content: flex-start; margin-top: 4px; }
+  .gv-watch > .tp > .tp-tags:empty { display: none; }
+}

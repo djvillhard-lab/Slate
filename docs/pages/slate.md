@@ -1,5 +1,5 @@
 # Today's Slate
-Last updated: Nov 17, 2026, 3.74.0
+Last updated: Nov 17, 2026, 3.75.0
 
 ## Done
 - Game cards line up one score column for the whole slate (fitScores in 240-chrome.js sets --tmw on #lineup-body):
@@ -23,8 +23,11 @@ Last updated: Nov 17, 2026, 3.74.0
   Checked team text colors: all 1,287 team colors (660 teams) reach 4.5:1 on Midnight and Sunday Paper after hlInk.
 - 3.74.0: Top performers (boxStars in 140-game.js, quick look and matchup) are cards: team edge (hlInk color),
   the feed's jerseys (fdJersey football, hpJersey basketball, a numbered square otherwise; numbers from the
-  summary), name + team, stat line always under the name, a big standout number on the right, 🏈 TD tag under it.
+  summary), name + team, stat line always under the name.
   Scoring lists newest first (scoringBlock reverses both the boxes and the plain list).
+- 3.75.0 (DJ): no big numbers; the right side holds up to three tags (tpTags(sport, v, over) for basketball, hockey,
+  baseball, soccer; tpFootTags for football's summed groups), fd-tag pills. Under 340px wide the tags drop under the
+  stat line (container query on .gv-watch). Box Office reuses tpTags and the tp- classes.
 
 ## Open
 - No position chip on Top performers: ESPN's game summary doesn't carry positions for these players.

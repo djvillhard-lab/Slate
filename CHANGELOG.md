@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.75.0 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Top performers: the big number on the right is gone. That side now holds tags for what made the player's night, in every sport, up to three per player, and nothing when nothing stands out. All of them come straight from the box score. On a regular iPhone the tags sit under the stat line, so names and stats keep their room.
+- Football: 🏈 TD (or 2 TD), 🧲 Pick six, ⚡ Return TD, 🎯 TD pass, 🔥 3 TD passes, 🚀 300-yd passer, 💨 100-yd rusher, 🙌 100-yd receiver, 😬 2 picks.
+- Basketball: 👑 Triple-double, ✌️ Double-double, 🪣 30-piece, 🔥 Hot hand (60% shooting on 8+ shots), 🎯 3 threes, 🔒 Lockdown (3+ steals and blocks), 🪄 8 assists.
+- Hockey: 🎩 Hat trick, 🚨 Two goals, 🚨 Goal, 🍎 2 assists, 🔒 Shutout, 🧱 30 saves.
+- Baseball: 💣 Homer, 🔥 3 hits, 🏃 3 RBI, ⚡ 8 strikeouts, 🔒 Scoreless 7 innings.
+- Soccer: 🎩 Hat trick, ⚽ Brace, ⚽ Goal, 🅰️ Assist, 🎯 3 on target, 🟥 Sent off.
+
 ## 3.74.1 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Football feed: the down and distance moved again. It's now a small pill with the football, centered right under the score of the team that has the ball. The records beside the logos are back to how they were, and both scores stay level.

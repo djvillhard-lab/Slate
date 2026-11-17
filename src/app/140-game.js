@@ -146,10 +146,11 @@
           // football: one line per player, whatever he did (a QB who ran and threw: "81 pass yds · 66 rush yds, 1 rush TD")
           if (sport === "football") {
             var key = t.abbr + "|" + r.n, ex = all.filter(function (x) { return x.key === key; })[0];
-            if (!ex) { ex = { key: key, n: r.n, id: r.id, p: r.p, team: t.abbr, score: 0, bits: [], scored: false, td: 0, hero: null }; all.push(ex); }
-            ex.td += n("TD"); if (!ex.p && r.p) ex.p = r.p;
-            var hv = odd ? { v: n("TD"), l: "TD" } : { v: n("YDS"), l: gr.k === "passing" ? "PASS YDS" : gr.k === "rushing" ? "RUSH YDS" : gr.k === "receiving" ? "REC YDS" : (BX_GROUP[gr.k] || gr.k).toUpperCase() };
-            if (!ex.hero || hv.v > ex.hero.v) ex.hero = hv;
+            if (!ex) { ex = { key: key, n: r.n, id: r.id, p: r.p, team: t.abbr, score: 0, bits: [], scored: false, fb: { td: 0, ptd: 0, py: 0, ry: 0, cy: 0, int: 0, odd: [] } }; all.push(ex); }
+            if (!ex.p && r.p) ex.p = r.p;
+            var F = ex.fb;  // what the tags read (3.75.0)
+            if (odd) F.odd.push(gr.k); else if (gr.k === "passing") { F.ptd += n("TD"); F.py += n("YDS"); F.int += n("INT"); } else { F.td += n("TD"); if (gr.k === "rushing") F.ry += n("YDS"); else F.cy += n("YDS"); }
+            if (odd) F.td += n("TD");
             var bit = gr.k === "passing" ? n("YDS") + " pass yds" + (n("TD") ? ", " + n("TD") + " pass TD" : "") + (n("INT") ? ", " + n("INT") + " INT" : "") + (v["C/ATT"] ? " (" + v["C/ATT"] + ")" : "")
               : gr.k === "rushing" ? n("YDS") + " rush yds" + (n("TD") ? ", " + n("TD") + " rush TD" : "")
               : gr.k === "receiving" ? n("REC") + " rec, " + n("YDS") + " yds" + (n("TD") ? ", " + n("TD") + " rec TD" : "")
@@ -158,9 +159,7 @@
             ex.score += score; ex.scored = ex.scored || (gr.k !== "passing" && n("TD") > 0); ex.line = ex.bits.join(" · ");
             return;
           }
-          var hero = sport === "bball" ? { v: n("PTS"), l: "PTS" } : sport === "hockey" ? (v.SV != null && v.SV !== "" ? { v: n("SV"), l: "SAVES" } : { v: n("G") + n("A"), l: "PTS" })
-            : sport === "baseball" ? (v.AB != null && v.AB !== "" ? { v: n("H"), l: "HITS" } : { v: n("K"), l: "K" }) : (n("G") ? { v: n("G"), l: n("G") === 1 ? "GOAL" : "GOALS" } : { v: n("SH"), l: "SHOTS" });
-          all.push({ n: r.n, id: r.id, p: r.p, team: t.abbr, score: score, line: parts.join(" · "), hero: hero, scored: sport === "hockey" ? n("G") > 0 : false });
+          all.push({ n: r.n, id: r.id, p: r.p, team: t.abbr, score: score, line: parts.join(" · "), tags: tpTags(sport, v, status(g).kind === "over"), scored: sport === "hockey" ? n("G") > 0 : false });
         });
       });
     });
@@ -168,8 +167,63 @@
     var wc = gvCard("Top performers", "gv-watch");
     // the top four, plus everyone else who scored (every touchdown and goal scorer gets a line)
     var show = all.slice(0, 4).concat(all.slice(4).filter(function (w) { return w.scored; })).slice(0, 10);
-    show.forEach(function (w) { wc.appendChild(tpRow(g, sport, w, tpJerseys(g))); });
+    show.forEach(function (w) { if (w.fb) w.tags = tpFootTags(w.fb); wc.appendChild(tpRow(g, sport, w, tpJerseys(g))); });
     return wc;
+  }
+  // ---- Top performers' tags (DJ, 3.75.0: "creative options for tags for players from all sports") ----
+  // only from numbers the box score has; the best ones first, at most three on a card
+  // football adds up a player's groups first: F = { td (non-passing TDs), ptd (TD passes), py, ry, cy (pass, rush, receiving yards), int (thrown), odd: [group names of return TDs] }
+  function tpFootTags(F) {
+    var t = [], a = function (txt, c) { t.push({ t: txt, c: c || "" }); };
+    if (F.odd.indexOf("interceptions") !== -1 && F.td) a("🧲 Pick six", "hot");
+    else if (F.odd.some(function (k) { return /kick|punt/.test(k); }) && F.td) a("⚡ Return TD", "hot");
+    else if (F.td) a("🏈 " + (F.td > 1 ? F.td + " TD" : "TD"), "hot");
+    if (F.ptd >= 3) a("🔥 " + F.ptd + " TD passes", "hot"); else if (F.ptd) a("🎯 " + (F.ptd > 1 ? F.ptd + " TD passes" : "TD pass"), "good");
+    if (F.py >= 300) a("🚀 300-yd passer", "good");
+    if (F.ry >= 100) a("💨 100-yd rusher", "good");
+    if (F.cy >= 100) a("🙌 100-yd receiver", "good");
+    if (F.int >= 2) a("😬 " + F.int + " picks", "bad");
+    return t;
+  }
+  // tpTags(sport, v, over): sport "bball" | "hockey" | "baseball" | "soccer"; v = { label: value } keyed by ESPN's box score labels
+  // (PTS, REB, AST, STL, BLK, FG "7-9", 3PT "3-5", G, A, SV, GA, SA, IP, ER, K, H, HR, RBI, SOG, RC); over = the game is final.
+  // Returns [{ t: "🎯 3 threes", c: "hot" | "good" | "bad" }], c being the fd-tag pill's style. Box Office uses it too. Football: tpFootTags.
+  function tpTags(sport, v, over) {
+    v = v || {};
+    var t = [], a = function (txt, c) { t.push({ t: txt, c: c || "" }); }, has = function (k) { return v[k] != null && v[k] !== "" && v[k] !== "–"; };
+    var n = function (k) { var x = parseFloat(String(v[k] == null ? "" : v[k]).replace("+", "")); return isNaN(x) ? 0 : x; };
+    var made = function (k) { var m = /^(\d+)-(\d+)$/.exec(String(v[k] || "")); return m ? [Number(m[1]), Number(m[2])] : [0, 0]; };
+    if (sport === "bball") {
+      var tens = ["PTS", "REB", "AST", "STL", "BLK"].filter(function (k) { return n(k) >= 10; }).length, fg = made("FG"), tp = made("3PT");
+      if (tens >= 3) a("👑 Triple-double", "hot"); else if (tens === 2) a("✌️ Double-double", "hot");
+      if (n("PTS") >= 30) a("🪣 " + n("PTS") + "-piece", "hot");
+      if (fg[1] >= 8 && fg[0] / fg[1] >= 0.6) a("🔥 Hot hand", "hot");
+      if (tp[0] >= 3) a("🎯 " + tp[0] + " threes", "good");
+      if (n("STL") + n("BLK") >= 3) a("🔒 Lockdown", "good");
+      if (n("AST") >= 8 && tens < 2) a("🪄 " + n("AST") + " assists", "good");
+    } else if (sport === "hockey") {
+      if (has("SV")) {
+        var ga = has("GA") ? n("GA") : has("SA") ? n("SA") - n("SV") : -1;
+        if (ga === 0 && n("SV") > 0) a(over ? "🔒 Shutout" : "🔒 Perfect so far", "hot");
+        if (n("SV") >= 30) a("🧱 " + n("SV") + " saves", "good");
+      } else {
+        if (n("G") >= 3) a("🎩 Hat trick", "hot"); else if (n("G") === 2) a("🚨 Two goals", "hot"); else if (n("G") === 1) a("🚨 Goal", "hot");
+        if (n("A") >= 2) a("🍎 " + n("A") + " assists", "good");
+      }
+    } else if (sport === "baseball") {
+      if (has("IP")) { if (n("K") >= 8) a("⚡ " + n("K") + " strikeouts", "hot"); if (n("IP") >= 6 && has("ER") && n("ER") === 0) a("🔒 Scoreless " + v.IP, "good"); }
+      else {
+        if (n("HR") >= 2) a("💣 " + n("HR") + " homers", "hot"); else if (n("HR") === 1) a("💣 Homer", "hot");
+        if (n("H") >= 3) a("🔥 " + n("H") + " hits", "good");
+        if (n("RBI") >= 3) a("🏃 " + n("RBI") + " RBI", "good");
+      }
+    } else if (sport === "soccer") {
+      if (n("G") >= 3) a("🎩 Hat trick", "hot"); else if (n("G") === 2) a("⚽ Brace", "hot"); else if (n("G") === 1) a("⚽ Goal", "hot");
+      if (n("A") >= 1) a("🅰️ " + (n("A") > 1 ? n("A") + " assists" : "Assist"), "good");
+      if (n("SOG") >= 3) a("🎯 " + n("SOG") + " on target", "good");
+      if (n("RC")) a("🟥 Sent off", "bad");
+    }
+    return t;
   }
   // ---- Top performers, in the live feed's look (DJ, 3.74.0: "bring this to life more") ----
   // each player is a small card: the team's color down the left edge, their jersey with the number (football and
@@ -196,9 +250,8 @@
     var ln = el("div", "tp-l");
     ln.appendChild(document.createTextNode(w.line));
     m.appendChild(top); m.appendChild(ln); r.appendChild(m);
-    if (w.hero && w.hero.v) { var h = el("div", "tp-hero"); h.appendChild(el("b", null, String(w.hero.v))); h.appendChild(el("i", null, w.hero.l));
-      if (sport === "football" && w.td > 0) h.appendChild(el("span", "tp-td", "🏈 " + (w.td > 1 ? w.td + " TD" : "TD")));
-      r.appendChild(h); }
+    // the right side: what made the night (3.75.0, DJ). Nothing qualifies, nothing shows.
+    var tg = el("div", "tp-tags"); (w.tags || []).slice(0, 3).forEach(function (x) { tg.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), x.t)); }); r.appendChild(tg);
     return r;
   }
   // part: "recap" (after the final: the recap and top performers), "pre" (the pregame preview only), or nothing (all of it)
