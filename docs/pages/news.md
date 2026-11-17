@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.83.2
+Last updated: Nov 17, 2026, 3.83.3
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -31,6 +31,10 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   redraws (redraws happen as rosters arrive). An Athletic lead (no photo) borrows the newest ESPN photo about its team.
 - News is always today (3.83.2, DJ: Regenerate showed last night's games): the app keeps its day while left open, so
   `renderNews` moves the app to `todayInHome()` when News is shown on an earlier day (rolls at 4 AM Central).
+- Top five and quick hits (3.83.3, DJ: "#5 should show Detroit Lions and NFL, since that's why it was chosen"): every top
+  story shows its team (Claude's `team`, else `nwFindTeam` finds a full name or a nickname unique in its league; with no league,
+  the page's leagues are tried) and a why pill: ⭐ My team, 📺 On your slate, or the league tag with its sport emoji. Quick hits on
+  game and league cards are feed boxes (`nwBoxHits`). Worker asks for `team` on top stories (lg always) and on hits.
 - Swipe (3.82.0, DJ): sideways on News moves between Press Box and the league tabs, never Back (mode "news" in
   280-ios-bridge.js, `nwSwipe`); ends spring back; a breakdown page has no swipe. Works per pane on the open Duo.
 - On Press Box, a league card's button is "<TAG> briefing" and switches to that league's tab.

@@ -416,3 +416,9 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx-side[style*="--nx-team"] { border-left: 4px solid var(--nx-team); background: color-mix(in srgb, var(--nx-team) 8%, var(--card)); }
 .nx-sn { font-size: 13px; font-weight: 800; color: var(--ink); }
 .nx-side .nx-th { display: flex; align-items: center; gap: 2px; }
+/* 3.83.3: why a top story made the five (My team, On your slate, or its league), and quick hits as feed boxes */
+.nx-pill.why { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--ink); }
+.nx .nx-hitb { margin-top: 10px; gap: 6px; }
+.nx .nx-hitb .nx-bx { font-size: 14px; }
+.nx-lgc .nx-lt b .nx-em { margin-right: 2px; }
+.nx-bm > .nx-bp:first-child { margin-left: 0; justify-content: flex-start; }  /* no team: the tags start the row */

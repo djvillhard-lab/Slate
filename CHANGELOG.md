@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.83.3 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- News, Press Box: every top-five story now shows its team's logo and name, even when Claude didn't name the team (the app finds it in the story), and why it made your five: ⭐ My team, 📺 On your slate, or its league (🏈 NFL, 🏀 CBB...).
+- News, Press Box: the league sections (and each game's quick hits) are in the new look. Each quick hit is a feed box with its team's color, logo and an emoji tag, and each league's name has its sport's emoji.
+- Claude now names the team for every top story and quick hit when it writes the page, so the logos and colors are filled in from the next Regenerate.
+
 ## 3.83.2 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - News: opening News (or tapping Regenerate) after the app was left open overnight now moves to today. Before, the game picker still showed last night's slate.

@@ -180,6 +180,32 @@
     [/result|final|win|won|beat|loss|lost/i, "🏁"], [/tonight|schedule|matchup|preview|game/i, "🗓️"], [/quote|said/i, "💬"], [/storyline|story|news/i, "📰"]];
   function nwCatEm(tag) { var t = String(tag || ""); for (var i = 0; i < NW_CATS.length; i++) if (NW_CATS[i][0].test(t)) return NW_CATS[i][1]; return t ? "📰" : ""; }
   function nwChip(chip, tone) { var hot = NW_HOT.test(chip), c = el("span", "nx-chipt " + (hot ? "hot" : tone || "")); if (hot || NW_COLD.test(chip)) c.appendChild(nwEm(hot ? "🔥" : "🧊")); c.appendChild(document.createTextNode(chip)); return c; }
+  // a team named in the text, when Claude didn't say which team (3.83.3): a full name ("Detroit Lions") anywhere, or a
+  // nickname ("Lions") that only one team in that league has
+  var NW_TLG = { nfl: "NFL", nba: "NBA", mlb: "MLB", nhl: "NHL", wnba: "WNBA", mls: "MLS", epl: "Premier League", laliga: "La Liga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", ncaaf: "College", ncaam: "College", ncaaw: "College" };
+  function nwFindTeam(text, lg) {
+    var tx = String(text || ""), lo = tx.toLowerCase(), want = NW_TLG[lg] || "", pool = teamIndex().filter(function (t) { return !want || t.lg === want; });
+    var full = pool.filter(function (t) { return t.name.length > 5 && lo.indexOf(t.name.toLowerCase()) !== -1; });
+    if (full.length) return full.sort(function (a, b) { return b.name.length - a.name.length; })[0];
+    if (!want || want === "College") return null;
+    var nick = pool.filter(function (t) { var w = t.name.split(" ").pop(); return w.length > 3 && new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(tx); });
+    return nick.length === 1 ? nick[0] : null;
+  }
+  function nwLgOfTeam(t) { if (!t) return ""; for (var k in NW_TLG) if (NW_TLG[k] === t.lg && t.lg !== "College") return k; return ""; }
+  function nwSportEm(lg) { var b = String(bxBase(lg) || ""); return /football\/(nfl|college)/.test(b) ? "🏈" : /basketball/.test(b) ? "🏀" : /hockey/.test(b) ? "🏒" : /baseball/.test(b) ? "⚾" : /soccer/.test(b) ? "⚽" : "🏆"; }
+  // quick hits as feed boxes (3.83.3, DJ: the league sections in the new look): the team's color and logo, the tag
+  function nwTopLgs(doc) {
+    var o = {}; (((doc || {}).cover || {}).leagues || []).forEach(function (k) { o[k] = 1; }); nwGames().forEach(function (g) { o[g.league] = 1; }); myTeamList().forEach(function (t) { o[t.lg] = 1; });
+    return Object.keys(o).filter(function (k) { return NW_TLG[k]; });
+  }
+  function nwBoxHits(list, lg) {
+    var w = el("div", "nx-boxes nx-hitb");
+    (list || []).forEach(function (h) {
+      var t = nwTeam(h.team, lg) || nwFindTeam(h.text, lg), b = nwBox(t, h.team, [h.tag ? nwPill(h.tag) : null], t ? "" : "plain");
+      b.appendChild(el("p", "nx-bx", h.text)); w.appendChild(b);
+    });
+    return w;
+  }
   function nwHits(list) {
     var w = el("div", "nx-hits");
     (list || []).forEach(function (h) { var r = el("div", "nx-hit"); if (h.tag) r.appendChild(nwTag(h.tag, /injur|out\b|suspen|doubt/i.test(h.tag))); r.appendChild(el("span", "nx-tx", h.text)); w.appendChild(r); });
@@ -359,7 +385,15 @@
       body.appendChild(tcard);
       // each story is a feed box (3.82.0): its rank, the team's color and logo when Claude named one, the tag and NEW
       if (!shut) { var tw = el("div", "nx-boxes nx-tops"); top.forEach(function (x, i) {
-        var t = nwTeam(x.team, x.lg), b = nwBox(t, x.team, [x.tag ? nwPill(x.tag) : null, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain");
+        // the team (from Claude, else found in the story) and why it made the five: one of my teams, a game on my slate, or its league (3.83.3, DJ)
+        var txt = x.title + " " + (x.why || ""), t = nwTeam(x.team, x.lg) || nwFindTeam(txt, x.lg);
+        // no league from Claude: try the leagues this page covers (its picked leagues, the slate's, my teams'), keeping a team only one of them has
+        if (!t && !x.lg) { var cands = []; nwTopLgs(doc).forEach(function (k) { var f = nwFindTeam(txt, k); if (f && cands.indexOf(f) === -1) cands.push(f); }); if (cands.length === 1) t = cands[0]; }
+        var lg = x.lg || nwLgOfTeam(t), why = null;
+        if (t && isFav(t.name, lg)) why = nwPill("My team", "why", "⭐");
+        else if (t && nwGames().some(function (g) { return (!lg || g.league === lg) && (teamMatch(t.name, g.away, g.league) || teamMatch(t.name, g.home, g.league)); })) why = nwPill("On your slate", "why", "📺");
+        else if (lg && LEAGUES[lg]) why = nwPill(LEAGUES[lg].tag, "why", nwSportEm(lg));
+        var b = nwBox(t, x.team, [why, x.tag ? nwPill(x.tag) : null, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain");
         var hl = el("div", "nx-th2"); hl.appendChild(el("i", "nx-rank", String(i + 1))); hl.appendChild(el("b", null, x.title)); b.appendChild(hl);
         if (x.why) b.appendChild(el("p", "nx-bx", x.why)); tw.appendChild(b);
       }); body.appendChild(tw); }
@@ -389,7 +423,7 @@
         ["away", "home"].forEach(function (sd) { var v = hx(g[sd + "Color"]) || ((nwTeam(g[sd], g.league) || {}).c1) || ""; if (hexOk(v)) c.style.setProperty(sd === "away" ? "--nx-a" : "--nx-h", v); });
         gh.appendChild(icon("more")); nwFoldBtn(gh, ok, open, short(g, "away") + " at " + short(g, "home")); c.appendChild(gh);
         if (open) {
-          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwHits(x.hits)); c.appendChild(bd);
+          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwBoxHits(x.hits, g.league)); c.appendChild(bd);
           if (x.read) c.appendChild(nwRead(x.read));
           c.appendChild(nwDeepRow({ type: "g", id: g.id }));
         }
@@ -425,10 +459,11 @@
         var n = nwGames().filter(function (g) { return g.league === x.key; }).length;
         // each league is a drop-down too: its name shows, a tap opens the write-up
         var ok = "l:" + x.key, open = nwIsOpen(ok), c = el("div", "nx-card nx-lgc nx-dd" + (open ? "" : " shut")), lh = el("div", "nx-lh"), lt = el("div", "nx-lt");
-        lt.appendChild(el("b", null, (LEAGUES[x.key] || {}).name || x.key)); if (n) lt.appendChild(el("span", null, n + (n === 1 ? " game" : " games") + " on your slate")); lh.appendChild(lt);
+        var ltn = el("b"); ltn.appendChild(nwEm(nwSportEm(x.key))); ltn.appendChild(document.createTextNode(" " + ((LEAGUES[x.key] || {}).name || x.key))); lt.appendChild(ltn);
+        if (n) lt.appendChild(el("span", null, n + (n === 1 ? " game" : " games") + " on your slate")); lh.appendChild(lt);
         lh.appendChild(icon("more")); nwFoldBtn(lh, ok, open, (LEAGUES[x.key] || {}).name || x.key); c.appendChild(lh);
         if (open) {
-          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwHits(x.hits)); c.appendChild(bd);
+          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwBoxHits(x.hits, x.key)); c.appendChild(bd);
           if (x.read) c.appendChild(nwRead(x.read));
           if (nwBriefLgs().indexOf(x.key) !== -1) { var lb = el("button", "nx-deep"); lb.type = "button"; lb.appendChild(icon("sparkle")); lb.appendChild(el("span", "nx-dl", (LEAGUES[x.key] || {}).tag + " briefing")); lb.appendChild(icon("more")); lb.addEventListener("click", function () { nwPickLg(x.key); }); c.appendChild(lb); }
           else c.appendChild(nwDeepRow({ type: "l", lg: x.key }));
