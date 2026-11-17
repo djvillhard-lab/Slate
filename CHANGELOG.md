@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.90.3 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- News, Press Box: on the Top news cards the two tags have switched places. The story's tag (🚑 Injury, 📋 Coaching, 🔥 Streak...) now sits beside the team name, and why it made Top news (🚨 Breaking, ⭐ My team, 📺 On your slate, 🔥 Trending) sits in the top right with NEW.
+
 ## 3.90.2 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate and All games: the 📰 News lines update by themselves as soon as a new News page is generated (or a league briefing is updated), on every open screen and the open Duo's other pane, with no 10-minute wait. A line from the older page is replaced or removed; a line that's still the best story stays the same.

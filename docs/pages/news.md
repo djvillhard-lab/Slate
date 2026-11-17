@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.85.1
+Last updated: Nov 17, 2026, 3.90.3
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -72,6 +72,8 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   (about 85 countries, flag and kit colors) win over ESPN's in `pairColors` for any team not in the app's club list, so it
   applies app-wide. News `nwSides(g)` makes a pseudo team for a nation (main from pairColors, second from the flag,
   aliases like us/usmnt/americans in `k`); its notes get class `two` (two-color edge). Notes match by `h.team` first.
+- Top news pills swapped (3.90.3, DJ): the story's tag sits beside the team name, the why pill (Breaking, My team, On your
+  slate, Trending, league) top right with NEW. Reverses 3.83.4 for Top news only; quick hits are unchanged.
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
   both inside the 24,000-token limit. DJ's Nov 16 "it fails on a small selection" report was the old failure's

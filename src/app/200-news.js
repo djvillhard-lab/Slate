@@ -449,7 +449,8 @@
         else if (t && nwGames().some(function (g) { return (!lg || g.league === lg) && (teamMatch(t.name, g.away, g.league) || teamMatch(t.name, g.home, g.league)); })) why = nwPill("On your slate", "why", "📺");
         else if (x.reason === "trending") why = nwPill("Trending", "why", "🔥");
         else if (lg && LEAGUES[lg]) why = nwPill(LEAGUES[lg].tag, "why", nwSportEm(lg));
-        var b = nwBox(t, x.team, [x.tag ? nwPill(x.tag) : null, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain", why);
+        // swapped (3.90.3, DJ): the story's tag (Injury, Coaching...) beside the team name, why it's here (Breaking, My team...) top right
+        var b = nwBox(t, x.team, [why, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain", x.tag ? nwPill(x.tag) : null);
         var hl = el("div", "nx-th2"); hl.appendChild(el("i", "nx-rank", String(i + 1))); hl.appendChild(el("b", null, x.title)); b.appendChild(hl);
         if (x.why) b.appendChild(el("p", "nx-bx", x.why)); tw.appendChild(b);
       });
