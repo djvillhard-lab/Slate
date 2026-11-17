@@ -56,3 +56,6 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 
 ## 3.68.1: the stat line matches the play (DJ)
 - `hpLine` k per play: turnover `to` ("3 TO"), offensive foul `tofoul` ("3 TO, 2 fouls": it's both), steal `stl` plus the player who lost it (`to`), block `blk`, made shot `pts`/`3` ("13 pts, 5-8 FG"), technical `none` (not a personal foul in the NBA). Foul-trouble tags also go on an offensive-foul turnover when it's the player's latest foul.
+
+## 3.68.4: the switcher is the slate's live games
+- DJ changed 3.66.9's rule: `fdList` (strip and swipe) is now the live football/basketball games on the slate (`inLineup`), plus the game the page was opened from (`FD.from`), which sorts first; the rest by start time. Not favorite teams any more.

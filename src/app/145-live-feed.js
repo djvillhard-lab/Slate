@@ -188,10 +188,11 @@
   function fdJersey(g, sd, P) { var j = el("span", "fd-jer", P.jer ? P.jer : "•"), c = badgeColor(g, sd) || "#555"; j.style.background = c; if (lum(c) > 0.62) j.style.color = "#111"; j.setAttribute("aria-hidden", "true"); return j; }
   // the live games in the switcher's order: your slate's first, then by start time
   function fdList(g) {
-    // 3.66.9 (DJ): the switcher and the swipe go between your teams' live games (football and basketball) plus the game you opened the page from
-    var from = FD.from || g.id, mine = function (x) { return isFav(x.away, x.league) || isFav(x.home, x.league); };
-    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedOk(x) && mine(x)) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
-    list.sort(function (a, b) { return ((b.id === from) - (a.id === from)) || (inLineup(b.id) - inLineup(a.id)) || byStart(a, b); });
+    // 3.68.4 (DJ): the switcher and the swipe go between the live games on your slate (football and basketball), plus the game you
+    // opened the page from. (3.66.9 had your teams' games; DJ changed it to the slate.)
+    var from = FD.from || g.id;
+    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedOk(x) && inLineup(x.id)) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
+    list.sort(function (a, b) { return ((b.id === from) - (a.id === from)) || byStart(a, b); });
     return list;
   }
   // a sideways swipe on the page moves to the next (left) or previous (right) game in the switcher; false when there's none that way
@@ -223,7 +224,7 @@
   function fdStrip(g) {
     var ids = {}, list = fdList(g);
     if (!list.length) return null;  // shown even for one game (3.36.7): the page keeps the same shape, and the score box stays clear of the folded Duo's clock
-    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Your teams' live games");
+    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Live games on your slate");
     list.forEach(function (x) { if (ids[x.id]) return; ids[x.id] = 1;
       var on = x.id === g.id, b = el("button", "fd-chip" + (on ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", on ? "true" : "false");
       var v = scoreRaw(x.id) || {}, c1 = bx.live[x.id], fs = c1 && c1.sum && Date.now() - (c1.sumAt || 0) < 120000 ? fdSumScore(x.id, c1.sum) : null;
