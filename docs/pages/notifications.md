@@ -39,6 +39,9 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - Football (3.71.3): sit is just ESPN's down and spot when possession is known; fitLine also splits on ", and have/are/…".
   Build 45 (3.75.1) moves the down next to the football icon by the team name and drops its own row; the island gets
   a football icon by the score, no timeouts (at/ht for football), no timeout/break last plays, and wp only without pv.
+- Logo pick (3.81.7, build 46): SlateLogos.fetch measures the dark logo; under 0.12 average saturation it tries the
+  regular one and keeps it if saturation > 0.3 and brightness >= 0.3 (same rule as 045-team-logos.js and the email's
+  LOGO_PLAIN). Saved to Logos2 so old picks are replaced. The page sends the game's own logo first (national teams).
 ## Open
 - Hockey: ESPN's scoreboard has no per-team leaders during a game (checked Nov 16, MTL-NYR 2nd period), so no standout.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.

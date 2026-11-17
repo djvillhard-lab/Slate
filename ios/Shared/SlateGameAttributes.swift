@@ -51,7 +51,7 @@ struct SlateGameAttributes: ActivityAttributes {
 enum SlateLogos {
     static let group = "group.com.djvillhard.slate"
     static var dir: URL? {
-        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)?.appendingPathComponent("Logos", isDirectory: true)
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)?.appendingPathComponent("Logos2", isDirectory: true)  // 3.81.7: new folder, so every logo is saved again with the pick below
     }
     // "nba/bos.png" -> Logos/nba-bos.png; anything that isn't a plain league/file name is ignored
     static func file(_ seg: String) -> URL? {
@@ -73,11 +73,39 @@ enum SlateLogos {
             if let at = (try? FileManager.default.attributesOfItem(atPath: f.path))?[.modificationDate] as? Date,
                Date().timeIntervalSince(at) < 7 * 86400 { continue }
             let p = seg.lowercased().split(separator: "/").map(String.init)
+            // 3.81.7: ESPN's version for dark backgrounds, unless it's a plain white mark and the regular logo has color
+            // and is bright enough to show on the dark card (Clemson's orange paw, not a white one); no dark one: the regular
             SlateLogos.load(p, dark: true) { d in
-                if let d { try? d.write(to: f, options: .atomic); return }
-                SlateLogos.load(p, dark: false) { d in if let d { try? d.write(to: f, options: .atomic) } }
+                if let d, let lk = SlateLogos.look(d), lk.sat >= 0.12 { try? d.write(to: f, options: .atomic); return }
+                SlateLogos.load(p, dark: false) { r in
+                    if let r, let rl = SlateLogos.look(r), rl.sat > 0.3, rl.lum >= 0.3 { try? r.write(to: f, options: .atomic); return }
+                    if let pick = d ?? r { try? pick.write(to: f, options: .atomic) }
+                }
             }
         }
+    }
+    // how colorful and how bright a logo is, over its visible pixels (0 to 1 each)
+    static func look(_ d: Data) -> (sat: Double, lum: Double)? {
+        guard let img = UIImage(data: d)?.cgImage else { return nil }
+        let w = 32, h = 32
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        let ok: Bool = px.withUnsafeMutableBytes { buf in
+            guard let ctx = CGContext(data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                      space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+            ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
+            return true
+        }
+        guard ok else { return nil }
+        var n = 0.0, sat = 0.0, lum = 0.0
+        for i in stride(from: 0, to: px.count, by: 4) {
+            let a = Double(px[i + 3]); if a < 60 { continue }
+            let r = Double(px[i]) / a, g = Double(px[i + 1]) / a, b = Double(px[i + 2]) / a
+            let mx = max(r, g, b), mn = min(r, g, b)
+            n += 1
+            if mx * 255 > 40, mx > 0 { sat += (mx - mn) / mx }
+            lum += 0.2126 * r + 0.7152 * g + 0.0722 * b
+        }
+        return n > 0 ? (sat / n, lum / n) : nil
     }
     private static func load(_ p: [String], dark: Bool, done: @escaping (Data?) -> Void) {
         guard let url = URL(string: "https://a.espncdn.com/combiner/i?img=/i/teamlogos/\(p[0])/\(dark ? "500-dark" : "500")/\(p[1])&w=64&h=64") else { done(nil); return }

@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Logo audit: logos the iPhone app saves, live notifications, morning email | src/app/040-live.js (laLogo only), worker/morning-email.js (logo image only), shared: ios/Shared/SlateGameAttributes.swift, docs/pages/notifications.md | 2026-11-17 04:21 |
