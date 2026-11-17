@@ -1445,11 +1445,14 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .feed-go em { font-style: normal; font-size: 13px; color: var(--muted); }
 .feed-go svg, .tray .feed-go svg { width: 16px; height: 16px; color: var(--dim); flex: none; }
 .gv-head .feed-go { margin: 12px 0 0; }
-.fd-play[style*="--fd-team"] { border-left: 4px solid color-mix(in srgb, var(--fd-team) 72%, var(--ink)); }  /* 3.70.1: football, the team that made the play */
-.fd-watch { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: -2px 0 4px; }
-.fd-won { flex: 1; min-width: 0; font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fd-wbtn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--hair); background: var(--raise); color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; text-decoration: none; white-space: nowrap; position: relative; }
-.fd-wbtn::after { content: ""; position: absolute; inset: -5px -2px; }
+.fd-play[style*="--fd-team"] { border-left: 4px solid var(--fd-team); }
+/* 3.72.1 (DJ: "scoring isn't in the right team colors"): a football scoring play is in the scoring team's color (headline, outline, tint), not the app's accent */
+.fd-play.fd-k-score[style*="--fd-team"] { border-color: color-mix(in srgb, var(--fd-team) 55%, transparent); border-left-color: var(--fd-team); background: color-mix(in srgb, var(--fd-team) 10%, var(--card)); }
+.fd-play.fd-k-score[style*="--fd-team"] .fd-pt { color: var(--fd-team); }  /* 3.70.1: football, the team that made the play */
+.fd-mid .fd-mw { display: inline-flex; align-items: center; gap: 3px; margin-top: 3px; padding: 0; border: 0; background: none; font: inherit; font-size: 11px; font-weight: 800; line-height: 1.2; color: var(--ink); text-decoration: none; white-space: nowrap; position: relative; -webkit-tap-highlight-color: transparent; }
+.fd-mid .fd-mw::after { content: ""; position: absolute; inset: -12px -16px -14px; }  /* a 44-point target around the small label */
+.fd-mid .fd-mw-x { color: var(--muted); font-weight: 700; }
+.fd-mid .fd-mw-x::after { content: none; }
 .fd-ht { display: inline-flex; align-items: center; gap: 5px; color: var(--live, #E5484D) !important; }
 .fd-htd { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #E5484D); }
 .fd-ldc { display: grid; gap: 5px; min-width: 0; align-content: start; }

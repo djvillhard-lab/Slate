@@ -97,3 +97,9 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 ## 3.70.1: Watch button, football team colors (DJ, Nov 17)
 - `fdWatch` (145) draws the row under the score bar on live games: "On <channels>" and up to two `watchLink` buttons (same links as the cards and On TV).
 - Football cards get `--fd-team` (left edge). `fdRead` returns `offTid`, plus `def` (sack, interception, fumble recovered by the defense, safety), `teamP` (the scorer on a return touchdown) or `noTeam` (penalty, kickoff).
+
+## 3.72.1: colors readable on every theme (Nov 17)
+- `fdTint` now ends with `hlInk` (150-game-row.js): the team color is pushed to 4.5:1 against the card on the current theme. Every edge and the win probability bar use it. Don't use `badgeColor` raw for anything that must be seen against the card.
+- Jersey numbers use `fdNumInk` (black or white by contrast, not a brightness cutoff). The jersey fill stays the true team color.
+- Watch moved (DJ, with a screenshot): `fdWatch` now returns a small "▶ ESPN" link that goes inside `.fd-mid` under the quarter (`.fd-mw`), and the 3.70.1 row under the score bar is gone. Don't bring the row back.
+- Football scoring cards (`.fd-k-score` with `--fd-team`) take the team's color for headline, outline and tint in place of the accent. Same boxes in the quick look's Scoring (`fdPlayCard`).

@@ -283,23 +283,28 @@
     return n ? list : null;
   }
   // a team's color that shows on a dark card: black or near-black gives way to the team's second color (or a neutral gray)
-  function fdTint(g, sd) { var c = badgeColor(g, sd); if (c && lum(c) >= 0.06) return c; var a2 = g[sd + "Alt"]; return hexOk(a2) && lum(a2) >= 0.06 ? a2 : "#8A94A6"; }
+  // 3.72.1: then pushed toward white (dark themes) or black (Sunday Paper) until it stands at 4.5:1 against the card, with the slate one-liners' helper
+  // (hlInk, 150-game-row.js). White and yellow teams were nearly invisible on Sunday Paper.
+  function fdTint(g, sd) { var c = badgeColor(g, sd), a2 = g[sd + "Alt"], base = c && lum(c) >= 0.06 ? c : hexOk(a2) && lum(a2) >= 0.06 ? a2 : "#8A94A6"; return hexOk(base) ? hlInk(base) : base; }
+  // the number on a jersey: black or white, whichever reads better on that team's color (3.72.1; a plain brightness cutoff left 17 teams hard to read)
+  function fdNumInk(c) { return hexOk(c) ? (hlContrast(c, "#111111") >= hlContrast(c, "#ffffff") ? "#111" : "#fff") : "#fff"; }
   // 3.70.0 (DJ: "look more like a football jersey"): the player's number on a football jersey in the team's color (wide shoulders, short sleeves, a V neck),
   // in place of the numbered circle. Basketball's is hpJersey, a tank top.
   function fdJersey(g, sd, P) {
-    var c = badgeColor(g, sd) || "#555", ink = lum(c) > 0.62 ? "#111" : "#fff", j = el("span", "fd-jer fd-jer-fb"), n = String(P.jer || "");
+    var c = badgeColor(g, sd) || "#555", ink = fdNumInk(c), j = el("span", "fd-jer fd-jer-fb"), n = String(P.jer || "");
     j.style.cssText = "position:relative;flex:none;width:30px;height:27px;display:grid;place-items:center;background:none;border-radius:0;box-shadow:none";
-    j.innerHTML = '<svg viewBox="0 0 30 27" width="30" height="27" style="position:absolute;inset:0;width:30px;height:27px" aria-hidden="true"><path d="M10 1.5H12.6Q15 5 17.4 1.5H20L28 5.2L28.6 12L23.6 13V24.6Q23.6 25.5 22.7 25.5H7.3Q6.4 25.5 6.4 24.6V13L1.4 12L2 5.2Z" fill="' + c + '" stroke="rgba(127,127,127,.5)" stroke-width="1" stroke-linejoin="round"/><path d="M2.3 9.2L6.4 10M27.7 9.2L23.6 10" fill="none" stroke="' + ink + '" stroke-opacity=".55" stroke-width="1.4"/></svg>';
+    j.innerHTML = '<svg viewBox="0 0 30 27" width="30" height="27" style="position:absolute;inset:0;width:30px;height:27px" aria-hidden="true"><path d="M10 1.5H12.6Q15 5 17.4 1.5H20L28 5.2L28.6 12L23.6 13V24.6Q23.6 25.5 22.7 25.5H7.3Q6.4 25.5 6.4 24.6V13L1.4 12L2 5.2Z" fill="' + c + '" stroke="rgba(127,127,127,.7)" stroke-width="1" stroke-linejoin="round"/><path d="M2.3 9.2L6.4 10M27.7 9.2L23.6 10" fill="none" stroke="' + ink + '" stroke-opacity=".55" stroke-width="1.4"/></svg>';
     var nb = el("b", null, n || "•"); nb.style.cssText = "position:relative;margin-top:4px;font-size:" + (n.length > 1 ? "10.5" : "11.5") + "px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:" + ink; j.appendChild(nb);
     j.setAttribute("aria-hidden", "true"); return j;
   }
-  // 3.70.1 (DJ: "no easy way to quickly watch the game"): under the score bar, where the game is on and a Watch button for each channel Slate can open
-  // (the same links as the game cards and On TV: watchLink). Live games only. Nothing when no channel is listed.
+  // Watching the game from its feed (DJ). 3.70.1 had an "On ESPN" row with a Watch button under the score bar; 3.72.1 (DJ, with a screenshot): the
+  // channel sits under the quarter inside the score bar with a small play arrow, and tapping it opens the app (watchLink, as on the cards and On TV).
+  // The first channel Slate can open; a channel it can't open shows as plain text. Live games only.
   function fdWatch(g, over) {
     if (over) return null; var tv = (g.tv || []).filter(Boolean); if (!tv.length) return null;
-    var w = el("div", "fd-watch"); w.appendChild(el("span", "fd-won", "On " + tv.map(function (n) { return NET_SHORT[n] || n; }).join(", ")));
-    var n2 = 0; tv.forEach(function (n) { if (n2 >= 2) return; var a = watchLink(n, "fd-wbtn", "\u25B6 " + (tv.length > 1 ? (NET_SHORT[n] || n) : "Watch")); if (!a) return; n2++; w.appendChild(a); });
-    return w;
+    var n = tv.filter(function (x) { return watchOptions(x).length; })[0], lbl = NET_SHORT[n || tv[0]] || n || tv[0];
+    var a = n ? watchLink(n, "fd-mw", "\u25B6 " + lbl) : null; if (a) a.addEventListener("click", function (e) { e.stopPropagation(); });
+    return a || el("span", "fd-mw fd-mw-x", lbl);
   }
   // halftime (3.70.0, DJ): a red dot and "HT", on the score bar and on the game's box in the switcher. ESPN says "End of 2nd Quarter" for a moment
   // before "Halftime" (and "End of 1st Half" in men's college basketball); all of those read HT.
@@ -462,7 +467,7 @@
     ["away", "mid", "home"].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = !over && fdIsHT(st.shortDetail || st.detail, g.league);
         var sd0 = spot && !over ? Number(spot.e.down) || 0 : 0;
-        if (ht) mid.appendChild(fdHT("b")); else { mid.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); } if (sd0 && spot.e.shortDownDistanceText) mid.appendChild(el("em", "fd-mdd", String(spot.e.shortDownDistanceText))); bug.appendChild(mid); return; }
+        if (ht) mid.appendChild(fdHT("b")); else { mid.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); } if (sd0 && spot.e.shortDownDistanceText) mid.appendChild(el("em", "fd-mdd", String(spot.e.shortDownDistanceText))); var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); if (!over && posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball"); nm.appendChild(bl); } tm.appendChild(nm);
@@ -470,7 +475,6 @@
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
     body.appendChild(bug);
-    var wrow = fdWatch(g, over); if (wrow) body.appendChild(wrow);
     // the scorebug stays on screen under the top bar while the plays scroll
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
     // the field: the away team's end zone on the left; the ball, the line of scrimmage and the yellow line to gain

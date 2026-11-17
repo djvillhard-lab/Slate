@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.72.1 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live feed: team colors now read on every theme. The colored edge on a play (and the win probability bar) is lightened on the dark themes or darkened on Sunday Paper until it stands out, the same check the slate's live one-liners use. White and yellow teams like the Nets were nearly invisible on Sunday Paper, and dark ones like the Ravens were faint on Midnight.
+- Live feed: the channel now sits inside the score bar, under the quarter, with a small play arrow (▶ ESPN). Tap it to open the app for that channel. The separate "On ESPN" row and its Watch button are gone.
+- Football scoring plays are now in the scoring team's color: the headline, the outline and the tint. That goes for the live feed and for Scoring in a game's quick look on the slate. They were all in the app's accent color before, so a Ravens touchdown looked the same as a Chargers one.
+- Live feed: the number on a jersey is black or white, whichever reads better on that team's color. The jersey outline is a little stronger so a white jersey shows on a white card.
+
 ## 3.72.0 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Football game cards: the Scoring section in the quick look (and on the matchup page) now shows each score as the same box the Live feed uses. Each box has the scoring team's color down its left edge, goalposts or an emoji on the headline, the players with their jerseys and stat lines, and the score at the right. Other sports keep the plain list for now.

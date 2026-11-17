@@ -132,6 +132,7 @@
         var ht = !over && fdIsHT(det, lg);  /* 3.70.0: a red dot and HT at halftime */
         if (ht) mid.appendChild(fdHT("b")); else mid.appendChild(el("b", null, over ? "Final" : /^end/i.test(det) ? "End" : st.state === "pre" ? timeText(g.start) : (cst.displayClock || "")));
         if (!over && !ht && st.state !== "pre") mid.appendChild(el("i", null, per ? hpPerName(lg, per) : ""));
+        var mw = fdWatch(g, over); if (mw) mid.appendChild(mw);
         bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
@@ -139,7 +140,6 @@
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
     body.appendChild(bug);
-    var wrow = fdWatch(g, over); if (wrow) body.appendChild(wrow);
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
     // each team's top-rated player so far (3.66.7): ESPN's own player rating from the live scoreboard, the same one the live
     // notifications use, so a big all-round game counts, not just points. A team ESPN hasn't rated yet shows its leading scorer.
@@ -245,9 +245,9 @@
   }
   // a player's jersey (3.66.10, DJ): a basketball tank top in the team's color with the number on it, in place of the numbered circle
   function hpJersey(g, sd, P) {
-    var c = badgeColor(g, sd) || "#555", ink = lum(c) > 0.62 ? "#111" : "#fff", j = el("span", "hp-jer");
+    var c = badgeColor(g, sd) || "#555", ink = fdNumInk(c), j = el("span", "hp-jer");
     j.style.cssText = "position:relative;flex:none;width:26px;height:28px;display:grid;place-items:center";
-    j.innerHTML = '<svg viewBox="0 0 24 26" width="26" height="28" style="position:absolute;inset:0" aria-hidden="true"><path d="M6.6 1H9.9Q12 5.6 14.1 1H17.4Q18 6.4 22 7.6V24.2Q22 25 21.2 25H2.8Q2 25 2 24.2V7.6Q6 6.4 6.6 1Z" fill="' + c + '" stroke="rgba(127,127,127,.45)" stroke-width="1"/></svg>';
+    j.innerHTML = '<svg viewBox="0 0 24 26" width="26" height="28" style="position:absolute;inset:0" aria-hidden="true"><path d="M6.6 1H9.9Q12 5.6 14.1 1H17.4Q18 6.4 22 7.6V24.2Q22 25 21.2 25H2.8Q2 25 2 24.2V7.6Q6 6.4 6.6 1Z" fill="' + c + '" stroke="rgba(127,127,127,.7)" stroke-width="1"/></svg>';
     var nb = el("b", null, P.jer ? P.jer : ""); nb.style.cssText = "position:relative;margin-top:7px;font-size:" + (String(P.jer || "").length > 1 ? "10" : "11") + "px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:" + ink; j.appendChild(nb);
     j.setAttribute("aria-hidden", "true"); return j;
   }
