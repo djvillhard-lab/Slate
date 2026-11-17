@@ -492,6 +492,81 @@
     });
     return out;
   }
+  // ---- the rarest tags (DJ, 3.78.0): 👑 Triple-double, 📈 Season high, 🏆 Game-winner. They go first on a card, before the leader tags.
+  // Triple-double: from the box score row. Season high (basketball points): the player's ESPN game log this season, at least five earlier
+  // games and 20+ points (15+ in college), final games only, and only the night's biggest jump past an old high. Game-winner (basketball, football): the scoring play that put the winner ahead
+  // for good, in the last 30 seconds (basketball) or 2 minutes (football) of regulation or overtime, from ESPN's play-by-play; only close finals are checked.
+  var MM_HI = {}, MM_GW = {}, MM_BUSY = {};
+  var MM_BB_PATH = { nba: "basketball/nba", wnba: "basketball/wnba", ncaam: "basketball/mens-college-basketball", ncaaw: "basketball/womens-college-basketball" };
+  function mmRerender() { if (state.view === "moments") keepScroll(renderMoments); }
+  function mmFinal(r) { return /^[WLT] /.test(r.result || "") && !r.live; }
+  function mmMargin(r) { var m = /^[WLT] (\d+)-(\d+)/.exec(r.result || ""); return m ? Math.abs(Number(m[1]) - Number(m[2])) : 99; }
+  function mmSecs(c) { if (!c) return 9999; if (typeof c.value === "number") return c.value; var d = String(c.displayValue || ""), m = /^(\d+):(\d+)/.exec(d); return m ? Number(m[1]) * 60 + Number(m[2]) : parseFloat(d) || 0; }
+  function mmSeasonHigh(lg, day, r) {
+    var path = MM_BB_PATH[lg]; if (!path || !r.id || !r.ev || !r.st || !mmFinal(r)) return false;
+    var pts = parseFloat(r.st.PTS) || 0; if (pts < (lg === "nba" || lg === "wnba" ? 20 : 15)) return false;
+    var key = lg + "|" + r.id + "|" + day, log = MM_HI[key];
+    if (log === undefined) {
+      if (MM_BUSY[key]) return false; MM_BUSY[key] = 1;
+      rkFetch("https://site.api.espn.com/apis/common/v3/sports/" + path + "/athletes/" + r.id + "/gamelog").then(function (j) {
+        var out = [], ix = j && (j.labels || []).indexOf("PTS"), evs = (j && j.events) || {};
+        if (j && ix >= 0) (j.seasonTypes || []).forEach(function (t) { if (/preseason/i.test(t.displayName || "")) return; (t.categories || []).forEach(function (c) { (c.events || []).forEach(function (e) { out.push({ id: String(e.eventId), d: String((evs[e.eventId] || {}).gameDate || ""), p: parseFloat((e.stats || [])[ix]) || 0 }); }); }); });
+        MM_HI[key] = j ? out : null; mmRerender();
+      });
+      return false;
+    }
+    if (!log) return false;
+    var me = log.filter(function (e) { return e.id === String(r.ev); })[0], before = log.filter(function (e) { return e.id !== String(r.ev) && (!me || !me.d || e.d < me.d); });
+    if (!me && day < todayInHome()) before = before.filter(function (e) { return e.d.slice(0, 10) < day; });
+    if (before.length < 5) return false;
+    var prev = Math.max.apply(null, before.map(function (e) { return e.p; }));
+    return pts > prev ? pts - prev : false;   // how far past his old high
+  }
+  // the player who scored the go-ahead points for good late: { key: athlete id (basketball) or name (football) } for one game
+  function mmGameWinner(lg, ev, sport) {
+    var key = lg + "|" + ev; if (MM_GW[key] !== undefined) return MM_GW[key];
+    if (MM_BUSY["gw" + key]) return null; MM_BUSY["gw" + key] = 1;
+    var cached = rk.sum[lg + ev];
+    (cached ? Promise.resolve(cached) : rkFetch(rkUrl(lg, "summary", "event=" + ev))).then(function (sm) {
+      MM_GW[key] = sm ? mmGwFind(sm, lg, sport) : null; if (sm) rk.sum[lg + ev] = sm; mmRerender();
+    });
+    return null;
+  }
+  function mmGwFind(sm, lg, sport) {
+    var plays = sport === "football" ? (sm.scoringPlays || []) : (sm.plays || []).filter(function (p) { return p.scoringPlay; }); if (!plays.length) return "";
+    var last = plays[plays.length - 1], winH = last.homeScore > last.awayScore; if (last.homeScore === last.awayScore) return "";
+    var reg = sport === "football" ? 4 : lg === "ncaam" ? 2 : 4, go = null, lead = 0;
+    plays.forEach(function (p) { var now = p.homeScore > p.awayScore ? 1 : p.homeScore < p.awayScore ? -1 : 0, w = winH ? 1 : -1; if (now === w && lead !== w) go = p; lead = now; });
+    if (!go || (go.period || {}).number < reg || mmSecs(go.clock) > (sport === "football" ? 120 : 30)) return "";
+    if (sport === "football") { var t = String(go.text || ""); return t ? { name: t } : ""; }
+    var a = ((go.participants || [])[0] || {}).athlete; return a && a.id ? { id: String(a.id) } : "";
+  }
+  function mmRare(rows, lg, day) {
+    var sport = mmSport(lg), out = {}, hi = [], add = function (r, t) { var k = r.id || r.name; (out[k] = out[k] || []).push(t); };
+    rows.forEach(function (r) {
+      var st = r.st || {};
+      if (sport === "bball" && ["PTS", "REB", "AST", "STL", "BLK"].filter(function (k) { return (parseFloat(st[k]) || 0) >= 10; }).length >= 3) add(r, "👑 Triple-double");
+      var jump = sport === "bball" ? mmSeasonHigh(lg, day, r) : false; if (jump) hi.push([r, jump]);
+    });
+    // early in a season lots of players set season highs, so only the night's biggest jump past an old high gets the tag
+    var top = Math.max.apply(null, hi.map(function (x) { return x[1]; }).concat([0]));
+    hi.forEach(function (x) { if (x[1] === top) add(x[0], "📈 Season-high " + (parseFloat(x[0].st.PTS) || 0)); });
+    if (sport === "bball" || sport === "football") {
+      var evs = {}; rows.forEach(function (r) { if (r.ev && mmFinal(r) && mmMargin(r) <= (sport === "football" ? 8 : 3)) evs[r.ev] = 1; });
+      Object.keys(evs).forEach(function (ev) {
+        var gw = mmGameWinner(lg, ev, sport); if (!gw) return;
+        var hit = rows.filter(function (r) { return String(r.ev) === ev && (gw.id ? String(r.id) === gw.id : gw.name.indexOf(r.name + " ") === 0); })[0];
+        if (hit) add(hit, "🏆 Game-winner");
+      });
+    }
+    return out;
+  }
+  // the rare tags first, then the leader tags; a card shows two at most
+  function mmTags(rows, shown, lg, day) {
+    var rare = mmRare(shown, lg, day), lead = mmLeaders(rows, mmSport(lg)), out = {};
+    [rare, lead].forEach(function (m) { Object.keys(m).forEach(function (k) { out[k] = (out[k] || []).concat(m[k]); }); });
+    return out;
+  }
   function mmCard(r, mark, kind, look, lead) {
     var lg = mm.lg, sport = mmSport(lg), byId = (look && r.id && look.id[r.id]) || {}, byTm = (look && r.team && look.team[r.team]) || {};
     var teamName = r.teamName || byId.teamName || byTm.teamName || "", color = r.color || byId.color || byTm.color || "", jer = String(r.jer || byId.jer || "");
@@ -583,7 +658,7 @@
       if (!rows.length) { body.appendChild(el("div", "notice", stillLoading ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
       var topT = rows.slice(0, 20);
       body.appendChild(mmSec("Top performers", gamesLine(day, mm.lg, dk.live) || "Top " + topT.length));
-      var tlT = el("div", "bs-list mm-top mm-cards"); var ldT = mmLeaders(rows, mmSport(mm.lg)); topT.forEach(function (r, i) { mmPlayer(tlT, mmCard(r, i + 1, "", null, ldT), r); }); tlT.style.setProperty("--rows", Math.ceil(topT.length / 2)); body.appendChild(tlT);
+      var tlT = el("div", "bs-list mm-top mm-cards"); var ldT = mmTags(rows, topT, mm.lg, day); topT.forEach(function (r, i) { mmPlayer(tlT, mmCard(r, i + 1, "", null, ldT), r); }); tlT.style.setProperty("--rows", Math.ceil(topT.length / 2)); body.appendChild(tlT);
       body.appendChild(mmHow(mm.lg));
       body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Wild finishes show up tomorrow morning, and Claude can pick the over and underachievers when you ask."));
       return;
@@ -612,7 +687,7 @@
     var all = MM_SOCCER[mm.lg] ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), top = all.slice(0, 20);
     if (top.length) {
       body.appendChild(mmSec("Top performers", gamesLine(night, mm.lg, 0) || "Top " + top.length));
-      var tl = el("div", "bs-list mm-top mm-cards"), lk0 = MM_SOCCER[mm.lg] ? mmLookup(mm.lg, night) : null, ld0 = mmLeaders(all, mmSport(mm.lg));
+      var tl = el("div", "bs-list mm-top mm-cards"), lk0 = MM_SOCCER[mm.lg] ? mmLookup(mm.lg, night) : null, ld0 = mmTags(all, top, mm.lg, night);
       top.forEach(function (r, i) { if (MM_SOCCER[mm.lg]) tl.appendChild(mmCard(r, i + 1, "", lk0)); else mmPlayer(tl, mmCard(r, i + 1, "", null, ld0), r); });
       tl.style.setProperty("--rows", Math.ceil(top.length / 2)); body.appendChild(tl);
       body.appendChild(mmHow(mm.lg));

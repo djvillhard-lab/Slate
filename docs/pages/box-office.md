@@ -1,5 +1,5 @@
 # Box Office (and Player rankings)
-Last updated: Nov 17, 2026, 3.77.3
+Last updated: Nov 17, 2026, 3.78.0
 
 Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMoments`; Player rankings = the `best` view, `renderBest`, not in the menu). Styles: `src/styles/095-box-office.css` (plus older `rk-`/`mm-` rules in 040-components.css).
 
@@ -11,10 +11,12 @@ Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMomen
 - Player rankings (`best` view) still uses the old `bestRow` and isn't in the menu.
 
 ## Open
-- Rare-tag ideas offered to DJ, not built: season/career high (needs ESPN athlete game logs), triple-double when it happens, game-winner (play-by-play), best plus-minus of the night.
+- Best plus-minus tag: offered, DJ didn't pick it (3.78.0). Football/hockey season highs not built (only basketball points).
 - Nights saved before 3.76.0 have no stat maps, so no leader tags. Could re-run standouts.py for recent nights if DJ wants them filled.
 - "+12 vs avg" on over/underachievers needs season averages, which Box Office doesn't load yet (ESPN's athlete pages have them). Not built: DJ's rule is only stats a source provides.
 - Nothing from DJ waiting on this page.
+
+- Rare tags (3.78.0, `mmRare` → `mmTags`, shown before leader tags, two per card max): 👑 Triple-double (box score); 📈 Season-high N (basketball points, ESPN gamelog at site.api.espn.com/apis/common/v3/sports/<path>/athletes/<id>/gamelog, 5+ earlier games, 20+ pts pro / 15+ college, finals only, only the night's biggest jump past an old high); 🏆 Game-winner (basketball and football close finals: the go-ahead-for-good scoring play in the last 30 s / 2 min of regulation or OT, from the summary's plays / scoringPlays; football matches the scorer by name at the start of the play text).
 
 ## Decisions
 - DJ (Nov 17, 3.77.3): no slate tags (tpTags) on Box Office, too many and hard to follow. Only night-leader tags, so most cards have none. Game result stays on the right.

@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.78.0 (Nov 17, 2026)
+TestFlight: 3.68.5 (44), no new build (web only)
+- Box Office: three new rare tags, shown first on a player's card:
+  - 👑 Triple-double, only when one actually happens.
+  - 📈 Season-high 39: a basketball player's most points this season, checked against his ESPN game log (at least five earlier games, and 20+ points in the pros or 15+ in college). Early in the season lots of players do that, so only the one who beat his old high by the most that night gets it.
+  - 🏆 Game-winner: the player who put his team ahead for good in the last 30 seconds of a basketball game, or the last two minutes of a football game, from ESPN's play-by-play. Only close finals are checked.
+- A card still shows two tags at most, and most cards have none.
+
 ## 3.77.4 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Live feed: the game chips above the score bar now read quarter first too ("4th 8:39"), matching the score bar.
