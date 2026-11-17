@@ -5,6 +5,21 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.3 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Logo check, part 1. Morning email on a dark theme: teams whose dark-background logo is a plain white mark but whose real logo shows fine on dark use the real one (Clemson's orange paw, Tennessee, Texas, the Dodgers and Tigers, and a few more). Three soccer clubs with no dark version no longer show a broken picture.
+- Live notifications: the app now saves the logo a game itself carries, so national teams (Germany, Netherlands…) and anyone missing from ESPN's team lists get their logo too.
+
+## 3.81.3 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Live feed: when you've scrolled down so the newest play sits under the score bar, a new play now lands right there in view. Before, it was added above and you had to scroll back up to see it.
+- If you've scrolled further down into older plays, the page stays put and a small "↑ 1 new play" pill shows under the score bar. Tap it to go up to the newest play. It goes away by itself when you scroll back up.
+- Live feed: swiping right no longer takes you back to the previous page. A sideways swipe only ever moves between games; on the first game it just springs back. Use the Back button to leave.
+- Live feed: after picking a filter (All, NBA and so on), the games keep their order as you swipe, so a swipe right goes back to the game you just came from. Before, the game on screen jumped to the front each time.
+- Live feed: the "All live" tab now reads "All".
+- Live feed score bar: three-digit basketball scores no longer cover the team's record on narrow screens. When the bar is tight, the record sits under the logo.
+- Football live feed: timeouts are now red boxes like the ones in the basketball feed, with the quarter, clock, team and score on top and "🚨 Timeout, Ravens" (or "🚨 TV timeout") as the headline. Before, they were a loose gray line between plays.
+
 ## 3.81.2 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Unfolded Duo, one menu: the app's menu and Back now always work the right side. The two sides no longer have their own menu buttons, so nothing sits under the app's menu any more, and picking a page from the menu changes the right side.

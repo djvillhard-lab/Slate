@@ -120,3 +120,9 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 Also in 3.77.2 (DJ, Nov 17): the quarter comes before the clock in `.fd-ck` ("4th 9:51"), both feeds. The score bar grid is now 9 columns (spacer, team, score, spacer, clock, spacer, score, team, spacer) so each team's badge, record and score read as one group and the groups spread evenly. DJ found the old layout (badges at the edges, scores huddled in the middle) too compact on the open Duo. The situation pill stays on row 2.
 
 3.77.4 (DJ, Nov 17): the game chips in `fdStrip` flip ESPN's "8:39 - 4th" to "4th 8:39" to match the score bar.
+
+## 3.81.3: new plays stay in view (DJ, Nov 17)
+`fdSettle` (145) runs after every redraw, both feeds. If the first play in `.fd-list` is the one under the score bar, the anchor is the list's top, so a new play appears where the last one was. If the reader is deeper (another play is the anchor), that play holds still and `.fd-newpill` ("↑ N new plays", counted in `FD.unseen`) hangs under the sticky score bar; tapping it scrolls the list top under the bar, and it clears when the reader gets back up. DJ's complaint was having to scroll up for each new play.
+Also 3.81.3: no swipe-back from the feed (`fdSwipe` returns true at either end, so the shared swipe code in 280 never calls Back; done here because 280 was claimed by another thread). The "All live" tab reads "All".
+Also 3.81.3: football timeouts (team and TV) are `.fd-play.fd-k-to` boxes built in the play loop, matching basketball. Two-minute warning and end-of-quarter lines stay as `.fd-note`.
+Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was picked (`FD.from` null); that reshuffle was why swipe right kept hitting the front of the list. Score bar: `.fd-tm` wraps (record under the badge) when three-digit scores make the bar tight, checked down to 330pt.

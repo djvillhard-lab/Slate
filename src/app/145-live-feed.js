@@ -356,7 +356,7 @@
   function fdList(g) {
     // The switcher and the swipe go between the live games (football and basketball) in the chosen filter, plus the game on screen and the one
     // you opened the page from. History: your teams' games (3.66.9), then the slate's (3.68.4, DJ), then filters for any league (3.70.0, DJ).
-    var from = FD.from || g.id, sc = FD.scope || "slate";
+    var from = FD.from || "", sc = FD.scope || "slate";  /* 3.81.3: after a filter is picked nothing is pinned first. Before, the game on screen jumped to the front after every swipe, so a swipe right never had a game to go back to */
     var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !(fdIn(x, sc) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
     list.sort(function (a, b) { return ((b.id === from) - (a.id === from)) || byStart(a, b); });
     return list;
@@ -364,7 +364,7 @@
   // the filters above the switcher (3.70.0): My slate, All live, then each league with a live game that has a feed. Picking one whose games
   // don't include the game on screen opens its first game.
   function fdFilters(g) {
-    var sc = FD.scope || "slate", lgs = {}, opts = [["slate", "My slate"], ["all", "All live"]];
+    var sc = FD.scope || "slate", lgs = {}, opts = [["slate", "My slate"], ["all", "All"]];
     games().forEach(function (x) { if (feedLive(x)) lgs[x.league] = 1; });
     if (LEAGUES[sc]) lgs[sc] = 1;
     Object.keys(LEAGUES).forEach(function (k) { if (lgs[k]) opts.push([k, LEAGUES[k].tag || LEAGUES[k].name]); });
@@ -382,7 +382,7 @@
   function fdSwipe(step) {
     var g = feedGame(); if (!g) return false;
     var list = fdList(g), i = -1; list.forEach(function (x, j) { if (x.id === g.id) i = j; });
-    var n = i < 0 ? null : list[i + step]; if (!n) return false;
+    var n = i < 0 ? null : list[i + step]; if (!n) return true;  /* 3.81.3 (DJ): no swipe-back from the live feed. Saying "handled" here keeps the swipe code from going Back on the first game; the page just springs back. Back is the Back button. */
     openFeed(n); fdSlideIn(step > 0 ? "l" : "r"); return true;
   }
   function fdAtFirst() { var g = feedGame(); if (!g) return true; var l = fdList(g); return !l.length || l[0].id === g.id; }
@@ -457,6 +457,23 @@
     });
     return out;
   }
+  // 3.81.3 (DJ: "when a new play comes in... it gets added to the top, meaning I have to scroll back up to see it"): after a redraw, put the page back where the reader was.
+  // On the newest play: the list's top stays put, so the new play shows where the last one was. Deeper in older plays: nothing moves, and a "↑ 1 new play" pill under the score bar takes you up.
+  function fdSettle(body, g, anchor, aTop, sc) {
+    var y = sc ? sc.scrollTop : (window.scrollY || 0), nw = body.querySelectorAll(".fd-list .fd-new").length;
+    if (FD.unseenId !== g.id) { FD.unseenId = g.id; FD.unseen = 0; }
+    if (anchor === ".fd-list") FD.unseen = 0; else if (anchor) FD.unseen = (FD.unseen || 0) + nw; else if (y <= 60) FD.unseen = 0;  /* an anchor means the page was scrolled; y itself reads 0 right after a redraw */
+    var bug = body.querySelector(".fd-bug"), list = body.querySelector(".fd-list");
+    if (FD.unseen > 0 && bug && list) {
+      var p = el("button", "fd-newpill", "\u2191 " + FD.unseen + (FD.unseen === 1 ? " new play" : " new plays")); p.type = "button";
+      var gone = function () { FD.unseen = 0; if (p.parentNode) p.remove(); (sc || window).removeEventListener("scroll", chk); };
+      var chk = function () { if (!p.isConnected) return (sc || window).removeEventListener("scroll", chk); if (list.getBoundingClientRect().top > bug.getBoundingClientRect().bottom - 30) gone(); };
+      p.addEventListener("click", function (e) { e.stopPropagation(); var d = list.getBoundingClientRect().top - bug.getBoundingClientRect().bottom - 10; gone(); (sc || window).scrollBy({ top: d, behavior: REDUCED ? "auto" : "smooth" }); });
+      setTimeout(function () { if (p.isConnected) (sc || window).addEventListener("scroll", chk, { passive: true }); }, 400);  /* after the redraw has put the page back, or its own scroll would clear the pill */
+      bug.appendChild(p);
+    }
+    if (anchor) requestAnimationFrame(function () { var n2 = body.querySelector(anchor); if (!n2) return; var dlt = n2.getBoundingClientRect().top - aTop; if (Math.abs(dlt) > 1) { if (sc) sc.scrollTop += dlt; else window.scrollBy(0, dlt); } });
+  }
   function renderFeed(fromPoll) {
     var body = $("feed-body"); if (!body) return;
     // an update never rebuilds the page under a moving finger or mid-scroll (it would stop the scroll and jolt the score bar): it waits for stillness
@@ -470,7 +487,10 @@
     // keep the reader's place: when new plays land on top, the play at the top of the screen stays where it was
     var sc = isDuo ? $("pane-r") : null, y0 = sc ? sc.scrollTop : (window.scrollY || 0), anchor = null, aTop = 0;
     // 3.41.2: a play, a basketball line or the box score below can be the anchor
-    if (fromPoll && y0 > 60) { var cs = body.querySelectorAll(".fd-play[data-id], .hp-row[data-id], .fd-box[data-id]");  for (var i = 0; i < cs.length; i++) { var rc = cs[i].getBoundingClientRect(); if (rc.bottom > 140) { anchor = cs[i].getAttribute("data-id"); aTop = rc.top; break; } } }
+    if (fromPoll && y0 > 60) { var cs = body.querySelectorAll(".fd-play[data-id], .hp-row[data-id], .fd-box[data-id]");  var bg0 = body.querySelector(".fd-bug"), lim = Math.max(140, bg0 ? bg0.getBoundingClientRect().bottom + 8 : 0), l0 = body.querySelector(".fd-list"), first = l0 ? l0.querySelector(".fd-play[data-id], .hp-row[data-id]") : null;
+      for (var i = 0; i < cs.length; i++) { var rc = cs[i].getBoundingClientRect(); if (rc.bottom > lim) {
+        // 3.81.3 (DJ): parked on the newest play, the list's top holds its place, so a new play lands right there in view. Deeper in the plays, the play you're reading holds still and a pill says what's new.
+        if (cs[i] === first) { anchor = ".fd-list"; aTop = l0.getBoundingClientRect().top; } else { anchor = '[data-id="' + cs[i].getAttribute("data-id") + '"]'; aTop = rc.top; } break; } } }
     body.textContent = "";
     body.appendChild(fdFilters(g));
     var strip = fdStrip(g); if (strip) body.appendChild(strip);
@@ -561,6 +581,12 @@
       for (var pi = 0; pi < pls.length && shown < cap; pi++) {
         var pl = pls[pi], rd = fdRead(pl, ix), pid = String(pl.id || pl.sequenceNumber || (di + "-" + pi)); seenNow[pid] = 1;
         var isNew = fresh && !fresh[pid];
+        if (rd.note && /timeout/i.test(rd.title)) {  // 3.81.3 (DJ): a timeout is a red box, the same as in the basketball feed, not a loose gray line
+          var tab = (/^Timeout ([A-Z]{2,4})$/.exec(rd.title) || [])[1], tsd0 = tab ? (abbr(g, "away") === fdAb(tab) ? "away" : abbr(g, "home") === fdAb(tab) ? "home" : "") : "";
+          var tc = el("div", "fd-play fd-k-to" + (isNew ? " fd-new" : "")), tq = ((pl.period || {}).number) || 0, th = el("div", "fd-ph"); tc.setAttribute("data-id", pid);
+          th.appendChild(el("span", null, (tq ? (tq > 4 ? "OT" : "Q" + tq) + " " : "") + ((pl.clock || {}).displayValue || "") + (tsd0 ? " \u00b7 " + abbr(g, tsd0) : "")));
+          if (pl.awayScore != null && pl.homeScore != null) th.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + pl.awayScore + "  " + abbr(g, "home") + " " + pl.homeScore));
+          tc.appendChild(th); tc.appendChild(fdTitle(tsd0 ? "Timeout, " + short(g, tsd0) : tab ? "Timeout, " + fdAb(tab) : rd.title)); list.appendChild(tc); continue; }
         if (rd.note) { list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
         shown++;
         var card = fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew);
@@ -581,5 +607,5 @@
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);  // the box score under the plays (3.40.3)
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
-    if (anchor) requestAnimationFrame(function () { var n2 = body.querySelector('[data-id="' + anchor + '"]'); if (!n2) return; var dlt = n2.getBoundingClientRect().top - aTop; if (Math.abs(dlt) > 1) { if (sc) sc.scrollTop += dlt; else window.scrollBy(0, dlt); } });
+    fdSettle(body, g, anchor, aTop, sc);
   }

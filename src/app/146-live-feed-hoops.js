@@ -228,7 +228,7 @@
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
-    if (anchor) requestAnimationFrame(function () { var n2 = body.querySelector('[data-id="' + anchor + '"]'); if (!n2) return; var dlt = n2.getBoundingClientRect().top - aTop; if (Math.abs(dlt) > 1) { if (sc) sc.scrollTop += dlt; else window.scrollBy(0, dlt); } });
+    fdSettle(body, g, anchor, aTop, sc);
   }
   // the box score under the plays (3.40.3, football and basketball), from the same ESPN summary the feed already has
   function feedBox(g, sum) {
