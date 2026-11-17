@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.88.0 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- New: live feeds for hockey. Any live or finished NHL game now has the Live feed button, and hockey games show in the feed's switcher and filters with the other sports.
+- The score bar shows the period and the time left ("2nd 12:01"), "End 1st" at an intermission, and Final, Final/OT or Final/SO at the end.
+- Under it: the goals so far on each team's side with the period and time, then shots on goal as one bar in the teams' colors. A Stats button opens shots, power play (goals out of chances), faceoffs won, hits, blocked shots, giveaways, takeaways and penalty minutes.
+- Every play is a box, newest first: 🚨 goals in the scoring team's color with the scorer, his season total and the assists, each with a headshot and his line for the game; ⛔ penalties with the call and the minutes; shots saved, wide and blocked; hits, giveaways and takeaways. A goal says "Power play goal" or "Shorthanded goal" when ESPN marks it that way.
+- A "Goals & penalties" button keeps just those. A finished game opens that way.
+- Faceoffs and whistles are left out; there are over a hundred a game. The time on each play is the time left in the period, so it matches the score bar.
+
 ## 3.87.1 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - My bets: each bet is its own card in the colors of the team you bet on, with a colored edge like the News boxes. A total (or a draw) splits the card between both teams' colors. A player line uses the player's team.

@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Live feed: soccer feed, then hockey feed | src/app/145-live-feed.js, src/app/146-live-feed-hoops.js, src/app/147-live-feed-soccer.js (new), src/app/148-live-feed-hockey.js (new), shared: src/shell.html (two new file lines), shared: src/styles/040-components.css (fd- feed rules only), docs/pages/live-feed.md | 2026-11-17 15:50 |

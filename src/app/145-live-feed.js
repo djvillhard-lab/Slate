@@ -5,15 +5,15 @@
   function feedBtn(g) {
     // 3.69.4 (DJ): a finished game keeps its feed. Nothing is saved by Slate: ESPN still serves every play, so the page reads it back
     var done = !feedLive(g), foot = BX_SPORT[g.league] === "football", socc = BX_SPORT[g.league] === "soccer";
-    var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, socc ? (done ? "The goals and cards, or every event" : "Goals, cards, subs and shots as they happen") : !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
+    var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, socc ? (done ? "The goals and cards, or every event" : "Goals, cards, subs and shots as they happen") : BX_SPORT[g.league] === "hockey" ? (done ? "The goals and penalties, or every play" : "Goals, penalties, shots and hits as they happen") : !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
     b.setAttribute("aria-label", "Open the " + (done ? "game" : "live") + " feed for " + g.away + (socc ? " v " : " at ") + g.home);
     b.addEventListener("click", function (e) { e.stopPropagation(); openFeed(g); }); return b;
   }
-  function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball" || BX_SPORT[g.league] === "soccer"); }  /* soccer since 3.87.0 (147-live-feed-soccer.js) */
+  function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball" || BX_SPORT[g.league] === "soccer" || BX_SPORT[g.league] === "hockey"); }  /* soccer since 3.87.0 (147-live-feed-soccer.js), hockey since 3.88.0 (148-live-feed-hockey.js) */
   function feedLive(g) { return feedHas(g) && status(g).kind === "live"; }
   function feedOk(g) { if (!feedHas(g)) return false; var k = status(g).kind; return k === "live" || k === "over"; }  // basketball since 3.37.0 (146-live-feed-hoops.js)
   // a finished football game opens on its scoring plays, a finished soccer match on its key events (3.87.0)
-  function fdQuietStart(g) { var sp = BX_SPORT[g.league]; return (sp === "football" || sp === "soccer") && status(g).kind === "over"; }
+  function fdQuietStart(g) { var sp = BX_SPORT[g.league]; return (sp === "football" || sp === "soccer" || sp === "hockey") && status(g).kind === "over"; }
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;
@@ -499,6 +499,7 @@
     var sum = FD.id === g.id ? FD.sum : null;
     if (!sum) { body.appendChild(el("p", "pv-none bx-wait fd-wait", "Loading the play-by-play…")); return; }
     if (BX_SPORT[g.league] === "soccer") return scFeed(body, g, sum, anchor, aTop, sc);  // 3.87.0: soccer, in 147-live-feed-soccer.js
+    if (BX_SPORT[g.league] === "hockey") return hkFeed(body, g, sum, anchor, aTop, sc);  // 3.88.0: hockey, in 148-live-feed-hockey.js
     if (BX_SPORT[g.league] === "bball") return hpFeed(body, g, sum, anchor, aTop, sc);  // basketball draws its own court and plays
     var comp = ((sum.header || {}).competitions || [])[0] || {}, st = (comp.status || {}).type || {}, sideOf = {}, abOf = {}, scoreOf = {}, recOf = {};
     (comp.competitors || []).forEach(function (k) { var id = String((k.team || {}).id || ""), sd = k.homeAway === "home" ? "home" : "away"; sideOf[id] = sd; abOf[String((k.team || {}).abbreviation || "").toUpperCase()] = sd; scoreOf[sd] = k.score; recOf[sd] = ((k.record || [])[0] || {}).summary || ""; });

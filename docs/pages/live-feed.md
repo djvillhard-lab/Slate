@@ -134,3 +134,10 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - ESPN sends no xG and no big-chance mark, so neither is shown (DJ's rule: only stats a source provides).
 - `feedHas` now includes soccer; a finished match opens on Key events (`fdQuietStart`); soccer polls every 8s.
 - Open: the shootout kick-by-kick (`sum.shootout`) isn't drawn, only "Pens 4–5" in the score bar.
+
+## 3.88.0: hockey feed (DJ, Nov 17)
+`148-live-feed-hockey.js`: `hkFeed` (dispatched from `renderFeed`), `hkRead` (one ESPN play → a box), `hkIndex` (box score players by id, for headshots and the game line), `hkLeft` (ESPN's play clock counts up; shown as time left so it matches the score bar: 20-minute periods, 5-minute regular-season overtime).
+- Data: `sum.plays` (goals with scorer and assisters and season totals, penalties with `type.penaltyMinutes`, shots, hits, giveaways, takeaways; `strength` marks power-play and shorthanded goals), `boxscore.teams[].statistics` for the shots bar and the Stats card. Reuses soccer's `sc-who`, `sc-stats` and `sc-play` styles and the `slate-feed-stats` setting.
+- Faceoffs and stoppages are skipped. "Goals & penalties" is the filter (`FD.scOnly`); finished games open on it.
+- ESPN files a blocked shot under the blocker's team, so that box is titled with the blocker.
+- Open: no live "on the power play now" indicator (ESPN's summary has no clear field for it), no shootout attempt list beyond the plays ESPN sends.
