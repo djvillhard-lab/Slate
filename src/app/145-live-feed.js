@@ -10,7 +10,8 @@
   function feedOk(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball") && status(g).kind === "live"; }  // basketball since 3.37.0 (146-live-feed-hoops.js)
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
-    if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;  // opening the feed is asking to see the score
+    if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;
+    if (state.view !== "feed") FD.from = g.id;  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
     if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; FD.sum = (c0 && c0.sum) || null; FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
     if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; openSub("feed"); }  // coming back to the page starts folded up
     feedPoll(true);
@@ -187,8 +188,10 @@
   function fdJersey(g, sd, P) { var j = el("span", "fd-jer", P.jer ? P.jer : "•"), c = badgeColor(g, sd) || "#555"; j.style.background = c; if (lum(c) > 0.62) j.style.color = "#111"; j.setAttribute("aria-hidden", "true"); return j; }
   // the live games in the switcher's order: your slate's first, then by start time
   function fdList(g) {
-    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedOk(x) && BX_SPORT[x.league] === BX_SPORT[g.league]) || x.id === g.id)) return false; ids[x.id] = 1; return true; });
-    list.sort(function (a, b) { return (inLineup(b.id) - inLineup(a.id)) || byStart(a, b); });
+    // 3.66.9 (DJ): the switcher and the swipe go between your teams' live games (football and basketball) plus the game you opened the page from
+    var from = FD.from || g.id, mine = function (x) { return isFav(x.away, x.league) || isFav(x.home, x.league); };
+    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedOk(x) && mine(x)) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
+    list.sort(function (a, b) { return ((b.id === from) - (a.id === from)) || (inLineup(b.id) - inLineup(a.id)) || byStart(a, b); });
     return list;
   }
   // a sideways swipe on the page moves to the next (left) or previous (right) game in the switcher; false when there's none that way
@@ -220,7 +223,7 @@
   function fdStrip(g) {
     var ids = {}, list = fdList(g);
     if (!list.length) return null;  // shown even for one game (3.36.7): the page keeps the same shape, and the score box stays clear of the folded Duo's clock
-    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", BX_SPORT[g.league] === "bball" ? "Live basketball games" : "Live football games");
+    var w = el("div", "fd-strip"); w.setAttribute("role", "tablist"); w.setAttribute("aria-label", "Your teams' live games");
     list.forEach(function (x) { if (ids[x.id]) return; ids[x.id] = 1;
       var on = x.id === g.id, b = el("button", "fd-chip" + (on ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", on ? "true" : "false");
       var v = scoreRaw(x.id) || {}, c1 = bx.live[x.id], fs = c1 && c1.sum && Date.now() - (c1.sumAt || 0) < 120000 ? fdSumScore(x.id, c1.sum) : null;

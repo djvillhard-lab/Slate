@@ -200,7 +200,9 @@
     var w = el("div", "fd-box"); w.setAttribute("data-id", "box"); w.appendChild(el("h3", "fd-boxh", "Box score"));
     var pl = null; try { pl = bxPlayers(g, b, true, false); } catch (e) { pl = null; } if (!pl) return null;
     w.appendChild(pl);
-    w.addEventListener("click", function () { setTimeout(function () { if (state.view === "feed") renderFeed(); }, 0); }, true);  // "Show all players" and the team switch redraw this page
+    w.addEventListener("click", function () { setTimeout(function () { if (state.view !== "feed") return;
+      // 3.66.9: redrawing keeps your place (on the unfolded Duo the page jumped back to the top)
+      var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); renderFeed(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); }, 0); }, true);  // "Show all players" and the team switch redraw this page
     return w;
   }
   // one emoji in front of each big play's headline (3.66.8, DJ: "Where are the emojis?"): never inside the play text
