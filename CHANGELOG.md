@@ -5,8 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.66.8 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live feed: a small timer under the game clock shows how long ago the newest play came in ("12s ago", "1:05 ago"), ticking every second while the game is live. It uses the time ESPN logged each play.
+- Live feed: big plays now have an emoji in front of their headline: 🎯 three-pointer, 💥 dunk, 🏀 other baskets, 🚫 block, 🖐️ steal, ⚠️ technical or flagrant, 🟥 ejection, 📺 review; in football 🏈 touchdown, 🥅 field goal, ❌ missed kick, 🧤 interception, 😬 fumble, 💥 sack, 🛡️ safety, 🚩 penalty. The tags on the right keep theirs.
+- Basketball live feed: the card's title is just "Top rated so far", without "(ESPN)".
+- Folded iPhone Duo: the clock and Wi-Fi no longer cover the right team on the live feed's score bar, and the last game in the strip above it can scroll out from under them. The rest of the page layout is unchanged.
+
 ## 3.66.7 (Nov 16, 2026)
-TestFlight: 3.39.1 (38), no new build (web only)
+TestFlight: 3.64.1 (42), no new build (web only)
 - Basketball live feed: the card at the top now shows each team's top-rated player so far, using ESPN's player rating (the same one the live notifications use), so a big all-round game counts, not just points. Their line adds steals and blocks when they have two or more. A team ESPN hasn't rated yet shows its leading scorer until it does.
 
 ## 3.66.6 (Nov 16, 2026)

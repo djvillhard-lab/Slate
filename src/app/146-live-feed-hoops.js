@@ -114,6 +114,7 @@
         mid.appendChild(el("b", null, over ? "Final" : /halftime/i.test(det) ? "Half" : /^end/i.test(det) ? "End" : st.state === "pre" ? timeText(g.start) : (cst.displayClock || "")));
         if (!over && st.state !== "pre" && !/halftime/i.test(det)) mid.appendChild(el("i", null, per ? hpPerName(lg, per) : ""));
         else if (/halftime/i.test(det)) mid.appendChild(el("i", null, "Halftime"));
+        fdAgo(mid, sum, st.state === "in");
         bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
@@ -132,7 +133,7 @@
     var nR = (rated.away ? 1 : 0) + (rated.home ? 1 : 0); ["away", "home"].forEach(function (sd) { if (rated[sd]) lead[sd] = rated[sd]; });
     if (lead.away || lead.home) {
       var nL = (lead.away ? 1 : 0) + (lead.home ? 1 : 0), ttl = nR === nL ? "Top rated" : nR ? "Top players" : "Top scorers";
-      card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", ttl + (over ? "" : " so far") + (nR === nL ? " (ESPN)" : "")));
+      card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", ttl + (over ? "" : " so far")));
       ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, "all"); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
       body.appendChild(card);
     }
@@ -176,7 +177,7 @@
         var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck + (sd2 ? " · " + abbr(g, sd2) : "")));
         ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""))); c2.appendChild(ph);
         if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); c2.appendChild(tw); }
-        c2.appendChild(el("p", "fd-pt", rd.title));
+        c2.appendChild(el("p", "fd-pt", fdTitleText(rd.title)));
         if (raw && raw !== rd.title) c2.appendChild(el("p", "fd-px", raw));
         if (rd.P) { var P = rd.P, psd = sideOf[P.tid] || sd2 || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); if (P.pos) nmw.appendChild(el("em", "fd-pos", P.pos)); var lnx = hpLine(P, rd.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); c2.appendChild(row); }
         list.appendChild(c2);
@@ -202,6 +203,27 @@
     w.addEventListener("click", function () { setTimeout(function () { if (state.view === "feed") renderFeed(); }, 0); }, true);  // "Show all players" and the team switch redraw this page
     return w;
   }
+  // one emoji in front of each big play's headline (3.66.8, DJ: "Where are the emojis?"): never inside the play text
+  function fdTitleText(t) {
+    t = String(t || "");
+    var e = /^three-pointer/i.test(t) ? "🎯" : /^(dunk|alley-oop)/i.test(t) ? "💥" : /^free throw good/i.test(t) ? "🏀" : /^(layup|jumper|hook|tip|floater|bank|fadeaway|putback|shot|jump shot|reverse|driving|turnaround|finger roll)/i.test(t) ? "🏀"
+      : /^blocked/i.test(t) ? "🚫" : /^steal/i.test(t) ? "🖐️" : /^ejected/i.test(t) ? "🟥" : /^(technical|flagrant)/i.test(t) ? "⚠️" : /^(coach's challenge|replay review)/i.test(t) ? "📺"
+      : /^(td:|pick six|fumble return touchdown|return touchdown|.*touchdown!?$)/i.test(t) ? "🏈" : /^field goal is good/i.test(t) ? "🥅" : /^field goal (missed|blocked)/i.test(t) ? "❌"
+      : /^safety/i.test(t) ? "🛡️" : /^intercepted/i.test(t) ? "🧤" : /^fumble/i.test(t) ? "😬" : /sacked|^sack/i.test(t) ? "💥" : /^penalty/i.test(t) ? "🚩" : "";
+    return e ? e + " " + t : t;
+  }
+  // how long since the newest play came in (3.66.8, DJ: "a small timer since last live play appeared"), from ESPN's wall clock on each play;
+  // shown under the game clock while the game is live, ticking every second
+  function fdLastAt(sum) {
+    var ps = (sum.plays || []).slice(), dr = sum.drives || {}; (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { (d && d.plays || []).forEach(function (p) { ps.push(p); }); });
+    var best = 0; ps.forEach(function (p) { var t = Date.parse(p.wallclock || ""); if (t > best) best = t; }); return best;
+  }
+  function fdAgoText(t) { var s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? s + "s ago" : s < 3600 ? Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2) + " ago" : ""; }
+  function fdAgo(mid, sum, live) {
+    var t = live ? fdLastAt(sum) : 0; if (!t || Date.now() - t > 3600000) return;
+    var x = el("i", "fd-ago", fdAgoText(t)); x.setAttribute("data-t", String(t)); x.setAttribute("aria-label", "Last play " + fdAgoText(t)); mid.appendChild(x);
+  }
+  setInterval(function () { if (state.view !== "feed" || document.hidden) return; var xs = document.querySelectorAll("#feed-body .fd-ago"); for (var i = 0; i < xs.length; i++) { var tx = fdAgoText(+xs[i].getAttribute("data-t")); if (xs[i].textContent !== tx) xs[i].textContent = tx; } }, 1000);
   // one emoji in front of each play tag (3.52.4, DJ's request, like News): never inside the play text
   function fdTagText(t) {
     t = String(t || "");

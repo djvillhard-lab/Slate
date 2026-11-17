@@ -1465,6 +1465,10 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-mid { display: grid; justify-items: center; gap: 1px; padding: 0 2px; }
 .fd-mid b { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
 .fd-mid i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--live, #E5484D); }
+.fd-mid i.fd-ago { font-size: 10px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }  /* 3.66.8: time since the newest play */
+/* 3.66.8: folded Duo: the clock and Wi-Fi sit over the right end of the score bar, so its right team moves in from under them (the page layout stays as 3.36.0) */
+html[data-native].side-col:not(.duo) #feed-body .fd-bug { padding-right: calc(10px + var(--strip-w, 0px) / var(--z, 1)); }
+html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
 .fd-mdd { font-style: normal; font-size: 11px; font-weight: 800; color: var(--muted); white-space: nowrap; }
 .fd-field { margin-top: 8px; padding: 6px 10px 7px; border-radius: 14px; background: var(--card); border: 1px solid var(--hair); }
 .fd-dd { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
