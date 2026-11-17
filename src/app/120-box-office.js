@@ -311,16 +311,22 @@
     var a = String(r.team).toLowerCase(), b = String(r.opp).toLowerCase();
     return ids.indexOf(lg + "-" + a + "-" + b) !== -1 || ids.indexOf(lg + "-" + b + "-" + a) !== -1;
   }
+  // a player's ESPN headshot in a circle of his team's color, initials underneath until it loads, the team badge at the corner.
+  // Shared: Box Office's cards and Player rankings use it, and any page can (p = { id, name, team, teamName, color }, lg = the league key).
+  function playerFace(p, lg) {
+    var face = el("span", "rk-face"), tc = typeof teamByName === "function" ? teamByName(p.teamName) : null;
+    face.style.background = (hexOk(p.color) ? p.color : (tc && tc.c1) || "#2a3442");
+    var ini = String(p.name || "").split(" "); face.appendChild(el("i", null, ((ini[0] || "")[0] || "") + ((ini[ini.length - 1] || "")[0] || "")));
+    var dir = BX_HEAD[lg];
+    if (p.id && dir) { var im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + p.id + ".png&w=140&h=102"; im.onerror = function () { im.remove(); }; face.appendChild(im); }
+    var wrapF = el("span", "rk-fw"); wrapF.appendChild(face);
+    var mark = badgeFor(p.team || "", p.teamName || "", p.color); mark.classList.add("rk-mark"); wrapF.appendChild(mark);
+    return wrapF;
+  }
   function bestRow(r, rank, lgx) {
     var lg = lgx || r.lg || state.bestLeague;
     var row = el("div", "rk-row" + (isFav(r.teamName, lg) || isFavPlayer(r.id, lg) ? " fav" : ""));
-    var face = el("span", "rk-face"), tc = typeof teamByName === "function" ? teamByName(r.teamName) : null;
-    face.style.background = (r.color && /^#[0-9a-f]{6}$/i.test(r.color) ? r.color : (tc && tc.c1) || "#2a3442");
-    var ini = String(r.name || "").split(" "); face.appendChild(el("i", null, ((ini[0] || "")[0] || "") + ((ini[ini.length - 1] || "")[0] || "")));
-    var dir = BX_HEAD[lg];
-    if (r.id && dir) { var im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + r.id + ".png&w=140&h=102"; im.onerror = function () { im.remove(); }; face.appendChild(im); }
-    var wrapF = el("span", "rk-fw"); wrapF.appendChild(face);
-    var mark = badgeFor(r.team || "", r.teamName || "", r.color); mark.classList.add("rk-mark"); wrapF.appendChild(mark);
+    var wrapF = playerFace(r, lg);
     row.appendChild(wrapF);
     var mid = el("div", "rk-mid");
     var top = el("div", "rk-top"), nm = el("span", "rk-nm");
@@ -389,13 +395,8 @@
     });
     return null;
   }
-  // the count beside a league tab, plus a spoken label ("NBA, 9 games")
-  function tabCount(b, day, lg, name, total) {
-    var n = total != null ? total : lgGameCount(day, lg); if (!n) return n;
-    b.appendChild(el("span", "lg-n", String(n)));
-    b.setAttribute("aria-label", name + ", " + n + (n === 1 ? " game" : " games"));
-    return n;
-  }
+  // the game count in a section heading: "8 games", "8 games · 1 live"
+  function gamesLine(day, lg, live) { var n = lgGameCount(day, lg); return (n ? n + (n === 1 ? " game" : " games") : "") + (live ? (n ? " · " : "") + live + " live" : ""); }
   function rkPick(k, dir) {
     if (state.bestLeague === k) return;
     state.bestLeague = k; state.bestAuto = false; state.bestConf = "all";
@@ -483,8 +484,8 @@
     var c = el("div", "tp mm-card" + (kind ? " mm-" + kind : "") + (isFav(teamName, lg) || isFavPlayer(r.id, lg) ? " fav" : ""));
     var tc = ""; try { tc = hlInk(badgeColor(g, "away") || ""); } catch (e) {} if (hexOk(tc)) c.style.setProperty("--tp-team", tc);
     if (mark) c.appendChild(el("span", "mm-rank" + (typeof mark === "number" && mark <= 3 ? " top" : ""), String(mark)));
-    var jj = null; try { jj = teamName ? (sport === "football" ? fdJersey(g, "away", { jer: jer }) : sport === "bball" ? hpJersey(g, "away", { jer: jer }) : null) : null; } catch (e) {}
-    if (!jj) { jj = el("span", "tp-num", jer || "•"); var bc = teamName ? badgeColor(g, "away") : ""; if (hexOk(bc)) { jj.style.background = bc; jj.style.color = fdNumInk(bc); } }
+    // the player's headshot (DJ, 3.76.1: liked these more than the jerseys)
+    var jj = playerFace({ id: r.id, name: r.name, team: r.team, teamName: teamName, color: color }, lg);
     c.appendChild(jj);
     var m = el("div", "tp-m"), top = el("div", "tp-top"), nm = String(r.name || ""), parts = nm.split(" ");
     top.appendChild(el("b", "tp-n", parts.length > 1 ? parts[0].charAt(0) + ". " + parts.slice(1).join(" ") : nm));
@@ -544,7 +545,6 @@
     var strip = el("div", "strip mm-strip");
     mmLgs().forEach(function (o) {
       var b = el("button", "lg-tab", o[1]); b.type = "button"; b.setAttribute("aria-pressed", mm.lg === o[0] ? "true" : "false");
-      tabCount(b, mm.date, o[0], (LEAGUES[o[0]] || {}).name || o[1]);  // the day's game count beside the league ("NBA 9")
       b.addEventListener("click", function () { mmPick(o[0]); }); strip.appendChild(b);
     });
     MM_SOON.forEach(function (n) { var b = el("span", "lg-tab mm-soon"); b.appendChild(document.createTextNode(n)); b.appendChild(el("i", null, "Soon")); strip.appendChild(b); });
@@ -570,7 +570,7 @@
       var stillLoading = !rk.loaded || (!checked && (rk.busyK[lkey] || Date.now() - (mm.wait[wk] || 0) < 15000));
       if (!rows.length) { body.appendChild(el("div", "notice", stillLoading ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
       var topT = rows.slice(0, 20);
-      body.appendChild(mmSec("Top performers", dk.live ? dk.live + " live" : "Top " + topT.length));
+      body.appendChild(mmSec("Top performers", gamesLine(day, mm.lg, dk.live) || "Top " + topT.length));
       var tlT = el("div", "bs-list mm-top mm-cards"); topT.forEach(function (r, i) { mmPlayer(tlT, mmCard(r, i + 1), r); }); tlT.style.setProperty("--rows", Math.ceil(topT.length / 2)); body.appendChild(tlT);
       body.appendChild(mmHow(mm.lg));
       body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Wild finishes show up tomorrow morning, and Claude can pick the over and underachievers when you ask."));
@@ -599,7 +599,7 @@
     var sp = "standouts/" + night; if (!MM_SOCCER[mm.lg]) mmWatch(sp);
     var all = MM_SOCCER[mm.lg] ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), top = all.slice(0, 20);
     if (top.length) {
-      body.appendChild(mmSec("Top performers", "Top " + top.length));
+      body.appendChild(mmSec("Top performers", gamesLine(night, mm.lg, 0) || "Top " + top.length));
       var tl = el("div", "bs-list mm-top mm-cards"), lk0 = MM_SOCCER[mm.lg] ? mmLookup(mm.lg, night) : null;
       top.forEach(function (r, i) { if (MM_SOCCER[mm.lg]) tl.appendChild(mmCard(r, i + 1, "", lk0)); else mmPlayer(tl, mmCard(r, i + 1), r); });
       tl.style.setProperty("--rows", Math.ceil(top.length / 2)); body.appendChild(tl);
@@ -704,11 +704,9 @@
     // the same filters as All games: your players, the leagues, then All, in your order; swipe between them
     var opts = rkOpts(ks);
     if (state.bestAuto !== false || !opts.some(function (o) { return o[0] === state.bestLeague; })) { state.bestLeague = opts[0][0]; state.bestAuto = true; }
-    var strip = el("div", "strip rk-strip"), nAll = 0;
-    ks.forEach(function (k) { nAll += lgGameCount(day, k) || 0; });
+    var strip = el("div", "strip rk-strip");
     opts.forEach(function (o) {
       var b2 = el("button", "lg-tab", o[1]); b2.type = "button"; b2.setAttribute("aria-pressed", state.bestLeague === o[0] ? "true" : "false");
-      if (o[0] !== "fav") tabCount(b2, day, o[0], o[0] === "all" ? "All leagues" : (LEAGUES[o[0]] || {}).name || o[1], o[0] === "all" ? nAll : null);
       if (o[0] === "fav") b2.setAttribute("aria-label", "My players");
       b2.addEventListener("click", function () { rkPick(o[0]); });
       strip.appendChild(b2);

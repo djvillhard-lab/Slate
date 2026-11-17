@@ -1,7 +1,3 @@
-/* Box Office: the day's game count beside each league tab ("NBA 9"), meta-sized and dim like other counts */
-:is(.mm-strip, .rk-strip) .lg-tab .lg-n { margin-left: .3em; font-size: .7em; font-weight: 700; font-stretch: 100%; color: var(--dim); }
-:is(.mm-strip, .rk-strip) .lg-tab[aria-pressed="true"] .lg-n { color: var(--muted); }
-
 /* Box Office player cards (3.75.0): the slate's Top performers card (tp- rules in 050-ux-review.css) with a rank in front,
    the game under the stat line, and the tags on the right */
 #mm-body .mm-cards { display: grid; row-gap: 8px; }
@@ -21,3 +17,8 @@
 }
 #mm-body .mm-card.tp > .tp-tags:empty { display: none; }
 .mm-l > span { white-space: nowrap; }
+/* the headshot (3.76.1, in place of the jersey) */
+#mm-body .mm-card .rk-fw { width: 44px; height: 44px; }
+#mm-body .mm-card .rk-face i { font-size: 15px; }
+#mm-body .mm-card .rk-face img { width: 62px; }
+#mm-body .mm-card .rk-mark { transform: scale(.45); right: -7px; bottom: -4px; }
