@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.11 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- National teams now show their flags on the slate and All games right away (Nations League, qualifiers, friendlies). The saved games had no logo, so flags waited on ESPN's country list, and on the open Duo's two panes the cards never redrew when it arrived. Flags now come straight from each team's country code.
+- Any team chip drawn before its logo was known now picks up the logo as soon as it arrives, without waiting for the page to redraw.
+
 ## 3.81.10 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Unfolded Duo: pages with just a name in the header (News, Settings, Live feed) now line their name up exactly with the slate's on the other side.

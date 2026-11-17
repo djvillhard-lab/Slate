@@ -27,15 +27,20 @@
     var lists = [state.slate && state.slate.games]; SLATE_PARTS.forEach(function (k) { var p = (state.slateParts || {})[k]; lists.push(p && p.games); });
     if (logoGamesRef && lists.length === logoGamesRef.length && lists.every(function (l, i) { return l === logoGamesRef[i]; })) return logoGamesIdx;
     var idx = {};
-    lists.forEach(function (l) { (l || []).forEach(function (g) { ["away", "home"].forEach(function (sd) { var sg = logoSeg(g[sd + "Logo"]); if (sg && g[sd]) idx[logoNorm(g[sd])] = [sg, g[sd + "Color"], g[sd + "Alt"]]; }); }); });
+    lists.forEach(function (l) { (l || []).forEach(function (g) { ["away", "home"].forEach(function (sd) {
+      var sg = logoSeg(g[sd + "Logo"]);
+      // national teams (3.81.11): saved games often have no logo, but ESPN's flag file is the team's abbreviation (GER -> countries/ger.png)
+      if (!sg && g.league === "intl" && /^[A-Z]{2,4}$/.test(g[sd + "Abbr"] || "")) sg = "countries/" + g[sd + "Abbr"].toLowerCase() + ".png";
+      if (sg && g[sd]) idx[logoNorm(g[sd])] = [sg, g[sd + "Color"], g[sd + "Alt"]];
+    }); }); });
     logoGamesRef = lists; logoGamesIdx = idx; return idx;
   }
   // logos seen in ESPN's live scoreboard (national teams and anyone the team lists miss); true when it's a new one
-  var LOGO_LIVE = {};
+  var LOGO_LIVE = {}, logoFillT = 0;
   function logoNote(name, href, c1, c2) {
     var k = logoNorm(name), sg = logoSeg(href); if (!k || !sg || LOGO_LIVE[k]) return false;
     var hx = function (c) { return /^[0-9a-f]{6}$/i.test(c || "") ? "#" + c.toLowerCase() : ""; };
-    LOGO_LIVE[k] = [sg, hx(c1), hx(c2)]; return !logoGames()[k];
+    LOGO_LIVE[k] = [sg, hx(c1), hx(c2)]; clearTimeout(logoFillT); logoFillT = setTimeout(logoFill, 0); return !logoGames()[k];
   }
   // the team's entry: [logo segment, main color, alternate color], or null
   function teamLook(name) {
@@ -71,6 +76,14 @@
       logoLoading = false;
       try { localStorage.setItem(LOGO_KEY, JSON.stringify(LOGO_REG)); } catch (e) {}
       if (typeof render === "function") render();
+      logoFill();
+    });
+  }
+  // chips already on screen that were drawn before their league's team list arrived get their logo now (3.81.11).
+  // render() alone missed them: the open Duo's two panes don't redraw on render()
+  function logoFill() {
+    Array.prototype.forEach.call(document.querySelectorAll(".badge[data-lg-wait]"), function (b) {
+      var n = b.getAttribute("data-lg-wait"); b.removeAttribute("data-lg-wait"); if (!b.querySelector(".badge-logo")) addLogo(b, n);
     });
   }
   // which version to show on Midnight, decided once per logo and kept on this phone (3.77.2): "l" = the regular logo,
@@ -95,7 +108,7 @@
   }
   // puts the logo into a chip made by badgeFor; the chip keeps its colors and letters until the picture has loaded
   function addLogo(b, name) {
-    var hit = teamLook(name); if (!hit || !hit[0]) return;
+    var hit = teamLook(name); if (!hit || !hit[0]) { b.setAttribute("data-lg-wait", name); return; }
     var seg = hit[0], dark = themeIsDark(), light = logoUrl(seg, false), url = dark && LOGO_PICK[seg] !== "l" ? logoUrl(seg, true) : light;
     if (LOGO_BAD[url]) { if (!dark || LOGO_BAD[url = light]) return; }
     var im = document.createElement("img"); im.className = "badge-logo"; im.alt = ""; im.decoding = "async"; im.draggable = false; im.crossOrigin = "anonymous";
