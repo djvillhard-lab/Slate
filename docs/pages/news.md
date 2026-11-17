@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.90.4
+Last updated: Nov 17, 2026, 3.93.2
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -78,6 +78,9 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   note about neither team gets the accent (`lgx`). Game header uses `noteShort` from 150-game-row.js like the slate.
 - Headline precision (3.90.4, DJ: "ends Lions season" for one player's injury): RULES in worker/index.js (all prompts) now
   ends with a reread-and-fix check that each line names exactly who is affected and never widens it.
+- While Claude writes (3.93.2, DJ: the timer sat top right under the island on the folded Duo and the open Duo's right
+  pane): `nwWriting` replaces the page (options, Press Box page, or a league briefing) with one centered card holding the
+  clock (`.nx-wr`). The league tabs stay so swipe still works. No timer in any top corner.
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
   both inside the 24,000-token limit. DJ's Nov 16 "it fails on a small selection" report was the old failure's

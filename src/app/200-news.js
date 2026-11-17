@@ -358,6 +358,14 @@
     show(); var iv = setInterval(function () { if (!s.isConnected) { clearInterval(iv); return; } show(); }, 1000);
     return s;
   }
+  // while Claude writes (3.93.2, DJ: the timer sat top right, under the island on the folded Duo and the open Duo's right
+  // pane): the page's content steps aside and one centered card holds the clock, so nothing waits in the corner
+  function nwWriting(body, title, note, doc, k) {
+    var c = el("div", "nx-card nx-wr"), hd = el("div", "nx-wrh"); hd.appendChild(el("i", "cl-dot")); hd.appendChild(el("span", null, title)); c.appendChild(hd);
+    var t = nwElapsed(doc, k); t.classList.add("nx-wrt"); c.appendChild(t);
+    if (note) c.appendChild(el("p", "nx-note", note));
+    body.appendChild(c);
+  }
   // an accurate wait: how long the last page really took (saved with it by the server), or the usual range before there is one
   function nwTookText() {
     var t = 0; try { t = Number(localStorage.getItem("slate-newstook")) || 0; } catch (e) {}
@@ -370,6 +378,7 @@
   }
   // ----- the options: what to cover, then Generate -----
   function nwRenderOpts(body, doc, busy, doc0) {
+    if (busy) { nwWriting(body, "Claude is writing your news", nwTookText() + " You can leave this page and come back.", doc0, "n:" + nwPagePath()); return; }
     var o = nwOpts(), gs = nwGames(), tms = myTeamList().filter(function (t) { return bxBase(t.lg); }), has = !!(doc && doc.at);
     var put = function () { nwOptsPut(o); var d0 = nw.docs[nwPagePath()]; if (d0 && d0.writing && d0.writing.error) nw.errSeen = d0.writing.at; keepScroll(renderNews); };
     var ttl = el("div", "nx-ptitle"); ttl.appendChild(el("b", null, state.date === todayInHome() ? "Customize today's news" : "Customize this day's news")); ttl.appendChild(el("span", null, "Pick the games, teams and leagues to cover.")); body.appendChild(ttl);
@@ -418,6 +427,7 @@
   }
   // ----- the generated page -----
   function nwRenderPage(body, doc, busy, err, errAt) {
+    if (busy) { nwWriting(body, "Claude is writing a new page", nwTookText() + " The page from " + timeText(doc.at) + " comes back if this one doesn't finish.", doc, "n:" + nwPagePath()); return; }
     var cov = doc.cover || {}, parts = []; if (cov.slate) parts.push("Slate"); if (cov.teams) parts.push("My teams"); (cov.leagues || []).forEach(function (k) { parts.push((LEAGUES[k] || {}).tag || k); });
     var gen = el("div", "nx-card nx-gen"), gl = el("div", "nx-genl"), today = state.date === todayInHome();
     gl.appendChild(el("b", null, "Generated " + (today ? "today" : fmtDate(state.date, { weekday: "short", month: "short", day: "numeric" })) + " at " + timeText(doc.at)));
@@ -540,7 +550,7 @@
   // ----- a breakdown: one game, team or league, written by Claude on the tap that opened it -----
   function nwRenderDeep(body, brief) {
     var d = brief || nw.deep, doc = nw.docs[d.path], page = nw.docs[nwPagePath()] || {}, has = !!(doc && doc.take && doc.take.length), k = "n:" + d.path;
-    if (brief) { nwRenderBriefTop(body, d, doc, has, k); if (!has) return; }
+    if (brief) { if (nwRenderBriefTop(body, d, doc, has, k) || !has) return; }
     else {
     var bk = el("button", "nx-back"); bk.type = "button"; bk.appendChild(icon("back")); bk.appendChild(el("span", null, d.type === "g" ? "Games" : d.type === "t" ? "Teams" : "Leagues")); bk.addEventListener("click", nwCloseDeep); body.appendChild(bk);
     var hero = el("div", "nx-card nx-hero");
@@ -681,11 +691,11 @@
     hl.appendChild(el("span", null, has ? "Updated " + timeText(doc.at) + " · " + nwAgo(doc.at) : ng ? ng + (ng === 1 ? " game" : " games") + " on your slate today" : "The latest around the league"));
     hd.appendChild(hl);
     if (doc === undefined) { var op = el("span", "nx-busy sm"); op.appendChild(el("i", "cl-dot")); op.appendChild(el("span", null, "Opening…")); hd.appendChild(op); body.appendChild(hd); return; }
-    if (busy) { var sp = el("span", "nx-busy sm"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, has ? "Updating…" : "Writing…")); sp.appendChild(nwElapsed(doc, k)); hd.appendChild(sp); }
-    else if (has) { var up = el("button", "nx-regen"); up.type = "button"; up.appendChild(el("span", null, "Update")); up.setAttribute("aria-label", "Update the " + tag + " briefing with Claude"); up.addEventListener("click", function () { nwAskDeep(d); }); hd.appendChild(up); }
+    if (busy) { nwWriting(body, "Claude is " + (has ? "updating" : "writing") + " the " + tag + " briefing", "Claude reads the newest " + tag + " headlines and searches the web. It usually takes about a minute. You can leave this page and come back.", doc, k); return true; }
+    if (has) { var up = el("button", "nx-regen"); up.type = "button"; up.appendChild(el("span", null, "Update")); up.setAttribute("aria-label", "Update the " + tag + " briefing with Claude"); up.addEventListener("click", function () { nwAskDeep(d); }); hd.appendChild(up); }
     body.appendChild(hd);
     if (w && w.error && !busy) body.appendChild(el("p", "pv-none cl-err", clErr(w.error)));
-    if (has || busy) { if (!has) { var wr = el("div", "nx-busy pad"); wr.appendChild(el("i", "cl-dot")); wr.appendChild(el("span", null, "Claude is reading the latest " + tag + " news… about a minute")); body.appendChild(wr); } return; }
+    if (has) return;
     var go = el("button", "cl-go"); go.type = "button"; go.appendChild(icon("sparkle")); go.appendChild(el("span", "cl-l", "Generate " + tag + " briefing")); go.appendChild(el("span", "cl-t", "about a minute"));
     go.addEventListener("click", function () { nwAskDeep(d); }); var gb = el("div", "cl-ctl nx-bgo"); gb.appendChild(go); body.appendChild(gb);
     body.appendChild(el("p", "nx-note", "Claude reads the newest ESPN and Athletic headlines and searches the web, then writes up the latest " + tag + " news. It's saved for everyone for the day, and Update writes a fresh one."));
