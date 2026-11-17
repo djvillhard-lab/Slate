@@ -235,14 +235,16 @@
     if (!box) return;
     // one score column for the whole slate (3.31.0): just past the longest team name (with its rank and record) on the
     // page, the same spot on every card; names only shorten when the card is too narrow for that
-    var ps = box.querySelectorAll(".g.panel"), col = 1e9, need = 0; box.style.removeProperty("--tmw");
+    var ps = box.querySelectorAll(".g.panel"), col = 1e9, need = 0, walP = []; box.style.removeProperty("--tmw");
     Array.prototype.forEach.call(ps, function (p) {
       p.style.removeProperty("--tmw");
       var rows = p.querySelectorAll(".tm"); if (!rows.length) return;
       // 3.68.2: a card inside a folded time group isn't drawn (width 0); measuring it set the score column to 0
       // and the scores printed over the records on every card
       var cw = rows[0].parentElement.clientWidth; if (!cw) return;
-      col = Math.min(col, cw);
+      // 3.68.3: the Worth a look card is narrower (its box and the +), so it doesn't set the column for the slate's
+      // own cards; its teams still fill the room it has
+      if (p.closest(".wal-item")) walP.push([p, cw]); else col = Math.min(col, cw);
       Array.prototype.forEach.call(rows, function (r) {
         var w = r.querySelector(".nmw"), sc = r.querySelector(".sc"); if (!w || !sc) return;
         var gap = parseFloat(getComputedStyle(w).columnGap) || 4, rg = parseFloat(getComputedStyle(r).columnGap) || 8, nw = 0, n = 0;
@@ -254,6 +256,7 @@
       });
     });
     if (need && col < 1e9) box.style.setProperty("--tmw", Math.ceil(Math.min(col, need)) + "px");
+    if (need) walP.forEach(function (x) { x[0].style.setProperty("--tmw", Math.ceil(Math.min(x[1], need)) + "px"); });
   }
   // live score updates redraw the slate on their own: refit the scores each time
   var renderLineup0 = renderLineup; renderLineup = function () { renderLineup0.apply(this, arguments); try { fitScores($("lineup-body")); } catch (e) {} };

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.3 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Today's Slate on a regular iPhone: long team names ("The Citadel", "Clemson") are no longer cut short on the slate's cards. The narrower Worth a look card was setting how much room every card's names got; now it only sizes itself.
+
 ## 3.68.2 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate: scores no longer print on top of the team names and records. Folding a time group (tapping its time) squeezed every card's team column to nothing, so the names vanished and the scores sat over the records. Cards in a folded group are now skipped when the slate lines up its score column.
