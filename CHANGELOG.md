@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.91.1 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Matchup cards: the team-color edge is always split exactly in half, the first team on the top half of the card and the second on the bottom half, however tall the card is.
+
 ## 3.91.0 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Every matchup card now has the News page's team-color edge: a thin stripe down the left side, the first team's color beside its row and the second team's beside its own. It's on Today's Slate, Worth a look, All games, On TV, the matchup page's header card and Betting lines (a game total gets both colors; a player's line gets his team's). Tags like Your team and Ranked stay where they were.
