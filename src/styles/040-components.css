@@ -1445,6 +1445,11 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .feed-go em { font-style: normal; font-size: 13px; color: var(--muted); }
 .feed-go svg, .tray .feed-go svg { width: 16px; height: 16px; color: var(--dim); flex: none; }
 .gv-head .feed-go { margin: 12px 0 0; }
+.fd-play[style*="--fd-team"] { border-left: 4px solid color-mix(in srgb, var(--fd-team) 72%, var(--ink)); }  /* 3.70.1: football, the team that made the play */
+.fd-watch { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: -2px 0 4px; }
+.fd-won { flex: 1; min-width: 0; font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fd-wbtn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--hair); background: var(--raise); color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; text-decoration: none; white-space: nowrap; position: relative; }
+.fd-wbtn::after { content: ""; position: absolute; inset: -5px -2px; }
 .fd-ht { display: inline-flex; align-items: center; gap: 5px; color: var(--live, #E5484D) !important; }
 .fd-htd { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #E5484D); }
 .fd-ldc { display: grid; gap: 5px; min-width: 0; align-content: start; }

@@ -232,24 +232,24 @@
     var src = inParens ? tx : tx.replace(/\([^)]*\)|\[[^\]]*\]/g, " ");
     src.replace(/\b([A-Z][a-z]{0,2})\.((?:St\. ?)?[A-Z][A-Za-z'\-]+)/g, function (m, i, l) { var P = fdFind(ix, i, l, offTid); if (P && !seen[P.id]) { seen[P.id] = 1; names.push(P); } return m; });
     var ln = function (P) { return P ? String(P.name).split(" ").slice(1).join(" ").replace(/\s+(Jr|Sr|II|III|IV|V)\.?$/, "") || P.name : ""; };
-    var a = names[0], b = names[1], m, out = { title: ty || "Play", ps: [], kind: "" };
+    var a = names[0], b = names[1], m, out = { title: ty || "Play", ps: [], kind: "", offTid: offTid };
     var lead = function (P, k) { if (P) out.ps.push({ P: P, k: k }); };
     if (/^(End Period|End of Half|End of Game|Two-minute warning|Official Timeout|Timeout|End of Regulation)/i.test(ty)) { out.note = true; out.title = /two-minute/i.test(ty) ? "Two-minute warning" : /timeout/i.test(ty) ? (/official/i.test(ty) ? "TV timeout" : "Timeout" + ((m = /Timeout #\d+ by ([A-Z]{2,4})/i.exec(tx)) ? " " + m[1] : "")) : tx.replace(/^END /, "End of ").replace(/QUARTER/i, "quarter").replace(/HALF/i, "half").replace(/GAME/i, "game"); return out; }
     if (/Passing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a && b ? ln(a) + " to " + ln(b) + ", " : "pass, ") + Math.abs(y) + " yds"; lead(a, "passing"); lead(b, "receiving"); }
     else if (/Rushing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a ? ln(a) + " run, " : "run, ") + Math.abs(y) + " yds"; lead(a, "rushing"); }
-    else if (/Touchdown/i.test(ty)) { out.kind = "score"; out.title = /interception/i.test(ty) ? "Pick six!" : /fumble/i.test(ty) ? "Fumble return touchdown!" : /punt|kick/i.test(ty) ? "Return touchdown!" : "Touchdown!"; lead(b || a, /interception/i.test(ty) ? "interceptions" : "defensive"); }
+    else if (/Touchdown/i.test(ty)) { out.kind = "score"; out.title = /interception/i.test(ty) ? "Pick six!" : /fumble/i.test(ty) ? "Fumble return touchdown!" : /punt|kick/i.test(ty) ? "Return touchdown!" : "Touchdown!"; lead(b || a, /interception/i.test(ty) ? "interceptions" : "defensive"); out.teamP = b || a || null; if (!out.teamP && /interception|fumble/i.test(ty)) out.def = true; }
     else if (/Pass Reception/i.test(ty)) { out.title = (a && b ? ln(a) + " to " + ln(b) : "Pass complete") + (y > 0 ? " for " + ya(y) : y < 0 ? ", loss of " + ya(y) : ", no gain"); lead(a, "passing"); lead(b, "receiving"); }
     else if (/Pass Incompletion/i.test(ty)) { out.title = "Incomplete" + (b ? ", intended for " + ln(b) : ""); lead(a, "passing"); lead(b, "receiving"); }
     else if (/^Rush/i.test(ty)) { out.title = a ? ln(a) + (y > 0 ? " runs for " + ya(y) : y < 0 ? " loses " + ya(y) : ", no gain") : (y > 0 ? "Run for " + ya(y) : y < 0 ? "Run, loss of " + ya(y) : "Run, no gain"); lead(a, "rushing"); }
-    else if (/Sack/i.test(ty)) { out.title = (a ? ln(a) + " sacked" : "Sack") + (y < 0 ? " for a loss of " + ya(y) : "") + (/fumble/i.test(ty) ? ", fumble" : ""); if (/fumble/i.test(ty)) out.kind = "turn"; lead(a, "passing"); lead(b, "defensive"); }
-    else if (/Interception/i.test(ty)) { out.kind = "turn"; out.title = "Intercepted" + (b ? " by " + ln(b) : ""); lead(a, "passing"); lead(b, "interceptions"); }
-    else if (/Fumble/i.test(ty)) { out.kind = /opp/i.test(ty) ? "turn" : ""; out.title = "Fumble" + (/opp/i.test(ty) ? ", recovered by the defense" : ", recovered by the offense"); lead(a, "rushing"); }
+    else if (/Sack/i.test(ty)) { out.title = (a ? ln(a) + " sacked" : "Sack") + (y < 0 ? " for a loss of " + ya(y) : "") + (/fumble/i.test(ty) ? ", fumble" : ""); if (/fumble/i.test(ty)) out.kind = "turn"; lead(a, "passing"); lead(b, "defensive"); out.def = true; }
+    else if (/Interception/i.test(ty)) { out.kind = "turn"; out.title = "Intercepted" + (b ? " by " + ln(b) : ""); lead(a, "passing"); lead(b, "interceptions"); out.def = true; }
+    else if (/Fumble/i.test(ty)) { out.kind = /opp/i.test(ty) ? "turn" : ""; out.title = "Fumble" + (/opp/i.test(ty) ? ", recovered by the defense" : ", recovered by the offense"); lead(a, "rushing"); if (/opp/i.test(ty)) out.def = true; }
     else if (/Field Goal Good/i.test(ty)) { out.kind = "score"; out.title = "Field goal is good" + ((m = /(\d+) yard field goal/i.exec(tx)) ? " from " + m[1] + " yards" : ""); lead(a, "kicking"); }
     else if (/Field Goal|Blocked/i.test(ty) && /miss|block|no good/i.test(ty + tx)) { out.title = (/block/i.test(ty + tx) ? "Field goal blocked" : "Field goal missed") + ((m = /(\d+) yard field goal/i.exec(tx)) ? " from " + m[1] + " yards" : ""); lead(a, "kicking"); }
-    else if (/Safety/i.test(ty)) { out.kind = "score"; out.title = "Safety!"; }
+    else if (/Safety/i.test(ty)) { out.kind = "score"; out.title = "Safety!"; out.def = true; }
     else if (/Punt/i.test(ty)) { out.title = "Punt" + ((m = /punts (\d+) yards?/i.exec(tx)) ? ", " + m[1] + " yards" : "") + (/touchback/i.test(tx) ? ", touchback" : /fair catch/i.test(tx) ? ", fair catch" : /MUFFS/.test(tx) ? ", muffed" : ""); }
-    else if (/Kickoff/i.test(ty)) { out.title = "Kickoff" + (/touchback/i.test(tx) ? ", touchback" : y > 0 && b ? ", " + ln(b) + " returns it " + ya(y) : ""); }
-    else if (/Penalty/i.test(ty) || /PENALTY on/.test(tx)) { out.title = (m = /PENALTY on ([A-Z]{2,4})-[^,]*, ([^,]+), (\d+) yards?/.exec(tx)) ? "Penalty on " + m[1] + ": " + m[2] + ", " + m[3] + " yards" : "Penalty"; if (/NULLIFIED/.test(tx)) out.title += " (play wiped out)"; }
+    else if (/Kickoff/i.test(ty)) { out.title = "Kickoff" + (/touchback/i.test(tx) ? ", touchback" : y > 0 && b ? ", " + ln(b) + " returns it " + ya(y) : ""); out.noTeam = true; }
+    else if (/Penalty/i.test(ty) || /PENALTY on/.test(tx)) { out.title = (m = /PENALTY on ([A-Z]{2,4})-[^,]*, ([^,]+), (\d+) yards?/.exec(tx)) ? "Penalty on " + m[1] + ": " + m[2] + ", " + m[3] + " yards" : "Penalty"; if (/NULLIFIED/.test(tx)) out.title += " (play wiped out)"; out.noTeam = true; }
     else if (/Extra Point|Two-Point|2pt/i.test(ty)) { out.title = ty; }
     return out;
   }
@@ -263,6 +263,14 @@
     j.innerHTML = '<svg viewBox="0 0 30 27" width="30" height="27" style="position:absolute;inset:0" aria-hidden="true"><path d="M10 1.5H12.6Q15 5 17.4 1.5H20L28 5.2L28.6 12L23.6 13V24.6Q23.6 25.5 22.7 25.5H7.3Q6.4 25.5 6.4 24.6V13L1.4 12L2 5.2Z" fill="' + c + '" stroke="rgba(127,127,127,.5)" stroke-width="1" stroke-linejoin="round"/><path d="M2.3 9.2L6.4 10M27.7 9.2L23.6 10" fill="none" stroke="' + ink + '" stroke-opacity=".55" stroke-width="1.4"/></svg>';
     var nb = el("b", null, n || "•"); nb.style.cssText = "position:relative;margin-top:4px;font-size:" + (n.length > 1 ? "10.5" : "11.5") + "px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:" + ink; j.appendChild(nb);
     j.setAttribute("aria-hidden", "true"); return j;
+  }
+  // 3.70.1 (DJ: "no easy way to quickly watch the game"): under the score bar, where the game is on and a Watch button for each channel Slate can open
+  // (the same links as the game cards and On TV: watchLink). Live games only. Nothing when no channel is listed.
+  function fdWatch(g, over) {
+    if (over) return null; var tv = (g.tv || []).filter(Boolean); if (!tv.length) return null;
+    var w = el("div", "fd-watch"); w.appendChild(el("span", "fd-won", "On " + tv.map(function (n) { return NET_SHORT[n] || n; }).join(", ")));
+    var n2 = 0; tv.forEach(function (n) { if (n2 >= 2) return; var a = watchLink(n, "fd-wbtn", "\u25B6 " + (tv.length > 1 ? (NET_SHORT[n] || n) : "Watch")); if (!a) return; n2++; w.appendChild(a); });
+    return w;
   }
   // halftime (3.70.0, DJ): a red dot and "HT", on the score bar and on the game's box in the switcher. ESPN says "End of 2nd Quarter" for a moment
   // before "Halftime" (and "End of 1st Half" in men's college basketball); all of those read HT.
@@ -433,6 +441,7 @@
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
     body.appendChild(bug);
+    var wrow = fdWatch(g, over); if (wrow) body.appendChild(wrow);
     // the scorebug stays on screen under the top bar while the plays scroll
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
     // the field: the away team's end zone on the left; the ball, the line of scrimmage and the yellow line to gain
@@ -488,6 +497,9 @@
         if (rd.note) { list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
         shown++;
         var card = el("div", "fd-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); card.setAttribute("data-id", pid);
+        // 3.70.1 (DJ: make it obvious which team made the play, like basketball): the card's left edge is that team's color. The offense by default;
+        // the defense for a sack, interception, fumble it recovered or safety; the scorer's team on a return touchdown. Penalties and kickoffs get none.
+        if (!rd.noTeam) { var osd = sideOf[rd.offTid] || "", tsd = rd.teamP ? sideOf[rd.teamP.tid] || "" : rd.def && osd ? (osd === "away" ? "home" : "away") : osd; if (tsd) card.style.setProperty("--fd-team", fdTint(g, tsd)); }
         var ph = el("div", "fd-ph"), q = ((pl.period || {}).number) || 0, ss = pl.start || {};
         ph.appendChild(el("span", null, (q ? (q > 4 ? "OT" : "Q" + q) + " " : "") + ((pl.clock || {}).displayValue || "") + (ss.down ? " · " + (ss.downDistanceText || ss.shortDownDistanceText || "") : "")));
         var scs = el("span", "fd-psc"); scs.textContent = abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""); ph.appendChild(scs);

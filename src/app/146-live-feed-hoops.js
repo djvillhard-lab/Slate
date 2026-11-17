@@ -139,6 +139,7 @@
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
     body.appendChild(bug);
+    var wrow = fdWatch(g, over); if (wrow) body.appendChild(wrow);
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
     // each team's top-rated player so far (3.66.7): ESPN's own player rating from the live scoreboard, the same one the live
     // notifications use, so a big all-round game counts, not just points. A team ESPN hasn't rated yet shows its leading scorer.

@@ -93,3 +93,7 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - Football leaders card: `fdLeaders` reads `sum.leaders` (each team's passingYards / rushingYards / receivingYards leader and ESPN's `displayValue`). ESPN has no football rating, so nothing is ranked or picked by Slate. Sacks and tackles leaders exist in the same data but aren't shown.
 - `fdJersey` is now a football jersey SVG (basketball keeps `hpJersey`).
 - Halftime: `fdIsHT` + `fdHT` draw a red dot and "HT" in the score bar and the switcher chip, including "End of 2nd Quarter" and men's college "End of 1st Half".
+
+## 3.70.1: Watch button, football team colors (DJ, Nov 17)
+- `fdWatch` (145) draws the row under the score bar on live games: "On <channels>" and up to two `watchLink` buttons (same links as the cards and On TV).
+- Football cards get `--fd-team` (left edge). `fdRead` returns `offTid`, plus `def` (sack, interception, fumble recovered by the defense, safety), `teamP` (the scorer on a return touchdown) or `noTeam` (penalty, kickoff).
