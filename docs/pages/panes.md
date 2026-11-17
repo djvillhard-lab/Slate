@@ -36,6 +36,9 @@ right, so I can have two live feeds at once."
 - `?panes=off` in the URL gives the old fixed layout (slate left, pages right), which still runs before sign-in.
 - `scripts/shots.py --sizes open` now goes into the right pane (`--pane left` for the left one).
 
+- Headers (3.81.9, DJ): inside a pane `#toprow-r` is at least 70px (the slate's, the tallest), top-aligned, and the
+  second line (`.d-sub`) sits at the slate's date height, so the dividers and names line up across the two sides.
+
 ## Open
 - A pane is about 365 points wide, a little narrower than the folded cover screen (about 382). The Live feed's score
   bar crowds at that width for NBA (a record sits under the score); that page belongs to the Live feed thread.
