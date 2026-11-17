@@ -215,6 +215,27 @@
   // a line no team can be told from still gets a full top row: the league with its sport's emoji, in the accent's edge
   function nwBoxHits(list, lg, only) {
     var w = el("div", "nx-boxes nx-hitb");
+    // a game card's notes (3.84.1, DJ): no logo, name or league row (the card above already says who's playing), just the
+    // tag on the right and the note tinted in its team's color; two notes per team, the first team's first, then the
+    // matchup note last in both teams' colors
+    if (only) {
+      var tA = only[0], tB = only[1], rows = (list || []).map(function (h) {
+        var t = nwTeam(h.team, lg) || nwFindTeam(h.text, lg, only);
+        if (t && t !== tA && t !== tB) t = null;
+        if (/^match/i.test(h.tag || "")) t = null;
+        return { h: h, t: t, o: t && t === tA ? 0 : t && t === tB ? 1 : 2 };
+      }).map(function (r, i) { r.i = i; return r; }).sort(function (a, b) { return a.o - b.o || a.i - b.i; });
+      w.classList.add("bare");
+      rows.forEach(function (r) {
+        var b = el("div", "nx-box"), h = r.h;
+        if (r.t) nwTint(b, r.t);
+        else { b.classList.add("mx"); if (tA && hexOk(tA.c1)) b.style.setProperty("--nx-a", tA.c1); if (tB && hexOk(tB.c1)) b.style.setProperty("--nx-b", tB.c1); }
+        var dup = r.t && h.tag && r.t.name.toLowerCase().indexOf(String(h.tag).toLowerCase()) !== -1;
+        if (h.tag && !dup) { var pr = el("span", "nx-bp"); pr.appendChild(nwPill(h.tag)); b.appendChild(pr); }
+        b.appendChild(el("p", "nx-bx", h.text)); w.appendChild(b);
+      });
+      return w;
+    }
     (list || []).forEach(function (h) {
       var t = nwTeam(h.team, lg) || nwFindTeam(h.text, lg, only);
       var dup = t && h.tag && t.name.toLowerCase().indexOf(String(h.tag).toLowerCase()) !== -1;  // a tag that's just the team's name ("Warriors") goes

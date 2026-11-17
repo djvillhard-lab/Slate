@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.84.0
+Last updated: Nov 17, 2026, 3.84.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -63,6 +63,11 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   ncaaf, ncaam, mlb, nhl, epl). Each story has `reason` (breaking/mine/trending/league); the why pill is 🚨 Breaking
   first, then ⭐ My team, 📺 On your slate, 🔥 Trending, then the league tag.
 
+- Game-card notes (3.84.1, DJ: label row "doesn't add anything"): `nwBoxHits(list, lg, only)` with `only` (a game) draws
+  bare boxes: no logo/name/league row, tag floats top right, tinted in the note's team color. Sorted away team, home team,
+  then matchup (`.mx`: two-color edge and a blended tint; any note with no team of the two, or tag Matchup). The prompt
+  asks for 5 per game: 2 away, 2 home, 1 Matchup; saved `hits(g.hits, 5)`. League section hits keep the label row.
+- Show 5 more only appears when a page has more than 5 top stories (pages written from 3.84.0 on).
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
   both inside the 24,000-token limit. DJ's Nov 16 "it fails on a small selection" report was the old failure's

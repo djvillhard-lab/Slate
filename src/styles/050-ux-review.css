@@ -434,3 +434,11 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx-more { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; background: var(--raise); color: var(--accent); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .nx-more svg { width: 14px; height: 14px; transform: rotate(90deg); }
 .nx-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
+/* Game-card notes (3.84.1): no label row; the tag floats top right and the note wraps beside it. A matchup note is in
+   both teams' colors: a two-color edge and a tint that blends from one to the other */
+.nx .nx-hitb.bare .nx-box { padding: 8px 10px 9px; }
+.nx-hitb.bare .nx-bp { float: right; margin: -1px 0 4px 8px; }
+.nx-hitb.bare .nx-bx { margin-top: 0; }
+.nx-hitb.bare .nx-box::after { content: ""; display: block; clear: both; }
+.nx-box.mx { border-left-color: transparent; background: linear-gradient(90deg, color-mix(in srgb, var(--nx-a, var(--accent)) 9%, var(--card)), color-mix(in srgb, var(--nx-b, var(--accent)) 9%, var(--card))); border-color: color-mix(in srgb, var(--accent) 14%, var(--hair)); border-left-color: transparent; }
+.nx-box.mx::before { content: ""; position: absolute; left: -4px; top: -1px; bottom: -1px; width: 4px; border-radius: 8px 0 0 8px; background: linear-gradient(to bottom, var(--nx-a, var(--accent-fill)) 50%, var(--nx-b, var(--accent-fill)) 50%); }
