@@ -9,6 +9,26 @@
   var MYB = (function () { try { var o = JSON.parse(localStorage.getItem("slate-mybets") || "{}"); return o && o.days ? o : { days: {} }; } catch (e) { return { days: {} }; } })();
   var MYBL = { loaded: false, busy: false, timer: null, sig: "", props: {}, roster: {} };
   var MYB_CSS = [
+    ".myb-list { display: grid; gap: 8px; }",
+    ".myb-bet { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; width: 100%; box-sizing: border-box; padding: 10px 12px 10px 16px; border-radius: 8px; border: 1px solid var(--hair); background: var(--card); color: var(--ink); text-align: left; }",
+    ".myb-bet::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-fill); }",
+    ".myb-bet.one { background: color-mix(in srgb, var(--myb-c) 10%, var(--card)); border-color: color-mix(in srgb, var(--myb-c) 32%, var(--hair)); }",
+    ".myb-bet.one::before { background: var(--myb-c); }",
+    ".myb-bet.two { background: linear-gradient(90deg, color-mix(in srgb, var(--myb-a) 10%, var(--card)), color-mix(in srgb, var(--myb-h) 10%, var(--card))); }",
+    ".myb-bet.two::before { background: linear-gradient(180deg, var(--myb-a) 50%, var(--myb-h) 50%); }",
+    ".myb-bet > .badge, .myb-bet > .myb-pair { grid-row: 1 / span 3; align-self: center; }",
+    ".myb-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; font-weight: 700; color: var(--muted); min-width: 0; }",
+    ".myb-kind { display: inline-block; padding: 2px 6px; border-radius: 4px; background: var(--raise); color: var(--ink); font-size: 12px; font-weight: 800; font-stretch: 85%; }",
+    ".myb-line { grid-column: 2; font-size: 18px; font-weight: 800; color: var(--ink); line-height: 1.2; }",
+    ".myb-st { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; font-weight: 700; color: var(--muted); line-height: 1.3; }",
+    ".myb-st.up { color: var(--accent); }",
+    ".myb-st .lvd { display: inline-flex; align-items: center; gap: 6px; color: var(--live); font-weight: 800; }",
+    ".myb-st .lvd::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--live); }",
+    ".myb-res { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 800; background: var(--raise); color: var(--ink); }",
+    ".myb-res.won { background: var(--accent-fill); color: var(--on-accent); }",
+    ".myb-res.lost { background: var(--live); color: #fff; }",
+    ".myb-bet.won { box-shadow: inset 0 0 0 1.5px var(--accent); }",
+    ".myb-bet .myb-x { grid-row: 1 / span 3; }",
     ".myb-card { background: var(--card); border-radius: 8px; padding: 4px 16px 12px; margin: 12px 0; }",
     ".myb-card .myb-t { display: flex; align-items: center; gap: 8px; padding: 10px 0 6px; font-size: 15px; font-weight: 800; color: var(--head); }",
     ".myb-card .myb-t .count { color: var(--dim); font-size: 13px; font-weight: 700; }",
@@ -25,11 +45,15 @@
     ".myb-s.lv::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--live); margin-right: 6px; vertical-align: 1px; }",
     ".myb-x { grid-row: 1 / span 2; grid-column: 3; width: 44px; height: 44px; display: grid; place-items: center; color: var(--dim); margin-right: -12px; }",
     ".myb-x svg { width: 18px; height: 18px; }",
-    ".myb-add { width: 100%; min-height: 44px; margin-top: 4px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--raise); color: var(--ink); font: 800 16px var(--font); display: flex; align-items: center; justify-content: center; gap: 8px; }",
+    ".myb-add { width: 100%; min-height: 44px; margin-top: 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--raise); color: var(--ink); font: 800 16px var(--font); display: flex; align-items: center; justify-content: center; gap: 8px; }",
     ".myb-add svg { width: 18px; height: 18px; }",
+    ".myb-bar.one { background: color-mix(in srgb, var(--myb-c) 12%, var(--card)); box-shadow: inset 3px 0 0 var(--myb-c); }",
+    ".myb-bar.two { background: linear-gradient(90deg, color-mix(in srgb, var(--myb-a) 12%, var(--card)), color-mix(in srgb, var(--myb-h) 12%, var(--card))); box-shadow: inset 3px 0 0 var(--myb-a); }",
     ".myb-bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 8px 0 0; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 10%, var(--card)); font-size: 13px; font-weight: 700; color: var(--muted); line-height: 1.3; }",
     ".myb-bar + .myb-bar { margin-top: 4px; }",
-    ".myb-bar b { color: var(--ink); font-weight: 800; }",
+    ".myb-bar b { color: var(--ink); font-weight: 800; font-size: 15px; }",
+    ".myb-bar { align-items: center !important; }",
+    ".myb-bar .myb-kind { font-size: 11px; padding: 1px 6px; }",
     ".myb-bar .up, .myb-bar .won { color: var(--accent); font-weight: 800; }",
     ".myb-bar .lost { color: var(--live); font-weight: 800; }",
     ".myb-rec { margin: 8px 2px 0; font-size: 13px; line-height: 1.35; color: var(--dim); font-weight: 700; }",
@@ -98,9 +122,23 @@
   function mybNoun(b) { if (b.kind === "total") return BET_TOT[BX_SPORT[b.lg]] || "points"; var d = mybDef(b); return d ? d.noun : "points"; }
   function mybLabel(b, g) {
     if (b.kind === "spread") return abbr(g, b.sd) + " " + mybSigned(b.line);
-    if (b.kind === "ml") return b.sd === "draw" ? "Draw" : abbr(g, b.sd) + " to win";
+    if (b.kind === "ml") return (b.sd === "draw" ? "Draw" : abbr(g, b.sd) + " to win") + (b.price != null && !isNaN(Number(b.price)) ? " " + fmtOdds(b.price) : "");
     if (b.kind === "total") return (b.ou === "over" ? "Over " : "Under ") + mybNum(b.line);
     return betSurname(b.p) + " " + b.ou + " " + mybNum(b.line) + " " + mybNoun(b);
+  }
+  // what kind of bet it is, for the card's tag: "Spread", "Moneyline", "Total points", "Player points"
+  function mybKind(b) {
+    if (b.kind === "spread") return SOCCER[b.lg] ? "Handicap" : BX_SPORT[b.lg] === "hockey" ? "Puck line" : BX_SPORT[b.lg] === "baseball" ? "Run line" : "Spread";
+    if (b.kind === "ml") return "Moneyline";
+    if (b.kind === "total") return "Total " + mybNoun(b);
+    return "Player " + mybNoun(b);
+  }
+  // the card's colors: the team bet on (a player's team for a player line), both teams for a total or a draw
+  function mybTone(node, b, g) {
+    var c = function (sd) { var x = ""; try { x = badgeColor(g, sd); } catch (e) {} return x || ""; };
+    if (b.kind === "total" || b.sd === "draw" || !b.sd) { var a = c("away"), h = c("home"); if (a && h) { node.style.setProperty("--myb-a", a); node.style.setProperty("--myb-h", h); node.classList.add("two"); } }
+    else { var k = c(b.sd); if (k) { node.style.setProperty("--myb-c", k); node.classList.add("one"); } }
+    return node;
   }
   function mybVs(g) { return abbr(g, "away") + (g.neutral ? " vs " : " at ") + abbr(g, "home"); }
 
@@ -164,18 +202,26 @@
   function mybRow(b, opts) {
     opts = opts || {};
     var g = mybGame(b), r = mybResult(b), say = mybSay(b, r, g);
-    var row = el(opts.tap ? "button" : "div", "myb-row"); if (opts.tap) { row.type = "button"; row.addEventListener("click", function () { openMatchup(g); }); }
-    if (b.kind === "total" || (b.kind === "ml" && b.sd === "draw")) { var pr = el("span", "myb-pair"); pr.setAttribute("aria-hidden", "true"); ["away", "home"].forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); }); row.appendChild(pr); }
+    var row = el(opts.tap ? "button" : "div", "myb-bet" + (r.s === "won" ? " won" : "")); if (opts.tap) { row.type = "button"; row.addEventListener("click", function () { openMatchup(g); }); }
+    mybTone(row, b, g);
+    if (b.kind === "total" || b.sd === "draw" || !b.sd) { var pr = el("span", "myb-pair"); pr.setAttribute("aria-hidden", "true"); ["away", "home"].forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); }); row.appendChild(pr); }
     else row.appendChild(badgeFor(abbr(g, b.sd), g[b.sd], g[b.sd + "Color"], g[b.sd + "Alt"]));
-    var l = el("span", "myb-l", mybLabel(b, g)); if (opts.vs) l.appendChild(el("i", null, " · " + mybVs(g))); row.appendChild(l);
-    var s = el("span", "myb-s" + (say.c ? " " + say.c : "") + (say.lv ? " lv" : ""), say.t); row.appendChild(s);
+    // top: the kind of bet and the game; then the bet itself, big; then where it stands
+    var meta = el("span", "myb-meta"); meta.appendChild(el("span", "myb-kind", mybKind(b))); meta.appendChild(el("span", null, mybVs(g))); row.appendChild(meta);
+    row.appendChild(el("span", "myb-line", mybLabel(b, g)));
+    var st = el("span", "myb-st" + (say.c === "up" ? " up" : "")), txt = say.t;
+    var m = /^(✓ Won|✗ Lost|Push)(?: · )?(.*)$/.exec(txt);
+    if (m) { st.appendChild(el("span", "myb-res" + (/Won/.test(m[1]) ? " won" : /Lost/.test(m[1]) ? " lost" : ""), m[1])); if (m[2]) st.appendChild(el("span", null, m[2].replace(/^./, function (x) { return x.toUpperCase(); }))); }
+    else if (say.lv) { var lm = /^(Live[^·]*?) · (.*)$/.exec(txt); st.appendChild(el("span", "lvd", lm ? lm[1] : "Live")); if (lm) st.appendChild(el("span", null, lm[2].replace(/^./, function (x) { return x.toUpperCase(); }))); }
+    else st.textContent = txt;
+    row.appendChild(st);
     if (opts.x) {
       var x = el("span", "myb-x"); x.setAttribute("role", "button"); x.tabIndex = 0; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove your bet " + mybLabel(b, g));
       var rm = function (e) { e.stopPropagation(); e.preventDefault(); mybRemove(b); };
       x.addEventListener("click", rm); x.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") rm(e); });
       row.appendChild(x);
     }
-    row.setAttribute("aria-label", "Your bet " + mybLabel(b, g) + (opts.vs ? ", " + mybVs(g) : "") + ": " + say.t);
+    row.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + ", " + mybVs(g) + ". " + say.t);
     return row;
   }
   function mybRemove(b) {
@@ -190,7 +236,7 @@
     var list = mybFor(g), can = mybCanAdd(g);
     if (!list.length && !can) return null;
     var c = el("div", "myb-card"), t = el("div", "myb-t"); t.appendChild(el("span", null, "Your bets")); if (list.length) t.appendChild(el("span", "count", String(list.length))); c.appendChild(t);
-    var rows = el("div", "myb-rows"); list.forEach(function (b) { rows.appendChild(mybRow(b, { x: true })); }); c.appendChild(rows);
+    var rows = el("div", "myb-list"); list.forEach(function (b) { rows.appendChild(mybRow(b, { x: true })); }); if (list.length) c.appendChild(rows);
     if (can) {
       var add = el("button", "myb-add"); add.type = "button"; add.appendChild(icon("plus")); add.appendChild(document.createTextNode(list.length ? "Add another bet" : "Add my bet"));
       add.addEventListener("click", function () { mybOpen(g); }); c.appendChild(add);
@@ -201,8 +247,9 @@
   function mybBars(g) {
     if (!g || g.custom) return [];
     return mybFor(g).map(function (b) {
-      var r = mybResult(b), say = mybSay(b, r, g), bar = el("div", "myb-bar");
-      bar.appendChild(el("span", null, "Your bet")); bar.appendChild(el("b", null, mybLabel(b, g)));
+      var r = mybResult(b), say = mybSay(b, r, g), bar = mybTone(el("div", "myb-bar"), b, g);
+      bar.appendChild(el("span", null, "Your bet")); bar.appendChild(el("span", "myb-kind", mybKind(b))); bar.appendChild(el("b", null, mybLabel(b, g)));
+      bar.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + (r.s !== "pre" ? ". " + say.t : ""));
       if (r.s !== "pre") bar.appendChild(el("span", say.c || null, say.t.replace(/^Live[^·]*· /, "")));
       return bar;
     });
@@ -221,7 +268,7 @@
     var rec = el("p", "myb-rec"); rec.appendChild(el("b", null, (state.date === todayInHome() ? "Today: " : "This day: ") + parts.join(", ")));
     var wk = mybRecord(state.date, 7); if (wk) rec.appendChild(document.createTextNode(" · Last 7 days " + wk));
     sec.appendChild(rec);
-    if (open) { var c = el("div", "myb-card myb-rows"); list.forEach(function (b) { c.appendChild(mybRow(b, { tap: true, vs: true })); }); sec.appendChild(c); }
+    if (open) { var c = el("div", "myb-list"); c.style.marginTop = "8px"; list.forEach(function (b) { c.appendChild(mybRow(b, { tap: true, vs: true })); }); sec.appendChild(c); }
     return sec;
   }
   // won-lost(-push) over the days up to and including this one: only settled bets count
@@ -368,6 +415,7 @@
     var g = S.g, now = Date.now(), b = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), gid: g.id, lg: g.league, kind: S.kind, at: now, ed: now, g: mybSnap(g) };
     if (S.kind === "spread" || S.kind === "ml") b.sd = S.sd;
     if (S.kind !== "ml") b.line = parseFloat(S.line);
+    if (S.kind === "ml" && S.sd !== "draw" && S.o.ml && S.o.ml[S.sd] != null && !isNaN(Number(S.o.ml[S.sd]))) b.price = Number(S.o.ml[S.sd]);  // shown with the bet, not used for money
     if (S.kind === "total" || S.kind === "prop") b.ou = S.ou;
     if (S.kind === "prop") { b.pid = S.pid; b.p = S.p; b.pos = S.pos; b.sd = S.psd; b.k = S.k; }
     if (S.kind === "spread" && S.sp[S.sd] != null && Number(S.sp[S.sd]) === b.line) b.src = S.src;

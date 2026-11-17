@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.87.1 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- My bets: each bet is its own card in the colors of the team you bet on, with a colored edge like the News boxes. A total (or a draw) splits the card between both teams' colors. A player line uses the player's team.
+- Each card says what kind of bet it is (Spread, Moneyline, Total points, Player points...) above the bet in big type: "DUKE -8.5", "Over 165.5", "DUKE to win -355", "Tatum over 25.5 points". Moneylines now keep the price you saw when you added them.
+- Won is a green tag (and a green outline on the card), Lost a red tag, Push a gray one. While the game is on, the card shows the red Live dot with the clock.
+- The line under a game card ("Your bet DUKE -8.5 · covering by 2.5") is tinted in the same team color.
+
 ## 3.87.0 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - New: live feeds for soccer. Any live or finished soccer match (Premier League, the other leagues, internationals) now has the Live feed button, and its games show in the feed's switcher and filters next to football and basketball.
