@@ -459,8 +459,7 @@
   }
   // ---- Box Office player cards, in the slate's Top performers look (DJ, 3.75.0: "the same design for box office") ----
   // team color down the left edge, the jersey with the number (football and basketball use the Live feed's jerseys), name, position
-  // and team, the stat line under the name, the game under that, and the tags on the right. The card styles are the slate's tp- rules;
-  // the tags come from the slate's own tpTags when it's there (one set of tags for the whole app).
+  // and team, the stat line under the name, a rare night-leader tag under that, and the game on the right. The card styles are the slate's tp- rules.
   var MM_SPORT = { bball: "bball", hockey: "hockey", football: "football", baseball: "baseball" };
   function mmSport(lg) { return MM_SOCCER[lg] ? "soccer" : MM_SPORT[RK_KIND[lg]] || ""; }
   // a player's team details (full name, color, jersey) from the night's rankings, for Claude's rows that only carry the team's abbreviation
@@ -470,13 +469,30 @@
     var lv = rk.live[day + "|" + lg]; ((lv && lv.rows) || []).forEach(add);
     return out;
   }
-  // football's tag numbers from a row's stat map ("passing.YDS" and so on)
-  function mmFoot(st) {
-    var n = function (k) { var x = parseFloat(String(st[k] == null ? "" : st[k])); return isNaN(x) ? 0 : x; }, odd = [], td = n("rushing.TD") + n("receiving.TD");
-    Object.keys(st).forEach(function (k) { var gr = k.split(".")[0]; if (/\.TD$/.test(k) && ["passing", "rushing", "receiving"].indexOf(gr) === -1 && n(k) > 0) { odd.push(gr); td += n(k); } });
-    return { td: td, ptd: n("passing.TD"), py: n("passing.YDS"), ry: n("rushing.YDS"), cy: n("receiving.YDS"), int: n("passing.INT"), odd: odd };
+  // the night's leaders in the list (DJ, 3.77.3): one tag per category, given only to the leader. A tie of three or more gets no tag.
+  // Every number comes from the box score row (st). Football reads "group.LABEL" keys.
+  var MM_LEAD = {
+    bball: [["🪣 Top scorer", "PTS"], ["🧲 Most boards", "REB"], ["🪄 Most assists", "AST"], ["🎯 Most threes", "3PT"], ["🔒 Most steals + blocks", ["STL", "BLK"]]],
+    football: [["🎯 Most passing yds", "passing.YDS"], ["💨 Most rushing yds", "rushing.YDS"], ["🙌 Most receiving yds", "receiving.YDS"], ["🏈 Most TDs", ["rushing.TD", "receiving.TD"]]],
+    hockey: [["🚨 Most goals", "G"], ["🍎 Most points", ["G", "A"]], ["🧱 Most saves", "SV"]],
+    baseball: [["🔥 Most hits", "H"], ["💣 Most homers", "HR"], ["🏃 Most RBI", "RBI"], ["⚡ Most strikeouts", "K", "IP"]]
+  };
+  function mmLeaders(rows, sport) {
+    var out = {}, defs = MM_LEAD[sport]; if (!defs) return out;
+    var num = function (st, k) { var m = /^(\d+)-\d+$/.exec(String(st[k] || "")); var x = m ? Number(m[1]) : parseFloat(String(st[k] == null ? "" : st[k])); return isNaN(x) ? 0 : x; };
+    defs.forEach(function (d) {
+      var best = 0, who = [];
+      rows.forEach(function (r) {
+        var st = r.st; if (!st) return; if (d[2] && st[d[2]] == null) return;   // pitchers only for strikeouts
+        if (d[1] === "K" && sport === "baseball" && st.IP == null) return;
+        var v = [].concat(d[1]).reduce(function (t, k) { return t + num(st, k); }, 0);
+        if (v > best) { best = v; who = [r]; } else if (v === best && v > 0) who.push(r);
+      });
+      if (best > 0 && who.length && who.length <= 2) who.forEach(function (r) { var k = r.id || r.name; (out[k] = out[k] || []).push(d[0]); });
+    });
+    return out;
   }
-  function mmCard(r, mark, kind, look) {
+  function mmCard(r, mark, kind, look, lead) {
     var lg = mm.lg, sport = mmSport(lg), byId = (look && r.id && look.id[r.id]) || {}, byTm = (look && r.team && look.team[r.team]) || {};
     var teamName = r.teamName || byId.teamName || byTm.teamName || "", color = r.color || byId.color || byTm.color || "", jer = String(r.jer || byId.jer || "");
     // a one-team stand-in for a game, so the slate's jersey and color helpers work here
@@ -494,22 +510,18 @@
     m.appendChild(top);
     // each stat stays whole when the line wraps ("3 STL", never "3" then "STL")
     if (r.line) { var ln = el("div", "tp-l mm-l"); String(r.line).replace(/\s*,\s*/g, " · ").split(" · ").forEach(function (x, i) { if (i) ln.appendChild(document.createTextNode(" · ")); ln.appendChild(el("span", null, x)); }); m.appendChild(ln); }
-    // the game: live clock in red, or W/L and the score, then the opponent
-    var res = r.result || byId.result || "", opp = r.opp || byId.opp || "", home = r.opp ? r.home : byId.home;
-    if (res || opp || r.live) {
-      var gm = el("div", "mm-gm");
-      if (r.live) { gm.appendChild(el("i", "rk-dot")); gm.appendChild(el("span", "rk-live", r.detail || "Live")); gm.appendChild(document.createTextNode(" ")); }
-      var wl = /^[WLT] /.test(res) ? res.charAt(0) : "";
-      if (wl) gm.appendChild(el("b", "rk-wl " + wl.toLowerCase(), wl + " "));
-      if (res) gm.appendChild(document.createTextNode(wl ? res.slice(2) : res));
-      if (opp) gm.appendChild(document.createTextNode((res ? " " : "") + (home ? "vs " : "@ ") + opp));
-      m.appendChild(gm);
-    }
     if (r.why) m.appendChild(el("div", "mm-why", r.why));
+    // a night-leader tag under the stats (DJ, 3.77.3: rare, only the night's leaders; most cards have none)
+    var lt = lead && lead[r.id || r.name];
+    if (lt && lt.length) { var tg = el("div", "mm-lead"); lt.slice(0, 2).forEach(function (t) { tg.appendChild(el("span", "fd-tag hot", t)); }); m.appendChild(tg); }
     c.appendChild(m);
-    // the slate's tags (tpTags / tpFootTags in 140-game.js), from the box score numbers the row carries; at most three
-    var tags = []; var st = r.st || byId.st; try { if (st) tags = sport === "football" ? tpFootTags(mmFoot(st)) : tpTags(sport, st, !!res && !r.live); } catch (e) { tags = []; }
-    var tg = el("div", "tp-tags"); tags.slice(0, 3).forEach(function (t) { tg.appendChild(el("span", "fd-tag " + (t.c || ""), t.t)); }); c.appendChild(tg);
+    // the game on the right, as before 3.76.0: W/L and the score (or the live clock in red), the opponent under it
+    var res = r.result || byId.result || "", opp = r.opp || byId.opp || "", home = r.opp ? r.home : byId.home, gm = el("div", "mm-res");
+    if (r.live) { var lv = el("div", "mm-r1"); lv.appendChild(el("i", "rk-dot")); lv.appendChild(el("span", "rk-live", r.detail || "Live")); gm.appendChild(lv); }
+    var wl = /^[WLT] /.test(res) ? res.charAt(0) : "";
+    if (res) { var r1 = el("div", "mm-r1"); if (wl) r1.appendChild(el("b", "rk-wl " + wl.toLowerCase(), wl)); r1.appendChild(el("span", "rk-sc", wl ? res.slice(2) : res)); gm.appendChild(r1); }
+    if (opp) gm.appendChild(el("div", "mm-r2", (home ? "vs " : "@ ") + opp));
+    c.appendChild(gm);
     return c;
   }
   function mmPerson(r, kind, i) {
@@ -571,7 +583,7 @@
       if (!rows.length) { body.appendChild(el("div", "notice", stillLoading ? "Loading…" : "No " + nm0 + " games have started yet today. Top performers show up here live once they do.")); return; }
       var topT = rows.slice(0, 20);
       body.appendChild(mmSec("Top performers", gamesLine(day, mm.lg, dk.live) || "Top " + topT.length));
-      var tlT = el("div", "bs-list mm-top mm-cards"); topT.forEach(function (r, i) { mmPlayer(tlT, mmCard(r, i + 1), r); }); tlT.style.setProperty("--rows", Math.ceil(topT.length / 2)); body.appendChild(tlT);
+      var tlT = el("div", "bs-list mm-top mm-cards"); var ldT = mmLeaders(rows, mmSport(mm.lg)); topT.forEach(function (r, i) { mmPlayer(tlT, mmCard(r, i + 1, "", null, ldT), r); }); tlT.style.setProperty("--rows", Math.ceil(topT.length / 2)); body.appendChild(tlT);
       body.appendChild(mmHow(mm.lg));
       body.appendChild(el("p", "pv-at", "Live from ESPN box scores. Wild finishes show up tomorrow morning, and Claude can pick the over and underachievers when you ask."));
       return;
@@ -600,8 +612,8 @@
     var all = MM_SOCCER[mm.lg] ? ((L && L.top) || []) : (((mm.docs[sp] || {}).leagues || {})[mm.lg] || []), top = all.slice(0, 20);
     if (top.length) {
       body.appendChild(mmSec("Top performers", gamesLine(night, mm.lg, 0) || "Top " + top.length));
-      var tl = el("div", "bs-list mm-top mm-cards"), lk0 = MM_SOCCER[mm.lg] ? mmLookup(mm.lg, night) : null;
-      top.forEach(function (r, i) { if (MM_SOCCER[mm.lg]) tl.appendChild(mmCard(r, i + 1, "", lk0)); else mmPlayer(tl, mmCard(r, i + 1), r); });
+      var tl = el("div", "bs-list mm-top mm-cards"), lk0 = MM_SOCCER[mm.lg] ? mmLookup(mm.lg, night) : null, ld0 = mmLeaders(all, mmSport(mm.lg));
+      top.forEach(function (r, i) { if (MM_SOCCER[mm.lg]) tl.appendChild(mmCard(r, i + 1, "", lk0)); else mmPlayer(tl, mmCard(r, i + 1, "", null, ld0), r); });
       tl.style.setProperty("--rows", Math.ceil(top.length / 2)); body.appendChild(tl);
       body.appendChild(mmHow(mm.lg));
     }

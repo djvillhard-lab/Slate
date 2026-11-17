@@ -1,21 +1,17 @@
-/* Box Office player cards (3.75.0): the slate's Top performers card (tp- rules in 050-ux-review.css) with a rank in front,
-   the game under the stat line, and the tags on the right */
+/* Box Office player cards (3.75.0, reworked 3.77.3): the slate's Top performers card (tp- rules in 050-ux-review.css) with a rank in front,
+   a headshot, the stat line, a rare night-leader tag under it, and the game on the right */
 #mm-body .mm-cards { display: grid; row-gap: 8px; }
 #mm-body .mm-card.tp { display: grid; grid-template-columns: 18px auto minmax(0, 1fr) auto; align-items: center; column-gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--card); border: 1px solid var(--hair); border-left: 4px solid var(--tp-team, var(--hair)); }
 #mm-body .mm-card.mm-open { border-color: var(--accent); border-left-color: var(--tp-team, var(--accent)); }
 .mm-rank { font-size: 13px; font-weight: 800; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
 .mm-rank.top { color: var(--ink); }
 .mm-card.mm-over .mm-rank { color: var(--accent); }
-.mm-gm { margin-top: 3px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 12px; font-weight: 600; color: var(--dim); font-variant-numeric: tabular-nums; }
-.mm-gm .rk-dot { flex: none; }
 .mm-card .mm-why { margin-top: 4px; font-size: 13px; line-height: 1.35; color: var(--muted); }
-/* a narrow card (folded Duo, iPhone): the tags move under the stat line so names and stats keep their room */
-#mm-body .mm-cards { container-type: inline-size; }
-@container (max-width: 400px) {
-  #mm-body .mm-card.tp { grid-template-columns: 18px auto minmax(0, 1fr); }
-  #mm-body .mm-card.tp > .tp-tags { grid-column: 3; display: flex; flex-wrap: wrap; justify-content: flex-start; margin-top: 4px; }
-}
-#mm-body .mm-card.tp > .tp-tags:empty { display: none; }
+/* the game on the right (3.77.3), and the rare night-leader tag under the stats */
+.mm-res { display: grid; justify-items: end; gap: 2px; text-align: right; font-size: 12px; font-weight: 600; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mm-r1 { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+.mm-res:empty { display: none; }
+.mm-lead { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px; }
 .mm-l > span { white-space: nowrap; }
 /* the headshot (3.76.1, in place of the jersey) */
 #mm-body .mm-card .rk-fw { width: 44px; height: 44px; }

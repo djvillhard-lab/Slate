@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.77.3 (Nov 17, 2026)
+TestFlight: 3.68.5 (44), no new build (web only)
+- Box Office: the game result is back on the right of each player card (W 126-115 over vs CHI, or the live clock in red).
+- Box Office: the slate's tags are gone from these cards. In their place, a few rare tags under the stats go only to the night's leaders in that league: 🪣 Top scorer, 🧲 Most boards, 🪄 Most assists, 🎯 Most threes and 🔒 Most steals + blocks in basketball. Football gets the most passing, rushing and receiving yards and the most TDs. Hockey gets the most goals, points and saves, and baseball the most hits, homers, RBI and strikeouts. A three-way tie gets no tag, so most cards have none.
+
 ## 3.77.2 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Live feed: player headshots in place of the jersey icons, on every play and in Leaders and Top rated, football and basketball. Each one sits in a circle of the team's color. When ESPN has no picture for a player (more common in college), the jersey with the number shows as before.
