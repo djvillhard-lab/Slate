@@ -8,3 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | Notifications: tag in the live notification header (app part, waiting for DJ) | shared: ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift | 2026-11-17 01:26 |
 | DJ | Slate: live game cards, scores over records | src/app/150-game-row.js, slate card CSS | 2026-11-17 01:31 |
+| DJ | shared: 240-chrome.js (slate score column fix) | src/app/240-chrome.js | 2026-11-17 01:52 |
