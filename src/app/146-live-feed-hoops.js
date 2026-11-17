@@ -23,13 +23,19 @@
   }
   function hpLine(P, k) {
     var s = P.st || {}, n = function (v) { return parseFloat(v) || 0; }, out = [];
-    if (s.PTS == null) return "";
+    if (s.PTS == null || k === "none") return "";
     // 3.67.3: the gray boxes lead with the number that play is about (shooting on a miss, boards on a rebound)
     if (k === "fg" || k === "fg3") { if (s.FG) out.push(s.FG + " FG"); if (k === "fg3" && s["3PT"]) out.push(s["3PT"] + " 3PT"); out.push(n(s.PTS) + " pts"); return out.join(", "); }
     if (k === "ft") { if (s.FT) out.push(s.FT + " FT"); out.push(n(s.PTS) + " pts"); return out.join(", "); }
     if (k === "reb") { out.push(n(s.REB) + " reb"); if (s.OREB != null && n(s.OREB)) out.push(n(s.OREB) + " offensive"); return out.join(", "); }
     if (k === "ast") return n(s.AST) + " ast, " + n(s.PTS) + " pts";
-    if (k === "foul") return n(s.PF) + (n(s.PF) === 1 ? " foul" : " fouls") + ", " + n(s.PTS) + " pts";
+    var fouls = function () { return n(s.PF) + (n(s.PF) === 1 ? " foul" : " fouls"); };
+    if (k === "foul") return fouls() + ", " + n(s.PTS) + " pts";
+    // 3.68.1 (DJ): every line leads with the stat the play is about. A turnover shows turnovers; an offensive foul counts as both a turnover and a personal foul
+    if (k === "to" || k === "tofoul") { if (s.TO != null) out.push(n(s.TO) + " TO"); if (k === "tofoul") out.push(fouls()); if (!out.length) out.push(n(s.PTS) + " pts"); return out.join(", "); }
+    if (k === "stl") return n(s.STL) + " stl, " + n(s.PTS) + " pts";
+    if (k === "blk") return n(s.BLK) + " blk, " + n(s.REB) + " reb";
+    if (k === "pts" || k === "3") { out.push(n(s.PTS) + " pts"); if (s.FG) out.push(s.FG + " FG"); if (k === "3" && s["3PT"]) out.push(s["3PT"] + " 3PT"); return out.join(", "); }
     out.push(n(s.PTS) + " pts"); if (n(s.REB)) out.push(n(s.REB) + " reb"); if (n(s.AST)) out.push(n(s.AST) + " ast");
     if (k === "3" && s["3PT"]) out.push(s["3PT"] + " 3PT"); if ((k === "blk" && n(s.BLK)) || (k === "all" && n(s.BLK) >= 2)) out.push(n(s.BLK) + " blk"); if ((k === "stl" && n(s.STL)) || (k === "all" && n(s.STL) >= 2)) out.push(n(s.STL) + " stl");
     if (k === "foul" && n(s.PF)) out.push(n(s.PF) + " fouls");
@@ -56,7 +62,7 @@
       return o;
     }
     if (pl.shootingPlay) {
-      if (pl.scoringPlay) { o.big = true; o.kind = "score"; o.title = shot() + (dist && shot() !== "Dunk" ? ", " + dist + " ft" : ""); o.k = three ? "3" : ""; if (parts[1] && /assist/i.test(tx)) { o.P2 = parts[1]; o.k2 = "ast"; o.l2 = "assist"; } return o; }
+      if (pl.scoringPlay) { o.big = true; o.kind = "score"; o.title = shot() + (dist && shot() !== "Dunk" ? ", " + dist + " ft" : ""); o.k = three ? "3" : "pts"; if (parts[1] && /assist/i.test(tx)) { o.P2 = parts[1]; o.k2 = "ast"; o.l2 = "assist"; } return o; }
       if (/blocks/i.test(tx)) { o.big = true; o.kind = "miss"; o.title = "Blocked" + (parts[1] ? " by " + fdShort(parts[1]) : ""); o.P = parts[1] || parts[0]; o.k = "blk"; if (parts[1] && parts[0]) { o.P2 = parts[0]; o.k2 = three ? "fg3" : "fg"; o.l2 = "shot blocked"; } return o; }
       o.big = true; o.kind = "miss"; o.k = three ? "fg3" : "fg";
       o.title = "Missed " + (three ? "three" : shot() === "Jumper" ? "jumper" : shot().toLowerCase()) + (dist && !/dunk|layup|tip|rim/i.test(shot()) ? ", " + dist + " ft" : ""); o.minor = "Miss"; return o;
@@ -66,11 +72,11 @@
       // what kind of turnover, from ESPN's type and text; a second player from the other team is the one ESPN credits with the steal
       var a2 = ty + " " + tx, sub = /bad pass/i.test(a2) ? "Bad pass" : /lost ball/i.test(a2) ? "Lost ball" : /travel/i.test(a2) ? "Traveling" : /offensive foul|charge/i.test(a2) ? "Offensive foul" : /double dribble/i.test(a2) ? "Double dribble" : /shot clock/i.test(a2) ? "Shot clock violation" : /step/i.test(a2) && /out of bounds/i.test(a2) ? "Stepped out of bounds" : /goaltend/i.test(a2) ? "Offensive goaltending" : /3.?second/i.test(a2) ? "3 seconds" : /5.?second/i.test(a2) ? "5 seconds" : /8.?second/i.test(a2) ? "8 seconds" : /back ?court/i.test(a2) ? "Backcourt" : /palming|discontinued|carry/i.test(a2) ? "Carrying" : /inbound/i.test(a2) ? "Inbound turnover" : /out of bounds/i.test(a2) ? "Out of bounds" : /kicked/i.test(a2) ? "Kicked ball" : /lane/i.test(a2) ? "Lane violation" : "";
       var P0 = parts[0], P1 = parts[1], stl = P1 && (/steal/i.test(tx) || (P0 && P1.tid !== P0.tid));
-      if (stl) { o.title = "Steal by " + fdShort(P1); o.P = P1; o.k = "stl"; o.desc = (P0 ? name(P0) + " " + (sub ? sub.toLowerCase() : "turnover") + ", " : (sub ? sub + ", " : "")) + "stolen by " + name(P1); }
-      else { o.title = sub ? "Turnover: " + sub.toLowerCase() : "Turnover"; o.desc = P0 ? name(P0) + ": " + (sub ? sub.toLowerCase() : "turnover") : (sub ? sub + " (team turnover)" : "Team turnover"); }
+      if (stl) { o.title = "Steal by " + fdShort(P1); o.P = P1; o.k = "stl"; o.desc = (P0 ? name(P0) + " " + (sub ? sub.toLowerCase() : "turnover") + ", " : (sub ? sub + ", " : "")) + "stolen by " + name(P1); if (P0) { o.P2 = P0; o.k2 = "to"; o.l2 = "turnover"; } }
+      else { o.k = sub === "Offensive foul" ? "tofoul" : "to"; o.title = sub ? "Turnover: " + sub.toLowerCase() : "Turnover"; o.desc = P0 ? name(P0) + ": " + (sub ? sub.toLowerCase() : "turnover") : (sub ? sub + " (team turnover)" : "Team turnover"); }
       return o;
     }
-    if (/technical|flagrant|ejection/i.test(ty + tx)) { o.big = true; o.kind = "turn"; o.k = "foul";
+    if (/technical|flagrant|ejection/i.test(ty + tx)) { o.big = true; o.kind = "turn"; o.k = /flagrant/i.test(ty + tx) ? "foul" : "none";  // a technical isn't a personal foul in the NBA: no stat line
       var fl = /flagrant[^0-9]*(\d)/i.exec(ty + " " + tx), why = ty.replace(/\s*technical( foul)?\s*/i, "").replace(/-/g, " ").trim().toLowerCase();
       o.title = /ejection|ejected/i.test(ty + tx) ? "Ejected" : /flagrant/i.test(ty + tx) ? "Flagrant foul" + (fl ? " " + fl[1] : "") : "Technical foul" + (why && why !== "technical" ? ": " + why : "");
       return o; }
@@ -170,7 +176,7 @@
     // latest foul is marked when it puts them in foul trouble or out of the game (the box score's foul count is the game so far)
     var rebOf = {}, rebSkip = {}, lastFoul = {}, isReb = function (p) { return /rebound/i.test(String((p.type || {}).text || "")); };
     plays.forEach(function (p, i) { var pv = plays[i - 1], ty0 = String((p.type || {}).text || "");
-      if (/foul/i.test(ty0) && !/turnover/i.test(ty0)) { var fa = String((((p.participants || [])[0] || {}).athlete || {}).id || ""); if (fa) lastFoul[fa] = hpPid(p); }
+      if (/foul/i.test(ty0) && !/technical/i.test(ty0)) { var fa = String((((p.participants || [])[0] || {}).athlete || {}).id || ""); if (fa) lastFoul[fa] = hpPid(p); }
       if (!pv || !isReb(p) || ((p.period || {}).number) !== ((pv.period || {}).number)) return;
       var pty = String((pv.type || {}).text || ""), missed = !pv.scoringPlay && (pv.shootingPlay || hpFT(pv)); if (!missed) return;
       // the dead-ball "team rebound" ESPN logs between two free throws isn't a play: left out
@@ -198,7 +204,7 @@
         if (rd.minor === "Sub" || rebSkip[pid]) continue;  // subs are left out; a rebound that follows a miss is on the miss's box
         flush(); items++;
         var gray = /^(miss|foul|to|end)$/.test(rd.kind), rb = rebOf[pid], rbR = rb ? hpRead(rb, ix) : null;
-        if (rd.kind === "foul" && rd.P && lastFoul[rd.P.id] === pid) { var pf = parseFloat((rd.P.st || {}).PF) || 0, ft0 = pf >= foulLimit ? "Fouled out" : pf === foulLimit - 1 ? "Foul trouble" : ""; if (ft0) tg = (tg || []).concat([{ t: ft0, c: "" }]); }
+        if ((rd.kind === "foul" || rd.k === "tofoul") && rd.P && lastFoul[rd.P.id] === pid) { var pf = parseFloat((rd.P.st || {}).PF) || 0, ft0 = pf >= foulLimit ? "Fouled out" : pf === foulLimit - 1 ? "Foul trouble" : ""; if (ft0) tg = (tg || []).concat([{ t: ft0, c: "" }]); }
         var sd2 = sideOf[String((pl.team || {}).id || "")] || "";
         var c2 = el("div", "fd-play hp-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); c2.setAttribute("data-id", pid);
         if (sd2 && rd.kind !== "to" && rd.kind !== "end") c2.style.setProperty("--hp-team", fdTint(g, sd2));

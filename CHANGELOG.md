@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.1 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Basketball live feed: the stats under each play now match the play. A turnover shows the player's turnovers ("3 TO"). An offensive foul shows turnovers and fouls ("3 TO, 2 fouls"), since it counts as both, and gets the foul-trouble tag when it applies.
+- A steal leads with the stealer's steals and adds the player who lost the ball with their turnovers. A block leads with blocks. A made shot shows points and field goals ("13 pts, 5-8 FG", plus threes on a three). A technical foul shows no stat line.
+
 ## 3.68.0 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Live notifications for a single game, every sport: one standout for the whole game instead of one per team. Basketball picks the higher of the two teams' ESPN in-game ratings; football picks the game leader with the most yards.
