@@ -204,10 +204,18 @@ private struct LockCard: View {
         let pvUnder = !stars.isEmpty && !pv.isEmpty
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Text(a.league)
-                    .font(SlateLook.semi(12))
-                    .foregroundStyle(SlateLook.muted)
-                    .lineLimit(1)
+                // "Slate • CBB" and, when the game has one, the slate card's tag after it, brighter (3.68.0)
+                HStack(spacing: 6) {
+                    Text(a.league)
+                        .font(SlateLook.semi(12))
+                        .foregroundStyle(SlateLook.muted)
+                    if let tag = s.tag, !tag.isEmpty, s.state != "post" {
+                        Text(tag)
+                            .font(SlateLook.semi(12))
+                            .foregroundStyle(SlateLook.ink)
+                    }
+                }
+                .lineLimit(1)
                 Spacer(minLength: 0)
                 HStack(spacing: 6) {
                     if live { Circle().fill(SlateLook.live).frame(width: 6, height: 6) }

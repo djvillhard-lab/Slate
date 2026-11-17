@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.5 (Nov 17, 2026)
+TestFlight: 3.68.5 (44)
+- Live notifications for a single game show the slate card's tag after the header: "Slate • CBB  Upset watch", "Slate • NBA  Rivalry". It follows the card, so a tag like Close finish appears and goes away as the game changes. Needs build 44, and your phone shares the tags whenever Slate is open.
+
 ## 3.68.4 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed: the game strip and swiping left and right now go through the live games on your slate (football and basketball), plus the game you opened the live feed from, which comes first. Before, it was your favorite teams' games.

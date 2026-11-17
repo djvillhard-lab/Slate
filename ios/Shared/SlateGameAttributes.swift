@@ -25,6 +25,7 @@ struct SlateGameAttributes: ActivityAttributes {
         var lp: String?       // the last play, in ESPN's words: "Dylan Harper makes free throw 2 of 2"
         var pv: String?       // 3.58.0: the slate's preview line for the game ("Celtics have won five in a row"), before and during it
         var wp: String?       // ESPN's win probability for the team ahead in it: "ESPN win chance: SA 99%"
+        var tag: String?      // 3.68.0: the slate card's tag ("Upset watch", "Rivalry"), shown after "Slate • CBB" in the header
     }
 
     var gameId: String

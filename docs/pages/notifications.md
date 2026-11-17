@@ -35,9 +35,9 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   page laAttrsOf from teamLook) and Board al/hl; Chip draws the saved image, else the colored chip.
 - Redesign (3.68.0, DJ): one standout per game (bball: higher ESPN rating value; football: most yards), pv never about
   the standout (s.tn last name) -> wp, shooting, preview line; header "Slate • CBB" (LA_CODE / LA_LG); tag shared from
-  the phone (pvlines.tags) and sent as st.tag. The app shows tag in the header only from build 44 (branch, waiting).
+  the phone (pvlines.tags) and sent as st.tag. The app shows tag in the header from build 44 (3.68.5).
 ## Open
-- Hockey standouts per team: check during a live game whether ESPN's per-team leaders are that game's numbers.
+- Hockey: ESPN's scoreboard has no per-team leaders during a game (checked Nov 16, MTL-NYR 2nd period), so no standout.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.
 - Hockey and soccer: no extra lines until ESPN's live numbers are checked during a game.
 - Football's other-team leader needs ESPN's summary (about 650 KB per game). Skipped because of the worker's CPU time; Cloudflare plan unknown.
