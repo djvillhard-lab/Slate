@@ -239,7 +239,10 @@
     Array.prototype.forEach.call(ps, function (p) {
       p.style.removeProperty("--tmw");
       var rows = p.querySelectorAll(".tm"); if (!rows.length) return;
-      col = Math.min(col, rows[0].parentElement.clientWidth);
+      // 3.68.2: a card inside a folded time group isn't drawn (width 0); measuring it set the score column to 0
+      // and the scores printed over the records on every card
+      var cw = rows[0].parentElement.clientWidth; if (!cw) return;
+      col = Math.min(col, cw);
       Array.prototype.forEach.call(rows, function (r) {
         var w = r.querySelector(".nmw"), sc = r.querySelector(".sc"); if (!w || !sc) return;
         var gap = parseFloat(getComputedStyle(w).columnGap) || 4, rg = parseFloat(getComputedStyle(r).columnGap) || 8, nw = 0, n = 0;
