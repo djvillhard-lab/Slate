@@ -1505,6 +1505,16 @@ html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(
 .fd-play.fd-k-score { border-color: color-mix(in srgb, var(--accent) 50%, transparent); background: color-mix(in srgb, var(--accent) 9%, var(--card)); }
 .fd-play.fd-k-score .fd-pt { color: var(--accent); }
 .fd-play.fd-k-turn { border-color: color-mix(in srgb, var(--live, #E5484D) 45%, transparent); }
+/* 3.67.3 basketball: every play is a box. Gray for misses, rebounds and fouls; red for timeouts; a plain bar for the end of a period */
+.fd-play.fd-k-miss, .fd-play.fd-k-foul { background: color-mix(in srgb, var(--ink) 5%, var(--bg, var(--card))); border-color: color-mix(in srgb, var(--ink) 14%, transparent); }
+.fd-play.fd-k-miss > .fd-pt, .fd-play.fd-k-foul > .fd-pt { font-size: 14px; color: var(--muted); }
+.fd-play.fd-k-to { border-left-color: var(--live, #E5484D); border-color: color-mix(in srgb, var(--live, #E5484D) 60%, transparent); background: color-mix(in srgb, var(--live, #E5484D) 12%, var(--card)); }
+.fd-play.fd-k-to > .fd-pt { color: var(--live, #E5484D); }
+.fd-play.fd-k-end { border-left-color: var(--hair); text-align: center; }
+.fd-play.fd-k-end > .fd-pt { font-size: 13px; color: var(--muted); }
+.fd-play.fd-k-end > .fd-ph { justify-content: center; gap: 14px; }
+.fd-play .hp-treb { font-size: 12.5px; color: var(--muted); }
+.fd-play.hp-play[style*="--hp-team"] { border-left-color: var(--hp-team); }
 .fd-ph { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 700; color: var(--dim); font-variant-numeric: tabular-nums; }
 .fd-psc { white-space: pre; flex: none; }
 .fd-play.fd-k-score .fd-psc { color: var(--ink); }
@@ -1539,6 +1549,14 @@ html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(
 .fd-boxh { margin: 0 2px 8px; font-size: 17px; font-weight: 800; color: var(--head); }
 .hp-top { display: grid; gap: 6px; }
 .hp-top .hp-tl { margin: 0; }
+/* 3.67.3: the top card, condensed: two players side by side (name over stats), win probability on one row */
+.hp-top { gap: 5px; }
+.hp-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hp-two .fd-pl { min-width: 0; gap: 7px; }
+.hp-two .fd-pn b { font-size: 14px; }
+.hp-two .fd-pn i { flex-basis: 100%; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fd-wp.hp-wp1 { margin-top: 1px; }
+.fd-wp.hp-wp1 .hp-wpl1 { margin: 0 2px 0 0; white-space: nowrap; }
 .hp-row { margin: 0; padding: 2px 10px; font-size: 13px; line-height: 1.35; color: var(--muted); }
 .hp-row span { display: inline-block; min-width: 52px; margin-right: 6px; font-size: 11px; font-weight: 700; color: var(--dim); font-variant-numeric: tabular-nums; }
 .hp-play { border-left: 3px solid var(--hp-team, var(--hair)); }

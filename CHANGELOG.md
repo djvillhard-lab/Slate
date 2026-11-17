@@ -5,6 +5,17 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.67.3 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Basketball live feed: every play is now a box, like the green made-shot box.
+- Missed shots are gray boxes that show the shooter's field goals made and attempted so far ("2-7 FG", plus threes on a missed three). The rebound goes on the same box, with the rebounder's total rebounds. A rebound after a missed free throw or a block does the same.
+- Timeouts are red boxes with 🚨.
+- Fouls are gray boxes with the player's foul count; their latest foul is tagged ⚠️ Foul trouble one short of the limit, and 🚪 Fouled out at the limit.
+- Made shots add the player who assisted, with their assists so far. Blocked shots add the shooter. Missed free throws show the shooter's free throws made and attempted.
+- The end of a quarter or half is its own centered box with 🔔. Substitutions are still left out.
+- The "Top rated so far" card is condensed: the two players sit side by side with their stats under their names, and the win probability is one row. It's about a third shorter, with slightly bigger names.
+- Fixed: college free throws were headlined "Two-pointer". They now read "Free throw good" or "Both free throws good", and count as one trip to the line.
+
 ## 3.67.2 (Nov 17, 2026)
 TestFlight: 3.39.1 (38), no new build (web only)
 - Settings → Morning email has a Family part, only on DJ's phone: Drew and Doug each get a switch, an email address and a time. Turning one on saves it in that person's own Morning email settings, so they see it and can change it themselves.

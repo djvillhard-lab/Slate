@@ -6,5 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Live feed (basketball): every play as a box | src/app/146-live-feed-hoops.js, shared: src/styles/040-components.css (hp- and fd- feed rules only) | 2026-11-17 01:15 |
 | DJ | Notifications: live notification redesign (one top player, second data point, Slate header and tag) | worker/alerts.js, src/app/040-live.js (live notification parts only), src/app/100-highlights.js (share function only), shared: ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift, docs/pages/notifications.md | 2026-11-17 01:26 |

@@ -24,11 +24,19 @@
   function hpLine(P, k) {
     var s = P.st || {}, n = function (v) { return parseFloat(v) || 0; }, out = [];
     if (s.PTS == null) return "";
+    // 3.67.3: the gray boxes lead with the number that play is about (shooting on a miss, boards on a rebound)
+    if (k === "fg" || k === "fg3") { if (s.FG) out.push(s.FG + " FG"); if (k === "fg3" && s["3PT"]) out.push(s["3PT"] + " 3PT"); out.push(n(s.PTS) + " pts"); return out.join(", "); }
+    if (k === "ft") { if (s.FT) out.push(s.FT + " FT"); out.push(n(s.PTS) + " pts"); return out.join(", "); }
+    if (k === "reb") { out.push(n(s.REB) + " reb"); if (s.OREB != null && n(s.OREB)) out.push(n(s.OREB) + " offensive"); return out.join(", "); }
+    if (k === "ast") return n(s.AST) + " ast, " + n(s.PTS) + " pts";
+    if (k === "foul") return n(s.PF) + (n(s.PF) === 1 ? " foul" : " fouls") + ", " + n(s.PTS) + " pts";
     out.push(n(s.PTS) + " pts"); if (n(s.REB)) out.push(n(s.REB) + " reb"); if (n(s.AST)) out.push(n(s.AST) + " ast");
     if (k === "3" && s["3PT"]) out.push(s["3PT"] + " 3PT"); if ((k === "blk" && n(s.BLK)) || (k === "all" && n(s.BLK) >= 2)) out.push(n(s.BLK) + " blk"); if ((k === "stl" && n(s.STL)) || (k === "all" && n(s.STL) >= 2)) out.push(n(s.STL) + " stl");
     if (k === "foul" && n(s.PF)) out.push(n(s.PF) + " fouls");
     return out.join(", ");
   }
+  // a free throw, however ESPN types it: the NBA says "Free Throw - 1 of 2", college says "MadeFreeThrow" with "makes free throw 1 of 2" in the text (3.67.3: those were headlined "Two-pointer")
+  function hpFT(pl) { return /free ?throw/i.test(String((pl.type || {}).text || "") + " " + String(pl.text || "")); }
   function hpPid(pl) { return String(pl.id || pl.sequenceNumber || ""); }
   // one play in plain words: its title, whether it gets a card ("big") or folds into the minor row, and the player to show
   function hpRead(pl, ix) {
@@ -38,17 +46,20 @@
     // the kind of shot in plain words (3.39.3): ESPN's type first, then its text ("makes 1-foot shot" is a shot at the rim, not a jumper)
     var shot = function () { var a = ty + " " + tx, d = Number(dist) || 0; return /dunk/i.test(a) ? "Dunk" : three ? "Three-pointer" : /putback/i.test(a) ? "Putback" : /tip/i.test(a) ? "Tip-in" : /layup|finger roll/i.test(a) ? "Layup" : /hook/i.test(a) ? "Hook shot" : /heave/i.test(a) ? "Heave" : /float/i.test(a) ? "Floater" : d && d <= 4 ? "Shot at the rim" : /jump|fade|pull ?up|step ?back|jumper/i.test(a) ? "Jumper" : "Two-pointer"; };
     var name = function (P) { return P ? P.name : ""; };
-    if (/^End (Period|Game)|End of/i.test(ty)) { o.note = true; o.title = tx.replace(/ the /, " the ") || "End of period"; return o; }
-    if (/timeout/i.test(ty)) { o.note = true; o.title = /official|tv/i.test(ty + tx) ? "TV timeout" : "Timeout" + (/^(.+?)\s+(Full|20 Sec\.?|Short)?\s*timeout/i.test(tx) ? ", " + tx.replace(/\s*(Full|20 Sec\.?|Short)?\s*timeout.*$/i, "") : ""); return o; }
-    if (/Free Throw/i.test(ty)) {
+    // 3.67.3 (DJ): every play is a box. Scores stay green, turnovers red-edged, timeouts red, everything else gray
+    if (/^End (Period|Game)|End of/i.test(ty)) { o.big = true; o.kind = "end"; o.P = null; o.title = tx.replace(/ the /, " the ") || "End of period"; return o; }
+    if (/timeout/i.test(ty)) { o.big = true; o.kind = "to"; o.P = null; o.title = /official|tv/i.test(ty + tx) ? "TV timeout" : "Timeout" + (/^(.+?)\s+(Full|20 Sec\.?|Short)?\s*timeout/i.test(tx) ? ", " + tx.replace(/\s*(Full|20 Sec\.?|Short)?\s*timeout.*$/i, "") : ""); return o; }
+    if (hpFT(pl)) {
       var of = (/(\d) of (\d)/.exec(ty) || /(\d) of (\d)/.exec(tx) || []), lab = of[1] ? " (" + of[1] + " of " + of[2] + ")" : /technical/i.test(ty + tx) ? " (technical)" : /flagrant/i.test(ty + tx) ? " (flagrant)" : "";
-      if (pl.scoringPlay) { o.big = true; o.kind = "score"; o.title = "Free throw good" + lab; } else { o.title = "Free throw missed" + lab; o.minor = "Missed FT"; }
+      if (pl.scoringPlay) { o.big = true; o.kind = "score"; o.title = "Free throw good" + lab; } else { o.big = true; o.kind = "miss"; o.title = "Free throw missed" + lab; o.minor = "Missed FT"; }
+      o.k = "ft";
       return o;
     }
     if (pl.shootingPlay) {
-      if (pl.scoringPlay) { o.big = true; o.kind = "score"; o.title = shot() + (dist && shot() !== "Dunk" ? ", " + dist + " ft" : ""); o.k = three ? "3" : ""; return o; }
-      if (/blocks/i.test(tx)) { o.big = true; o.title = "Blocked" + (parts[1] ? " by " + fdShort(parts[1]) : ""); o.P = parts[1] || parts[0]; o.k = "blk"; return o; }
-      o.title = "Missed " + (three ? "three" : shot() === "Jumper" ? "jumper" : shot().toLowerCase()); o.minor = "Miss"; return o;
+      if (pl.scoringPlay) { o.big = true; o.kind = "score"; o.title = shot() + (dist && shot() !== "Dunk" ? ", " + dist + " ft" : ""); o.k = three ? "3" : ""; if (parts[1] && /assist/i.test(tx)) { o.P2 = parts[1]; o.k2 = "ast"; o.l2 = "assist"; } return o; }
+      if (/blocks/i.test(tx)) { o.big = true; o.kind = "miss"; o.title = "Blocked" + (parts[1] ? " by " + fdShort(parts[1]) : ""); o.P = parts[1] || parts[0]; o.k = "blk"; if (parts[1] && parts[0]) { o.P2 = parts[0]; o.k2 = three ? "fg3" : "fg"; o.l2 = "shot blocked"; } return o; }
+      o.big = true; o.kind = "miss"; o.k = three ? "fg3" : "fg";
+      o.title = "Missed " + (three ? "three" : shot() === "Jumper" ? "jumper" : shot().toLowerCase()) + (dist && !/dunk|layup|tip|rim/i.test(shot()) ? ", " + dist + " ft" : ""); o.minor = "Miss"; return o;
     }
     if (/turnover|traveling/i.test(ty) || /turnover/i.test(tx)) {
       o.big = true; o.kind = "turn";
@@ -68,18 +79,19 @@
       o.title = (/challenge/i.test(ty) ? "Coach's challenge" : "Replay review") + (res ? ": " + res : "");
       o.desc = /challenge/i.test(ty) ? (tm3 ? tm3 + " challenged the call" : "Coach's challenge") + (res ? "; the " + res.replace("call overturned", "call was overturned") : "") + (/retain/i.test(tx) ? ", and they keep their timeout" : /charged with a timeout/i.test(tx) ? ", and they lose a timeout" : "") : "The officials reviewed the play" + (res ? "; the " + res.replace("call overturned", "call was overturned") : "");
       return o; }
-    if (/foul/i.test(ty)) { o.title = ty; o.minor = "Foul"; o.k = "foul"; return o; }
-    if (/rebound/i.test(ty)) { o.title = ty; o.minor = "Rebound"; return o; }
+    var cap1 = function (t) { t = String(t || "").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+    if (/foul/i.test(ty)) { o.big = true; o.kind = "foul"; o.title = cap1(/foul/i.test(ty) && ty.length > 4 ? ty : "Foul") + (parts[0] ? " on " + fdShort(parts[0]) : ""); o.minor = "Foul"; o.k = "foul"; return o; }
+    if (/rebound/i.test(ty)) { o.big = true; o.kind = "miss"; o.reb = true; o.off = /offensive/i.test(ty + " " + tx); o.k = "reb"; o.title = (parts[0] ? "" : "Team ") + (o.off ? (parts[0] ? "Offensive rebound" : "offensive rebound") : (parts[0] ? "Defensive rebound" : "rebound")); o.minor = "Rebound"; return o; }
     if (/substitution/i.test(ty)) { o.title = "Sub"; o.minor = "Sub"; return o; }
-    if (/jump ?ball/i.test(ty)) { o.title = "Jump ball"; o.minor = "Jump ball"; return o; }
-    if (/violation|delay|kicked|lane|goaltend/i.test(ty + tx)) { o.minor = "Violation"; return o; }
-    return o;
+    if (/jump ?ball/i.test(ty)) { o.big = true; o.kind = "miss"; o.P = null; o.title = "Jump ball"; o.minor = "Jump ball"; return o; }
+    if (/violation|delay|kicked|lane|goaltend/i.test(ty + tx)) { o.big = true; o.kind = "miss"; o.P = null; o.title = cap1(ty); o.minor = "Violation"; return o; }
+    o.big = true; o.kind = "miss"; o.P = null; o.title = cap1(o.title); return o;
   }
   // tags (right side of a card), all from ESPN's plays: lead change, tie, a scoring run, and-one, buzzer-beater, clutch, win probability swing
   function hpTags(plays, sum, g, sideOf, ix) {
     var out = {}, wpBy = {}, prevWp = null, pa = 0, ph = 0, run = { sd: "", n: 0 }, reg = hpHalves(g.league) ? 2 : 4, ft1 = {};
     (sum.winprobability || []).forEach(function (w) { if (w && w.playId != null && w.homeWinPercentage != null) wpBy[String(w.playId)] = w.homeWinPercentage; });
-    plays.forEach(function (pl) { if (/Free Throw - 1 of 1/i.test(String((pl.type || {}).text || "")) && !/technical|flagrant/i.test(String(pl.text || ""))) { var a = ((pl.participants || [])[0] || {}).athlete || {}; ft1[((pl.period || {}).number) + "|" + ((pl.clock || {}).displayValue) + "|" + a.id] = 1; } });
+    plays.forEach(function (pl) { if (hpFT(pl) && /1 of 1/i.test(String((pl.type || {}).text || "") + " " + String(pl.text || "")) && !/technical|flagrant/i.test(String(pl.text || ""))) { var a = ((pl.participants || [])[0] || {}).athlete || {}; ft1[((pl.period || {}).number) + "|" + ((pl.clock || {}).displayValue) + "|" + a.id] = 1; } });
     plays.forEach(function (pl) {
       var pid = hpPid(pl), t = [], add = function (p, x, c) { t.push({ p: p, t: x, c: c || "" }); };
       var aS = pl.awayScore != null ? Number(pl.awayScore) : pa, hS = pl.homeScore != null ? Number(pl.homeScore) : ph, sd = sideOf[String((pl.team || {}).id || "")] || "";
@@ -89,8 +101,8 @@
         var who = aS !== pa ? "away" : "home"; if (run.sd === who) run.n += pts; else run = { sd: who, n: pts };
         if (run.n >= 8) add(2, abbr(g, who) + " " + run.n + "-0 run", "good");
         var a1 = ((pl.participants || [])[0] || {}).athlete || {};
-        if (pl.shootingPlay && !/Free Throw/i.test(String((pl.type || {}).text || "")) && ft1[((pl.period || {}).number) + "|" + ((pl.clock || {}).displayValue) + "|" + a1.id]) add(3, "And-one", "hot");
-        if (pl.shootingPlay && !/Free Throw/i.test(String((pl.type || {}).text || "")) && hpSecs((pl.clock || {}).displayValue) <= 1 && /\./.test(String((pl.clock || {}).displayValue || "")) ) add(2, "Buzzer-beater", "hot");
+        if (pl.shootingPlay && !hpFT(pl) && ft1[((pl.period || {}).number) + "|" + ((pl.clock || {}).displayValue) + "|" + a1.id]) add(3, "And-one", "hot");
+        if (pl.shootingPlay && !hpFT(pl) && hpSecs((pl.clock || {}).displayValue) <= 1 && /\./.test(String((pl.clock || {}).displayValue || "")) ) add(2, "Buzzer-beater", "hot");
       }
       pa = aS; ph = hS;
       var per = Number((pl.period || {}).number) || 0, big = pts > 0 || /turnover|blocks|steals/i.test(String(pl.text || "") + String((pl.type || {}).text || ""));
@@ -133,7 +145,10 @@
     if (lead.away || lead.home) {
       var nL = (lead.away ? 1 : 0) + (lead.home ? 1 : 0), ttl = nR === nL ? "Top rated" : nR ? "Top players" : "Top scorers";
       card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", ttl + (over ? "" : " so far")));
-      ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(hpJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, "all"); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
+      // 3.67.3 (DJ: the card wasn't using its space): the two players sit side by side, name over stats, and the win probability is one row
+      var two = el("div", "hp-two");
+      ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(hpJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, "all"); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); two.appendChild(row); });
+      card.appendChild(two);
       body.appendChild(card);
     }
     var wp = (sum.winprobability || [])[(sum.winprobability || []).length - 1];
@@ -143,14 +158,26 @@
       var bar = el("span", "fd-wpb"), ba = el("i"), bh = el("i"); ba.style.width = ap + "%"; ba.style.background = fdTint(g, "away"); bh.style.width = hp + "%"; bh.style.background = fdTint(g, "home"); bar.appendChild(ba); bar.appendChild(bh); wr.appendChild(bar);
       wr.appendChild(el("span", null, hp + "% " + abbr(g, "home")));
       wr.setAttribute("aria-label", "ESPN win probability: " + abbr(g, "away") + " " + ap + " percent, " + abbr(g, "home") + " " + hp + " percent");
-      host.appendChild(el("p", "fd-wpl", "Win probability (ESPN)")); host.appendChild(wr);
+      var wl = el("p", "fd-wpl", "Win probability (ESPN)"); if (card) { wr.classList.add("hp-wp1"); wl.className = "fd-wpl hp-wpl1"; wl.textContent = "Win prob. (ESPN)"; wr.insertBefore(wl, wr.firstChild); host.appendChild(wr); } else { host.appendChild(wl); host.appendChild(wr); }
     }
     // the plays, newest first: scores and big plays as cards, everything else (misses, rebounds, fouls) as one plain line; subs left out
     FD.hpOpen = FD.hpOpen || {};
     var list = el("div", "fd-list"), items = 0, cap2 = 12 * (1 + (+FD.more || 0)), fresh = FD.seen || null, seenNow = {}, total = 0;
     // a trip to the line (same shooter, same moment) shows as one card with the last free throw
     var trips = {}, tripOf = {};
-    plays.forEach(function (p) { if (!/Free Throw/i.test(String((p.type || {}).text || ""))) return; var a = ((p.participants || [])[0] || {}).athlete || {}, k = ((p.period || {}).number) + "|" + ((p.clock || {}).displayValue) + "|" + a.id; (trips[k] = trips[k] || []).push(p); tripOf[hpPid(p)] = trips[k]; });
+    plays.forEach(function (p) { if (!hpFT(p)) return; var a = ((p.participants || [])[0] || {}).athlete || {}, k = ((p.period || {}).number) + "|" + ((p.clock || {}).displayValue) + "|" + a.id; (trips[k] = trips[k] || []).push(p); tripOf[hpPid(p)] = trips[k]; });
+    // 3.67.3: a rebound right after a miss (or a block, or a missed last free throw) shares that play's box; and each player's
+    // latest foul is marked when it puts them in foul trouble or out of the game (the box score's foul count is the game so far)
+    var rebOf = {}, rebSkip = {}, lastFoul = {}, isReb = function (p) { return /rebound/i.test(String((p.type || {}).text || "")); };
+    plays.forEach(function (p, i) { var pv = plays[i - 1], ty0 = String((p.type || {}).text || "");
+      if (/foul/i.test(ty0) && !/turnover/i.test(ty0)) { var fa = String((((p.participants || [])[0] || {}).athlete || {}).id || ""); if (fa) lastFoul[fa] = hpPid(p); }
+      if (!pv || !isReb(p) || ((p.period || {}).number) !== ((pv.period || {}).number)) return;
+      var pty = String((pv.type || {}).text || ""), missed = !pv.scoringPlay && (pv.shootingPlay || hpFT(pv)); if (!missed) return;
+      // the dead-ball "team rebound" ESPN logs between two free throws isn't a play: left out
+      var Tp = tripOf[hpPid(pv)]; if (Tp && Tp.length > 1 && hpPid(Tp[Tp.length - 1]) !== hpPid(pv)) { if (!(p.participants || []).length) rebSkip[hpPid(p)] = 1; return; }
+      rebOf[hpPid(pv)] = p; rebSkip[hpPid(p)] = 1; });
+    var foulLimit = lg === "nba" || lg === "wnba" ? 6 : 5;
+    var plRow = function (P, k, sdF, lab) { var psd = sideOf[P.tid] || sdF || "away", row = el("div", "fd-pl"); row.appendChild(hpJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", lab || P.pos || abbr(g, psd))); var lnx = hpLine(P, k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); return row; };
     var byP = {}, order = []; plays.forEach(function (p) { var n = Number((p.period || {}).number) || 0; if (!byP[n]) { byP[n] = []; order.push(n); } byP[n].push(p); });
     for (var oi = order.length - 1; oi >= 0 && items < cap2; oi--) {
       var pn = order[oi], ps = byP[pn].slice().reverse(), isCur = !over && pn === per && !brk;
@@ -162,23 +189,28 @@
         if (T && T.length > 1) {
           if (hpPid(T[T.length - 1]) !== pid) continue;
           var made = T.filter(function (x) { return x.scoringPlay; }).length, n3 = T.length;
-          rd.big = made > 0; rd.kind = made ? "score" : ""; rd.minor = "Missed FTs";
+          rd.big = true; rd.kind = made ? "score" : "miss"; rd.k = "ft"; rd.minor = "Missed FTs";
           rd.title = made === n3 ? (n3 === 2 ? "Both free throws good" : "All " + n3 + " free throws good") : made ? "Makes " + made + " of " + n3 + " free throws" : "Misses " + n3 + " free throws";
           raw = T.map(function (x, i) { var t3 = String(x.text || "").replace(/\s+/g, " ").trim(), nm3 = rd.P && rd.P.name; return i && nm3 && t3.indexOf(nm3 + " ") === 0 ? t3.slice(nm3.length + 1) : t3; }).join(", ");
-          var tm2 = [], tseen = {}; T.forEach(function (x) { (tags[hpPid(x)] || []).forEach(function (y) { if (!tseen[y.t]) { tseen[y.t] = 1; tm2.push(y); } }); }); tg = tm2.length ? tm2.slice(0, 3) : null;
+          var tm2 = [], tseen = {}; T.forEach(function (x) { (tags[hpPid(x)] || []).forEach(function (y) { if (!tseen[y.t]) { tseen[y.t] = 1; tm2.push(y); } }); }); var runs = tm2.filter(function (y) { return /-0 run$/.test(y.t); }); if (runs.length > 1) tm2 = tm2.filter(function (y) { return !/-0 run$/.test(y.t) || y === runs[runs.length - 1]; });  // one run tag per trip: the latest
+          tg = tm2.length ? tm2.slice(0, 3) : null;
         }
-        if (rd.note) { flush(); items++; list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
-        if (!rd.big) { if (rd.minor === "Sub") continue; items++; var mr = el("p", "hp-row" + (isNew ? " fd-new" : "")); mr.setAttribute("data-id", pid); mr.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck)); mr.appendChild(document.createTextNode(raw || rd.title)); list.appendChild(mr); continue; }
+        if (rd.minor === "Sub" || rebSkip[pid]) continue;  // subs are left out; a rebound that follows a miss is on the miss's box
         flush(); items++;
+        var gray = /^(miss|foul|to|end)$/.test(rd.kind), rb = rebOf[pid], rbR = rb ? hpRead(rb, ix) : null;
+        if (rd.kind === "foul" && rd.P && lastFoul[rd.P.id] === pid) { var pf = parseFloat((rd.P.st || {}).PF) || 0, ft0 = pf >= foulLimit ? "Fouled out" : pf === foulLimit - 1 ? "Foul trouble" : ""; if (ft0) tg = (tg || []).concat([{ t: ft0, c: "" }]); }
         var sd2 = sideOf[String((pl.team || {}).id || "")] || "";
         var c2 = el("div", "fd-play hp-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); c2.setAttribute("data-id", pid);
-        if (sd2) c2.style.setProperty("--hp-team", fdTint(g, sd2));
+        if (sd2 && rd.kind !== "to" && rd.kind !== "end") c2.style.setProperty("--hp-team", fdTint(g, sd2));
         var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck + (sd2 ? " · " + abbr(g, sd2) : "")));
         ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""))); c2.appendChild(ph);
         if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); c2.appendChild(tw); }
         c2.appendChild(el("p", "fd-pt", fdTitleText(rd.title)));
-        if (raw && raw !== rd.title) c2.appendChild(el("p", "fd-px", raw));
-        if (rd.P) { var P = rd.P, psd = sideOf[P.tid] || sd2 || "away", row = el("div", "fd-pl"); row.appendChild(hpJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); if (P.pos) nmw.appendChild(el("em", "fd-pos", P.pos)); var lnx = hpLine(P, rd.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); c2.appendChild(row); }
+        // the gray and red boxes say it in the headline and the player's line; ESPN's sentence is kept where it adds something
+        if (raw && raw !== rd.title && (!gray || (!rd.P && rd.kind === "miss" && !rd.reb))) c2.appendChild(el("p", "fd-px", raw));
+        if (rd.P) c2.appendChild(plRow(rd.P, rd.k, sd2, ""));
+        if (rd.P2) c2.appendChild(plRow(rd.P2, rd.k2, sd2, rd.l2));
+        if (rbR) { if (rbR.P) c2.appendChild(plRow(rbR.P, "reb", "", rbR.off ? "offensive rebound" : "rebound")); else { var rsd = sideOf[String((rb.team || {}).id || "")] || ""; c2.appendChild(el("p", "fd-px hp-treb", "Team rebound" + (rsd ? ", " + abbr(g, rsd) : ""))); } }
         list.appendChild(c2);
       }
       flush();
@@ -218,7 +250,9 @@
     var e = /^three-pointer/i.test(t) ? "🎯" : /^(dunk|alley-oop)/i.test(t) ? "💥" : /^free throw good/i.test(t) ? "🏀" : /^(two-pointer|layup|jumper|hook|tip|floater|bank|fadeaway|putback|shot|jump shot|reverse|driving|turnaround|finger roll)/i.test(t) ? "🏀"
       : /^blocked/i.test(t) ? "🚫" : /^steal/i.test(t) ? "🖐️" : /^ejected/i.test(t) ? "🟥" : /^(technical|flagrant)/i.test(t) ? "⚠️" : /^(coach's challenge|replay review)/i.test(t) ? "📺"
       : /^(td:|pick six|fumble return touchdown|return touchdown|.*touchdown!?$)/i.test(t) ? "🏈" : /^field goal is good/i.test(t) ? "🥅" : /^field goal (missed|blocked)/i.test(t) ? "❌"
-      : /^safety/i.test(t) ? "🛡️" : /^intercepted/i.test(t) ? "🧤" : /^fumble/i.test(t) ? "😬" : /sacked|^sack/i.test(t) ? "💥" : /^penalty/i.test(t) ? "🚩" : "";
+      : /^safety/i.test(t) ? "🛡️" : /^intercepted/i.test(t) ? "🧤" : /^fumble/i.test(t) ? "😬" : /sacked|^sack/i.test(t) ? "💥" : /^penalty/i.test(t) ? "🚩"
+      : /timeout/i.test(t) ? "🚨" : /^(miss(ed|es) |free throw missed)/i.test(t) ? "❌" : /^(both free throws|all \d free throws|makes \d of)/i.test(t) ? "🏀" : /offensive rebound/i.test(t) ? "🔁" : /rebound/i.test(t) ? "🙌"
+      : /^turnover/i.test(t) ? "↩️" : /foul/i.test(t) ? "✋" : /^end /i.test(t) ? "🔔" : /^jump ball/i.test(t) ? "⛹️" : "";
     return e ? e + " " + t : t;
   }
   // how long since the newest play came in (3.66.8, DJ: "a small timer since last live play appeared"), from ESPN's wall clock on each play;
@@ -241,6 +275,6 @@
     t = String(t || "");
     var e = /takes the lead|lead change/i.test(t) ? "🔄" : /ties it|tie game/i.test(t) ? "🤝" : /big play/i.test(t) ? "🔥" : /-0 run$/i.test(t) ? "🔥"
       : /^converted/i.test(t) ? "✅" : /^stopped/i.test(t) ? "🛑" : /^1st down/i.test(t) ? "⛓️" : /^\+\d+%/.test(t) ? "📈" : /^flag/i.test(t) ? "🚩"
-      : /red zone/i.test(t) ? "🚨" : /two-minute|clutch/i.test(t) ? "⏱️" : /and-one/i.test(t) ? "💪" : /buzzer/i.test(t) ? "🚨" : "";
+      : /red zone/i.test(t) ? "🚨" : /two-minute|clutch/i.test(t) ? "⏱️" : /and-one/i.test(t) ? "💪" : /buzzer/i.test(t) ? "🚨" : /^fouled out/i.test(t) ? "🚪" : /^foul trouble/i.test(t) ? "⚠️" : "";
     return e ? e + " " + t : t;
   }
