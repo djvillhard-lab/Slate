@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Slate: live feed button in place of the card bell | src/app/150-game-row.js, src/styles/050-ux-review.css (g-feed rules) | 2026-11-17 03:55 |
