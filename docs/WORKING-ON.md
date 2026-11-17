@@ -1,1 +1,2 @@
 | DJ | Live feed: fold plays back up, Scoring filter (football) | src/app/145-live-feed.js, src/app/146-live-feed-hoops.js, shared: src/styles/040-components.css (fd- feed rules only) | 2026-11-17 02:08 |
+| DJ | Morning email (light design) | worker/morning-email.js, docs/pages/morning-email.md | 2026-11-17 02:13 |
