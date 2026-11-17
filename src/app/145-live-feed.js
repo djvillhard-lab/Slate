@@ -115,12 +115,17 @@
     var s = P.st, n = function (v) { return parseFloat(v) || 0; }, part = {};
     if (s.passing && n(String(s.passing["C/ATT"]).split("/")[1])) { var p = s.passing; part.passing = p["C/ATT"] + ", " + p.YDS + " yds" + (n(p.TD) ? ", " + p.TD + " TD" : "") + (n(p.INT) ? ", " + p.INT + " INT" : ""); }
     if (s.rushing && n(s.rushing.CAR)) { var r = s.rushing; part.rushing = r.CAR + " car, " + r.YDS + " yds" + (n(r.TD) ? ", " + r.TD + " TD" : ""); }
-    if (s.receiving && n(s.receiving.REC)) { var c = s.receiving; part.receiving = c.REC + " rec, " + c.YDS + " yds" + (n(c.TD) ? ", " + c.TD + " TD" : ""); }
+    // 3.68.10 (DJ: receivers on incompletions showed no stats): a receiver with targets and no catch yet reads "0 rec, 2 tgt"; when the
+    // play is a pass to him, his targets are added to his catches and yards
+    if (s.receiving && (n(s.receiving.REC) || n(s.receiving.TGTS))) { var c = s.receiving, tg = c.TGTS != null && n(c.TGTS) ? ", " + n(c.TGTS) + " tgt" : "";
+      part.receiving = n(c.REC) ? c.REC + " rec, " + c.YDS + " yds" + (n(c.TD) ? ", " + c.TD + " TD" : "") + (first === "receiving" ? tg : "") : "0 rec" + tg; }
     if (s.defensive && (n(s.defensive.TOT) || n(s.defensive.SACKS))) { var d = s.defensive; part.defensive = n(d.TOT) + " tkl" + (n(d.SACKS) ? ", " + d.SACKS + " sk" : ""); }
     if (s.interceptions && n(s.interceptions.INT)) part.interceptions = s.interceptions.INT + " INT";
     if (s.kicking && s.kicking.FG) part.kicking = "FG " + s.kicking.FG + (s.kicking.XP ? ", XP " + s.kicking.XP : "");
     var order = [first, "passing", "rushing", "receiving", "interceptions", "defensive", "kicking"], out = [];
     order.forEach(function (k) { if (k && part[k] && out.indexOf(part[k]) < 0) out.push(part[k]); });
+    // nobody is shown without a line: a player the box score has nothing for yet in what this play is about has none of it so far
+    if (!out.length) return first === "receiving" ? "0 rec" : first === "rushing" ? "0 car" : first === "passing" ? "0/0, 0 yds" : first === "defensive" ? "0 tkl" : first === "interceptions" ? "0 INT" : "";
     return out.slice(0, 2).join(" · ");
   }
   function fdClean(t) { return String(t || "").replace(/^\s*\(\d{1,2}:\d\d\)\s*/, "").replace(/^\s*\((?:No Huddle|Shotgun|No Huddle, Shotgun|Run formation)[^)]*\)\s*/i, "").trim(); }

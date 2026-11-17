@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.10 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Football live feed: every player under a play now has a stat line. A receiver with no catch yet shows "0 rec, 2 tgt" (his targets from ESPN), where before he showed nothing. On a pass play the receiver's targets are added to his line ("2 rec, 17 yds, 2 tgt").
+- A player the box score has nothing for yet shows a zero for what the play is about ("0 car", "0 rec"), never a blank.
+
 ## 3.68.9 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed: the "Last play" timer now starts from 0 the moment a new play shows up on the page, counted on your phone's own clock. It used to start around 30 to 40 seconds, because it counted from the time ESPN logged the play, and ESPN's feed runs that far behind.

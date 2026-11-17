@@ -62,3 +62,7 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 
 ## 3.68.9: the timer counts from when a play appears
 - ESPN's feed is 30 to 40 seconds behind the `wallclock` it stamps on plays, so the timer "reset" to ~40s. `fdAgo` now keeps `FD_AGO[gameId] = {key, t}`: when the newest play changes (play count + last id), `t` = the device's clock. Only the first look at a game uses ESPN's time. DJ expects 0 on every new play.
+
+## 3.68.10: football, no player without a stat line
+- `fdLine`: receiving counts with targets alone ("0 rec, 2 tgt", ESPN's TGTS); on a pass play the receiver's line adds targets. If the box score has nothing for the play's stat yet, a zero ("0 rec", "0 car"), never blank (DJ).
+- Open: the floating Back/menu buttons (bottom right, 070-navigation, shared) cover the right-aligned tags of whichever card scrolls under them. Not changed here; it needs DJ's call since it's the app-wide dock.
