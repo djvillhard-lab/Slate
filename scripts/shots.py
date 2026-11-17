@@ -10,7 +10,7 @@
     python3 scripts/shots.py lineup --gate                                  (the log-in page; --gate invite = the sign-up page)
     SLATE_PASS=... python3 scripts/shots.py settings --readonly --name welcome-2 --eval "document.querySelector('#acct button').click(); document.querySelector('.wl-next').click()"
 
-Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --tomorrow (the slate's next day:
+Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --tap "sel" (a real finger tap on the first visible match, after --click), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
 --eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
 --pane left|right (open Duo: which side the page, game, filters and --click go to; default right; --eval runs on the whole screen),
@@ -53,6 +53,8 @@ def main():
         except Exception: pw = ""
     if "--gate" in args: pw = ""
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
+    tap = None  # --tap "sel": a real touch tap, after --click
+    teams = None  # --teams "Notre Dame,Duke": favorite teams for this run only (read-only, never saved)
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
     pane = "right"
     ev, name, readonly, gate = None, "", False, None
@@ -66,6 +68,8 @@ def main():
         if a == "--click": click = args[i + 1]; i += 2; continue
         if a == "--text": text = args[i + 1].lower(); i += 2; continue
         if a == "--look": look = args[i + 1]; i += 2; continue
+        if a == "--tap": tap = args[i + 1]; i += 2; continue
+        if a == "--teams": teams = [t.strip() for t in args[i + 1].split(",") if t.strip()]; i += 2; continue
         if a == "--league": league = args[i + 1]; i += 2; continue
         if a == "--filter": filt = args[i + 1]; i += 2; continue
         if a == "--tomorrow": tomorrow = True; i += 1; continue
@@ -104,6 +108,7 @@ def main():
                     if isinstance(row, dict) and isinstance(row.get("data"), dict) and str(row.get("path", "user-settings")).endswith("user-settings"):
                         row["data"]["device"] = device
                         if text: row["data"]["textSize"] = text; row["data"]["textSizeWide"] = text
+                        if teams: row["data"]["teams"] = teams
                         if look: row["data"]["look"] = look; row["data"]["accent"] = {"paper": "navy"}.get(look, "green")
                 route.fulfill(response=r, body=json.dumps(d))
             except Exception:
@@ -177,6 +182,16 @@ def main():
                     page.wait_for_timeout(1500)
                 if click:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.click(); })(%s)" % json.dumps(click)); page.wait_for_timeout(700)
+                if tap:  # a real finger tap at the middle of the first visible match (catches anything covering it, unlike --click)
+                    box = page.evaluate("(s => { const e = [...document.querySelectorAll(s)].find(x => x.offsetWidth); if (!e) return null; e.scrollIntoView({block: 'center'}); const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })(%s)" % json.dumps(tap))
+                    if box is None: print(f"  {size}: nothing visible matches --tap {tap}")
+                    else:
+                        off = [0, 0]
+                        if page is not host:
+                            fe = page.frame_element(); fb = fe.bounding_box(); off = [fb["x"], fb["y"]]
+                        hit = host.evaluate("(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? e.tagName + '.' + (e.className.baseVal !== undefined ? e.className.baseVal : e.className) : 'nothing'; })(%s)" % json.dumps([box[0] + off[0], box[1] + off[1]]))
+                        print(f"  {size}: tapping {tap} at {round(box[0] + off[0])},{round(box[1] + off[1])} (top of the screen there: {hit})")
+                        host.touchscreen.tap(box[0] + off[0], box[1] + off[1]); page.wait_for_timeout(1200)
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
                 page = host
