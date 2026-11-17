@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Morning email: subject line, set it up for Doug | worker/morning-email.js, src/app/235-morning-email.js, docs/pages/morning-email.md | 2026-11-17 01:10 |
