@@ -54,6 +54,21 @@ export async function signupRoutes(req, env, url, h) {
       const gone = Object.keys(users).filter((k) => users[k].id === String(p.id || "") && users[k].id !== "dj" && users[k].admin !== true);
       if (gone.length) { gone.forEach((k) => delete users[k]); reg.users = users; await putDoc(env, "users/registry", reg); }
     }
+    // "setpass" (security review, 3.83.0): the admin gives someone a new passcode, kept the safe way (HMAC, like sign-up).
+    // Their old passcode stops working (within 5 minutes, the server's memory of right passcodes); their data stays theirs.
+    // For moving the people added by the GitHub action off plain SHA-256 hashes, which anyone could read and guess offline.
+    if (p.action === "setpass") {
+      const id = String(p.id || ""), np = String(p.newPass || "");
+      const keys = Object.keys(users).filter((k) => users[k].id === id && users[k].id !== "dj" && users[k].admin !== true);
+      if (!keys.length) return json({ error: "No one with that id." }, 400);
+      if (np.length < 10 || np.length > 100 || /^(.)\1+$/.test(np) || /^(12345678|password|passcode)/i.test(np)) return json({ error: "Pick a passcode of 10 or more characters that isn't easy to guess." }, 400);
+      if (await whoIs(env, np)) return json({ error: "That passcode can't be used. Pick a different one." }, 400);
+      const keep = Object.assign({}, users[keys[0]], { rekeyed: new Date().toISOString() });
+      keys.forEach((k) => delete users[k]);
+      users[await passKey(env, np)] = keep; reg.users = users;
+      const w = await putDoc(env, "users/registry", reg);
+      if (!w.ok) return json({ error: "Couldn't save. Try again." }, 502);
+    }
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const by = ((((await getDoc(env, "stats/usage")) || {}).days || {})[day] || {}).by || {};
     const seen = {}, people = [];

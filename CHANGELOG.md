@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.83.0 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- Safer logins: after 20 wrong passcodes from one network in 15 minutes, Slate makes that network wait 15 minutes before trying again, so passcodes can't be guessed by trying them one after another.
+- A daily Claude budget for everyone together ($15 a day unless DJ sets another amount). Once it's used up, new summaries for everyone but DJ wait until tomorrow, and DJ's phone gets one notification saying so. The 10-a-day limit per person still applies.
+- The server remembers a right passcode for 5 minutes, so the app's regular check-ins don't each look it up again.
+- The site sends the usual browser safety headers (no framing by other sites, no camera, microphone or location access).
+
 ## 3.82.1 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - News: when a league briefing's big story comes from The Athletic (whose stories have no photo), it now shows the newest ESPN photo of a story about the same team.

@@ -16,7 +16,7 @@ const MODEL = "claude-sonnet-5-5";
 // web searches allowed per summary: each one adds a cent plus thousands of input tokens
 const SEARCHES = { preview: 2, team: 2, recap: 1, moments: 2, news: 4, deep: 2 };
 
-const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store", "x-content-type-options": "nosniff" } });
 
 async function rpc(env, fn, body, key) {
   const k = key || env.SUPABASE_SECRET;
@@ -34,7 +34,7 @@ async function getDoc(env, path) {
 async function sha(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
 import { signupRoutes, passKey } from "./signup.js";  // invite-only sign-up; kept down here, next to the one place that uses passKey
 // who a passcode belongs to: DJ (the Supabase passcode) or someone listed (by passcode hash) in users/registry
-async function whoIs(env, pass) {
+async function whoIsRaw(env, pass) {
   pass = String(pass || ""); if (pass.length < 8) return null;
   const chk = await rpc(env, "save_doc", { p_path: "prefs/passcheck", p_data: { at: new Date().toISOString(), via: "worker" }, p_pass: pass, p_merge: false }, PUB);
   // admin: may invite and remove people and use the other admin-only actions. The owner's passcode always is one;
@@ -44,6 +44,39 @@ async function whoIs(env, pass) {
   // everyone but DJ gets at most 10 Claude summaries a day (a lower cap in the registry still applies)
   return u && u.id ? { id: u.id, name: u.name || u.id, cap: Math.min(Number(u.cap) || 10, 10), admin: u.admin === true } : null;
 }
+// ---- login limits and the passcode check's short memory (security review, 3.82.0) ----
+// A wrong passcode is counted per network address (Cloudflare's cache, per data center, 15 minutes). After 20 wrong
+// tries every /api call from that address waits 15 minutes, so passcodes can't be guessed by trying them one by one.
+// A right passcode is remembered for 5 minutes (keyed by an HMAC of it, never the passcode), so the app's regular calls
+// don't each re-check it in Supabase.
+const FAIL_MAX = 20, FAIL_SECS = 900, WHO_SECS = 300;
+const failReq = (ip) => new Request("https://slate.cache/login-fail/" + encodeURIComponent(ip));
+async function failCount(ip) {
+  if (!ip || typeof caches === "undefined") return 0;
+  try { const r = await caches.default.match(failReq(ip)); return r ? Number(await r.text()) || 0 : 0; } catch (e) { return 0; }
+}
+async function noteFail(ip) {
+  if (!ip || typeof caches === "undefined") return;
+  try { const n = (await failCount(ip)) + 1; await caches.default.put(failReq(ip), new Response(String(n), { headers: { "cache-control": "max-age=" + FAIL_SECS } })); } catch (e) {}
+  console.log("wrong passcode", ip.replace(/[.:][^.:]*$/, ".x"));  // the address without its last part
+}
+async function whoIsCached(env, pass) {
+  pass = String(pass || ""); if (pass.length < 8) return null;
+  let key = null;
+  if (typeof caches !== "undefined" && env.SUPABASE_SECRET) {
+    key = new Request("https://slate.cache/who/" + (await passKey(env, "who|" + pass)).slice(3));
+    try { const hit = await caches.default.match(key); if (hit) return await hit.json(); } catch (e) {}
+  }
+  const me = await whoIsRaw(env, pass);
+  if (me && key) { try { await caches.default.put(key, new Response(JSON.stringify(me), { headers: { "content-type": "application/json", "cache-control": "max-age=" + WHO_SECS } })); } catch (e) {} }
+  return me;
+}
+// the passcode check every route uses: remembers right ones, counts wrong ones for this address
+const guardWho = (ip) => async (env, pass) => {
+  const me = await whoIsCached(env, pass);
+  if (!me && String(pass || "")) await noteFail(ip);
+  return me;
+};
 const ctDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 // running cost log: stats/usage {days: {D: {n, in, out, search, usd, by: {user: n}}}}
 const PRICE = { in: 2 / 1e6, out: 10 / 1e6, search: 10 / 1000 };
@@ -61,6 +94,14 @@ async function logUsage(env, user, u, model, failed) {
   await mergeDoc(env, "stats/usage", { days: { [d]: day } });
 }
 
+// the daily Claude budget ran out: note it once, and tell the admin's phones
+async function budgetAlert(env, capUsd) {
+  const d = ctDay(), cur = (((await getDoc(env, "stats/usage")) || {}).days || {})[d] || {};
+  if (cur.capNote) return;
+  await mergeDoc(env, "stats/usage", { days: { [d]: { capNote: new Date().toISOString() } } });
+  const doc = (await getDoc(env, "prefs/push")) || {};
+  for (const sub of doc.subs || []) await (sub.apns ? sendApns : sendPush)(env, sub, { title: " ", body: "Today's Claude budget ($" + capUsd + ") is used up. Summaries for others are paused until tomorrow.", tag: "budget" }).catch(() => {});
+}
 const MOMENT_LGS = { nfl: "NFL", nba: "NBA", ncaam: "men's college basketball", ncaaf: "college football (FBS)", epl: "Premier League", nhl: "NHL", ncaaw: "women's college basketball", ucl: "Champions League", mlb: "MLB", wnba: "WNBA" };
 // News briefs: My slate and My teams are personal (under the person's own space); league briefs are shared
 // The News page (3.45.0): one personal page a day ("page"), written only when its Generate button is tapped.
@@ -102,6 +143,10 @@ export default {
   },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    // every passcode check below goes through the login limit (see guardWho)
+    const ip = req.headers.get("cf-connecting-ip") || "", whoIs = guardWho(ip);
+    if (url.pathname.startsWith("/api/") && req.method === "POST" && (await failCount(ip)) >= FAIL_MAX)
+      return json({ error: "Too many wrong passcodes from this network. Try again in 15 minutes." }, 429);
     // Settings → Send feedback, and the daily report that reads it (worker/feedback.js)
     if (url.pathname.startsWith("/api/feedback")) return feedbackRoute(req, env, url, { rpc, whoIs, json });
     // how much each person uses Slate, for DJ's Project status page (worker/usage.js)
@@ -166,11 +211,17 @@ export default {
       if (!p || !["preview", "recap", "team", "moments", "news", "deep"].includes(p.kind)) return json({ error: "bad kind" }, 400);
       if (p.kind === "deep" ? !(DEEP_KEY.test(p.key || "") && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "news" ? !(NEWS_KEY.test(p.key || "") && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "moments" ? !(MOMENT_LGS[p.key] && /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) : p.kind === "team" ? !/^[a-z0-9-]{2,40}$/.test(p.key || "") : !(/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && /^[a-z0-9-]{3,60}$/.test(p.id || ""))) return json({ error: "bad target" }, 400);
       if (!apiKey(env) || !env.SUPABASE_SECRET) return json({ error: "Summaries aren't set up yet (missing keys in Cloudflare)." }, 503);
-      const me = (env.SUPABASE_SECRET && p.pass === env.SUPABASE_SECRET) ? { id: "dj", cap: 0 } : await whoIs(env, p.pass);
+      const me = (env.SUPABASE_SECRET && p.pass === env.SUPABASE_SECRET) ? { id: "dj", cap: 0, admin: true } : await whoIs(env, p.pass);
       if (!me) return json({ error: "Wrong passcode" }, 403);
-      if (me.cap) {
+      if (me.cap || !me.admin) {
         const day = (((await getDoc(env, "stats/usage")) || {}).days || {})[ctDay()] || {};
-        if (((day.by || {})[me.id] || 0) >= me.cap) return json({ error: "That's today's limit of " + me.cap + " Claude summaries. More tomorrow." }, 429);
+        if (me.cap && ((day.by || {})[me.id] || 0) >= me.cap) return json({ error: "That's today's limit of " + me.cap + " Claude summaries. More tomorrow." }, 429);
+        // Slate's daily Claude budget for everyone together (CLAUDE_DAY_USD in Cloudflare, $15 if unset); the admin isn't held to it
+        const capUsd = Number(env.CLAUDE_DAY_USD) || 15;
+        if (!me.admin && (Number(day.usd) || 0) >= capUsd) {
+          if (!day.capNote) ctx.waitUntil(budgetAlert(env, capUsd).catch((e) => console.log("budget alert", String(e))));
+          return json({ error: "Slate has used today's Claude budget. Summaries are back tomorrow." }, 429);
+        }
       }
       if (p.kind === "moments" && !p.facts) {  // the app only says which night; the free tick job saved the facts
         const fd = await getDoc(env, "mfacts/" + p.date + "-" + p.key);
@@ -247,6 +298,19 @@ export default {
       const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
       if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
       try { const out = await morningApi(env, me, p); return json(out, out.error ? 400 : 200); } catch (e) { return json({ error: String(e && e.message || e).slice(0, 200) }, 500); }
+    }
+    // a person's own documents (settings, alerts, their News page...): read here, with their passcode, instead of with the
+    // app's public key, so nobody can read anyone else's (security review, 3.82.0). {pass, paths: [...]} → {rows: [{path, data, updated_at}]}
+    if (url.pathname === "/api/docs" && req.method === "POST") {
+      let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
+      const own = (x) => (me.id === "dj" ? /^(mine|prefs)\//.test(x) : x.startsWith("u/" + me.id + "/"));
+      const paths = [...new Set((Array.isArray(p.paths) ? p.paths : []).map(String))].slice(0, 60)
+        .filter((x) => x.length <= 200 && /^[A-Za-z0-9._\/-]+$/.test(x) && (own(x) || (me.admin && /^(news\/email-dj|stats\/usage)$/.test(x))));
+      if (!paths.length) return json({ ok: true, rows: [] });
+      const r = await fetch(`${SB}/rest/v1/docs?select=path,data,updated_at&path=in.(${paths.map((x) => encodeURIComponent('"' + x + '"')).join(",")})`, { headers: { apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET } });
+      if (!r.ok) return json({ error: "Couldn't read " + r.status }, 502);
+      return json({ ok: true, rows: await r.json() });
     }
     if (url.pathname === "/api/whoami" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
