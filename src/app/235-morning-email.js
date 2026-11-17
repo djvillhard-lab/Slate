@@ -45,6 +45,43 @@
   function meLoad() {
     if (!slatePass()) { meDraw(); return; }
     meCall({ action: "get" }).then(function (j) { meInfo.loaded = true; meInfo.p = j.prefs; meDraw(); }, function () { meInfo.loaded = true; meDraw(); });
+    if (state.isOwner) meCall({ action: "family" }).then(function (j) { meFamily(j.people || []); }, function () {});
+  }
+  // DJ only (3.67.2): turn the morning email on for Drew or Doug. It's saved in their own settings, so what they change in
+  // their Settings wins from then on.
+  function meFamily(list) {
+    var box = $("me-fam"); if (!box) { box = el("div"); box.id = "me-fam"; $("me-set").appendChild(box); }
+    box.textContent = ""; if (!list.length) return;
+    var hd = el("div", "optrow col"); var hw = el("div"); hw.appendChild(el("b", null, "Family")); hw.appendChild(el("span", null, "Turn it on for someone else. It goes in their own Settings, so they can change it.")); hd.appendChild(hw); box.appendChild(hd);
+    list.forEach(function (u) {
+      var save = function (patch, msg) {
+        patch.action = "save"; patch.for = u.id; if (!u.tz) patch.tz = "America/Chicago";
+        meCall(patch).then(function (j) { var q = j.prefs || {}; u.on = q.on; u.email = q.email; u.time = q.time; u.tz = q.tz; draw(); if (msg) toast(msg); }, function (e) { draw(); toast(e.message); });
+      };
+      var row = el("div", "optrow"), tx = el("div"), nm = el("b", null, u.name), st = el("span"); tx.appendChild(nm); tx.appendChild(st); row.appendChild(tx);
+      var sw = el("button", "switch"); sw.type = "button"; sw.setAttribute("role", "switch"); sw.setAttribute("aria-label", "Morning email for " + u.name); sw.appendChild(el("span", "knob")); row.appendChild(sw);
+      var er = el("div", "optrow col"), inp = el("input", "field"); inp.type = "email"; inp.setAttribute("inputmode", "email"); inp.setAttribute("autocapitalize", "off"); inp.spellcheck = false;
+      inp.placeholder = u.name + "'s email"; inp.setAttribute("aria-label", u.name + "'s email address"); inp.style.cssText = "width:100%;box-sizing:border-box;margin-top:0"; er.appendChild(inp);
+      var tr = el("div", "optrow"), tl = el("div"); tl.appendChild(el("b", null, "Arrives at")); tr.appendChild(tl);
+      var sel = el("select", "sel"); sel.setAttribute("aria-label", u.name + "'s email time");
+      for (var m = 4 * 60; m <= 12 * 60; m += 30) { var v = ("0" + Math.floor(m / 60)).slice(-2) + ":" + ("0" + m % 60).slice(-2), o = el("option", "", meClock(v)); o.value = v; sel.appendChild(o); }
+      tr.appendChild(sel);
+      function draw() {
+        sw.setAttribute("aria-checked", u.on ? "true" : "false");
+        if (document.activeElement !== inp) inp.value = u.email || "";
+        sel.value = u.time || "06:00";
+        st.textContent = u.on ? "On: every day at " + meClock(u.time || "06:00") + (u.tz ? ", " + meTzName(u.tz) : "") : "Off";
+      }
+      sw.addEventListener("click", function () {
+        var on = sw.getAttribute("aria-checked") !== "true", em = inp.value.trim();
+        if (on && !em) { toast("Add " + u.name + "'s email address first."); inp.focus(); return; }
+        var patch = { on: on, time: sel.value }; if (em !== (u.email || "")) patch.email = em;
+        save(patch, on ? "Morning email on for " + u.name : "Morning email off for " + u.name);
+      });
+      inp.addEventListener("change", function () { var em = inp.value.trim(); if (em !== (u.email || "")) save({ email: em }, em ? "Saved " + u.name + "'s email" : "Morning email off for " + u.name); });
+      sel.addEventListener("change", function () { save({ time: sel.value }, u.name + "'s arrives at " + meClock(sel.value)); });
+      box.appendChild(row); box.appendChild(er); box.appendChild(tr); draw();
+    });
   }
   (function () {
     var sel = $("me-time"); if (!sel) return;

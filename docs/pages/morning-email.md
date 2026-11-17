@@ -24,6 +24,9 @@ Each person can get their own slate by email every morning (3.55.0). Asked by DJ
 - Subject: "Today's Slate, Mon, Nov 17: <first game> and N more" (DJ).
 - DJ-only set-up for someone else: `/api/morning-email` takes `for: <registry id>` (get and save only, DJ's passcode). The app reads a link `#mail-for=<id>&email=<address>&at=06:00`, keeps it for the tab until a passcode is in, then saves it once. It lands in that person's own settings (Doug = `dad`, set up for 6:00 AM Central on Nov 17).
 
+## 3.67.2
+- DJ's Family list in Settings → Morning email (`state.isOwner` only): `/api/morning-email` action `family` (DJ only) lists everyone in users/registry but DJ and `tester`, with their on/time/address; saves go through `save` with `for`. The set-up link (#mail-for=) still works but needs the passcode in Safari, so the Family list is the way.
+
 ## Open
 - Ideas: The Athletic newsletters under the slate, Claude preview lines when already written (free), links into the iPhone app instead of Safari.
 - Testing locally: `SMTP_HOST`/`SMTP_PORT`/`SMTP_PLAIN` point the sender at a stand-in mail server (never set them in Cloudflare).
