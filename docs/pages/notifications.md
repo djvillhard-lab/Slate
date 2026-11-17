@@ -42,7 +42,14 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - Logo pick (3.81.7, build 46): SlateLogos.fetch measures the dark logo; under 0.12 average saturation it tries the
   regular one and keeps it if saturation > 0.3 and brightness >= 0.3 (same rule as 045-team-logos.js and the email's
   LOGO_PLAIN). Saved to Logos2 so old picks are replaced. The page sends the game's own logo first (national teams).
+- 3.92.0 (build 47, waiting for DJ's OK): the face-off card. DJ picked "slanted panels" from the mockup
+  (https://claude.ai/artifact/NmK9P5wVXLsnrzwjeVFm1W; inspired by another app's Live Activity, not copied).
+  Logos 40pt with names under them, slanted team-color panels (62% to 30% opacity) at each edge, the score big in the
+  middle, the clock in a square-cornered tag. New ContentState keys: ag/hg (soccer scorers per side, 2 lines max),
+  yl/ds (football ball spot and drive start, 0 = away goal line). The worker reads the spot from the down text and the
+  drive start from situation.lastPlay.drive.start.text (not yet seen live; the bar just skips the drive without it).
 ## Open
+- Check the face-off card on DJ's Duo once build 47 is out: a live football game (field bar) and a soccer game with goals.
 - Hockey: ESPN's scoreboard has no per-team leaders during a game (checked Nov 16, MTL-NYR 2nd period), so no standout.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.
 - Hockey and soccer: no extra lines until ESPN's live numbers are checked during a game.

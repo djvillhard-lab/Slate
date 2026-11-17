@@ -249,6 +249,10 @@ function laState(s, id) {
   if (s.state === "in" && id && LVL[id]) { st.pv = String(LVL[id]).slice(0, 140); st.line = st.pv.slice(0, 60); }
   // 3.64.0, soccer with a goal: the scorers and minutes instead (live notifications only, not the slate card)
   if (s.state === "in" && s.gl) { st.pv = String(s.gl).slice(0, 140); st.line = st.pv.slice(0, 60); }
+  // 3.85.0: the same scorers split by side for the face-off card (it shows these instead of the line above)
+  if (s.state !== "pre" && s.gl) { if ((s.ag || []).length) st.ag = s.ag.map((x) => String(x).slice(0, 40)); if ((s.hg || []).length) st.hg = s.hg.map((x) => String(x).slice(0, 40)); }
+  // 3.85.0, football: the ball's spot and the drive's start for the field bar
+  if (st.poss && Number.isFinite(s.yl)) { st.yl = s.yl; if (Number.isFinite(s.ds)) st.ds = s.ds; }
   // 3.68.0 (DJ): the line is a second thing to know about the game, never the standout's own numbers again. A line
   // about that player gives way to ESPN's win chance, then the two teams' shooting, then the slate's preview line
   if (s.state === "in" && s.tn) {
@@ -583,7 +587,19 @@ function goalLine(c, cs) {
     const L = by[k], hit = L.find((x) => x.nm === nm); if (hit) hit.m.push(min); else L.push({ nm, m: [min] });
   }
   const one = (k) => by[k].length ? `${((cs[k] || {}).team || {}).abbreviation || ""} ${by[k].map((x) => `${x.nm} ${x.m.join(", ")}`).join(", ")}`.trim() : "";
-  return [one("away"), one("home")].filter(Boolean).join(" · ");
+  const line = [one("away"), one("home")].filter(Boolean).join(" · ");
+  // 3.85.0: the face-off card puts each side's scorers under that side, one scorer a line, two lines at most
+  // ("Højlund 11', 52'"; a third scorer and on share the second line)
+  const list = (k) => { const L = by[k].map((x) => `${x.nm} ${x.m.join(", ")}`); return L.length > 2 ? [L[0], L.slice(1).join(", ")] : L; };
+  return { line, ag: list("away"), hg: list("home") };
+}
+// 3.85.0, football: a spot ("BAL 35", "midfield") on the face-off card's field bar, 0 = away's goal line, 100 = home's
+function fieldSpot(text, aa, ha) {
+  const t = String(text || "").trim();
+  if (/(^|\s)(midfield|50)$/i.test(t)) return 50;
+  const m = /([A-Z][A-Za-z0-9&]{0,5})\s+(\d{1,2})$/.exec(t); if (!m) return null;
+  const n = Number(m[2]); if (!(n >= 0 && n <= 50)) return null;
+  return m[1] === ha ? 100 - n : m[1] === aa ? n : null;
 }
 async function liveScores(games, want, now, early) {
   const leagues = {}, sc = {};
@@ -624,7 +640,12 @@ async function liveScores(games, want, now, early) {
     if (dd) sc[id].dd = String(dd);
     if (pid) sc[id].po = pid === String((cs.away.team || {}).id) ? "away" : pid === String((cs.home.team || {}).id) ? "home" : "";
     if (st.state === "in" || st.state === "post") Object.assign(sc[id], islandStats(g, c, cs, sit, st.state === "post"));
-    if (SPORT[g.league] === "soccer") { const gl = goalLine(c, cs); if (gl) sc[id].gl = gl; }
+    if (SPORT[g.league] === "soccer") { const gl = goalLine(c, cs); if (gl.line) Object.assign(sc[id], { gl: gl.line, ag: gl.ag, hg: gl.hg }); }
+    if (dd && sc[id].po) {
+      const yl = fieldSpot(String(dd).split(" at ").pop(), sc[id].aa, sc[id].ha); if (yl != null) sc[id].yl = yl;
+      const dr = (sit.lastPlay || {}).drive, ds = dr && dr.start ? fieldSpot(dr.start.text, sc[id].aa, sc[id].ha) : null;
+      if (yl != null && ds != null) sc[id].ds = ds;
+    }
   }
   return sc;
 }

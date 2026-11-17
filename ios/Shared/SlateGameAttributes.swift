@@ -26,6 +26,11 @@ struct SlateGameAttributes: ActivityAttributes {
         var pv: String?       // 3.58.0: the slate's preview line for the game ("Celtics have won five in a row"), before and during it
         var wp: String?       // ESPN's win probability for the team ahead in it: "ESPN win chance: SA 99%"
         var tag: String?      // 3.68.0: the slate card's tag ("Upset watch", "Rivalry"), shown after "Slate • CBB" in the header
+        // 3.85.0, the face-off card (builds before it ignore these):
+        var ag: [String]?     // soccer: away's scorers, one line each ("Højlund 11', 52'")
+        var hg: [String]?     // home's scorers
+        var yl: Int?          // football: the ball's spot, 0 = away's goal line (left) to 100 = home's (right)
+        var ds: Int?          // where this drive started, on the same scale
     }
 
     var gameId: String
