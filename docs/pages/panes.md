@@ -39,7 +39,9 @@ right, so I can have two live feeds at once."
 - Headers (3.81.9-3.81.12, DJ): fixed numbers didn't match on the phone, so `pnAlign` (host, every 1.5 s and on page
   changes) asks each pane for its header's natural height and the page name's offset (`SlateApp.paneHead`, divided by
   the header's text-size zoom), then sets the same `--pn-head` (min-height) on both and `--pn-tpad` (extra top padding)
-  on the one whose name sits higher (`paneHeadSet`). The dividers and page names then match.
+  on the one whose name sits higher (`paneHeadSet`). The dividers and page names then match. A name-only header (3.81.13, DJ) gets no top padding: its name is bigger
+  (clamp 22-34px, 8.2vw; fitTitle still shrinks long names) with the full 42px mark, centered in the shared height.
+  Panes only; the folded phone keeps its short one-line header (DJ has rejected extra top space there).
 
 ## Open
 - A pane is about 365 points wide, a little narrower than the folded cover screen (about 382). The Live feed's score

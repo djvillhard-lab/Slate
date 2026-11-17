@@ -31,3 +31,8 @@ html.panes, html.panes body { overflow: hidden; overscroll-behavior: none; touch
    height (--pn-head) and the same top space above the page name (--pn-tpad), set by pnAlign in 288-panes.js */
 html.in-pane #toprow-r { min-height: var(--pn-head, 0px); box-sizing: border-box; align-items: flex-start !important; padding-top: calc(8px + var(--pn-tpad, 0px)) !important; }
 html.in-pane .title.has-brand > .d-sub { margin-top: 4px !important; }
+/* 3.81.13 (DJ): a name-only header (Teams, News, Settings, Live feed) fills the same block as a name with a date
+   under it: a bigger name and the full-size mark, centered. A long name still shrinks to fit (fitTitle). */
+html.in-pane #toprow-r:has(.title.one-line) { align-items: center !important; }
+html[data-native].in-pane .toprow.lineup-top:not(#pane-l .toprow) .title.has-brand.one-line > #title-t, html.in-pane .title.has-brand.one-line > #title-t, html.in-pane .title.has-brand.one-line > .t { font-size: clamp(22px, 8.2vw, 34px); }
+html.in-pane .title.has-brand.one-line > svg.brand { width: 42px !important; height: 42px !important; }

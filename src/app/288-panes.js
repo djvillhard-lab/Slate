@@ -190,8 +190,10 @@
     if (!PN.on) return;
     var ws = ["a", "b"].map(pnWin), hs = ws.map(function (w) { try { return w && w.SlateApp.paneHead ? w.SlateApp.paneHead() : null; } catch (e) { return null; } });
     if (!hs[0] || !hs[1]) { ws.forEach(function (w, i) { if (w && hs[i]) w.SlateApp.paneHeadSet(0, 0); }); return; }
-    var tt = Math.max(hs[0].tt, hs[1].tt), H = Math.max(hs[0].h + tt - hs[0].tt, hs[1].h + tt - hs[1].tt);
-    ws.forEach(function (w, i) { w.SlateApp.paneHeadSet(H, tt - hs[i].tt); });
+    // a name-only header (Teams, News, Settings) has a bigger name centered in the block instead (DJ): no top padding
+    var two = hs.filter(function (h) { return !h.one; }), tt = two.length ? Math.max.apply(null, two.map(function (h) { return h.tt; })) : 0;
+    var pad = hs.map(function (h) { return h.one ? 0 : tt - h.tt; }), H = Math.max(hs[0].h + pad[0], hs[1].h + pad[1]);
+    ws.forEach(function (w, i) { w.SlateApp.paneHeadSet(H, pad[i]); });
   }
   setInterval(pnAlign, 1500);
   window.slatePaneNudge = function (n) { state.foldNudge = Number(n) || 0; applyLayout(true); };
@@ -263,7 +265,7 @@
       var r = t.getBoundingClientRect(), T = t.querySelector(".title .t"), out = null;
       // sizes come back zoomed by the text size (--z on the header); the CSS values are set before that zoom
       var z = 1; try { var zz = t.closest("[style*=zoom]") ? 1 : parseFloat(getComputedStyle(t.closest("header") || t).zoom); if (zz > 0) z = zz; } catch (e) {}
-      if (r.height > 0) out = { h: r.height / z, tt: (T ? T.getBoundingClientRect().top - r.top : 0) / z };
+      if (r.height > 0) out = { h: r.height / z, tt: (T ? T.getBoundingClientRect().top - r.top : 0) / z, one: !!t.querySelector(".title.one-line") };
       rs.setProperty("--pn-head", h0 || "0px"); rs.setProperty("--pn-tpad", p0 || "0px");
       return out;
     };

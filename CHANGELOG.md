@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.13 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Unfolded Duo: pages with just a name in the header (Teams, News, Settings, Live feed, Matchup) now show a bigger name and the full-size Slate mark, centered in the header, so they fill the same space as a page with a date under its name. The line under the header still sits at the same height on both sides.
+
 ## 3.81.12 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Unfolded Duo: the headers on the two sides now line up on the phone itself. Each side measures its own header as it's drawn (your text size and fonts included), and both take the same height and the same space above the page name, so the line under the headers sits at exactly the same spot whatever page is on each side.
