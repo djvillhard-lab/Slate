@@ -451,3 +451,5 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .hl-news-tag { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 4px; background: var(--raise); border: 1px solid var(--line); color: var(--head); font-size: 11px; font-weight: 700; line-height: 16px; vertical-align: 1px; }
 .hl.hl-news .hl-tm { color: var(--head); }
 .g.panel.has-feed > .hl.hl-news { padding-right: 0; }
+/* 3.89.6: the stats one-liner under an upcoming slate game is one line too (pvFit picks a version that fits) */
+.hl.hl-one { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -336,6 +336,8 @@
     // 3.71.0: the card's own ranks win. ESPN's game summary can still carry last week's poll (UCLA "No. 7" on a card that
     // says 9 the Monday a new poll came out), so when the card has ranks, the line uses the same ones
     if (g && (Number(g.awayRank) > 0 || Number(g.homeRank) > 0)) ids.forEach(function (i) { var r = Number(g[T[i].side + "Rank"]); T[i].rank = r > 0 && r <= 25 ? r : 0; });
+    // 3.89.6 (DJ: "Michigan St"): the card's own name for each team ("Michigan State", "Central Michigan", "Pistons")
+    if (g) ids.forEach(function (i) { var cn = String(g[T[i].side + "Short"] || "").trim(); if (cn && cn.length <= 22) T[i].name = cn; });
     ids.forEach(function (i) { if (T[i].rank) T[i].name = "No. " + T[i].rank + " " + T[i].name; });
     var H = ids.filter(function (i) { return T[i].side === "home"; })[0] || ids[1], A = ids[0] === H ? ids[1] : ids[0], oth = function (i) { return i === H ? A : H; };
     var nm = function (i) { return (T[i].rank ? "No. " + T[i].rank + " " : "") + T[i].name; };
@@ -467,7 +469,7 @@
       });
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
-  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g3) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
+  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g4) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   // the phone shares today's preview lines with Slate's server (prefs/pvlines), so live notifications and Starting now
   // alerts can carry the same line as the slate (3.58.0). Only on a phone signed in with a passcode; only when it changed.
   var pvShareT = null, pvShared = "", pvSharedAt = 0;
@@ -488,11 +490,15 @@
       db.doc("prefs/pvlines").set({ date: state.date, lines: lines, live: live, tags: tags, liveAt: Date.now(), updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
     }, 8000);
   }
-  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", sc: PV[k].sc || 0, f: PV[k].f || "", fb: PV[k].fb ? 1 : 0, g3: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
+  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", sc: PV[k].sc || 0, f: PV[k].f || "", fb: PV[k].fb ? 1 : 0, g4: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
   function pvNode(g) {
     var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
-    return p && p.text ? hlLine(g, p.text, p.tm, "hl hl-pre") : null;
+    if (!p || !p.text) return null;
+    var ln = hlLine(g, p.text, p.tm, "hl hl-pre hl-one");   // 3.89.6: one line, the longest version that fits (pvFit, 105-pv-notes.js)
+    var pre = ln.querySelector(".hl-tm"); if (pre) pre.remove();   // and never an "MSU:" in front of the stats line (DJ)
+    pvFit(ln, ln.lastChild, pvStatAlts(p));
+    return ln;
   }
   function pvNeed(g) {
     if (!BX_SPORT[g.league] || !bxBase(g.league) || g.custom) return;

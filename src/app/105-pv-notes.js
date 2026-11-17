@@ -90,6 +90,25 @@
     p.appendChild(tg); p.appendChild(tx); tx.textContent = alts[0]; p.title = n.text;
     if (n.side) p.dataset.side = n.side;
     // once it's on screen: the longest version that fits on the one line
-    requestAnimationFrame(function () { for (var i = 1; i < alts.length && p.isConnected && p.scrollWidth > p.clientWidth + 1; i++) tx.textContent = alts[i]; });
+    pvFit(p, tx, alts);
     return p;
+  }
+  // once a line is on screen: the longest version that fits on one line (3.89.6). Skipped while it isn't laid out
+  // (a folded time group); the next redraw fits it then
+  function pvFit(p, node, alts) {
+    if (alts.length < 2) return;
+    requestAnimationFrame(function () {
+      if (!p.isConnected || !p.clientWidth) return;
+      for (var i = 1; i < alts.length && p.scrollWidth > p.clientWidth + 1; i++) { if (node.nodeType === 3) node.nodeValue = alts[i]; else node.textContent = alts[i]; }
+    });
+  }
+  // 3.89.6 (DJ: the one-liner wrapped to a second line on the folded Duo): the stats line is one line too. Shorter versions,
+  // longest first: both facts with filler cut ("going into the second leg"), then the strongest fact alone, then that fact cut
+  function pvStatAlts(p) {
+    var cut = function (t) { return String(t || "").replace(/ going into the second leg/, "").replace(/ in their last five\b/, " in the last five").replace(/\bis only a ([\d.]+)-point favorite/, "is only a $1-pt favorite").replace(/\b(is|are) a ([\d.]+)-point favorite/, "$1 a $2-pt favorite").replace(/\s+/g, " ").trim(); };
+    var out = [p.text, cut(p.text)];
+    if (p.f && p.f !== p.text) out.push(p.f, cut(p.f));
+    // last: the strongest fact up to its first clause ("No. 10 Illinois visits No. 5 Duke after Ivisic's 28-point outing" -> "...visits No. 5 Duke")
+    var last = out[out.length - 1], m = /^(.{20,}?)( after | and | as | with | while | following |; )/.exec(last); if (m) out.push(m[1]);
+    return out.filter(function (x, i) { return x && out.indexOf(x) === i; });
   }
