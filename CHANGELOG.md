@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.86.0 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- My bets: track the bets you made (Drew's idea). On a game's matchup page, under the betting line, tap Add my bet and pick a spread, moneyline, total or a player line (points, rebounds, yards and so on), the side and the line. DraftKings' posted line fills in, and you can change it to the line you got. No amounts or money, just won or lost.
+- The game card shows each of your bets while the game is on: "covering by 2.5", "up 3", "47 so far, needs 1 more", "Tatum 18 points so far, needs 7 more". At the final it settles by itself as Won, Lost or Push. An over that has already passed its line counts as won right away.
+- On the slate, My bets (under Betting lines) lists today's bets on any game, today's record and the last 7 days. Earlier days show how each one finished. × removes a bet, with Undo.
+- Bets are saved to your own account, so they follow you to any phone.
+
 ## 3.85.1 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - National teams have their own colors now, across every international competition (World Cup qualifiers, Nations League, friendlies...). Before, the app used ESPN's colors, which make many countries the same blue, so Haiti and the USA looked alike. About 85 countries get their flag and kit colors. When two sides still clash, one switches to its second color, the same as club teams.

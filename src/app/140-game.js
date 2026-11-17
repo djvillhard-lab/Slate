@@ -36,6 +36,7 @@
     var kind = status(g).kind, started = kind === "live" || kind === "over", sport = BX_SPORT[g.league] || "", b = sport ? boxFor(g) : null;
     bxNeed(g);
     var ostrip = oddsStrip(g, b); if (ostrip) { ostrip.classList.add("gv-oddsbar"); body.appendChild(ostrip); }
+    var mybc = mybCard(g); if (mybc) body.appendChild(mybc);  // Your bets and Add my bet, under the line (3.86.0)
     // Claude's write (or regenerate) button sits right under the location and the betting line, in every sport (DJ, 3.52.5)
     var gcTop = gameClaudeCtl(g); if (gcTop) { gcTop.classList.add("gv-cl"); body.appendChild(gcTop); }
     var live = boxLive(b), season = !live && b && b.state === "pre" && b.season;
