@@ -10,6 +10,10 @@
   var MYBL = { loaded: false, busy: false, timer: null, sig: "", props: {}, roster: {} };
   var MYB_CSS = [
     ".myb-list { display: grid; gap: 8px; }",
+    ".myb-chip { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--muted); font: 800 13px var(--font); }",
+    ".myb-chip svg { width: 14px; height: 14px; }",
+    ".myb-chip::after { content: ''; position: absolute; inset: -9px -4px; }",
+    ".myb-chip-row { margin: 8px 0 0; }",
     ".myb-bet { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; width: 100%; box-sizing: border-box; padding: 10px 12px 10px 16px; border-radius: 8px; border: 1px solid var(--hair); background: var(--card); color: var(--ink); text-align: left; }",
     ".myb-bet::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-fill); }",
     ".myb-bet.one { background: color-mix(in srgb, var(--myb-c) 10%, var(--card)); border-color: color-mix(in srgb, var(--myb-c) 32%, var(--hair)); }",
@@ -233,15 +237,19 @@
   function mybCard(g) {
     if (!g || g.custom || !ESPN_URLS[g.league]) return null;
     mybLoad();
-    var list = mybFor(g), can = mybCanAdd(g);
-    if (!list.length && !can) return null;
-    var c = el("div", "myb-card"), t = el("div", "myb-t"); t.appendChild(el("span", null, "Your bets")); if (list.length) t.appendChild(el("span", "count", String(list.length))); c.appendChild(t);
-    var rows = el("div", "myb-list"); list.forEach(function (b) { rows.appendChild(mybRow(b, { x: true })); }); if (list.length) c.appendChild(rows);
-    if (can) {
-      var add = el("button", "myb-add"); add.type = "button"; add.appendChild(icon("plus")); add.appendChild(document.createTextNode(list.length ? "Add another bet" : "Add my bet"));
-      add.addEventListener("click", function () { mybOpen(g); }); c.appendChild(add);
-    } else if (!list.length) return null;
+    var list = mybFor(g);
+    if (!list.length) return null;   // the way in is the small "+ Add bet" beside the betting line (mybChip, 3.89.4: DJ found the big button too prominent)
+    var c = el("div", "myb-card"), t = el("div", "myb-t"); t.appendChild(el("span", null, "Your bets")); t.appendChild(el("span", "count", String(list.length))); c.appendChild(t);
+    var rows = el("div", "myb-list"); list.forEach(function (b) { rows.appendChild(mybRow(b, { x: true })); }); c.appendChild(rows);
     return c;
+  }
+  // matchup page: a small "+ Add bet" at the end of the betting line strip
+  function mybChip(g) {
+    if (!mybCanAdd(g)) return null;
+    var b = el("button", "myb-chip"); b.type = "button"; b.appendChild(icon("plus")); b.appendChild(document.createTextNode("Add bet"));
+    b.setAttribute("aria-label", "Add a bet you made on this game, to follow it live");
+    b.addEventListener("click", function () { mybOpen(g); });
+    return b;
   }
   // game cards (slate and All games): one short line per bet, under the card's one-liner
   function mybBars(g) {
