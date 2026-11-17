@@ -25,14 +25,14 @@ struct SlateLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     // each team's standout so far sits under its score (3.38.0)
                     VStack(alignment: .leading, spacing: 3) {
-                        IslandTeam(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, chipFirst: true, dim: SlateLook.lost(s, away: true), logo: a.awayLogo)
+                        IslandTeam(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, chipFirst: true, dim: SlateLook.lost(s, away: true), logo: a.awayLogo, ball: s.state == "in" && s.poss == "away")
                         IslandNote(text: s.ap, align: .leading)
                     }
                     .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 3) {
-                        IslandTeam(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, chipFirst: false, dim: SlateLook.lost(s, away: false), logo: a.homeLogo)
+                        IslandTeam(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, chipFirst: false, dim: SlateLook.lost(s, away: false), logo: a.homeLogo, ball: s.state == "in" && s.poss == "home")
                         IslandNote(text: s.hp, align: .trailing)
                     }
                     .padding(.trailing, 4)
@@ -194,7 +194,11 @@ private struct LockCard: View {
 
     var body: some View {
         let live = s.state == "in"
-        let hasSit = live && !(s.sit ?? "").isEmpty
+        // 3.75.1 (DJ): with the football icon by a team, the down and spot go right next to it ("1st & 10 · BAL 6")
+        // and lose their own row, so at most two lines sit under the scores
+        let downByBall = live && (s.poss == "away" || s.poss == "home") && !(s.sit ?? "").isEmpty
+        let down = downByBall ? BallLook.compact(s.sit ?? "") : nil
+        let hasSit = live && !(s.sit ?? "").isEmpty && !downByBall
         // 3.39.1: each team's standout on its own line when ESPN has them ("SF  B. Purdy 22/28, 389 YDS, 3 TD"),
         // else the slate's one-liner as before
         let stars: [(String, String)] = [(a.awayAbbr, s.ap ?? ""), (a.homeAbbr, s.hp ?? ""), (s.ox ?? "", s.op ?? "")].filter { !$0.0.isEmpty && !$0.1.isEmpty }
@@ -230,9 +234,9 @@ private struct LockCard: View {
 
             VStack(spacing: 4) {
                 ScoreRow(abbr: a.awayAbbr, name: a.away, color: a.awayColor, alt: a.awayAlt, rank: a.awayRank, score: s.a,
-                         ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true), logo: a.awayLogo)
+                         ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true), logo: a.awayLogo, down: s.poss == "away" ? down : nil)
                 ScoreRow(abbr: a.homeAbbr, name: a.home, color: a.homeColor, alt: a.homeAlt, rank: a.homeRank, score: s.h,
-                         ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), logo: a.homeLogo)
+                         ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), logo: a.homeLogo, down: s.poss == "home" ? down : nil)
             }
 
             // the bottom of the card, full width (3.25.1, no Watch button): for live football who has the ball, the down
@@ -290,6 +294,11 @@ private struct LockCard: View {
     }
 }
 
+enum BallLook {
+    // "1st & 10 at BAL 6" -> "1st & 10 · BAL 6" (3.75.1)
+    static func compact(_ sit: String) -> String { sit.replacingOccurrences(of: " at ", with: " · ") }
+}
+
 private struct ScoreRow: View {
     let abbr: String
     let name: String
@@ -300,6 +309,7 @@ private struct ScoreRow: View {
     let ball: Bool
     let dim: Bool
     var logo: String? = nil
+    var down: String? = nil
 
     var body: some View {
         HStack(spacing: 10) {
@@ -311,11 +321,19 @@ private struct ScoreRow: View {
                     }
                     Text(name).font(SlateLook.bold(17)).lineLimit(1)
                 }
+                .layoutPriority(1)
                 if ball {
                     Image(systemName: "football.fill")
                         .font(.system(size: 10))
                         .foregroundStyle(SlateLook.muted)
                         .accessibilityLabel("has the ball")
+                    if let down, !down.isEmpty {
+                        Text(down)
+                            .font(SlateLook.semi(13))
+                            .foregroundStyle(SlateLook.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
                 }
             }
             Spacer(minLength: 6)
@@ -427,18 +445,28 @@ private struct IslandTeam: View {
     let chipFirst: Bool
     let dim: Bool
     var logo: String? = nil
+    var ball: Bool = false   // 3.75.1: football, this team has it: the icon on the score's inside edge, by the down
 
     var body: some View {
         HStack(spacing: 9) {
             if chipFirst { Chip(abbr: abbr, color: color, alt: alt, width: 40, height: 24, logo: logo) }
+            if ball && !chipFirst { icon }
             Text("\(score)")
                 .font(SlateLook.num(34))
                 .foregroundStyle(SlateLook.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+            if ball && chipFirst { icon }
             if !chipFirst { Chip(abbr: abbr, color: color, alt: alt, width: 40, height: 24, logo: logo) }
         }
         .opacity(dim ? 0.5 : 1)
+    }
+
+    private var icon: some View {
+        Image(systemName: "football.fill")
+            .font(.system(size: 11))
+            .foregroundStyle(SlateLook.ink)
+            .accessibilityLabel("has the ball")
     }
 }
 

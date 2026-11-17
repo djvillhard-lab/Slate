@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.75.1 (Nov 17, 2026)
+TestFlight: 3.75.1 (45)
+- Football live notification, Lock Screen: the down and spot sit right next to the football icon by the team that has the ball ("Ravens 🏈 1st & 10 · BAL 6"), and the separate down line is gone. So there are at most two lines under the scores: the standout and the one-liner.
+- Dynamic Island held open, football: a football icon next to the score of the team that has the ball. The timeouts line is gone, timeouts and quarter breaks no longer show as the last play ("Timeout #1 by BLT"), and ESPN's win chance only gets its own line when there's no one-liner. That leaves two lines under the scores: the last play and the one-liner.
+- Needs build 45. The timeouts and last-play changes work on build 44 too.
+
 ## 3.75.0 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Top performers: the big number on the right is gone. That side now holds tags for what made the player's night, in every sport, up to three per player, and nothing when nothing stands out. All of them come straight from the box score. On a regular iPhone the tags sit under the stat line, so names and stats keep their room.

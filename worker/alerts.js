@@ -262,6 +262,9 @@ function laState(s, id) {
   }
   // 3.68.0: the slate card's tag for the header ("Slate • CBB  Upset watch"); app builds before 44 ignore it
   if (s.state === "in" && id && TGL[id]) st.tag = String(TGL[id]).slice(0, 24);
+  // 3.75.1: the Dynamic Island shows win chance on a line of its own; leave it off when the one-liner is there, so the
+  // island has two lines under the scores (the last play and the one-liner)
+  if (st.pv && st.wp) delete st.wp;
   // 3.66.3: sized to fit. Under the two standouts the Lock Screen has one line (about 44 letters); alone it has two
   if (st.pv) { st.pv = fitLine(st.pv, st.ap || st.hp || st.op ? 44 : 80); st.line = fitLine(st.pv, 60); }
   return st;
@@ -668,8 +671,7 @@ function islandStats(g, c, cs, sit, fin) {
       if (parts.length) out[k + "t"] = parts.join(" · ");
     }
     if (sport === "football") {
-      const to = sit[sd + "Timeouts"];
-      if (Number.isInteger(Number(to)) && to !== undefined && to !== null && to !== "") out[k + "t"] = `${to} timeout${Number(to) === 1 ? "" : "s"} left`;
+      // 3.75.1 (DJ): no timeouts line; it read like a stat and crowded the Dynamic Island
     }
   }
   // 3.68.0 (DJ): one standout for the whole game, not one per team. Basketball: the higher of the two teams' ESPN
@@ -687,7 +689,8 @@ function islandStats(g, c, cs, sit, fin) {
   const tk = out.ap ? "a" : out.hp ? "h" : ""; if (tk && names[tk]) out.tn = String(names[tk].displayName || names[tk].shortName || "");
   if (fin) return { ap: out.ap, hp: out.hp, tn: out.tn };  // after the final: the game's standout stays on the Lock Screen (3.39.1)
   const lp = sit.lastPlay || {};
-  if ((sport === "bball" || sport === "football") && lp.text) out.lp = cut(lp.text, 90);
+  // 3.75.1: not a timeout, quarter break or two-minute warning ("Timeout #1 by BLT at 05:49."): those say nothing about the game
+  if ((sport === "bball" || sport === "football") && lp.text && !/^(timeout|end of|end (quarter|half|game)|two[- ]minute warning|official timeout)/i.test(String(lp.text).trim())) out.lp = cut(lp.text, 90);
   // decision 10 (docs/NOTIFICATIONS-PLAN.md): ESPN's win probability, labeled as ESPN's, for football and basketball
   const pr = lp.probability || {}, aw = Number(pr.awayWinPercentage), hw = Number(pr.homeWinPercentage);
   if ((sport === "bball" || sport === "football") && aw >= 0 && hw >= 0 && aw + hw > 0) {
