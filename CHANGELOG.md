@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.7 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- All games: team names are no longer cut short in narrow cards, like the open Duo's right pane ("Char…" for Chargers). When a name doesn't fit, that card drops both teams' records first. If it still doesn't fit, both teams show their abbreviation (LAC, BAL), never half a name.
+
 ## 3.68.6 (Nov 17, 2026)
 TestFlight: 3.68.5 (44), no new build (web only)
 - Morning email: it keeps Slate's own colors in mail apps that use dark mode (Outlook turned the background a muddy gray and washed out the text and the bold), and game times and dates no longer show up as blue underlined links.

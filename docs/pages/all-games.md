@@ -28,3 +28,8 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - Box scores list everyone who played, no "top 6" and no fold behind a button (3.40.1, DJ asked).
 - Headers: one compact header on every page (3.44.0); see docs/DESIGN.md. On the open Duo the slate pane's header is
   taller than a one-line page beside it; DJ hasn't objected.
+
+## 3.68.7: no cut-off team names (open Duo right pane showed "Char…")
+- `agFitNames()` at the end of 160-all-games.js runs after every `renderGames` (wrapped there, with `alignSides` first) and on resize.
+  Per card: if any name is clipped, hide both records; if still clipped, both rows show the badge's abbreviation (full name kept in `title`).
+- The card's main column is narrow there (about 160px at the Duo's zoom), so the record was what cost the room.
