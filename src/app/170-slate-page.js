@@ -209,3 +209,30 @@
     body.appendChild(acts);
   }
 
+
+  // ---- team names never cut short on the slate (3.68.8) ----
+  // A narrow card (Worth a look on the open Duo's left pane) cut "St. Thomas" to "St. Tho…". After the score column is
+  // fitted, a card whose name doesn't fit drops both teams' records first, and if a name still doesn't fit, both rows show
+  // the team's abbreviation instead (the same steps as All games, 3.68.7). Called at the end of fitScores (240-chrome.js).
+  function slateUnfitNames(box) {  // full names and records back, so the score column is measured from them
+    Array.prototype.forEach.call(box.querySelectorAll(".g.panel .tm"), function (r) {
+      var rc = r.querySelector(".rec"), n = r.querySelector(".nm"); if (rc) rc.style.display = "";
+      if (n && n.dataset.full) { n.textContent = n.dataset.full; n.removeAttribute("title"); delete n.dataset.full; }
+    });
+  }
+  function slateFitNames(box) {
+    if (!box || !box.offsetParent) return;
+    slateUnfitNames(box);
+    Array.prototype.forEach.call(box.querySelectorAll(".g.panel"), function (p) {
+      var rows = Array.prototype.slice.call(p.querySelectorAll(".tm")); if (!rows.length) return;
+      var nms = rows.map(function (r) { return r.querySelector(".nm"); }).filter(Boolean);
+      var cut = function () { return nms.some(function (n) { return n.clientWidth && n.scrollWidth > n.clientWidth + 1; }); };
+      if (!cut()) return;
+      rows.forEach(function (r) { var rc = r.querySelector(".rec"); if (rc) rc.style.display = "none"; });
+      if (!cut()) return;
+      rows.forEach(function (r) {
+        var n = r.querySelector(".nm"), b = r.querySelector(".badge"), t = b && Array.prototype.filter.call(b.childNodes, function (x) { return x.nodeType === 3 && x.nodeValue.trim(); })[0];
+        if (n && t) { n.dataset.full = n.textContent; n.textContent = t.nodeValue.trim(); n.setAttribute("title", n.dataset.full); }
+      });
+    });
+  }

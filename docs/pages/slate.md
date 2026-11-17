@@ -1,5 +1,5 @@
 # Today's Slate
-Last updated: Nov 17, 2026, 3.68.3
+Last updated: Nov 17, 2026, 3.68.8
 
 ## Done
 - Game cards line up one score column for the whole slate (fitScores in 240-chrome.js sets --tmw on #lineup-body):
@@ -10,9 +10,12 @@ Last updated: Nov 17, 2026, 3.68.3
 - 3.68.3: the Worth a look card no longer sets the column (it's narrower: its box and the +), so long names
   aren't cut on a regular iPhone; it gets its own --tmw sized to its width.
 
+- 3.68.8: names never cut short. After fitScores, slateFitNames (170-slate-page.js) hides a cut card's records,
+  then swaps both names for the badge abbreviations (STMN, LIU), like All games 3.68.7. fitScores calls
+  slateUnfitNames first so the column is always measured from the full names.
+
 ## Open
 - Open Duo's left pane is under 330px, so records hide there (050-ux-review.css container rule), by design.
-- All games (right pane, open Duo) still cuts names short ("The C…"): that's 160-all-games.js, not this page.
 
 ## Decisions
 - Keep one shared score column (3.31.0) rather than per-card positions, so scores line up down the page.
