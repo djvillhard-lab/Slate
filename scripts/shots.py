@@ -127,6 +127,10 @@ def main():
             if gate == "invite": page.route("**/api/invite-check", lambda r: r.fulfill(body='{"ok":true}', content_type="application/json"))
             page.goto(SITE + ("#pass=" + pw if pw else "#invite=SHOTS2TEST234" if gate == "invite" else ""))
             page.wait_for_timeout(int(wait * 1000))
+            # a new test profile opens on the welcome: close it ("Skip for now") unless the welcome is what's being checked
+            if pw and "welcome" not in (name or ""):
+                try: page.wait_for_selector(".wl-skip", timeout=5000); page.click(".wl-skip"); page.wait_for_timeout(800)
+                except Exception: pass
             if S["inset"]: page.evaluate("SlateApp.setInset(%d)" % S["inset"]); page.wait_for_timeout(400)
             if tomorrow: page.evaluate("document.getElementById('l-day-next').click()"); page.wait_for_timeout(int(wait * 1000))
             mode = page.evaluate("document.documentElement.className")

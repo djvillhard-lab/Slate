@@ -383,7 +383,7 @@ Answer with only this JSON inside <json></json> tags:
  "watch": [{"name": "...", "team": "ABBR", "line": "short season stat line", "note": "optional few words"}],
  "series": "one short line on the season series, or empty",
  "headlines": [{"title": "...", "source": "The Athletic", "url": "..."}]}
-Watch: 2-4 players, never one who is out. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
+Watch: 2-4 players, never one who is out. Each "line" is real numbers from the ESPN facts or your searches, the ones that fit why the player is worth watching (3-point percentage for a shooter, rebounds for a big man), never a role or position such as "Boston guard"; if you can't find numbers for a player, pick another. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
 }
 
 // web search answers can carry <cite index='…'>…</cite> markers: keep the words, drop the tags, everywhere in the answer

@@ -209,15 +209,10 @@
     } else { dd.appendChild(el("h3", "gv-h", "The deep dive")); if (!rc) dd.appendChild(el("p", "pv-none", "Regenerate the preview to add the longer read.")); }
     if (long.length || !rc) body.appendChild(dd);
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }) : [];
-    var wl = stars.length ? stars : Array.isArray(pv.watch) ? pv.watch.filter(function (w) { return w && w.name; }) : [];
+    var wl = pwList(g, pv, stars);
     if (wl.length) {
       var wc = gvCard(stars.length ? "Top performers" : "Players to watch", "gv-watch");
-      wl.forEach(function (w) {
-        var r = el("div", "pw");
-        r.appendChild(el("span", "pw-n", w.name)); if (w.team) r.appendChild(el("span", "pw-t", w.team)); if (w.line) r.appendChild(el("span", "pw-l", w.line));
-        if (w.note) r.appendChild(el("span", "pw-note", w.note));
-        wc.appendChild(r);
-      });
+      wl.forEach(function (w) { wc.appendChild(pwRow(g, w, stars.length > 0)); });
       body.appendChild(wc);
     }
     if ((pv.last5 && (pv.last5.away || pv.last5.home)) || pv.series || pv.injuries) {
