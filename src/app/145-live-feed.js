@@ -478,8 +478,9 @@
   }
   function fdIsland() {
   // 3.93.4: in the unfolded Duo's right pane the island sits over this pane's top right. The host page knows its width.
+  // 3.94.1: which side this pane is on is the host's pn-right class on our <html> (288-panes.js), so the spacing follows a swap at once.
   if (!PANE) return; var w = 0;
-  try { var fe = window.frameElement, pw = window.parent; if (fe && fe.getBoundingClientRect().right >= pw.innerWidth - 4) w = parseFloat(pw.document.documentElement.style.getPropertyValue("--strip-w")) || 0; } catch (e) { w = 0; }
+  try { var fe = window.frameElement, pw = window.parent; if (fe) w = parseFloat(pw.document.documentElement.style.getPropertyValue("--strip-w")) || 0; } catch (e) { w = 0; }
   var v = $("view-feed"); if (!v) return; v.classList.toggle("fd-isl", w > 0); v.style.setProperty("--fd-isl", w + "px");
 }
 function renderFeed(fromPoll) {

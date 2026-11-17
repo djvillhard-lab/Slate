@@ -1512,9 +1512,9 @@ html .feed-go.feed-done, html .tray .feed-go.feed-done { background: var(--raise
 html[data-native].side-col:not(.duo) #feed-body .fd-bug { padding-right: calc(10px + var(--strip-w, 0px) / var(--z, 1)); }
 /* 3.91.4 (DJ: "the island covering content... move that content to the left slightly more"): the cards right under the score bar (possession, scorers, the field, top players) stop short of the folded Duo's side column too, like the score bar's own contents */
 html[data-native].side-col:not(.duo) #feed-body > .fd-field { padding-right: calc(12px + var(--strip-w, 0px) / var(--z, 1)); }
-#view-feed.fd-isl #feed-body .fd-bug { padding-right: calc(10px + var(--fd-isl, 0px) / var(--z, 1)); }
-#view-feed.fd-isl #feed-body > .fd-field { padding-right: calc(12px + var(--fd-isl, 0px) / var(--z, 1)); }
-#view-feed.fd-isl #feed-body .fd-strip { padding-right: calc(16px + var(--fd-isl, 0px) / var(--z, 1)); }
+html.pn-right #view-feed.fd-isl #feed-body .fd-bug { padding-right: calc(10px + var(--fd-isl, 0px) / var(--z, 1)); }
+html.pn-right #view-feed.fd-isl #feed-body > .fd-field { padding-right: calc(12px + var(--fd-isl, 0px) / var(--z, 1)); }
+html.pn-right #view-feed.fd-isl #feed-body .fd-strip { padding-right: calc(16px + var(--fd-isl, 0px) / var(--z, 1)); }
 html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
 .fd-face { position: relative; flex: none; width: 32px; height: 32px; display: grid; place-items: center; }
 .fd-face > img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: var(--fc, #2a3442); box-shadow: inset 0 0 0 1.5px rgba(127,127,127,.5); opacity: 0; }
