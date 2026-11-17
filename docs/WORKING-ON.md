@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Logos + one-liners (Thunder logo, informative fallback) | src/app/045-team-logos.js, src/app/100-highlights.js | 2026-11-17 19:15 |
