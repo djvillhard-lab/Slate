@@ -40,3 +40,7 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 ## 3.71.4: a game past its start that ESPN still has pre-game
 - `livePoll` remembers ESPN pre-game sightings (`LIVE_PRE` in 040-live.js); `status()` returns upcoming with `late: true` for a game past its start but seen pre-game in the last 6 minutes. Cards say "Starting soon" (060-cards.js). Before, the clock fallback said Live with no score (Long Beach State at UCLA, late tip).
 - `agLine` re-requests a preview older than 30 min on a "live" card, so stale ranks get redone.
+
+## 3.81.1: watch links
+- `statusSide` in 060-cards.js now gives All games the slate's channel block (watchLink, up to two, linkable first, ▶ marker). The old plain "ESPN / ABC" span is gone.
+- `agFitNames` re-runs 120 ms after each draw and after fonts load, and treats any scrollWidth > clientWidth as cut (Chargers was off by 1px).

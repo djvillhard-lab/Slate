@@ -96,8 +96,8 @@
     if (side.className === "s-row") side = side.parentNode;
     if (g.moved && st.kind === "upcoming") side.appendChild(el("span", "s-moved", "Was " + timeText(g.moved)));
     var tv = (g.tv || []).filter(Boolean);
-    if (mode === "lineup") {
-      // at most two channels on the card, ones you can tap to watch first; the matchup page lists them all
+    if (mode === "lineup" || mode === "games") {
+      // at most two channels on the card, ones you can tap to watch first; the matchup page lists them all (All games too since 3.81.1)
       var linked = tv.filter(function (n) { return !!watchLink(n, "net", n); });
       var shown = linked.concat(tv.filter(function (n) { return linked.indexOf(n) === -1; })).slice(0, 2);
       tv = tv.filter(function (n) { return shown.indexOf(n) !== -1; }).sort(function (a, b) { return shown.indexOf(a) - shown.indexOf(b); });
@@ -107,7 +107,7 @@
         a.addEventListener("click", function (e) { e.stopPropagation(); });
         side.appendChild(a);
       });
-    } else if (mode === "games") if (tv.length) side.appendChild(el("span", "net", tv.slice(0, 2).map(function (n) { return NET_SHORT[n] || n; }).join(" / ")));
+    }
     return side;
   }
   function fmtOdds(n) { n = Number(n); return isNaN(n) ? "" : (n > 0 ? "+" : "") + n; }

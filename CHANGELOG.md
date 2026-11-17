@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.1 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- All games: each matchup's channel is now a watch link, the same as on Today's Slate ("▶ ESPN"). Tap it to open that channel's app, or pick one when there's more than one way to watch. Up to two channels per card, with the ones you can watch first.
+- All games: fixed a team name still cut by a hair ("Charg…" for Chargers). The name check now runs again once the page settles, and it catches a clip of even one pixel.
+
 ## 3.81.0 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - News: a row of tabs across the top. The first tab, Press Box, is the News page you had (Claude's page for your picks), and it's where News opens.
@@ -1317,7 +1322,6 @@ TestFlight: 3.0 (10)
 TestFlight: 3.0 (9)
 - iPhone Duo, unfolded: the two sides now split exactly on the fold. The app tells the page where the middle of the screen is instead of the page guessing (iOS's side column threw the guess off). Settings > Move split still fine-tunes it.
 - Release notes now list the TestFlight build for each version.
-
 
 ## 3.2.0 (Nov 14, 2026)
 TestFlight: 3.0 (8)

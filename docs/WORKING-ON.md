@@ -8,4 +8,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | Live feed: new plays stay in view when scrolled to the plays | src/app/145-live-feed.js, src/app/146-live-feed-hoops.js, shared: src/styles/040-components.css (fd- feed rules only) | 2026-11-17 04:10 |
 | DJ | Logo audit: logos the iPhone app saves, live notifications, morning email | src/app/040-live.js (laLogo only), worker/morning-email.js (logo image only), shared: ios/Shared/SlateGameAttributes.swift, docs/pages/notifications.md | 2026-11-17 04:21 |
-| DJ | shared: 060-cards.js (All games channel watch links) | src/app/060-cards.js | 2026-11-17 04:28 |

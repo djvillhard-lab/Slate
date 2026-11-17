@@ -252,7 +252,7 @@
     Array.prototype.forEach.call(box.querySelectorAll(".g.panel"), function (p) {
       var rows = Array.prototype.slice.call(p.querySelectorAll(".tm")); if (!rows.length) return;
       var nms = rows.map(function (r) { return r.querySelector(".nm"); }).filter(Boolean);
-      var cut = function () { return nms.some(function (n) { return n.clientWidth && n.scrollWidth > n.clientWidth + 1; }); };
+      var cut = function () { return nms.some(function (n) { return n.clientWidth && n.scrollWidth > n.clientWidth; }); };  // 3.80.1: even a 1px clip shows the ellipsis
       rows.forEach(function (r) { var rc = r.querySelector(".rec"); if (rc) rc.style.display = ""; });
       nms.forEach(function (n) { if (n.dataset.full) { n.textContent = n.dataset.full; delete n.dataset.full; } });
       if (!cut()) return;
@@ -265,6 +265,10 @@
     });
   }
   var renderGames0 = renderGames;
-  renderGames = function () { renderGames0.apply(this, arguments); try { alignSides($("games-body")); agFitNames(); } catch (e) {} };
+  renderGames = function () { renderGames0.apply(this, arguments); try { alignSides($("games-body")); agFitNames(); } catch (e) {} agFitLater(); };
+  // and once more after the page settles (3.80.1: the watch links and the fonts can widen the right column after the first fit)
+  var agFitT2 = null;
+  function agFitLater() { clearTimeout(agFitT2); agFitT2 = setTimeout(function () { try { agFitNames(); } catch (e) {} }, 120); }
+  try { document.fonts && document.fonts.ready.then(agFitLater); } catch (e) {}
   var agFitT = null;
   window.addEventListener("resize", function () { clearTimeout(agFitT); agFitT = setTimeout(function () { try { agFitNames(); } catch (e) {} }, 300); });
