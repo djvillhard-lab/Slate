@@ -266,7 +266,8 @@
     ["away", "home"].forEach(function (sd) { var lg = laLogo(g, sd); if (lg) at[sd + "Logo"] = lg; });
     return at;
   }
-  function laLogo(g, sd) { try { var t = teamLook(g[sd]); return t && t[0] ? String(t[0]) : ""; } catch (e) { return ""; } }
+  // the game's own logo first (national teams and anyone ESPN's team lists miss), then the team lookup
+  function laLogo(g, sd) { try { var own = logoSeg(g[sd + "Logo"]); if (own) return own; var t = teamLook(g[sd]); return t && t[0] ? String(t[0]) : ""; } catch (e) { return ""; } }
   // 3.67.0: tell the iPhone app which logos today's games use, so it can save them for live notifications
   // (a live notification can't download a picture itself). Sent once per change; builds before 3.67.0 ignore it.
   var laLogosSent = "";

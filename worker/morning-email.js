@@ -213,7 +213,7 @@ function painter(T, kit, tz) {
   const badge = (g, sd) => {
     const ab = kit.abbr(g, sd);
     const m = /\/i\/teamlogos\/([a-z0-9]+)\/500(?:-dark)?\/(?:scoreboard\/)?([\w-]+\.png)/i.exec(String(g[sd + "Logo"] || ""));
-    if (m) return `<img src="https://a.espncdn.com/combiner/i?img=/i/teamlogos/${m[1].toLowerCase()}/${T.dark ? "500-dark" : "500"}/${m[2].toLowerCase()}&amp;w=96&amp;h=96" width="28" height="28" alt="${esc(ab)}" style="display:block;margin:0 auto;border:0;width:28px;height:28px;font:800 11px ${FONT};color:${T.muted}">`;
+    if (m) return `<img src="https://a.espncdn.com/combiner/i?img=/i/teamlogos/${m[1].toLowerCase()}/${T.dark && !LOGO_PLAIN.has(`${m[1]}/${m[2]}`.toLowerCase()) ? "500-dark" : "500"}/${m[2].toLowerCase()}&amp;w=96&amp;h=96" width="28" height="28" alt="${esc(ab)}" style="display:block;margin:0 auto;border:0;width:28px;height:28px;font:800 11px ${FONT};color:${T.muted}">`;
     let f = hexOk(g[sd + "Color"]) ? g[sd + "Color"] : T.raise, r = hexOk(g[sd + "Alt"]) ? g[sd + "Alt"] : "#ffffff";
     if (lum(f) > 0.72 && hexOk(g[sd + "Alt"]) && lum(r) < 0.72) { const x = f; f = r; r = x; }
     if (r.toLowerCase() === f.toLowerCase()) r = "#ffffff";
@@ -315,6 +315,12 @@ async function logoList(lg) {
   }
   return j || {};
 }
+// Logos whose dark version is a plain white mark while the regular one is colorful and bright enough for a dark
+// background (Clemson's orange paw, Tennessee's T), or that have no dark version at all: these use the regular logo.
+// From a check of every team in ESPN's pro, college and soccer team lists (Nov 17, 2026); the iPhone app's live
+// notifications work the same out for themselves from the pictures.
+const LOGO_PLAIN = new Set(["mlb/det.png", "mlb/lad.png", "ncaa/2084.png", "ncaa/228.png", "ncaa/2363.png", "ncaa/249.png", "ncaa/2501.png",
+  "ncaa/251.png", "ncaa/2534.png", "ncaa/2633.png", "ncaa/2752.png", "soccer/388.png", "soccer/2697.png", "soccer/436.png"]);
 async function fillLogos(list) {
   const lgs = [...new Set(list.filter((g) => !g.awayLogo || !g.homeLogo).map((g) => g.league).filter((l) => LOGO_FEEDS[l]))];
   const maps = Object.fromEntries(await Promise.all(lgs.map(async (l) => [l, await logoList(l).catch(() => ({}))])));

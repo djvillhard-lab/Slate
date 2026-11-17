@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.79.1 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Logo check, part 1. Morning email on a dark theme: teams whose dark-background logo is a plain white mark but whose real logo shows fine on dark use the real one (Clemson's orange paw, Tennessee, Texas, the Dodgers and Tigers, and a few more). Three soccer clubs with no dark version no longer show a broken picture.
+- Live notifications: the app now saves the logo a game itself carries, so national teams (Germany, Netherlands…) and anyone missing from ESPN's team lists get their logo too.
+
 ## 3.79.0 (Nov 17, 2026)
 TestFlight: 3.68.5 (44), no new build (web only)
 - Box Office: the college tabs (CBB, WCBB and CFB) have an "All / Power conferences" row under the date. Power conferences keeps only players from the ACC, Big Ten, Big 12 and SEC, plus the Big East in basketball, and re-ranks them 1 to 20. The over and underachievers follow it too, and so does the game count in the heading (games with at least one power-conference team). Your pick is remembered on this phone.
