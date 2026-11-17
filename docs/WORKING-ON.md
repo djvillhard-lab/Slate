@@ -8,3 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | Notifications: tag in the live notification header (app part, waiting for DJ) | shared: ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift | 2026-11-17 01:26 |
 | DJ | Quick look: Scoring as live feed boxes (football) | src/app/110-box-score.js, src/app/145-live-feed.js (play box pulled into its own function) | 2026-11-17 03:08 |
+| DJ | All games (live one-liners in team colors) | src/app/160-all-games.js | 2026-11-17 03:10 |
