@@ -477,7 +477,7 @@
       pvShareT = null;
       if (!db || !uid || !state.isOwner || state.date !== todayInHome()) return;
       var lines = {}, live = {}, tags = {}; games().forEach(function (g) {
-        var p = PV[g.id], pb = p && p.text && status(g).kind === "upcoming" ? pvBlend(g) : null; if (p && p.text) lines[g.id] = String(pb && pb.text || p.text).slice(0, 140);
+        var p = PV[g.id]; if (p && p.text) lines[g.id] = String(p.text).slice(0, 140);   // notifications keep the plain stats line (DJ, 3.89.1)
         // 3.68.0: the card's tag for the live notification's header ("Upset watch", "Rivalry"), not "Your team" or "Added"
         try { var wst = status(g).kind === "live" ? walSlateTag(g) : null, tg = (wst ? [wst.tag] : []).concat(state.why[g.id] || []).filter(function (t) { return t && t !== "Your team" && t !== "Added"; })[0]; if (tg && status(g).kind !== "over") tags[g.id] = String(tg).slice(0, 24); } catch (e) {}
         // 3.61.1: the red live one-liner too, as the card shows it ("GER: Wirtz has scored twice"), for the live notification
@@ -492,7 +492,7 @@
   function pvNode(g) {
     var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
-    var b = pvBlend(g); return b && b.text ? hlLine(g, b.text, b.tm, "hl hl-pre") : null;   // 3.89.0: Claude's note when it says more
+    return p && p.text ? hlLine(g, p.text, p.tm, "hl hl-pre") : null;
   }
   function pvNeed(g) {
     if (!BX_SPORT[g.league] || !bxBase(g.league) || g.custom) return;

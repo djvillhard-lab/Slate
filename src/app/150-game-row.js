@@ -150,7 +150,7 @@
         if (pk) row.appendChild(pk);
       }
     }
-    else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); }
+    else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); var nn = pvNewsNode(g); if (nn) row.appendChild(nn); }   // 3.89.1: Claude's news note on its own line
     else if (mode === "games" && !g.custom) { var agl = agLine(g, st.kind, row); if (agl) row.appendChild(agl); }  // All games: the same one-liners (3.39.0)
     if ((mode === "lineup" || mode === "games") && !g.custom) mybBars(g).forEach(function (x) { row.appendChild(x); });  // your own bets on this game (3.86.0)
     if (openTray) row.appendChild(openTray);

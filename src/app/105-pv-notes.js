@@ -63,14 +63,18 @@
     out.sort(function (a, b) { return b.sc - a.sc; });
     return out[0] || null;
   }
-  // the line a slate card shows before the game: the stats line, or Claude's note when it says more
-  function pvBlend(g) {
-    var p = PV[g.id] || {}, st = p.text || "", n = null;
-    try { n = pvNote(g); } catch (e) {}
-    var stSc = p.fb ? 0 : (p.sc || (st ? 50 : 0));
-    if (!n || n.sc <= stSc) return st ? { text: st, tm: p.tm || "" } : null;
+  // 3.89.1 (DJ: "keep the original one-liners. If something is newsworthy… include it as another line beneath the one-liner and
+  // make it obvious that it's extra and news"): the stats line always stays; a newsworthy note gets its own line under it,
+  // with a 📰 News tag. Newsworthy = a story tag (Last game, Coaching, Injury…) or story words; plain "Slump"/"Rebounding" notes don't show
+  function pvNewsNode(g) {
+    var n = null; try { n = pvNote(g); } catch (e) {}
+    if (!n || n.sc < 60) return null;
+    var st = (PV[g.id] || {}).text || ""; if (st && (st.indexOf(n.text) >= 0 || n.text.indexOf(st) >= 0)) return null;
+    var p = el("p", "hl hl-news"), tg = el("span", "hl-news-tag", "📰 News");
+    p.appendChild(tg);
     var tm = n.side ? String(abbr(g, n.side) || "").toUpperCase() : "";
-    // room for the stats line's best fact too: "Pochettino's final match in charge…; USA leads 6-0 on aggregate"
-    var f = !p.fb && p.f ? p.f : "", both = f && n.text.length + f.length <= 112 && n.text.indexOf(f) < 0;
-    return { text: both ? n.text + "; " + f : n.text, tm: both ? "" : tm };
+    if (tm && !new RegExp("(^|[^A-Za-z])(" + [g[n.side], short(g, n.side), tm].filter(Boolean).map(function (w) { return String(w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")([^A-Za-z]|$)").test(n.text)) p.appendChild(el("b", "hl-tm", tm + ": "));
+    p.appendChild(document.createTextNode(n.text));
+    if (n.side) p.dataset.side = n.side;
+    return p;
   }
