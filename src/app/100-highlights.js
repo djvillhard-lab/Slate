@@ -327,7 +327,7 @@
   // ---- Preview line: one free line under an upcoming game, from ESPN's pre-game summary ----
   // streaks, injuries to a team's leaders, the betting line, ESPN's predictor, table clashes, head-to-head, ESPN's preview headline
   function pvCompute(lg, sum, qbx, g) {
-    pvCompute.fb = false; pvCompute.tm = "";
+    pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = "";
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
       var rec = {}; (k.record || []).forEach(function (r) { rec[r.type] = r.summary || r.displayValue || ""; });
@@ -416,6 +416,7 @@
     c.sort(function (x, y) { return y.sc - x.sc; });
     var idIn = function (k) { return String(k || "").split("|").filter(function (x) { return T[x]; })[0] || ""; };
     pvCompute.tm = idIn(c[0].k) ? T[idIn(c[0].k)].abbr : "";
+    pvCompute.sc = c[0].sc; pvCompute.f = c[0].k === "art" ? "" : c[0].tx;   // for pvBlend (105-pv-notes.js): how strong the line is, and its best fact alone
     // the second fact must add something: after "Both on a roll" or a hot-vs-cold line, the streaks are already said
     var STREAK = /^(form|bothhot|won|lost|unb|form5)$/, streaky = STREAK.test(c[0].k.split("|")[0]);
     var qbFirst = c[0].k.indexOf("qb1|") === 0;  // "Raiders QB Mendoza makes his first start" doesn't read on into "and are without…": the second fact is the other team's
@@ -466,7 +467,7 @@
       });
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
-  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g2) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
+  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g3) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   // the phone shares today's preview lines with Slate's server (prefs/pvlines), so live notifications and Starting now
   // alerts can carry the same line as the slate (3.58.0). Only on a phone signed in with a passcode; only when it changed.
   var pvShareT = null, pvShared = "", pvSharedAt = 0;
@@ -476,7 +477,7 @@
       pvShareT = null;
       if (!db || !uid || !state.isOwner || state.date !== todayInHome()) return;
       var lines = {}, live = {}, tags = {}; games().forEach(function (g) {
-        var p = PV[g.id]; if (p && p.text) lines[g.id] = String(p.text).slice(0, 140);
+        var p = PV[g.id], pb = p && p.text && status(g).kind === "upcoming" ? pvBlend(g) : null; if (p && p.text) lines[g.id] = String(pb && pb.text || p.text).slice(0, 140);
         // 3.68.0: the card's tag for the live notification's header ("Upset watch", "Rivalry"), not "Your team" or "Added"
         try { var wst = status(g).kind === "live" ? walSlateTag(g) : null, tg = (wst ? [wst.tag] : []).concat(state.why[g.id] || []).filter(function (t) { return t && t !== "Your team" && t !== "Added"; })[0]; if (tg && status(g).kind !== "over") tags[g.id] = String(tg).slice(0, 24); } catch (e) {}
         // 3.61.1: the red live one-liner too, as the card shows it ("GER: Wirtz has scored twice"), for the live notification
@@ -487,11 +488,11 @@
       db.doc("prefs/pvlines").set({ date: state.date, lines: lines, live: live, tags: tags, liveAt: Date.now(), updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
     }, 8000);
   }
-  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", g2: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
+  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", sc: PV[k].sc || 0, f: PV[k].f || "", fb: PV[k].fb ? 1 : 0, g3: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
   function pvNode(g) {
     var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
-    return p && p.text ? hlLine(g, p.text, p.tm, "hl hl-pre") : null;
+    var b = pvBlend(g); return b && b.text ? hlLine(g, b.text, b.tm, "hl hl-pre") : null;   // 3.89.0: Claude's note when it says more
   }
   function pvNeed(g) {
     if (!BX_SPORT[g.league] || !bxBase(g.league) || g.custom) return;
@@ -510,7 +511,7 @@
         if (pvCompute.fb && p.text) tx = p.text;  // never swap a real pre-game line for the plain records one
         // keep the odds chips in step with the line: same fetch, same numbers
         try { var tgt = cur.data || (state.box || {})[g.id]; if (sum && tgt && tgt.state === "pre") { var fresh = bxNorm(g.league, sum, null); if (fresh.odds) { tgt.odds = fresh.odds; bxRedraw(g); } } } catch (e) {}
-        var changed = tx !== p.text; if (tx) p.tm = pvCompute.tm || ""; p.text = tx || p.text || ""; p.at = Date.now();
+        var changed = tx !== p.text; if (tx && tx !== p.text) { p.tm = pvCompute.tm || ""; p.sc = pvCompute.sc || 0; p.f = pvCompute.f || ""; p.fb = !!pvCompute.fb; } p.text = tx || p.text || ""; p.at = Date.now();
         if (changed && tx) { pvSave(); clearTimeout(pvT); pvT = setTimeout(function () { if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, 250); }
         if (changed && tx) agRedraw();
       }, function () { p.at = Date.now() - 25 * 60000; }).then(function () { p.busy = false; pvRun--; pvPump(); });
