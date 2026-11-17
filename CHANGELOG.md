@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.89.2 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Today's Slate and All games: long tournament names in a card's league line are shortened so they fit. "Concacaf Nations League · 2nd Leg - United States lead 6-0 on aggregate" is now "Nations League · 2nd leg", and "The Shriners Children's Charleston Classic" is "Charleston Classic".
+- The aggregate score of a two-legged tie now always leads the one-liner under the game, in full: "USA leads 6-0 on aggregate going into the second leg and has won five in a row".
+
 ## 3.89.1 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate: the regular one-liner under an upcoming game is back and always stays. When Claude's news has something newsworthy about the game (a coaching change, a last game, an injury or return, a real storyline), it shows on its own line underneath, starting with a small 📰 News tag and in quieter text, so it's clear it's extra. Example: "📰 News USA: Pochettino's final match in charge before he officially starts at Manchester United Wednesday".

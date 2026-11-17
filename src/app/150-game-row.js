@@ -14,10 +14,11 @@
       }
     }
     var main = el(pick ? "span" : "div", "g-main");
+    var ng = noteShort(g.note);   // 3.89.2: the league line fits; a two-legged tie's aggregate is in the one-liner instead
     if (opts.league || mode === "lineup" || mode === "tv") {
-      var ln = leagueLine(g, true);
+      var ln = leagueLine(ng !== g.note ? Object.assign({}, g, { note: ng }) : g, true);
       main.appendChild(ln);
-    } else if (g.note) { var ln2 = el("span", "g-lg"); ln2.appendChild(el("span", "nt", g.note)); main.appendChild(ln2); }
+    } else if (g.note) { var ln2 = el("span", "g-lg"); ln2.appendChild(el("span", "nt", ng)); main.appendChild(ln2); }
     if (g.custom) {
       var cr = el("span", "tm"); var cb = badgeFor("+", "custom"); cb.style.background = "var(--raise)"; cb.style.color = "var(--ink)"; cb.style.setProperty("--ring", "transparent"); cr.appendChild(cb);
       var cw = el("span", "nmw"); cw.appendChild(el("span", "nm", g.home)); cr.appendChild(cw); cr.appendChild(el("span")); main.appendChild(cr);
@@ -207,4 +208,14 @@
     var c = pairColors(g)[sd]; if (!hexOk(c)) return;
     p.style.color = hlInk(c); p.classList.add("hl-team");
   }
-
+  // 3.89.2 (DJ: "the fact that USA is up 6-0 on aggregate gets cut off here"): ESPN's long event notes, made to fit the league line.
+  // "Concacaf Nations League · 2nd Leg - United States lead 6-0 on aggregate" -> "Nations League · 2nd leg" (the 6-0 leads the one-liner)
+  function noteShort(n) {
+    if (!n) return n;
+    return String(n)
+      .replace(/\s*-\s*[^·]*\b(lead|leads|level|tied)\b[^·]*aggregate/i, "")
+      .replace(/\b(Concacaf|UEFA|CONMEBOL|CAF|AFC) Nations League\b/i, "Nations League")
+      .replace(/\b(1st|2nd) Leg\b/g, function (m, x) { return x + " leg"; })
+      .replace(/^The /, "").replace(/^U\.S\. Virgin Islands /, "").replace(/^Shriners Children's /, "")
+      .replace(/\s+/g, " ").trim();
+  }

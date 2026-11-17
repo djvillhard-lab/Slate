@@ -359,9 +359,9 @@
     var ser = (comp.series || [])[0] || comp.series; if (sport === "soccer" && ser && +ser.leg === 2 && ser.competitors && ser.competitors.length === 2) {
       var ag = {}; ser.competitors.forEach(function (x) { var i = String(x.id || ""); if (T[i] && x.aggregateScore != null) ag[i] = +x.aggregateScore; });
       if (ag[A] != null && ag[H] != null) { var gA = ag[A], gH = ag[H], up = gA > gH ? A : H, d = Math.abs(gA - gH), hi = Math.max(gA, gH), lo = Math.min(gA, gH);
-        if (!d) add("agg", 66, "Level at " + gA + "-" + gH + " on aggregate going into the second leg");
-        else if (d === 1) add("agg|" + up, 66, T[up].name + " lead " + T[oth(up)].name + " " + hi + "-" + lo + " on aggregate going into the second leg");
-        else add("agg|" + up, 62, T[up].name + " lead " + hi + "-" + lo + " on aggregate going into the second leg"); } }
+        if (!d) add("agg", 70, "Level at " + gA + "-" + gH + " on aggregate going into the second leg");
+        else if (d === 1) add("agg|" + up, 70, T[up].name + " lead " + T[oth(up)].name + " " + hi + "-" + lo + " on aggregate going into the second leg");
+        else add("agg|" + up, 70, T[up].name + " lead " + hi + "-" + lo + " on aggregate going into the second leg"); } }
     // the team's leaders who won't play
     var lead = {}; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); (L.leaders || []).forEach(function (cat) { (cat.leaders || []).slice(0, 1).forEach(function (x) { var a = x.athlete || {}; if (a.displayName) (lead[i] = lead[i] || {})[a.displayName] = { pos: (a.position || {}).abbreviation || "", cat: cat.displayName || cat.name, v: x.displayValue }; }); }); });
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
