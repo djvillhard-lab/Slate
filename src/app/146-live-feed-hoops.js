@@ -25,7 +25,7 @@
     var s = P.st || {}, n = function (v) { return parseFloat(v) || 0; }, out = [];
     if (s.PTS == null) return "";
     out.push(n(s.PTS) + " pts"); if (n(s.REB)) out.push(n(s.REB) + " reb"); if (n(s.AST)) out.push(n(s.AST) + " ast");
-    if (k === "3" && s["3PT"]) out.push(s["3PT"] + " 3PT"); if (k === "blk" && n(s.BLK)) out.push(n(s.BLK) + " blk"); if (k === "stl" && n(s.STL)) out.push(n(s.STL) + " stl");
+    if (k === "3" && s["3PT"]) out.push(s["3PT"] + " 3PT"); if ((k === "blk" && n(s.BLK)) || (k === "all" && n(s.BLK) >= 2)) out.push(n(s.BLK) + " blk"); if ((k === "stl" && n(s.STL)) || (k === "all" && n(s.STL) >= 2)) out.push(n(s.STL) + " stl");
     if (k === "foul" && n(s.PF)) out.push(n(s.PF) + " fouls");
     return out.join(", ");
   }
@@ -122,12 +122,18 @@
     });
     body.appendChild(bug);
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
-    // each team's leading scorer so far (3.38.1: replaces the shot graphic), with ESPN's win probability under them
-    var card = null, lead = {};
+    // each team's top-rated player so far (3.66.7): ESPN's own player rating from the live scoreboard, the same one the live
+    // notifications use, so a big all-round game counts, not just points. A team ESPN hasn't rated yet shows its leading scorer.
+    var card = null, lead = {}, rated = {}, raw = scoreRaw(g.id) || {}, sdAb = {};
+    (comp.competitors || []).forEach(function (k) { var ab = (k.team || {}).abbreviation; if (ab) sdAb[ab] = k.homeAway === "home" ? "home" : "away"; });
+    if (raw.state === "in" || raw.state === "post") (raw.ld || []).forEach(function (L) { if (L.c !== "rating" || !L.full) return; var sd = sdAb[L.t]; if (!sd || rated[sd]) return;
+      Object.keys(ix).forEach(function (id) { var P = ix[id]; if (!rated[sd] && sideOf[P.tid] === sd && P.name === L.full && (P.st || {}).PTS != null) rated[sd] = P; }); });
     Object.keys(ix).forEach(function (id) { var P = ix[id], sd = sideOf[P.tid], pts = parseFloat((P.st || {}).PTS) || 0; if (sd && (!lead[sd] || pts > (parseFloat(lead[sd].st.PTS) || 0))) lead[sd] = P; });
+    var nR = (rated.away ? 1 : 0) + (rated.home ? 1 : 0); ["away", "home"].forEach(function (sd) { if (rated[sd]) lead[sd] = rated[sd]; });
     if (lead.away || lead.home) {
-      card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", over ? "Top scorers" : "Top scorers so far"));
-      ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, ""); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
+      var nL = (lead.away ? 1 : 0) + (lead.home ? 1 : 0), ttl = nR === nL ? "Top rated" : nR ? "Top players" : "Top scorers";
+      card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", ttl + (over ? "" : " so far") + (nR === nL ? " (ESPN)" : "")));
+      ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, "all"); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
       body.appendChild(card);
     }
     var wp = (sum.winprobability || [])[(sum.winprobability || []).length - 1];

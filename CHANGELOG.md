@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.66.7 (Nov 16, 2026)
+TestFlight: 3.39.1 (38), no new build (web only)
+- Basketball live feed: the card at the top now shows each team's top-rated player so far, using ESPN's player rating (the same one the live notifications use), so a big all-round game counts, not just points. Their line adds steals and blocks when they have two or more. A team ESPN hasn't rated yet shows its leading scorer until it does.
+
 ## 3.66.6 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Players to watch (the quick look and the matchup page): every player now shows real season numbers from ESPN instead of a description like "Boston guard". The numbers fit why the player is worth watching: a shooter gets 3-point percentage (Payton Pritchard: 13.1 pts, 36.3% 3P), a big man gets rebounds, a quarterback gets passing yards and touchdowns. This works on previews already written, with no need to regenerate.

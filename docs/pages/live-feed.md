@@ -27,3 +27,7 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - A fixed-height scroll box for the plays (3.41.1) was removed in 3.42.1: no inner scroll box on this page.
 - A basketball shot chart (3.37.0) was removed in 3.38.1: simpler is better.
 - Folded Duo spacing changes in 3.36.1–3.36.3 were undone in 3.36.4; only the pull-down at the top was kept.
+
+## Top-rated players card (3.66.7)
+- DJ: "show two top rated players in the game so far, not just the top scorers". The basketball card shows each team's top-rated player from ESPN's own `rating` leader on the live scoreboard (`scoreRaw(g.id).ld`, matched to the box score by full name and team abbreviation). It's the same rating the live notifications use (worker/alerts.js), so the feed and the Lock Screen agree. No rating of our own: DJ's rule is source stats only.
+- A team ESPN hasn't rated yet shows its leading scorer; the title then reads "Top players so far" (mixed) or "Top scorers so far" (none rated). Lines add steals and blocks at 2+.
