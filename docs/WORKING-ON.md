@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Notifications: team logos on live notifications (app part, waiting for DJ) | shared: ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift, ios/Slate/LiveActivities.swift, docs/pages/notifications.md | 2026-11-17 00:09 |

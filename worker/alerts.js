@@ -201,8 +201,12 @@ function laAttrs(id, g, s) {
     // 3.20.0, the scorebug design: each chip's second-color stripe, college ranks, and the channel for the Watch button (all optional in the app)
     awayAlt: s.ax || g.awayAlt || "", homeAlt: s.hx || g.homeAlt || "", channel: String((g.tv || [])[0] || "") };
   for (const side of ["away", "home"]) { const r = Number(g[side + "Rank"]); if (COLLEGE[g.league] && Number.isInteger(r) && r > 0 && r < 26) at[side + "Rank"] = r; }  // a whole number, or the app can't read the notification
+  // 3.67.0: ESPN's logo for each team ("nba/bos.png"); the app draws it in place of the chip once it has saved it
+  const al = s.al || logoSeg(g.awayLogo), hl = s.hl || logoSeg(g.homeLogo); if (al) at.awayLogo = al; if (hl) at.homeLogo = hl;
   return at;
 }
+// "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png" -> "nba/bos.png" (the same name the page uses)
+function logoSeg(href) { const m = /\/i\/teamlogos\/([a-z0-9]+)\/500(?:-dark)?\/(?:scoreboard\/)?([\w-]+\.png)/i.exec(String(href || "")); return m ? `${m[1]}/${m[2]}`.toLowerCase() : ""; }
 // each person's preview lines for today, shared by their phone from the slate (prefs/pvlines, 3.58.0): game id → line
 let PVL = {}, LVL = {};
 // 3.66.3: a one-liner made to fit a live notification instead of being cut mid-word: the first part of a two-part line
@@ -338,6 +342,7 @@ function boardGame(id, g, s) {
   // past the start time but not under way yet (tip-off comes a few minutes after the listed time): "Starting", not a time already gone
   const d = st === "pre" ? (kick > 0 && Date.now() >= kick ? "Starting" : clock(new Date(s.start || g.start))) : st === "post" ? (s.detail || "Final") : (s.detail || "");
   return { id, aa: at.awayAbbr, ha: at.homeAbbr, ac: at.awayColor, hc: at.homeColor, ax: at.awayAlt, hx: at.homeAlt,
+    ...(at.awayLogo ? { al: at.awayLogo } : {}), ...(at.homeLogo ? { hl: at.homeLogo } : {}),
     a: st === "pre" ? 0 : (s.a || 0), h: st === "pre" ? 0 : (s.h || 0), d: String(d).slice(0, 24), s: st,
     // live football (3.25.0): who has the ball and the down and yardage line, when ESPN reports them
     ...(st === "in" && (s.po === "away" || s.po === "home") ? { p: s.po } : {}), ...(st === "in" && s.dd ? { dd: String(s.dd).slice(0, 32) } : {}),
@@ -575,9 +580,9 @@ async function liveScores(games, want, now, early) {
     for (const x of c.competitors || []) cs[x.homeAway] = x;
     // before the start too (3.33.1): ESPN's abbreviations and team colors, so a live notification or the scoreboard
     // shows DAL and BOS in their colors from the first minute instead of gray MAV and CEL
-    const look = (x) => x ? { abbr: (x.team || {}).abbreviation || "", c: hex((x.team || {}).color), alt: hex((x.team || {}).alternateColor) } : { abbr: "", c: "", alt: "" };
+    const look = (x) => x ? { abbr: (x.team || {}).abbreviation || "", c: hex((x.team || {}).color), alt: hex((x.team || {}).alternateColor), lg: logoSeg((x.team || {}).logo) } : { abbr: "", c: "", alt: "", lg: "" };
     const la0 = look(cs.away), lh0 = look(cs.home);
-    if (st.state === "pre") { sc[id] = { state: "pre", start: e.date, aa: la0.abbr, ha: lh0.abbr, ac: la0.c, hc: lh0.c, ax: la0.alt, hx: lh0.alt }; continue; }
+    if (st.state === "pre") { sc[id] = { state: "pre", start: e.date, aa: la0.abbr, ha: lh0.abbr, ac: la0.c, hc: lh0.c, ax: la0.alt, hx: lh0.alt, al: la0.lg, hl: lh0.lg }; continue; }
     if (!cs.away || !cs.home) continue;
     const ld = [];
     const tAb = {}; for (const x of c.competitors || []) tAb[String((x.team || {}).id)] = (x.team || {}).abbreviation || "";
@@ -585,7 +590,7 @@ async function liveScores(games, want, now, early) {
     (c.leaders || []).forEach(take); for (const x of c.competitors || []) (x.leaders || []).forEach((L) => { if (/^(points|goals)$/.test(L.name)) take(L); });
     sc[id] = { state: st.state, a: Number(cs.away.score), h: Number(cs.home.score), detail: st.shortDetail || "", p: Number((c.status || {}).period) || 0, ck: Number((c.status || {}).clock) || 0, ld,
       aa: (cs.away.team || {}).abbreviation || "", ha: (cs.home.team || {}).abbreviation || "", ac: hex((cs.away.team || {}).color), hc: hex((cs.home.team || {}).color),
-      ax: hex((cs.away.team || {}).alternateColor), hx: hex((cs.home.team || {}).alternateColor) };
+      ax: hex((cs.away.team || {}).alternateColor), hx: hex((cs.home.team || {}).alternateColor), al: la0.lg, hl: lh0.lg };
     // football: ESPN's down and distance, and which side has the ball (its team id matched to away or home)
     const sit = c.situation || {}, pid = String(sit.possession || "");
     let dd = sit.downDistanceText || (sit.shortDownDistanceText && sit.possessionText ? `${sit.shortDownDistanceText} at ${sit.possessionText}` : "");

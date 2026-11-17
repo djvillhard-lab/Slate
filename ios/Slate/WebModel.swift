@@ -186,6 +186,9 @@ final class WebModel: ObservableObject {
         case "live":
             // a live notification switched on or off on the slate: put it up or take it down right away (3.24.0)
             LiveActivities.shared.fromPage(m)
+        case "logos":
+            // 3.67.0: the day's team logos, saved for live notifications to draw (SlateLogos)
+            if let segs = m["segs"] as? [String] { SlateLogos.fetch(segs) }
         case "push-request":
             pushAsked = true
             requestPush()

@@ -1,5 +1,6 @@
 import ActivityKit
 import SwiftUI
+import UIKit
 
 // A live notification (Live Activity) for one game: the score on the Lock Screen and at the top of the screen.
 // Shared by the app and the SlateLive widget extension. Slate's server starts, updates and ends these by push,
@@ -39,6 +40,51 @@ struct SlateGameAttributes: ActivityAttributes {
     var awayRank: Int?        // college rankings (No. 5), when ranked
     var homeRank: Int?
     var channel: String?      // "NBC", "ESPN"…, as on the slate: the Watch button
+    var awayLogo: String?     // 3.67.0: ESPN's logo for the team, "nba/bos.png": drawn in place of the chip once the app has saved it
+    var homeLogo: String?
+}
+
+// 3.67.0: team logos for live notifications. A live notification can't download a picture, so the app saves ESPN's
+// logos for the day's games (the page sends the list when Slate is open) into the space it shares with the
+// SlateLive extension, and the extension draws a saved one in place of the team's colored chip.
+enum SlateLogos {
+    static let group = "group.com.djvillhard.slate"
+    static var dir: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)?.appendingPathComponent("Logos", isDirectory: true)
+    }
+    // "nba/bos.png" -> Logos/nba-bos.png; anything that isn't a plain league/file name is ignored
+    static func file(_ seg: String) -> URL? {
+        let clean = seg.lowercased().replacingOccurrences(of: "/", with: "-")
+        guard seg.split(separator: "/").count == 2, clean.range(of: "^[a-z0-9_-]+\\.png$", options: .regularExpression) != nil else { return nil }
+        return dir?.appendingPathComponent(clean)
+    }
+    static func image(_ seg: String?) -> UIImage? {
+        guard let seg, !seg.isEmpty, let u = file(seg), let d = try? Data(contentsOf: u) else { return nil }
+        return UIImage(data: d)
+    }
+    // the app: save each logo not saved in the last week, small (64 px) and in ESPN's version for dark backgrounds,
+    // or the regular one when a team has no dark version
+    static func fetch(_ segs: [String]) {
+        guard let dir else { return }
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for seg in Set(segs).prefix(300) {
+            guard let f = file(seg) else { continue }
+            if let at = (try? FileManager.default.attributesOfItem(atPath: f.path))?[.modificationDate] as? Date,
+               Date().timeIntervalSince(at) < 7 * 86400 { continue }
+            let p = seg.lowercased().split(separator: "/").map(String.init)
+            SlateLogos.load(p, dark: true) { d in
+                if let d { try? d.write(to: f, options: .atomic); return }
+                SlateLogos.load(p, dark: false) { d in if let d { try? d.write(to: f, options: .atomic) } }
+            }
+        }
+    }
+    private static func load(_ p: [String], dark: Bool, done: @escaping (Data?) -> Void) {
+        guard let url = URL(string: "https://a.espncdn.com/combiner/i?img=/i/teamlogos/\(p[0])/\(dark ? "500-dark" : "500")/\(p[1])&w=64&h=64") else { done(nil); return }
+        URLSession.shared.dataTask(with: url) { d, r, _ in
+            let ok = (r as? HTTPURLResponse)?.statusCode == 200 && d.flatMap { UIImage(data: $0) } != nil
+            done(ok ? d : nil)
+        }.resume()
+    }
 }
 
 extension Color {

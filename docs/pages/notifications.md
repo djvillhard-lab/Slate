@@ -28,9 +28,12 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   shootout; ownGoal flips the side; penaltyKick "pen"). sc.gl replaces pv/line and the Board ln while live.
 - Fitted lines (3.66.3): fitLine() sizes pv to 44 letters under standouts, 80 alone (first clause of a two-part line,
   else whole words + "…"); standout() shortens ap/hp/op to last name + 3 numbers. Football standout = most yards.
+- Team logos (3.67.0, build 43, needs DJ's App Group setup): App Group group.com.djvillhard.slate on both targets
+  (ios/Slate.entitlements, ios/SlateLive.entitlements). The page sends {t:"logos", segs:["nba/bos.png",…]} for today's
+  games (040-live.js laLogos, from livePoll); WebModel -> SlateLogos.fetch saves 64 px ESPN 500-dark (else 500) logos to
+  the group's Logos/ folder, refreshed weekly. Attributes awayLogo/homeLogo (server laAttrs from the scoreboard's team.logo,
+  page laAttrsOf from teamLook) and Board al/hl; Chip draws the saved image, else the colored chip.
 ## Open
-- Team logos on live notifications: needs an app build (DJ must OK it first). Widgets can't load images from the
-  web, so logos would have to be bundled in the app or saved by the app ahead of time.
 - Hockey standouts per team: check during a live game whether ESPN's per-team leaders are that game's numbers.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.
 - Hockey and soccer: no extra lines until ESPN's live numbers are checked during a game.

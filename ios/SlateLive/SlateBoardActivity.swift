@@ -132,7 +132,7 @@ private struct BoardLine: View {
         let under = BoardLook.under(g), playing = live && !under.lowercased().contains("half")
         VStack(spacing: 3) {
             HStack(spacing: 6) {
-                Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 34, height: 18, size: 10, stripe: 2, radius: 3)
+                Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 34, height: 18, size: 10, stripe: 2, radius: 3, logo: g.al)
                     .opacity(fin && g.a < g.h ? 0.5 : 1)
                 if pre {
                     Text("at").font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted)
@@ -141,7 +141,7 @@ private struct BoardLine: View {
                     Text("–").font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted)
                     Text("\(g.h)").font(SlateLook.num(21)).opacity(fin && g.h < g.a ? 0.5 : 1)
                 }
-                Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 34, height: 18, size: 10, stripe: 2, radius: 3)
+                Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 34, height: 18, size: 10, stripe: 2, radius: 3, logo: g.hl)
                     .opacity(fin && g.h < g.a ? 0.5 : 1)
             }
             .lineLimit(1)
@@ -262,8 +262,8 @@ private struct BoardChips: View {
             // before kickoff: both chips left of the camera, the countdown (or start time) right of it
             if leading {
                 HStack(spacing: 3) {
-                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
-                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.al)
+                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.hl)
                 }
             } else {
                 BoardKickoff(g: g, size: 15, width: 46)
@@ -271,11 +271,11 @@ private struct BoardChips: View {
         } else {
             HStack(spacing: 5) {
                 if leading {
-                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.al)
                     Text("\(g.a)").font(SlateLook.num(15)).foregroundStyle(.white)
                 } else {
                     Text("\(g.h)").font(SlateLook.num(15)).foregroundStyle(.white)
-                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.hl)
                 }
             }
         }

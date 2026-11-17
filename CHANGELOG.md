@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.67.0 (Nov 16, 2026)
+TestFlight: 3.67.0 (43)
+- Team logos on live notifications: the Lock Screen, the Dynamic Island and the Board show each team's logo in place of its lettered chip, for every team ESPN has a logo for (college and national teams too).
+- How: a live notification can't download a picture, so whenever Slate is open the app saves the logos for that day's games on your phone, and the live notifications use them from there. A team whose logo hasn't been saved yet keeps its colored chip.
+- Needs build 43, and a one-time setting in Apple's developer account so the app and its live notifications can share the saved logos.
+
 ## 3.66.10 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Basketball live feed: players now show a small jersey in their team's color with their number on it, in place of the numbered circle (the top-rated card and every play).

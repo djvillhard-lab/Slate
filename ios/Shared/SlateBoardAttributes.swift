@@ -31,4 +31,6 @@ struct SlateBoardGame: Codable, Hashable {
     var tv: String?           // 3.30.0: the channel, shown beside the start time ("12:00 PM · CBS")
     var c: Bool?              // 3.30.0: kickoff is within the hour, so the Dynamic Island counts down to it
     var ln: String?           // 3.64.0: the slate card's one-liner (the live line while it's on, the preview line before)
+    var al: String?           // 3.67.0: away and home logos ("nba/bos.png"), drawn in place of the chips once the app has saved them
+    var hl: String?
 }

@@ -25,14 +25,14 @@ struct SlateLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     // each team's standout so far sits under its score (3.38.0)
                     VStack(alignment: .leading, spacing: 3) {
-                        IslandTeam(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, chipFirst: true, dim: SlateLook.lost(s, away: true))
+                        IslandTeam(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, chipFirst: true, dim: SlateLook.lost(s, away: true), logo: a.awayLogo)
                         IslandNote(text: s.ap, align: .leading)
                     }
                     .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 3) {
-                        IslandTeam(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, chipFirst: false, dim: SlateLook.lost(s, away: false))
+                        IslandTeam(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, chipFirst: false, dim: SlateLook.lost(s, away: false), logo: a.homeLogo)
                         IslandNote(text: s.hp, align: .trailing)
                     }
                     .padding(.trailing, 4)
@@ -151,10 +151,24 @@ struct Chip: View {
     var size: CGFloat = 13
     var stripe: CGFloat = 3
     var radius: CGFloat = 4
+    var logo: String? = nil   // 3.67.0: the team's ESPN logo ("nba/bos.png"), when the app has saved it; else the chip
 
+    @ViewBuilder
     var body: some View {
+        if let img = SlateLogos.image(logo) {
+            Image(uiImage: img)
+                .resizable()
+                .scaledToFit()
+                .frame(width: width, height: height)
+                .accessibilityLabel(Text(abbr))
+        } else {
+            chip
+        }
+    }
+
+    private var chip: some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        Text(abbr)
+        return Text(abbr)
             .font(SlateLook.num(size))
             .foregroundStyle(SlateLook.onChip(color))
             .lineLimit(1)
@@ -208,9 +222,9 @@ private struct LockCard: View {
 
             VStack(spacing: 4) {
                 ScoreRow(abbr: a.awayAbbr, name: a.away, color: a.awayColor, alt: a.awayAlt, rank: a.awayRank, score: s.a,
-                         ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true))
+                         ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true), logo: a.awayLogo)
                 ScoreRow(abbr: a.homeAbbr, name: a.home, color: a.homeColor, alt: a.homeAlt, rank: a.homeRank, score: s.h,
-                         ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false))
+                         ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), logo: a.homeLogo)
             }
 
             // the bottom of the card, full width (3.25.1, no Watch button): for live football who has the ball, the down
@@ -277,10 +291,11 @@ private struct ScoreRow: View {
     let score: Int
     let ball: Bool
     let dim: Bool
+    var logo: String? = nil
 
     var body: some View {
         HStack(spacing: 10) {
-            Chip(abbr: abbr, color: color, alt: alt)
+            Chip(abbr: abbr, color: color, alt: alt, logo: logo)
             HStack(spacing: 7) {
                 HStack(spacing: 4) {
                     if let rank {
@@ -403,16 +418,17 @@ private struct IslandTeam: View {
     let score: Int
     let chipFirst: Bool
     let dim: Bool
+    var logo: String? = nil
 
     var body: some View {
         HStack(spacing: 9) {
-            if chipFirst { Chip(abbr: abbr, color: color, alt: alt, width: 40, height: 24) }
+            if chipFirst { Chip(abbr: abbr, color: color, alt: alt, width: 40, height: 24, logo: logo) }
             Text("\(score)")
                 .font(SlateLook.num(34))
                 .foregroundStyle(SlateLook.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            if !chipFirst { Chip(abbr: abbr, color: color, alt: alt, width: 40, height: 24) }
+            if !chipFirst { Chip(abbr: abbr, color: color, alt: alt, width: 40, height: 24, logo: logo) }
         }
         .opacity(dim ? 0.5 : 1)
     }
@@ -447,9 +463,9 @@ private struct NarrowAwareSide: View {
         if !narrow {
             ChipsSide(a: a, s: s, leading: leading)
         } else if leading {
-            MiniSide(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, leading: true, showScore: s.state != "pre")
+            MiniSide(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, score: s.a, leading: true, showScore: s.state != "pre", logo: a.awayLogo)
         } else {
-            MiniSide(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, leading: false, showScore: s.state != "pre")
+            MiniSide(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, score: s.h, leading: false, showScore: s.state != "pre", logo: a.homeLogo)
         }
     }
 }
@@ -464,15 +480,16 @@ struct MiniSide: View {
     let score: Int
     let leading: Bool
     var showScore: Bool = true
+    var logo: String? = nil
 
     var body: some View {
         VStack(spacing: 2) {
             if leading {
-                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2)
+                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2, logo: logo)
                 if showScore { num }
             } else {
                 if showScore { num }
-                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2)
+                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2, logo: logo)
             }
         }
         .frame(maxWidth: 22)
@@ -505,13 +522,13 @@ private struct ChipsSide: View {
     var body: some View {
         HStack(spacing: 5) {
             if leading {
-                Chip(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                Chip(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: a.awayLogo)
                 if s.state != "pre" { Text("\(s.a)").font(SlateLook.num(15)).foregroundStyle(.white) }
             } else {
                 // before kickoff (3.33.1): the start time in place of 0-0
                 if s.state == "pre" { Text(s.detail).font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6) }
                 else { Text("\(s.h)").font(SlateLook.num(15)).foregroundStyle(.white) }
-                Chip(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, width: 26, height: 16, size: 10, stripe: 2, radius: 3)
+                Chip(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: a.homeLogo)
             }
         }
     }

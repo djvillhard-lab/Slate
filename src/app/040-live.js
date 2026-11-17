@@ -108,6 +108,7 @@
     return out.slice(0, 8);
   }
   function livePoll() {
+    try { laLogos(); } catch (e) {}
     if (!window.SLATE_SELF || livePolling || document.hidden || !state.date) return;
     if (LIVE_DATE !== state.date) LIVE_AT = {};
     // how often each league is checked: every 10 seconds while a slate game is live or about to start,
@@ -256,7 +257,19 @@
       awayAbbr: abbr(g, "away"), homeAbbr: abbr(g, "home"), awayColor: laHex(g.awayColor), homeColor: laHex(g.homeColor),
       awayAlt: laHex(g.awayAlt), homeAlt: laHex(g.homeAlt), channel: String((g.tv || [])[0] || "") };
     ["away", "home"].forEach(function (sd) { var r = Number(g[sd + "Rank"]); if ((LEAGUES[g.league] || {}).college && Number.isInteger(r) && r > 0 && r < 26) at[sd + "Rank"] = r; });
+    // 3.67.0: the team's ESPN logo ("nba/bos.png"), drawn in place of the chip once the app has saved it
+    ["away", "home"].forEach(function (sd) { var lg = laLogo(g, sd); if (lg) at[sd + "Logo"] = lg; });
     return at;
+  }
+  function laLogo(g, sd) { try { var t = teamLook(g[sd]); return t && t[0] ? String(t[0]) : ""; } catch (e) { return ""; } }
+  // 3.67.0: tell the iPhone app which logos today's games use, so it can save them for live notifications
+  // (a live notification can't download a picture itself). Sent once per change; builds before 3.67.0 ignore it.
+  var laLogosSent = "";
+  function laLogos() {
+    if (!NATIVE || state.date !== todayInHome()) return;
+    var segs = {}; games().forEach(function (g) { ["away", "home"].forEach(function (sd) { var lg = laLogo(g, sd); if (lg) segs[lg] = 1; }); });
+    var list = Object.keys(segs).sort(), k = list.join(","); if (!list.length || k === laLogosSent) return;
+    laLogosSent = k; nativePost({ t: "logos", segs: list });
   }
   function laStateOf(g) {
     var v = scoreRaw(g.id) || {}, k = status(g).kind, st = k === "over" ? "post" : k === "live" ? "in" : "pre";
@@ -271,6 +284,7 @@
     return ids.map(function (id) { var g = games().filter(function (q) { return q.id === id; })[0]; if (!g) return null;
       var at = laAttrsOf(g), s = laStateOf(g);
       var out = { id: g.id, aa: at.awayAbbr, ha: at.homeAbbr, ac: at.awayColor, hc: at.homeColor, ax: at.awayAlt, hx: at.homeAlt, a: s.a, h: s.h, d: String(s.detail).slice(0, 24), s: s.state };
+      if (at.awayLogo) out.al = at.awayLogo; if (at.homeLogo) out.hl = at.homeLogo;
       // 3.30.0, before kickoff: the start (seconds), the channel, and c once it's within the hour (the Dynamic Island counts down)
       var kick = new Date(g.start).getTime();
       if (s.state === "pre" && kick > 0) { out.t = Math.floor(kick / 1000); if (at.channel) out.tv = String(at.channel).slice(0, 16); if (kick - Date.now() <= 3600000) out.c = true; }
