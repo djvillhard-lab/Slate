@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Today's Slate: preview one-liners read naturally | src/app/100-highlights.js, docs/pages/slate.md | 2026-11-17 16:20 |

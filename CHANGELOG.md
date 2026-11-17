@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.88.3 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Today's Slate: the preview lines under upcoming games read more naturally. Two facts about the same team no longer repeat the verb ("has won five in a row and the last four meetings").
+- College teams and soccer sides now get singular verbs, the way they're said in the US ("Florida is a 15.5-point favorite", "USA has won five in a row"). Pro nicknames stay plural ("Spurs have won five in a row").
+- Second legs of two-legged soccer ties now lead with the aggregate score: "USA leads 6-0 on aggregate going into the second leg and has won five in a row".
+- A line no longer says the favorite twice ("No. 8 Houston is a 17.5-point favorite" without "ESPN gives No. 8 Houston a 89% chance" after it).
+
 ## 3.88.2 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - My bets: a soccer spread bet is called Spread, like every other sport (it said Handicap).

@@ -331,7 +331,7 @@
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
       var rec = {}; (k.record || []).forEach(function (r) { rec[r.type] = r.summary || r.displayValue || ""; });
-      var rk = (k.curatedRank || {}).current; T[id] = { id: id, name: (sport === "soccer" ? tm.shortDisplayName : tm.nickname || tm.name) || tm.shortDisplayName || tm.displayName || "", full: tm.displayName || "", abbr: tm.abbreviation || "", side: k.homeAway, rec: rec, rank: rk && rk <= 25 ? rk : (k.rank && k.rank <= 25 ? k.rank : 0) }; });
+      var rk = (k.curatedRank || {}).current; T[id] = { id: id, name: String((sport === "soccer" ? tm.shortDisplayName : tm.nickname || tm.name) || tm.shortDisplayName || tm.displayName || "").replace(/\s+/g, " ").trim(), full: tm.displayName || "", abbr: tm.abbreviation || "", side: k.homeAway, rec: rec, rank: rk && rk <= 25 ? rk : (k.rank && k.rank <= 25 ? k.rank : 0) }; });
     if (ids.length !== 2) return null;
     // 3.71.0: the card's own ranks win. ESPN's game summary can still carry last week's poll (UCLA "No. 7" on a card that
     // says 9 the Monday a new poll came out), so when the card has ranks, the line uses the same ones
@@ -340,7 +340,11 @@
     var H = ids.filter(function (i) { return T[i].side === "home"; })[0] || ids[1], A = ids[0] === H ? ids[1] : ids[0], oth = function (i) { return i === H ? A : H; };
     var nm = function (i) { return (T[i].rank ? "No. " + T[i].rank + " " : "") + T[i].name; };
     var NW = ["", "one", "two", "three", "four", "five", "six"], ORD = function (n) { var v = n % 100; return n + (v >= 11 && v <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"); };
-    var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: tx }); };
+    // 3.88.3: American grammar. A college team or a soccer side is one place ("Florida is", "USA has"); pro nicknames stay plural ("Spurs have")
+    var sing = sport === "soccer" || /^ncaa/.test(lg), esc = function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+    var conj = function (tx) { if (!sing) return tx; ids.forEach(function (i) { if (!T[i].name) return; tx = tx.replace(new RegExp("(^|[:;,] |and )" + esc(T[i].name) + " (have|are|lead)\\b", "g"), function (m0, pre, v) { return pre + T[i].name + " " + { have: "has", are: "is", lead: "leads" }[v]; }); });
+      return tx.replace(/\bis (only )?([\d.]+)-point favorites/g, function (m0, o, n) { return "is " + (o || "") + (/^(8|11|18)(\.|$)/.test(n) ? "an " : "a ") + n + "-point favorite"; }).replace(/ their last five/g, " its last five"); };
+    var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: conj(tx) }); };
     var byAbbr = {}; ids.forEach(function (i) { byAbbr[T[i].abbr] = i; });
     // form: streaks from the last five
     var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = (t.events || []).map(function (e) { return e.gameResult; }); });
@@ -351,6 +355,13 @@
       if (sport === "soccer" && f.indexOf("L") < 0 && f.length >= 5) add("unb|" + i, 40, T[i].name + " are unbeaten in their last five"); });
     if (T[A].hot && T[H].cold || T[H].hot && T[A].cold) { var ho = T[A].hot ? A : H; add("form", 64, T[ho].name + " have won " + NW[T[ho].hot] + " straight; " + T[oth(ho)].name + " have lost " + NW[T[oth(ho)].cold]); }
     if (T[A].hot && T[H].hot) add("bothhot", 60, T[A].hot === T[H].hot ? "Both teams have won " + NW[T[A].hot] + " in a row" : "Both on a roll: " + T[A].name + " have won " + NW[T[A].hot] + " straight, " + T[H].name + " " + NW[T[H].hot]);
+    // a two-legged tie's second leg (3.88.3): the aggregate score is the story ("USA leads 6-0 on aggregate going into the second leg")
+    var ser = (comp.series || [])[0] || comp.series; if (sport === "soccer" && ser && +ser.leg === 2 && ser.competitors && ser.competitors.length === 2) {
+      var ag = {}; ser.competitors.forEach(function (x) { var i = String(x.id || ""); if (T[i] && x.aggregateScore != null) ag[i] = +x.aggregateScore; });
+      if (ag[A] != null && ag[H] != null) { var gA = ag[A], gH = ag[H], up = gA > gH ? A : H, d = Math.abs(gA - gH), hi = Math.max(gA, gH), lo = Math.min(gA, gH);
+        if (!d) add("agg", 66, "Level at " + gA + "-" + gH + " on aggregate going into the second leg");
+        else if (d === 1) add("agg|" + up, 66, T[up].name + " lead " + T[oth(up)].name + " " + hi + "-" + lo + " on aggregate going into the second leg");
+        else add("agg|" + up, 62, T[up].name + " lead " + hi + "-" + lo + " on aggregate going into the second leg"); } }
     // the team's leaders who won't play
     var lead = {}; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); (L.leaders || []).forEach(function (cat) { (cat.leaders || []).slice(0, 1).forEach(function (x) { var a = x.athlete || {}; if (a.displayName) (lead[i] = lead[i] || {})[a.displayName] = { pos: (a.position || {}).abbreviation || "", cat: cat.displayName || cat.name, v: x.displayValue }; }); }); });
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
@@ -368,7 +379,7 @@
       if (sp <= 2.5) add("tight", 42, T[fav].name + " are only " + sp + "-point favorites"); else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " are " + sp + "-point favorites"); }
     if (m && byAbbr[m[1]] && byAbbr[m[1]] !== H && parseFloat(m[2]) <= -1 && sport !== "football" && sport !== "bball") {}
     var pr = sum.predictor; if (pr && pr.homeTeam && pr.awayTeam) { var ph = parseFloat(pr.homeTeam.gameProjection), pa = parseFloat(pr.awayTeam.gameProjection);
-      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.round(Math.max(ph, pa)); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + " a " + pp + "% chance"); } } }
+      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.round(Math.max(ph, pa)); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
     // the table: leaders, top-of-table and relegation clashes
     var pos = {}, grp = (((sum.standings || {}).groups || [])[0] || {}), ent = ((grp.standings || {}).entries || []);
     if (sport === "soccer" && ent.length >= 10) { ent.forEach(function (e, n) { var id = String(e.id || ""); if (T[id]) pos[id] = n + 1; });
@@ -408,12 +419,18 @@
     // the second fact must add something: after "Both on a roll" or a hot-vs-cold line, the streaks are already said
     var STREAK = /^(form|bothhot|won|lost|unb|form5)$/, streaky = STREAK.test(c[0].k.split("|")[0]);
     var qbFirst = c[0].k.indexOf("qb1|") === 0;  // "Raiders QB Mendoza makes his first start" doesn't read on into "and are without…": the second fact is the other team's
-    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)); })[0];
+    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)) && !(/^(big|tight)$/.test(c[0].k) && /^(pred|coin)$/.test(x.k)) && !(/^(pred|coin)$/.test(c[0].k) && /^(big|tight)$/.test(x.k)); })[0];
     if (c[0].k !== "art" && s2 && t.length + s2.tx.length <= 100 && s2.sc >= 30) {  // two facts when they fit in about a line and a half
       // same team twice reads as one sentence: "Canucks have lost five straight and are 1-8 at home"
       var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
       var rest = who0 ? s2.tx.slice(T[who0].name.length + 1) : "";
-      t = who0 && /^(are|have|is) /.test(rest) ? t + " and " + rest : who0 ? t : t + "; " + s2.tx;
+      // 3.88.3: no repeated verb. "USA has won five in a row and has won the last four meetings" -> "...and the last four meetings";
+      // "are without X and are 5-0 at home" -> "...and 5-0 at home"
+      if (who0) { var p1 = t.slice(T[who0].name.length + 1).split(" "), p2 = rest.split(" ");
+        if (p1[0] === p2[0] && /^(have|has)$/.test(p1[0]) && p1[1] === p2[1]) rest = p2.slice(2).join(" ");
+        else if (p1[0] === p2[0] && /^(are|is|have|has)$/.test(p1[0]) && !/^(still|only|looking)$/.test(p2[1] || "")) rest = p2.slice(1).join(" ");
+        else if (!/^(are|have|is|has|leads?) /.test(rest)) rest = ""; }
+      t = who0 && rest ? t + " and " + rest : who0 ? t : t + "; " + s2.tx;
       if (!who0 && idIn(s2.k) !== idIn(c[0].k)) pvCompute.tm = "";  // two teams' facts: no single team
     }
     return t;
@@ -449,7 +466,7 @@
       });
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
-  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {}))) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
+  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g2) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   // the phone shares today's preview lines with Slate's server (prefs/pvlines), so live notifications and Starting now
   // alerts can carry the same line as the slate (3.58.0). Only on a phone signed in with a passcode; only when it changed.
   var pvShareT = null, pvShared = "", pvSharedAt = 0;
@@ -470,7 +487,7 @@
       db.doc("prefs/pvlines").set({ date: state.date, lines: lines, live: live, tags: tags, liveAt: Date.now(), updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
     }, 8000);
   }
-  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "" }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
+  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", g2: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
   function pvNode(g) {
     var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
