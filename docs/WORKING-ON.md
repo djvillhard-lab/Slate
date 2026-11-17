@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Team logos: flags for national teams on the slate | src/app/045-team-logos.js, docs/pages/team-logos.md | 2026-11-17 05:05 |
