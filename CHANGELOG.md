@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.66.3 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live notifications for a single game: one-liners are now sized to fit instead of being cut off mid-word. A two-part line keeps its first part ("Warriors are without Curry"); otherwise it ends on a whole word with "…". Under the two standouts there's room for one short line; on its own (soccer, hockey, before kickoff) it gets two lines.
+- Each team's standout is shorter so it fits on one line: last name and three numbers ("Wembanyama 26 PTS 10 REB 6 AST"). Basketball keeps ESPN's own in-game rating to pick the team's best player. Football now picks the team's player with the most yards so far, instead of whoever ESPN listed first.
+
 ## 3.66.2 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - iPhone app: the "New app version is ready" notice no longer shows up before you can actually get the build. It used to appear about half an hour after a new build was sent to Apple, even while it was still waiting in Apple's processing or review. Now it only appears once someone's phone is already running that build, which proves it's out in TestFlight.

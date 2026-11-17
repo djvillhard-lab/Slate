@@ -205,6 +205,23 @@ function laAttrs(id, g, s) {
 }
 // each person's preview lines for today, shared by their phone from the slate (prefs/pvlines, 3.58.0): game id → line
 let PVL = {}, LVL = {};
+// 3.66.3: a one-liner made to fit a live notification instead of being cut mid-word: the first part of a two-part line
+// ("Warriors are without Curry; Pelicans have lost five in a row" -> "Warriors are without Curry"), else whole words
+// and "…". Soccer scorers drop the away side's first names already, so they fit two lines.
+function fitLine(t, n) {
+  t = String(t || "").replace(/\s+/g, " ").trim(); if (t.length <= n) return t;
+  const first = t.split(/;\s+|\s+·\s+(?=[A-Z]{2,4} )/)[0];
+  if (first.length <= n && first.length >= 12 && !/ · /.test(t)) return first;
+  const cut = t.slice(0, n - 1), sp = cut.lastIndexOf(" ");
+  return (sp > n * 0.6 ? cut.slice(0, sp) : cut).replace(/[,;:·\s]+$/, "") + "…";
+}
+// 3.66.3: a standout made short enough for one line: last name and the first three numbers
+// ("V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK" -> "Wembanyama 26 PTS 10 REB 6 AST")
+function standout(ath, val) {
+  const nm = String(ath.shortName || ath.displayName || "").replace(/^[A-Z]\.\s+/, "").trim();
+  const v = String(val || "").split(/,\s*/).filter(Boolean).slice(0, 3).join(" ");
+  return `${nm} ${v}`.replace(/\s+/g, " ").trim().slice(0, 34);
+}
 function laState(s, id) {
   const x = (s.ld || []).slice().sort((a, b) => b.v - a.v)[0];
   const st = { a: s.a || 0, h: s.h || 0, detail: s.state === "post" ? (s.detail || "Final") : (s.detail || ""), state: s.state };
@@ -223,6 +240,8 @@ function laState(s, id) {
   if (s.state === "in" && id && LVL[id]) { st.pv = String(LVL[id]).slice(0, 140); st.line = st.pv.slice(0, 60); }
   // 3.64.0, soccer with a goal: the scorers and minutes instead (live notifications only, not the slate card)
   if (s.state === "in" && s.gl) { st.pv = String(s.gl).slice(0, 140); st.line = st.pv.slice(0, 60); }
+  // 3.66.3: sized to fit. Under the two standouts the Lock Screen has one line (about 44 letters); alone it has two
+  if (st.pv) { st.pv = fitLine(st.pv, st.ap || st.hp || st.op ? 44 : 80); st.line = fitLine(st.pv, 60); }
   return st;
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
@@ -230,7 +249,7 @@ function preState(g, kick, id) {
   const tv = String((g.tv || [])[0] || ""), st = { a: 0, h: 0, detail: Date.now() >= kick ? "Starting" : clock(new Date(kick)), state: "pre" };
   if (tv) st.line = `On ${tv}`.slice(0, 60);
   // the slate's preview line (3.58.0): its own field for new builds, and the one-liner for older ones
-  if (id && PVL[id]) { st.pv = String(PVL[id]).slice(0, 140); st.line = st.pv.slice(0, 60); }
+  if (id && PVL[id]) { st.pv = fitLine(PVL[id], 80); st.line = fitLine(st.pv, 60); }
   return st;
 }
 async function sendLive(env, tok, event, body, prio) {
@@ -619,7 +638,7 @@ function islandStats(g, c, cs, sit, fin) {
     if (sport === "bball") {
       // ESPN's own pick for the team's best game so far, with the full line: "V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK"
       const r = ((x.leaders || []).find((L) => L.name === "rating") || {}).leaders, top = r && r[0];
-      if (top && top.athlete && top.displayValue) out[k + "p"] = cut(`${top.athlete.shortName || top.athlete.displayName} ${top.displayValue}`, 48);
+      if (top && top.athlete && top.displayValue) out[k + "p"] = standout(top.athlete, top.displayValue);
       const fg = stat(x, "fieldGoalPct"), tm = stat(x, "threePointFieldGoalsMade"), ta = stat(x, "threePointFieldGoalsAttempted"), rb = stat(x, "rebounds");
       const parts = [fg ? `FG ${Math.round(Number(fg))}%` : "", tm && ta ? `3PT ${tm}/${ta}` : "", rb ? `REB ${rb}` : ""].filter(Boolean);
       if (parts.length) out[k + "t"] = parts.join(" · ");
@@ -627,10 +646,13 @@ function islandStats(g, c, cs, sit, fin) {
     if (sport === "football") {
       // the game's passing, rushing and receiving leaders that play for this team (the first one ESPN lists)
       const tid = String((x.team || {}).id || "");
+      // 3.66.3: the one with the biggest game, by yards, rather than the first listed
+      let best = null, by = -1;
       for (const L of c.leaders || []) {
         const top = (L.leaders || [])[0]; if (!top || !top.athlete || String((top.team || {}).id || "") !== tid) continue;
-        out[k + "p"] = cut(`${top.athlete.shortName || top.athlete.displayName} ${top.displayValue || ""}`, 48); break;
+        const y = Number((/(\d+) YDS/.exec(top.displayValue || "") || [])[1]) || 0; if (y > by) { by = y; best = top; }
       }
+      if (best) out[k + "p"] = standout(best.athlete, best.displayValue);
       const to = sit[sd + "Timeouts"];
       if (Number.isInteger(Number(to)) && to !== undefined && to !== null && to !== "") out[k + "t"] = `${to} timeout${Number(to) === 1 ? "" : "s"} left`;
     }
@@ -642,7 +664,7 @@ function islandStats(g, c, cs, sit, fin) {
     const used = [out.ap, out.hp].filter(Boolean), yds = (t) => Number((/(\d+) YDS/.exec(t) || [])[1]) || 0, cand = [];
     for (const L of c.leaders || []) {
       const top = (L.leaders || [])[0]; if (!top || !top.athlete) continue;
-      const t = cut(`${top.athlete.shortName || top.athlete.displayName} ${top.displayValue || ""}`, 48), tm = ab[String((top.team || {}).id || "")];
+      const t = standout(top.athlete, top.displayValue), tm = ab[String((top.team || {}).id || "")];
       if (tm && !used.includes(t)) cand.push([tm, t]);
     }
     cand.sort((x, y) => yds(y[1]) - yds(x[1]));  // the bigger game of the rest

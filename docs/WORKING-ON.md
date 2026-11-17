@@ -8,4 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | Players to watch (quick look and matchup) | src/app/080-claude.js, src/app/140-game.js, worker/index.js | 2026-11-17 00:05 |
 | DJ | Betting lines (slate) | src/app/175-best-bets.js | 2026-11-17 00:06 |
-| DJ | Notifications: live notification standouts, shorter one-liners, team logos | worker/alerts.js, shared: ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift, ios/Slate/LiveActivities.swift, docs/pages/notifications.md | 2026-11-17 00:09 |
+| DJ | Notifications: team logos on live notifications (app part, waiting for DJ) | shared: ios/SlateLive/SlateLiveActivity.swift, ios/Shared/SlateGameAttributes.swift, ios/Slate/LiveActivities.swift, docs/pages/notifications.md | 2026-11-17 00:09 |

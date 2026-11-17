@@ -26,7 +26,12 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   server's first update.
 - Soccer scorers line (3.64.0): goalLine() from the ESPN scoreboard's competitions[0].details (scoringPlay, not
   shootout; ownGoal flips the side; penaltyKick "pen"). sc.gl replaces pv/line and the Board ln while live.
+- Fitted lines (3.66.3): fitLine() sizes pv to 44 letters under standouts, 80 alone (first clause of a two-part line,
+  else whole words + "…"); standout() shortens ap/hp/op to last name + 3 numbers. Football standout = most yards.
 ## Open
+- Team logos on live notifications: needs an app build (DJ must OK it first). Widgets can't load images from the
+  web, so logos would have to be bundled in the app or saved by the app ahead of time.
+- Hockey standouts per team: check during a live game whether ESPN's per-team leaders are that game's numbers.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.
 - Hockey and soccer: no extra lines until ESPN's live numbers are checked during a game.
 - Football's other-team leader needs ESPN's summary (about 650 KB per game). Skipped because of the worker's CPU time; Cloudflare plan unknown.
