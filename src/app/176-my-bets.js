@@ -248,7 +248,7 @@
     if (!g || g.custom) return [];
     return mybFor(g).map(function (b) {
       var r = mybResult(b), say = mybSay(b, r, g), bar = mybTone(el("div", "myb-bar"), b, g);
-      bar.appendChild(el("span", null, "Your bet")); bar.appendChild(el("span", "myb-kind", mybKind(b))); bar.appendChild(el("b", null, mybLabel(b, g)));
+      bar.appendChild(el("span", "myb-kind", mybKind(b))); bar.appendChild(el("b", null, mybLabel(b, g)));
       bar.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + (r.s !== "pre" ? ". " + say.t : ""));
       if (r.s !== "pre") bar.appendChild(el("span", say.c || null, say.t.replace(/^Live[^·]*· /, "")));
       return bar;

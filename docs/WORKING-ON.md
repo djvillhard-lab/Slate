@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | My bets: game card note without "Your bet" | src/app/176-my-bets.js | 2026-11-17 16:15 |

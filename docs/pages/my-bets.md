@@ -25,6 +25,8 @@ Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#m
   totals and draws split both teams' colors. Won adds an accent outline. The game card's note (`mybBars`) gets the same tint and the kind tag.
 - Moneylines save the price shown when added (`b.price`), display only.
 
+- 3.88.1 (DJ): the game card note drops "Your bet"; it starts with the kind tag.
+
 ## Open
 - Not on the Live feed or in notifications yet (a "your bet" line on the live notification could ride the existing line field without a build).
 - Parlays not supported. Stake/odds/profit was option 2 on DJ's card if he wants it later.
