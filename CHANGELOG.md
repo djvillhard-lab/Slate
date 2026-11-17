@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.91.5 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Soccer live feed: a goal now shows as a proper goal box the moment it comes in, with the scorer and the assist, and the scorer is added to the list under the score right away. For the first minute or so after a goal ESPN sends only the sentence ("Goal! Wales 2, Portugal 2. Pedro Neto..."), without marking it as a goal, so it was showing as a gray line and the scorer was missing from the list until ESPN caught up.
+- The same goes for cards, subs, shots, corners and offsides in that first minute: they get their boxes straight away.
+
 ## 3.91.4 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - All games: live games now have the same quick "Feed" button as on Today's Slate (red dot, bottom right of the card). One tap opens that game's live feed. It shows for every sport with a feed: football, basketball, soccer and hockey.

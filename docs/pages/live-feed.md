@@ -143,3 +143,5 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - Open: no live "on the power play now" indicator (ESPN's summary has no clear field for it), no shootout attempt list beyond the plays ESPN sends.
 
 3.91.4 (DJ, Nov 17): on the folded Duo, `#feed-body > .fd-field` gets the same right padding as the score bar (`--strip-w`), so the possession bar and the other top cards end left of the clock/Wi-Fi island. Only those cards move; the page itself keeps its width (DJ rejected a page gutter in 3.36.1).
+
+3.91.5 (DJ, Nov 17): a fresh soccer event arrives as a bare sentence (no `play`: no type, team or participants) and ESPN fills it in a minute later. `scFill` reads the type, team and names out of the sentence so it gets its box at once; ids are by `sequence` so the box does not count as new again when the details arrive. The scorers card is redrawn from the events when they hold more goals than `details` does (details lag too).

@@ -49,6 +49,39 @@
     else { o.kind = "foul"; o.names = []; }
     return o;
   }
+  // 3.91.5 (DJ: "doesn't look right after Portugal just scored"): for the first minute or so ESPN sends a new event as a bare sentence, with no
+  // type, team or players attached; those arrive later. Until they do, the sentence itself says what happened ("Goal! Wales 2, Portugal 2.
+  // Pedro Neto (Portugal) right footed shot..."), so the event is read from it and gets its proper box straight away.
+  function scFill(c) {
+    if (!c || c.play || !c.text) return c;
+    var tx = String(c.text).replace(/\s+/g, " ").trim(), ty = "";
+    if (/^Own Goal/i.test(tx)) ty = "Own Goal";
+    else if (/^Goal!/i.test(tx)) ty = /converts the penalty/i.test(tx) ? "Penalty - Scored" : /\bheader\b/i.test(tx) ? "Goal - Header" : "Goal";
+    else if (/^Penalty (saved|missed)/i.test(tx)) ty = /saved/i.test(tx) ? "Penalty - Saved" : "Penalty - Missed";
+    else if (/second yellow card/i.test(tx)) ty = "Yellow Red Card";
+    else if (/is shown the red card/i.test(tx)) ty = "Red Card";
+    else if (/is shown the yellow card/i.test(tx)) ty = "Yellow Card";
+    else if (/^Substitution,/i.test(tx)) ty = "Substitution";
+    else if (/^VAR/i.test(tx)) ty = "VAR";
+    else if (/hits the (bar|left post|right post|post|woodwork)/i.test(tx)) ty = "Shot Hit Woodwork";
+    else if (/^Attempt saved/i.test(tx)) ty = "Shot On Target";
+    else if (/^Attempt missed/i.test(tx)) ty = "Shot Off Target";
+    else if (/^Attempt blocked/i.test(tx)) ty = "Shot Blocked";
+    else if (/^Corner,/i.test(tx)) ty = "Corner Awarded";
+    else if (/^Offside,/i.test(tx)) ty = "Offside";
+    else if (/^Hand ball/i.test(tx)) ty = "Handball";
+    else if (/^Foul by|wins a free kick/i.test(tx)) ty = "Foul";
+    if (!ty) return c;
+    var names = [], team = "", m;
+    if (ty === "Substitution") { m = /^Substitution, ([^.]+)\. (.+?) replaces (.+?)(?: because of an injury)?\.$/i.exec(tx); if (m) { team = m[1]; names = [m[2], m[3]]; } }
+    else { var body = tx.replace(/^Goal!\s+.+? \d+, .+? \d+\.\s*/, "").replace(/^(Attempt (saved|missed|blocked)|Own Goal by|Foul by|Hand ball by|Penalty (saved|missed)!?)\.?\s*/i, "");
+      m = /^(.+?) \(([^)]+)\)/.exec(body); if (m) { names.push(m[1].replace(/^.*\. /, "").trim()); team = m[2]; }
+      if (!team && (m = /^(?:Corner|Offside), ([^.]+)\./i.exec(tx))) team = m[1];
+      if (/^Goal!/i.test(tx) && (m = /Assisted by (.+?)(?: with | following |\.|$)/.exec(tx)) && names.length) names.push(m[1].trim()); }
+    var out = {}; Object.keys(c).forEach(function (k) { out[k] = c[k]; });
+    out.play = { type: { text: ty }, text: tx, team: team ? { displayName: team } : null, participants: names.map(function (n) { return { athlete: { displayName: n } }; }) };
+    return out;
+  }
   function scStatsOpen() { try { return localStorage.getItem("slate-feed-stats") === "1"; } catch (e) { return false; } }
   function scFeed(body, g, sum, anchor, aTop, sc) {
     var comp = ((sum.header || {}).competitions || [])[0] || {}, cst = comp.status || {}, st = cst.type || {}, sideOf = {}, nameOf = {}, scoreOf = {}, recOf = {}, penOf = {};
@@ -82,9 +115,10 @@
       var nm = scLast((((d.participants || [])[0] || {}).athlete || {}).displayName || ""), min = (d.clock || {}).displayValue || "", k = sd + "|" + (d.redCard ? "r" : "g") + "|" + nm;
       if (!nm) return; var e = byP[k]; if (!e) { e = byP[k] = { nm: nm, red: !!d.redCard, mins: [] }; cols[sd].push(e); }
       e.mins.push(min + (d.penaltyKick ? " pen" : "") + (d.ownGoal ? " og" : "")); });
-    if (cols.away.length || cols.home.length) { var two = el("div", "sc-who");
-      ["away", "home"].forEach(function (sd) { var c = el("div", "sc-whoc sc-who-" + sd); cols[sd].forEach(function (e) { var r = el("p", "sc-wl"); r.appendChild(el("span", "sc-wi", e.red ? "🟥" : "⚽")); r.appendChild(el("b", null, e.nm)); r.appendChild(el("i", null, e.mins.join(", "))); c.appendChild(r); }); two.appendChild(c); });
-      top.appendChild(two); }
+    var whoEl = function (cs) { var two = el("div", "sc-who");
+      ["away", "home"].forEach(function (sd) { var c = el("div", "sc-whoc sc-who-" + sd); cs[sd].forEach(function (e) { var r = el("p", "sc-wl"); r.appendChild(el("span", "sc-wi", e.red ? "🟥" : "⚽")); r.appendChild(el("b", null, e.nm)); r.appendChild(el("i", null, e.mins.join(", "))); c.appendChild(r); }); two.appendChild(c); });
+      return two; };
+    if (cols.away.length || cols.home.length) top.appendChild(whoEl(cols));
     var stOf = {}; ((sum.boxscore || {}).teams || []).forEach(function (t) { var sd = sdOf(t.team); if (!sd) return; stOf[sd] = {}; (t.statistics || []).forEach(function (s) { stOf[sd][s.name] = s.displayValue; }); });
     var hasStats = !pre && stOf.away && stOf.home, pa = hasStats ? parseFloat(stOf.away.possessionPct) : NaN, ph0 = hasStats ? parseFloat(stOf.home.possessionPct) : NaN;
     if (!isNaN(pa) && !isNaN(ph0) && pa + ph0 > 0) { var ap = Math.round(pa), hp = 100 - ap, wr = el("div", "fd-wp hp-wp1");
@@ -93,13 +127,24 @@
       wr.appendChild(el("span", null, hp + "% " + abbr(g, "home"))); wr.setAttribute("aria-label", "Possession: " + abbr(g, "away") + " " + ap + " percent, " + abbr(g, "home") + " " + hp + " percent"); top.appendChild(wr); }
     if (top.firstChild) body.appendChild(top);
     // the events, oldest first, with the score as it stood after each one (from ESPN's own "Goal! A 1, B 0." line; counted when it isn't there)
-    var evs = (sum.commentary || []).filter(function (c) { return c && (c.text || c.play); }), fromKey = false;
+    var evs = (sum.commentary || []).filter(function (c) { return c && (c.text || c.play); }).map(scFill), fromKey = false;
     if (!evs.some(function (c) { return c.play; }) && (sum.keyEvents || []).length) { fromKey = true; evs = (sum.keyEvents || []).map(function (k, i) { return { sequence: i, time: k.clock || {}, text: k.text || "", play: k }; }); }
-    var run = { away: 0, home: 0 }, rows = [];
-    evs.forEach(function (c, i) { var rd = scRead(c), p = c.play || {}, sd = sdOf(p.team), pid = String(p.id || "c" + (c.sequence != null ? c.sequence : i));
+    var run = { away: 0, home: 0 }, rows = [], goalsC = [];
+    evs.forEach(function (c, i) { var rd = scRead(c), p = c.play || {}, sd = sdOf(p.team), pid = fromKey ? String(p.id || "k" + i) : "c" + (c.sequence != null ? c.sequence : i);  /* by sequence: the id stays when ESPN fills the event's details in later */
       if (rd.goal) { var m = /Goal!\s+(.+?) (\d+), (.+?) (\d+)\./.exec(rd.tx), s1 = m ? nameOf[scNorm(m[1])] : "", s2 = m ? nameOf[scNorm(m[3])] : "";
-        if (s1 && s2 && s1 !== s2) { run[s1] = +m[2]; run[s2] = +m[4]; } else if (sd) { var to = /own goal/i.test(rd.ty) && !m ? (sd === "away" ? "home" : "away") : sd; run[to]++; } }
+        var was = { away: run.away, home: run.home };
+        if (s1 && s2 && s1 !== s2) { run[s1] = +m[2]; run[s2] = +m[4]; } else if (sd) { var to = /own goal/i.test(rd.ty) && !m ? (sd === "away" ? "home" : "away") : sd; run[to]++; }
+        var cr = run.away > was.away ? "away" : run.home > was.home ? "home" : sd, min0 = (c.time || {}).displayValue || ((p.clock || {}).displayValue) || "";
+        if (cr && rd.names[0]) goalsC.push({ sd: cr, nm: scLast(rd.names[0]), min: min0 + (/penalty/i.test(rd.ty) ? " pen" : "") + (/own goal/i.test(rd.ty) ? " og" : "") }); }
+      if (rd.kind === "to" && sd && rd.names[0]) goalsC.push({ sd: sd, nm: scLast(rd.names[0]), min: (c.time || {}).displayValue || "", red: true });
       rows.push({ c: c, rd: rd, sd: sd, pid: pid, a: run.away, h: run.home, min: (c.time || {}).displayValue || ((p.clock || {}).displayValue) || "" }); });
+    // 3.91.5: ESPN's match details (the scorers card above) can trail its commentary by a minute or more after a goal. When the events
+    // already hold more goals than the details do, the card is drawn from the events so the new scorer is there right away.
+    if (!fromKey && goalsC.filter(function (x) { return !x.red; }).length > (comp.details || []).filter(function (d) { return d.scoringPlay; }).length) {
+      var cols2 = { away: [], home: [] }, by2 = {};
+      goalsC.forEach(function (x) { var k = x.sd + "|" + (x.red ? "r" : "g") + "|" + x.nm, e = by2[k]; if (!e) { e = by2[k] = { nm: x.nm, red: !!x.red, mins: [] }; cols2[x.sd].push(e); } e.mins.push(x.min); });
+      var oldW = top.querySelector(".sc-who"), newW = whoEl(cols2); if (oldW) top.replaceChild(newW, oldW); else top.insertBefore(newW, top.firstChild);
+      if (!top.parentNode) body.insertBefore(top, bug.nextSibling); }
     var keyOnly = !!FD.scOnly && !fromKey, list = el("div", "fd-list"), cap = keyOnly ? 1e9 : 14 * (1 + (+FD.more || 0)), shown = 0, total = 0, fresh = FD.seen || null, seenNow = {};
     var plRow = function (nm, sd, role) { var P = ix[scNorm(nm)] || { name: nm, jer: "", st: {} }, psd = sideOf[P.tid] || sd || "away", row = el("div", "fd-pl"); row.appendChild(fdJerseyOnly(g, psd, P));
       var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort({ name: nm }))); if (role) w.appendChild(el("em", "fd-pos", role)); var ln = role === "on" || role === "off" ? "" : scLine(P); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); return row; };
