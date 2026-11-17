@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | News lines refresh when a News page is generated | src/app/105-pv-notes.js, docs/pages/slate.md | 2026-11-17 18:12 |
