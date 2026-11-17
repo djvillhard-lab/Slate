@@ -30,8 +30,12 @@
     var sv = pnLoad(); PN.on = true; PN.lock = !!sv.lock;
     PN.left = sv.left === "b" ? "b" : "a";
     PN.routes = sv.routes && typeof sv.routes === "object" ? sv.routes : {};
-    if (!PN.routes[PN.left]) PN.routes[PN.left] = "lineup";
-    if (!PN.routes[pnOther(PN.left)]) PN.routes[pnOther(PN.left)] = "games";
+    // DJ (Nov 17): the left side opens on whatever the front screen showed; the right side keeps its last page, but
+    // never the same page as the left (then All games, or the slate when the left is All games)
+    var lr = pnRouteOf(), rr = PN.routes[pnOther(PN.left)];
+    PN.routes[PN.left] = lr;
+    if (!rr || rr === lr) rr = lr === "games" ? "lineup" : "games";
+    PN.routes[pnOther(PN.left)] = rr;
     state.menuOpen = false;
     document.documentElement.classList.add("panes");
     var box = el("div", "pn"); box.id = "panes";
@@ -58,11 +62,14 @@
   }
   function exitPanes() {
     if (!PN.on) return;
+    // DJ (Nov 17): folding shows the left side's page on the front screen
+    var lw = pnWin(PN.left), lr = PN.routes[PN.left] || "lineup";
+    try { if (lw && lw.SlateApp.paneRoute) lr = lw.SlateApp.paneRoute(); } catch (e) {}
     PN.on = false; PN.drag = null; pnSave();
     if (PN.el) PN.el.remove(); PN.el = null; PN.frames = {};
     document.documentElement.classList.remove("panes");
-    // folding the phone always lands on the slate
     state.view = "lineup"; state.menuOpen = false; state.backTo = null; window.scrollTo(0, 0);
+    if (lr && lr !== "lineup") setTimeout(function () { pnGoTo(lr, openMatchup, openFeed, openTeam); window.scrollTo(0, 0); }, 0);
   }
   function pnPlace() {
     if (!PN.on) return;
@@ -235,6 +242,31 @@
   });
   // signing in or closing the welcome happens after the layout was chosen: switch to the two panes then
   if (!PANE) setInterval(function () { if (!PN.on && isDuo && panesOK()) applyLayout(true); }, 1500);
+  // a page as a short name: lineup, games, moments, tv, news, teams, settings, best, feed:<game>, game:<game>, team:[name, league]
+  function pnRouteOf() {
+    var v = state.view;
+    if (v === "feed" && state.feedId) return "feed:" + state.feedId;
+    if (v === "game" && state.gameId) return "game:" + state.gameId;
+    if (v === "team" && state.team && state.team.name) return "team:" + JSON.stringify([state.team.name, state.team.lg || ""]);
+    if (v === "best" || PN_PAGES.some(function (p) { return p[0] === v; })) return v;
+    return "lineup";
+  }
+  // open a page by its short name (a game waits a few seconds for the day's games to load)
+  function pnGoTo(r, openM, openF, openT) {
+    var t = /^team:(.+)$/.exec(r || "");
+    if (t) { try { var tt = JSON.parse(t[1]); openT(tt[0], tt[1] || ""); } catch (e) {} return; }
+    var m = /^(feed|game):(.+)$/.exec(r || ""), tries = 0;
+    if (m) {
+      (function look() {
+        var g = games().filter(function (x) { return String(x.id) === m[2]; })[0];
+        if (g) { if (m[1] === "feed" && feedOk(g)) openF(g); else openM(g); window.scrollTo(0, 0); return; }
+        if (++tries < 30) setTimeout(look, 500);
+      })();
+      return;
+    }
+    if (r === "best") { menuGo("best"); return; }
+    if (r && r !== "lineup" && PN_PAGES.some(function (p) { return p[0] === r; })) window.SlateApp.go(r);
+  }
   // the host's own page waits behind the panes: don't spend the phone's time drawing it
   var pnRender0 = render;
   render = function () { if (PN.on) return; pnRender0(); };
@@ -242,13 +274,7 @@
   // ---- a pane: report its page and follow the other side's settings ----
   if (PANE) {
     document.documentElement.classList.add("in-pane");
-    var pnRoute = function () {
-      var v = state.view;
-      if (v === "feed" && state.feedId) return "feed:" + state.feedId;
-      if (v === "game" && state.gameId) return "game:" + state.gameId;
-      if (v === "best" || PN_PAGES.some(function (p) { return p[0] === v; })) return v;
-      return "lineup";
-    };
+    var pnRoute = pnRouteOf;
     window.SlateApp.paneRoute = function () {
       var r = pnRoute();
       try { var h = "#go=" + encodeURIComponent(r); if (location.hash !== h) history.replaceState(null, "", location.pathname + location.search + h); } catch (e) {}
@@ -290,21 +316,7 @@
     openFeed = function (g) { if (g && pnLeft() && pnToRight("feed:" + g.id)) return; return pnOpenF0.apply(null, arguments); };
     openTeam = function (name, lg) { if (pnLeft() && pnToRight("team:" + JSON.stringify([name, lg || ""]))) return; return pnOpenT0.apply(null, arguments); };
     // open the page this side had (#go=feed:<game>, game:<game>, or a menu page)
-    var pnGo = function (r) {
-      var t = /^team:(.+)$/.exec(r || "");
-      if (t) { try { var tt = JSON.parse(t[1]); pnOpenT0(tt[0], tt[1] || ""); } catch (e) {} return; }
-      var m = /^(feed|game):(.+)$/.exec(r || ""), tries = 0;
-      if (m) {
-        (function look() {
-          var g = games().filter(function (x) { return String(x.id) === m[2]; })[0];
-          if (g) { if (m[1] === "feed" && feedOk(g)) pnOpenF0(g); else pnOpenM0(g); window.scrollTo(0, 0); return; }
-          if (++tries < 30) setTimeout(look, 500);
-        })();
-        return;
-      }
-      if (r === "best") { menuGo("best"); return; }
-      if (r && r !== "lineup" && PN_PAGES.some(function (p) { return p[0] === r; })) window.SlateApp.go(r);
-    };
+    var pnGo = function (r) { pnGoTo(r, pnOpenM0, pnOpenF0, pnOpenT0); };
     window.SlateApp.paneGo = pnGo;
     var pnStart = /[#&]go=([^&]+)/.exec(location.hash);
     if (pnStart) setTimeout(function () { pnGo(decodeURIComponent(pnStart[1])); }, 0);

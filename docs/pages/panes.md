@@ -13,7 +13,10 @@ right, so I can have two live feeds at once."
 - The host stops drawing (`render` wrapper) and stops polling ESPN (`livePoll`) while the panes are up.
 - Pages per side are kept in sessionStorage `slate-panes` ({left, active, routes}) and in each pane's `#go=` hash
   (`lineup`, `games`, `moments`, `tv`, `news`, `teams`, `settings`, `best`, `feed:<id>`, `game:<id>`). Unfolding again
-  restores them; folding lands on the slate (unchanged rule).
+  restores the right one. Since 3.90.6 (DJ): unfolding puts the front screen's page on the left (`pnRouteOf` in
+  the host), the right keeps its last page unless that matches the left (then games, or lineup when the left is games),
+  and folding opens the left pane's page on the front screen (`exitPanes` → `pnGoTo`). This replaces "folding always
+  lands on the slate".
 - The grip on the fold (`.pn-grip`, 44x88): tap = the two sides swap (3.81.4, DJ: no picker). No dragging (3.81.6, DJ:
   dragging broke the layout on the phone); a finger that moves 24pt off just cancels. Holding never selects text.
   Frames swap by grid column (no reload). The "Pick a page" screen from 3.80.0 was removed at DJ's request.

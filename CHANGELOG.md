@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.90.6 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- Unfolded Duo: opening the phone puts the page you had on the front screen on the left side. The right side shows the page it had last time, but never the same page as the left (then All games, or the slate if the left is All games).
+- Closing the phone shows the left side's page on the front screen, instead of always going to the slate.
+
 ## 3.90.5 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - All games: the line under an upcoming game stays on one line, as on the slate, and has no team abbreviation in front.
