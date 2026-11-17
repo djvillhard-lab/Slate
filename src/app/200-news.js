@@ -592,6 +592,9 @@
   }
   function renderNews() {
     if (state.view !== "news") return;
+    // News is always today's (3.82.2, DJ): the app keeps the day it was on, so after a night left open, News (and
+    // Regenerate's game picker) still had last night's slate. Opening News on an earlier day moves the app to today.
+    var today0 = todayInHome(); if (state.date < today0 && !nw.toToday) { nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
     var tb = $("nw-tabs"); tb.textContent = ""; tb.hidden = true;
     var body = $("nw-body"); body.textContent = ""; body.className = "nx";
     if (!db) { body.appendChild(el("p", "pv-none", "News needs the app's saved data, which isn't available here.")); return; }

@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.82.1
+Last updated: Nov 17, 2026, 3.83.2
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -29,6 +29,8 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   injuries as {player, team, status, text} (old string injuries still render); Press Box top items carry team + lg.
 - Photos (3.82.1): `nwPic` asks ESPN's combiner for a phone-sized copy; `nwImg` keeps one <img> per picture across
   redraws (redraws happen as rosters arrive). An Athletic lead (no photo) borrows the newest ESPN photo about its team.
+- News is always today (3.83.2, DJ: Regenerate showed last night's games): the app keeps its day while left open, so
+  `renderNews` moves the app to `todayInHome()` when News is shown on an earlier day (rolls at 4 AM Central).
 - Swipe (3.82.0, DJ): sideways on News moves between Press Box and the league tabs, never Back (mode "news" in
   280-ios-bridge.js, `nwSwipe`); ends spring back; a breakdown page has no swipe. Works per pane on the open Duo.
 - On Press Box, a league card's button is "<TAG> briefing" and switches to that league's tab.
