@@ -126,3 +126,11 @@ Also in 3.77.2 (DJ, Nov 17): the quarter comes before the clock in `.fd-ck` ("4t
 Also 3.81.3: no swipe-back from the feed (`fdSwipe` returns true at either end, so the shared swipe code in 280 never calls Back; done here because 280 was claimed by another thread). The "All live" tab reads "All".
 Also 3.81.3: football timeouts (team and TV) are `.fd-play.fd-k-to` boxes built in the play loop, matching basketball. Two-minute warning and end-of-quarter lines stay as `.fd-note`.
 Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was picked (`FD.from` null); that reshuffle was why swipe right kept hitting the front of the list. Score bar: `.fd-tm` wraps (record under the badge) when three-digit scores make the bar tight, checked down to 330pt.
+
+## 3.87.0: soccer feed (DJ, Nov 17)
+`147-live-feed-soccer.js`: `scFeed` draws the soccer page (dispatched from `renderFeed`), `scRead` turns one ESPN commentary entry into a box (kind, emoji, title, `key` for the Key events filter), `scIndex` is the roster by player name (commentary gives names only, no ids, so no headshots; jerseys with numbers instead).
+- Data: `sum.commentary` (falls back to `sum.keyEvents` when a match has none; then there is no Key events button and no sentence under the title), `header.competitions[0].details` for the scorers card, `boxscore.teams[].statistics` for possession and the Stats card (open/closed in `localStorage["slate-feed-stats"]`).
+- The running score in each box comes from ESPN's "Goal! A 1, B 0." text, counted by team when that isn't there.
+- ESPN sends no xG and no big-chance mark, so neither is shown (DJ's rule: only stats a source provides).
+- `feedHas` now includes soccer; a finished match opens on Key events (`fdQuietStart`); soccer polls every 8s.
+- Open: the shootout kick-by-kick (`sum.shootout`) isn't drawn, only "Pens 4–5" in the score bar.

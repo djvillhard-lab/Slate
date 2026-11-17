@@ -282,7 +282,7 @@
   // how long since the newest play came in (3.66.8, DJ: "a small timer since last live play appeared"), from ESPN's wall clock on each play;
   // shown while the game is live, ticking every second
   function fdLastAt(sum) {
-    var ps = (sum.plays || []).slice(), dr = sum.drives || {}; (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { (d && d.plays || []).forEach(function (p) { ps.push(p); }); });
+    var ps = (sum.plays || []).slice(), dr = sum.drives || {}; (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { (d && d.plays || []).forEach(function (p) { ps.push(p); }); }); (sum.commentary || []).forEach(function (c) { if (c && c.play) ps.push(c.play); });  /* soccer (3.87.0) */
     var best = 0; ps.forEach(function (p) { var t = Date.parse(p.wallclock || ""); if (t > best) best = t; });
     var lastP = ps[ps.length - 1]; return { t: best, key: ps.length + "|" + (lastP ? String(lastP.id || lastP.sequenceNumber || "") : "") };
   }

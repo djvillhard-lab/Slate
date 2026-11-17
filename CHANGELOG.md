@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.87.0 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- New: live feeds for soccer. Any live or finished soccer match (Premier League, the other leagues, internationals) now has the Live feed button, and its games show in the feed's switcher and filters next to football and basketball.
+- The score bar shows the half and the minute ("2H 67'"), HT at the break and FT at the end, with the shootout score under it when a match goes to penalties.
+- Under it: who scored and in which minute, on each team's side, with red cards. Then possession as one bar in the teams' colors. A Stats button opens shots, shots on target, corners, fouls, offsides, saves, cards and passes completed.
+- Every event is a box, newest first: ⚽ goals in the scoring team's color with the scorer and the assist, 🟨 yellow cards, 🟥 red cards, 🔁 subs with who came on and off, 📺 VAR, penalties, shots saved, off target, blocked and off the woodwork, corners, offsides and fouls. Each box has the minute, the team and the score at that moment.
+- A Key events button keeps just the goals, cards, subs, VAR, penalties and woodwork. A finished match opens that way.
+- Everything is ESPN's own data. ESPN doesn't send xG or mark big chances for these matches, so neither is shown. A few smaller matches have no play-by-play at all; those say so.
+
 ## 3.86.0 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - My bets: track the bets you made (Drew's idea). On a game's matchup page, under the betting line, tap Add my bet and pick a spread, moneyline, total or a player line (points, rebounds, yards and so on), the side and the line. DraftKings' posted line fills in, and you can change it to the line you got. No amounts or money, just won or lost.

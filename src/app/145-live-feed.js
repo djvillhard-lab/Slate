@@ -4,14 +4,16 @@
   var FD = { id: null, sum: null, at: 0, t: null, busy: false, seen: null, more: false };
   function feedBtn(g) {
     // 3.69.4 (DJ): a finished game keeps its feed. Nothing is saved by Slate: ESPN still serves every play, so the page reads it back
-    var done = !feedLive(g), foot = BX_SPORT[g.league] === "football";
-    var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
-    b.setAttribute("aria-label", "Open the " + (done ? "game" : "live") + " feed for " + g.away + " at " + g.home);
+    var done = !feedLive(g), foot = BX_SPORT[g.league] === "football", socc = BX_SPORT[g.league] === "soccer";
+    var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, socc ? (done ? "The goals and cards, or every event" : "Goals, cards, subs and shots as they happen") : !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
+    b.setAttribute("aria-label", "Open the " + (done ? "game" : "live") + " feed for " + g.away + (socc ? " v " : " at ") + g.home);
     b.addEventListener("click", function (e) { e.stopPropagation(); openFeed(g); }); return b;
   }
-  function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball"); }
+  function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball" || BX_SPORT[g.league] === "soccer"); }  /* soccer since 3.87.0 (147-live-feed-soccer.js) */
   function feedLive(g) { return feedHas(g) && status(g).kind === "live"; }
   function feedOk(g) { if (!feedHas(g)) return false; var k = status(g).kind; return k === "live" || k === "over"; }  // basketball since 3.37.0 (146-live-feed-hoops.js)
+  // a finished football game opens on its scoring plays, a finished soccer match on its key events (3.87.0)
+  function fdQuietStart(g) { var sp = BX_SPORT[g.league]; return (sp === "football" || sp === "soccer") && status(g).kind === "over"; }
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;
@@ -20,8 +22,8 @@
       // All games on All, Live or My teams: every live game. Anywhere else: your slate when the game is on it, else the game's league.
       FD.scope = state.view === "games" ? (LEAGUES[state.league] ? state.league : "all") : inLineup(g.id) ? "slate" : g.league; }  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
     if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; clearTimeout(FD.dt); FD.bufs = FD.bufs || {}; Object.keys(FD.bufs).forEach(function (k) { if (k !== g.id) delete FD.bufs[k]; });
-      FD.sum = fdDelay(g.id) ? ((FD.last || {})[g.id] || null) : ((c0 && c0.sum) || null); /* a delayed game comes back where you left it, not at ESPN's latest */ FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.scOnly = BX_SPORT[g.league] === "football" && status(g).kind === "over"; /* a finished football game opens on its scoring plays */ FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
-    if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; FD.scOnly = BX_SPORT[g.league] === "football" && status(g).kind === "over"; openSub("feed"); }  // coming back to the page starts folded up
+      FD.sum = fdDelay(g.id) ? ((FD.last || {})[g.id] || null) : ((c0 && c0.sum) || null); /* a delayed game comes back where you left it, not at ESPN's latest */ FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.scOnly = fdQuietStart(g); /* a finished football game opens on its scoring plays */ FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
+    if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; FD.scOnly = fdQuietStart(g); openSub("feed"); }  // coming back to the page starts folded up
     feedPoll(true);
   }
   // how often the feed asks ESPN (3.36.0): every 4 seconds while a play could happen, slower at breaks, backing off after errors.
@@ -32,7 +34,7 @@
   }
   function fdSig(sum) {  // what's on screen: the newest play, the clock, the score and the win probability
     var comp = ((sum.header || {}).competitions || [])[0] || {}, st = comp.status || {}, dr = sum.drives || {}, cur = dr.current || (dr.previous || [])[(dr.previous || []).length - 1] || {}, pl = (cur.plays || [])[(cur.plays || []).length - 1] || {};
-    return [(dr.previous || []).length, cur.id, (cur.plays || []).length, pl.id, pl.awayScore, pl.homeScore, st.displayClock, st.period, (st.type || {}).state, (comp.competitors || []).map(function (k) { return k.score; }).join("-"), (sum.winprobability || []).length, (sum.plays || []).length, hpPid((sum.plays || [])[(sum.plays || []).length - 1] || {})].join("|");
+    return [(dr.previous || []).length, cur.id, (cur.plays || []).length, pl.id, pl.awayScore, pl.homeScore, st.displayClock, st.period, (st.type || {}).state, (comp.competitors || []).map(function (k) { return k.score; }).join("-"), (sum.winprobability || []).length, (sum.plays || []).length, hpPid((sum.plays || [])[(sum.plays || []).length - 1] || {}), (sum.commentary || []).length, (sum.keyEvents || []).length, String(((((sum.boxscore || {}).teams || [])[0] || {}).statistics || []).map(function (x) { return x.displayValue; }))].join("|");
   }
   // ---- the delay (3.69.0, DJ: "It's faster than the game on TV") ----
   // Set per game from the page (0 to 90 seconds, in fives), remembered on this phone for that game only; a game nobody has set starts
@@ -106,7 +108,7 @@
       if (state.view === "feed" && changed) renderFeed(true);  // nothing new: leave the page alone
       var st = ((((sum || {}).header || {}).competitions || [])[0] || {}).status || {}, k = (st.type || {}).state, det = String((st.type || {}).shortDetail || st.type && st.type.detail || "");
       var brk = /half|end of|delay/i.test(det) || /End Period|End of Half/i.test(String(((((sum || {}).drives || {}).current || {}).plays || []).slice(-1).map(function (p) { return (p.type || {}).text; })[0] || ""));
-      var wait = !sum ? Math.min(60000, 6000 * Math.pow(2, Math.min(FD.err, 4))) : k === "post" ? 120000 : k === "pre" ? 30000 : brk ? 12000 : 4000;
+      var wait = !sum ? Math.min(60000, 6000 * Math.pow(2, Math.min(FD.err, 4))) : k === "post" ? 120000 : k === "pre" ? 30000 : brk ? 12000 : BX_SPORT[g.league] === "soccer" ? 8000 : 4000;  /* soccer's commentary moves slower than a play clock */
       if (state.view === "feed") FD.t = setTimeout(feedPoll, wait);
       if (sum) fdPrefetch(g);
     }, function () { FD.busy = false; FD.err = (FD.err || 0) + 1; if (state.view === "feed") FD.t = setTimeout(feedPoll, Math.min(60000, 6000 * Math.pow(2, Math.min(FD.err, 4)))); });
@@ -496,6 +498,7 @@
     var strip = fdStrip(g); if (strip) body.appendChild(strip);
     var sum = FD.id === g.id ? FD.sum : null;
     if (!sum) { body.appendChild(el("p", "pv-none bx-wait fd-wait", "Loading the play-by-play…")); return; }
+    if (BX_SPORT[g.league] === "soccer") return scFeed(body, g, sum, anchor, aTop, sc);  // 3.87.0: soccer, in 147-live-feed-soccer.js
     if (BX_SPORT[g.league] === "bball") return hpFeed(body, g, sum, anchor, aTop, sc);  // basketball draws its own court and plays
     var comp = ((sum.header || {}).competitions || [])[0] || {}, st = (comp.status || {}).type || {}, sideOf = {}, abOf = {}, scoreOf = {}, recOf = {};
     (comp.competitors || []).forEach(function (k) { var id = String((k.team || {}).id || ""), sd = k.homeAway === "home" ? "home" : "away"; sideOf[id] = sd; abOf[String((k.team || {}).abbreviation || "").toUpperCase()] = sd; scoreOf[sd] = k.score; recOf[sd] = ((k.record || [])[0] || {}).summary || ""; });
