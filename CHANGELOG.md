@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.75.2 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Football feed: the down and distance pill moved to its own line, centered at the bottom of the score bar, and it now says the yard line too: the football, the team with the ball in its color, then "4th & 1 at BAL 17". It's tinted in that team's color, so you can tell at a glance who has it and where.
+- Live feed: both scores are full brightness while a game is live. The trailing team's score used to be dimmed, which made a live game look finished. Only the loser's score dims, and only once the game is final.
+- Live feed: the quarter now sits on the same line as the clock in the score bar ("14:12 4th"), not on a line of its own under it. Football and basketball.
+
 ## 3.75.1 (Nov 17, 2026)
 TestFlight: 3.75.1 (45)
 - Football live notification, Lock Screen: the down and spot sit right next to the football icon by the team that has the ball ("Ravens 🏈 1st & 10 · BAL 6"), and the separate down line is gone. So there are at most two lines under the scores: the standout and the one-liner.

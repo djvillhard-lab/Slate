@@ -479,20 +479,20 @@
     ["away", "mid", "home"].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = !over && fdIsHT(st.shortDetail || st.detail, g.league);
         var sd0 = spot && !over ? Number(spot.e.down) || 0 : 0;
-        if (ht) mid.appendChild(fdHT("b")); else { mid.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); } var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
+        if (ht) mid.appendChild(fdHT("b")); else { var ck = el("span", "fd-ck"); /* 3.75.2 (DJ): the quarter sits on the clock's line, not under it */ ck.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) ck.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); mid.appendChild(ck); } var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
-      var scn = el("b", "fd-sc" + ((sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
-      // 3.74.1 (DJ: under the record it "isn't in a good spot"): the football and the down and distance are a small pill centered right under the
-      // score of the team with the ball. The other score keeps an empty slot the same height, so the two scores stay level and the bar stays even.
-      // History: under the clock (3.36), beside the record (3.73.1).
-      if (!over) { var scw = el("div", "fd-scw"), slot = el("span", "fd-poss"); scw.appendChild(scn);
-        if (posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball"); slot.appendChild(bl); slot.classList.add("on");
-          var ddT = spot && Number(spot.e.down) && spot.e.shortDownDistanceText ? String(spot.e.shortDownDistanceText) : ""; if (ddT) slot.appendChild(el("em", "fd-mdd", ddT)); }
-        scw.appendChild(slot); scn = scw; }
+      var scn = el("b", "fd-sc" + (over && (sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
+    // The game's situation, on its own centered line at the bottom of the score bar (3.75.2, DJ: "a spot that's obvious for a user following the
+    // live feed to know the current down and yard line"): a pill with the football, the team that has the ball in its color, the down and distance
+    // and the yard line, e.g. "LAC  4th & 1 at BAL 17". History: under the clock (3.36), beside the record (3.73.1), under that team's score (3.74.1).
+    if (!over && posSide && spot && Number(spot.e.down) && spot.e.shortDownDistanceText) {  /* only on a real down: between a score and the kickoff ESPN still says the scoring team has the ball */ var E0 = spot.e, sit = el("div", "fd-sit"), sbl = el("i", "fd-ball"), tmN = el("b", "fd-sit-t", abbr(g, posSide)); tmN.style.color = fdTint(g, posSide); sit.style.setProperty("--fd-team", fdTint(g, posSide));
+      var pt0 = String(E0.possessionText || "").replace(/^([A-Z]{2,4})/, function (a2) { return abOf[a2] ? abbr(g, abOf[a2]) : a2; }), dn0 = Number(E0.down) && E0.shortDownDistanceText ? String(E0.shortDownDistanceText) : "";
+      sit.appendChild(sbl); sit.appendChild(tmN); sit.appendChild(el("span", "fd-sit-d", dn0 ? dn0 + (pt0 ? " at " + pt0 : "") : "ball" + (pt0 ? " at " + pt0 : "")));
+      sit.setAttribute("aria-label", abbr(g, posSide) + " has the ball" + (dn0 ? ", " + dn0 : "") + (pt0 ? " at " + pt0 : "")); bug.appendChild(sit); }
     body.appendChild(bug);
     // the scorebug stays on screen under the top bar while the plays scroll
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");

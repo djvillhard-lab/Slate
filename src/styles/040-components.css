@@ -1507,10 +1507,10 @@ html .feed-go.feed-done, html .tray .feed-go.feed-done { background: var(--raise
 /* 3.66.8: folded Duo: the clock and Wi-Fi sit over the right end of the score bar, so its right team moves in from under them (the page layout stays as 3.36.0) */
 html[data-native].side-col:not(.duo) #feed-body .fd-bug { padding-right: calc(10px + var(--strip-w, 0px) / var(--z, 1)); }
 html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
-.fd-scw { display: grid; grid-template-columns: 66px; justify-items: center; row-gap: 3px; width: 66px; }
-.fd-scw .fd-poss { display: inline-flex; align-items: center; gap: 4px; height: 17px; padding: 0 6px; border-radius: 9px; white-space: nowrap; }
-.fd-scw .fd-poss.on { background: var(--raise); border: 1px solid var(--hair); }
-.fd-scw .fd-mdd { font-size: 10.5px; color: var(--ink); }
+.fd-ck { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+.fd-ck i:empty { display: none; }
+.fd-sit { grid-column: 1 / -1; justify-self: center; display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; height: 22px; padding: 0 10px; border-radius: 11px; background: color-mix(in srgb, var(--fd-team) 14%, var(--raise)); border: 1px solid color-mix(in srgb, var(--fd-team) 55%, transparent); font-size: 12px; font-weight: 800; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fd-sit-d { font-weight: 800; }
 .fd-bar .fd-ago { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fd-list > .fd-ld { margin: 0 0 2px; }
 .fd-mdd { font-style: normal; font-size: 11px; font-weight: 800; color: var(--muted); white-space: nowrap; }
