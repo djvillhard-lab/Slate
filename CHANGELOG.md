@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.83.5 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- News, Press Box: each story in a league section is now a short summary of two or three sentences (what happened, the key detail and why it matters) instead of a one-line headline. To make room, each league has 3 to 5 stories instead of 4 to 6. This applies from the next Regenerate.
+
 ## 3.83.4 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - News: on each story card the tag that says why it's there (🏈 NFL, ⭐ My team, 📺 On your slate) now sits right beside the team name in the top left, and the story's other tags (Injury, Tonight, NEW...) always sit in the top right, even on a card with no team.
