@@ -189,7 +189,7 @@
     var a = el("a", "nx-read"); a.href = safeUrl(rd.url); a.target = "_blank"; a.rel = "noopener";
     // ESPN's picture beside it when the story is in a league feed already loaded (3.82.0)
     var it = null; Object.keys(nw.feeds).some(function (k) { it = nwItem(k, rd.url); return !!it; });
-    if (it && it.img) { var im = document.createElement("img"); im.className = "nx-rimg"; im.alt = ""; im.loading = "lazy"; im.src = it.img; im.onerror = function () { im.remove(); }; a.appendChild(im); a.classList.add("pic"); }
+    var im = it && it.img ? nwImg(nwPic(it.img, 200), "nx-rimg") : null; if (im) { a.appendChild(im); a.classList.add("pic"); }
     var tx = el("span", "nx-rw"); tx.appendChild(el("span", "nx-rt", rd.title)); tx.appendChild(el("span", "nx-rs", (rd.source || "Read") + (it && it.at ? " · " + nwAgo(it.at) : ""))); a.appendChild(tx); return a;
   }
   function nwDeepRow(d, label) {
@@ -239,6 +239,11 @@
     f.classList.add("nx-face"); return f;
   }
   // the newest headlines' pictures and links (free ESPN), found by url
+  // ESPN's photos are 1296 wide: ask its image server for a phone-sized copy
+  function nwPic(u, w) { var m = /^https:\/\/a\.espncdn\.com(\/photo\/[^?#]+)$/.exec(u || ""); return m ? "https://a.espncdn.com/combiner/i?img=" + m[1] + "&w=" + w : u; }
+  // one <img> per picture, kept across redraws, so a photo still loading isn't started over each time the page redraws
+  nw.imgs = {};
+  function nwImg(src, cls) { var k = cls + "|" + src, im = nw.imgs[k]; if (!im) { im = nw.imgs[k] = document.createElement("img"); im.className = cls; im.alt = ""; im.onerror = function () { im.remove(); im.dead = 1; }; im.src = src; } return im.dead ? null : im; }
   function nwItem(lg, url) { return url ? ((((nw.feeds[lg] || {}).items) || []).filter(function (a) { return a.url === url; })[0] || null) : null; }
   // a feed box: the team's edge, a meta row (logo, team, pills on the right), then the text
   function nwBox(t, team, pills, cls) {
@@ -458,9 +463,12 @@
     if (lg && !nw.feeds[lg]) nwFeed(lg).then(nwRedraw, function () {});  // free: the story pictures and the players' ids
     // the big story (a league briefing): ESPN's picture when Claude named the headline, the team's color, a tap opens it
     if (doc.lead && doc.lead.title) {
-      var lt = nwTeam(doc.lead.team, lg), it = nwItem(lg, doc.lead.url), ld = nwTint(el(doc.lead.url ? "a" : "div", "nx-lead"), lt);
+      var lt = nwTeam(doc.lead.team, lg), it = nwItem(lg, doc.lead.url);
+      // The Athletic's stories carry no picture: use the newest ESPN photo of a story about the same team (3.82.1)
+      var pic = it && it.img ? it.img : lt ? ((((nw.feeds[lg] || {}).items) || []).filter(function (a) { return a.img && nwAbout(a, lt.name); })[0] || {}).img : "";
+      var ld = nwTint(el(doc.lead.url ? "a" : "div", "nx-lead"), lt);
       if (doc.lead.url) { ld.href = safeUrl(doc.lead.url); ld.target = "_blank"; ld.rel = "noopener"; }
-      if (it && it.img) { var im = document.createElement("img"); im.className = "nx-limg"; im.alt = ""; im.loading = "lazy"; im.src = it.img; im.onerror = function () { im.remove(); }; ld.appendChild(im); }
+      var im = pic ? nwImg(nwPic(pic, 720), "nx-limg") : null; if (im) ld.appendChild(im);
       var lb = el("div", "nx-lbody"), lm = el("div", "nx-bm"); var lp = el("span", "nx-bt"); if (lt) { lp.appendChild(nwMark(lt)); lp.appendChild(el("b", null, lt.name)); } lm.appendChild(lp);
       var lpr = el("span", "nx-bp"); lpr.appendChild(nwPill("The big story", "lead", "🗞️")); lm.appendChild(lpr); lb.appendChild(lm);
       lb.appendChild(el("b", "nx-lt", doc.lead.title)); if (doc.lead.text) lb.appendChild(el("p", null, doc.lead.text));

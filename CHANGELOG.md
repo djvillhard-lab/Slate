@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.82.1 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- News: when a league briefing's big story comes from The Athletic (whose stories have no photo), it now shows the newest ESPN photo of a story about the same team.
+- News photos load a phone-sized copy from ESPN (smaller and quicker), and a photo still loading no longer starts over when the page redraws (for example as headshots come in).
+
 ## 3.82.0 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - News: swipe sideways to move between Press Box and the league tabs. A swipe never takes you back to the last page any more. On the first or last tab it just springs back.
