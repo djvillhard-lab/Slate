@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.69.1 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Morning email is now light: Sunday Paper's cream and dark ink, with your accent color. Outlook on iPhone laid a gray wash over the dark version however it was built, and a light email is what mail apps' dark modes darken cleanly.
+
 ## 3.69.0 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed delay, for when the feed is ahead of your TV. On the "Last play" line there's now a Delay control: tap + or − to hold the feed back 5 to 90 seconds, in steps of 5. Everything on the page waits that long: the plays, the score bar, the timer, the win probability and the box score. That game's box in the strip at the top shows the delayed score too.

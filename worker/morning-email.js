@@ -161,6 +161,21 @@ function solidLook(T) {
   return o;
 }
 
+// 3.68.12: the email is always drawn light, in Sunday Paper (the app's light theme) with the person's accent. Outlook on
+// iPhone laid a gray wash over the dark design whatever the email asked for; a light email is what mail apps' dark modes
+// are built to darken, so it reads cleanly in light and dark mode alike.
+const PAPER = { bg: "#F1EBDD", card: "#FBF7EE", raise: "#EAE2D0", line: "#D6CCB6", hair: "#DDD3C0", ink: "#1D1B16", muted: "#5A5447", dim: "#6A6456", head: "#3A362D" };
+function deepen(c, bg, need) {
+  let [r, g, b] = [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+  for (let k = 0; k < 40 && contrast("#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join(""), bg) < need; k++) [r, g, b] = [r, g, b].map((v) => Math.round(v * 0.92));
+  return ("#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")).toUpperCase();
+}
+function paperLook(T) {
+  if (!T.dark) return T;
+  const fill = deepen(T.fill, "#FFFFFF", 4.5);
+  return Object.assign({}, PAPER, { accent: deepen(T.accent, PAPER.card, 4.5), fill, on: "#FFFFFF", live: deepen(T.live, PAPER.card, 4.5), dark: false });
+}
+
 // 3.67.3: mail apps' dark modes (Outlook's above all) repaint emails, turning Slate's dark theme a muddy gray, and they
 // turn times and dates into blue links. This keeps the email in the phone's own colors: every inline color also gets a
 // class that Outlook's dark mode ([data-ogsc] text, [data-ogsb] backgrounds) is told to leave alone, tables and cells
@@ -329,7 +344,7 @@ export async function buildEmail(env, who, nowT) {
   const d = await gather(env, who, date);
   if (d.wait) return { wait: true, why: d.wait };
   if (d.skip) return { skip: true, why: d.skip };
-  const T = solidLook(Object.assign({}, MIDNIGHT, cleanLook(who.look) || {}));
+  const T = paperLook(solidLook(Object.assign({}, MIDNIGHT, cleanLook(who.look) || {})));
   const mineT = Object.fromEntries((d.me.mine || []).map((i) => [i, 1])), mineY = Object.fromEntries((d.pme.mine || []).map((i) => [i, 1]));
   const kit = slateKit({ rules: d.sett.rules, mine: mineT }), kitY = slateKit({ rules: d.sett.rules, mine: mineY }), P = painter(T, kit, tz);
   // the star next to a name: that team is one of yours (from the day's team list; the side is the one whose name matches)

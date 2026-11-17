@@ -44,3 +44,7 @@ The Morning email controls moved from the Settings main page to their own sub-pa
 - 3.68.6's `[data-ogsc]` locks did nothing in Outlook iOS (DJ checked a fresh send). Now, for dark themes only, every background also gets `background-image:linear-gradient(c,c)`, which Outlook doesn't repaint. Not for light themes: Outlook would lighten the dark text on a locked light background.
 - Times use U+2236 (ratio sign) in place of the colon in the HTML; the zero-width joiner alone didn't stop Outlook's links. Plain text keeps real colons.
 - Can't render Outlook here; check with a Send from Settings. Fallback if it's still off: a light theme, which Outlook darkens cleanly.
+
+## 3.69.1: light design
+- Two tries at locking the dark design (3.68.6, 3.68.11) didn't change Outlook iOS: a gray wash over everything. Decision (coordinator, after DJ's report): the email is always drawn light. `paperLook()` swaps a dark phone look for Sunday Paper's colors plus the person's accent, deepened to 4.5:1 on the cards; the button is the deepened fill with white text. Light phone looks pass through unchanged.
+- Kept: color classes, bgcolor, font longhands, the ratio-sign colon in times.
