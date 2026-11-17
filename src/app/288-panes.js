@@ -104,19 +104,16 @@
       var d0 = PN.drag;
       d0.t = setTimeout(function () { if (PN.drag === d0 && !d0.moved) { d0.held = true; pnLock(!PN.lock); } }, 550);
       try { grip.setPointerCapture(e.pointerId); } catch (er) {}
-      PN.el.classList.add("pn-dragging");
-      var fs = frames(); [fs.L, fs.R].forEach(function (f) { f.style.transition = "none"; });
       e.preventDefault();
     });
+    // DJ (Nov 17): no dragging, the bar only takes a tap (swap) or a hold (lock). A finger that wanders off just cancels.
     grip.addEventListener("pointermove", function (e) {
       var d = PN.drag; if (!d || e.pointerId !== d.id || d.held) return;
-      d.dx = e.clientX - d.x; if (Math.abs(d.dx) > 8) d.moved = true;
-      var fs = frames(), dx = Math.max(-fs.span, Math.min(fs.span, d.dx));
-      var mover = dx < 0 ? fs.R : fs.L, stay = mover === fs.R ? fs.L : fs.R;
-      mover.classList.add("pn-moving"); stay.classList.remove("pn-moving");
-      // the two sides trade places: the one under the finger on top, the other sliding the opposite way
-      mover.style.transform = dx ? "translateX(" + dx + "px)" : ""; stay.style.transform = dx ? "translateX(" + (-dx) + "px)" : "";
+      if (Math.abs(e.clientX - d.x) > 24) d.moved = true;
     });
+    // holding the bar must not select text, show a callout or the iPhone's magnifier
+    grip.addEventListener("touchstart", function (e) { e.preventDefault(); }, { passive: false });
+    ["contextmenu", "selectstart", "dragstart"].forEach(function (t) { PN.el.addEventListener(t, function (e) { e.preventDefault(); }); });
     function end(e, cancel) {
       var d = PN.drag; if (!d || e.pointerId !== d.id) return;
       PN.drag = null;
@@ -124,8 +121,7 @@
       if (cancel) { reset(true); return; }
       clearTimeout(d.t);
       if (d.held) { reset(false); return; }
-      if (!d.moved) { reset(false); pnMove(-1); return; }
-      if (Math.abs(d.dx) > fs.span * 0.3) pnMove(d.dx < 0 ? -1 : 1); else reset(true);
+      reset(false); if (!d.moved) pnMove(-1);
     }
     grip.addEventListener("pointerup", function (e) { end(e, false); });
     grip.addEventListener("pointercancel", function (e) { end(e, true); });
