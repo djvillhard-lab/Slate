@@ -99,9 +99,9 @@ def main():
             try:
                 r = route.fetch(); body = r.text()
                 d = json.loads(body)
-                rows = d if isinstance(d, list) else [d]
+                rows = d if isinstance(d, list) else d.get("rows", [d]) if isinstance(d, dict) else [d]
                 for row in rows:
-                    if isinstance(row, dict) and isinstance(row.get("data"), dict):
+                    if isinstance(row, dict) and isinstance(row.get("data"), dict) and str(row.get("path", "user-settings")).endswith("user-settings"):
                         row["data"]["device"] = device
                         if text: row["data"]["textSize"] = text; row["data"]["textSizeWide"] = text
                         if look: row["data"]["look"] = look; row["data"]["accent"] = {"paper": "navy"}.get(look, "green")
@@ -123,8 +123,9 @@ def main():
             page.route(re.compile(r".*/version\.json.*"), lambda r: r.fulfill(path=ver, content_type="application/json"))
             page.route(re.compile(r"^https://site\.api\.espn\.com/.*"), espn)
             page.route(re.compile(r".*supabase\.co/rest/v1/docs.*user-settings.*"), settings_for(S["device"]))
+            page.route(re.compile(r".*/api/docs$"), settings_for(S["device"]))  # 3.83.1: a person's own documents come from the server
             if not pw or readonly:  # read-only: nothing this run does can be saved (the passcode check itself still goes through)
-                page.route("**/*", lambda r: r.abort() if r.request.method not in ("GET", "HEAD", "OPTIONS") and "/api/whoami" not in r.request.url else r.fallback())
+                page.route("**/*", lambda r: r.abort() if r.request.method not in ("GET", "HEAD", "OPTIONS") and "/api/whoami" not in r.request.url and "/api/docs" not in r.request.url else r.fallback())
             if not pw and not gate:  # no passcode: just looking, without the log-in page on top
                 page.add_init_script("try{localStorage.setItem('slate-view-only','1')}catch(e){}")
             if gate == "invite": page.route("**/api/invite-check", lambda r: r.fulfill(body='{"ok":true}', content_type="application/json"))

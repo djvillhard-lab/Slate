@@ -151,7 +151,30 @@
     }
   }
   function snap(row) { var d = row ? row.data : undefined; return { exists: !!row, data: function () { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }, metadata: { fromCache: false } }; }
+  // Shared documents (slates, scores, previews, team pages, news...) come straight from Supabase with the public key.
+  // A person's own documents (settings, alerts, their News page) come from the server with their passcode, so nobody can
+  // read anyone else's (security review, 3.82.0). Asks made at the same moment go in one request.
+  var SHARED = /^(slates|scores|previews|teams|standouts|live|box|moments|mfacts|newsdeep|newsbrief|events)\/|^news\/(athletic|newsletters)$|^code\/teamids$/;
+  function isShared(path) { return SHARED.test(path); }
+  var pq = null;
+  function fetchPrivate(path) {
+    if (!pass()) return Promise.resolve(null);  // looking around without a passcode: nothing personal to read
+    if (!pq) {
+      pq = { paths: {}, p: null };
+      var q = pq;
+      q.p = new Promise(function (res) { setTimeout(res, 30); }).then(function () {
+        pq = null;
+        return fetch("/api/docs", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass(), paths: Object.keys(q.paths) }) })
+          .then(function (r) { if (!r.ok) { var e = new Error("read " + r.status); e.code = "unavailable"; throw e; } return r.json(); },
+            function () { var e = new Error("offline"); e.code = "unavailable"; throw e; })
+          .then(function (j) { var m = {}; (j.rows || []).forEach(function (x) { m[x.path] = { data: x.data, updated_at: x.updated_at }; }); return m; });
+      });
+    }
+    pq.paths[path] = 1;
+    return pq.p.then(function (m) { return m[path] || null; });
+  }
   function fetchRow(path) {
+    if (!isShared(path)) return fetchPrivate(path).then(function (row) { cachePut(path, row); return row; });
     return sb.from("docs").select("data,updated_at").eq("path", path).maybeSingle().then(function (r) {
       if (r.error) { var e = new Error(r.error.message); e.code = "unavailable"; throw e; }
       cachePut(path, r.data); return r.data;
@@ -168,6 +191,20 @@
   // phones drop the live connection in the background: catch up when the page comes back
   document.addEventListener("visibilitychange", function () { if (!document.hidden) Object.keys(subs).forEach(notify); });
   setInterval(function () { if (!document.hidden) Object.keys(subs).forEach(notify); }, 5 * 60000);
+  // a person's own documents don't arrive over the live connection: look for changes every 15 seconds while the app is
+  // on screen, and pass on only the ones that changed
+  setInterval(function () {
+    if (document.hidden || !pass()) return;
+    Object.keys(subs).forEach(function (path) {
+      if (isShared(path) || !(subs[path] || []).length) return;
+      var was = cacheGet(path), wasAt = was ? (was.none ? "none" : was.updated_at) : null;
+      fetchPrivate(path).then(function (row) {
+        if ((row ? row.updated_at : "none") === wasAt) return;
+        cachePut(path, row);
+        (subs[path] || []).slice().forEach(function (s) { try { s.cb(snap(row)); } catch (e) { console.error(e); } });
+      }, function () {});
+    });
+  }, 15000);
   function doc(p) {
     var path = mapPath(p);
     return {
