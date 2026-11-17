@@ -44,3 +44,5 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 ## 3.81.1: watch links
 - `statusSide` in 060-cards.js now gives All games the slate's channel block (watchLink, up to two, linkable first, ▶ marker). The old plain "ESPN / ABC" span is gone.
 - `agFitNames` re-runs 120 ms after each draw and after fonts load, and treats any scrollWidth > clientWidth as cut (Chargers was off by 1px).
+
+3.91.4 (DJ, Nov 17): live game cards on All games carry the same quick "Feed" button as the slate (`g-feed` in `150-game-row.js`, now for mode "games" as well as "lineup"). Live games only, every sport with a feed.

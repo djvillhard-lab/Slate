@@ -141,3 +141,5 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - Faceoffs and stoppages are skipped. "Goals & penalties" is the filter (`FD.scOnly`); finished games open on it.
 - ESPN files a blocked shot under the blocker's team, so that box is titled with the blocker.
 - Open: no live "on the power play now" indicator (ESPN's summary has no clear field for it), no shootout attempt list beyond the plays ESPN sends.
+
+3.91.4 (DJ, Nov 17): on the folded Duo, `#feed-body > .fd-field` gets the same right padding as the score bar (`--strip-w`), so the possession bar and the other top cards end left of the clock/Wi-Fi island. Only those cards move; the page itself keeps its width (DJ rejected a page gutter in 3.36.1).

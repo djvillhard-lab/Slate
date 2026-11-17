@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.91.4 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- All games: live games now have the same quick "Feed" button as on Today's Slate (red dot, bottom right of the card). One tap opens that game's live feed. It shows for every sport with a feed: football, basketball, soccer and hockey.
+- Live feed on the folded Duo: the card under the score bar (possession, who scored, the football field, top players) now stops short of the clock and Wi-Fi column, so the right-hand team's number is no longer hidden under it. The score bar already did this.
+
 ## 3.91.3 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Claude's game previews: early in the season, ESPN's "last five games" still holds last season's final games, and Claude was calling them recent (Central Michigan "just lost" at Ball State back in March while 4-0; Duke "lost twice" counting last season's loss to UConn). Previews now get only this season's results, newest first and dated, and Claude checks every win, loss and "last game" against each team's record before answering. Tap Regenerate on a preview written before this to get a corrected one.

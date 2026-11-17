@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Live feed: top cards keep clear of the island on the folded Duo; All games: Feed button on live cards | src/app/150-game-row.js (the Feed button only), shared: src/styles/040-components.css (fd- feed rules only), docs/pages/live-feed.md, docs/pages/all-games.md | 2026-11-17 19:53 |
