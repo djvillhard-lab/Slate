@@ -442,3 +442,6 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx-hitb.bare .nx-box::after { content: ""; display: block; clear: both; }
 .nx-box.mx { border-left-color: transparent; background: linear-gradient(90deg, color-mix(in srgb, var(--nx-a, var(--accent)) 9%, var(--card)), color-mix(in srgb, var(--nx-b, var(--accent)) 9%, var(--card))); border-color: color-mix(in srgb, var(--accent) 14%, var(--hair)); border-left-color: transparent; }
 .nx-box.mx::before { content: ""; position: absolute; left: -4px; top: -1px; bottom: -1px; width: 4px; border-radius: 8px 0 0 8px; background: linear-gradient(to bottom, var(--nx-a, var(--accent-fill)) 50%, var(--nx-b, var(--accent-fill)) 50%); }
+/* a national team's note (3.85.1): its two flag colors on the edge, tinted in the main one */
+.nx-box.two { border-left-color: transparent; }
+.nx-box.two::before { content: ""; position: absolute; left: -4px; top: -1px; bottom: -1px; width: 4px; border-radius: 8px 0 0 8px; background: linear-gradient(to bottom, var(--nx-team) 50%, var(--nx-alt) 50%); }

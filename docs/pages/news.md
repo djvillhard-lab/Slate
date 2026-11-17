@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.84.1
+Last updated: Nov 17, 2026, 3.85.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -68,6 +68,10 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   then matchup (`.mx`: two-color edge and a blended tint; any note with no team of the two, or tag Matchup). The prompt
   asks for 5 per game: 2 away, 2 home, 1 Matchup; saved `hits(g.hits, 5)`. League section hits keep the label row.
 - Show 5 more only appears when a page has more than 5 top stories (pages written from 3.84.0 on).
+- National teams (3.85.1, DJ: Haiti-USA notes all one blue): `NATION_COLORS` / `nationColors(name)` in 045-team-logos.js
+  (about 85 countries, flag and kit colors) win over ESPN's in `pairColors` for any team not in the app's club list, so it
+  applies app-wide. News `nwSides(g)` makes a pseudo team for a nation (main from pairColors, second from the flag,
+  aliases like us/usmnt/americans in `k`); its notes get class `two` (two-color edge). Notes match by `h.team` first.
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
   both inside the 24,000-token limit. DJ's Nov 16 "it fails on a small selection" report was the old failure's

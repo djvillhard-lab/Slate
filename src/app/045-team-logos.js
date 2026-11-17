@@ -146,8 +146,39 @@
     if (bad && hexOk(alt)) { var La = lum(alt); if (dark ? La >= 0.05 : La <= 0.85) return alt; }
     return main;
   }
+  // national teams' colors (3.85.1, DJ: a Haiti-USA game was all one blue): their flag and kit colors, main then
+  // second, used before ESPN's for any team that isn't a club in the app's team list. Keys are logoNorm'd names.
+  var NATION_COLORS = (function () {
+    var o = {}, add = function (names, m, a) { names.split("|").forEach(function (n) { o[logoNorm(n)] = [m, a]; }); };
+    add("United States|USA|United States of America", "#0A3161", "#B31942"); add("Mexico", "#006847", "#CE1126"); add("Canada", "#D80621", "#FFFFFF");
+    add("Haiti", "#00209F", "#D21034"); add("Jamaica", "#009B3A", "#FED100"); add("Costa Rica", "#002B7F", "#CE1126"); add("Panama", "#DA121A", "#072357");
+    add("Honduras", "#0073CF", "#FFFFFF"); add("El Salvador", "#0F47AF", "#FFFFFF"); add("Guatemala", "#4997D0", "#FFFFFF"); add("Trinidad and Tobago", "#CE1126", "#000000");
+    add("Curacao|Curaçao", "#002B7F", "#F9E814"); add("Suriname", "#377E3F", "#B40A2D"); add("Nicaragua", "#0067C6", "#FFFFFF"); add("Cuba", "#002A8F", "#CF142B");
+    add("Brazil", "#FEDF00", "#009C3B"); add("Argentina", "#75AADB", "#FCBF49"); add("Uruguay", "#0038A8", "#FCD116"); add("Colombia", "#FCD116", "#003893");
+    add("Chile", "#D52B1E", "#0039A6"); add("Ecuador", "#FFD100", "#034EA2"); add("Peru", "#D91023", "#FFFFFF"); add("Paraguay", "#D52B1E", "#0038A8");
+    add("Venezuela", "#7F1734", "#FFCC00"); add("Bolivia", "#007A33", "#D52B1E");
+    add("England", "#FFFFFF", "#CE1124"); add("France", "#002395", "#ED2939"); add("Spain", "#AA151B", "#F1BF00"); add("Germany", "#000000", "#DD0000");
+    add("Portugal", "#C8102E", "#006600"); add("Netherlands|Holland", "#F36C21", "#21468B"); add("Italy", "#0066CC", "#009246"); add("Belgium", "#E30613", "#000000");
+    add("Croatia", "#FF0000", "#171796"); add("Switzerland", "#D52B1E", "#FFFFFF"); add("Denmark", "#C8102E", "#FFFFFF"); add("Sweden", "#FECC02", "#006AA7");
+    add("Norway", "#BA0C2F", "#00205B"); add("Poland", "#DC143C", "#FFFFFF"); add("Austria", "#ED2939", "#FFFFFF"); add("Scotland", "#005EB8", "#FFFFFF");
+    add("Wales", "#C8102E", "#00B140"); add("Republic of Ireland|Ireland", "#169B62", "#FF883E"); add("Northern Ireland", "#00B140", "#FFFFFF");
+    add("Serbia", "#C6363C", "#0C4076"); add("Turkey|Türkiye|Turkiye", "#E30A17", "#FFFFFF"); add("Ukraine", "#0057B7", "#FFD700"); add("Czechia|Czech Republic", "#11457E", "#D7141A");
+    add("Hungary", "#CE2939", "#477050"); add("Greece", "#0D5EAF", "#FFFFFF"); add("Romania", "#FCD116", "#002B7F"); add("Slovakia", "#0B4EA2", "#EE1C25");
+    add("Slovenia", "#005DA4", "#ED1C24"); add("Iceland", "#02529C", "#DC1E35"); add("Finland", "#002F6C", "#FFFFFF"); add("Russia", "#D52B1E", "#0039A6");
+    add("Bosnia and Herzegovina|Bosnia-Herzegovina", "#002395", "#FECB00"); add("Albania", "#E41E20", "#000000"); add("Georgia", "#DA291C", "#FFFFFF");
+    add("Japan", "#1B3C8C", "#BC002D"); add("South Korea|Korea Republic", "#C60C30", "#003478"); add("Australia", "#FFCD00", "#00843D"); add("New Zealand", "#000000", "#FFFFFF");
+    add("Saudi Arabia", "#006C35", "#FFFFFF"); add("Iran|IR Iran", "#239F40", "#DA0000"); add("Qatar", "#8A1538", "#FFFFFF"); add("Iraq", "#007A3D", "#CE1126");
+    add("Jordan", "#CE1126", "#007A3D"); add("Uzbekistan", "#0099B5", "#1EB53A"); add("China|China PR", "#DE2910", "#FFDE00"); add("United Arab Emirates|UAE", "#00732F", "#FF0000");
+    add("Morocco", "#C1272D", "#006233"); add("Senegal", "#00853F", "#FDEF42"); add("Nigeria", "#008751", "#FFFFFF"); add("Ghana", "#006B3F", "#FCD116");
+    add("Cameroon", "#007A5E", "#CE1126"); add("Egypt", "#CE1126", "#000000"); add("Algeria", "#006233", "#D21034"); add("Tunisia", "#E70013", "#FFFFFF");
+    add("Ivory Coast|Côte d'Ivoire|Cote d'Ivoire", "#F77F00", "#009E60"); add("South Africa", "#007749", "#FFB81C"); add("Mali", "#14B53A", "#FCD116");
+    add("Cape Verde|Cabo Verde", "#003893", "#CF2027"); add("DR Congo|Congo DR", "#007FFF", "#CE1021");
+    return o;
+  })();
+  function nationColors(name) { var k = logoNorm(name); if (!k || !NATION_COLORS[k]) return null; var kt = typeof teamByName === "function" ? teamByName(name) : null; return kt ? null : NATION_COLORS[k]; }
   function pairColors(g) {
     var raw = ["away", "home"].map(function (sd) {
+      var nc = nationColors(g[sd]); if (nc) return { m: nc[0], a: nc[1] };
       var m = g[sd + "Color"], a = g[sd + "Alt"];
       if (!hexOk(m)) { var tl = teamLook(g[sd]); if (tl) { m = tl[1]; a = a || tl[2]; } }
       if (!hexOk(m)) { var kt = typeof teamByName === "function" ? teamByName(g[sd]) : null; if (kt && kt.c1) { m = kt.c1; a = a || kt.c2; } }

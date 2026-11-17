@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.85.1 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- National teams have their own colors now, across every international competition (World Cup qualifiers, Nations League, friendlies...). Before, the app used ESPN's colors, which make many countries the same blue, so Haiti and the USA looked alike. About 85 countries get their flag and kit colors. When two sides still clash, one switches to its second color, the same as club teams.
+- News, Press Box: the notes on an international game now find their country (by name, or "the US", "USMNT", "the Americans") and are tinted in its color with a two-color edge from its flag. The matchup note is split between the two countries. Before, every note on those games was the same plain blue.
+
 ## 3.85.0 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - Claude summaries cost less. Previews, team pages and Box Office use Claude's newer web search, which reads only the useful parts of each page, and think less for short write-ups. Recaps are written by Claude Haiku, about a twentieth of the price; if Haiku can't, Claude Sonnet writes it as before.

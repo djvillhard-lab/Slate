@@ -200,10 +200,23 @@
     pool.forEach(function (t) { var c = city(t); if (c) cc[t.lg + "|" + c] = (cc[t.lg + "|" + c] || 0) + 1; });
     pool.forEach(function (t) {
       var keys = [t.n]; if (t.s && t.s.length >= 4) keys.push(t.s); var c = city(t); if (c.length > 3 && cc[t.lg + "|" + c] === 1) keys.push(c);
+      (t.k || []).forEach(function (k) { if (k) keys.push(k); });   // a national team's other names (the US, USMNT, Americans)
       var nk = (t.w || []).slice(-1)[0]; if (t.lg !== "College" && nk && nk.length > 3 && !NW_NICK_SKIP[nk]) keys.push(nk);
       keys.forEach(function (k) { var i = lo.indexOf(" " + k + " "); if (i !== -1 && (i < bi || (i === bi && k.length > bl))) { best = t; bi = i; bl = k.length; } });
     });
     return best;
+  }
+  // a game's two teams for its notes: the app's own team, or (a national team, 3.84.2) one made from the game with its
+  // flag colors, the main color as the game's pair shows it (the second side switches when the two clash) and the other second
+  var NW_NAT_ALIAS = { "united states": ["us", "usa", "usmnt", "americans", "u s"], "usa": ["us", "united states", "usmnt", "americans"], "mexico": ["el tri", "mexican"], "south korea": ["korea"], "korea republic": ["korea", "south korea"] };
+  function nwSides(g) {
+    var pc = pairColors(g);
+    return ["away", "home"].map(function (sd) {
+      var t = nwTeam(g[sd], g.league) || nwFindTeam(g[sd], g.league); if (t) return t;
+      var nc = nationColors(g[sd]); if (!nc) return null;
+      var main = hexOk(pc[sd]) ? pc[sd] : nc[0], n = normT(g[sd]), sh = normT(short(g, sd)), ab = normT(abbr(g, sd));
+      return { name: g[sd], n: n, s: sh !== n ? sh : "", w: [], lg: "Nation", nat: true, c1: main, c2: main.toLowerCase() === nc[0].toLowerCase() ? nc[1] : nc[0], k: [ab].concat(NW_NAT_ALIAS[n] || []).filter(function (k) { return k && k.length >= 2 && k !== n; }) };
+    });
   }
   function nwLgOfTeam(t) { if (!t) return ""; for (var k in NW_TLG) if (NW_TLG[k] === t.lg && t.lg !== "College") return k; return ""; }
   function nwSportEm(lg) { var b = String(bxBase(lg) || ""); return /football\/(nfl|college)/.test(b) ? "🏈" : /basketball/.test(b) ? "🏀" : /hockey/.test(b) ? "🏒" : /baseball/.test(b) ? "⚾" : /soccer/.test(b) ? "⚽" : "🏆"; }
@@ -220,7 +233,7 @@
     // matchup note last in both teams' colors
     if (only) {
       var tA = only[0], tB = only[1], rows = (list || []).map(function (h) {
-        var t = nwTeam(h.team, lg) || nwFindTeam(h.text, lg, only);
+        var t = (h.team && nwFindTeam(h.team, lg, only)) || nwTeam(h.team, lg) || nwFindTeam(h.text, lg, only);
         if (t && t !== tA && t !== tB) t = null;
         if (/^match/i.test(h.tag || "")) t = null;
         return { h: h, t: t, o: t && t === tA ? 0 : t && t === tB ? 1 : 2 };
@@ -228,7 +241,7 @@
       w.classList.add("bare");
       rows.forEach(function (r) {
         var b = el("div", "nx-box"), h = r.h;
-        if (r.t) nwTint(b, r.t);
+        if (r.t) { nwTint(b, r.t); if (r.t.nat && hexOk(r.t.c2)) { b.classList.add("two"); b.style.setProperty("--nx-alt", r.t.c2); } }
         else { b.classList.add("mx"); if (tA && hexOk(tA.c1)) b.style.setProperty("--nx-a", tA.c1); if (tB && hexOk(tB.c1)) b.style.setProperty("--nx-b", tB.c1); }
         var dup = r.t && h.tag && r.t.name.toLowerCase().indexOf(String(h.tag).toLowerCase()) !== -1;
         if (h.tag && !dup) { var pr = el("span", "nx-bp"); pr.appendChild(nwPill(h.tag)); b.appendChild(pr); }
@@ -470,10 +483,10 @@
         var ok = "g:" + g.id, open = nwIsOpen(ok), c = el("div", "nx-card nx-game nx-dd" + (open ? "" : " shut")), gh = nwGameHead(g);
         // the edge carries both teams' colors, away on top (3.82.0)
         var hx = function (v) { v = String(v || ""); return hexOk(v) ? v : hexOk("#" + v) ? "#" + v : ""; };
-        ["away", "home"].forEach(function (sd) { var v = hx(g[sd + "Color"]) || ((nwTeam(g[sd], g.league) || {}).c1) || ""; if (hexOk(v)) c.style.setProperty(sd === "away" ? "--nx-a" : "--nx-h", v); });
+        var pcs = pairColors(g); ["away", "home"].forEach(function (sd) { var v = hx(pcs[sd]) || hx(g[sd + "Color"]) || ((nwTeam(g[sd], g.league) || {}).c1) || ""; if (hexOk(v)) c.style.setProperty(sd === "away" ? "--nx-a" : "--nx-h", v); });
         gh.appendChild(icon("more")); nwFoldBtn(gh, ok, open, short(g, "away") + " at " + short(g, "home")); c.appendChild(gh);
         if (open) {
-          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwBoxHits(x.hits, g.league, [nwTeam(g.away, g.league) || nwFindTeam(g.away, g.league), nwTeam(g.home, g.league) || nwFindTeam(g.home, g.league)])); c.appendChild(bd);
+          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwBoxHits(x.hits, g.league, nwSides(g))); c.appendChild(bd);
           if (x.read) c.appendChild(nwRead(x.read));
           c.appendChild(nwDeepRow({ type: "g", id: g.id }));
         }
