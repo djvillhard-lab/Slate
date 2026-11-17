@@ -8,3 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | My bets: quieter Add bet on the matchup page | src/app/176-my-bets.js, src/app/140-game.js | 2026-11-17 17:00 |
 | DJ | Box Office: team logos on every night | src/app/120-box-office.js, docs/pages/box-office.md | 2026-11-17 17:08 |
+| DJ | Today's Slate: one-liners stay on one line | src/app/100-highlights.js, src/app/105-pv-notes.js, src/styles/050-ux-review.css (hl rules only), docs/pages/slate.md | 2026-11-17 17:10 |
