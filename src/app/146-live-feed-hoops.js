@@ -131,8 +131,7 @@
       if (sd === "mid") { var mid = el("div", "fd-mid");
         var ht = !over && fdIsHT(det, lg);  /* 3.70.0: a red dot and HT at halftime */
         var ck = el("span", "fd-ck");  /* 3.75.2 (DJ): the quarter sits on the clock's line, not under it */
-        if (ht) mid.appendChild(fdHT("b")); else { ck.appendChild(el("b", null, over ? "Final" : /^end/i.test(det) ? "End" : st.state === "pre" ? timeText(g.start) : (cst.displayClock || ""))); mid.appendChild(ck); }
-        if (!over && !ht && st.state !== "pre") ck.appendChild(el("i", null, per ? hpPerName(lg, per) : ""));
+        if (ht) mid.appendChild(fdHT("b")); else { if (!over && st.state !== "pre") ck.appendChild(el("i", null, per ? hpPerName(lg, per) : "")); /* 3.77.2 (DJ): the quarter reads first */ ck.appendChild(el("b", null, over ? "Final" : /^end/i.test(det) ? "End" : st.state === "pre" ? timeText(g.start) : (cst.displayClock || ""))); mid.appendChild(ck); }
         var mw = fdWatch(g, over); if (mw) mid.appendChild(mw);
         bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
@@ -245,7 +244,8 @@
     return w;
   }
   // a player's jersey (3.66.10, DJ): a basketball tank top in the team's color with the number on it, in place of the numbered circle
-  function hpJersey(g, sd, P) {
+  function hpJersey(g, sd, P) { return fdFace(g, sd, P, hpJerseyOnly(g, sd, P)); }  /* 3.77.2: the headshot, with the jersey as the stand-in */
+  function hpJerseyOnly(g, sd, P) {
     var c = badgeColor(g, sd) || "#555", ink = fdNumInk(c), j = el("span", "hp-jer");
     j.style.cssText = "position:relative;flex:none;width:26px;height:28px;display:grid;place-items:center";
     j.innerHTML = '<svg viewBox="0 0 24 26" width="26" height="28" style="position:absolute;inset:0" aria-hidden="true"><path d="M6.6 1H9.9Q12 5.6 14.1 1H17.4Q18 6.4 22 7.6V24.2Q22 25 21.2 25H2.8Q2 25 2 24.2V7.6Q6 6.4 6.6 1Z" fill="' + c + '" stroke="rgba(127,127,127,.7)" stroke-width="1"/></svg>';

@@ -1470,7 +1470,7 @@ html .feed-go.feed-done, html .tray .feed-go.feed-done { background: var(--raise
 .fd-cr { display: flex; gap: 5px; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .fd-cr b { font-weight: 800; }
 .fd-chip i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--live, #E5484D); white-space: nowrap; }
-.fd-bug { position: -webkit-sticky; position: sticky; top: var(--fd-top, 0px); z-index: 3; display: grid; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; column-gap: 8px; padding: 8px 10px; border-radius: 14px; background: var(--card); border: 1px solid var(--hair); box-shadow: 0 0 0 4px var(--bg); }
+.fd-bug { position: -webkit-sticky; position: sticky; top: var(--fd-top, 0px); z-index: 3; display: grid; grid-template-columns: 1fr auto auto 1fr auto 1fr auto auto 1fr; align-items: center; column-gap: 0; padding: 8px 10px; border-radius: 14px; background: var(--card); border: 1px solid var(--hair); box-shadow: 0 0 0 4px var(--bg); }
 .fd-tm { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .fd-tm-home { flex-direction: row-reverse; }
 .fd-tm > b { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--dim); white-space: nowrap; }
@@ -1507,9 +1507,20 @@ html .feed-go.feed-done, html .tray .feed-go.feed-done { background: var(--raise
 /* 3.66.8: folded Duo: the clock and Wi-Fi sit over the right end of the score bar, so its right team moves in from under them (the page layout stays as 3.36.0) */
 html[data-native].side-col:not(.duo) #feed-body .fd-bug { padding-right: calc(10px + var(--strip-w, 0px) / var(--z, 1)); }
 html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)); }
+.fd-face { position: relative; flex: none; width: 32px; height: 32px; display: grid; place-items: center; }
+.fd-face > img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: var(--fc, #2a3442); box-shadow: inset 0 0 0 1.5px rgba(127,127,127,.5); opacity: 0; }
+.fd-face.has > img { opacity: 1; }
+.fd-face.has > :not(img) { visibility: hidden; }
 .fd-ck { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
 .fd-ck i:empty { display: none; }
-.fd-sit { grid-column: 1 / -1; justify-self: center; display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; height: 22px; padding: 0 10px; border-radius: 11px; background: color-mix(in srgb, var(--fd-team) 14%, var(--raise)); border: 1px solid color-mix(in srgb, var(--fd-team) 55%, transparent); font-size: 12px; font-weight: 800; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* 3.77.2 (DJ: "the whole scorebug is too compact towards the middle"): each team's badge, record and score sit together as one group, and the two groups and the clock spread evenly across the bar */
+.fd-bug > .fd-tm-away { grid-column: 2; margin-right: 10px; }
+.fd-bug > .fd-tm-away + .fd-sc { grid-column: 3; }
+.fd-bug > .fd-mid { grid-column: 5; padding: 0 8px; }
+.fd-bug > .fd-mid + .fd-sc { grid-column: 7; }
+.fd-bug > .fd-tm-home { grid-column: 8; margin-left: 10px; }
+.fd-bug > .fd-tm, .fd-bug > .fd-sc, .fd-bug > .fd-mid { grid-row: 1; }
+.fd-sit { grid-row: 2; grid-column: 1 / -1; justify-self: center; display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; height: 22px; padding: 0 10px; border-radius: 11px; background: color-mix(in srgb, var(--fd-team) 14%, var(--raise)); border: 1px solid color-mix(in srgb, var(--fd-team) 55%, transparent); font-size: 12px; font-weight: 800; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .fd-sit-d { font-weight: 800; }
 .fd-bar .fd-ago { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fd-list > .fd-ld { margin: 0 0 2px; }

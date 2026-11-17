@@ -113,3 +113,8 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - 3.74.1 (DJ didn't like it beside the record): down and distance is a pill under the possession team's score (`.fd-scw` wraps the score and a `.fd-poss` slot on both sides so the scores stay level). Don't move it back under the clock or beside the record.
 - 3.75.2 (DJ): clock and quarter share one line in `.fd-mid` (`.fd-ck`). The pill is now `.fd-sit`: its own centered line at the bottom of `.fd-bug` (grid-column 1 / -1), tinted in the possession team's color, reading "LAC 4th & 1 at BAL 17" (DJ: it must be obvious, with the down and the yard line). `.fd-scw` is gone.
 - Scores in the score bar: `.trail` (dimmed) only when the game is over (DJ: a dimmed trailing score made a live game look finished).
+
+## 3.77.2: headshots (DJ, Nov 17)
+- `fdFace` wraps the jersey (`fdJerseyOnly` / `hpJerseyOnly`) and lays ESPN's headshot over it once it loads (`BX_HEAD` dirs, same URL as the box score). `FD_FACE[id]` remembers 1 = has a picture, 0 = none, so redraws don't flicker. `fdJersey` and `hpJersey` return the face, so the matchup page's Top performers get it too.
+
+Also in 3.77.2 (DJ, Nov 17): the quarter comes before the clock in `.fd-ck` ("4th 9:51"), both feeds. The score bar grid is now 9 columns (spacer, team, score, spacer, clock, spacer, score, team, spacer) so each team's badge, record and score read as one group and the groups spread evenly. DJ found the old layout (badges at the edges, scores huddled in the middle) too compact on the open Duo. The situation pill stays on row 2.

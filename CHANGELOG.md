@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.77.2 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Live feed: player headshots in place of the jersey icons, on every play and in Leaders and Top rated, football and basketball. Each one sits in a circle of the team's color. When ESPN has no picture for a player (more common in college), the jersey with the number shows as before.
+- The same headshots show in Top performers on a game's matchup page, since it uses the same player rows.
+- Live feed score bar: the quarter now comes before the clock ("4th 9:51"), football and basketball.
+- Live feed score bar: it no longer bunches up in the middle. Each team's logo, record and score sit together as one group, and the two groups and the clock spread evenly across the bar. Most visible on the open Duo.
+
 ## 3.77.1 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate: the Feed button now shows only while a game is live. Finished games no longer have it; their feed is still a tap away from the matchup page.

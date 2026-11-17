@@ -300,7 +300,22 @@
   function fdNumInk(c) { return hexOk(c) ? (hlContrast(c, "#111111") >= hlContrast(c, "#ffffff") ? "#111" : "#fff") : "#fff"; }
   // 3.70.0 (DJ: "look more like a football jersey"): the player's number on a football jersey in the team's color (wide shoulders, short sleeves, a V neck),
   // in place of the numbered circle. Basketball's is hpJersey, a tank top.
-  function fdJersey(g, sd, P) {
+  // 3.77.2 (DJ: "bring the player headshots into the live feed instead of the jersey icon"): the player's ESPN headshot in a circle of the team's color,
+  // the same pictures as the box score and Box Office. The jersey with the number stays as the stand-in: it shows until the picture loads, and for good
+  // when ESPN has none (FD_FACE remembers which, so the page doesn't flicker on every update).
+  var FD_FACE = {};
+  function fdFace(g, sd, P, jersey) {
+    var dir = BX_HEAD[g.league], id = P && P.id ? String(P.id) : "";
+    if (!id || !dir || dir === "soccer" || FD_FACE[id] === 0) return jersey;
+    var c = badgeColor(g, sd) || "#2a3442", w = el("span", "fd-face" + (FD_FACE[id] === 1 ? " has" : "")); w.style.setProperty("--fc", c); w.setAttribute("aria-hidden", "true");
+    w.appendChild(jersey);
+    var im = document.createElement("img"); im.alt = ""; im.decoding = "async";
+    im.onload = function () { FD_FACE[id] = 1; w.classList.add("has"); }; im.onerror = function () { FD_FACE[id] = 0; im.remove(); };
+    im.src = "https://a.espncdn.com/combiner/i?img=/i/headshots/" + dir + "/players/full/" + id + ".png&w=96&h=70"; w.appendChild(im);
+    return w;
+  }
+  function fdJersey(g, sd, P) { return fdFace(g, sd, P, fdJerseyOnly(g, sd, P)); }
+  function fdJerseyOnly(g, sd, P) {
     var c = badgeColor(g, sd) || "#555", ink = fdNumInk(c), j = el("span", "fd-jer fd-jer-fb"), n = String(P.jer || "");
     j.style.cssText = "position:relative;flex:none;width:30px;height:27px;display:grid;place-items:center;background:none;border-radius:0;box-shadow:none";
     j.innerHTML = '<svg viewBox="0 0 30 27" width="30" height="27" style="position:absolute;inset:0;width:30px;height:27px" aria-hidden="true"><path d="M10 1.5H12.6Q15 5 17.4 1.5H20L28 5.2L28.6 12L23.6 13V24.6Q23.6 25.5 22.7 25.5H7.3Q6.4 25.5 6.4 24.6V13L1.4 12L2 5.2Z" fill="' + c + '" stroke="rgba(127,127,127,.7)" stroke-width="1" stroke-linejoin="round"/><path d="M2.3 9.2L6.4 10M27.7 9.2L23.6 10" fill="none" stroke="' + ink + '" stroke-opacity=".55" stroke-width="1.4"/></svg>';
@@ -327,7 +342,7 @@
     var want = [["passingYards", "PASS"], ["rushingYards", "RUSH"], ["receivingYards", "REC"]], cols = {}, any = false;
     (sum.leaders || []).forEach(function (t) { var sd = sideOf[String((t.team || {}).id || "")]; if (!sd) return; var col = el("div", "fd-ldc");
       want.forEach(function (w) { var L = (t.leaders || []).filter(function (x) { return x.name === w[0]; })[0], top = L && (L.leaders || [])[0], a = top && top.athlete; if (!a || !top.displayValue) return;
-        var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, { jer: a.jersey || "" }));
+        var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, { jer: a.jersey || "", id: a.id }));
         var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, a.shortName || a.displayName || "")); nmw.appendChild(el("em", "fd-pos", w[1]));
         nmw.appendChild(el("i", null, String(top.displayValue).replace(/\bYDS\b/g, "yds").replace(/\bCAR\b/g, "car").replace(/\bREC\b/g, "rec"))); row.appendChild(nmw); col.appendChild(row); any = true; });
       if (col.firstChild) cols[sd] = col; });
@@ -479,7 +494,7 @@
     ["away", "mid", "home"].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid"); var per = Number((comp.status || {}).period) || 0, ht = !over && fdIsHT(st.shortDetail || st.detail, g.league);
         var sd0 = spot && !over ? Number(spot.e.down) || 0 : 0;
-        if (ht) mid.appendChild(fdHT("b")); else { var ck = el("span", "fd-ck"); /* 3.75.2 (DJ): the quarter sits on the clock's line, not under it */ ck.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) ck.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); mid.appendChild(ck); } var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
+        if (ht) mid.appendChild(fdHT("b")); else { var ck = el("span", "fd-ck"); /* 3.75.2 (DJ): the quarter sits on the clock's line, not under it */ if (!over) ck.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); /* 3.77.2 (DJ): the quarter reads first, "4th 9:51" */ ck.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); mid.appendChild(ck); } var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
