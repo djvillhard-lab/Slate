@@ -114,7 +114,6 @@
         mid.appendChild(el("b", null, over ? "Final" : /halftime/i.test(det) ? "Half" : /^end/i.test(det) ? "End" : st.state === "pre" ? timeText(g.start) : (cst.displayClock || "")));
         if (!over && st.state !== "pre" && !/halftime/i.test(det)) mid.appendChild(el("i", null, per ? hpPerName(lg, per) : ""));
         else if (/halftime/i.test(det)) mid.appendChild(el("i", null, "Halftime"));
-        fdAgo(mid, sum, st.state === "in");
         bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
@@ -134,7 +133,7 @@
     if (lead.away || lead.home) {
       var nL = (lead.away ? 1 : 0) + (lead.home ? 1 : 0), ttl = nR === nL ? "Top rated" : nR ? "Top players" : "Top scorers";
       card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", ttl + (over ? "" : " so far")));
-      ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, "all"); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
+      ["away", "home"].forEach(function (sd) { var P = lead[sd]; if (!P) return; var row = el("div", "fd-pl"); row.appendChild(hpJersey(g, sd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", abbr(g, sd))); var lnx = hpLine(P, "all"); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
       body.appendChild(card);
     }
     var wp = (sum.winprobability || [])[(sum.winprobability || []).length - 1];
@@ -179,13 +178,13 @@
         if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); c2.appendChild(tw); }
         c2.appendChild(el("p", "fd-pt", fdTitleText(rd.title)));
         if (raw && raw !== rd.title) c2.appendChild(el("p", "fd-px", raw));
-        if (rd.P) { var P = rd.P, psd = sideOf[P.tid] || sd2 || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); if (P.pos) nmw.appendChild(el("em", "fd-pos", P.pos)); var lnx = hpLine(P, rd.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); c2.appendChild(row); }
+        if (rd.P) { var P = rd.P, psd = sideOf[P.tid] || sd2 || "away", row = el("div", "fd-pl"); row.appendChild(hpJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); if (P.pos) nmw.appendChild(el("em", "fd-pos", P.pos)); var lnx = hpLine(P, rd.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); c2.appendChild(row); }
         list.appendChild(c2);
       }
       flush();
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game tips off." : "No plays yet."));
-    body.appendChild(list);
+    fdAgo(list, sum, st.state === "in"); body.appendChild(list);
     if (plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); list.appendChild(mb); }
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
@@ -205,27 +204,38 @@
       var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); renderFeed(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); }, 0); }, true);  // "Show all players" and the team switch redraw this page
     return w;
   }
+  // a player's jersey (3.66.10, DJ): a basketball tank top in the team's color with the number on it, in place of the numbered circle
+  function hpJersey(g, sd, P) {
+    var c = badgeColor(g, sd) || "#555", ink = lum(c) > 0.62 ? "#111" : "#fff", j = el("span", "hp-jer");
+    j.style.cssText = "position:relative;flex:none;width:26px;height:28px;display:grid;place-items:center";
+    j.innerHTML = '<svg viewBox="0 0 24 26" width="26" height="28" style="position:absolute;inset:0" aria-hidden="true"><path d="M6.6 1H9.9Q12 5.6 14.1 1H17.4Q18 6.4 22 7.6V24.2Q22 25 21.2 25H2.8Q2 25 2 24.2V7.6Q6 6.4 6.6 1Z" fill="' + c + '" stroke="rgba(127,127,127,.45)" stroke-width="1"/></svg>';
+    var nb = el("b", null, P.jer ? P.jer : ""); nb.style.cssText = "position:relative;margin-top:7px;font-size:" + (String(P.jer || "").length > 1 ? "10" : "11") + "px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:" + ink; j.appendChild(nb);
+    j.setAttribute("aria-hidden", "true"); return j;
+  }
   // one emoji in front of each big play's headline (3.66.8, DJ: "Where are the emojis?"): never inside the play text
   function fdTitleText(t) {
     t = String(t || "");
-    var e = /^three-pointer/i.test(t) ? "🎯" : /^(dunk|alley-oop)/i.test(t) ? "💥" : /^free throw good/i.test(t) ? "🏀" : /^(layup|jumper|hook|tip|floater|bank|fadeaway|putback|shot|jump shot|reverse|driving|turnaround|finger roll)/i.test(t) ? "🏀"
+    var e = /^three-pointer/i.test(t) ? "🎯" : /^(dunk|alley-oop)/i.test(t) ? "💥" : /^free throw good/i.test(t) ? "🏀" : /^(two-pointer|layup|jumper|hook|tip|floater|bank|fadeaway|putback|shot|jump shot|reverse|driving|turnaround|finger roll)/i.test(t) ? "🏀"
       : /^blocked/i.test(t) ? "🚫" : /^steal/i.test(t) ? "🖐️" : /^ejected/i.test(t) ? "🟥" : /^(technical|flagrant)/i.test(t) ? "⚠️" : /^(coach's challenge|replay review)/i.test(t) ? "📺"
       : /^(td:|pick six|fumble return touchdown|return touchdown|.*touchdown!?$)/i.test(t) ? "🏈" : /^field goal is good/i.test(t) ? "🥅" : /^field goal (missed|blocked)/i.test(t) ? "❌"
       : /^safety/i.test(t) ? "🛡️" : /^intercepted/i.test(t) ? "🧤" : /^fumble/i.test(t) ? "😬" : /sacked|^sack/i.test(t) ? "💥" : /^penalty/i.test(t) ? "🚩" : "";
     return e ? e + " " + t : t;
   }
   // how long since the newest play came in (3.66.8, DJ: "a small timer since last live play appeared"), from ESPN's wall clock on each play;
-  // shown under the game clock while the game is live, ticking every second
+  // shown while the game is live, ticking every second
   function fdLastAt(sum) {
     var ps = (sum.plays || []).slice(), dr = sum.drives || {}; (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { (d && d.plays || []).forEach(function (p) { ps.push(p); }); });
     var best = 0; ps.forEach(function (p) { var t = Date.parse(p.wallclock || ""); if (t > best) best = t; }); return best;
   }
   function fdAgoText(t) { var s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? s + "s ago" : s < 3600 ? Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2) + " ago" : ""; }
-  function fdAgo(mid, sum, live) {
+  // 3.66.10 (DJ): it sits small at the top left, directly above the newest play, and starts again from 0 when a new play comes in
+  function fdAgo(list, sum, live) {
     var t = live ? fdLastAt(sum) : 0; if (!t || Date.now() - t > 3600000) return;
-    var x = el("i", "fd-ago", fdAgoText(t)); x.setAttribute("data-t", String(t)); x.setAttribute("aria-label", "Last play " + fdAgoText(t)); mid.appendChild(x);
+    var x = el("p", "fd-ago", "Last play " + fdAgoText(t)); x.setAttribute("data-t", String(t));
+    x.style.cssText = "margin:0 0 2px 2px;text-align:left;font-size:11px;font-weight:600;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums";
+    list.insertBefore(x, list.firstChild);
   }
-  setInterval(function () { if (state.view !== "feed" || document.hidden) return; var xs = document.querySelectorAll("#feed-body .fd-ago"); for (var i = 0; i < xs.length; i++) { var tx = fdAgoText(+xs[i].getAttribute("data-t")); if (xs[i].textContent !== tx) xs[i].textContent = tx; } }, 1000);
+  setInterval(function () { if (state.view !== "feed" || document.hidden) return; var xs = document.querySelectorAll("#feed-body .fd-ago"); for (var i = 0; i < xs.length; i++) { var tx = "Last play " + fdAgoText(+xs[i].getAttribute("data-t")); if (xs[i].textContent !== tx) xs[i].textContent = tx; } }, 1000);
   // one emoji in front of each play tag (3.52.4, DJ's request, like News): never inside the play text
   function fdTagText(t) {
     t = String(t || "");

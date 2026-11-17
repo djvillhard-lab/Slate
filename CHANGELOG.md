@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.66.10 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Basketball live feed: players now show a small jersey in their team's color with their number on it, in place of the numbered circle (the top-rated card and every play).
+- Live feed: the timer moved out of the score bar. It's now a small "Last play 12s ago" line at the top left, directly above the newest play, and it starts again from 0 each time a new play comes in.
+
 ## 3.66.9 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed: the game strip at the top, and swiping left and right, now go between your teams' live games (football and basketball together) plus the game you opened the live feed from, which comes first. Other live games you don't follow are no longer in the strip.
