@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.93.2
+Last updated: Nov 17, 2026, 3.94.2
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -81,6 +81,12 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - While Claude writes (3.93.2, DJ: the timer sat top right under the island on the folded Duo and the open Duo's right
   pane): `nwWriting` replaces the page (options, Press Box page, or a league briefing) with one centered card holding the
   clock (`.nx-wr`). The league tabs stay so swipe still works. No timer in any top corner.
+- Big story photo (3.94.2, DJ: a Pochettino story showed Ratcliffe): `nwFeed` keeps ESPN's photo name/caption (`inm`);
+  `nwLeadPic` takes capitalized headline words that aren't team-name words in that league (the person) and uses only a
+  photo whose name has one, from the story or any feed item; none, no photo. Team-only headlines keep the 3.82.1 rule.
+- No first person (3.94.2, DJ): RULES say write as a news report, no I/we, no "I found"; date a fact that may be stale.
+- Logos (3.94.2): an empty ESPN team list no longer gets saved for a week (045-team-logos.js); couldn't reproduce DJ's
+  missing Premier League logos on the test account.
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
   both inside the 24,000-token limit. DJ's Nov 16 "it fails on a small selection" report was the old failure's

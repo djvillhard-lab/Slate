@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.94.2 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- News, league briefings: the big story's photo now shows the person the headline is about. ESPN says who each photo shows, so a story about Pochettino uses a photo of Pochettino from any recent Premier League story, not the Sir Jim Ratcliffe photo that came with the article. If there's no photo of that person, the card shows no photo. A headline about a team keeps a photo from a story about that team.
+- Everything Claude writes reads like a news report now: no "I", "we" or "the last table I found". If a fact might be out of date, it says as of when. This starts with the next one written.
+- Team logos: if ESPN's team list for a league ever comes back empty, the app asks again two minutes later instead of showing letters (like MAN) for a week. Premier League logos load on the test account; if you still see letters, pull down to refresh after a couple of minutes.
+
 ## 3.94.1 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - Live feed on the unfolded Duo: the space left for the island now follows the page. Move the feed to the left side and its top cards go back to full width; move it back to the right and they stop short of the island again.

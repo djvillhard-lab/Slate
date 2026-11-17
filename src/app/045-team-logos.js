@@ -56,7 +56,7 @@
   }
   function logoRefresh() {
     if (logoLoading || !window.fetch) return;
-    var now = Date.now(), due = Object.keys(LOGO_FEEDS).filter(function (lg) { return !LOGO_REG[lg] || now - (LOGO_REG[lg].at || 0) > LOGO_WEEK; });
+    var now = Date.now(), due = Object.keys(LOGO_FEEDS).filter(function (lg) { var r = LOGO_REG[lg]; return !r || now - (r.at || 0) > LOGO_WEEK || (!Object.keys(r.t || {}).length && now - (r.at || 0) > 120000); });
     if (!due.length) return;
     logoLoading = true;
     Promise.all(due.map(function (lg) {
@@ -68,6 +68,7 @@
           var c1 = /^[0-9a-f]{6}$/i.test(tm.color || "") ? "#" + tm.color.toLowerCase() : "", c2 = /^[0-9a-f]{6}$/i.test(tm.alternateColor || "") ? "#" + tm.alternateColor.toLowerCase() : "";
           t[logoNorm(tm.displayName)] = [sg, c1, c2];
         });
+        if (!Object.keys(t).length) return;   // 3.94.2 (DJ: Premier League logos missing): an empty answer from ESPN counts as a failed one, tried again in two minutes, instead of a week of letters
         LOGO_REG[lg] = { at: now, t: t };
       }).catch(function () {}).then(function () {
         if (!LOGO_REG[lg] || LOGO_REG[lg].at !== now) LOGO_REG[lg] = { at: now - LOGO_WEEK + 120000, t: (LOGO_REG[lg] || {}).t || {} };   // offline or ESPN hiccup: keep what we had, try again in two minutes

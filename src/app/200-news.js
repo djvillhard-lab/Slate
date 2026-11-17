@@ -18,8 +18,10 @@
         var teams = (a.categories || []).filter(function (x) { return x.type === "team" && x.description; }).map(function (x) { return x.description; });
         var evs = (a.categories || []).filter(function (x) { return x.type === "event" && x.description; }).map(function (x) { return x.description.toLowerCase(); });
         (a.categories || []).forEach(function (x) { var id = x.athleteId || (x.athlete || {}).id; if (x.type === "athlete" && id && x.description) nwAthPut(lg, x.description, id); });
-        var img = ((a.images || []).filter(function (m) { return m && /^https:\/\//.test(m.url || "") && !/stitcher/.test(m.url); })[0] || {}).url || "";
-        return { title: a.headline, desc: a.description || "", url: ((a.links || {}).web || {}).href || "", at: a.published || a.lastModified || "", src: "ESPN", lg: lg, teams: teams, events: evs, img: img };
+        var im0 = (a.images || []).filter(function (m) { return m && /^https:\/\//.test(m.url || "") && !/stitcher/.test(m.url); })[0] || {}, img = im0.url || "";
+        // who the photo shows, as ESPN names it ("Sir Jim Ratcliffe [1296x729]"), so the big story only uses a photo of its subject (3.94.2)
+        var inm = String(im0.name || "").replace(/\[[^\]]*\]/g, " ") + " " + String(im0.caption || "") + " " + String(im0.alt || "");
+        return { title: a.headline, desc: a.description || "", url: ((a.links || {}).web || {}).href || "", at: a.published || a.lastModified || "", src: "ESPN", lg: lg, teams: teams, events: evs, img: img, inm: inm };
       });
     }, function () { return []; });
     var ath = ATH_SLUG[lg] ? fetch("/api/athletic?slug=" + ATH_SLUG[lg]).then(function (r) { return r.ok ? r.json() : { items: [] }; }).then(function (j) {
@@ -217,6 +219,20 @@
       var main = hexOk(pc[sd]) ? pc[sd] : nc[0], n = normT(g[sd]), sh = normT(short(g, sd)), ab = normT(abbr(g, sd));
       return { name: g[sd], n: n, s: sh !== n ? sh : "", w: [], lg: "Nation", nat: true, c1: main, c2: main.toLowerCase() === nc[0].toLowerCase() ? nc[1] : nc[0], k: [ab].concat(NW_NAT_ALIAS[n] || []).filter(function (k) { return k && k.length >= 2 && k !== n; }) };
     });
+  }
+  // the big story's photo (3.94.2, DJ: a Pochettino story showed Sir Jim Ratcliffe): when the headline names a person,
+  // only a photo ESPN says shows that person, from the story itself or any other story in the league's feed; none fits,
+  // no photo. A headline about a team keeps the story's own photo (or a story about the same team, 3.82.1).
+  var NW_NOT_NAME = { this: 1, that: 1, with: 1, from: 1, after: 1, week: 1, sunday: 1, monday: 1, tuesday: 1, wednesday: 1, thursday: 1, friday: 1, saturday: 1, league: 1, premier: 1, champions: 1, cup: 1, final: 1, season: 1, coach: 1, manager: 1 };
+  function nwLeadPic(lg, lead, lt, it) {
+    var items = ((nw.feeds[lg] || {}).items) || [], want = NW_TLG[lg] || "", tw = {};
+    teamIndex().forEach(function (t) { if (!want || t.lg === want) String(t.name).toLowerCase().split(/[^a-z]+/).forEach(function (w) { tw[w] = 1; }); });
+    var who = (String(lead.title || "").match(/\b[A-Z][A-Za-z'\u00C0-\u017F-]{3,}/g) || []).map(function (w) { return normT(w).split(" ")[0]; })
+      .filter(function (w) { return w && !tw[w] && !NW_NOT_NAME[w] && !LEAGUES[w]; });
+    var shows = function (a) { var n = " " + normT(a.inm || "") + " "; return who.some(function (w) { return n.indexOf(" " + w + " ") !== -1; }); };
+    if (who.length) { var hit = [it].concat(items).filter(function (a) { return a && a.img && shows(a); })[0]; return hit ? hit.img : ""; }
+    if (it && it.img) return it.img;
+    return lt ? ((items.filter(function (a) { return a.img && nwAbout(a, lt.name); })[0]) || {}).img || "" : "";
   }
   function nwLgOfTeam(t) { if (!t) return ""; for (var k in NW_TLG) if (NW_TLG[k] === t.lg && t.lg !== "College") return k; return ""; }
   function nwSportEm(lg) { var b = String(bxBase(lg) || ""); return /football\/(nfl|college)/.test(b) ? "🏈" : /basketball/.test(b) ? "🏀" : /hockey/.test(b) ? "🏒" : /baseball/.test(b) ? "⚾" : /soccer/.test(b) ? "⚽" : "🏆"; }
@@ -575,7 +591,7 @@
     if (doc.lead && doc.lead.title) {
       var lt = nwTeam(doc.lead.team, lg), it = nwItem(lg, doc.lead.url);
       // The Athletic's stories carry no picture: use the newest ESPN photo of a story about the same team (3.82.1)
-      var pic = it && it.img ? it.img : lt ? ((((nw.feeds[lg] || {}).items) || []).filter(function (a) { return a.img && nwAbout(a, lt.name); })[0] || {}).img : "";
+      var pic = nwLeadPic(lg, doc.lead, lt, it);
       var ld = nwTint(el(doc.lead.url ? "a" : "div", "nx-lead"), lt);
       if (doc.lead.url) { ld.href = safeUrl(doc.lead.url); ld.target = "_blank"; ld.rel = "noopener"; }
       var im = pic ? nwImg(nwPic(pic, 720), "nx-limg") : null; if (im) ld.appendChild(im);
