@@ -199,6 +199,16 @@ html .dock-day .dd-arrow:active { background: var(--raise); }
 .nw-gh b { font-size: 15px; font-weight: 800; } .nw-gh span { font-size: 12px; font-weight: 700; color: var(--muted); }
 .nw-about { justify-self: start; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 6px; background: color-mix(in srgb, var(--accent-fill) 18%, transparent); color: var(--accent); }
 .nw-tabs[hidden] { display: none; }
+/* News tabs (3.80.0): Press Box (the personal page) first, then a one-tap briefing per league. The row is the
+   app's league tabs (.strip / .lg-tab, as in Box Office), scrolled sideways; the button on a briefing's top card
+   is the page's Regenerate button at a full 44-point height. */
+.nx > .nx-strip { margin: 0 0 12px; padding-left: 2px; padding-right: 2px; }
+.nx-strip .lg-tab { white-space: nowrap; }
+.nx-bf { margin-top: 0; }
+.nx-bf .nx-regen { min-height: 44px; }
+.nx-bf .nx-busy.sm { flex: none; }
+.nx .nx-bgo { margin-top: 12px; }
+.nx .nx-bgo + .nx-note { margin-top: 10px; }
 /* the page's own menu button, Back and the menu capsule use the same frosted glass as the day picker (and the app's menu) */
 /* clear glass like Apple's (the app's own menu): mostly see-through, lightly blurred, a bright edge */
 :root { --glass-clear: rgba(255, 255, 255, .13); --glass-edge: rgba(255, 255, 255, .16); }

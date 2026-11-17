@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.0 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- News: a row of tabs across the top. The first tab, Press Box, is the News page you had (Claude's page for your picks), and it's where News opens.
+- The other tabs are leagues (NFL, CFB, NBA, CBB, NHL and the rest, in your All games order). Tap one, then Generate, and Claude writes that league's briefing in about a minute: the newest stories first, then the take, who's hot and cold, standout performances, injuries and the best reads. It reads the latest ESPN and Athletic headlines and searches the web for today's news.
+- A briefing is saved for everyone for the day, so a league someone already generated shows right away, with when it was written. Update writes a fresh one with one tap.
+- On Press Box, a league's card now opens that league's tab ("NFL briefing") instead of a separate breakdown.
+
 ## 3.80.0 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Unfolded Duo: the screen is now two separate sides, one on each side of the fold. Each side has its own page, its own menu and Back, and keeps its own live scores, so you can follow two Live feeds at once, or keep the slate open next to Box Office.

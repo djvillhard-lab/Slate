@@ -302,18 +302,19 @@ watch: exactly 3. sides: both teams, away first. timeline: 3-4 dated events that
  "timeline": [{"when": "a short date like Nov 11", "text": "one line: what happened"}],
  "next": "one line: the next game or two, with day and opponent",
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
-latest: 3-4, newest first. timeline: 3-4 dated events in the team's biggest current storyline, oldest first. said: null if your sources have nothing.` : `{"take": ["two paragraphs, 90-140 words in all: what is going on around this league right now"],
+latest: 3-4, newest first. timeline: 3-4 dated events in the team's biggest current storyline, oldest first. said: null if your sources have nothing.` : `{"take": ["two paragraphs, 90-140 words in all: what is going on around this league right now, the newest news first"],
+ "latest": [{"tag": "one or two words, such as Trade, Injury, Fired, Upset", "text": "one line: a specific development from the last day or two"}],
  "hot": [{"team": "team name", "text": "two to four words, such as won 12 straight"}],
  "cold": [{"team": "team name", "text": "two to four words"}],
  "perf": [{"tag": "the stat line or feat in a few words, such as 43 points or 223 yards, 3 TDs: 30 characters at most", "text": "one line: who did it and in what game"}],
  "number": {"value": "one striking number or milestone from your sources: the figure alone or with one or two words, such as 223 yards, 14 characters at most", "text": "one sentence on what it is and why it matters"},
  "injuries": ["one line each: the injuries that matter most league-wide"],
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
-hot and cold: up to 3 each. perf: 3-5 standout performances from the last two days. injuries: up to 4; [] if none.`;
-    return `You're writing a tap-in breakdown for the News page of a sports fan's app: a deeper, more creative look at one ${type === "g" ? "game" : type === "t" ? "team" : "league"} than the dashboard card they just tapped. Today is ${new Date().toDateString()}.
+latest: 4-6 of the newest stories (last 48 hours), newest first, each a different story. hot and cold: up to 3 each. perf: 3-5 standout performances from the last two days. injuries: up to 4; [] if none.`;
+    return `${type === "l" ? "You're writing a league news briefing for the News page of a sports fan's app: the most up-to-date news around one league, the kind a fan taps to catch up in a minute. Lead with what happened most recently." : `You're writing a tap-in breakdown for the News page of a sports fan's app: a deeper, more creative look at one ${type === "g" ? "game" : "team"} than the dashboard card they just tapped.`} Today is ${new Date().toDateString()}.
 Subject (JSON): ${game}
 Facts (JSON: free ESPN data and headlines with url, plus what the dashboard card already said, so go beyond it): ${facts}
-Do up to two web searches for the latest news and the story behind it (last 3 days).
+${type === "l" ? "Do up to three web searches for the newest news around this league (today and the last two days): trades, injuries, firings, results, rankings." : "Do up to two web searches for the latest news and the story behind it (last 3 days)."}
 ${RULES}
 Every number, date and statement must come from the facts or your searches; your opinions (the take${type === "g" ? ", the verdict and the hunch" : type === "t" ? " and the mood" : ""}) are yours and should read like a sharp friend's.
 Answer with only this JSON inside <json></json> tags:
@@ -448,7 +449,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const p = event.payload, t = target(p);
     try {
-      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, SEARCHES[p.kind]));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, p.kind === "deep" && p.key[0] === "l" ? 3 : SEARCHES[p.kind]));
       const ans = stripCites(res.ans || res);
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, null, !!res.tooLong); } catch (e) {} return true; });
       if (res.tooLong) throw new Error("Claude's answer ran too long");
@@ -475,7 +476,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           if (!out.take.length) throw new Error("Claude's breakdown came back empty");
           if (type === "g") Object.assign(out, { verdict: S(ans.verdict, 40), watch: hits(ans.watch, 3), sides: pairs(ans.sides, 2, "team"), timeline: pairs(ans.timeline, 4, "when"), hunch: S(ans.hunch, 300) });
           else if (type === "t") Object.assign(out, { mood: S(ans.mood, 32), latest: hits(ans.latest, 4), said: ans.said && ans.said.text ? { text: S(ans.said.text, 300), who: S(ans.said.who, 120) } : null, timeline: pairs(ans.timeline, 4, "when"), next: S(ans.next, 200) });
-          else Object.assign(out, { hot: pairs(ans.hot, 3, "team"), cold: pairs(ans.cold, 3, "team"), perf: hits(ans.perf, 5), injuries: strs(ans.injuries, 4).map((x) => x.slice(0, 240)) });
+          else Object.assign(out, { latest: hits(ans.latest, 6), hot: pairs(ans.hot, 3, "team"), cold: pairs(ans.cold, 3, "team"), perf: hits(ans.perf, 5), injuries: strs(ans.injuries, 4).map((x) => x.slice(0, 240)) });
           await putDoc(this.env, t.path, out);
         } else if (p.kind === "news") {
           const reads = (Array.isArray(ans.reads) ? ans.reads : []).filter((r) => r && r.title && /^https:\/\//.test(r.url || "")).slice(0, 4).map((r) => ({ title: String(r.title).slice(0, 200), url: String(r.url).slice(0, 600), source: String(r.source || "").slice(0, 40), why: String(r.why || "").slice(0, 160) }));

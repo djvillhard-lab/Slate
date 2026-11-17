@@ -1,10 +1,23 @@
 # News
-Last updated: Nov 16, 2026, 3.53.1
+Last updated: Nov 17, 2026, 3.80.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
 ## Done
+- Tabs (3.80.0, DJ's ask: "the current news page called something special, first and default in a row of filter
+  tabs, then one-click news for each league"): the row is the app's league tabs (`.strip` / `.lg-tab`, as in Box Office),
+  built in `nwStrip()`. First tab **Press Box** (`NW_HOME`) is the personal page below; News opens on it, and the picked
+  tab lasts while the app is open (`nw.lg`, null = Press Box). Then one tab per league, in the All games order
+  (`state.gamesOrder`, else `ORDER`; `nwBriefLgs()`). Names offered to DJ: Press Box (picked, echoes Box Office),
+  The Wire, Newsroom. Renaming = change `NW_HOME`.
+- League briefing (`nwRenderBriefTop` + `nwRenderDeep(body, brief)`): the same shared doc as a league breakdown,
+  always for today: `newsdeep/<today>-l-<league>`. Top card: "<League> briefing", Updated time + how long ago, and
+  one button: Generate (no briefing yet today) or Update (one tap, no confirm). Claude writes only on that tap. The
+  tap re-fetches the ESPN and Athletic headlines (`nwFeed(lg, true)`), sends 20 of them plus today's league games
+  (slate first). Worker prompt for `l-` keys is a briefing ("newest first", up to 3 searches) and adds `latest`
+  (4-6 newest stories, rendered right after the take).
+- On Press Box, a league card's button is "<TAG> briefing" and switches to that league's tab.
 - Options screen ("Customize today's news", 3.47.1): three groups, Today's slate, My teams, Leagues. No group
   checkmarks and nothing picked to start; the user picks each game, team and league (chips), with "n of N picked" and
   All / Clear per group. Game chip = league tag and time above the two team badges; team chip = badge + league tag.
