@@ -21,6 +21,12 @@ html.wl-on .toast { z-index: 45; }
 .gate-err { margin: 0; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 700; color: var(--ink); background: color-mix(in srgb, var(--live) 16%, var(--card)); }
 .gate-go { width: 100%; height: 48px; }
 .gate-go:disabled, .inv .solid:disabled { opacity: .6; }
+/* Sign in with Google (3.95.0): Google's own mark on Slate's outline button, under the passcode log-in */
+.gate-or { text-align: center; font-size: 13px; font-weight: 700; color: var(--dim); }
+.gate-google { width: 100%; height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.gate-google svg, .acct-g svg { width: 20px; height: 20px; flex: none; }
+.gate-google:disabled { opacity: .6; }
+.gate-note { padding: 12px; border-radius: 8px; background: var(--card); color: var(--ink); }
 .gate-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 .gate-link, .wl-skip { min-height: 44px; padding: 0 4px; font-size: 15px; font-weight: 700; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .wl { display: flex; flex-direction: column; overflow: hidden; }

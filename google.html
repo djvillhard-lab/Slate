@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Slate · Google</title>
+<!-- Sign in with Google (3.95.0, worker/google.js). Slate opens this page in Safari (or a new tab) with a one-time
+     ticket in the link: Google sign-in can't run inside the iPhone app. After Google, the server ties the Google
+     account to the profile (Connect) or gives the phone that asked a key for its profile (Sign in); the app is
+     checking every few seconds and picks it up by itself. -->
+<style>
+body { margin: 0; background: #121821; color: #ECF1F7; font: 17px/1.5 -apple-system, Helvetica, Arial, sans-serif; display: grid; place-items: center; min-height: 100vh; }
+main { max-width: 420px; padding: 24px 16px; }
+.mark { font-weight: 800; letter-spacing: .02em; color: #45A85E; margin-bottom: 18px; }
+h1 { font-size: 24px; line-height: 1.25; margin: 0 0 8px; }
+p { color: #A0ACBD; margin: 0 0 14px; }
+p.err { color: #FF6B6B; }
+button { font: inherit; font-weight: 700; border-radius: 6px; padding: 12px 22px; min-height: 44px; cursor: pointer; }
+.g { display: inline-flex; align-items: center; gap: 10px; background: #FFFFFF; color: #1F1F1F; border: 1px solid #DADCE0; }
+.g svg { width: 20px; height: 20px; }
+.back { background: #45A85E; color: #0C0C0C; border: 0; }
+button[disabled] { opacity: .6; }
+</style>
+</head>
+<body>
+<main>
+  <div class="mark">Slate</div>
+  <h1 id="h">One moment…</h1>
+  <p id="p"></p>
+  <p class="err" id="err" hidden></p>
+  <div id="act"></div>
+</main>
+<script>window.SLATE_SELF = {url: "https://xpkzcdaawaqiqgwkkwst.supabase.co", key: "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ"};</script>
+<script src="supabase.js"></script>
+<script>
+(function () {
+  var C = window.SLATE_SELF;
+  var sb = window.supabase.createClient(C.url, C.key, { auth: { flowType: "pkce", persistSession: true, autoRefreshToken: false, detectSessionInUrl: false, storageKey: "slate-google-auth" } });
+  function $(id) { return document.getElementById(id); }
+  function say(h, p) { $("h").textContent = h; $("p").textContent = p || ""; $("p").hidden = !p; }
+  function oops(m) { $("err").textContent = m; $("err").hidden = false; }
+  function clearAct() { $("act").textContent = ""; }
+  function post(op, body) {
+    return fetch("/api/google/" + op, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return { error: "Something went wrong. Try again." }; }); }, function () { return { error: "No connection. Check your signal and try again." }; });
+  }
+  var t = "";
+  try {
+    var m = /[#&]t=([0-9a-f]{36})/.exec(location.hash);
+    if (m) { sessionStorage.setItem("slate-gt", m[1]); history.replaceState(null, "", location.pathname + location.search); }
+    t = sessionStorage.getItem("slate-gt") || "";
+  } catch (e) {}
+  var q = new URLSearchParams(location.search);
+  function backBtn(label) {
+    var b = document.createElement("button"); b.className = "back"; b.type = "button"; b.textContent = label || "Back to Slate";
+    b.addEventListener("click", function () { try { window.close(); } catch (e) {} setTimeout(function () { location.href = "/"; }, 300); });
+    $("act").appendChild(b);
+  }
+  function googleBtn() {
+    var b = document.createElement("button"); b.className = "g"; b.type = "button";
+    b.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.2-8.5 2.2-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span>Continue with Google</span>';
+    b.addEventListener("click", function () {
+      b.disabled = true;
+      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/google.html", queryParams: { prompt: "select_account" } } })
+        .then(function (r) { if (r.error) { b.disabled = false; oops("Google didn't open. Try again."); } });
+    });
+    $("act").appendChild(b);
+  }
+  if (!t) { say("Start from Slate", "Open Slate and tap Connect Google (Settings → Account and people) or Sign in with Google on the log-in page."); backBtn("Open Slate"); return; }
+
+  if (q.get("error")) {
+    say("Google sign-in stopped", "Nothing changed in Slate.");
+    oops(q.get("error_description") || "Google didn't finish. Try again.");
+    history.replaceState(null, "", location.pathname); googleBtn(); return;
+  }
+  if (q.get("code")) {
+    say("Checking with Google…", "");
+    var code = q.get("code"); history.replaceState(null, "", location.pathname);
+    sb.auth.exchangeCodeForSession(code).then(function (r) {
+      var tok = r && r.data && r.data.session && r.data.session.access_token;
+      if (!tok) { say("Google sign-in didn't finish", "Nothing changed in Slate."); oops("Try again."); googleBtn(); return; }
+      return post("finish", { t: t, token: tok }).then(function (j) {
+        sb.auth.signOut({ scope: "local" }).catch(function () {});
+        clearAct();
+        var gs = ""; try { gs = sessionStorage.getItem("slate-gs") || ""; } catch (e) {}
+        if (j.ok && gs) {  // started on this website, in this tab: finish here and go back to Slate
+          return post("poll", { t: t, s: gs }).then(function (r) {
+            try { sessionStorage.removeItem("slate-gs"); sessionStorage.removeItem("slate-gt"); } catch (e) {}
+            if (r.ok && r.kind === "signin" && r.pass) {
+              try { localStorage.setItem("slate-pass", r.pass); localStorage.setItem("slate-user", r.id); localStorage.setItem("slate-user-name", r.name || ""); localStorage.setItem("slate-admin", r.admin ? "1" : ""); localStorage.removeItem("slate-view-only"); } catch (e) {}
+              say("You're signed in, " + (r.name || ""), "Opening Slate…");
+            } else if (r.ok) { say("Google is connected", "Going back to Slate…"); try { sessionStorage.setItem("slate-google-done", r.email || "1"); } catch (e) {} }
+            else { say("That didn't work", "Nothing changed in Slate."); oops(r.error || "Try again."); backBtn(); return; }
+            setTimeout(function () { location.replace("/"); }, 900);
+          });
+        }
+        if (j.ok && j.kind === "link") { say("Google is connected", "Your Slate profile (" + (j.name || "") + ") now opens with " + (j.email || "this Google account") + ". Your teams, rules, favorites and alerts are unchanged. Go back to Slate to see it."); try { sessionStorage.removeItem("slate-gt"); } catch (e) {} backBtn(); }
+        else if (j.ok) { say("You're signed in, " + (j.name || ""), "Go back to Slate. It opens your profile in a few seconds."); try { sessionStorage.removeItem("slate-gt"); } catch (e) {} backBtn(); }
+        else { say("That didn't work", "Nothing changed in Slate."); oops(j.error || "Try again."); }
+      });
+    });
+    return;
+  }
+  post("peek", { t: t }).then(function (j) {
+    if (j.error) { say("This link ran out", "Go back to Slate and start again."); oops(j.error); backBtn(); return; }
+    if (j.kind === "link") say("Connect Google to " + j.name + "'s Slate profile", "Your teams, rules, favorites and alerts stay exactly as they are. Afterwards you can open Slate on any phone with Google instead of a passcode.");
+    else say("Sign in to Slate with Google", "Use the Google account you connected in Slate. Only continue if you just tapped Sign in with Google in Slate yourself.");
+    googleBtn();
+  });
+})();
+</script>
+</body>
+</html>

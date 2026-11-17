@@ -17,3 +17,11 @@ Full review: Claude Doc "Slate safety, security and scaling review" (Nov 17, 202
 ## Decisions
 - No IP-wide CAPTCHA or account lockout: a lockout per account would let anyone lock DJ out.
 - The GitHub "Add a person" action still writes plain SHA-256; prefer invites (HMAC) for new people.
+
+## Sign in with Google (Web 3.95.0, Nov 17, 2026)
+- Google is turned on in Supabase Auth (DJ's Google Cloud project "Slate", OAuth client set up Nov 17). Slate only uses Supabase Auth to confirm who someone is; it keeps the Supabase user id and email in `users/google` (private).
+- Connect (Settings → Account and people) ties Google to the profile the phone is logged in as. Nothing moves: the profile id (u/bro, u/dad...) stays, so all data, settings, favorites and rules stay. Passcodes keep working.
+- Sign in with Google (log-in page) gives that phone a device key (`g1-...`), stored only as an HMAC in `users/devices`; whoIs treats it like the profile's passcode, so the rest of the app is unchanged. Removing a person also drops their device keys and Google link.
+- The Google step always runs in a browser (`google.html`), joined to the app by a one-time ticket (`users/gtickets`, 15 minutes, poll secret stays on the phone). In the iPhone app it opens in Safari and the app polls; on the website the same tab goes and comes back. No new iPhone build needed.
+- DJ's profile can connect Google but still logs in with its passcode (DJ's saves are checked in the database, `save_doc`).
+- Open: Sign in with Apple and sign-in inside the app (ASWebAuthenticationSession) need an iPhone build and DJ's yes. Retire the old plain-hash passcodes for Drew and Doug only after they've connected Google and DJ says so.

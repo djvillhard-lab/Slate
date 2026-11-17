@@ -447,6 +447,46 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     ppl.busy = true; acctPeople();
     invCall({ action: "list" }).then(function (j) { ppl.busy = false; if (j.people) ppl.list = j.people; if (j.list) inv.list = j.list; acctPeople(); });
   }
+  // ---- Sign in with Google (3.95.0): Connect ties Google to this profile, so it can open on any phone without the
+  // passcode. Nothing about the profile changes. The Google part runs in Safari (db-shim.js slateGoogle, google.html). ----
+  var gst = { state: "", email: "", msg: "" };
+  function gCall(op) {
+    return fetch("/api/google/" + op, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: slatePass() }) })
+      .then(function (r) { return r.json(); }).catch(function () { return { error: "No connection. Try again." }; });
+  }
+  function acctGoogle() {
+    var box = $("acct-google"); if (!box) return;
+    if (!gst.state) { gst.state = "load"; gCall("status").then(function (j) { gst.state = j.linked ? "linked" : "off"; gst.email = j.email || ""; acctGoogle(); }); }
+    box.textContent = "";
+    var me = ""; try { me = localStorage.getItem("slate-user") || ""; } catch (e) {}
+    var r = el("div", "optrow acct-g"), t = el("div");
+    t.appendChild(el("b", null, gst.state === "linked" ? "Google connected" : "Sign in with Google"));
+    t.appendChild(el("span", null, gst.msg || (gst.state === "linked"
+      ? gst.email + (me === "dj" ? ". Your own phone keeps logging in with your passcode for now." : ". On a new phone, tap Sign in with Google on the log-in page. Your passcode still works too.")
+      : gst.state === "wait" ? "Finish in Safari, then come back here."
+      : "Connect your Google account so Slate opens on any phone without a passcode. Your teams, rules, favorites and alerts stay as they are.")));
+    r.appendChild(t);
+    if (gst.state === "load") { box.appendChild(r); return; }
+    var b = el("button", "outline quiet", gst.state === "linked" ? "Disconnect" : gst.state === "wait" ? "Waiting…" : "Connect"); b.type = "button";
+    if (gst.state === "wait") b.disabled = true;
+    b.addEventListener("click", function () {
+      if (gst.state === "linked") {
+        if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again"; setTimeout(function () { delete b.dataset.sure; b.textContent = "Disconnect"; }, 4000); return; }
+        b.disabled = true; gCall("unlink").then(function (j) { if (j.ok) { gst.state = "off"; gst.email = ""; toast("Google disconnected. Your passcode still works."); } else toast(j.error || "Couldn't disconnect. Try again."); acctGoogle(); });
+        return;
+      }
+      b.disabled = true; gst.msg = "";
+      window.slateGoogle("link", function (j) {
+        if (j.opened) { gst.state = "wait"; acctGoogle(); return; }
+        if (j.ok) { gst.state = "linked"; gst.email = j.email || ""; toast("Google is connected"); }
+        else { gst.state = "off"; gst.msg = j.error || "Couldn't connect. Try again."; }
+        acctGoogle();
+      });
+    });
+    r.appendChild(b); box.appendChild(r);
+  }
+  // back from Google in this same tab (the website): say so once
+  try { if (sessionStorage.getItem("slate-google-done")) { sessionStorage.removeItem("slate-google-done"); setTimeout(function () { toast("Google is connected"); }, 800); } } catch (e) {}
   function acctRows() {
     var slot = $("acct-slot"); if (!slot || !window.SLATE_SELF) return;
     slot.textContent = "";
@@ -463,6 +503,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       b.dataset.sure = "1"; b.textContent = "Tap again to log out"; setTimeout(function () { delete b.dataset.sure; b.textContent = "Log out"; }, 4000);
     });
     else row("Not logged in", "This phone is just looking. Log in to save teams, rules and alerts.", "Log in", function () { if (window.slateAskPass) window.slateAskPass(); });
+    if (signed && window.slateGoogle) { var gb = el("div"); gb.id = "acct-google"; wrap.appendChild(gb); }
     if (signed) {
       head("Welcome");
       row("Welcome walkthrough", "Pick teams and rebuild your own slate rules from a few questions.", "Start", function () { wlStart(false); });
@@ -478,6 +519,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       var pb = el("div", "acct-people"); pb.id = "acct-people"; wrap.appendChild(pb);
     }
     slot.appendChild(wrap);
+    acctGoogle();
     if (state.setPage === "account") acctLoadPeople();
   }
   (function () { var b = document.querySelector('#view-settings [data-open="account"]'); if (b) b.addEventListener("click", function () { ppl.list = ppl.list || null; acctLoadPeople(); }); })();

@@ -9,6 +9,7 @@ import { runNewsletters, rss } from "./newsletters.js";
 import { runMorningEmail, morningApi, confirmEmail } from "./morning-email.js";
 import { feedbackRoute } from "./feedback.js";
 import { usageRoute } from "./usage.js";
+import { googleRoutes } from "./google.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -41,6 +42,12 @@ async function whoIsRaw(env, pass) {
   // anyone else only if their users/registry entry says admin: true (nobody does today, and nothing in the app sets it).
   if (chk.ok && !/not allowed|error/i.test(chk.text)) return { id: "dj", name: "DJ", cap: 0, admin: true };
   const reg = (await getDoc(env, "users/registry")) || {}, u = (reg.users || {})[await sha(pass)] || (reg.users || {})[await passKey(env, pass)];  // the second: a passcode chosen at sign-up (signup.js)
+  // a phone signed in with Google (worker/google.js, 3.95.0) has its own device key, kept in users/devices; it acts as that profile
+  if (!u && pass.startsWith("g1-")) {
+    const dv = ((await getDoc(env, "users/devices")) || {}).keys || {}, d = dv[await passKey(env, pass)];
+    const p = d && d.id && d.id !== "dj" ? Object.values(reg.users || {}).find((x) => x && x.id === d.id) : null;
+    if (p) return { id: p.id, name: p.name || p.id, cap: Math.min(Number(p.cap) || 10, 10), admin: p.admin === true };
+  }
   // everyone but DJ gets at most 10 Claude summaries a day (a lower cap in the registry still applies)
   return u && u.id ? { id: u.id, name: u.name || u.id, cap: Math.min(Number(u.cap) || 10, 10), admin: u.admin === true } : null;
 }
@@ -340,6 +347,8 @@ export default {
       const r = await rpc(env, "mirror_doc", { p_path: path, p_data: p.data || {}, p_merge: !!p.merge });
       return r.ok ? json({ ok: true }) : fail("Couldn't save " + r.status, 502);
     }
+    // Sign in with Google, tied to an existing profile (worker/google.js)
+    if (url.pathname.startsWith("/api/google/")) return googleRoutes(req, env, url, { json, whoIs, getDoc, putDoc, passKey });
     // invite-only sign-up (signup.js)
     if (url.pathname === "/api/invite" || url.pathname === "/api/invite-check" || url.pathname === "/api/signup") return signupRoutes(req, env, url, { json, whoIs, getDoc, putDoc });
     return env.ASSETS.fetch(req);

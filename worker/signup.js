@@ -53,6 +53,11 @@ export async function signupRoutes(req, env, url, h) {
     if (p.action === "remove") {
       const gone = Object.keys(users).filter((k) => users[k].id === String(p.id || "") && users[k].id !== "dj" && users[k].admin !== true);
       if (gone.length) { gone.forEach((k) => delete users[k]); reg.users = users; await putDoc(env, "users/registry", reg); }
+      // and the phones they signed in on with Google (worker/google.js); their Google link goes too
+      const dv = (await getDoc(env, "users/devices")) || {}, ks = Object.keys(dv.keys || {}).filter((k) => dv.keys[k].id === String(p.id || ""));
+      if (ks.length && gone.length) { ks.forEach((k) => delete dv.keys[k]); await putDoc(env, "users/devices", dv); }
+      const gl = (await getDoc(env, "users/google")) || {}, gs = Object.keys(gl.links || {}).filter((k) => gl.links[k].id === String(p.id || ""));
+      if (gs.length && gone.length) { gs.forEach((k) => delete gl.links[k]); await putDoc(env, "users/google", gl); }
     }
     // "setpass" (security review, 3.83.0): the admin gives someone a new passcode, kept the safe way (HMAC, like sign-up).
     // Their old passcode stops working (within 5 minutes, the server's memory of right passcodes); their data stays theirs.

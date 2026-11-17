@@ -17,6 +17,47 @@
       .then(function (r) { return r.json().then(function (j) { j = j || {}; j.status = r.status; return j; }, function () { return { status: r.status, error: "Something went wrong. Try again." }; }); },
         function () { return { status: 0, error: "No connection. Check your signal and try again." }; });
   }
+  // ---- Sign in with Google (3.95.0, worker/google.js, google.html) ----
+  // Google can't sign in inside the iPhone app, so Slate gets a one-time ticket and opens google.html in Safari; this
+  // phone then checks every few seconds until the browser is done. On the website the same tab goes there and back.
+  // kind "link": tie Google to the profile this phone is logged in as. "signin": log this phone in as the profile tied to
+  // the Google account. done(answer) gets {ok, kind, email} or {error}; a sign-in reloads the page as that profile.
+  function nativeHost() {
+    var w = window;
+    try { while (w.parent && w.parent !== w && !(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.slate)) w = w.parent; } catch (e) {}
+    try { return w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.slate ? w.webkit.messageHandlers.slate : null; } catch (e) { return null; }
+  }
+  var gPoll = null;
+  window.slateGoogle = function (kind, done) {
+    done = done || function () {};
+    var body = { kind: kind }; if (kind === "link") body.pass = pass();
+    return post("/api/google/start", body).then(function (j) {
+      if (!j.t) { done({ error: j.error || "Couldn't start. Try again." }); return; }
+      var url = location.origin + "/google.html#t=" + j.t, host = nativeHost();
+      if (!host) {  // the website: this tab goes to Google and comes back (google.html finishes with the second half)
+        try { sessionStorage.setItem("slate-gs", j.s); sessionStorage.setItem("slate-gt", j.t); } catch (e) {}
+        location.href = url; return;
+      }
+      host.postMessage({ t: "open", url: url });
+      if (gPoll) clearInterval(gPoll);
+      var until = Date.now() + 15 * 60000, busy = false;
+      function check() {
+        if (busy || document.visibilityState === "hidden") return;
+        if (Date.now() > until) { clearInterval(gPoll); gPoll = null; done({ error: "That took too long. Try again." }); return; }
+        busy = true;
+        post("/api/google/poll", { t: j.t, s: j.s }).then(function (r) {
+          busy = false; if (r.wait || r.status === 0) return;
+          clearInterval(gPoll); gPoll = null; document.removeEventListener("visibilitychange", check);
+          if (r.ok && r.kind === "signin" && r.pass) { signedIn(r.pass, r.id, r.name, false, r.admin); return; }
+          done(r);
+        });
+      }
+      gPoll = setInterval(check, 3000); document.addEventListener("visibilitychange", check);
+      done({ opened: true });
+    });
+  };
+  // Google sent the browser back to the home page instead of google.html: hand the answer to google.html
+  try { if (/[?&](code|error)=/.test(location.search) && sessionStorage.getItem("slate-gt")) location.replace("/google.html" + location.search); } catch (e) {}
   function mk(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function signedIn(passcode, id, name, fresh, admin) {
     try {
@@ -63,6 +104,18 @@
           return j.status === 403 ? "That passcode didn't work. Check it and try again." : j.status === 0 ? j.error : "Couldn't check that just now. Try again.";
         });
       });
+      var gg = mk("button", "outline gate-google"); gg.type = "button";
+      gg.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.2-8.5 2.2-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span>Sign in with Google</span>';
+      gg.addEventListener("click", function () {
+        if (busy) return; busy = true; err.hidden = true; gg.disabled = true;
+        window.slateGoogle("signin", function (r) {
+          busy = false; gg.disabled = false;
+          if (r.opened) { err.textContent = "Finish in Safari, then come back here. Slate opens by itself."; err.className = "gate-p gate-note"; err.hidden = false; return; }
+          err.className = "gate-err"; err.textContent = r.error || "Couldn't sign in. Try again."; err.hidden = false;
+        });
+      });
+      box.appendChild(mk("div", "gate-or", "or"));
+      box.appendChild(gg);
       links.appendChild(link("I have an invite", function () { gate("code"); }));
       links.appendChild(link("Just look around", function () { try { localStorage.setItem("slate-view-only", "1"); } catch (e) {} g.remove(); }));
     } else if (mode === "code") {

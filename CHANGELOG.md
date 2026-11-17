@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.95.0 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Sign in with Google. In Settings → Account and people, tap Connect next to Sign in with Google and pick your Google account. That ties Google to the profile you're already in, so your teams, slate rules, favorites, alerts and everything else stay exactly as they are. Your passcode keeps working too.
+- After that, on a new phone or after logging out, tap Sign in with Google on the log-in page instead of typing a passcode.
+- In the iPhone app, the Google step opens in Safari (Google doesn't allow its sign-in inside apps). Finish there, go back to Slate, and it picks it up by itself within a few seconds.
+- DJ's own profile can be connected, but DJ's phone keeps logging in with the passcode for now.
+
 ## 3.94.2 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - News, league briefings: the big story's photo now shows the person the headline is about. ESPN says who each photo shows, so a story about Pochettino uses a photo of Pochettino from any recent Premier League story, not the Sir Jim Ratcliffe photo that came with the article. If there's no photo of that person, the card shows no photo. A headline about a team keeps a photo from a story about that team.
