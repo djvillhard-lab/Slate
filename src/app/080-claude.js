@@ -46,7 +46,7 @@
     } catch (e) {}
     return f;
   }
-  function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; return o; }
+  function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage", "post"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; return o; }
   function claudeAsk(kind, g, team) {
     var pass = slatePass(); if (!pass) { toast("Enter your passcode first (bottom of the page)"); return; }
     var k = kind === "team" ? "t:" + team.key : "g:" + state.date + ":" + g.id; CL_ASK[k] = Date.now(); keepScroll(render);

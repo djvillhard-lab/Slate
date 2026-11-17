@@ -349,7 +349,7 @@ const RULES = `Rules for all writing: plain text only, no citation tags or marku
 function prompt(p) {
   const game = p.game, facts = p.facts;
   if (p.kind === "news" && p.key === "page") return `You're writing the News page of a sports fan's app: a quick-look dashboard of everything this person would want to know today. Today is ${new Date().toDateString()}.
-Facts (JSON): "cover" (what they asked this page to cover), "games" (the games on their slate today: id, league, teams, records, start time in UTC, status (not started, live now or finished), TV), "teams" (their favorite teams), "leagues" (leagues they picked), "headlines" (free ESPN and The Athletic headlines with url: byGame by slate game id, byTeam by team name, byLeague by league key, and around: the newest headlines from the major leagues, whether or not this person follows them) and "prev" (the top stories from the last time this page was written today, if any): ${facts}
+Facts (JSON): "cover" (what they asked this page to cover), "games" (the games on their slate today: id, league, teams, records, start time in UTC, status (not started, live now or finished), TV, note (the round or event), playoff (true for a playoff or postseason game: write about it as one, never about regular-season standings as still at stake)), "teams" (their favorite teams), "leagues" (leagues they picked), "headlines" (free ESPN and The Athletic headlines with url: byGame by slate game id, byTeam by team name, byLeague by league key, and around: the newest headlines from the major leagues, whether or not this person follows them) and "prev" (the top stories from the last time this page was written today, if any): ${facts}
 Do up to four web searches for what the headlines don't tell you: breaking news from the last day or two about these teams (injuries, trades, coaching, lineup changes), the biggest sports stories anywhere today, and the story behind the biggest games. Compile everything first, then decide what this person most needs to know.
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
@@ -449,6 +449,7 @@ Stars: 2-4 players. Headlines: only The Athletic stories about this game your se
 Game (JSON: teams, records, standings or conferences, ranks, TV, start time in UTC, notes): ${game}
 ESPN facts (JSON: injuries, season leaders, last5 (each team's results this season, newestFirst, each with its date; the first one is its most recent game), season series, venue): ${facts}
 Do two web searches: "<away short> <home short> preview" and "<away short> <home short> The Athletic". Use results from the last 3 days about this game or these teams.
+If the game has "post": true, it is a playoff or postseason game (its round is in "note"): frame it that way (the round, the series or aggregate score, win or go home only if it truly is), and never write about regular-season standings, playoff races or seeding as still at stake.
 Look for what makes the game matter: standings stakes, rivalries, recent meetings, a player facing his old team, streaks, injuries, coaching angles.
 ${RULES}
 Answer with only this JSON inside <json></json> tags:

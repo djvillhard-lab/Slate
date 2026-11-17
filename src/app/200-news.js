@@ -104,7 +104,7 @@
     Promise.all(Object.keys(want).map(function (lg) { return nwFeed(lg).then(null, function () { return []; }); })).then(function () {
       var facts = { cover: { slate: cv.slate, teams: cv.teams, leagues: cv.lgs, picked: cv.myTeams.map(nwTKey) }, games: [], teams: [], leagues: [], headlines: { byGame: {}, byTeam: {}, byLeague: {} } };
       if (cv.slate) cv.games.forEach(function (g) {
-        facts.games.push({ id: g.id, lg: g.league, league: info(g).name, away: g.away, home: g.home, awayRecord: g.awayRecord || "", homeRecord: g.homeRecord || "", start: g.start, status: ({ live: "live now", over: "finished", upcoming: "not started" })[status(g).kind] || "", tv: (g.tv || []).slice(0, 2).join(", "), note: g.note || "" });
+        facts.games.push({ id: g.id, lg: g.league, league: info(g).name, away: g.away, home: g.home, awayRecord: g.awayRecord || "", homeRecord: g.homeRecord || "", start: g.start, status: ({ live: "live now", over: "finished", upcoming: "not started" })[status(g).kind] || "", tv: (g.tv || []).slice(0, 2).join(", "), note: g.note || "", playoff: !!g.post });
         var seen = {}, hs = nwTeamHeads(g.away, g.league, 2).concat(nwTeamHeads(g.home, g.league, 2)).filter(function (a) { if (seen[a.url]) return false; seen[a.url] = 1; return true; });
         if (hs.length) facts.headlines.byGame[g.id] = hs.slice(0, 4);
       });

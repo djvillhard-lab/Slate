@@ -364,6 +364,10 @@
         if (!d) add("agg", 70, "Level at " + gA + "-" + gH + " on aggregate going into the second leg");
         else if (d === 1) add("agg|" + up, 70, T[up].name + " lead " + T[oth(up)].name + " " + hi + "-" + lo + " on aggregate going into the second leg");
         else add("agg|" + up, 70, T[up].name + " lead " + hi + "-" + lo + " on aggregate going into the second leg"); } }
+    // playoff series (NBA, NHL, MLB, MLS Round One): "Thunder lead the series 2-1" (3.92.0)
+    var hs0 = (sum.header || {}).season || {}, post = !!(g && g.post) || hs0.type === 3 || /playoff|post-?season/i.test(String(hs0.name || ""));
+    if (post && ser && !ser.leg && ser.summary) { var sx = String(ser.summary).replace(/^([A-Z]{2,5}) (leads?|wins?|won)\b/, function (m0, ab, v) { return byAbbr[ab] ? T[byAbbr[ab]].name + " " + v.replace(/s$/, "") : m0; });
+      if (/series/i.test(sx) && !/^\s*series starts/i.test(sx)) add("pser", 72, sx.charAt(0).toUpperCase() + sx.slice(1)); }
     // the team's leaders who won't play
     var lead = {}; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); (L.leaders || []).forEach(function (cat) { (cat.leaders || []).slice(0, 1).forEach(function (x) { var a = x.athlete || {}; if (a.displayName) (lead[i] = lead[i] || {})[a.displayName] = { pos: (a.position || {}).abbreviation || "", cat: cat.displayName || cat.name, v: x.displayValue }; }); }); });
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
@@ -429,6 +433,8 @@
         var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
     // ESPN's preview headline: a solid fallback
     var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90) add("art", 33, hd);
+    // a playoff game (3.92.0): the regular-season table, division race and season series no longer decide anything
+    if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser)(\||$)/.test(x.k); });
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
       var rc = function (x) { return T[x].rec.total ? " (" + T[x].rec.total + ")" : ""; };
       pvCompute.fb = true;

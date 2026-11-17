@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.93.0 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Playoff games: Slate now knows which games are playoff or postseason games in every league. MLS playoff games used to come in with nothing on the card. They now show their round, like "MLS Cup Playoffs · East Round One" or "MLS Cup Playoffs · West Wild Card". NFL, NBA, NHL, MLB and college postseason games keep ESPN's round ("AFC Wild Card Playoffs", "NBA Finals - Game 2") and add the series score ("NY leads series 2-0").
+- Game one-liners for playoff games lead with the series ("Series tied 1-1") and drop regular-season talk (division races, table position, season series).
+- Claude's previews and the News page are told which games are playoff games, so they write about the round and the series and never about regular-season standings as if they still mattered.
+
 ## 3.92.0 (Nov 17, 2026)
 TestFlight: 3.92.0 (47)
 - Live notifications have a new look. Each team's logo is big with its name under it, on a slanted panel of its team color at its side of the card. The score is big in the middle, with the clock under it in a small red live tag.

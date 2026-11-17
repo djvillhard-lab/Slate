@@ -167,6 +167,24 @@ def is_mine(name, lg, teams):
             if sp == "football" and lg == "ncaaf": return True
     return False
 
+def playoff_round(lg, e, c):
+    """The round's name when ESPN has this as a playoff or postseason game, else "".
+    MLS: "MLS Cup Playoffs · East Round One"; other leagues: their own note, or "Playoffs" / "Postseason" when ESPN gives none."""
+    se = e.get("season") or {}
+    slug = str(se.get("slug") or "").lower()
+    if lg == "mls":
+        if "playoff" not in slug and "mls-cup" not in slug: return ""
+        if re.search(r"mls-cup(-final)?$", slug) and "playoff" not in slug: return "MLS Cup final"
+        side = "East " if slug.startswith("eastern") else "West " if slug.startswith("western") else ""
+        rnd = slug.split("---")[-1] if "---" in slug else ""
+        rnd = {"wild-card": "Wild Card", "round-one": "Round One", "conference-semifinals": "Conference Semifinal", "semifinals": "Conference Semifinal",
+               "conference-final": "Conference Final", "conference-finals": "Conference Final", "final": "Conference Final"}.get(rnd, rnd.replace("-", " ").title())
+        return "MLS Cup Playoffs" + (" · " + side + rnd if rnd else "")
+    if lg in SOCCER: return ""    # cups and European knockouts already carry their round in the note and stage
+    if se.get("type") == 3 or slug == "post-season":
+        return "Bowl game" if lg == "ncaaf" else "Postseason" if lg in COLLEGE else "Playoffs"
+    return ""
+
 def build(lg, day, teams, old_ids):
     st = standings(lg)
     games = []
@@ -211,6 +229,15 @@ def build(lg, day, teams, old_ids):
                 g["comp"] = e.get("_league_name") or ""
                 cn = "Friendly" if "friendly" in g["comp"].lower() else g["comp"]
                 note = (cn + " · " + note) if note and cn and cn not in note else (note or cn)
+        # playoff and postseason games in every league (DJ, Nov 17, 2026: "ensure you know what games are playoff games").
+        # ESPN marks them by season type 3 ("post-season") in the US leagues and colleges, and by a round slug in MLS
+        # ("eastern-conference-playoffs---round-one"), which comes with no note, so the card said nothing
+        rd = playoff_round(lg, e, c)
+        if rd:
+            g["post"] = True
+            if not note or (lg == "mls" and "playoff" not in note.lower()): note = rd + (" · " + note if note else "")
+            ser = (c.get("series") or {}).get("summary") or ""
+            if ser and ser.lower() not in note.lower(): note += " · " + ser
         if note: g["note"] = note[:120]
         g["_mine"] = mine; g["_ev"] = e
         games.append(g)

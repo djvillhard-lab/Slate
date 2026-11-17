@@ -64,3 +64,6 @@ ESPN's lastFiveGames pads early-season lists with last season's games (Central M
 
 ## Color edge order (3.91.6)
 `teamStripe(box, g, order)` paints the top half with the color of the team listed on top: `sideOrder(g)` by default (soccer lists home first), or an explicit order (Betting lines game totals pass ["away","home"] because their badges are away over home).
+
+## Playoff games (3.93.0)
+scripts/slates.py `playoff_round()` sets `g.post = true` for postseason games: ESPN season type 3 / slug "post-season" (US leagues, college), or an MLS round slug ("eastern-conference-playoffs---round-one" → note "MLS Cup Playoffs · East Round One"; MLS playoff games have no ESPN note). The series summary is appended to the note. pvCompute adds a "pser" series line (72) and drops regular-season-only facts (div, table, season series) when post. clGame sends `post` to previews, News facts send `playoff`; the worker prompts tell Claude to frame them as playoffs. Other soccer cups already carry rounds in note/stage. Existing slates pick it up on the next slates.py run.
