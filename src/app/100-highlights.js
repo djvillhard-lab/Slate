@@ -303,6 +303,7 @@
       var full = String(g[side] || ""), words = [full, short(g, side), full.split(" ").slice(0, -1).join(" "), abbr(g, side)].filter(function (w) { return w && w.length >= 2; });
       named = words.some(function (w) { return new RegExp("(^|[^A-Za-z])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^A-Za-z]|$)").test(text); });
     }
+    if (side) p.dataset.side = side;  // 3.71.0: which team the line is about, for its team color on the slate
     if (side && !named) p.appendChild(el("b", "hl-tm", String(abbr(g, side) || tm) + ": "));
     p.appendChild(document.createTextNode(text));
     return p;
@@ -325,13 +326,16 @@
   }
   // ---- Preview line: one free line under an upcoming game, from ESPN's pre-game summary ----
   // streaks, injuries to a team's leaders, the betting line, ESPN's predictor, table clashes, head-to-head, ESPN's preview headline
-  function pvCompute(lg, sum, qbx) {
+  function pvCompute(lg, sum, qbx, g) {
     pvCompute.fb = false; pvCompute.tm = "";
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
       var rec = {}; (k.record || []).forEach(function (r) { rec[r.type] = r.summary || r.displayValue || ""; });
       var rk = (k.curatedRank || {}).current; T[id] = { id: id, name: (sport === "soccer" ? tm.shortDisplayName : tm.nickname || tm.name) || tm.shortDisplayName || tm.displayName || "", full: tm.displayName || "", abbr: tm.abbreviation || "", side: k.homeAway, rec: rec, rank: rk && rk <= 25 ? rk : (k.rank && k.rank <= 25 ? k.rank : 0) }; });
     if (ids.length !== 2) return null;
+    // 3.71.0: the card's own ranks win. ESPN's game summary can still carry last week's poll (UCLA "No. 7" on a card that
+    // says 9 the Monday a new poll came out), so when the card has ranks, the line uses the same ones
+    if (g && (Number(g.awayRank) > 0 || Number(g.homeRank) > 0)) ids.forEach(function (i) { var r = Number(g[T[i].side + "Rank"]); T[i].rank = r > 0 && r <= 25 ? r : 0; });
     ids.forEach(function (i) { if (T[i].rank) T[i].name = "No. " + T[i].rank + " " + T[i].name; });
     var H = ids.filter(function (i) { return T[i].side === "home"; })[0] || ids[1], A = ids[0] === H ? ids[1] : ids[0], oth = function (i) { return i === H ? A : H; };
     var nm = function (i) { return (T[i].rank ? "No. " + T[i].rank + " " : "") + T[i].name; };
@@ -485,7 +489,7 @@
       (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) { if (!ev) return null; cur.ev = ev; return rkFetch(bxSummaryUrl(g.league, ev)); }).then(function (sum) {
         return sum ? pvQB(g.league, sum).then(function (q) { qbx = q || []; return sum; }, function () { return sum; }) : sum; }).then(function (sum) {
         if (sum) { cur.sum = sum; cur.sumAt = Date.now(); }
-        var tx = null; try { tx = sum ? pvCompute(g.league, sum, qbx) : null; } catch (e) {}
+        var tx = null; try { tx = sum ? pvCompute(g.league, sum, qbx, g) : null; } catch (e) {}
         if (pvCompute.fb && p.text) tx = p.text;  // never swap a real pre-game line for the plain records one
         // keep the odds chips in step with the line: same fetch, same numbers
         try { var tgt = cur.data || (state.box || {})[g.id]; if (sum && tgt && tgt.state === "pre") { var fresh = bxNorm(g.league, sum, null); if (fresh.odds) { tgt.odds = fresh.odds; bxRedraw(g); } } } catch (e) {}

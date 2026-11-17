@@ -131,12 +131,14 @@
     // a line under every game: the live game's own line once there is one (red while it's on), until then the pre-game line
     if (mode === "lineup" && !g.custom && (st.kind === "live" || st.kind === "over")) {
       var hn = hlNode(g);
-      if (hn) { if (st.kind === "live") hn.classList.add("hl-live"); row.appendChild(hn); }
+      if (hn) { if (st.kind === "live") { hn.classList.add("hl-live"); hlTeamInk(g, hn); } row.appendChild(hn); }
       else {
         if (!(st.kind === "over" && HLC[g.id])) bxNeed(g);
         // live with a score but no highlight yet: the game's standout so far, in red; before any score, the pre-game line
         var ll = st.kind === "live" ? liveLeadLine(g) : "";
-        var pk = ll ? hlLine(g, ll, teamOfText(g, ll), "hl hl-live") : PV[g.id] && PV[g.id].text ? hlLine(g, PV[g.id].text, PV[g.id].tm, "hl hl-pre") : (st.kind === "live" ? pvNode(g) : null); if (pk) row.appendChild(pk);
+        var pk = ll ? hlLine(g, ll, teamOfText(g, ll), "hl hl-live") : PV[g.id] && PV[g.id].text ? hlLine(g, PV[g.id].text, PV[g.id].tm, "hl hl-pre") : (st.kind === "live" ? pvNode(g) : null);
+        if (pk && ll) hlTeamInk(g, pk);
+        if (pk) row.appendChild(pk);
       }
     }
     else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); }
@@ -166,5 +168,33 @@
       row.appendChild(p);
     }
     return row;
+  }
+
+  // ---- the live one-liner in the color of the team it's about (DJ, 3.71.0) ----
+  // "LAC: Tre' Harris 86 receiving yds" in Chargers colors. A line about both teams (or neither) keeps the live red.
+  // The team's color (the pair that works on this theme, as on the cards) is lightened on Midnight or darkened on
+  // Sunday Paper until it reads clearly on the card (4.5:1, the usual bar for text).
+  function hlRelLum(h) {
+    var n = parseInt(h.slice(1), 16), f = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(n >> 16) + 0.7152 * f(n >> 8 & 255) + 0.0722 * f(n & 255);
+  }
+  function hlContrast(a, b) { var x = hlRelLum(a), y = hlRelLum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  function hlMix(a, b, t) {
+    var x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16), m = function (s) { return Math.round((x >> s & 255) * (1 - t) + (y >> s & 255) * t); };
+    return "#" + ((1 << 24) + (m(16) << 16) + (m(8) << 8) + m(0)).toString(16).slice(1);
+  }
+  var hlInkCache = {};
+  function hlInk(c) {
+    var card = String(getComputedStyle(document.documentElement).getPropertyValue("--card") || "").trim();
+    if (!hexOk(card)) card = themeIsDark() ? "#1A2330" : "#FFFFFF";
+    var k = c + card; if (hlInkCache[k]) return hlInkCache[k];
+    var to = hlRelLum(card) < 0.5 ? "#ffffff" : "#000000", out = c;
+    for (var t = 0.1; hlContrast(out, card) < 4.5 && t <= 1; t += 0.1) out = hlMix(c, to, t);
+    return (hlInkCache[k] = out);
+  }
+  function hlTeamInk(g, p) {
+    var sd = p && p.dataset && p.dataset.side; if (sd !== "away" && sd !== "home") return;
+    var c = pairColors(g)[sd]; if (!hexOk(c)) return;
+    p.style.color = hlInk(c); p.classList.add("hl-team");
   }
 

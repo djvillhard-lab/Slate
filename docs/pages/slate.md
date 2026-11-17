@@ -1,5 +1,5 @@
 # Today's Slate
-Last updated: Nov 17, 2026, 3.68.8
+Last updated: Nov 17, 2026, 3.71.0
 
 ## Done
 - Game cards line up one score column for the whole slate (fitScores in 240-chrome.js sets --tmw on #lineup-body):
@@ -14,7 +14,14 @@ Last updated: Nov 17, 2026, 3.68.8
   then swaps both names for the badge abbreviations (STMN, LIU), like All games 3.68.7. fitScores calls
   slateUnfitNames first so the column is always measured from the full names.
 
+- 3.71.0: a live game's one-liner is in the color of the team it's about (hlLine marks data-side; hlTeamInk in
+  150-game-row.js uses pairColors, then lightens/darkens to 4.5:1 against --card). No side (both teams) = live red.
+  Slate cards only; All games and Worth a look keep red.
+- 3.71.0: preview lines take the card's ranks (pvCompute's 4th arg g), since ESPN's summary can lag a new poll.
+
 ## Open
+- The morning email's copy of pvCompute (worker/slate-kit.js) still uses the summary's ranks.
+- If DJ likes team-colored lines, All games and Worth a look could follow.
 - Open Duo's left pane is under 330px, so records hide there (050-ux-review.css container rule), by design.
 
 ## Decisions
