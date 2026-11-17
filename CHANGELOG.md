@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.69.4 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- The live feed no longer disappears when a game ends. A finished football or basketball game has a "Game feed" button where "Live feed" was, on the quick look and the matchup page.
+- Football: a finished game opens on its scoring plays (the Scoring button is already on). Tap Scoring off to read every play, drive by drive.
+- Basketball: a finished game opens on the final minutes, with every earlier play behind "Show earlier plays", plus the top-rated players and the box score.
+- Live feed, football: a made field goal now shows yellow goalposts in place of the hockey net. There's no goalpost emoji, so this one is drawn by Slate. Touchdowns keep the football.
+- Nothing is stored by Slate for this: ESPN keeps every play after the game, and the page reads it back when you open it.
+
 ## 3.69.3 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed delay: the choices can be put away now. Tap the Delay button to open the control, tap it again to hide it. The button keeps showing your delay ("Delay 30s"), with an × beside it that turns the delay off in one tap.

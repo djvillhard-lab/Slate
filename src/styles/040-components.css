@@ -1445,6 +1445,8 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .feed-go em { font-style: normal; font-size: 13px; color: var(--muted); }
 .feed-go svg, .tray .feed-go svg { width: 16px; height: 16px; color: var(--dim); flex: none; }
 .gv-head .feed-go { margin: 12px 0 0; }
+.fd-pt .fd-gp { width: 1.15em; height: 1.15em; vertical-align: -0.2em; margin-right: 0.25em; }
+html .feed-go.feed-done, html .tray .feed-go.feed-done { background: var(--raise); border-color: var(--hair); }  /* 3.69.4: a finished game's feed is not red (red = live) */
 .tray .feed-go { flex-basis: 100%; box-sizing: border-box; margin: 8px 0 4px; }
 .fd-strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 8px; padding: 2px 16px 2px; scroll-snap-type: x proximity; }
 .fd-strip::-webkit-scrollbar { display: none; }

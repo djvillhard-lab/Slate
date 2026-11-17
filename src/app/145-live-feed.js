@@ -3,18 +3,22 @@
   // from ESPN's game summary every 8 seconds while the page is open. Player lines are their game so far, from the same summary.
   var FD = { id: null, sum: null, at: 0, t: null, busy: false, seen: null, more: false };
   function feedBtn(g) {
-    var b = el("button", "feed-go"); b.type = "button"; b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, "Live feed")); t.appendChild(el("em", null, "Every play as it happens")); b.appendChild(t); b.appendChild(icon("more"));
-    b.setAttribute("aria-label", "Open the live feed for " + g.away + " at " + g.home);
+    // 3.69.4 (DJ): a finished game keeps its feed. Nothing is saved by Slate: ESPN still serves every play, so the page reads it back
+    var done = !feedLive(g), foot = BX_SPORT[g.league] === "football";
+    var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
+    b.setAttribute("aria-label", "Open the " + (done ? "game" : "live") + " feed for " + g.away + " at " + g.home);
     b.addEventListener("click", function (e) { e.stopPropagation(); openFeed(g); }); return b;
   }
-  function feedOk(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball") && status(g).kind === "live"; }  // basketball since 3.37.0 (146-live-feed-hoops.js)
+  function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball"); }
+  function feedLive(g) { return feedHas(g) && status(g).kind === "live"; }
+  function feedOk(g) { if (!feedHas(g)) return false; var k = status(g).kind; return k === "live" || k === "over"; }  // basketball since 3.37.0 (146-live-feed-hoops.js)
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;
     if (state.view !== "feed") FD.from = g.id;  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
     if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; clearTimeout(FD.dt); FD.bufs = FD.bufs || {}; Object.keys(FD.bufs).forEach(function (k) { if (k !== g.id) delete FD.bufs[k]; });
-      FD.sum = fdDelay(g.id) ? ((FD.last || {})[g.id] || null) : ((c0 && c0.sum) || null); /* a delayed game comes back where you left it, not at ESPN's latest */ FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
-    if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; openSub("feed"); }  // coming back to the page starts folded up
+      FD.sum = fdDelay(g.id) ? ((FD.last || {})[g.id] || null) : ((c0 && c0.sum) || null); /* a delayed game comes back where you left it, not at ESPN's latest */ FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.scOnly = BX_SPORT[g.league] === "football" && status(g).kind === "over"; /* a finished football game opens on its scoring plays */ FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
+    if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; FD.scOnly = BX_SPORT[g.league] === "football" && status(g).kind === "over"; openSub("feed"); }  // coming back to the page starts folded up
     feedPoll(true);
   }
   // how often the feed asks ESPN (3.36.0): every 4 seconds while a play could happen, slower at breaks, backing off after errors.
@@ -254,7 +258,7 @@
     // 3.68.4 (DJ): the switcher and the swipe go between the live games on your slate (football and basketball), plus the game you
     // opened the page from. (3.66.9 had your teams' games; DJ changed it to the slate.)
     var from = FD.from || g.id;
-    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedOk(x) && inLineup(x.id)) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
+    var ids = {}, list = games().filter(function (x) { if (ids[x.id] || !((feedLive(x) && inLineup(x.id)) || x.id === g.id || x.id === from)) return false; ids[x.id] = 1; return true; });
     list.sort(function (a, b) { return ((b.id === from) - (a.id === from)) || byStart(a, b); });
     return list;
   }
@@ -439,7 +443,7 @@
         var scs = el("span", "fd-psc"); scs.textContent = abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""); ph.appendChild(scs);
         card.appendChild(ph);
         var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); card.appendChild(tw); }
-        card.appendChild(el("p", "fd-pt", fdTitleText(rd.title)));
+        card.appendChild(fdTitle(rd.title));
         var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); lines.forEach(function (l) { px.appendChild(el("p", null, l)); }); card.appendChild(px); }
         rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
         list.appendChild(card);

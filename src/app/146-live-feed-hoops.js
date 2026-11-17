@@ -211,7 +211,7 @@
         var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck + (sd2 ? " · " + abbr(g, sd2) : "")));
         ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""))); c2.appendChild(ph);
         if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); c2.appendChild(tw); }
-        c2.appendChild(el("p", "fd-pt", fdTitleText(rd.title)));
+        c2.appendChild(fdTitle(rd.title));
         // the gray and red boxes say it in the headline and the player's line; ESPN's sentence is kept where it adds something
         if (raw && raw !== rd.title && (!gray || (!rd.P && rd.kind === "miss" && !rd.reb))) c2.appendChild(el("p", "fd-px", raw));
         if (rd.P) c2.appendChild(plRow(rd.P, rd.k, sd2, ""));
@@ -251,11 +251,24 @@
     j.setAttribute("aria-hidden", "true"); return j;
   }
   // one emoji in front of each big play's headline (3.66.8, DJ: "Where are the emojis?"): never inside the play text
+  // 3.69.4 (DJ: a made field goal should not look like a touchdown or a hockey net, "goal posts would be great"): there is no goalpost emoji,
+  // so this is Slate's own drawing, sized and placed like an emoji. Yellow uprights with a dark edge so they read on dark and on paper themes.
+  function fdGoalposts() {
+    var NS = "http://www.w3.org/2000/svg", sv = document.createElementNS(NS, "svg"); sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("class", "fd-gp"); sv.setAttribute("aria-hidden", "true");
+    [["#1b1f27", "5"], ["#F5C518", "2.8"]].forEach(function (c) { var pa = document.createElementNS(NS, "path"); pa.setAttribute("d", "M5 3.5V13H19V3.5M12 13V21"); pa.setAttribute("fill", "none"); pa.setAttribute("stroke", c[0]); pa.setAttribute("stroke-width", c[1]); pa.setAttribute("stroke-linecap", "round"); pa.setAttribute("stroke-linejoin", "round"); sv.appendChild(pa); });
+    return sv;
+  }
+  function fdTitle(t) {
+    var s = fdTitleText(t), p = el("p", "fd-pt");
+    if (s.charAt(0) === "\uE0F0") { p.appendChild(fdGoalposts()); p.appendChild(document.createTextNode(s.slice(2))); } else p.textContent = s;
+    return p;
+  }
   function fdTitleText(t) {
     t = String(t || "");
     var e = /^three-pointer/i.test(t) ? "🎯" : /^(dunk|alley-oop)/i.test(t) ? "💥" : /^free throw good/i.test(t) ? "🏀" : /^(two-pointer|layup|jumper|hook|tip|floater|bank|fadeaway|putback|shot|jump shot|reverse|driving|turnaround|finger roll)/i.test(t) ? "🏀"
       : /^blocked/i.test(t) ? "🚫" : /^steal/i.test(t) ? "🖐️" : /^ejected/i.test(t) ? "🟥" : /^(technical|flagrant)/i.test(t) ? "⚠️" : /^(coach's challenge|replay review)/i.test(t) ? "📺"
-      : /^(td:|pick six|fumble return touchdown|return touchdown|.*touchdown!?$)/i.test(t) ? "🏈" : /^field goal is good/i.test(t) ? "🥅" : /^field goal (missed|blocked)/i.test(t) ? "❌"
+      : /^(td:|pick six|fumble return touchdown|return touchdown|.*touchdown!?$)/i.test(t) ? "🏈" : /^field goal is good/i.test(t) ? "\uE0F0"  /* 3.69.4: stands for the goalposts drawing, see fdTitle */
+      : /^field goal (missed|blocked)/i.test(t) ? "❌"
       : /^safety/i.test(t) ? "🛡️" : /^intercepted/i.test(t) ? "🧤" : /^fumble/i.test(t) ? "😬" : /sacked|^sack/i.test(t) ? "💥" : /^penalty/i.test(t) ? "🚩"
       // 3.69.0 (DJ): football's everyday plays too, where an emoji fits: a completion, a run, an incompletion, a punt, a kickoff, a good extra point
       : /^pass complete| to [A-Z][^,]*(?: for \d|, loss of|, no gain)/.test(t) ? "🎯" : /^incomplete/i.test(t) ? "❌" : / runs for | loses \d|^run\b|^[A-Z][^,]*, no gain$/.test(t) ? "🏃"
