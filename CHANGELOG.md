@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.90.4 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- News, Press Box: each team's notes on a game card are in that team's color only. On international games they had a two-color flag edge, which read as both teams' colors. Only the Matchup note is split between the two teams now; a note about neither team (kickoff time, TV) uses the app's accent color.
+- News: a game's league line is shortened the same way as on Today's Slate ("INTL · Nations League · 2nd leg" instead of the cut-off "2nd Leg - United States lead 6-0 on …").
+- Claude checks every headline and line before it answers so it says exactly who is affected: a player's season-ending injury no longer becomes "ends Lions season". This applies to everything Claude writes in the app, from the next one written.
+
 ## 3.90.3 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - News, Press Box: on the Top news cards the two tags have switched places. The story's tag (🚑 Injury, 📋 Coaching, 🔥 Streak...) now sits beside the team name, and why it made Top news (🚨 Breaking, ⭐ My team, 📺 On your slate, 🔥 Trending) sits in the top right with NEW.

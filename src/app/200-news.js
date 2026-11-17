@@ -235,13 +235,14 @@
       var tA = only[0], tB = only[1], rows = (list || []).map(function (h) {
         var t = (h.team && nwFindTeam(h.team, lg, only)) || nwTeam(h.team, lg) || nwFindTeam(h.text, lg, only);
         if (t && t !== tA && t !== tB) t = null;
-        if (/^match/i.test(h.tag || "")) t = null;
-        return { h: h, t: t, o: t && t === tA ? 0 : t && t === tB ? 1 : 2 };
+        var mx = /^match/i.test(h.tag || ""); if (mx) t = null;
+        return { h: h, t: t, mx: mx, o: t && t === tA ? 0 : t && t === tB ? 1 : mx ? 3 : 2 };
       }).map(function (r, i) { r.i = i; return r; }).sort(function (a, b) { return a.o - b.o || a.i - b.i; });
       w.classList.add("bare");
       rows.forEach(function (r) {
         var b = el("div", "nx-box"), h = r.h;
-        if (r.t) { nwTint(b, r.t); if (r.t.nat && hexOk(r.t.c2)) { b.classList.add("two"); b.style.setProperty("--nx-alt", r.t.c2); } }
+        if (r.t) nwTint(b, r.t);   // one team, one color (3.90.4, DJ): only the matchup note is split
+        else if (!r.mx) b.classList.add("lgx");   // about neither team (kickoff time, a coach leaving): the accent, not a split
         else { b.classList.add("mx"); if (tA && hexOk(tA.c1)) b.style.setProperty("--nx-a", tA.c1); if (tB && hexOk(tB.c1)) b.style.setProperty("--nx-b", tB.c1); }
         var dup = r.t && h.tag && r.t.name.toLowerCase().indexOf(String(h.tag).toLowerCase()) !== -1;
         if (h.tag && !dup) { var pr = el("span", "nx-bp"); pr.appendChild(nwPill(h.tag)); b.appendChild(pr); }
@@ -333,7 +334,7 @@
   function nwSec(title, right) { var h = el("div", "nx-sec"); h.appendChild(el("b", null, title)); if (right) h.appendChild(el("span", null, right)); return h; }
   function nwGameHead(g) {
     var hd = el("div", "nx-gh"), l = el("div", "nx-gl");
-    l.appendChild(el("span", "nx-lg", info(g).tag + (g.note ? " · " + g.note : "")));
+    l.appendChild(el("span", "nx-lg", info(g).tag + (g.note ? " · " + noteShort(g.note) : "")));   // short like the slate's (3.90.4)
     // the result is the card's job (3.50.1): each team's score beside it once the game is live or over, and Final, the
     // live clock or the start time on the right, the same free ESPN numbers as the slate
     var st = status(g), sc = state.showScores ? scoreOf(g) : null;
