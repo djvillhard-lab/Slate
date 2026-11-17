@@ -22,8 +22,8 @@ html.in-pane.pn-left #menu-fab, html.in-pane.pn-left #menu-pop, html.in-pane.pn-
 .pn-grip { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .pn-lock { display: none; position: absolute; left: 50%; top: 0; width: 16px; height: 16px; margin-left: -8px; color: var(--accent); }
 .pn-locked .pn-lock { display: block; }
-.pn-tip { position: absolute; z-index: 5; top: calc(50% + 52px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 220px; padding: 8px 12px; border-radius: 8px; background: var(--raise); color: var(--ink); box-shadow: 0 0 0 1px var(--line), 0 8px 24px var(--shadow); font-size: 13px; font-weight: 700; text-align: center; opacity: 0; pointer-events: none; transition: opacity .15s ease; }
-.pn-tip.on { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .pn-tip { transition: none; } }
 /* 3.81.6: holding the bar never selects or highlights anything around it (the frames keep their own selection) */
 html.panes, html.panes body, .pn, .pn-hinge, .pn-grip, .pn-grip * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+/* 3.81.8: nothing on the fold can pan, zoom or bounce the screen behind the two sides */
+html.panes, html.panes body { overflow: hidden; overscroll-behavior: none; touch-action: none; position: fixed; inset: 0; width: 100%; }
+.pn { touch-action: none; overflow: hidden; overscroll-behavior: none; }

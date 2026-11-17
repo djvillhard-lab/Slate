@@ -49,7 +49,7 @@
     var lk = document.createElementNS("http://www.w3.org/2000/svg", "svg"); lk.setAttribute("viewBox", "0 0 24 24"); lk.setAttribute("class", "pn-lock"); lk.setAttribute("aria-hidden", "true");
     lk.innerHTML = '<rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>';
     grip.appendChild(lk);
-    hinge.appendChild(el("div", "pn-tip"));
+
     hinge.appendChild(grip); box.appendChild(hinge);
     box.appendChild(el("div", "pn-shield"));
     document.body.appendChild(box); PN.el = box;
@@ -84,7 +84,8 @@
       if (!d) return;
       var left = PN.left === id;
       // locked: the left side keeps its own menu and Back and opens things on its own side
-      d.classList.toggle("pn-left", left && !PN.lock); d.classList.toggle("pn-right", !left);
+      // the left side never has its own menu or Back (DJ). Unlocked, it also opens things on the right side.
+      d.classList.toggle("pn-left", left); d.classList.toggle("pn-fwd", left && !PN.lock); d.classList.toggle("pn-right", !left);
       // the app draws the menu capsule over the right side: that side hides its own, like the app's floating menu does
       if (!left && nm) d.setAttribute("data-float", ""); else d.removeAttribute("data-float");
       var w = pnWin(id); if (left && w && w.SlateApp.paneMenu) w.SlateApp.paneMenu(false);
@@ -114,6 +115,9 @@
     // holding the bar must not select text, show a callout or the iPhone's magnifier
     grip.addEventListener("touchstart", function (e) { e.preventDefault(); }, { passive: false });
     ["contextmenu", "selectstart", "dragstart"].forEach(function (t) { PN.el.addEventListener(t, function (e) { e.preventDefault(); }); });
+    // 3.81.8: a finger on the fold (the bar or the gap) must not pan or bounce this page under the two sides; the
+    // sides' own scrolling happens inside their frames, which this never sees
+    ["touchstart", "touchmove"].forEach(function (t) { PN.el.addEventListener(t, function (e) { if (e.cancelable) e.preventDefault(); }, { passive: false }); });
     function end(e, cancel) {
       var d = PN.drag; if (!d || e.pointerId !== d.id) return;
       PN.drag = null;
@@ -133,8 +137,6 @@
   function pnLock(on) {
     PN.lock = !!on; pnSave(); pnMark();
     PN.el.classList.toggle("pn-locked", PN.lock);
-    var tip = PN.el.querySelector(".pn-tip");
-    if (tip) { tip.textContent = PN.lock ? "Sides locked: each works on its own" : "Unlocked: the left opens things on the right"; tip.classList.add("on"); clearTimeout(tip._t); tip._t = setTimeout(function () { tip.classList.remove("on"); }, 2200); }
     var g = PN.el.querySelector(".pn-grip"); if (g) g.setAttribute("aria-label", "Swap the two sides" + (PN.lock ? ". Sides locked: hold to unlock" : ". Hold to lock the sides apart"));
     try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
   }
@@ -162,14 +164,20 @@
   // what the active side reports to the iPhone app's strip (its Back and menu work that side)
   function paneSyncMsg() {
     var w = pnWin(pnRight()); if (!w || !w.SlateApp.paneState) return null;
-    try { var m = JSON.parse(w.SlateApp.paneState()); m.duo = true; return m; } catch (e) { return null; }
+    try {
+      var m = JSON.parse(w.SlateApp.paneState()); m.duo = true;
+      // locked: the app's Back shows for the side touched last
+      var tw = PN.lock && PN.touched && PN.touched !== pnRight() ? pnWin(PN.touched) : null;
+      if (tw && tw.SlateApp.paneState) m.back = JSON.parse(tw.SlateApp.paneState()).back;
+      return m;
+    } catch (e) { return null; }
   }
   window.slatePaneSync = function (id) {
     if (!PN.on) return;
     var w = pnWin(id);
     if (w && w.SlateApp.paneRoute) { var r = w.SlateApp.paneRoute(); if (r !== PN.routes[id]) { PN.routes[id] = r; pnSave(); } }
     pnMark();
-    if (id === pnRight() && typeof nativeSync === "function") nativeSync();
+    if ((id === pnRight() || (PN.lock && id === PN.touched)) && typeof nativeSync === "function") nativeSync();
   };
   // the left side opened a game, Live feed or team from its list: it opens on the right side instead
   window.slatePaneOpen = function (route) {
@@ -186,11 +194,15 @@
     PN_SET_KEYS.forEach(function (k) { if (k in d) state[k] = d[k]; });
     applyLook();
   }
-  // the iPhone app's menu and Back reach the right side
+  // the iPhone app's menu and Back reach the right side. Locked, Back works whichever side was touched last, since the
+  // left side has no Back of its own.
+  window.slatePaneTouch = function (id) { if (PN.touched === id) return; PN.touched = id; if (PN.lock && typeof nativeSync === "function") nativeSync(); };
   ["go", "today", "back", "openGame", "day", "toggleMenu", "watch"].forEach(function (k) {
     var f0 = window.SlateApp[k];
     window.SlateApp[k] = function () {
-      var w = PN.on ? pnWin(pnRight()) : null;
+      var side = pnRight();
+      if (PN.lock && (k === "back" || k === "today") && (PN.touched === "a" || PN.touched === "b")) side = PN.touched;
+      var w = PN.on ? pnWin(side) : null;
       if (w) return w.SlateApp[k].apply(w.SlateApp, arguments);
       return f0.apply(window.SlateApp, arguments);
     };
@@ -244,7 +256,8 @@
     saveNotify = function () { pnSaveNt0.apply(null, arguments); try { window.parent.slatePaneSaved(PANE, pnSnap()); } catch (e) {} };
     // on the left side, a game, Live feed or team tapped in a list opens on the right side (the left stays put).
     // Inside a matchup or Live feed that was slid over to the left, switching games stays on the left.
-    var pnLeft = function () { return document.documentElement.classList.contains("pn-left") && state.view !== "feed" && state.view !== "game" && state.view !== "team"; };
+    var pnLeft = function () { return document.documentElement.classList.contains("pn-fwd") && state.view !== "feed" && state.view !== "game" && state.view !== "team"; };
+    window.addEventListener("pointerdown", function () { try { window.parent.slatePaneTouch(PANE); } catch (e) {} }, { capture: true, passive: true });
     var pnToRight = function (r) { try { window.parent.slatePaneOpen(r); return true; } catch (e) { return false; } };
     var pnOpenM0 = openMatchup, pnOpenF0 = openFeed, pnOpenT0 = openTeam;
     openMatchup = function (g) { if (g && pnLeft() && pnToRight("game:" + g.id)) return; return pnOpenM0.apply(null, arguments); };

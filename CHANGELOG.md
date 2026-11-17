@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.81.8 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Unfolded Duo: the left side never shows its own menu or Back button, locked or not. Only the app's menu and Back remain.
+- While the sides are locked, the app's Back works whichever side you touched last, so the left side can still go back. The menu still changes the right side.
+- No more help text when you lock or unlock; the lock on the bar is enough.
+- Touching or dragging on the fold can no longer move or stretch the screen behind the two sides.
+
 ## 3.81.7 (Nov 17, 2026)
 TestFlight: 3.81.7 (46)
 - Live notifications (Lock Screen, Dynamic Island, Board) pick the logo that shows best on their dark background, the same way the rest of the app now does: a team whose dark logo is a plain white mark gets its real logo when that shows up on dark (Clemson's orange paw instead of a gray one). The app saves every logo again the first time you open Slate after updating.

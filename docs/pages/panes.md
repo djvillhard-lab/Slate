@@ -23,8 +23,9 @@ right, so I can have two live feeds at once."
   (`html.pn-left`) has no menu or Back. A game, Live feed or team opened from a list on the left opens on the right
   (`slatePaneOpen`); inside a matchup or Live feed that was slid over to the left, switching games stays left.
 - Lock (3.81.5, DJ): hold the grip 550 ms to toggle `PN.lock` (kept in `slate-panes`). Locked, the left pane loses
-  `pn-left`, so it has its own menu and Back and opens games, feeds and teams on its own side; a small accent lock
-  shows on the grip and a tip says which mode. Tapping still swaps. The app's menu and Back still go to the right.
+  `pn-fwd`, so it opens games, feeds and teams on its own side; a small accent lock shows on the grip (no tip text,
+  DJ). The left pane never shows its own menu or Back (`pn-left`, 3.81.8, DJ); while locked, the app's Back works the
+  side touched last (`slatePaneTouch`), and the app is told that side's Back state. Tapping still swaps. The app's menu and Back still go to the right.
 - Inside a matchup, Live feed or team page on the left, switching games always stays on the left, locked or not.
 - iPhone app: panes talk to it through the host (`slateHostPost`; "state"/"ready" are dropped). The strip's buttons
   (`go`, `back`, `today`, `day`, `toggleMenu`, `openGame`, `watch`) go to the right side, and the app is told the
