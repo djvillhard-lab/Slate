@@ -58,21 +58,30 @@
     return changed;
   }
   // the control, on the right of the "Last play" line: minus, the delay, plus
-  // 3.69.2 (DJ: the + and − were too fiddly, and Off has to be quick): a Delay button on the "Last play" line opens one-tap choices under it.
-  // While a delay is on, the choices stay showing, so Off is always one tap.
-  var FD_DELAYS = [0, 15, 30, 45, 60, 90];
+  // The delay control (3.69.3, DJ). A "Delay" pill on the "Last play" line opens and closes a slider under it: 0 to 90 seconds in steps of 5, with Off beside it.
+  // Closed, the pill shows the delay ("Delay 30s") and an × next to it turns it off in one tap. History: + and − (3.69.0) were too fiddly; always-showing chips (3.69.2) couldn't be hidden.
   function fdKeepY(fn) { var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); fn(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); }
+  function fdDelayPick(g, v, close) { fdSetDelay(g.id, v); fdRelease(g); if (close) FD.dlOpen = null; fdKeepY(renderFeed); }
   function fdDelayCtl(g) {
-    var d = fdDelay(g.id), open = d > 0 || FD.dlOpen === g.id, b = el("button", "fd-scf fd-dlb" + (d ? " on" : ""), d ? "Delay " + d + "s" : "Delay"); b.type = "button";
+    var d = fdDelay(g.id), open = FD.dlOpen === g.id, w = el("span", "fd-dlw"), b = el("button", "fd-scf fd-dlb" + (d ? " on" : ""), d ? "Delay " + d + "s" : "Delay"); b.type = "button";
     b.setAttribute("aria-expanded", open ? "true" : "false");
-    b.addEventListener("click", function () { if (d > 0) return; FD.dlOpen = FD.dlOpen === g.id ? null : g.id; fdKeepY(renderFeed); });
-    return b;
+    b.addEventListener("click", function () { FD.dlOpen = open ? null : g.id; fdKeepY(renderFeed); });
+    w.appendChild(b);
+    if (d > 0 && !open) { var x = el("button", "fd-scf fd-dlx", "×"); x.type = "button"; x.setAttribute("aria-label", "Turn the delay off"); x.addEventListener("click", function () { fdDelayPick(g, 0, true); }); w.appendChild(x); }
+    return w;
   }
   function fdDelayRow(g) {
-    var d = fdDelay(g.id); if (!(d > 0 || FD.dlOpen === g.id)) return null;
-    var w = el("div", "fd-dlrow"); w.setAttribute("role", "group"); w.setAttribute("aria-label", "Delay the feed");
-    FD_DELAYS.forEach(function (v) { var c = el("button", "fd-dlc" + (v === d ? " on" : ""), v ? v + "s" : "Off"); c.type = "button"; c.setAttribute("aria-pressed", v === d ? "true" : "false");
-      c.addEventListener("click", function () { fdSetDelay(g.id, v); fdRelease(g); FD.dlOpen = null; fdKeepY(renderFeed); }); w.appendChild(c); });
+    if (FD.dlOpen !== g.id) return null;
+    var d = fdDelay(g.id), w = el("div", "fd-dlrow"), off = el("button", "fd-dlc" + (d ? "" : " on"), "Off"); off.type = "button";
+    off.addEventListener("click", function () { fdDelayPick(g, 0, true); });
+    var r = document.createElement("input"); r.type = "range"; r.className = "fd-dlr"; r.min = "0"; r.max = "90"; r.step = "5"; r.value = String(d); r.setAttribute("aria-label", "Delay the feed, in seconds");
+    var v = el("b", "fd-dlv" + (d ? " on" : ""), d ? d + "s" : "Off");
+    r.addEventListener("input", function () { var n = +r.value || 0; v.textContent = n ? n + "s" : "Off"; v.classList.toggle("on", n > 0); off.classList.toggle("on", !n);
+      var pill = document.querySelector("#feed-body .fd-dlb"); if (pill) { pill.textContent = n ? "Delay " + n + "s" : "Delay"; pill.classList.toggle("on", n > 0); } });
+    r.addEventListener("change", function () { fdDelayPick(g, +r.value || 0, false); });  /* the slider stays open; the pill closes it */
+    /* sliding sideways here must not swipe to the next game or go Back */
+    ["touchstart", "touchmove"].forEach(function (n) { w.addEventListener(n, function (e) { e.stopPropagation(); }, { passive: true }); });
+    w.appendChild(off); w.appendChild(r); w.appendChild(v);
     return w;
   }
   function feedPoll(now) {

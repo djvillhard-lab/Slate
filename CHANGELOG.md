@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.69.3 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live feed delay: the choices can be put away now. Tap the Delay button to open the control, tap it again to hide it. The button keeps showing your delay ("Delay 30s"), with an × beside it that turns the delay off in one tap.
+- The delay is set with a slider in 5-second steps, from Off to 90 seconds, with an Off button next to it. Sliding it doesn't swipe you to another game.
+
 ## 3.69.2 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed: after you tap "Show earlier plays", there's now a "Show fewer plays" button next to it. One tap folds the list back to how it started and takes you back to the newest play. It stays there even when you've opened every play.
