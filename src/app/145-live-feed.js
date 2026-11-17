@@ -476,7 +476,13 @@
     }
     if (anchor) requestAnimationFrame(function () { var n2 = body.querySelector(anchor); if (!n2) return; var dlt = n2.getBoundingClientRect().top - aTop; if (Math.abs(dlt) > 1) { if (sc) sc.scrollTop += dlt; else window.scrollBy(0, dlt); } });
   }
-  function renderFeed(fromPoll) {
+  function fdIsland() {
+  // 3.93.4: in the unfolded Duo's right pane the island sits over this pane's top right. The host page knows its width.
+  if (!PANE) return; var w = 0;
+  try { var fe = window.frameElement, pw = window.parent; if (fe && fe.getBoundingClientRect().right >= pw.innerWidth - 4) w = parseFloat(pw.document.documentElement.style.getPropertyValue("--strip-w")) || 0; } catch (e) { w = 0; }
+  var v = $("view-feed"); if (!v) return; v.classList.toggle("fd-isl", w > 0); v.style.setProperty("--fd-isl", w + "px");
+}
+function renderFeed(fromPoll) {
     var body = $("feed-body"); if (!body) return;
     // an update never rebuilds the page under a moving finger or mid-scroll (it would stop the scroll and jolt the score bar): it waits for stillness
     if (FD.touch && Date.now() - (FD.touchAt || 0) > 10000) FD.touch = false;
@@ -494,6 +500,7 @@
         // 3.81.3 (DJ): parked on the newest play, the list's top holds its place, so a new play lands right there in view. Deeper in the plays, the play you're reading holds still and a pill says what's new.
         if (cs[i] === first) { anchor = ".fd-list"; aTop = l0.getBoundingClientRect().top; } else { anchor = '[data-id="' + cs[i].getAttribute("data-id") + '"]'; aTop = rc.top; } break; } } }
     body.textContent = "";
+    fdIsland();
     body.appendChild(fdFilters(g));
     var strip = fdStrip(g); if (strip) body.appendChild(strip);
     var sum = FD.id === g.id ? FD.sum : null;
