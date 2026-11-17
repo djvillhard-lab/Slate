@@ -180,6 +180,7 @@
       }
       row.appendChild(p);
     }
+    if (row.classList.contains("panel") && !g.custom) teamStripe(row, g, ".g-main > .tm");   // 3.91.0: the two teams' colors down the left edge
     return row;
   }
 

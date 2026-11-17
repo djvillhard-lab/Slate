@@ -31,6 +31,7 @@
     }
     if (feedOk(g)) hd.appendChild(feedBtn(g));
     body.appendChild(hd);
+    teamStripe(hd, g, ".gv-teams > .tm");   // 3.91.0: the team-color stripe down the header card's edge, as on every matchup card
 
     // three sections that open and close: box score, team stats, preview (or recap)
     var kind = status(g).kind, started = kind === "live" || kind === "over", sport = BX_SPORT[g.league] || "", b = sport ? boxFor(g) : null;

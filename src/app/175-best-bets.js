@@ -452,6 +452,7 @@
     var x = el("button", "bet-x"); x.type = "button"; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove " + (b.game ? "this game total" : b.p) + " and show the next line");
     x.addEventListener("click", function (e) { e.stopPropagation(); betRemove(b); });
     top.appendChild(x); r.appendChild(top);
+    if (b.game) teamStripe(r, g, ".bet-pair > .badge"); else teamStripe1(r, g, b.sd);   // 3.91.0: team colors down the left edge
     if (b.game) {  // a game total: both teams' badges, away over home, like a matchup card (3.52.11)
       var pr = el("span", "bet-pair"); pr.setAttribute("aria-hidden", "true");
       ["away", "home"].forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); });
