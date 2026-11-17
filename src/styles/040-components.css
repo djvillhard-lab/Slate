@@ -1706,3 +1706,15 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .nx-foot { margin: 16px 2px 4px; font-size: 12px; color: var(--dim); }
 .nx .cl-ctl { margin-top: 8px; }
 .nx > .pv-none { margin: 12px 2px 0; font-size: 14px; line-height: 1.4; }
+
+/* Matchup header: "On your slate" is a small button on the right, beside the conference and venue lines,
+   instead of a big button on its own row (DJ, 3.66.5). The card's top right stays clear for the folded
+   Duo's clock. It looks 30px tall; the tap area is still 44 points. */
+.gv-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-auto-flow: row dense; column-gap: 12px; }
+.gv-head > * { grid-column: 1 / -1; min-width: 0; }
+.gv-head > .gv-meta { grid-column: 1; }
+.gv-head > .gv-acts { grid-column: 2; grid-row: span 2; align-self: center; justify-content: flex-end; margin-top: 8px; }
+.gv-head:not(:has(> .gv-loc)) > .gv-acts, .gv-head:not(:has(> .gv-meta:not(.gv-loc))) > .gv-acts { grid-row: span 1; }
+html .gv-head .gv-act { position: relative; min-height: 0 !important; height: 30px; padding: 0 10px; gap: 4px; font-size: 13px; white-space: nowrap; }
+.gv-head .gv-act svg { width: 13px; height: 13px; }
+.gv-head .gv-act::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: calc(44px / var(--z, 1)); transform: translateY(-50%); }

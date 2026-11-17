@@ -12,6 +12,7 @@ Last updated: Nov 16, 2026, 3.52.8
 - Nothing asked for yet.
 
 ## Decisions
+- "On your slate" / "Add to slate" is a small 30px button on the right of the header card, beside the conference and arena lines (DJ, 3.66.5: "too big, should be on the right side"). Done in CSS only (`.gv-head` is a two-column grid; end of `040-components.css`); the tap area stays 44 points. It sits below the score row, so it's clear of the folded Duo's clock.
 - No Player stats section before the start for soccer (DJ, 3.52.5). 3.52.5 hid it for every sport; DJ wanted it back for the others (3.52.7).
 - Claude's button lives at the top of the page only, not inside the sections (DJ, 3.52.5). The quick look keeps its own button, ordered the same way (under location and line, 3.52.8).
 
