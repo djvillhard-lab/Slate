@@ -17,6 +17,14 @@
     var at = Math.max(w && !w.error ? Date.parse(w.at) || 0 : 0, mine || 0);
     return at && Date.now() - at < 6 * 60000 ? { busy: true } : null;
   }
+  // ESPN's "last five games" for one team, this season only, oldest first (3.91.3). Early in a season ESPN fills the list
+  // with last season's final games (Central Michigan's March loss at Ball State on a 4-0 team), and Claude read them as
+  // recent results. Anything before the off-season gap (60+ days between games), or 60+ days old, is dropped.
+  function l5Season(evs, now) {
+    var t = Date.parse(now) || Date.now(), out = (evs || []).slice().sort(function (x, y) { return (Date.parse(x.gameDate) || 0) - (Date.parse(y.gameDate) || 0); });
+    for (var i = out.length - 1; i > 0; i--) if ((Date.parse(out[i].gameDate) || 0) - (Date.parse(out[i - 1].gameDate) || 0) > 60 * 864e5) { out = out.slice(i); break; }
+    return out.filter(function (e) { var d = Date.parse(e.gameDate); return !d || t - d < 60 * 864e5; });
+  }
   function trimEspn(sum, g, kind) {
     var f = {}, hd = sum.header || {}, cp = (hd.competitions || [])[0] || {};
     try {
@@ -25,7 +33,9 @@
       f.status = ((cp.status || {}).type || {}).detail;
       f.injuries = (sum.injuries || []).map(function (t) { return { team: (t.team || {}).abbreviation, out: (t.injuries || []).slice(0, 8).map(function (i) { return ((i.athlete || {}).displayName || "") + " (" + (i.status || "") + ")"; }) }; });
       f.leaders = (sum.leaders || []).map(function (t) { return { team: (t.team || {}).abbreviation, cats: (t.leaders || []).slice(0, 4).map(function (c) { var l = (c.leaders || [])[0] || {}; return (c.displayName || c.name) + ": " + ((l.athlete || {}).displayName || "") + " " + (l.displayValue || ""); }) }; });
-      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, games: (t.events || []).map(function (e) { return (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
+      // this season's results only, newest first, each with its date, so "last game" is the right one (3.91.3)
+      var gd = (cp.date || (g && g.start) || "");
+      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, newestFirst: l5Season(t.events, gd).reverse().map(function (e) { var d = new Date(e.gameDate); return (isNaN(d) ? "" : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()] + " " + d.getUTCDate() + ": ") + (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
       if ((sum.seasonseries || [])[0]) f.series = sum.seasonseries[0].summary || sum.seasonseries[0].description;
       if (kind === "recap") {
         f.lines = (cp.competitors || []).map(function (c) { return { team: (c.team || {}).abbreviation, by: (c.linescores || []).map(function (l) { return l.displayValue || l.value; }) }; });

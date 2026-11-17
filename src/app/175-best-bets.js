@@ -164,7 +164,7 @@
         (sum.injuries || []).forEach(function (t) { var tid = String((t.team || {}).id || ""); (t.injuries || []).forEach(function (x) { var id = String((x.athlete || {}).id || ""), stx = String(x.status || ""); if (/question/i.test(stx)) qst[id] = 1; if (/out|reserve|suspen|doubt/i.test(stx)) { hurt[id] = 1; (hurtBy[tid] = hurtBy[tid] || {})[id] = (((x.athlete || {}).position || {}).abbreviation) || "?"; } }); });
         // the game's own context: the spread, the total against both teams' recent games, the weather, and who's out
         var pk = (sum.pickcenter || [])[0] || {}, ou = parseFloat(pk.overUnder), tot = [], seenEv = {}, lastAt = {};
-        (sum.lastFiveGames || []).forEach(function (t) { var tid = String((t.team || {}).id || ""); (t.events || []).forEach(function (e) {
+        (sum.lastFiveGames || []).forEach(function (t) { var tid = String((t.team || {}).id || ""); l5Season(t.events, comp.date).forEach(function (e) {
           var at = Date.parse(e.gameDate) || 0; if (at && at < start - 3600e3 && at > (lastAt[tid] || 0)) lastAt[tid] = at;
           if (seenEv[e.id]) return; seenEv[e.id] = 1; var a = parseFloat(e.homeTeamScore), h = parseFloat(e.awayTeamScore); if (!isNaN(a) && !isNaN(h)) tot.push({ at: at, v: a + h }); }); });
         var recTot = 0; tot.forEach(function (x) { recTot += x.v; }); recTot = tot.length >= 6 ? recTot / tot.length : 0;

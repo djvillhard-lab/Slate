@@ -189,23 +189,29 @@ export function slateKit(opts) {
   function bxApi(lg, rest) { return "https://site.api.espn.com/apis/site/v2/sports/" + bxBase(lg) + "/" + rest; }
   // ---- from src/app/100-highlights.js
   function pvCompute(lg, sum, qbx, g) {
-    pvCompute.fb = false; pvCompute.tm = "";
+    pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = "";
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
       var rec = {}; (k.record || []).forEach(function (r) { rec[r.type] = r.summary || r.displayValue || ""; });
-      var rk = (k.curatedRank || {}).current; T[id] = { id: id, name: (sport === "soccer" ? tm.shortDisplayName : tm.nickname || tm.name) || tm.shortDisplayName || tm.displayName || "", full: tm.displayName || "", abbr: tm.abbreviation || "", side: k.homeAway, rec: rec, rank: rk && rk <= 25 ? rk : (k.rank && k.rank <= 25 ? k.rank : 0) }; });
+      var rk = (k.curatedRank || {}).current; T[id] = { id: id, name: String((sport === "soccer" ? tm.shortDisplayName : tm.nickname || tm.name) || tm.shortDisplayName || tm.displayName || "").replace(/\s+/g, " ").trim(), full: tm.displayName || "", abbr: tm.abbreviation || "", side: k.homeAway, rec: rec, rank: rk && rk <= 25 ? rk : (k.rank && k.rank <= 25 ? k.rank : 0) }; });
     if (ids.length !== 2) return null;
     // 3.71.0: the card's own ranks win. ESPN's game summary can still carry last week's poll (UCLA "No. 7" on a card that
     // says 9 the Monday a new poll came out), so when the card has ranks, the line uses the same ones
     if (g && (Number(g.awayRank) > 0 || Number(g.homeRank) > 0)) ids.forEach(function (i) { var r = Number(g[T[i].side + "Rank"]); T[i].rank = r > 0 && r <= 25 ? r : 0; });
+    // 3.89.6 (DJ: "Michigan St"): the card's own name for each team ("Michigan State", "Central Michigan", "Pistons")
+    if (g) ids.forEach(function (i) { var cn = String(g[T[i].side + "Short"] || "").trim(); if (cn && cn.length <= 22) T[i].name = cn; });
     ids.forEach(function (i) { if (T[i].rank) T[i].name = "No. " + T[i].rank + " " + T[i].name; });
     var H = ids.filter(function (i) { return T[i].side === "home"; })[0] || ids[1], A = ids[0] === H ? ids[1] : ids[0], oth = function (i) { return i === H ? A : H; };
     var nm = function (i) { return (T[i].rank ? "No. " + T[i].rank + " " : "") + T[i].name; };
     var NW = ["", "one", "two", "three", "four", "five", "six"], ORD = function (n) { var v = n % 100; return n + (v >= 11 && v <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"); };
-    var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: tx }); };
+    // 3.88.3: American grammar. A college team or a soccer side is one place ("Florida is", "USA has"); pro nicknames stay plural ("Spurs have")
+    var sing = sport === "soccer" || /^ncaa/.test(lg), esc = function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+    var conj = function (tx) { if (!sing) return tx; ids.forEach(function (i) { if (!T[i].name) return; tx = tx.replace(new RegExp("(^|[:;,] |and )" + esc(T[i].name) + " (have|are|lead)\\b", "g"), function (m0, pre, v) { return pre + T[i].name + " " + { have: "has", are: "is", lead: "leads" }[v]; }); });
+      return tx.replace(/\bis (only )?([\d.]+)-point favorites/g, function (m0, o, n) { return "is " + (o || "") + (/^(8|11|18)(\.|$)/.test(n) ? "an " : "a ") + n + "-point favorite"; }).replace(/ their last five/g, " its last five"); };
+    var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: conj(tx) }); };
     var byAbbr = {}; ids.forEach(function (i) { byAbbr[T[i].abbr] = i; });
     // form: streaks from the last five
-    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = (t.events || []).map(function (e) { return e.gameResult; }); });
+    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
     ids.forEach(function (i) { var f = form[i] || []; if (f.length < 4) return; var last = f[f.length - 1], n = 0; for (var j = f.length - 1; j >= 0 && f[j] === last; j--) n++;
       var all = n === f.length && f.length >= 5 ? " in a row" : " straight";
       if (last === "W" && n >= 4) T[i].hot = n, add("won|" + i, 36 + n * 5, T[i].name + " have won " + NW[n] + all);
@@ -213,6 +219,13 @@ export function slateKit(opts) {
       if (sport === "soccer" && f.indexOf("L") < 0 && f.length >= 5) add("unb|" + i, 40, T[i].name + " are unbeaten in their last five"); });
     if (T[A].hot && T[H].cold || T[H].hot && T[A].cold) { var ho = T[A].hot ? A : H; add("form", 64, T[ho].name + " have won " + NW[T[ho].hot] + " straight; " + T[oth(ho)].name + " have lost " + NW[T[oth(ho)].cold]); }
     if (T[A].hot && T[H].hot) add("bothhot", 60, T[A].hot === T[H].hot ? "Both teams have won " + NW[T[A].hot] + " in a row" : "Both on a roll: " + T[A].name + " have won " + NW[T[A].hot] + " straight, " + T[H].name + " " + NW[T[H].hot]);
+    // a two-legged tie's second leg (3.88.3): the aggregate score is the story ("USA leads 6-0 on aggregate going into the second leg")
+    var ser = (comp.series || [])[0] || comp.series; if (sport === "soccer" && ser && +ser.leg === 2 && ser.competitors && ser.competitors.length === 2) {
+      var ag = {}; ser.competitors.forEach(function (x) { var i = String(x.id || ""); if (T[i] && x.aggregateScore != null) ag[i] = +x.aggregateScore; });
+      if (ag[A] != null && ag[H] != null) { var gA = ag[A], gH = ag[H], up = gA > gH ? A : H, d = Math.abs(gA - gH), hi = Math.max(gA, gH), lo = Math.min(gA, gH);
+        if (!d) add("agg", 70, "Level at " + gA + "-" + gH + " on aggregate going into the second leg");
+        else if (d === 1) add("agg|" + up, 70, T[up].name + " lead " + T[oth(up)].name + " " + hi + "-" + lo + " on aggregate going into the second leg");
+        else add("agg|" + up, 70, T[up].name + " lead " + hi + "-" + lo + " on aggregate going into the second leg"); } }
     // the team's leaders who won't play
     var lead = {}; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); (L.leaders || []).forEach(function (cat) { (cat.leaders || []).slice(0, 1).forEach(function (x) { var a = x.athlete || {}; if (a.displayName) (lead[i] = lead[i] || {})[a.displayName] = { pos: (a.position || {}).abbreviation || "", cat: cat.displayName || cat.name, v: x.displayValue }; }); }); });
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
@@ -230,7 +243,7 @@ export function slateKit(opts) {
       if (sp <= 2.5) add("tight", 42, T[fav].name + " are only " + sp + "-point favorites"); else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " are " + sp + "-point favorites"); }
     if (m && byAbbr[m[1]] && byAbbr[m[1]] !== H && parseFloat(m[2]) <= -1 && sport !== "football" && sport !== "bball") {}
     var pr = sum.predictor; if (pr && pr.homeTeam && pr.awayTeam) { var ph = parseFloat(pr.homeTeam.gameProjection), pa = parseFloat(pr.awayTeam.gameProjection);
-      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.round(Math.max(ph, pa)); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + " a " + pp + "% chance"); } } }
+      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.round(Math.max(ph, pa)); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
     // the table: leaders, top-of-table and relegation clashes
     var pos = {}, grp = (((sum.standings || {}).groups || [])[0] || {}), ent = ((grp.standings || {}).entries || []);
     if (sport === "soccer" && ent.length >= 10) { ent.forEach(function (e, n) { var id = String(e.id || ""); if (T[id]) pos[id] = n + 1; });
@@ -253,6 +266,29 @@ export function slateKit(opts) {
       else if (sm && who && ss.type !== "head-to-head" && +sm[2] >= 2) add("ser", 30, T[who].name + " lead the season series " + sm[2] + "-" + sm[3]); }
     // quieter form: four or five wins from the last five without a current streak
     ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five"); });
+    // 3.91.2 (DJ: "Pistons (8-4) at Pelicans (5-10)" is not informative): quieter facts that only win when nothing above stands out
+    // a slump: one or no wins in the last five, without a current four-game skid
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five"); });
+    // the division race (pro leagues; ESPN's summary carries each team's division): first place by how much, or last place
+    if (/^(nba|wnba|nhl|nfl|mlb)$/.test(lg)) (((sum.standings || {}).groups) || []).forEach(function (gr) {
+      var es = ((gr.standings || {}).entries || []), dv = String(gr.header || "").replace(/^\d{4}(-\d{2,4})?\s+/, "").replace(/\s+Standings$/i, "").trim();
+      if (es.length < 4 || !dv || dv.length > 20) return;
+      var st = function (e, ab) { var s = (e.stats || []).filter(function (x) { return x.abbreviation === ab; })[0]; return s ? s.displayValue : ""; };
+      var gp = function (e) { return (+st(e, "W") || 0) + (+st(e, "L") || 0); };
+      es.forEach(function (e, n) { var i = String(e.id || ""); if (!T[i] || gp(e) < 8) return;
+        if (n === 0) { var gb2 = parseFloat(st(es[1], "GB")); if (!(gb2 > 0)) return;
+          add("div|" + i, 38, T[i].name + " lead the " + dv + " by " + (gb2 === 1 ? "a game" : gb2 === 0.5 ? "half a game" : gb2 + " games")); }
+        else if (n === es.length - 1 && parseFloat(st(e, "GB")) >= 3) add("divlast|" + i, 30, T[i].name + " are last in the " + dv); }); });
+    // a strong home or road record that the perfect-record line above doesn't cover
+    ids.forEach(function (i) { var w = String(T[i].rec[i === H ? "home" : "road"] || "").split("-"), W = +w[0], Lw = +w[1];
+      if (sport !== "soccer" && w.length >= 2 && Lw > 0 && W + Lw >= 6 && W / (W + Lw) >= 0.7) add("good|" + i, 30, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); });
+    // ESPN's predictor leaning one way without being lopsided
+    if (pr && pr.homeTeam && pr.awayTeam) { var ph2 = parseFloat(pr.homeTeam.gameProjection), pa2 = parseFloat(pr.awayTeam.gameProjection);
+      if (!isNaN(ph2) && !isNaN(pa2) && Math.abs(ph2 - pa2) > 8 && Math.max(ph2, pa2) < 85) { var pf2 = ph2 > pa2 ? H : A, pp2 = Math.round(Math.max(ph2, pa2)); add("pred", 22, "ESPN gives " + T[pf2].name + (/^(8\d|11|18)$/.test(String(pp2)) ? " an " : " a ") + pp2 + "% chance"); } }
+    // the better team's top scorer (basketball)
+    if (sport === "bball") { var bt = (parseFloat(String(T[A].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[A].rec.total).split("-")[1]) || 0) >= (parseFloat(String(T[H].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[H].rec.total).split("-")[1]) || 0) ? A : H;
+      (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
+        var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
     // ESPN's preview headline: a solid fallback
     var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90) add("art", 33, hd);
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
@@ -267,15 +303,22 @@ export function slateKit(opts) {
     c.sort(function (x, y) { return y.sc - x.sc; });
     var idIn = function (k) { return String(k || "").split("|").filter(function (x) { return T[x]; })[0] || ""; };
     pvCompute.tm = idIn(c[0].k) ? T[idIn(c[0].k)].abbr : "";
+    pvCompute.sc = c[0].sc; pvCompute.f = c[0].k === "art" ? "" : c[0].tx;   // for pvBlend (105-pv-notes.js): how strong the line is, and its best fact alone
     // the second fact must add something: after "Both on a roll" or a hot-vs-cold line, the streaks are already said
     var STREAK = /^(form|bothhot|won|lost|unb|form5)$/, streaky = STREAK.test(c[0].k.split("|")[0]);
     var qbFirst = c[0].k.indexOf("qb1|") === 0;  // "Raiders QB Mendoza makes his first start" doesn't read on into "and are without…": the second fact is the other team's
-    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)); })[0];
+    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)) && !(/^(big|tight)$/.test(c[0].k) && /^(pred|coin)$/.test(x.k)) && !(/^(pred|coin)$/.test(c[0].k) && /^(big|tight)$/.test(x.k)); })[0];
     if (c[0].k !== "art" && s2 && t.length + s2.tx.length <= 100 && s2.sc >= 30) {  // two facts when they fit in about a line and a half
       // same team twice reads as one sentence: "Canucks have lost five straight and are 1-8 at home"
       var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
       var rest = who0 ? s2.tx.slice(T[who0].name.length + 1) : "";
-      t = who0 && /^(are|have|is) /.test(rest) ? t + " and " + rest : who0 ? t : t + "; " + s2.tx;
+      // 3.88.3: no repeated verb. "USA has won five in a row and has won the last four meetings" -> "...and the last four meetings";
+      // "are without X and are 5-0 at home" -> "...and 5-0 at home"
+      if (who0) { var p1 = t.slice(T[who0].name.length + 1).split(" "), p2 = rest.split(" ");
+        if (p1[0] === p2[0] && /^(have|has)$/.test(p1[0]) && p1[1] === p2[1]) rest = p2.slice(2).join(" ");
+        else if (p1[0] === p2[0] && /^(are|is|have|has)$/.test(p1[0]) && !/^(still|only|looking)$/.test(p2[1] || "")) rest = p2.slice(1).join(" ");
+        else if (!/^(are|have|is|has|leads?) /.test(rest)) rest = ""; }
+      t = who0 && rest ? t + " and " + rest : who0 ? t : t + "; " + s2.tx;
       if (!who0 && idIn(s2.k) !== idIn(c[0].k)) pvCompute.tm = "";  // two teams' facts: no single team
     }
     return t;
@@ -309,6 +352,11 @@ export function slateKit(opts) {
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
   // ---- from src/app/080-claude.js
+  function l5Season(evs, now) {
+    var t = Date.parse(now) || Date.now(), out = (evs || []).slice().sort(function (x, y) { return (Date.parse(x.gameDate) || 0) - (Date.parse(y.gameDate) || 0); });
+    for (var i = out.length - 1; i > 0; i--) if ((Date.parse(out[i].gameDate) || 0) - (Date.parse(out[i - 1].gameDate) || 0) > 60 * 864e5) { out = out.slice(i); break; }
+    return out.filter(function (e) { var d = Date.parse(e.gameDate); return !d || t - d < 60 * 864e5; });
+  }
   function trimEspn(sum, g, kind) {
     var f = {}, hd = sum.header || {}, cp = (hd.competitions || [])[0] || {};
     try {
@@ -317,7 +365,9 @@ export function slateKit(opts) {
       f.status = ((cp.status || {}).type || {}).detail;
       f.injuries = (sum.injuries || []).map(function (t) { return { team: (t.team || {}).abbreviation, out: (t.injuries || []).slice(0, 8).map(function (i) { return ((i.athlete || {}).displayName || "") + " (" + (i.status || "") + ")"; }) }; });
       f.leaders = (sum.leaders || []).map(function (t) { return { team: (t.team || {}).abbreviation, cats: (t.leaders || []).slice(0, 4).map(function (c) { var l = (c.leaders || [])[0] || {}; return (c.displayName || c.name) + ": " + ((l.athlete || {}).displayName || "") + " " + (l.displayValue || ""); }) }; });
-      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, games: (t.events || []).map(function (e) { return (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
+      // this season's results only, newest first, each with its date, so "last game" is the right one (3.91.3)
+      var gd = (cp.date || (g && g.start) || "");
+      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, newestFirst: l5Season(t.events, gd).reverse().map(function (e) { var d = new Date(e.gameDate); return (isNaN(d) ? "" : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()] + " " + d.getUTCDate() + ": ") + (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
       if ((sum.seasonseries || [])[0]) f.series = sum.seasonseries[0].summary || sum.seasonseries[0].description;
       if (kind === "recap") {
         f.lines = (cp.competitors || []).map(function (c) { return { team: (c.team || {}).abbreviation, by: (c.linescores || []).map(function (l) { return l.displayValue || l.value; }) }; });

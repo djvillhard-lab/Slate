@@ -58,3 +58,6 @@ Last updated: Nov 17, 2026, 3.77.0
 
 ## One-liner fallback facts (3.91.2)
 When no strong fact exists, pvCompute (100-highlights.js) now tries quieter facts before the plain records line: a slump (1 or 0 wins in the last five), division leader by N games or last in the division (pro leagues only, 8+ games played, from the summary's standings groups), a .700+ home/road record (6+ games), ESPN's predictor at 58–84%, and the better team's top scorer (basketball). Cached records-only lines (fb) are dropped on load so they recompute.
+
+## Last season's games in "last five" (3.91.3)
+ESPN's lastFiveGames pads early-season lists with last season's games (Central Michigan's March loss on a 4-0 team). `l5Season(events, gameDate)` in 080-claude.js keeps this season only (cut at a 60+ day gap, drop anything 60+ days old). Used by trimEspn (Claude facts: `last5[].newestFirst`, dated), pvCompute form, Best bets totals, slate-kit (regenerated with email_kit.py) and tick.py (`season_only`). The worker RULES now make Claude check every result and "last game" against the record. Old previews keep their text until regenerated.

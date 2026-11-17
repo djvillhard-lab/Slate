@@ -322,6 +322,19 @@ def short_leaders(team_block):
             out.append({"cat": cat.get("displayName") or cat.get("name"), "name": l.get("athlete", {}).get("displayName"), "value": l.get("displayValue")})
     return out
 
+
+def season_only(evs):
+    """ESPN's last five, this season only, oldest first (3.91.3): early in a season ESPN pads it with last season's games."""
+    from datetime import datetime, timezone
+    def at(e):
+        try: return datetime.fromisoformat(str(e.get("gameDate", "")).replace("Z", "+00:00")).timestamp()
+        except Exception: return 0
+    out = sorted(evs or [], key=at)
+    for i in range(len(out) - 1, 0, -1):
+        if at(out[i]) - at(out[i - 1]) > 60 * 86400: out = out[i:]; break
+    now = datetime.now(timezone.utc).timestamp()
+    return [e for e in out if not at(e) or now - at(e) < 60 * 86400]
+
 def summary_facts(g, ev):
     lg = g["league"]; s = get(f"https://site.api.espn.com/apis/site/v2/sports/{base(lg)}/summary?event={ev['id']}")
     comp = ev["competitions"][0]; cs = {c["homeAway"]: c for c in comp["competitors"]}
@@ -360,7 +373,7 @@ def summary_facts(g, ev):
     l5 = {}
     for blk in s.get("lastFiveGames", []):
         side = ids.get(blk.get("team", {}).get("id"))
-        if side: l5[side] = "".join(e.get("gameResult", "")[:1] for e in reversed(blk.get("events", [])))
+        if side: l5[side] = "".join(e.get("gameResult", "")[:1] for e in reversed(season_only(blk.get("events", []))))
     if l5: f["last5"] = l5
     ser = [x for x in s.get("seasonseries", []) if x.get("type") == "season"] or s.get("seasonseries", [])
     if ser:

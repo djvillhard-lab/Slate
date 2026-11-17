@@ -349,7 +349,7 @@
     var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: conj(tx) }); };
     var byAbbr = {}; ids.forEach(function (i) { byAbbr[T[i].abbr] = i; });
     // form: streaks from the last five
-    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = (t.events || []).map(function (e) { return e.gameResult; }); });
+    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
     ids.forEach(function (i) { var f = form[i] || []; if (f.length < 4) return; var last = f[f.length - 1], n = 0; for (var j = f.length - 1; j >= 0 && f[j] === last; j--) n++;
       var all = n === f.length && f.length >= 5 ? " in a row" : " straight";
       if (last === "W" && n >= 4) T[i].hot = n, add("won|" + i, 36 + n * 5, T[i].name + " have won " + NW[n] + all);

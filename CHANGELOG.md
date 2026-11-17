@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.91.3 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Claude's game previews: early in the season, ESPN's "last five games" still holds last season's final games, and Claude was calling them recent (Central Michigan "just lost" at Ball State back in March while 4-0; Duke "lost twice" counting last season's loss to UConn). Previews now get only this season's results, newest first and dated, and Claude checks every win, loss and "last game" against each team's record before answering. Tap Regenerate on a preview written before this to get a corrected one.
+- Game one-liners, Best bets and the morning email also leave last season's games out of streaks and recent form.
+
 ## 3.91.2 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Game one-liners: when nothing big stands out, the line now says something real about the game instead of repeating the records, like "Pistons lead the Central by 1.5 games", "Pelicans have lost four of their last five", a strong home or road record, ESPN's win chance, or the better team's top scorer.

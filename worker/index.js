@@ -344,7 +344,7 @@ export default {
   }
 };
 
-const RULES = `Rules for all writing: plain text only, no citation tags or markup; every fact must come from the facts you were given or your web searches; never guess rosters or injuries; no betting talk at all (no spreads, totals, moneylines, odds or sportsbooks; the app shows the lines separately); no quote longer than five words; write in your own words, plain and specific, for a knowledgeable fan. Before you answer, reread every headline and line against its facts: each must say exactly who or what is affected (a player, a coach, a team, a league) and never widen it (a player out for the season is not his team's season ending; one loss is not a team eliminated; a report is not a confirmation); fix any that overstate.`;
+const RULES = `Rules for all writing: plain text only, no citation tags or markup; every fact must come from the facts you were given or your web searches; never guess rosters or injuries; no betting talk at all (no spreads, totals, moneylines, odds or sportsbooks; the app shows the lines separately); no quote longer than five words; write in your own words, plain and specific, for a knowledgeable fan. Before you answer, reread every headline and line against its facts: each must say exactly who or what is affected (a player, a coach, a team, a league) and never widen it (a player out for the season is not his team's season ending; one loss is not a team eliminated; a report is not a confirmation); fix any that overstate. Then check every win, loss, streak and "last game" against each team's record and dated results: a team's latest game is the first one in its newestFirst list; a game from last season is never "recent" or "last time out"; the number of losses you mention this season can never be more than the record shows (a 4-0 team has not lost; a 3-1 team has lost once); when a web result disagrees with the record you were given, trust the record and leave that result out.`;
 
 function prompt(p) {
   const game = p.game, facts = p.facts;
@@ -447,7 +447,7 @@ Answer with only this JSON inside <json></json> tags:
 Stars: 2-4 players. Headlines: only The Athletic stories about this game your search found; [] if none.`;
   return `Write a preview of this upcoming game for a sports fan's app. Today is ${new Date().toDateString()}.
 Game (JSON: teams, records, standings or conferences, ranks, TV, start time in UTC, notes): ${game}
-ESPN facts (JSON: injuries, season leaders, last five results, season series, venue): ${facts}
+ESPN facts (JSON: injuries, season leaders, last5 (each team's results this season, newestFirst, each with its date; the first one is its most recent game), season series, venue): ${facts}
 Do two web searches: "<away short> <home short> preview" and "<away short> <home short> The Athletic". Use results from the last 3 days about this game or these teams.
 Look for what makes the game matter: standings stakes, rivalries, recent meetings, a player facing his old team, streaks, injuries, coaching angles.
 ${RULES}
