@@ -118,3 +118,5 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - `fdFace` wraps the jersey (`fdJerseyOnly` / `hpJerseyOnly`) and lays ESPN's headshot over it once it loads (`BX_HEAD` dirs, same URL as the box score). `FD_FACE[id]` remembers 1 = has a picture, 0 = none, so redraws don't flicker. `fdJersey` and `hpJersey` return the face, so the matchup page's Top performers get it too.
 
 Also in 3.77.2 (DJ, Nov 17): the quarter comes before the clock in `.fd-ck` ("4th 9:51"), both feeds. The score bar grid is now 9 columns (spacer, team, score, spacer, clock, spacer, score, team, spacer) so each team's badge, record and score read as one group and the groups spread evenly. DJ found the old layout (badges at the edges, scores huddled in the middle) too compact on the open Duo. The situation pill stays on row 2.
+
+3.77.4 (DJ, Nov 17): the game chips in `fdStrip` flip ESPN's "8:39 - 4th" to "4th 8:39" to match the score bar.

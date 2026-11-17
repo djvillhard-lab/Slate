@@ -416,7 +416,8 @@
         v = dfs ? { a: dfs.a, h: dfs.h, detail: dst.shortDetail || dst.detail || "Live" } : { detail: "Delayed" }; }  // 3.69.0: no score ahead of the delay
       var show = boxShown(x) && v.a != null && !isNaN(v.a);
       ["away", "home"].forEach(function (sd) { var r = el("span", "fd-cr"); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });
-      b.appendChild(fdIsHT(v.detail, x.league) ? fdHT("i") : el("i", null, v.detail || "Live"));
+      var qd = String(v.detail || "").replace(/^(\d{1,2}:\d{2}(?:\.\d)?)\s*-\s*(.+)$/, "$2 $1");  /* 3.77.4 (DJ): the quarter reads first, "4th 8:39", same as the score bar */
+      b.appendChild(fdIsHT(v.detail, x.league) ? fdHT("i") : el("i", null, qd || "Live"));
       b.setAttribute("aria-label", x.away + " at " + x.home + (show ? ", " + v.a + " to " + v.h : "") + ", " + (v.detail || "live"));
       if (!on) b.addEventListener("click", function () { openFeed(x); });
       w.appendChild(b); });

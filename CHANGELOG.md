@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.77.4 (Nov 17, 2026)
+TestFlight: 3.75.1 (45), no new build (web only)
+- Live feed: the game chips above the score bar now read quarter first too ("4th 8:39"), matching the score bar.
+
 ## 3.77.3 (Nov 17, 2026)
 TestFlight: 3.68.5 (44), no new build (web only)
 - Box Office: the game result is back on the right of each player card (W 126-115 over vs CHI, or the live clock in red).
