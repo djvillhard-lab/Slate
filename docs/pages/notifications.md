@@ -33,6 +33,9 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   games (040-live.js laLogos, from livePoll); WebModel -> SlateLogos.fetch saves 64 px ESPN 500-dark (else 500) logos to
   the group's Logos/ folder, refreshed weekly. Attributes awayLogo/homeLogo (server laAttrs from the scoreboard's team.logo,
   page laAttrsOf from teamLook) and Board al/hl; Chip draws the saved image, else the colored chip.
+- Redesign (3.68.0, DJ): one standout per game (bball: higher ESPN rating value; football: most yards), pv never about
+  the standout (s.tn last name) -> wp, shooting, preview line; header "Slate • CBB" (LA_CODE / LA_LG); tag shared from
+  the phone (pvlines.tags) and sent as st.tag. The app shows tag in the header only from build 44 (branch, waiting).
 ## Open
 - Hockey standouts per team: check during a live game whether ESPN's per-team leaders are that game's numbers.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.

@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.0 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Live notifications for a single game, every sport: one standout for the whole game instead of one per team. Basketball picks the higher of the two teams' ESPN in-game ratings; football picks the game leader with the most yards.
+- The one-liner under it is a second thing to know about the game, never that player's numbers again. A line about the standout gives way to ESPN's win chance, then both teams' shooting ("Shooting: CIT 38% · CLEM 55%"), then the slate's preview line. Soccer keeps the goal scorers. So the card has two lines of text instead of three.
+- The header reads "Slate • CBB" (short league codes: NBA, CBB, WCBB, NFL, CFB, NHL, MLB, EPL, UCL…). It changes for live notifications that start from now on.
+- The slate card's tag ("Upset watch", "Rivalry"…) is now sent along too, for the header. Showing it needs a new app build, which is waiting for DJ's OK.
+
 ## 3.67.3 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Basketball live feed: every play is now a box, like the green made-shot box.

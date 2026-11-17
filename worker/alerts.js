@@ -177,7 +177,7 @@ export async function bcSave(env, doc) {
   await putDoc(env, "bc/channels", { games, updatedAt: new Date().toISOString() });
 }
 // a game's channel is shared by everyone following it: keep the line someone's phone shared, if the next person has none
-function bcPick(had, st) { return had && had.pv && !st.pv ? Object.assign({}, st, { pv: had.pv, line: had.line }) : st; }
+function bcPick(had, st) { let o = had && had.pv && !st.pv ? Object.assign({}, st, { pv: had.pv, line: had.line }) : st; if (had && had.tag && !o.tag) o = Object.assign({}, o, { tag: had.tag }); return o; }
 let BC = null;  // this run's channel record, and the games whose channel needs this minute's score
 
 // same return shape as sendPush: an HTTP status, with 410 meaning "this phone's token is gone, drop it"
@@ -195,8 +195,11 @@ export async function sendApns(env, sub, msg) {
 // ---------- live notifications (Live Activities in the iPhone app) ----------
 // The app reports a "start" token (lets Slate start a live notification) and one token per running game
 // (to update and end it) to <prefix>prefs/liveacts. Each game's state lives in sent-<D>.la[id] = {k, n, end}.
+// 3.68.0 (DJ): the live notification's header, "Slate • CBB", with short league codes
+const LA_CODE = { nfl: "NFL", ncaaf: "CFB", nba: "NBA", wnba: "WNBA", ncaam: "CBB", ncaaw: "WCBB", nhl: "NHL", mlb: "MLB", mls: "MLS",
+  epl: "EPL", ucl: "UCL", uel: "UEL", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "Intl" };
 function laAttrs(id, g, s) {
-  const at = { gameId: id, league: LEAGUE_NAME[g.league] || String(g.league || "").toUpperCase(), away: g.awayShort || g.away || "", home: g.homeShort || g.home || "",
+  const at = { gameId: id, league: `Slate • ${LA_CODE[g.league] || String(g.league || "").toUpperCase()}`, away: g.awayShort || g.away || "", home: g.homeShort || g.home || "",
     awayAbbr: s.aa || g.awayAbbr || (g.awayShort || g.away || "").slice(0, 3).toUpperCase(), homeAbbr: s.ha || g.homeAbbr || (g.homeShort || g.home || "").slice(0, 3).toUpperCase(), awayColor: s.ac || g.awayColor || "", homeColor: s.hc || g.homeColor || "",
     // 3.20.0, the scorebug design: each chip's second-color stripe, college ranks, and the channel for the Watch button (all optional in the app)
     awayAlt: s.ax || g.awayAlt || "", homeAlt: s.hx || g.homeAlt || "", channel: String((g.tv || [])[0] || "") };
@@ -208,7 +211,7 @@ function laAttrs(id, g, s) {
 // "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png" -> "nba/bos.png" (the same name the page uses)
 function logoSeg(href) { const m = /\/i\/teamlogos\/([a-z0-9]+)\/500(?:-dark)?\/(?:scoreboard\/)?([\w-]+\.png)/i.exec(String(href || "")); return m ? `${m[1]}/${m[2]}`.toLowerCase() : ""; }
 // each person's preview lines for today, shared by their phone from the slate (prefs/pvlines, 3.58.0): game id → line
-let PVL = {}, LVL = {};
+let PVL = {}, LVL = {}, TGL = {};
 // 3.66.3: a one-liner made to fit a live notification instead of being cut mid-word: the first part of a two-part line
 // ("Warriors are without Curry; Pelicans have lost five in a row" -> "Warriors are without Curry"), else whole words
 // and "…". Soccer scorers drop the away side's first names already, so they fit two lines.
@@ -244,6 +247,19 @@ function laState(s, id) {
   if (s.state === "in" && id && LVL[id]) { st.pv = String(LVL[id]).slice(0, 140); st.line = st.pv.slice(0, 60); }
   // 3.64.0, soccer with a goal: the scorers and minutes instead (live notifications only, not the slate card)
   if (s.state === "in" && s.gl) { st.pv = String(s.gl).slice(0, 140); st.line = st.pv.slice(0, 60); }
+  // 3.68.0 (DJ): the line is a second thing to know about the game, never the standout's own numbers again. A line
+  // about that player gives way to ESPN's win chance, then the two teams' shooting, then the slate's preview line
+  if (s.state === "in" && s.tn) {
+    const last = String(s.tn).split(" ").slice(-1)[0], about = (t) => !!t && last.length >= 3 && String(t).includes(last);
+    if (!st.pv || about(st.pv)) {
+      const fg = (t) => (/FG (\d+)%/.exec(t || "") || [])[1];
+      const shoot = fg(s.at) && fg(s.ht) ? `Shooting: ${s.aa} ${fg(s.at)}% · ${s.ha} ${fg(s.ht)}%` : "";
+      const alt = [s.wp, shoot, id && PVL[id]].find((t) => t && !about(t));
+      if (alt) st.pv = String(alt); else delete st.pv;
+    }
+  }
+  // 3.68.0: the slate card's tag for the header ("Slate • CBB  Upset watch"); app builds before 44 ignore it
+  if (s.state === "in" && id && TGL[id]) st.tag = String(TGL[id]).slice(0, 24);
   // 3.66.3: sized to fit. Under the two standouts the Lock Screen has one line (about 44 letters); alone it has two
   if (st.pv) { st.pv = fitLine(st.pv, st.ap || st.hp || st.op ? 44 : 80); st.line = fitLine(st.pv, 60); }
   return st;
@@ -254,6 +270,7 @@ function preState(g, kick, id) {
   if (tv) st.line = `On ${tv}`.slice(0, 60);
   // the slate's preview line (3.58.0): its own field for new builds, and the one-liner for older ones
   if (id && PVL[id]) { st.pv = fitLine(PVL[id], 80); st.line = fitLine(st.pv, 60); }
+  if (id && TGL[id]) st.tag = String(TGL[id]).slice(0, 24);
   return st;
 }
 async function sendLive(env, tok, event, body, prio) {
@@ -275,7 +292,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     // before kickoff (3.32.0): a new one starts 10 minutes early, showing 0-0 with the start time and channel
     const kick = Date.parse(s.start || g.start) || 0, soon = s.state === "pre" && kick > 0 && Date.now() >= kick - 10 * 60000 && Date.now() - kick <= 60 * 60000;
     if (s.state === "pre" && !cur && !soon) continue;
-    const st = s.state === "pre" ? preState(g, kick, id) : laState(s, id), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}`;
+    const st = s.state === "pre" ? preState(g, kick, id) : laState(s, id), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}-${st.tag || ""}`;
     let tok = (la.acts || {})[id];
     // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
     if (cur && !cur.off && per[id] === 0) {
@@ -636,46 +653,37 @@ export async function followNow(env, prefix, p) {
 // (before tip-off its numbers are season averages, so nothing is taken then): each team's standout, a team line,
 // the last play and ESPN's win probability. Sports ESPN gives none of these for get nothing new.
 function islandStats(g, c, cs, sit, fin) {
-  const sport = SPORT[g.league], out = {}, cut = (x, n) => String(x || "").replace(/\s+/g, " ").trim().slice(0, n);
+  const sport = SPORT[g.league], out = {}, rate = {}, names = {}, cut = (x, n) => String(x || "").replace(/\s+/g, " ").trim().slice(0, n);
   const stat = (x, k) => { const f = (x.statistics || []).find((y) => y.name === k); return f ? String(f.displayValue || "") : ""; };
   for (const [sd, k] of [["away", "a"], ["home", "h"]]) {
     const x = cs[sd]; if (!x) continue;
     if (sport === "bball") {
       // ESPN's own pick for the team's best game so far, with the full line: "V. Wembanyama 26 PTS, 10 REB, 6 AST, 5 BLK"
       const r = ((x.leaders || []).find((L) => L.name === "rating") || {}).leaders, top = r && r[0];
-      if (top && top.athlete && top.displayValue) out[k + "p"] = standout(top.athlete, top.displayValue);
+      if (top && top.athlete && top.displayValue) { out[k + "p"] = standout(top.athlete, top.displayValue); rate[k] = Number(top.value) || 0; names[k] = top.athlete; }
       const fg = stat(x, "fieldGoalPct"), tm = stat(x, "threePointFieldGoalsMade"), ta = stat(x, "threePointFieldGoalsAttempted"), rb = stat(x, "rebounds");
       const parts = [fg ? `FG ${Math.round(Number(fg))}%` : "", tm && ta ? `3PT ${tm}/${ta}` : "", rb ? `REB ${rb}` : ""].filter(Boolean);
       if (parts.length) out[k + "t"] = parts.join(" · ");
     }
     if (sport === "football") {
-      // the game's passing, rushing and receiving leaders that play for this team (the first one ESPN lists)
-      const tid = String((x.team || {}).id || "");
-      // 3.66.3: the one with the biggest game, by yards, rather than the first listed
-      let best = null, by = -1;
-      for (const L of c.leaders || []) {
-        const top = (L.leaders || [])[0]; if (!top || !top.athlete || String((top.team || {}).id || "") !== tid) continue;
-        const y = Number((/(\d+) YDS/.exec(top.displayValue || "") || [])[1]) || 0; if (y > by) { by = y; best = top; }
-      }
-      if (best) out[k + "p"] = standout(best.athlete, best.displayValue);
       const to = sit[sd + "Timeouts"];
       if (Number.isInteger(Number(to)) && to !== undefined && to !== null && to !== "") out[k + "t"] = `${to} timeout${Number(to) === 1 ? "" : "s"} left`;
     }
   }
-  // football: ESPN's scoreboard has only three leaders for the whole game (passing, rushing, receiving), so one team can
-  // have none. Then the next one listed fills in as a second standout, with its own team's abbreviation (ox, op).
-  if (sport === "football" && (!out.ap || !out.hp)) {
-    const ab = {}; for (const x of Object.values(cs)) ab[String((x.team || {}).id || "")] = (x.team || {}).abbreviation || "";
-    const used = [out.ap, out.hp].filter(Boolean), yds = (t) => Number((/(\d+) YDS/.exec(t) || [])[1]) || 0, cand = [];
+  // 3.68.0 (DJ): one standout for the whole game, not one per team. Basketball: the higher of the two teams' ESPN
+  // in-game ratings. Football: of ESPN's game leaders (passing, rushing, receiving), the one with the most yards.
+  if (sport === "football") {
+    const side = {}; for (const [sd, k] of [["away", "a"], ["home", "h"]]) side[String(((cs[sd] || {}).team || {}).id || "")] = k;
+    let best = null, by = -1;
     for (const L of c.leaders || []) {
-      const top = (L.leaders || [])[0]; if (!top || !top.athlete) continue;
-      const t = standout(top.athlete, top.displayValue), tm = ab[String((top.team || {}).id || "")];
-      if (tm && !used.includes(t)) cand.push([tm, t]);
+      const top = (L.leaders || [])[0]; if (!top || !top.athlete || !side[String((top.team || {}).id || "")]) continue;
+      const y = Number((/(\d+) YDS/.exec(top.displayValue || "") || [])[1]) || 0; if (y > by) { by = y; best = top; }
     }
-    cand.sort((x, y) => yds(y[1]) - yds(x[1]));  // the bigger game of the rest
-    if (cand.length) { out.ox = cand[0][0]; out.op = cand[0][1]; }
+    if (best) { const k = side[String((best.team || {}).id || "")]; out[k + "p"] = standout(best.athlete, best.displayValue); names[k] = best.athlete; rate[k] = 1; }
   }
-  if (fin) return { ap: out.ap, hp: out.hp, ox: out.ox, op: out.op };  // after the final: each team's standout stays on the Lock Screen (3.39.1)
+  if (out.ap && out.hp) { if ((rate.a || 0) >= (rate.h || 0)) delete out.hp; else delete out.ap; }
+  const tk = out.ap ? "a" : out.hp ? "h" : ""; if (tk && names[tk]) out.tn = String(names[tk].displayName || names[tk].shortName || "");
+  if (fin) return { ap: out.ap, hp: out.hp, tn: out.tn };  // after the final: the game's standout stays on the Lock Screen (3.39.1)
   const lp = sit.lastPlay || {};
   if ((sport === "bball" || sport === "football") && lp.text) out.lp = cut(lp.text, 90);
   // decision 10 (docs/NOTIFICATIONS-PLAN.md): ESPN's win probability, labeled as ESPN's, for football and basketball
@@ -714,7 +722,8 @@ export async function runAlerts(env) {
     const pre = w.prefix, subs = (docs[pre + "prefs/push"] || {}).subs || [], p = merged(docs[pre + "prefs/notify"]), s0 = docs[`${pre}prefs/sent-${D}`] || {};
     TZ = typeof p.tz === "string" && /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(p.tz) ? p.tz : "America/Chicago";
     { const pvd = docs[pre + "prefs/pvlines"] || {}; PVL = pvd.date === D && pvd.lines && typeof pvd.lines === "object" ? pvd.lines : {};
-      LVL = pvd.date === D && pvd.live && typeof pvd.live === "object" ? pvd.live : {}; }
+      LVL = pvd.date === D && pvd.live && typeof pvd.live === "object" ? pvd.live : {};
+      TGL = pvd.date === D && pvd.tags && typeof pvd.tags === "object" ? pvd.tags : {}; }
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
@@ -778,7 +787,7 @@ export async function runAlerts(env) {
   if (BC) {
     for (const [id, st] of Object.entries(BC.want)) {
       const g = BC.doc.games[id]; if (!g) continue;
-      const key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.line || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}`;
+      const key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.line || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}-${st.tag || ""}`;
       if (g.end || g.k === key) continue;
       const fin = st.state === "post", scored = !String(g.k || "").startsWith(`${st.a}-${st.h}-`);
       for (const envName of ["production", "sandbox"]) {

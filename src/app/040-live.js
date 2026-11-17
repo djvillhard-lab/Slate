@@ -249,11 +249,12 @@
   // ---- live notifications started and ended right on the phone (3.23.2) ----
   // Switching one on asks the app to put it on the Lock Screen at once (the server takes it over and keeps it current
   // within a minute); switching it off takes it down at once. The same for the live scoreboard.
-  var LA_LG = { nfl: "NFL", ncaaf: "College Football", nba: "NBA", wnba: "WNBA", ncaam: "Men's College Hoops", ncaaw: "Women's College Hoops", nhl: "NHL", mlb: "MLB", mls: "MLS",
-    epl: "Premier League", ucl: "Champions League", uel: "Europa League", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "International" };
+  // 3.68.0 (DJ): the live notification's header, "Slate • CBB", with short league codes
+  var LA_LG = { nfl: "NFL", ncaaf: "CFB", nba: "NBA", wnba: "WNBA", ncaam: "CBB", ncaaw: "WCBB", nhl: "NHL", mlb: "MLB", mls: "MLS",
+    epl: "EPL", ucl: "UCL", uel: "UEL", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "Intl" };
   function laHex(c) { var m = /^#?([0-9a-f]{6})$/i.exec(String(c || "").trim()); return m ? "#" + m[1].toUpperCase() : ""; }
   function laAttrsOf(g) {
-    var at = { gameId: g.id, league: LA_LG[g.league] || info(g).name, away: short(g, "away") || g.away || "", home: short(g, "home") || g.home || "",
+    var at = { gameId: g.id, league: "Slate • " + (LA_LG[g.league] || info(g).name), away: short(g, "away") || g.away || "", home: short(g, "home") || g.home || "",
       awayAbbr: abbr(g, "away"), homeAbbr: abbr(g, "home"), awayColor: laHex(g.awayColor), homeColor: laHex(g.homeColor),
       awayAlt: laHex(g.awayAlt), homeAlt: laHex(g.homeAlt), channel: String((g.tv || [])[0] || "") };
     ["away", "home"].forEach(function (sd) { var r = Number(g[sd + "Rank"]); if ((LEAGUES[g.league] || {}).college && Number.isInteger(r) && r > 0 && r < 26) at[sd + "Rank"] = r; });

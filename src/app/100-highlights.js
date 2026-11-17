@@ -454,14 +454,16 @@
     pvShareT = setTimeout(function () {
       pvShareT = null;
       if (!db || !uid || !state.isOwner || state.date !== todayInHome()) return;
-      var lines = {}, live = {}; games().forEach(function (g) {
+      var lines = {}, live = {}, tags = {}; games().forEach(function (g) {
         var p = PV[g.id]; if (p && p.text) lines[g.id] = String(p.text).slice(0, 140);
+        // 3.68.0: the card's tag for the live notification's header ("Upset watch", "Rivalry"), not "Your team" or "Added"
+        try { var wst = status(g).kind === "live" ? walSlateTag(g) : null, tg = (wst ? [wst.tag] : []).concat(state.why[g.id] || []).filter(function (t) { return t && t !== "Your team" && t !== "Added"; })[0]; if (tg && status(g).kind !== "over") tags[g.id] = String(tg).slice(0, 24); } catch (e) {}
         // 3.61.1: the red live one-liner too, as the card shows it ("GER: Wirtz has scored twice"), for the live notification
         var h = (bx.live[g.id] || {}).hl; if (h && h.text && status(g).kind === "live") { try { var n = hlLine(g, h.text, h.tm); if (n && n.textContent) live[g.id] = String(n.textContent).slice(0, 140); } catch (e) {} }
       });
-      var js = JSON.stringify([lines, live]); if (js === "[{},{}]" || js === pvShared && (!Object.keys(live).length || Date.now() - pvSharedAt < 5 * 60000)) return;
+      var js = JSON.stringify([lines, live, tags]); if (js === "[{},{},{}]" || js === pvShared && (!Object.keys(live).length || Date.now() - pvSharedAt < 5 * 60000)) return;
       pvShared = js; pvSharedAt = Date.now();  // live lines are re-sent every 5 minutes while Slate is open, so the server knows they're current
-      db.doc("prefs/pvlines").set({ date: state.date, lines: lines, live: live, liveAt: Date.now(), updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
+      db.doc("prefs/pvlines").set({ date: state.date, lines: lines, live: live, tags: tags, liveAt: Date.now(), updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
     }, 8000);
   }
   function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "" }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
