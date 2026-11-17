@@ -9,7 +9,8 @@
     nfl: "football/nfl", nba: "basketball/nba", wnba: "basketball/wnba", nhl: "hockey/nhl", mlb: "baseball/mlb",
     ncaaf: "football/college-football", ncaam: "basketball/mens-college-basketball", ncaaw: "basketball/womens-college-basketball",
     mls: "soccer/usa.1", epl: "soccer/eng.1", laliga: "soccer/esp.1", seriea: "soccer/ita.1", bundesliga: "soccer/ger.1", ligue1: "soccer/fra.1",
-    ucl: "soccer/uefa.champions", uel: "soccer/uefa.europa"
+    ucl: "soccer/uefa.champions", uel: "soccer/uefa.europa",
+    intl: "soccer/fifa.friendly"   // national teams (3.77.2): about 200 countries, so World Cup qualifiers and friendlies get flags too
   };
   var LOGO_PRO = { NFL: "nfl", NBA: "nba", WNBA: "wnba", NHL: "nhl", MLB: "mlb" };
   var LOGO_WEEK = 7 * 86400000, LOGO_KEY = "slate-logos-v1";
@@ -72,19 +73,54 @@
       if (typeof render === "function") render();
     });
   }
+  // which version to show on Midnight, decided once per logo and kept on this phone (3.77.2): "l" = the regular logo,
+  // because ESPN's dark-theme version has almost no color (Clemson's white paw) and the regular one is colorful and bright enough
+  // for the dark card. Duke and the Yankees keep their white marks: their navy would disappear.
+  var LOGO_PICK = (function () { try { return JSON.parse(localStorage.getItem("slate-logos-pick") || "null") || {}; } catch (e) { return {}; } })();
+  function logoPickSave() { try { localStorage.setItem("slate-logos-pick", JSON.stringify(LOGO_PICK)); } catch (e) {} }
+  // what a loaded logo looks like: solid pixels, average color saturation and average brightness (0 to 1).
+  // The same test the live notifications and the morning email use. null when the picture can't be read (then it's trusted as it is)
+  function logoStats(im) {
+    try {
+      var W = 48, cv = document.createElement("canvas"); cv.width = cv.height = W;
+      var cx = cv.getContext("2d"); cx.drawImage(im, 0, 0, W, W);
+      var d = cx.getImageData(0, 0, W, W).data, n = 0, sat = 0, br = 0;
+      for (var i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 200) continue;
+        var r = d[i], g = d[i + 1], bl = d[i + 2], mx = Math.max(r, g, bl), mn = Math.min(r, g, bl);
+        n++; sat += mx ? (mx - mn) / mx : 0; br += (0.299 * r + 0.587 * g + 0.114 * bl) / 255;
+      }
+      return { n: n, sat: n ? sat / n : 0, br: n ? br / n : 0 };
+    } catch (e) { return null; }
+  }
   // puts the logo into a chip made by badgeFor; the chip keeps its colors and letters until the picture has loaded
   function addLogo(b, name) {
     var hit = teamLook(name); if (!hit || !hit[0]) return;
-    var dark = themeIsDark(), url = logoUrl(hit[0], dark);
-    if (LOGO_BAD[url]) { if (!dark || LOGO_BAD[url = logoUrl(hit[0], false)]) return; }
+    var seg = hit[0], dark = themeIsDark(), light = logoUrl(seg, false), url = dark && LOGO_PICK[seg] !== "l" ? logoUrl(seg, true) : light;
+    if (LOGO_BAD[url]) { if (!dark || LOGO_BAD[url = light]) return; }
     var im = document.createElement("img"); im.className = "badge-logo"; im.alt = ""; im.decoding = "async"; im.draggable = false; im.crossOrigin = "anonymous";
-    if (LOGO_OK[url]) b.classList.add("lg");           // loaded on this phone before: show it straight away, no letters flashing first
-    im.onload = function () { b.classList.add("lg"); if (!LOGO_OK[url]) { LOGO_OK[url] = 1; try { localStorage.setItem("slate-logos-ok", JSON.stringify(LOGO_OK)); } catch (e) {} } };
+    var done = false;
+    if (LOGO_OK[url]) {                                 // loaded on this phone before: show it straight away, no letters flashing first
+      b.classList.add("lg");
+      setTimeout(function () { if (!done) b.classList.remove("lg"); }, 4000);   // 3.77.2: a load that hangs no longer leaves an empty box
+    }
+    im.onload = function () {
+      var fresh = !LOGO_OK[url] || (dark && url !== light && !LOGO_PICK[seg]), st = fresh ? logoStats(im) : null;   // read each logo once per phone
+      if (st && st.n < 8) { im.onerror(); return; }     // an empty picture counts as a failed one: letters, or the other version
+      done = true; b.classList.add("lg");
+      if (!LOGO_OK[url]) { LOGO_OK[url] = 1; try { localStorage.setItem("slate-logos-ok", JSON.stringify(LOGO_OK)); } catch (e) {} }
+      if (dark && url !== light && !LOGO_PICK[seg] && st) {
+        if (st.sat >= 0.12) { LOGO_PICK[seg] = "d"; logoPickSave(); return; }
+        var pr = new Image(); pr.crossOrigin = "anonymous";   // one-color dark mark: is the full-color logo readable on the card?
+        pr.onload = function () { var s2 = logoStats(pr); LOGO_PICK[seg] = s2 && s2.n >= 8 && s2.sat > 0.3 && s2.br >= 0.3 ? "l" : "d"; logoPickSave(); if (LOGO_PICK[seg] === "l") { url = light; im.src = light; } };
+        pr.onerror = function () { LOGO_PICK[seg] = "d"; logoPickSave(); };
+        pr.src = light;
+      }
+    };
     im.onerror = function () {
       LOGO_BAD[url] = 1; delete LOGO_OK[url];
-      var light = logoUrl(hit[0], false);
       if (url !== light && !LOGO_BAD[light]) { url = light; im.src = light; return; }   // no dark version: try the regular one
-      b.classList.remove("lg"); im.remove();
+      done = true; b.classList.remove("lg"); im.remove();
     };
     im.src = url; b.appendChild(im);
   }

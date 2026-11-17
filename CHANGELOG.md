@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.79.2 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Team logos: on Midnight, a team whose dark-background logo is a plain white mark now shows its full-color logo when that one stands out on the card. Clemson's orange paw, Texas, Tennessee, Xavier and the Raptors, for example. Duke and the Yankees keep their white logos, because their navy would disappear.
+- Team logos: a logo that is slow to arrive no longer leaves an empty box. After 4 seconds the team's colored chip and letters come back until the logo loads, and a logo that comes back empty counts as missing.
+- National teams (World Cup qualifiers and friendlies) now show their flags on All games and the slate.
+
 ## 3.79.1 (Nov 17, 2026)
 TestFlight: 3.75.1 (45), no new build (web only)
 - Logo check, part 1. Morning email on a dark theme: teams whose dark-background logo is a plain white mark but whose real logo shows fine on dark use the real one (Clemson's orange paw, Tennessee, Texas, the Dodgers and Tigers, and a few more). Three soccer clubs with no dark version no longer show a broken picture.
