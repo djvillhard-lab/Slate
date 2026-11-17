@@ -133,7 +133,8 @@
     rk.busyK[key] = true;
     Promise.all([rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 0))), rkFetch(rkUrl(lg, "scoreboard", "dates=" + rkEtDay(day, 1)))]).then(function (sbs) {
       var evs = {};
-      sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { var s = (e.status || {}).type || {}; if ((s.state === "in" || s.state === "post") && rkCentral(new Date(e.date).getTime()) === day) evs[e.id] = e; }); });
+      sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { var s = (e.status || {}).type || {}; if ((s.state === "in" || s.state === "post") && rkCentral(new Date(e.date).getTime()) === day) evs[e.id] = e;
+        (((e.competitions || [])[0] || {}).competitors || []).forEach(function (c) { var tm = c.team || {}; if (tm.logo && tm.displayName) logoNote(tm.displayName, tm.logo, tm.color, tm.alternateColor); }); }); });
       var doc = rk.docDate === day ? rk.doc : null, savedFinal = {}, saved = [];
       if (doc && doc.events && doc.events[lg] && doc.leagues && doc.leagues[lg]) {
         doc.events[lg].forEach(function (id) { savedFinal[id] = 1; });
@@ -391,7 +392,11 @@
       sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) {
         var t = (e.status || {}).type || {}; if (GC_OFF.test((t.name || "") + " " + (t.description || ""))) return; if (rkCentral(new Date(e.date).getTime()) !== day) return;
         seen[e.id] = 1;
-        (((e.competitions || [])[0] || {}).competitors || []).forEach(function (c) { var tm = c.team || {}, ci = tm.conferenceId; if (!ci) return; if (tm.abbreviation) conf[tm.abbreviation] = ci; if (tm.id) conf["#" + tm.id] = ci; if (P[ci]) pw[e.id] = 1; });
+        (((e.competitions || [])[0] || {}).competitors || []).forEach(function (c) { var tm = c.team || {}, ci = tm.conferenceId;
+          // every team that played that day hands its logo to the logo helper (DJ, 3.89.4: Box Office had no logos for last night's
+          // college teams when the phone's team list didn't have them; the slate's own games only cover the day the app has loaded)
+          if (tm.logo && tm.displayName) logoNote(tm.displayName, tm.logo, tm.color, tm.alternateColor);
+          if (!ci) return; if (tm.abbreviation) conf[tm.abbreviation] = ci; if (tm.id) conf["#" + tm.id] = ci; if (P[ci]) pw[e.id] = 1; });
       }); });
       gc[key] = { n: Object.keys(seen).length, p: Object.keys(pw).length, conf: conf };
       if (state.view === "moments") keepScroll(renderMoments); else if (state.view === "best") keepScroll(renderBest);
@@ -662,6 +667,7 @@
       else if (on0 && !on0[mm.lg]) { var l0 = mmLgs()[0]; if (l0) mm.lg = l0[0]; else { mm.date = shiftDate(today, -1); mm.auto = true; } }
     }
     renderDockDay();
+    if (!MM_SOCCER[mm.lg] || GC_PATH[mm.lg]) gcBoard(mm.date, mm.lg);   // that day's teams and their logos (fetched once per day and league)
     var strip = el("div", "strip mm-strip");
     mmLgs().forEach(function (o) {
       var b = el("button", "lg-tab", o[1]); b.type = "button"; b.setAttribute("aria-pressed", mm.lg === o[0] ? "true" : "false");

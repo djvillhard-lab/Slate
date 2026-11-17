@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.89.4 (Nov 17, 2026)
+TestFlight: 3.68.5 (44), no new build (web only)
+- Box Office: team logos show on every night and every sport, including last night's college basketball. Box Office used to get logos for teams that weren't on today's slate from a team list kept on the phone, and when that list was missing a team, its badge stayed a plain colored circle. Now each night's own ESPN scoreboard hands over every team's logo, so a team that played that night always has one.
+
 ## 3.89.3 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate: the 📰 News line under a game always stays on one line. It drops the team in front, says things shorter ("before joining Man United" instead of "before he officially starts at Manchester United Wednesday"), and on a narrow screen keeps just the main fact ("Pochettino's final match in charge").
