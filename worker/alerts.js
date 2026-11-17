@@ -217,7 +217,8 @@ let PVL = {}, LVL = {}, TGL = {};
 // and "…". Soccer scorers drop the away side's first names already, so they fit two lines.
 function fitLine(t, n) {
   t = String(t || "").replace(/\s+/g, " ").trim(); if (t.length <= n) return t;
-  const first = t.split(/;\s+|\s+·\s+(?=[A-Z]{2,4} )/)[0];
+  // 3.71.3: "and" starting a second clause counts as two parts too ("Chargers are without WR McConkey and have lost five")
+  const first = t.split(/;\s+|\s+·\s+(?=[A-Z]{2,4} )|,?\s+and\s+(?=(?:have|has|are|is|were|was|won|lost|lead|leads|trail|trails)\b)/)[0];
   if (first.length <= n && first.length >= 12 && !/ · /.test(t)) return first;
   const cut = t.slice(0, n - 1), sp = cut.lastIndexOf(" ");
   return (sp > n * 0.6 ? cut.slice(0, sp) : cut).replace(/[,;:·\s]+$/, "") + "…";
@@ -236,7 +237,8 @@ function laState(s, id) {
   // football, while the ball is live: who has it and the down ("2nd & 7 at BC 34"), straight from ESPN; left out when ESPN has none
   if (s.state === "in" && (s.po === "away" || s.po === "home")) st.poss = s.po;
   // "MIN ball · 3rd & 4 at GB 35" (3.25.1: who has it, in words too, beside the football icon)
-  if (s.state === "in" && s.dd) { const who = s.po === "away" ? s.aa : s.po === "home" ? s.ha : ""; st.sit = ((who ? who + " ball · " : "") + String(s.dd)).slice(0, 44); }
+  // 3.71.3 (DJ): just the down and the spot ("1st & 10 at BAL 6"): the football icon by the team name already says who has it
+  if (s.state === "in" && s.dd) { const who = s.po === "away" ? s.aa : s.po === "home" ? s.ha : ""; st.sit = (s.po ? String(s.dd) : (who ? who + " ball · " : "") + String(s.dd)).slice(0, 44); }
   // the expanded island's extra lines (3.38.0; builds before it ignore them)
   if (s.state === "in" || s.state === "post") for (const k of ["ap", "hp", "ox", "op", "at", "ht", "lp", "wp"]) if (s[k]) st[k] = s[k];
   // the slate's preview line for the game, while it's on (after the final it's old news)

@@ -36,6 +36,8 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - Redesign (3.68.0, DJ): one standout per game (bball: higher ESPN rating value; football: most yards), pv never about
   the standout (s.tn last name) -> wp, shooting, preview line; header "Slate • CBB" (LA_CODE / LA_LG); tag shared from
   the phone (pvlines.tags) and sent as st.tag. The app shows tag in the header from build 44 (3.68.5).
+- Football (3.71.3): sit is just ESPN's down and spot when possession is known; fitLine also splits on ", and have/are/…".
+  Build 45 (branch, waiting for DJ) moves the down next to the football icon by the team name and drops its own row.
 ## Open
 - Hockey: ESPN's scoreboard has no per-team leaders during a game (checked Nov 16, MTL-NYR 2nd period), so no standout.
 - Not yet seen on DJ's Duo: the expanded island (build 37) and the Lock Screen lines (build 38). Ask for screenshots.
