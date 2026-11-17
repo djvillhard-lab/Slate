@@ -1,0 +1,3 @@
+/* Box Office: the day's game count beside each league tab ("NBA 9"), meta-sized and dim like other counts */
+:is(.mm-strip, .rk-strip) .lg-tab .lg-n { margin-left: .3em; font-size: .7em; font-weight: 700; font-stretch: 100%; color: var(--dim); }
+:is(.mm-strip, .rk-strip) .lg-tab[aria-pressed="true"] .lg-n { color: var(--muted); }

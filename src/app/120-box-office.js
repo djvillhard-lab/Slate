@@ -363,6 +363,36 @@
     if (ord.length) opts = opts.map(function (o, i) { var j = ord.indexOf(o[0]); return [j === -1 ? 1e3 + i : j, o]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
     return opts;
   }
+  // how many games each league has on a Box Office day ("NBA 9" on its tab). The day the app has loaded counts the games
+  // All games shows; any other day asks ESPN's scoreboard once (free) and keeps the answer. Postponed and canceled games don't count.
+  var GC_PATH = { epl: "soccer/eng.1", ucl: "soccer/uefa.champions" }, gc = {};
+  var GC_OFF = /postpon|cancel|suspend|forfeit/i;
+  function lgGameCount(day, lg) {
+    if (lg === "all") return null;
+    if (day === state.date && (state.slateStatus === "ready" || state.slateStatus === "empty")) {
+      var n = 0; games().forEach(function (g) { if (g.league !== lg) return; var sc0 = scoreRaw(g.id); if (sc0 && GC_OFF.test(sc0.detail || "")) return; n++; });
+      return n;
+    }
+    var key = day + "|" + lg; if (key in gc) return gc[key];
+    var path = RK_PATH[lg] || GC_PATH[lg]; if (!path) return null;
+    gc[key] = null;
+    var url = function (add) { var p = path.split("&"); return "https://site.api.espn.com/apis/site/v2/sports/" + p[0] + "/scoreboard?dates=" + rkEtDay(day, add) + (p.length > 1 ? "&" + p.slice(1).join("&") : ""); };
+    Promise.all([rkFetch(url(0)), rkFetch(url(1))]).then(function (sbs) {
+      if (!sbs[0] && !sbs[1]) { delete gc[key]; return; }
+      var seen = {};
+      sbs.forEach(function (j) { ((j && j.events) || []).forEach(function (e) { var t = (e.status || {}).type || {}; if (GC_OFF.test((t.name || "") + " " + (t.description || ""))) return; if (rkCentral(new Date(e.date).getTime()) === day) seen[e.id] = 1; }); });
+      gc[key] = Object.keys(seen).length;
+      if (state.view === "moments") keepScroll(renderMoments); else if (state.view === "best") keepScroll(renderBest);
+    });
+    return null;
+  }
+  // the count beside a league tab, plus a spoken label ("NBA, 9 games")
+  function tabCount(b, day, lg, name, total) {
+    var n = total != null ? total : lgGameCount(day, lg); if (!n) return n;
+    b.appendChild(el("span", "lg-n", String(n)));
+    b.setAttribute("aria-label", name + ", " + n + (n === 1 ? " game" : " games"));
+    return n;
+  }
   function rkPick(k, dir) {
     if (state.bestLeague === k) return;
     state.bestLeague = k; state.bestAuto = false; state.bestConf = "all";
@@ -456,6 +486,7 @@
     var strip = el("div", "strip mm-strip");
     mmLgs().forEach(function (o) {
       var b = el("button", "lg-tab", o[1]); b.type = "button"; b.setAttribute("aria-pressed", mm.lg === o[0] ? "true" : "false");
+      tabCount(b, mm.date, o[0], (LEAGUES[o[0]] || {}).name || o[1]);  // the day's game count beside the league ("NBA 9")
       b.addEventListener("click", function () { mmPick(o[0]); }); strip.appendChild(b);
     });
     MM_SOON.forEach(function (n) { var b = el("span", "lg-tab mm-soon"); b.appendChild(document.createTextNode(n)); b.appendChild(el("i", null, "Soon")); strip.appendChild(b); });
@@ -614,9 +645,11 @@
     // the same filters as All games: your players, the leagues, then All, in your order; swipe between them
     var opts = rkOpts(ks);
     if (state.bestAuto !== false || !opts.some(function (o) { return o[0] === state.bestLeague; })) { state.bestLeague = opts[0][0]; state.bestAuto = true; }
-    var strip = el("div", "strip rk-strip");
+    var strip = el("div", "strip rk-strip"), nAll = 0;
+    ks.forEach(function (k) { nAll += lgGameCount(day, k) || 0; });
     opts.forEach(function (o) {
       var b2 = el("button", "lg-tab", o[1]); b2.type = "button"; b2.setAttribute("aria-pressed", state.bestLeague === o[0] ? "true" : "false");
+      if (o[0] !== "fav") tabCount(b2, day, o[0], o[0] === "all" ? "All leagues" : (LEAGUES[o[0]] || {}).name || o[1], o[0] === "all" ? nAll : null);
       if (o[0] === "fav") b2.setAttribute("aria-label", "My players");
       b2.addEventListener("click", function () { rkPick(o[0]); });
       strip.appendChild(b2);
