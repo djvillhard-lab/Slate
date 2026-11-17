@@ -482,12 +482,15 @@
         if (ht) mid.appendChild(fdHT("b")); else { mid.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); if (!over) mid.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); } var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
-      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); if (!over && posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball");
-        // 3.73.1 (DJ): the down and distance sits with the ball, beside the score of the team that has it (it was under the clock)
-        var ddT = spot && Number(spot.e.down) && spot.e.shortDownDistanceText ? String(spot.e.shortDownDistanceText) : "";
-        if (ddT) { var ps = el("span", "fd-poss"); ps.appendChild(bl); ps.appendChild(el("em", "fd-mdd", ddT)); tm.classList.add("fd-has"); }
-        else nm.appendChild(bl); } tm.appendChild(nm); if (ps && tm.classList.contains("fd-has") && !ps.parentNode) tm.appendChild(ps);
+      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
       var scn = el("b", "fd-sc" + ((sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
+      // 3.74.1 (DJ: under the record it "isn't in a good spot"): the football and the down and distance are a small pill centered right under the
+      // score of the team with the ball. The other score keeps an empty slot the same height, so the two scores stay level and the bar stays even.
+      // History: under the clock (3.36), beside the record (3.73.1).
+      if (!over) { var scw = el("div", "fd-scw"), slot = el("span", "fd-poss"); scw.appendChild(scn);
+        if (posSide === sd) { var bl = el("i", "fd-ball"); bl.setAttribute("aria-label", "has the ball"); slot.appendChild(bl); slot.classList.add("on");
+          var ddT = spot && Number(spot.e.down) && spot.e.shortDownDistanceText ? String(spot.e.shortDownDistanceText) : ""; if (ddT) slot.appendChild(el("em", "fd-mdd", ddT)); }
+        scw.appendChild(slot); scn = scw; }
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
     body.appendChild(bug);

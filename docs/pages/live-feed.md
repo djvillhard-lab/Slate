@@ -110,3 +110,4 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - Down and distance now lives in the possession team's block (`.fd-poss` inside `.fd-tm.fd-has`), not in `.fd-mid`.
 - `fdAb` maps the NFL's codes in ESPN play text (BLT, HST, CLV, ARZ) to the scoreboard's; `fdClean` runs it.
 - Compact top (DJ, folded Duo: no plays visible without scrolling): the football Leaders card is closed by default behind a `Leaders` button in `.fd-bar` (`localStorage["slate-feed-leaders"]`), opens inside the list under the bar. The field card's heading shows only when there's no down (kickoff). Win probability is one row (`hp-wp1`). Don't add new always-open cards above the plays.
+- 3.74.1 (DJ didn't like it beside the record): down and distance is a pill under the possession team's score (`.fd-scw` wraps the score and a `.fd-poss` slot on both sides so the scores stay level). Don't move it back under the clock or beside the record.
