@@ -222,7 +222,7 @@
       flush();
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game tips off." : "No plays yet."));
-    fdAgo(list, sum, st.state === "in", g.id); body.appendChild(list);
+    fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
     if (plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); list.appendChild(mb); }
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
@@ -257,6 +257,9 @@
       : /^blocked/i.test(t) ? "🚫" : /^steal/i.test(t) ? "🖐️" : /^ejected/i.test(t) ? "🟥" : /^(technical|flagrant)/i.test(t) ? "⚠️" : /^(coach's challenge|replay review)/i.test(t) ? "📺"
       : /^(td:|pick six|fumble return touchdown|return touchdown|.*touchdown!?$)/i.test(t) ? "🏈" : /^field goal is good/i.test(t) ? "🥅" : /^field goal (missed|blocked)/i.test(t) ? "❌"
       : /^safety/i.test(t) ? "🛡️" : /^intercepted/i.test(t) ? "🧤" : /^fumble/i.test(t) ? "😬" : /sacked|^sack/i.test(t) ? "💥" : /^penalty/i.test(t) ? "🚩"
+      // 3.69.0 (DJ): football's everyday plays too, where an emoji fits: a completion, a run, an incompletion, a punt, a kickoff, a good extra point
+      : /^pass complete| to [A-Z][^,]*(?: for \d|, loss of|, no gain)/.test(t) ? "🎯" : /^incomplete/i.test(t) ? "❌" : / runs for | loses \d|^run\b|^[A-Z][^,]*, no gain$/.test(t) ? "🏃"
+      : /^punt/i.test(t) ? "🦵" : /^kickoff/i.test(t) ? "🦶" : /^extra point.*good/i.test(t) && !/no good/i.test(t) ? "✅"
       : /timeout/i.test(t) ? "🚨" : /^(miss(ed|es) |free throw missed)/i.test(t) ? "❌" : /^(both free throws|all \d free throws|makes \d of)/i.test(t) ? "🏀" : /offensive rebound/i.test(t) ? "🔁" : /rebound/i.test(t) ? "🙌"
       : /^turnover/i.test(t) ? "↩️" : /foul/i.test(t) ? "✋" : /^end /i.test(t) ? "🔔" : /^jump ball/i.test(t) ? "⛹️" : "";
     return e ? e + " " + t : t;
@@ -273,15 +276,14 @@
   var FD_AGO = {};
   function fdAgoText(t) { var s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? s + "s ago" : s < 3600 ? Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2) + " ago" : ""; }
   // 3.66.10 (DJ): it sits small at the top left, directly above the newest play, and starts again from 0 when a new play comes in
-  function fdAgo(list, sum, live, gid) {
-    if (!live) return; var L = fdLastAt(sum), o = FD_AGO[gid];
+  function fdAgo(list, sum, live, g) {
+    if (!live) return; var gid = g.id, L = fdLastAt(sum), o = FD_AGO[gid];
     if (!o) o = FD_AGO[gid] = { key: L.key, t: L.t }; else if (o.key !== L.key) { o.key = L.key; o.t = Date.now(); }
-    var t = o.t; if (!t || Date.now() - t > 3600000) return;
-    var x = el("p", "fd-ago", "Last play " + fdAgoText(t)); x.setAttribute("data-t", String(t));
-    x.style.cssText = "margin:0 0 2px 2px;text-align:left;font-size:11px;font-weight:600;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums";
-    list.insertBefore(x, list.firstChild);
+    var t = o.t, bar = el("div", "fd-bar"), x = el("p", "fd-ago", t && Date.now() - t <= 3600000 ? "Last play " + fdAgoText(t) : ""); x.setAttribute("data-t", String(t || 0));
+    bar.appendChild(x); bar.appendChild(fdDelayCtl(g));  // 3.69.0: the delay control sits on the same line
+    list.insertBefore(bar, list.firstChild);
   }
-  setInterval(function () { if (state.view !== "feed" || document.hidden) return; var xs = document.querySelectorAll("#feed-body .fd-ago"); for (var i = 0; i < xs.length; i++) { var tx = "Last play " + fdAgoText(+xs[i].getAttribute("data-t")); if (xs[i].textContent !== tx) xs[i].textContent = tx; } }, 1000);
+  setInterval(function () { if (state.view !== "feed" || document.hidden) return; var xs = document.querySelectorAll("#feed-body .fd-ago"); for (var i = 0; i < xs.length; i++) { var t0 = +xs[i].getAttribute("data-t"); if (!t0) continue; var tx = "Last play " + fdAgoText(t0); if (xs[i].textContent !== tx) xs[i].textContent = tx; } }, 1000);
   // one emoji in front of each play tag (3.52.4, DJ's request, like News): never inside the play text
   function fdTagText(t) {
     t = String(t || "");

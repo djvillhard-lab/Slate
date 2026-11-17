@@ -66,3 +66,10 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 ## 3.68.10: football, no player without a stat line
 - `fdLine`: receiving counts with targets alone ("0 rec, 2 tgt", ESPN's TGTS); on a pass play the receiver's line adds targets. If the box score has nothing for the play's stat yet, a zero ("0 rec", "0 car"), never blank (DJ).
 - Open: the floating Back/menu buttons (bottom right, 070-navigation, shared) cover the right-aligned tags of whichever card scrolls under them. Not changed here; it needs DJ's call since it's the app-wide dock.
+
+## 3.69.0: the delay (DJ: "It's faster than the game on TV")
+- Per game, on this phone: `localStorage["slate-feed-delay"] = {gameId: seconds}` (0 to 90 in fives, today's games only). DJ: remember it for the specific game; a game nobody set starts with none.
+- How: `feedPoll` hands each summary to `fdTake`, which keeps arrivals in `FD.bufs[gameId]` (only when `fdSig` changed) and `fdRelease` puts the newest one old enough into `FD.sum` (what the page draws), with a timeout for the next one due. It never steps back: turning the delay up holds the page until the game catches up. `FD.last[gameId]` is what a delayed game returns to when you swipe back.
+- Control: `fdDelayCtl` on the "Last play" line (`.fd-bar`), minus / value / plus, 44-point buttons.
+- Delayed: everything from the summary (plays, score bar, timer, win probability, box score) and that game's chip in the strip. Not delayed: other chips, the top-rated pick (live scoreboard leader; its numbers are from the delayed box), other pages, notifications (worker/ios: would need DJ's OK and a design).
+- Football headlines got more emojis (`fdTitleText`): 🎯 completion, ❌ incompletion, 🏃 run, 🦵 punt, 🦶 kickoff, ✅ extra point. None where nothing fits.

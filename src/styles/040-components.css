@@ -1465,6 +1465,15 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-mid { display: grid; justify-items: center; gap: 1px; padding: 0 2px; }
 .fd-mid b { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
 .fd-mid i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--live, #E5484D); }
+/* 3.69.0: the line above the newest play: "Last play 12s ago" on the left, the delay control (minus, value, plus) on the right */
+.fd-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; margin: -4px 0 0; }
+.fd-bar .fd-ago { margin: 0 0 0 2px; font-size: 11px; font-weight: 600; line-height: 1.2; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fd-delay { display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.fd-dl-l { margin-right: 4px; }
+.fd-dl-b { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 18px; font-weight: 700; -webkit-tap-highlight-color: transparent; }
+.fd-dl-b:disabled { color: var(--dim); opacity: .5; }
+.fd-dl-v { min-width: 34px; text-align: center; font-size: 12px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; padding: 5px 6px; border: 1px solid var(--hair); border-radius: 6px; }
+.fd-dl-v.on { color: var(--accent); border-color: var(--accent); }
 .fd-mid i.fd-ago { font-size: 10px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }  /* 3.66.8: time since the newest play */
 /* 3.66.8: folded Duo: the clock and Wi-Fi sit over the right end of the score bar, so its right team moves in from under them (the page layout stays as 3.36.0) */
 html[data-native].side-col:not(.duo) #feed-body .fd-bug { padding-right: calc(10px + var(--strip-w, 0px) / var(--z, 1)); }
@@ -1553,7 +1562,8 @@ html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(
 .hp-top { gap: 5px; }
 .hp-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .hp-two .fd-pl { min-width: 0; gap: 7px; }
-.hp-two .fd-pn b { font-size: 14px; }
+.hp-two .fd-pn b { font-size: 14px; min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hp-two .fd-pn { flex: 1; }
 .hp-two .fd-pn i { flex-basis: 100%; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fd-wp.hp-wp1 { margin-top: 1px; }
 .fd-wp.hp-wp1 .hp-wpl1 { margin: 0 2px 0 0; white-space: nowrap; }

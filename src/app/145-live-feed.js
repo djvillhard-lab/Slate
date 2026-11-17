@@ -12,7 +12,8 @@
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;
     if (state.view !== "feed") FD.from = g.id;  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
-    if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; FD.sum = (c0 && c0.sum) || null; FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
+    if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; clearTimeout(FD.dt); FD.bufs = FD.bufs || {}; Object.keys(FD.bufs).forEach(function (k) { if (k !== g.id) delete FD.bufs[k]; });
+      FD.sum = fdDelay(g.id) ? ((FD.last || {})[g.id] || null) : ((c0 && c0.sum) || null); /* a delayed game comes back where you left it, not at ESPN's latest */ FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
     if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; openSub("feed"); }  // coming back to the page starts folded up
     feedPoll(true);
   }
@@ -26,6 +27,47 @@
     var comp = ((sum.header || {}).competitions || [])[0] || {}, st = comp.status || {}, dr = sum.drives || {}, cur = dr.current || (dr.previous || [])[(dr.previous || []).length - 1] || {}, pl = (cur.plays || [])[(cur.plays || []).length - 1] || {};
     return [(dr.previous || []).length, cur.id, (cur.plays || []).length, pl.id, pl.awayScore, pl.homeScore, st.displayClock, st.period, (st.type || {}).state, (comp.competitors || []).map(function (k) { return k.score; }).join("-"), (sum.winprobability || []).length, (sum.plays || []).length, hpPid((sum.plays || [])[(sum.plays || []).length - 1] || {})].join("|");
   }
+  // ---- the delay (3.69.0, DJ: "It's faster than the game on TV") ----
+  // Set per game from the page (0 to 90 seconds, in fives), remembered on this phone for that game only; a game nobody has set starts
+  // with none. What ESPN sends is held and shown that many seconds after it arrived: the plays, the score bar, the timer, the box score.
+  function fdDelays() { try { return JSON.parse(localStorage.getItem("slate-feed-delay") || "{}") || {}; } catch (e) { return {}; } }
+  function fdDelay(id) { var v = Number(fdDelays()[id]) || 0; return Math.max(0, Math.min(90, v)); }
+  function fdSetDelay(id, secs) {
+    var m = fdDelays(); secs = Math.max(0, Math.min(90, Math.round(secs / 5) * 5)); if (secs) m[id] = secs; else delete m[id];
+    var live = {}; games().forEach(function (x) { live[x.id] = 1; }); Object.keys(m).forEach(function (k) { if (!live[k]) delete m[k]; });  // only today's games are kept
+    try { localStorage.setItem("slate-feed-delay", JSON.stringify(m)); } catch (e) {}
+  }
+  function fdTake(g, sum) {
+    FD.bufs = FD.bufs || {}; var B = FD.bufs[g.id] || (FD.bufs[g.id] = []), sg = fdSig(sum);
+    if (!B.length || B[B.length - 1].sig !== sg) B.push({ t: Date.now(), sum: sum, sig: sg });
+    if (B.length > 60) B.splice(0, B.length - 60);
+    return fdRelease(g);
+  }
+  // puts the newest update that is old enough on the page; true when what's shown changed. It never steps backwards: after the delay
+  // is turned up, the page holds where it is until the game catches up
+  function fdRelease(g) {
+    clearTimeout(FD.dt); FD.bufs = FD.bufs || {}; FD.last = FD.last || {};
+    var B = FD.bufs[g.id] || [], d = fdDelay(g.id) * 1000, now = Date.now(), pick = null;
+    B.forEach(function (e) { if (e.t <= now - d) pick = e; });
+    if (!pick && !(FD.id === g.id && FD.sum)) pick = B[0] || null;  // the first look at a game shows what ESPN has now
+    if (pick) B.splice(0, B.indexOf(pick));
+    var changed = false;
+    if (pick && (FD.id !== g.id || FD.sig !== pick.sig || !FD.sum)) { FD.sum = pick.sum; FD.sig = pick.sig; FD.id = g.id; FD.last[g.id] = pick.sum; changed = true; }
+    var nx = null; B.forEach(function (e) { if (e !== pick && e.t > now - d && (nx == null || e.t < nx)) nx = e.t; });
+    if (nx != null && state.view === "feed") FD.dt = setTimeout(function () { var g2 = feedGame(); if (g2 && g2.id === g.id && state.view === "feed" && fdRelease(g2)) renderFeed(true); }, Math.max(250, nx + d - now + 30));
+    return changed;
+  }
+  // the control, on the right of the "Last play" line: minus, the delay, plus
+  function fdDelayCtl(g) {
+    var d = fdDelay(g.id), w = el("span", "fd-delay"), set = function (v) { fdSetDelay(g.id, v); fdRelease(g);
+      var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); renderFeed(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); };
+    var mk = function (txt, lab, v, off) { var b = el("button", "fd-dl-b", txt); b.type = "button"; b.setAttribute("aria-label", lab); if (off) b.disabled = true; b.addEventListener("click", function () { set(v); }); return b; };
+    w.appendChild(el("span", "fd-dl-l", "Delay"));
+    w.appendChild(mk("−", "Less delay", d - 5, d <= 0));
+    var val = el("b", "fd-dl-v" + (d ? " on" : ""), d ? d + "s" : "Off"); val.setAttribute("aria-live", "polite"); w.appendChild(val);
+    w.appendChild(mk("+", "More delay", d + 5, d >= 90));
+    return w;
+  }
   function feedPoll(now) {
     clearTimeout(FD.t); FD.t = null;
     if (state.view !== "feed") return;
@@ -36,7 +78,7 @@
     (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) { if (!ev) return null; cur.ev = ev; return fdGet(bxSummaryUrl(g.league, ev)); }).then(function (sum) {
       FD.busy = false; if (state.feedId !== g.id) return feedPoll();
       var changed = true;
-      if (sum) { var sg = fdSig(sum); changed = sg !== FD.sig || FD.id !== g.id; FD.sig = sg; FD.err = 0; FD.sum = sum; FD.id = g.id; FD.at = Date.now(); cur.sum = sum; cur.sumAt = Date.now(); }
+      if (sum) { FD.err = 0; FD.at = Date.now(); cur.sum = sum; cur.sumAt = Date.now(); changed = fdTake(g, sum); }
       else FD.err = (FD.err || 0) + 1;
       if (state.view === "feed" && changed) renderFeed(true);  // nothing new: leave the page alone
       var st = ((((sum || {}).header || {}).competitions || [])[0] || {}).status || {}, k = (st.type || {}).state, det = String((st.type || {}).shortDetail || st.type && st.type.detail || "");
@@ -234,6 +276,8 @@
       var on = x.id === g.id, b = el("button", "fd-chip" + (on ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", on ? "true" : "false");
       var v = scoreRaw(x.id) || {}, c1 = bx.live[x.id], fs = c1 && c1.sum && Date.now() - (c1.sumAt || 0) < 120000 ? fdSumScore(x.id, c1.sum) : null;
       if (fs) v = { a: fs.a, h: fs.h, detail: v.detail };  // the same held score as the page below
+      if (fdDelay(x.id)) { var dsum = on && FD.id === x.id ? FD.sum : (FD.last || {})[x.id], dfs = dsum ? fdSumScore(x.id, dsum) : null, dst = dsum ? ((((dsum.header || {}).competitions || [])[0] || {}).status || {}).type || {} : {};
+        v = dfs ? { a: dfs.a, h: dfs.h, detail: dst.shortDetail || dst.detail || "Live" } : { detail: "Delayed" }; }  // 3.69.0: no score ahead of the delay
       var show = boxShown(x) && v.a != null && !isNaN(v.a);
       ["away", "home"].forEach(function (sd) { var r = el("span", "fd-cr"); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });
       b.appendChild(el("i", null, v.detail || "Live"));
@@ -384,7 +428,7 @@
       }
     }
     if (!allPlays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game kicks off." : "No plays yet."));
-    fdAgo(list, sum, st.state === "in", g.id); body.appendChild(list);
+    fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
     if (allPlays.length > shown && shown >= cap) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); list.appendChild(mb); }
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);  // the box score under the plays (3.40.3)
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
