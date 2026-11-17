@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.69.2 (Nov 17, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Live feed: after you tap "Show earlier plays", there's now a "Show fewer plays" button next to it. One tap folds the list back to how it started and takes you back to the newest play. It stays there even when you've opened every play.
+- Live feed delay is now one tap. The + and − are gone: tap Delay on the "Last play" line and pick Off, 15s, 30s, 45s, 60s or 90s. While a delay is on, those choices stay showing under the line, so Off is always one tap away, and the Delay button shows the number you picked.
+- Live feed, football: a "Scoring" button on the line above the newest play. Tap it to see only the scoring plays (touchdowns, field goals and safeties), from the whole game; tap again for every play. It works on finished games too. Basketball doesn't get one, since most plays there are scores.
+
 ## 3.69.1 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Morning email is now light: Sunday Paper's cream and dark ink, with your accent color. Outlook on iPhone laid a gray wash over the dark version however it was built, and a light email is what mail apps' dark modes darken cleanly.

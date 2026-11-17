@@ -73,3 +73,8 @@ Code: `src/app/145-live-feed.js` (shared page, football) and `src/app/146-live-f
 - Control: `fdDelayCtl` on the "Last play" line (`.fd-bar`), minus / value / plus, 44-point buttons.
 - Delayed: everything from the summary (plays, score bar, timer, win probability, box score) and that game's chip in the strip. Not delayed: other chips, the top-rated pick (live scoreboard leader; its numbers are from the delayed box), other pages, notifications (worker/ios: would need DJ's OK and a design).
 - Football headlines got more emojis (`fdTitleText`): 🎯 completion, ❌ incompletion, 🏃 run, 🦵 punt, 🦶 kickoff, ✅ extra point. None where nothing fits.
+
+## 3.69.2: fold back up, Scoring filter (DJ, Nov 17)
+- `fdMoreRow` (146) draws "Show earlier plays" and, once `FD.more > 0`, "Show fewer plays" (sets `FD.more = 0`, scrolls to `.fd-bar`). Both sports.
+- Football only: `fdScoringBtn` in `.fd-bar` toggles `FD.scOnly` (reset when leaving the feed). On = only plays `fdRead` calls `score`, no 8-play cap, drives with none are skipped. Shown on finished games too. DJ: not for basketball; soccer and hockey have no live feed yet, give them the same button when they do.
+- Delay control redone (DJ: + and − too fiddly, Off must be quick): `fdDelayCtl` is now a "Delay" button in `.fd-bar`; `fdDelayRow` draws the choices (`FD_DELAYS` = Off 15 30 45 60 90) under the bar when the button was tapped (`FD.dlOpen`) or a delay is on. Don't bring the stepper back.

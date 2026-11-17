@@ -58,14 +58,21 @@
     return changed;
   }
   // the control, on the right of the "Last play" line: minus, the delay, plus
+  // 3.69.2 (DJ: the + and − were too fiddly, and Off has to be quick): a Delay button on the "Last play" line opens one-tap choices under it.
+  // While a delay is on, the choices stay showing, so Off is always one tap.
+  var FD_DELAYS = [0, 15, 30, 45, 60, 90];
+  function fdKeepY(fn) { var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); fn(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); }
   function fdDelayCtl(g) {
-    var d = fdDelay(g.id), w = el("span", "fd-delay"), set = function (v) { fdSetDelay(g.id, v); fdRelease(g);
-      var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); renderFeed(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); };
-    var mk = function (txt, lab, v, off) { var b = el("button", "fd-dl-b", txt); b.type = "button"; b.setAttribute("aria-label", lab); if (off) b.disabled = true; b.addEventListener("click", function () { set(v); }); return b; };
-    w.appendChild(el("span", "fd-dl-l", "Delay"));
-    w.appendChild(mk("−", "Less delay", d - 5, d <= 0));
-    var val = el("b", "fd-dl-v" + (d ? " on" : ""), d ? d + "s" : "Off"); val.setAttribute("aria-live", "polite"); w.appendChild(val);
-    w.appendChild(mk("+", "More delay", d + 5, d >= 90));
+    var d = fdDelay(g.id), open = d > 0 || FD.dlOpen === g.id, b = el("button", "fd-scf fd-dlb" + (d ? " on" : ""), d ? "Delay " + d + "s" : "Delay"); b.type = "button";
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+    b.addEventListener("click", function () { if (d > 0) return; FD.dlOpen = FD.dlOpen === g.id ? null : g.id; fdKeepY(renderFeed); });
+    return b;
+  }
+  function fdDelayRow(g) {
+    var d = fdDelay(g.id); if (!(d > 0 || FD.dlOpen === g.id)) return null;
+    var w = el("div", "fd-dlrow"); w.setAttribute("role", "group"); w.setAttribute("aria-label", "Delay the feed");
+    FD_DELAYS.forEach(function (v) { var c = el("button", "fd-dlc" + (v === d ? " on" : ""), v ? v + "s" : "Off"); c.type = "button"; c.setAttribute("aria-pressed", v === d ? "true" : "false");
+      c.addEventListener("click", function () { fdSetDelay(g.id, v); fdRelease(g); FD.dlOpen = null; fdKeepY(renderFeed); }); w.appendChild(c); });
     return w;
   }
   function feedPoll(now) {
@@ -324,7 +331,7 @@
     var body = $("feed-body"); if (!body) return;
     // an update never rebuilds the page under a moving finger or mid-scroll (it would stop the scroll and jolt the score bar): it waits for stillness
     if (fromPoll && (FD.drag || FD.touch || Date.now() - (FD.scrollAt || 0) < 700)) { clearTimeout(FD.rt); FD.rt = setTimeout(function () { renderFeed(true); }, 300); return; }
-    if (state.view !== "feed") { FD.more = 0; if (body.firstChild) body.textContent = "";  // leaving the page: earlier plays fold back up (3.43.1)
+    if (state.view !== "feed") { FD.more = 0; FD.scOnly = false; if (body.firstChild) body.textContent = "";  // leaving the page: earlier plays fold back up (3.43.1)
       clearTimeout(FD.t); FD.t = null; return; }
     var g = feedGame();
     if (!g) { body.textContent = ""; body.appendChild(el("div", "notice", "That game isn't on today's list anymore.")); return; }
@@ -402,14 +409,16 @@
       var wl = el("p", "fd-wpl", "Win probability (ESPN)"); wpHost.appendChild(wl); wpHost.appendChild(wr);
     }
     // the plays, newest first, under their drives
-    var list = el("div", "fd-list"), shown = 0, cap = 8 * (1 + (+FD.more || 0)), fresh = FD.seen ? FD.seen : null, seenNow = {};
+    // 3.69.1 (DJ): the Scoring button shows only the scoring plays (all of them, under their drives)
+    var scOnly = !!FD.scOnly, isScore = function (p) { return fdRead(p, ix).kind === "score"; };
+    var list = el("div", "fd-list"), shown = 0, cap = scOnly ? 1e9 : 8 * (1 + (+FD.more || 0)), fresh = FD.seen ? FD.seen : null, seenNow = {};
     for (var di = drives.length - 1; di >= 0 && shown < cap; di--) {
       var d2 = drives[di], dsd = sideOf[String((d2.team || {}).id || "")] || "", isCur = dr.current && d2.id === dr.current.id && !over && !d2.displayResult && (!posSide || dsd === posSide);  // a punt or turnover ends it before ESPN opens the next drive
+      var pls = (d2.plays || []).slice().reverse(); if (scOnly) { pls = pls.filter(isScore); if (!pls.length) continue; }
       var dh = el("div", "fd-drive"); if (dsd) dh.appendChild(badgeFor(abbr(g, dsd), g[dsd], g[dsd + "Color"], g[dsd + "Alt"]));
       var dt = el("span", "fd-dt"); dt.appendChild(el("b", null, isCur ? "Current drive" : (dsd ? abbr(g, dsd) + " drive" : "Drive"))); if (d2.description) dt.appendChild(el("span", null, d2.description)); dh.appendChild(dt);
       var res = d2.displayResult || ""; if (res && !isCur) dh.appendChild(el("em", "fd-res" + (d2.isScore ? " sc" : /fumble|interception|downs/i.test(res) ? " to" : ""), res));
       list.appendChild(dh);
-      var pls = (d2.plays || []).slice().reverse();
       for (var pi = 0; pi < pls.length && shown < cap; pi++) {
         var pl = pls[pi], rd = fdRead(pl, ix), pid = String(pl.id || pl.sequenceNumber || (di + "-" + pi)); seenNow[pid] = 1;
         var isNew = fresh && !fresh[pid];
@@ -428,8 +437,9 @@
       }
     }
     if (!allPlays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game kicks off." : "No plays yet."));
+    else if (scOnly && !shown) list.appendChild(el("p", "pv-none", "No scoring plays yet."));
     fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
-    if (allPlays.length > shown && shown >= cap) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); list.appendChild(mb); }
+    fdMoreRow(list, !scOnly && allPlays.length > shown && shown >= cap, scOnly);
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);  // the box score under the plays (3.40.3)
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);

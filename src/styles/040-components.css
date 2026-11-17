@@ -1468,12 +1468,19 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 /* 3.69.0: the line above the newest play: "Last play 12s ago" on the left, the delay control (minus, value, plus) on the right */
 .fd-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; margin: -4px 0 0; }
 .fd-bar .fd-ago { margin: 0 0 0 2px; font-size: 11px; font-weight: 600; line-height: 1.2; color: var(--muted); font-variant-numeric: tabular-nums; }
-.fd-delay { display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); }
-.fd-dl-l { margin-right: 4px; }
-.fd-dl-b { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 18px; font-weight: 700; -webkit-tap-highlight-color: transparent; }
-.fd-dl-b:disabled { color: var(--dim); opacity: .5; }
-.fd-dl-v { min-width: 34px; text-align: center; font-size: 12px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; padding: 5px 6px; border: 1px solid var(--hair); border-radius: 6px; }
-.fd-dl-v.on { color: var(--accent); border-color: var(--accent); }
+/* 3.69.1: football's Scoring filter (accent = selected), and the two buttons under the plays side by side */
+.fd-scf { flex: none; min-height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--hair); background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: 800; position: relative; }
+.fd-scf::after { content: ""; position: absolute; inset: -6px -4px; }
+.fd-scf.on { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.fd-morerow { display: flex; gap: 8px; }
+.fd-list .fd-morerow { margin: 4px 0 0; }
+.fd-list .fd-morerow > .fd-more { flex: 1; width: auto; min-width: 0; margin: 0; }
+.fd-list .fd-more.fd-less::after { transform: rotate(-135deg) translateY(-2px); }
+.fd-bar .fd-ago { margin-right: auto; }
+.fd-dlrow { display: flex; gap: 6px; margin: 0 0 2px; }
+.fd-dlc { flex: 1; min-width: 0; min-height: 40px; padding: 0; border-radius: 8px; border: 1px solid var(--hair); background: none; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; position: relative; -webkit-tap-highlight-color: transparent; }
+.fd-dlc::after { content: ""; position: absolute; inset: -2px 0; }
+.fd-dlc.on { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .fd-mid i.fd-ago { font-size: 10px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }  /* 3.66.8: time since the newest play */
 /* 3.66.8: folded Duo: the clock and Wi-Fi sit over the right end of the score bar, so its right team moves in from under them (the page layout stays as 3.36.0) */
 html[data-native].side-col:not(.duo) #feed-body .fd-bug { padding-right: calc(10px + var(--strip-w, 0px) / var(--z, 1)); }

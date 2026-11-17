@@ -223,7 +223,7 @@
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game tips off." : "No plays yet."));
     fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
-    if (plays.length > total) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); list.appendChild(mb); }
+    fdMoreRow(list, plays.length > total, false);
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
@@ -276,12 +276,31 @@
   var FD_AGO = {};
   function fdAgoText(t) { var s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? s + "s ago" : s < 3600 ? Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2) + " ago" : ""; }
   // 3.66.10 (DJ): it sits small at the top left, directly above the newest play, and starts again from 0 when a new play comes in
+  // the buttons under the plays (3.69.1, DJ: "I should always be able to close it back"): "Show earlier plays" while there are more,
+  // and "Show fewer plays" whenever the list has been opened up, which folds it back to where it started
+  function fdMoreRow(list, more, scOnly) {
+    if (!more && !(+FD.more > 0 && !scOnly)) return;
+    var row = el("div", "fd-morerow");
+    if (more) { var mb = el("button", "bets-more fd-more", "Show earlier plays"); mb.type = "button"; mb.addEventListener("click", function () { FD.more = (+FD.more || 0) + 1; renderFeed(); }); row.appendChild(mb); }
+    if (+FD.more > 0 && !scOnly) { var fb = el("button", "bets-more fd-more fd-less", "Show fewer plays"); fb.type = "button"; fb.addEventListener("click", function () { FD.more = 0; renderFeed();
+      var top = document.querySelector("#feed-body .fd-bar") || document.querySelector("#feed-body .fd-list"); if (top) top.scrollIntoView({ block: "center" }); }); row.appendChild(fb); }
+    list.appendChild(row);
+  }
+  // football's Scoring button (3.69.2): on = only touchdowns, field goals and safeties. Not on basketball, where every other play scores
+  function fdScoringBtn() {
+    var b = el("button", "fd-scf" + (FD.scOnly ? " on" : ""), "Scoring"); b.type = "button"; b.setAttribute("aria-pressed", FD.scOnly ? "true" : "false");
+    b.addEventListener("click", function () { FD.scOnly = !FD.scOnly; var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); renderFeed(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); });
+    return b;
+  }
   function fdAgo(list, sum, live, g) {
-    if (!live) return; var gid = g.id, L = fdLastAt(sum), o = FD_AGO[gid];
+    var foot = BX_SPORT[g.league] === "football";
+    if (!live) { if (foot && ((sum.drives || {}).previous || []).length) { var b0 = el("div", "fd-bar"); b0.appendChild(el("p", "fd-ago", "")); b0.appendChild(fdScoringBtn()); list.insertBefore(b0, list.firstChild); } return; }
+    var gid = g.id, L = fdLastAt(sum), o = FD_AGO[gid];
     if (!o) o = FD_AGO[gid] = { key: L.key, t: L.t }; else if (o.key !== L.key) { o.key = L.key; o.t = Date.now(); }
     var t = o.t, bar = el("div", "fd-bar"), x = el("p", "fd-ago", t && Date.now() - t <= 3600000 ? "Last play " + fdAgoText(t) : ""); x.setAttribute("data-t", String(t || 0));
-    bar.appendChild(x); bar.appendChild(fdDelayCtl(g));  // 3.69.0: the delay control sits on the same line
+    bar.appendChild(x); if (foot) bar.appendChild(fdScoringBtn()); bar.appendChild(fdDelayCtl(g));  // 3.69.0: the delay control sits on the same line
     list.insertBefore(bar, list.firstChild);
+    var dr = fdDelayRow(g); if (dr) list.insertBefore(dr, bar.nextSibling);
   }
   setInterval(function () { if (state.view !== "feed" || document.hidden) return; var xs = document.querySelectorAll("#feed-body .fd-ago"); for (var i = 0; i < xs.length; i++) { var t0 = +xs[i].getAttribute("data-t"); if (!t0) continue; var tx = "Last play " + fdAgoText(t0); if (xs[i].textContent !== tx) xs[i].textContent = tx; } }, 1000);
   // one emoji in front of each play tag (3.52.4, DJ's request, like News): never inside the play text
