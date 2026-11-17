@@ -99,6 +99,8 @@
     var path = nwPagePath(), k = "n:" + path, date = state.date, prevDoc = nw.docs[path];
     CL_ASK[k] = Date.now(); nw.opts = false; keepScroll(renderNews); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
     var want = {}; if (cv.slate) cv.games.forEach(function (g) { want[g.league] = 1; }); if (cv.teams) cv.myTeams.forEach(function (t) { want[t.lg] = 1; }); cv.lgs.forEach(function (l) { want[l] = 1; });
+    // Top news also covers big stories outside my teams and leagues (3.83.6, DJ): the newest headlines from the major leagues
+    var around = ["nfl", "nba", "ncaaf", "ncaam", "mlb", "nhl", "epl"].filter(function (l) { return LEAGUES[l]; }); around.forEach(function (l) { want[l] = 1; });
     Promise.all(Object.keys(want).map(function (lg) { return nwFeed(lg).then(null, function () { return []; }); })).then(function () {
       var facts = { cover: { slate: cv.slate, teams: cv.teams, leagues: cv.lgs, picked: cv.myTeams.map(nwTKey) }, games: [], teams: [], leagues: [], headlines: { byGame: {}, byTeam: {}, byLeague: {} } };
       if (cv.slate) cv.games.forEach(function (g) {
@@ -108,6 +110,7 @@
       });
       if (cv.teams) cv.myTeams.forEach(function (t) { facts.teams.push({ name: t.name, lg: t.lg, league: (LEAGUES[t.lg] || {}).name || t.lg }); var hs = nwTeamHeads(t.name, t.lg, 2); if (hs.length) facts.headlines.byTeam[t.name] = hs; });
       cv.lgs.forEach(function (lg) { facts.leagues.push({ key: lg, name: (LEAGUES[lg] || {}).name || lg }); facts.headlines.byLeague[lg] = (((nw.feeds[lg] || {}).items) || []).slice(0, 8).map(nwLite); });
+      facts.headlines.around = {}; around.forEach(function (lg) { var it = (((nw.feeds[lg] || {}).items) || []).slice(0, 5).map(nwLite); if (it.length) facts.headlines.around[lg] = it; });
       if (prevDoc && prevDoc.top) facts.prev = prevDoc.top.map(function (x) { return x.title; });
       return nwPost({ pass: pass, kind: "news", key: "page", date: date, game: {}, facts: facts }, k);
     });
@@ -177,19 +180,30 @@
   var NW_CATS = [[/injur|hurt|out\b|doubt|questionable|ir\b/i, "🚑"], [/trade|deal|swap|transfer/i, "🔁"], [/sign|contract|extension|agree/i, "✍️"], [/fire|coach|hire|staff/i, "📋"],
     [/upset|stun|shock/i, "😱"], [/record|milestone|history|career|season[- ]high/i, "📈"], [/streak|run\b|rolling|won \d/i, "🔥"], [/slump|skid|lost \d|losing/i, "🧊"], [/suspen|ban|fine|discipline/i, "⛔"],
     [/rumou?r|report|buzz|watch/i, "👀"], [/draft|prospect|recruit|portal/i, "🎓"], [/rank|poll|standing|playoff|bracket|seed/i, "📊"], [/return|back\b|activated/i, "💪"], [/debut|rookie|breakout/i, "🌟"],
-    [/result|final|win|won|beat|loss|lost/i, "🏁"], [/tonight|schedule|matchup|preview|game/i, "🗓️"], [/quote|said/i, "💬"], [/storyline|story|news/i, "📰"]];
+    [/result|final|win|won|beat|loss|lost/i, "🏁"], [/matchup|versus|vs\b|duel|battle/i, "⚔️"], [/tonight|schedule|preview|game|slate/i, "🗓️"], [/depth|lineup|rotation|roster|bench/i, "🧩"], [/future|expansion|plan|europe|new league/i, "🔮"],
+    [/tournament|event|classic|invitational|cup|era\b/i, "🏆"], [/eligib|ruling|ncaa|court|legal|appeal/i, "⚖️"], [/money|nil|salary|cap\b|budget/i, "💰"], [/health|rest|load/i, "🩺"], [/quote|said/i, "💬"], [/storyline|story|news/i, "📰"]];
   function nwCatEm(tag) { var t = String(tag || ""); for (var i = 0; i < NW_CATS.length; i++) if (NW_CATS[i][0].test(t)) return NW_CATS[i][1]; return t ? "📰" : ""; }
   function nwChip(chip, tone) { var hot = NW_HOT.test(chip), c = el("span", "nx-chipt " + (hot ? "hot" : tone || "")); if (hot || NW_COLD.test(chip)) c.appendChild(nwEm(hot ? "🔥" : "🧊")); c.appendChild(document.createTextNode(chip)); return c; }
   // a team named in the text, when Claude didn't say which team (3.83.3): a full name ("Detroit Lions") anywhere, or a
   // nickname ("Lions") that only one team in that league has
   var NW_TLG = { nfl: "NFL", nba: "NBA", mlb: "MLB", nhl: "NHL", wnba: "WNBA", mls: "MLS", epl: "Premier League", laliga: "La Liga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", ncaaf: "College", ncaam: "College", ncaaw: "College" };
-  function nwFindTeam(text, lg) {
-    var tx = String(text || ""), lo = tx.toLowerCase(), want = NW_TLG[lg] || "", pool = teamIndex().filter(function (t) { return !want || t.lg === want; });
-    var full = pool.filter(function (t) { return t.name.length > 5 && lo.indexOf(t.name.toLowerCase()) !== -1; });
-    if (full.length) return full.sort(function (a, b) { return b.name.length - a.name.length; })[0];
-    if (!want || want === "College") return null;
-    var nick = pool.filter(function (t) { var w = t.name.split(" ").pop(); return w.length > 3 && new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(tx); });
-    return nick.length === 1 ? nick[0] : null;
+  // the team a line is about (3.83.6, DJ: hits had no color): the first team named in it, by full name ("Detroit Lions"),
+  // school or city ("Notre Dame", "Golden State") or nickname ("76ers", pro leagues only); the earliest one wins, so
+  // "the 76ers beat the Nets" is the 76ers. only: limit to these teams (a game card's two)
+  var NW_NICK_SKIP = { state: 1, city: 1, united: 1, county: 1, club: 1 };
+  function nwFindTeam(text, lg, only) {
+    var lo = " " + normT(text) + " ", want = NW_TLG[lg] || "", best = null, bi = 1e9, bl = 0;
+    var pool = only ? only.filter(Boolean) : teamIndex().filter(function (t) { return !want || t.lg === want; });
+    if (!only && !want) pool = pool.filter(function (t) { return t.lg !== "College"; });
+    // a pro team's city ("Minnesota", "Golden State") counts too, unless two teams in the league share it (Los Angeles)
+    var city = function (t) { return t.lg !== "College" && t.w && t.w.length > 1 ? t.w.slice(0, -1).join(" ") : ""; }, cc = {};
+    pool.forEach(function (t) { var c = city(t); if (c) cc[t.lg + "|" + c] = (cc[t.lg + "|" + c] || 0) + 1; });
+    pool.forEach(function (t) {
+      var keys = [t.n]; if (t.s && t.s.length >= 4) keys.push(t.s); var c = city(t); if (c.length > 3 && cc[t.lg + "|" + c] === 1) keys.push(c);
+      var nk = (t.w || []).slice(-1)[0]; if (t.lg !== "College" && nk && nk.length > 3 && !NW_NICK_SKIP[nk]) keys.push(nk);
+      keys.forEach(function (k) { var i = lo.indexOf(" " + k + " "); if (i !== -1 && (i < bi || (i === bi && k.length > bl))) { best = t; bi = i; bl = k.length; } });
+    });
+    return best;
   }
   function nwLgOfTeam(t) { if (!t) return ""; for (var k in NW_TLG) if (NW_TLG[k] === t.lg && t.lg !== "College") return k; return ""; }
   function nwSportEm(lg) { var b = String(bxBase(lg) || ""); return /football\/(nfl|college)/.test(b) ? "🏈" : /basketball/.test(b) ? "🏀" : /hockey/.test(b) ? "🏒" : /baseball/.test(b) ? "⚾" : /soccer/.test(b) ? "⚽" : "🏆"; }
@@ -198,10 +212,13 @@
     var o = {}; (((doc || {}).cover || {}).leagues || []).forEach(function (k) { o[k] = 1; }); nwGames().forEach(function (g) { o[g.league] = 1; }); myTeamList().forEach(function (t) { o[t.lg] = 1; });
     return Object.keys(o).filter(function (k) { return NW_TLG[k]; });
   }
-  function nwBoxHits(list, lg) {
+  // a line no team can be told from still gets a full top row: the league with its sport's emoji, in the accent's edge
+  function nwBoxHits(list, lg, only) {
     var w = el("div", "nx-boxes nx-hitb");
     (list || []).forEach(function (h) {
-      var t = nwTeam(h.team, lg) || nwFindTeam(h.text, lg), b = nwBox(t, h.team, [h.tag ? nwPill(h.tag) : null], t ? "" : "plain");
+      var t = nwTeam(h.team, lg) || nwFindTeam(h.text, lg, only);
+      var dup = t && h.tag && t.name.toLowerCase().indexOf(String(h.tag).toLowerCase()) !== -1;  // a tag that's just the team's name ("Warriors") goes
+      var b = nwBox(t, t ? h.team : "", [h.tag && !dup ? nwPill(h.tag) : null], t ? "" : "lgx", t ? null : nwPill((LEAGUES[lg] || {}).tag || "News", "why", nwSportEm(lg)));
       b.appendChild(el("p", "nx-bx", h.text)); w.appendChild(b);
     });
     return w;
@@ -379,25 +396,36 @@
     if (top.length) {
       var shut = false; try { shut = localStorage.getItem("slate-newstop") === "0"; } catch (e) {}
       var th = el("button", "nx-toph"); th.type = "button"; th.setAttribute("aria-expanded", shut ? "false" : "true");
-      var tl = el("span", "nx-cl"); tl.appendChild(icon("sparkle")); tl.appendChild(el("span", null, "Top news · Claude's picks")); th.appendChild(tl);
+      var tl = el("span", "nx-cl"); tl.appendChild(icon("sparkle")); tl.appendChild(el("span", null, "Top news")); th.appendChild(tl);
       var tc = el("span", "nx-topn", String(top.length)); tc.appendChild(icon("more")); th.appendChild(tc);
       th.addEventListener("click", function () { try { localStorage.setItem("slate-newstop", shut ? "1" : "0"); } catch (e) {} keepScroll(renderNews); });
       var tcard = el("div", "nx-card nx-top" + (shut ? " shut" : "")); tcard.appendChild(th);
       body.appendChild(tcard);
-      // each story is a feed box (3.82.0): its rank, the team's color and logo when Claude named one, the tag and NEW
-      if (!shut) { var tw = el("div", "nx-boxes nx-tops"); top.forEach(function (x, i) {
+      // each story is a feed box (3.82.0): its rank, the team's color and logo when Claude named one, the tag and NEW.
+      // Ten stories (3.83.6, DJ): the first five show, Show 5 more opens the rest and stays open until closed
+      var more = false; try { more = localStorage.getItem("slate-newsmore") === "1"; } catch (e) {}
+      if (!shut) { var tw = el("div", "nx-boxes nx-tops"); top.slice(0, more ? 10 : 5).forEach(function (x, i) {
         // the team (from Claude, else found in the story) and why it made the five: one of my teams, a game on my slate, or its league (3.83.3, DJ)
         var txt = x.title + " " + (x.why || ""), t = nwTeam(x.team, x.lg) || nwFindTeam(txt, x.lg);
         // no league from Claude: try the leagues this page covers (its picked leagues, the slate's, my teams'), keeping a team only one of them has
         if (!t && !x.lg) { var cands = []; nwTopLgs(doc).forEach(function (k) { var f = nwFindTeam(txt, k); if (f && cands.indexOf(f) === -1) cands.push(f); }); if (cands.length === 1) t = cands[0]; }
         var lg = x.lg || nwLgOfTeam(t), why = null;
-        if (t && isFav(t.name, lg)) why = nwPill("My team", "why", "⭐");
+        if (x.reason === "breaking") why = nwPill("Breaking", "why", "🚨");
+        else if (t && isFav(t.name, lg)) why = nwPill("My team", "why", "⭐");
         else if (t && nwGames().some(function (g) { return (!lg || g.league === lg) && (teamMatch(t.name, g.away, g.league) || teamMatch(t.name, g.home, g.league)); })) why = nwPill("On your slate", "why", "📺");
+        else if (x.reason === "trending") why = nwPill("Trending", "why", "🔥");
         else if (lg && LEAGUES[lg]) why = nwPill(LEAGUES[lg].tag, "why", nwSportEm(lg));
         var b = nwBox(t, x.team, [x.tag ? nwPill(x.tag) : null, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain", why);
         var hl = el("div", "nx-th2"); hl.appendChild(el("i", "nx-rank", String(i + 1))); hl.appendChild(el("b", null, x.title)); b.appendChild(hl);
         if (x.why) b.appendChild(el("p", "nx-bx", x.why)); tw.appendChild(b);
-      }); body.appendChild(tw); }
+      });
+      if (top.length > 5) {
+        var mb = el("button", "nx-more"); mb.type = "button"; mb.setAttribute("aria-expanded", more ? "true" : "false");
+        mb.appendChild(el("span", null, more ? "Show fewer" : "Show " + (Math.min(top.length, 10) - 5) + " more")); mb.appendChild(icon("more"));
+        mb.addEventListener("click", function () { try { localStorage.setItem("slate-newsmore", more ? "0" : "1"); } catch (e) {} keepScroll(renderNews); });
+        tw.appendChild(mb);
+      }
+      body.appendChild(tw); }
     }
     // Games | Teams | Leagues: only the ones this page has; the leftmost opens first. Teams is only the favorite teams
     // picked in the options (3.50.1; cover.picked), not every team in the picked games; older pages have no list of
@@ -424,7 +452,7 @@
         ["away", "home"].forEach(function (sd) { var v = hx(g[sd + "Color"]) || ((nwTeam(g[sd], g.league) || {}).c1) || ""; if (hexOk(v)) c.style.setProperty(sd === "away" ? "--nx-a" : "--nx-h", v); });
         gh.appendChild(icon("more")); nwFoldBtn(gh, ok, open, short(g, "away") + " at " + short(g, "home")); c.appendChild(gh);
         if (open) {
-          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwBoxHits(x.hits, g.league)); c.appendChild(bd);
+          var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwBoxHits(x.hits, g.league, [nwTeam(g.away, g.league) || nwFindTeam(g.away, g.league), nwTeam(g.home, g.league) || nwFindTeam(g.home, g.league)])); c.appendChild(bd);
           if (x.read) c.appendChild(nwRead(x.read));
           c.appendChild(nwDeepRow({ type: "g", id: g.id }));
         }

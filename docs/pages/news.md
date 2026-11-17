@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.83.5
+Last updated: Nov 17, 2026, 3.84.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -46,7 +46,7 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   Saved on the phone (`slate-newspicks`: `gs` = picked game ids for one day, `gt` = the teams of those games, so their games start
   picked on a new day (3.49.1), `ts` = picked teams, `lgs` = leagues).
   A running clock shows while Claude writes.
-- One Claude request writes the page to `mine/news-<date>`: top (5), games, teams, leagues. Free ESPN and Athletic
+- One Claude request writes the page to `mine/news-<date>`: top (10), games, teams, leagues. Free ESPN and Athletic
   headlines are gathered in the app and sent as facts.
 - Page: Generated bar (time, how long ago, what it covered) + Regenerate (reopens the options); Top news, collapsible
   and remembered (`slate-newstop`), with New tags after a regenerate; Games | Teams | Leagues tabs, leftmost first.
@@ -54,6 +54,14 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
   right away; otherwise the page has a Generate button and Claude writes only on that tap (3.51.1). It's saved to `newsdeep/<date>-<g|t|l>-…`, shared by every account.
 - Back (dock, swipe, or the row on top) returns from a breakdown to the page: one line in `goBack()` (070-navigation).
 - Every generate, regenerate and breakdown goes through `/api/summary`, so testers' 10-a-day cap counts them.
+- Quick hits in the top-five look (3.84.0, DJ: "No color. Bad formatting"): `nwFindTeam` finds the team from the hit's words
+  (earliest match of full name, school, unique city or pro nickname; game cards only consider the two teams). No team gives
+  class `lgx` (accent edge) with a league pill. A tag equal to the team name is dropped.
+- Top news is 10 stories (3.84.0, DJ): five show, `.nx-more` "Show 5 more"/"Show fewer" (localStorage `slate-newsmore`).
+  Heading is just "Top news" (DJ didn't want "Claude's picks"). Order in the prompt: breaking (anywhere in sports), then
+  my teams and leagues, then big headlines from around sports. Facts get `headlines.around` (newest 5 from nfl, nba,
+  ncaaf, ncaam, mlb, nhl, epl). Each story has `reason` (breaking/mine/trending/league); the why pill is 🚨 Breaking
+  first, then ⭐ My team, 📺 On your slate, 🔥 Trending, then the league tag.
 
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,

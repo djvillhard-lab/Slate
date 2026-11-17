@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.84.0 (Nov 17, 2026)
+TestFlight: 3.81.7 (46), no new build (web only)
+- News, Press Box: Top news has 10 stories now. The first five show, and Show 5 more under them opens the other five (Show fewer closes them, and the page remembers which you left it on). The heading just says Top news.
+- Top news puts breaking news first, from anywhere in sports, then the biggest stories about your teams and leagues, then other big headlines from around sports even if you don't follow them. Claude gets the newest ESPN and Athletic headlines from the NFL, NBA, college football, college hoops, MLB, NHL and Premier League to find them. A story that isn't about your teams says why it's there: 🚨 Breaking or 🔥 Trending. This starts with the next Regenerate.
+- News, Press Box: the quick hits on game and league cards now look like the top-five cards. Each one finds the team it's about from its own words (the first team named, by full name, school, city or nickname: "the 76ers beat the Nets" is the 76ers), so it gets that team's color stripe, tint, logo and name. On a game card, only the two teams playing are considered.
+- A hit about no team in particular shows its league (🏀 NBA, 🏈 CFB...) in the top left with the accent color, so no card has an empty top row any more.
+- More tags get their own emoji: ⚔️ Matchup, 🧩 Depth and Lineup, 🔮 Future and Expansion, 🏆 tournaments, ⚖️ Eligibility, 💰 NIL and money, 🩺 Health.
+
 ## 3.83.5 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - News, Press Box: each story in a league section is now a short summary of two or three sentences (what happened, the key detail and why it matters) instead of a one-line headline. To make room, each league has 3 to 5 stories instead of 4 to 6. This applies from the next Regenerate.

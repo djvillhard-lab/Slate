@@ -426,3 +426,11 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx-bt { flex-wrap: wrap; row-gap: 4px; padding-top: 1px; }
 .nx-bt .nx-pill.why { flex: none; }
 
+/* 3.83.6 (DJ: "no color, bad formatting"): every quick hit carries a color, tight like the top-five cards */
+.nx-box.lgx { border-left-color: var(--accent-fill); background: color-mix(in srgb, var(--accent) 6%, var(--card)); border-color: color-mix(in srgb, var(--accent) 22%, var(--hair)); border-left-color: var(--accent-fill); }
+.nx .nx-hitb .nx-box { padding: 7px 10px 9px; }
+.nx .nx-hitb .nx-bx { margin-top: 4px; }
+/* Top news: Show 5 more / Show fewer under the first five (3.83.6) */
+.nx-more { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; background: var(--raise); color: var(--accent); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.nx-more svg { width: 14px; height: 14px; transform: rotate(90deg); }
+.nx-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
