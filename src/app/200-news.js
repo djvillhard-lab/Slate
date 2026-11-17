@@ -272,9 +272,10 @@
   function nwImg(src, cls) { var k = cls + "|" + src, im = nw.imgs[k]; if (!im) { im = nw.imgs[k] = document.createElement("img"); im.className = cls; im.alt = ""; im.onerror = function () { im.remove(); im.dead = 1; }; im.src = src; } return im.dead ? null : im; }
   function nwItem(lg, url) { return url ? ((((nw.feeds[lg] || {}).items) || []).filter(function (a) { return a.url === url; })[0] || null) : null; }
   // a feed box: the team's edge, a meta row (logo, team, pills on the right), then the text
-  function nwBox(t, team, pills, cls) {
+  // why (3.83.4, DJ): the why-it's-here tag sits right beside the team name, top left; the other tags stay top right
+  function nwBox(t, team, pills, cls, why) {
     var b = nwTint(el("div", "nx-box" + (cls ? " " + cls : "")), t), m = el("div", "nx-bm");
-    if (t || team) { var tm = el("span", "nx-bt"); tm.appendChild(nwMark(t, team)); tm.appendChild(el("b", null, t ? t.name : team)); m.appendChild(tm); }
+    if (t || team || why) { var tm = el("span", "nx-bt"); if (t || team) { tm.appendChild(nwMark(t, team)); tm.appendChild(el("b", null, t ? t.name : team)); } if (why) tm.appendChild(why); m.appendChild(tm); }
     var pr = el("span", "nx-bp"); (pills || []).forEach(function (p) { if (p) pr.appendChild(p); }); if (pr.firstChild) m.appendChild(pr);
     if (m.firstChild) b.appendChild(m); return b;
   }
@@ -393,7 +394,7 @@
         if (t && isFav(t.name, lg)) why = nwPill("My team", "why", "⭐");
         else if (t && nwGames().some(function (g) { return (!lg || g.league === lg) && (teamMatch(t.name, g.away, g.league) || teamMatch(t.name, g.home, g.league)); })) why = nwPill("On your slate", "why", "📺");
         else if (lg && LEAGUES[lg]) why = nwPill(LEAGUES[lg].tag, "why", nwSportEm(lg));
-        var b = nwBox(t, x.team, [why, x.tag ? nwPill(x.tag) : null, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain");
+        var b = nwBox(t, x.team, [x.tag ? nwPill(x.tag) : null, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain", why);
         var hl = el("div", "nx-th2"); hl.appendChild(el("i", "nx-rank", String(i + 1))); hl.appendChild(el("b", null, x.title)); b.appendChild(hl);
         if (x.why) b.appendChild(el("p", "nx-bx", x.why)); tw.appendChild(b);
       }); body.appendChild(tw); }

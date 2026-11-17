@@ -421,4 +421,8 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx .nx-hitb { margin-top: 10px; gap: 6px; }
 .nx .nx-hitb .nx-bx { font-size: 14px; }
 .nx-lgc .nx-lt b .nx-em { margin-right: 2px; }
-.nx-bm > .nx-bp:first-child { margin-left: 0; justify-content: flex-start; }  /* no team: the tags start the row */
+/* 3.83.4 (DJ): tags always top right, the why tag beside the team name */
+.nx-bm { align-items: center; }
+.nx-bt { flex-wrap: wrap; row-gap: 4px; padding-top: 1px; }
+.nx-bt .nx-pill.why { flex: none; }
+
