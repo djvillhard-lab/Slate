@@ -14,9 +14,8 @@ right, so I can have two live feeds at once."
 - Pages per side are kept in sessionStorage `slate-panes` ({left, active, routes}) and in each pane's `#go=` hash
   (`lineup`, `games`, `moments`, `tv`, `news`, `teams`, `settings`, `best`, `feed:<id>`, `game:<id>`). Unfolding again
   restores them; folding lands on the slate (unchanged rule).
-- The grip on the fold (`.pn-grip`, 44x88): drag left or tap = the right frame slides left; drag right = the other way.
-  Frames swap by grid column (no reload), then the side that was left shows the picker (`SlateApp.panePick`): live games
-  first (Live feed where `feedOk`, else the matchup), then the menu's pages (icons cloned from `#nav-*`), then "Keep ...".
+- The grip on the fold (`.pn-grip`, 44x88): drag either way or tap = the two sides swap (3.81.4, DJ: no picker).
+  Frames swap by grid column (no reload). The "Pick a page" screen from 3.80.0 was removed at DJ's request.
 - One menu (3.81.2, DJ after trying 3.80.0 on the Duo): the app's menu and Back (and the strip's buttons) always go to
   the right side. The right pane gets `data-float` when the app draws its own menu, so it hides its menu button and
   Back (like the folded phone with the app's floating menu); in a browser it keeps its own. The left pane

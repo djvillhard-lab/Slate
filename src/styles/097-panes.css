@@ -6,7 +6,6 @@ html.panes body > :not(#panes) { display: none !important; }
 .pn { position: fixed; inset: 0; z-index: 100; display: grid; grid-template-columns: calc(50% - var(--hinge) / 2 + var(--fold-shift)) var(--hinge) minmax(0, 1fr); grid-template-rows: 100%; background: var(--bg); }
 .pn-frame { grid-row: 1; display: block; width: 100%; height: 100%; min-width: 0; border: 0; background: var(--bg); position: relative; z-index: 1; }
 .pn-frame.pn-moving { z-index: 3; box-shadow: 0 0 0 1px var(--line), 0 12px 32px var(--shadow); }
-.pn-frame.pn-dim { opacity: .35; }
 .pn-hinge { grid-column: 2; grid-row: 1; position: relative; }
 .pn-hinge::after { content: ""; position: absolute; top: 18px; bottom: 18px; left: 50%; width: 1px; margin-left: -.5px; background: var(--line); }
 /* 44 x 88 to grab, drawn as a small upright bar on the fold line */
@@ -17,27 +16,5 @@ html.panes body > :not(#panes) { display: none !important; }
 .pn-shield { display: none; position: absolute; inset: 0; z-index: 3; cursor: grabbing; }
 .pn-dragging .pn-shield { display: block; }
 
-/* inside a pane: the page picker, shown on the side a page just left */
-.pn-pick { position: fixed; inset: 0; z-index: 90; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: var(--bg); color: var(--ink); }
-.pn-pick.pn-in { animation: pn-in .24s ease; }
-@keyframes pn-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
-html.pn-picking nav.dock, html.pn-picking #menu-fab { display: none !important; }
-.pn-pk-in { max-width: 560px; margin: 0 auto; padding: 16px 16px 32px; }
-.pn-pk-head h2 { margin: 0; font-size: 28px; font-weight: 800; font-stretch: 118%; letter-spacing: -.015em; line-height: 1.05; }
-.pn-pk-head p { margin: 4px 0 0; font-size: 15px; font-weight: 700; color: var(--muted); }
-.pn-pick .sec { display: flex; align-items: baseline; gap: 8px; margin: 24px 0 8px; }
-.pn-pk-games { border-top: 1px solid var(--hair); }
-.pn-pk-game { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; width: 100%; min-height: 44px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--hair); background: none; color: var(--ink); text-align: left; font: inherit; }
-.pn-pk-tms { display: grid; gap: 8px; min-width: 0; }
-.pn-pk-st { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.pn-pk-st em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--accent); }
-.pn-pk-pages { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.pn-pk-page { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; border: 0; border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; text-align: left; }
-.pn-pk-page svg { flex: none; width: 22px; height: 22px; color: var(--muted); }
-.pn-pk-page span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pn-pk-page[aria-current="page"] { box-shadow: inset 0 0 0 2px var(--accent); }
-.pn-pk-keep { display: block; width: 100%; min-height: 48px; margin-top: 24px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; }
-@media (prefers-reduced-motion: reduce) { .pn-pick.pn-in { animation: none; } .pn-grip i { transition: none; } }
-.pn-pick:focus { outline: none; }
 /* one menu (3.81.2): the left side has no menu or Back of its own; the menu and Back work the right side */
 html.in-pane.pn-left #menu-fab, html.in-pane.pn-left #menu-pop, html.in-pane.pn-left #menu-scrim, html.in-pane.pn-left #dock-back { display: none !important; }
