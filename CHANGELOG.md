@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.93.3 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Unfolded Duo: each side's page now sits centered in its half of the screen. The extra gap at the fold is gone, so the right page no longer looks pushed toward the right edge (and the left page no longer leans left). The bar on the fold stays where it was.
+
 ## 3.93.2 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - News: while Claude writes (Generate, Regenerate, or a league briefing's Update), the page steps aside and one card in the middle shows a big running clock and how long it usually takes. Before, the clock sat in the top right corner, under the clock and Wi-Fi on the folded Duo and under the island on the right side of the open Duo. The league tabs stay at the top, so you can still swipe to another league while you wait.

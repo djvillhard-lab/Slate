@@ -46,6 +46,10 @@ right, so I can have two live feeds at once."
   (clamp 22-34px, 8.2vw; fitTitle still shrinks long names) with the full 42px mark, centered in the shared height.
   Panes only; the folded phone keeps its short one-line header (DJ has rejected extra top space there).
 
+- Centering (3.93.3, DJ): no gap column at the fold any more (`.pn` grid hinge column 0); each pane's own 16pt page
+  margin is the gap, the same as at the outer edge, so each page is centered in its half. The grip is 32pt wide so it
+  covers only those margins.
+
 ## Open
 - A pane is about 365 points wide, a little narrower than the folded cover screen (about 382). The Live feed's score
   bar crowds at that width for NBA (a record sits under the score); that page belongs to the Live feed thread.
