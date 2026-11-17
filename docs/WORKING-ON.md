@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | My bets (track your own bets): new file plus the matchup page, game card and slate section | src/app/176-my-bets.js, src/app/140-game.js, src/app/150-game-row.js, src/app/170-slate-page.js, docs/pages/my-bets.md | 2026-11-17 15:42 |
