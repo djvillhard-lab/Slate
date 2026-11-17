@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.66.4 (Nov 16, 2026)
+TestFlight: 3.64.1 (42), no new build (web only)
+- Betting lines keep up with tonight's injury report. Before a game, each line is checked again every 20 minutes in the last 12 hours, and the lean and reasons are redone with the newest news. If the player is now out, or the lean is too close to call, the card goes and the next one takes its place. (It used to stay as first picked: Garza's under stayed after Queta was ruled out.)
+- A new reason: a starter at the same position is out, like "Queta (C, 9.1 points a game) is out tonight, so more minutes at center." It counts toward the over for that player's points and rebounds (assists for guards), checks the team's top six scorers instead of only the top three, and makes the player's recent games count for less, since they came in a smaller role. Tonight that takes Garza's points under off the list (too close to call now) and leans his rebounds over.
+- A player listed as questionable gets "Listed as questionable tonight."
+
 ## 3.66.3 (Nov 16, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live notifications for a single game: one-liners are now sized to fit instead of being cut off mid-word. A two-part line keeps its first part ("Warriors are without Curry"); otherwise it ends on a whole word with "…". Under the two standouts there's room for one short line; on its own (soccer, hockey, before kickoff) it gets two lines.

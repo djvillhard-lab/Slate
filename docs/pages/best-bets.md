@@ -71,3 +71,11 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 - Open/closed is `state.slateFold.__betsOpen` (was `__bets` = closed, now dropped on the next tap). slateFold is saved in the person's
   Supabase settings, so the choice follows them across days and devices. Picks still load while closed, so the count shows on the header.
 - `newsletterBlock()` moved below `betsBlock()` in 170-slate-page.js. Both appear only on the slate page.
+
+## 3.66.4: tonight's injury news (DJ: Garza under stayed after Queta was ruled out)
+- Queta went day-to-day → Out at 22:10 UTC; chosen lines were never re-judged, and refreshes stopped once the five were full.
+- Now: upcoming games within 12h refresh every 20 min (`betNeed`), always (not only when filling). `betPicks` re-judges each chosen line
+  of a not-yet-started game when its game data is newer than the pick (`pk.at`): copies the new lean/facts/line, or drops it (out, or too close) and refills.
+- Same-position starter out (bball, team top-6 scorer, position letter matches, from the injury entry's position): +0.7 over for pts/reb (ast for guards),
+  and `facts.damp` scales the stats lean by 0.3, since recent games were a smaller role and the posted line already moved.
+- Questionable: "Listed as questionable tonight." (-0.3). Out/doubtful players are still left out entirely.
