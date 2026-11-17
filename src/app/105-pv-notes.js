@@ -13,7 +13,7 @@
       db.doc(path).get().then(function (sn) {
         var d = sn.exists ? sn.data() : null, was = JSON.stringify(PVN.docs[path] || null);
         PVN.docs[path] = d;
-        if (JSON.stringify(d || null) !== was) { clearTimeout(pvT); pvT = setTimeout(function () { if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, 250); }
+        if (JSON.stringify(d || null) !== was) { clearTimeout(pvT); pvT = setTimeout(function () { if (state.view === "lineup" || isDuo) keepScroll(renderLineup); }, 250); if (typeof agRedraw === "function") agRedraw(); }
       }, function () {});
     }
     return PVN.docs[path] || null;
@@ -40,21 +40,43 @@
   }
   // which side a note's team is ("United States", "Duke Blue Devils" -> away / home), or ""
   function pvnSide(g, team) {
-    var n = String(team || "").toLowerCase().replace(/[^a-z0-9 ]/g, ""); if (!n) return "";
-    return ["away", "home"].filter(function (sd) {
-      return [g[sd], short(g, sd), g[sd + "Short"]].some(function (w) { w = String(w || "").toLowerCase().replace(/[^a-z0-9 ]/g, ""); return w.length >= 3 && (n === w || n.indexOf(w + " ") === 0 || w.indexOf(n) === 0); });
-    })[0] || "";
+    var nz = function (x) { return String(x || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim(); }, n = nz(team); if (!n) return "";
+    // the full name, the card's name, or the start of the full name at least as long as the card's ("Michigan" is not "Michigan State")
+    return ["away", "home"].filter(function (sd) { var F = nz(g[sd]), S = nz(short(g, sd));
+      return n === F || n === S || (F && F.indexOf(n + " ") === 0 && n.length >= S.length) || (S && n.indexOf(F + " ") === 0); })[0] || "";
   }
   // the best note Claude has for this game: { text, sc, side }, or null
+  // 3.90.0 (DJ: "look at the news that's generated, determine one liners for specific matchups, and then add them to the matchup
+  // cards in all games… and on my slate"): news first. Every note Claude has written today is gathered into one index, by game id
+  // and by team; a card then only looks itself up there. Sources: this person's News page (game notes, top stories, team lines,
+  // league notes), the league briefings (latest news, injuries) for the leagues on screen, a game breakdown News already has open,
+  // and the game's Claude preview. Nothing new is asked of Claude.
+  var PVN_IX = { key: "", ix: null };
+  function pvnFirst(t) { t = String(t || ""); var m = /^(.{20,130}?[.!?])(\s|$)/.exec(t); return m ? m[1] : t; }
+  function pvNewsIndex(lgs) {
+    var day = state.date, page = pvnGet("mine/news-" + day), briefs = lgs.map(function (lg) { return pvnGet("newsdeep/" + day + "-l-" + lg); });
+    var key = day + "|" + lgs.join(",") + "|" + (page ? page.at || 1 : 0) + "|" + briefs.map(function (x) { return x ? x.at || 1 : 0; }).join(",");
+    if (PVN_IX.key === key && PVN_IX.ix) return PVN_IX.ix;
+    var ix = { game: {}, team: [] }, team = function (name, tag, text, lg) { if (name && text) ix.team.push({ name: name, tag: tag, text: pvnFirst(text), lg: lg || "" }); };
+    if (page) {
+      (page.games || []).forEach(function (x) { if (x && x.id) ix.game[x.id] = (x.hits || []).map(function (h) { return { tag: h.tag, text: h.text, team: h.team }; }); });
+      (page.top || []).forEach(function (x) { if (x && x.team) team(x.team, x.tag || "news", x.title && x.title.length >= 25 ? x.title : x.why, x.lg); });
+      (page.teams || []).forEach(function (t) { if (t && t.line) team(t.name, t.tone === "alert" ? "news" : t.chip, t.line, t.lg); });
+      (page.leagues || []).forEach(function (L) { ((L && L.hits) || []).forEach(function (h) { if (h.team) team(h.team, h.tag, h.text, L.key); }); });
+    }
+    briefs.forEach(function (d, i) { if (!d) return; var lg = lgs[i];
+      if (d.lead && d.lead.team) team(d.lead.team, "news", d.lead.text || d.lead.title, lg);
+      (d.latest || []).forEach(function (x) { if (x.team) team(x.team, x.tag, x.text, lg); });
+      (d.injuries || []).forEach(function (x) { if (x.team && x.player) team(x.team, "injury", x.player + (x.status ? " (" + x.status + ")" : "") + ": " + String(x.text || "").replace(/^[A-Z]/, function (c) { return c.toLowerCase(); }), lg); });
+    });
+    PVN_IX.key = key; PVN_IX.ix = ix; return ix;
+  }
   function pvNote(g) {
     var out = [], add = function (tag, text, team) { var sc = pvNoteScore(g, tag, text); if (sc >= 0) out.push({ text: pvnClean(text), sc: sc, side: pvnSide(g, team) }); };
-    var day = state.date, page = pvnGet("mine/news-" + day);
-    if (page) {
-      (page.games || []).forEach(function (x) { if (x && x.id === g.id) (x.hits || []).forEach(function (h) { add(h.tag, h.text, h.team); }); });
-      // a team's one line, when it isn't about tonight's start time ("At 1-3, the Flyers host… at 7 pm ET")
-      (page.teams || []).forEach(function (t) { var sd = pvnSide(g, t && t.name); if (sd && t.line) add(t.tone === "alert" ? "news" : t.chip, t.line, t.name); });
-    }
-    var deep = pvnGet("newsdeep/" + day + "-g-" + g.id);
+    var ix = pvNewsIndex(pvnLeagues(g));
+    (ix.game[g.id] || []).forEach(function (h) { add(h.tag, h.text, h.team); });
+    ix.team.forEach(function (x) { if ((!x.lg || x.lg === g.league || BX_SPORT[x.lg] === BX_SPORT[g.league]) && pvnSide(g, x.name)) add(x.tag, x.text, x.name); });
+    var deep = typeof nw !== "undefined" && nw.docs ? nw.docs["newsdeep/" + state.date + "-g-" + g.id] : null;
     if (deep) {
       (deep.watch || []).forEach(function (w) { add(w.tag, w.text, ""); });
       if (deep.number && deep.number.text) add("", deep.number.text, deep.number.team);
@@ -63,6 +85,9 @@
     out.sort(function (a, b) { return b.sc - a.sc; });
     return out[0] || null;
   }
+  // the leagues whose briefings are read: the ones with a card drawn this session (each read at most every 10 minutes)
+  var PVN_LGS = [];
+  function pvnLeagues(g) { if (g && g.league && PVN_LGS.indexOf(g.league) < 0 && BX_SPORT[g.league]) PVN_LGS.push(g.league); return PVN_LGS; }
   // 3.89.1 (DJ: "keep the original one-liners. If something is newsworthy… include it as another line beneath the one-liner and
   // make it obvious that it's extra and news"): the stats line always stays; a newsworthy note gets its own line under it,
   // with a 📰 News tag. Newsworthy = a story tag (Last game, Coaching, Injury…) or story words; plain "Slump"/"Rebounding" notes don't show

@@ -7,4 +7,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Box Office: team logos on the headshots | src/app/120-box-office.js, src/styles/095-box-office.css, docs/pages/box-office.md | 2026-11-17 17:20 |
-| DJ | News lines on All games and the slate, from the generated News | src/app/105-pv-notes.js, src/app/150-game-row.js, docs/pages/slate.md | 2026-11-17 17:14 |

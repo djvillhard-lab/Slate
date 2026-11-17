@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.90.0 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- All games: upcoming matchup cards now get the same 📰 News line as the slate.
+- Today's Slate and All games: the News lines start from the news Claude already wrote, not from each game. Everything Claude wrote today is gathered once: your News page's game notes, top stories, team lines and league notes, plus the league briefings and their injury lists. Each item is matched to the game of the team it's about. A card only shows a line when one of those items is about its game or its teams and is real news (coaching, last games, injuries, returns, storylines). Still no new Claude requests.
+
 ## 3.89.6 (Nov 17, 2026)
 TestFlight: 3.67.0 (43), no new build (web only)
 - Today's Slate: the line under an upcoming game always stays on one line, on the folded Duo, the open Duo and the iPhone. When it doesn't fit, it gets shorter instead of wrapping: filler goes first ("going into the second leg"), then the second fact, so it might read "USA leads 6-0 on aggregate and has won five in a row" or "No. 2 Michigan State has won four straight".
