@@ -128,7 +128,7 @@
   }
   // what kind of bet it is, for the card's tag: "Spread", "Moneyline", "Total points", "Player points"
   function mybKind(b) {
-    if (b.kind === "spread") return SOCCER[b.lg] ? "Handicap" : BX_SPORT[b.lg] === "hockey" ? "Puck line" : BX_SPORT[b.lg] === "baseball" ? "Run line" : "Spread";
+    if (b.kind === "spread") return BX_SPORT[b.lg] === "hockey" ? "Puck line" : BX_SPORT[b.lg] === "baseball" ? "Run line" : "Spread";
     if (b.kind === "ml") return "Moneyline";
     if (b.kind === "total") return "Total " + mybNoun(b);
     return "Player " + mybNoun(b);

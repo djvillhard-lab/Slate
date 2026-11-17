@@ -27,6 +27,8 @@ Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#m
 
 - 3.88.1 (DJ): the game card note drops "Your bet"; it starts with the kind tag.
 
+- 3.88.2 (DJ): soccer spreads say Spread, not Handicap. Hockey still says Puck line and baseball Run line.
+
 ## Open
 - Not on the Live feed or in notifications yet (a "your bet" line on the live notification could ride the existing line field without a build).
 - Parlays not supported. Stake/odds/profit was option 2 on DJ's card if he wants it later.
