@@ -189,7 +189,7 @@
     if (loading) return;
     var sg = suggestionBlock("slate"); if (sg) body.appendChild(sg);
     var bts = betsBlock(lgAll); if (bts) body.appendChild(bts);  // the whole slate: finished games (in their own group) and the Live-only filter must not take picks away (3.45.1)
-    var nlb = newsletterBlock(); if (nlb) body.appendChild(nlb);  // under Betting lines (DJ, 3.65.3)
+    var nlb = newsletterBlock(); if (nlb) body.appendChild(slNlFold(nlb));  // under Betting lines (DJ, 3.65.3)
     // two actions in one panel, like the rest of the slate; Share lives in the header, Clear is a quiet link
     var acts = el("div", "slate-acts"), row = el("div", "sa-row");
     function act(label, path, fn) {
@@ -236,3 +236,18 @@
       });
     });
   }
+
+  // ---- The Athletic Newsletters fold up like Betting lines (DJ, 3.77.0) ----
+  // open until you close it; closed stays closed for you (saved with your settings, like the other slate sections)
+  function slNlFold(box) {
+    var rows = box.querySelectorAll(".nl-row"), shut = !!(state.slateFold || {}).__nlShut;
+    var sec = el("section", "sl-sec sl-nl" + (shut ? " shut" : ""));
+    var hb = el("button", "sl-h"); hb.type = "button"; hb.setAttribute("aria-expanded", shut ? "false" : "true");
+    hb.appendChild(el("b", null, "The Athletic Newsletters")); if (rows.length) hb.appendChild(el("span", "count", String(rows.length))); hb.appendChild(icon("more"));
+    hb.addEventListener("click", function () { var f = Object.assign({}, state.slateFold || {}); if (f.__nlShut) delete f.__nlShut; else f.__nlShut = 1; state.slateFold = f; saveSettings(); keepScroll(renderLineup); });
+    sec.appendChild(hb);
+    if (shut) return sec;
+    var h = box.querySelector(".sec"); if (h) h.remove();
+    sec.appendChild(box); return sec;
+  }
+

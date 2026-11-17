@@ -119,14 +119,23 @@
       if (open) openTray = makeTray();
       // the whole card opens and closes the quick look, apart from the channel links and the bell (3.29.1)
       row.addEventListener("click", function (e) {
-        var t = e.target; if (main.contains(t) || (t.closest && t.closest(".tray, .net, .g-bell, a, button, input"))) return;
+        var t = e.target; if (main.contains(t) || (t.closest && t.closest(".tray, .net, .g-bell, .g-feed, a, button, input"))) return;
         main.click();
       });
     }
     row.appendChild(main);
     var sideEl = statusSide(g, mode); row.appendChild(sideEl);
     // the bell sits in the card's bottom right corner (3.29.1), clear of the clock and the channels
-    var bellEl = sideEl.querySelector(".g-bell"); if (bellEl) { row.appendChild(bellEl); row.classList.add("has-bell"); }
+    // 3.77.0 (DJ): no bell on the slate's cards. In its corner, a quick button straight to the game's live feed (live and finished
+    // games that have one). A game's notifications are still in its quick look: Live notification and Game alerts.
+    var bellEl = sideEl.querySelector(".g-bell"); if (bellEl) bellEl.remove();
+    if (mode === "lineup" && feedOk(g)) {
+      var fl = status(g).kind === "live", fb = el("button", "g-feed" + (fl ? " on" : "")); fb.type = "button";
+      if (fl) fb.appendChild(el("i", "g-feed-dot")); fb.appendChild(el("span", null, "Feed")); fb.appendChild(el("i", "g-feed-chev"));
+      fb.setAttribute("aria-label", "Open the " + (fl ? "live" : "game") + " feed for " + g.away + " at " + g.home);
+      fb.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); openFeed(g); });
+      row.appendChild(fb); row.classList.add("has-feed");
+    }
     // the live highlight runs the full width of the card, under the teams and the clock
     // a line under every game: the live game's own line once there is one (red while it's on), until then the pre-game line
     if (mode === "lineup" && !g.custom && (st.kind === "live" || st.kind === "over")) {

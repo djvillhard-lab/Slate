@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.77.0 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Today's Slate: the small bell in a card's bottom corner is gone. In its place is a Feed button that opens that game's live feed in one tap (a red dot while the game is live). It shows on live and finished football and basketball games, the ones that have a feed. Swiping in the feed still goes through the games on your slate.
+- A game's notifications are still in its quick look (tap the card): Live notification and Game alerts.
+- The Athletic Newsletters under the slate now fold up like Betting lines: tap the heading to close or open it. It starts open, and once you close it, it stays closed for you.
+- Scores on live games stay full brightness for both teams on the slate's cards (only the losing team dims once it's final), the same as the Live feed now.
+
 ## 3.76.1 (Nov 17, 2026)
 TestFlight: 3.68.5 (44), no new build (web only)
 - Box Office: the player cards show the player's headshot again (with his team's badge at the corner) in place of the jersey. The rest of the new card stays.

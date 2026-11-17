@@ -292,6 +292,14 @@ html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-sh
 .g.panel > .g-bell svg { width: 15px; height: 15px; }
 .g.panel.has-bell > .hl { padding-right: 26px; }
 .g.panel.has-bell:has(> .tray) > .g-bell { display: none; }
+/* 3.77.0: the card's corner button to the live feed (in place of the bell): a small pill, red dot while live; a 44-point tap area */
+.g.panel > .g-feed { position: absolute; right: 8px; bottom: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--hair); background: var(--raise); color: var(--head); font: inherit; font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.g.panel > .g-feed::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; height: 44px; transform: translateY(-50%); }
+.g.panel > .g-feed.on { color: var(--ink); border-color: color-mix(in srgb, var(--live, #E5484D) 45%, transparent); background: color-mix(in srgb, var(--live, #E5484D) 12%, var(--raise)); }
+.g-feed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live, #E5484D); }
+.g-feed-chev { width: 6px; height: 6px; border-right: 2px solid currentColor; border-top: 2px solid currentColor; transform: rotate(45deg); opacity: .6; margin-left: -1px; }
+.g.panel.has-feed > .hl { padding-right: 76px; }
+.g.panel.has-feed:has(> .tray) > .g-feed { display: none; }
 /* one header on every page (3.31.0): the mark, the page name and a second line in the same spots; the line under the
    header sits right under them everywhere, with a page's tabs below it */
 header.top { border-bottom: 0 !important; }

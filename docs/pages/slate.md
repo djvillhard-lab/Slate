@@ -1,5 +1,5 @@
 # Today's Slate
-Last updated: Nov 17, 2026, 3.75.0
+Last updated: Nov 17, 2026, 3.77.0
 
 ## Done
 - Game cards line up one score column for the whole slate (fitScores in 240-chrome.js sets --tmw on #lineup-body):
@@ -28,6 +28,9 @@ Last updated: Nov 17, 2026, 3.75.0
 - 3.75.0 (DJ): no big numbers; the right side holds up to three tags (tpTags(sport, v, over) for basketball, hockey,
   baseball, soccer; tpFootTags for football's summed groups), fd-tag pills. Under 340px wide the tags drop under the
   stat line (container query on .gv-watch). Box Office reuses tpTags and the tp- classes.
+- 3.77.0 (DJ): no bell on slate cards; a Feed button in its corner opens openFeed(g) (feedOk: live or final football and
+  basketball). Notifications stay in the quick look. The Athletic Newsletters fold like Betting lines (slNlFold wraps
+  newsletterBlock from 130-teams.js; slateFold.__nlShut, open by default).
 
 ## Open
 - No position chip on Top performers: ESPN's game summary doesn't carry positions for these players.
