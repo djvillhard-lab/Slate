@@ -109,9 +109,24 @@
       .replace(/\b(after|before) (he|she|they) (joins?|moves? to) /i, "$1 joining ")
       .replace(/ (on |this |next )?(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i, "")
       .replace(/\s+/g, " ").trim();
-    var out = [a], m = /^(.{18,}?)(,| -| before | after | as | while | with | since | when | following | ahead of | because )/.exec(a);
-    if (m && m[1].length < a.length) out.push(m[1].replace(/[,;:\s]+$/, ""));
-    return out;
+    return pvCuts([a]);
+  }
+  // 3.90.5 (DJ: the news lines still ended in "…" on All games): every shorter version of a line, longest first, so pvFit can keep
+  // the longest that fits. Asides in brackets go first ("Duncan Robinson (quad) and…" -> "Duncan Robinson and…"), then the line is
+  // cut where a clause starts ("…are out for the season" -> "…are out"; "The Irish open Players Era against…" -> "The Irish open Players Era")
+  var PVN_BRK = /(,|;| -| (?:before|after|as|while|with|since|when|following|ahead of|because|for|against|in|at|on|and|but|to|from|despite|over|than|including|amid|behind|into|until) )/g;
+  function pvCuts(list) {
+    var out = [];
+    list.forEach(function (t) {
+      t = String(t || "").replace(/\s+/g, " ").trim(); if (!t) return;
+      var np = t.replace(/\s*\([^)]{1,40}\)/g, "").replace(/\s+/g, " ").trim();
+      [t, np].forEach(function (b) {
+        out.push(b); var m; PVN_BRK.lastIndex = 0;
+        while ((m = PVN_BRK.exec(b))) { var c = b.slice(0, m.index).replace(/[,;:\s-]+$/, "").replace(/\s+(the|a|an|of|and|or|to|his|her|their|its)$/i, ""); if (c.length >= 18) out.push(c); }
+      });
+    });
+    out = out.filter(function (x, i) { return x && out.indexOf(x) === i; });
+    return out.sort(function (a, b) { return b.length - a.length; });
   }
   function pvNewsNode(g) {
     var n = null; try { n = pvNote(g); } catch (e) {}
@@ -140,6 +155,7 @@
     var out = [p.text, cut(p.text)];
     if (p.f && p.f !== p.text) out.push(p.f, cut(p.f));
     // last: the strongest fact up to its first clause ("No. 10 Illinois visits No. 5 Duke after Ivisic's 28-point outing" -> "...visits No. 5 Duke")
-    var last = out[out.length - 1], m = /^(.{20,}?)( after | and | as | with | while | following |; )/.exec(last); if (m) out.push(m[1]);
-    return out.filter(function (x, i) { return x && out.indexOf(x) === i; });
+    // then every shorter cut of those (pvCuts), longest first; the two-fact line always comes before a cut of it
+    var head = out.filter(function (x, i) { return x && out.indexOf(x) === i; });
+    return head.concat(pvCuts(head).filter(function (x) { return head.indexOf(x) < 0 && x.length < head[head.length - 1].length; }));
   }

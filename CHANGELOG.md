@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.90.5 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- All games: the line under an upcoming game stays on one line, as on the slate, and has no team abbreviation in front.
+- Slate and All games: the 📰 News line gets shorter instead of ending in "…". Asides in brackets go first, then the end of the sentence: "Duncan Robinson and Ron Holland II are out", "The Irish open Players Era".
+
 ## 3.90.4 (Nov 17, 2026)
 TestFlight: 3.81.7 (46), no new build (web only)
 - News, Press Box: each team's notes on a game card are in that team's color only. On international games they had a two-color flag edge, which read as both teams' colors. Only the Matchup note is split between the two teams now; a note about neither team (kickoff time, TV) uses the app's accent color.

@@ -152,7 +152,9 @@
       }
     }
     else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); var nn = pvNewsNode(g); if (nn) row.appendChild(nn); }   // 3.89.1: Claude's news note on its own line
-    else if (mode === "games" && !g.custom) { var agl = agLine(g, st.kind, row); if (agl) row.appendChild(agl); if (st.kind === "upcoming") { var agn = pvNewsNode(g); if (agn) row.appendChild(agn); } }   // 3.90.0: 📰 News lines on All games too  // All games: the same one-liners (3.39.0)
+    else if (mode === "games" && !g.custom) { var agl = agLine(g, st.kind, row); if (agl) row.appendChild(agl); if (st.kind === "upcoming") {
+        // 3.90.5: the stats line on one line here too, the longest version that fits, without an "MSU:" in front (as on the slate)
+        if (agl && agl.classList.contains("hl-pre") && PV[g.id] && PV[g.id].text) { var agp = agl.querySelector(".hl-tm"); if (agp) agp.remove(); agl.classList.add("hl-one"); pvFit(agl, agl.lastChild, pvStatAlts(PV[g.id])); } var agn = pvNewsNode(g); if (agn) row.appendChild(agn); } }   // 3.90.0: 📰 News lines on All games too  // All games: the same one-liners (3.39.0)
     if ((mode === "lineup" || mode === "games") && !g.custom) mybBars(g).forEach(function (x) { row.appendChild(x); });  // your own bets on this game (3.86.0)
     if (openTray) row.appendChild(openTray);
     if (mode === "lineup" && isDuo && state.view === "game" && state.gameId === g.id) row.classList.add("picked");
