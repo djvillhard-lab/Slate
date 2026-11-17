@@ -147,6 +147,7 @@
       // live with a score but no line yet: the game's standout so far, from the scoreboard
       var ll = kind === "live" ? liveLeadLine(g) : "";
       if (ll) { var lk = hlLine(g, ll, teamOfText(g, ll), "hl hl-live"); if (lk) hlTeamInk(g, lk); return lk; }
+      var pv0 = PV[g.id]; if (kind === "live" && pv0 && !pv0.busy && Date.now() - pv0.at > 30 * 60000) agSeen(row, function () { pvNeed(g); });  // an old preview (3.71.3: last week's rank) gets redone
       return kind === "live" && PV[g.id] && PV[g.id].text ? hlLine(g, PV[g.id].text, PV[g.id].tm, "hl hl-pre") : null;
     }
     if (kind === "upcoming") {

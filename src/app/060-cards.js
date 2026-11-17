@@ -88,9 +88,10 @@
     if (st.kind === "live") side.appendChild(el("span", "s-live", sc && sc.detail ? sc.detail : "Live"));
     else if (st.kind === "over") side.appendChild(el("span", "s-final", st.final ? (sc && sc.detail && /OT|SO|\//.test(sc.detail) ? sc.detail : "Final") : "Likely over"));
     else if (mode === "lineup") {
-      if (st.kind === "upcoming") { var u = until(st.ms); side.appendChild(el("span", "s-cd", u.h < 24 ? "in " + (u.h ? u.h + "h " : "") + u.m + "m" : timeText(g.start))); }
+      if (st.kind === "upcoming" && st.late) side.appendChild(el("span", "s-cd", "Starting soon"));  // past its time, not tipped off yet (3.71.4)
+      else if (st.kind === "upcoming") { var u = until(st.ms); side.appendChild(el("span", "s-cd", u.h < 24 ? "in " + (u.h ? u.h + "h " : "") + u.m + "m" : timeText(g.start))); }
       else side.appendChild(el("span", "s-cd", timeText(g.start)));
-    } else side.appendChild(el("span", "s-time", timeText(g.start)));
+    } else side.appendChild(el("span", "s-time", st.late ? "Starting soon" : timeText(g.start)));
     if (st.kind === "over" && mode !== "lineup") side.appendChild(el("span", "s-ftime", timeText(g.start)));  // when it was on (the slate's Finished group has its time headers)
     if (side.className === "s-row") side = side.parentNode;
     if (g.moved && st.kind === "upcoming") side.appendChild(el("span", "s-moved", "Was " + timeText(g.moved)));

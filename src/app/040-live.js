@@ -13,6 +13,7 @@
   // soccer is shown home team first ("Arsenal vs Chelsea"); everything else away @ home
   function sideOrder(g) { return SOCCER[g.league] ? ["home", "away"] : ["away", "home"]; }
   function sep(g) { return SOCCER[g.league] || g.neutral ? " vs " : " @ "; }
+  var LIVE_PRE = {};  // games ESPN still lists as pre-game, by id: when it was last seen that way
   function scoreRaw(id) { if (LIVE_DATE === state.date && LIVE[id]) return LIVE[id]; return state.scores && state.scores[id]; }
   var ESPN_URLS = {
     nfl: ["football/nfl"], ncaaf: ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
@@ -157,7 +158,8 @@
             else continue;
             var st = (c.status || e.status || {}).type || {};
             var es = new Date(e.date).toISOString().replace(".000Z", "Z");
-            if (st.state === "pre") { if (Math.abs(new Date(e.date) - new Date(g.moved || g.start)) >= 60000) { if (LIVE_START[g.id] !== es) { LIVE_START[g.id] = es; changed = true; } } else if (LIVE_START[g.id]) { delete LIVE_START[g.id]; changed = true; } break; }
+            if (st.state === "pre") { if (!LIVE_PRE[g.id]) changed = true; LIVE_PRE[g.id] = Date.now(); if (Math.abs(new Date(e.date) - new Date(g.moved || g.start)) >= 60000) { if (LIVE_START[g.id] !== es) { LIVE_START[g.id] = es; changed = true; } } else if (LIVE_START[g.id]) { delete LIVE_START[g.id]; changed = true; } break; }
+            if (LIVE_PRE[g.id]) { delete LIVE_PRE[g.id]; changed = true; }
             if (st.state !== "in" && st.state !== "post") break;
             var v = { a: Number(A.score), h: Number(H.score), state: st.state, detail: st.shortDetail || st.detail || "", live: true, p: Number((c.status || e.status || {}).period) || 0, ck: Number((c.status || e.status || {}).clock) || 0, ld: liveLeaders(c), sit: liveSit(c) };
             var old = LIVE[g.id];
@@ -182,6 +184,8 @@
     var start = new Date(g.start).getTime(); if (isNaN(start)) return { kind: "tbd" };
     var now = Date.now();
     if (now < start) return { kind: "upcoming", ms: start - now };
+    // 3.71.4: past its start time but ESPN still has it pre-game (a late tip, a delay): not live yet (it used to say Live with no score)
+    if (LIVE_PRE[g.id] && now - LIVE_PRE[g.id] < 6 * 60000 && now < start + 3 * 3600000) return { kind: "upcoming", ms: 0, late: true };
     if (now < start + info(g).hrs * 3600000) return { kind: "live" };
     return { kind: "over" };
   }

@@ -36,3 +36,7 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 
 ## 3.71.2: live one-liners in the team color
 - `agLine` calls the slate's `hlTeamInk` (150-game-row.js, 3.71.0) on live lines, both the highlight and the standout-so-far line. Same contrast rule on both themes; lines about both teams stay red.
+
+## 3.71.4: a game past its start that ESPN still has pre-game
+- `livePoll` remembers ESPN pre-game sightings (`LIVE_PRE` in 040-live.js); `status()` returns upcoming with `late: true` for a game past its start but seen pre-game in the last 6 minutes. Cards say "Starting soon" (060-cards.js). Before, the clock fallback said Live with no score (Long Beach State at UCLA, late tip).
+- `agLine` re-requests a preview older than 30 min on a "live" card, so stale ranks get redone.
