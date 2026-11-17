@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.76.0 (Nov 17, 2026)
+TestFlight: 3.68.5 (44), no new build (web only)
+- Box Office: top performers, overachievers and underachievers are now cards in the slate's new Top performers look. Each has the team's color down the left edge, the player's jersey with his number, his name, position and team, the stat line under the name, and the game under that (W 126-115 vs CHI, or the live clock in red). The same tags as the slate's Top performers sit on the right (👑 Triple-double, 🎯 4 threes, 🎩 Hat trick, 💨 100-yd rusher and the rest), and move under the stats on narrower screens. Claude's reason sits under an over or underachiever's line. Tap a top performer to open his game, same as before.
+- Jersey numbers and tags fill in from tonight on. Nights saved before this update show the cards without them.
+
 ## 3.75.2 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Football feed: the down and distance pill moved to its own line, centered at the bottom of the score bar, and it now says the yard line too: the football, the team with the ball in its color, then "4th & 1 at BAL 17". It's tinted in that team's color, so you can tell at a glance who has it and where.

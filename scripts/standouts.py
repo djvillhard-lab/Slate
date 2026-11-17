@@ -150,12 +150,14 @@ def game_rows(lg, path, kind, ev):
             for grp in team.get("statistics", []):
                 labels = grp.get("labels", [])
                 for a in grp.get("athletes", []):
-                    nm = a["athlete"]["displayName"]; per.setdefault(nm, {"pos": a["athlete"].get("position", {}).get("abbreviation", ""), "id": a["athlete"].get("id", "")})
+                    nm = a["athlete"]["displayName"]; per.setdefault(nm, {"pos": a["athlete"].get("position", {}).get("abbreviation", ""), "id": a["athlete"].get("id", ""), "jer": a["athlete"].get("jersey", "")})
                     per[nm][grp.get("name")] = dict(zip(labels, a.get("stats", [])))
             for nm, groups in per.items():
-                pos = groups.pop("pos", ""); aid = groups.pop("id", "")
+                pos = groups.pop("pos", ""); aid = groups.pop("id", ""); jer = groups.pop("jer", "")
                 sc, line, extra = football(groups)
-                if line: rows.append({**base, "name": nm, "id": aid, "pos": pos, "score": round(sc, 1), "line": line, "extra": extra})
+                # the card's stat map (the app's tags read it): ESPN's labels, each prefixed with its group ("passing.YDS")
+                stm = {f"{gn}.{k}": str(v) for gn, gs in groups.items() for k, v in gs.items() if v not in (None, "", "--")}
+                if line: rows.append({**base, "name": nm, "id": aid, "pos": pos, "jer": jer, "st": stm, "score": round(sc, 1), "line": line, "extra": extra})
             continue
         seen = set()
         for grp in team.get("statistics", []):
@@ -172,7 +174,8 @@ def game_rows(lg, path, kind, ev):
                     r = None
                 if not r: continue
                 sc, line, extra = r
-                rows.append({**base, "name": a["athlete"]["displayName"], "id": a["athlete"].get("id", ""), "pos": a["athlete"].get("position", {}).get("abbreviation", ""), "score": round(sc, 1), "line": line, "extra": extra})
+                stm = {k: str(v) for k, v in zip(labels, a["stats"]) if v not in (None, "", "--")}
+                rows.append({**base, "name": a["athlete"]["displayName"], "id": a["athlete"].get("id", ""), "pos": a["athlete"].get("position", {}).get("abbreviation", ""), "jer": a["athlete"].get("jersey", ""), "st": stm, "score": round(sc, 1), "line": line, "extra": extra})
     return rows
 
 def run(day):
@@ -187,7 +190,7 @@ def run(day):
             rows.sort(key=lambda r: -r["score"])
             top = rows[:TOP]
             for i, r in enumerate(top): r["rank"] = i + 1
-            out["leagues"][lg] = [{k: r[k] for k in ("rank", "name", "id", "pos", "team", "teamName", "color", "opp", "home", "result", "line", "score", "ev", "live", "detail") if r.get(k) not in (None, "", False)} for r in top]
+            out["leagues"][lg] = [{k: r[k] for k in ("rank", "name", "id", "pos", "jer", "st", "team", "teamName", "color", "opp", "home", "result", "line", "score", "ev", "live", "detail") if r.get(k) not in (None, "", False)} for r in top]
             out["games"][lg] = len(lst)
             out["events"][lg] = [e["id"] for e in lst if e["status"]["type"].get("state") == "post"]
             n_live = sum(1 for e in lst if e["status"]["type"].get("state") == "in")
