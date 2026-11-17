@@ -147,6 +147,47 @@ function lum(h) {
 const hexOk = (h) => /^#[0-9a-f]{6}$/i.test(String(h || ""));
 const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 
+// every color as plain #rrggbb (rgba blended onto the background), since mail apps handle hex best and bgcolor needs it
+function hexOf(c, base) {
+  c = String(c || "").trim(); if (hexOk(c)) return c.toUpperCase();
+  const m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(c); if (!m) return null;
+  const a = m[4] === undefined ? 1 : Math.max(0, Math.min(1, Number(m[4])));
+  const b = base && hexOk(base) ? [1, 3, 5].map((i) => parseInt(base.slice(i, i + 2), 16)) : [0, 0, 0];
+  return "#" + [m[1], m[2], m[3]].map((v, i) => Math.round(Math.min(255, Number(v)) * a + b[i] * (1 - a)).toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+function solidLook(T) {
+  const o = { dark: T.dark }; o.bg = hexOf(T.bg) || MIDNIGHT.bg;
+  for (const k of Object.keys(MIDNIGHT)) if (k !== "dark" && k !== "bg") o[k] = hexOf(T[k], o.bg) || MIDNIGHT[k];
+  return o;
+}
+
+// 3.67.3: mail apps' dark modes (Outlook's above all) repaint emails, turning Slate's dark theme a muddy gray, and they
+// turn times and dates into blue links. This keeps the email in the phone's own colors: every inline color also gets a
+// class that Outlook's dark mode ([data-ogsc] text, [data-ogsb] backgrounds) is told to leave alone, tables and cells
+// get bgcolor, font shorthands are spelled out (Outlook drops "font:" and with it the weights), and times and dates get
+// an invisible joiner so the phone doesn't see them as something to link.
+function emailize(html) {
+  const ids = new Map(), cls = (c) => { if (!ids.has(c)) ids.set(c, ids.size); return ids.get(c); };
+  const out = html.replace(/<(\w+)((?:\s[^>]*?)?)\sstyle="([^"]*)"/g, (all, tag, attrs, st) => {
+    st = st.replace(/(^|;)\s*font:\s*(\d{3})\s+(\d+)px(?:\/([\d.]+(?:px)?))?\s+([^;]+)/g, (m, pre, w, sz, lh, fam) =>
+      `${pre}font-weight:${w};font-size:${sz}px;${lh ? `line-height:${lh};` : ""}font-family:${fam.trim()}`);
+    const add = [], c = /(?:^|;)\s*color:\s*(#[0-9a-f]{6})/i.exec(st), b = /(?:^|;)\s*background:\s*(#[0-9a-f]{6})/i.exec(st);
+    if (c) add.push("oc" + cls(c[1].toUpperCase()));
+    if (b) { add.push("ob" + cls(b[1].toUpperCase())); st = st.replace(/(^|;)(\s*)background:\s*(#[0-9a-f]{6})/i, "$1$2background:$3;background-color:$3"); }
+    let a = attrs;
+    if (b && /^(table|td|body)$/i.test(tag) && !/\sbgcolor=/i.test(a)) a += ` bgcolor="${b[1]}"`;
+    if (add.length) a = /\sclass="/.test(a) ? a.replace(/\sclass="/, ` class="${add.join(" ")} `) : a + ` class="${add.join(" ")}"`;
+    return `<${tag}${a} style="${st}"`;
+  });
+  const rules = [];
+  for (const [c, i] of ids) rules.push(`[data-ogsc] .oc${i}{color:${c}!important}`, `[data-ogsb] .ob${i}{background-color:${c}!important}`, `[data-ogsc] .ob${i}{background-color:${c}!important}`);
+  // times ("1:45 pm", "6:00") and dates ("Nov 17") in the text, never inside tags or links' addresses
+  const M = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December";
+  const text = (t) => t.replace(/(\d{1,2}):(\d\d)/g, "$1&#8204;:&#8204;$2").replace(new RegExp(`\\b(${M})\\.?\\s(\\d{1,2})\\b`, "g"), "$1&#8204; &#8204;$2");
+  const body = out.replace(/>([^<]+)</g, (m, t) => ">" + text(t) + "<");
+  return body.replace("</style>", rules.join("") + "</style>");
+}
+
 // ---------- the cards, drawn like the slate page's ----------
 function painter(T, kit, tz) {
   const time = (t) => new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(new Date(t));
@@ -285,7 +326,7 @@ export async function buildEmail(env, who, nowT) {
   const d = await gather(env, who, date);
   if (d.wait) return { wait: true, why: d.wait };
   if (d.skip) return { skip: true, why: d.skip };
-  const T = Object.assign({}, MIDNIGHT, cleanLook(who.look) || {});
+  const T = solidLook(Object.assign({}, MIDNIGHT, cleanLook(who.look) || {}));
   const mineT = Object.fromEntries((d.me.mine || []).map((i) => [i, 1])), mineY = Object.fromEntries((d.pme.mine || []).map((i) => [i, 1]));
   const kit = slateKit({ rules: d.sett.rules, mine: mineT }), kitY = slateKit({ rules: d.sett.rules, mine: mineY }), P = painter(T, kit, tz);
   // the star next to a name: that team is one of yours (from the day's team list; the side is the one whose name matches)
@@ -340,10 +381,13 @@ export async function buildEmail(env, who, nowT) {
   }
   const pre = today.length ? today.slice(0, 3).map((g) => `${pair(g)} ${P.time(g.start)}`).join(" · ") : fav.concat(rest).slice(0, 3).map((g) => `${kit.short(g, "away")} ${d.scores[g.id].a}, ${kit.short(g, "home")} ${d.scores[g.id].h}`).join(" · ");
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="${T.dark ? "dark" : "light"} only"><meta name="supported-color-schemes" content="${T.dark ? "dark" : "light"}"><title>${esc(subject)}</title>
+<meta name="color-scheme" content="${T.dark ? "dark" : "light"} only"><meta name="supported-color-schemes" content="${T.dark ? "dark" : "light"} only">
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no"><meta name="x-apple-disable-message-reformatting"><title>${esc(subject)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;display=swap" rel="stylesheet">
-<style>:root{color-scheme:${T.dark ? "dark" : "light"} only}body{margin:0;padding:0;background:${T.bg}}a{color:${T.accent}}</style></head>
-<body style="margin:0;padding:0;background:${T.bg};-webkit-text-size-adjust:100%">
+<style>:root{color-scheme:${T.dark ? "dark" : "light"} only;supported-color-schemes:${T.dark ? "dark" : "light"} only}body{margin:0;padding:0;background:${T.bg}}a{color:${T.accent}}
+a[x-apple-data-detectors],u+#body a,#MessageViewBody a[href^="x-"]{color:inherit!important;text-decoration:none!important;font-size:inherit!important;font-family:inherit!important;font-weight:inherit!important;line-height:inherit!important}
+@media (prefers-color-scheme:dark){body,.slate-bg{background:${T.bg}!important}}</style></head>
+<body id="body" class="slate-bg" style="margin:0;padding:0;background:${T.bg};-webkit-text-size-adjust:100%">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${T.bg}">${esc(pre)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg}"><tr><td align="center" style="padding:16px 12px 32px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;font-family:${FONT};color:${T.ink}">
@@ -365,7 +409,7 @@ ${h}
   if (fav.length) { tx.push("YOUR TEAMS YESTERDAY"); for (const g of fav) { tx.push(res(g)); const r = ((d.recaps[g.id] || {}).recap || {}).text; if (r) tx.push(r); tx.push(""); } }
   if (rest.length) { tx.push("LAST NIGHT"); for (const g of rest) tx.push(res(g)); tx.push(""); }
   tx.push(`Open Slate: ${APP}`, "", "Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings > Morning email.");
-  return { date, subject, text: tx.join("\n"), html, games: today.length, results: fav.length + rest.length, pending };
+  return { date, subject, text: tx.join("\n"), html: emailize(html), games: today.length, results: fav.length + rest.length, pending };
 }
 
 // ---------- the minute job ----------

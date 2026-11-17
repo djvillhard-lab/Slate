@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.68.6 (Nov 17, 2026)
+TestFlight: 3.68.5 (44), no new build (web only)
+- Morning email: it keeps Slate's own colors in mail apps that use dark mode (Outlook turned the background a muddy gray and washed out the text and the bold), and game times and dates no longer show up as blue underlined links.
+
 ## 3.68.5 (Nov 17, 2026)
 TestFlight: 3.68.5 (44)
 - Live notifications for a single game show the slate card's tag after the header: "Slate • CBB  Upset watch", "Slate • NBA  Rivalry". It follows the card, so a tag like Close finish appears and goes away as the game changes. Needs build 44, and your phone shares the tags whenever Slate is open.

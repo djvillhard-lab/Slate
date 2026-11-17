@@ -33,3 +33,9 @@ Each person can get their own slate by email every morning (3.55.0). Asked by DJ
 
 ## Settings sub-page (3.61.0)
 The Morning email controls moved from the Settings main page to their own sub-page (Settings > Morning email, `data-pg="email"` in `body.html`; see `docs/pages/settings.md`). Ids and behavior are unchanged. `meDraw` also refreshes the row's on or off line on the main page.
+
+## 3.68.6: dark mode in mail apps, no time links
+- `emailize()` runs on the finished HTML: each inline color gets a class with `[data-ogsc]`/`[data-ogsb]` rules so Outlook's dark mode leaves the colors alone, tables and cells get `bgcolor`, and `font:` shorthands are spelled out (Outlook drops them and loses the weights).
+- Times and dates in the text get an invisible joiner (`&#8204;`) so iOS and Outlook don't turn them into links; plus the format-detection meta and `a[x-apple-data-detectors]` CSS. Plain-text part is unchanged.
+- Theme colors are turned into plain hex (rgba blended on the background) before drawing.
+- Decision: lock the email to the phone's own theme rather than let mail apps invert it. Gmail's app can still force its own dark mode; nothing in an email can fully stop that.
