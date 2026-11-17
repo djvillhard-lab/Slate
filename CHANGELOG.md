@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.74.0 (Nov 17, 2026)
+TestFlight: 3.67.0 (43), no new build (web only)
+- Top performers (quick look and matchup page) got the Live feed's look. Each player is a small card with their team's color down the left edge and their jersey with its number. Next to that are the name and team, then the full stat line, always on its own line under the name, so every player reads the same way. The standout number sits big on the right in the team's color (215 PASS YDS, 31 PTS), with a 🏈 TD tag under it for football players who scored.
+- Scoring now starts with the most recent score and works down to the game's first.
+
 ## 3.73.1 (Nov 17, 2026)
 TestFlight: 3.64.1 (42), no new build (web only)
 - Live feed: fixed the score banner getting stuck. It could freeze on an old clock, leave a gap above itself and sit on top of the field after you scrolled. The page had lost track of your finger lifting when the spot you were touching was redrawn mid-touch, so it kept waiting and never updated. It now always notices.

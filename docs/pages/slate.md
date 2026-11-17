@@ -1,5 +1,5 @@
 # Today's Slate
-Last updated: Nov 17, 2026, 3.72.0
+Last updated: Nov 17, 2026, 3.74.0
 
 ## Done
 - Game cards line up one score column for the whole slate (fitScores in 240-chrome.js sets --tmw on #lineup-body):
@@ -21,8 +21,13 @@ Last updated: Nov 17, 2026, 3.72.0
 - 3.72.0: football Scoring (quick look and matchup) is the live feed's own play box: fdPlayCard in 145-live-feed.js
   (pulled out of the feed loop), listed by fdScoringList from the summary the quick look already has. Oldest first.
   Checked team text colors: all 1,287 team colors (660 teams) reach 4.5:1 on Midnight and Sunday Paper after hlInk.
+- 3.74.0: Top performers (boxStars in 140-game.js, quick look and matchup) are cards: team edge (hlInk color),
+  the feed's jerseys (fdJersey football, hpJersey basketball, a numbered square otherwise; numbers from the
+  summary), name + team, stat line always under the name, a big standout number on the right, 🏈 TD tag under it.
+  Scoring lists newest first (scoringBlock reverses both the boxes and the plain list).
 
 ## Open
+- No position chip on Top performers: ESPN's game summary doesn't carry positions for these players.
 - Live feed's own colors don't use hlInk: 36 teams' edge colors (white/yellow, e.g. Nets, Columbus Crew) barely show
   on Sunday Paper (fdTint only guards dark backgrounds), and 17 jerseys' numbers are under 3:1 (e.g. Marlins).
 - Scoring boxes for other sports wait until DJ likes football's.

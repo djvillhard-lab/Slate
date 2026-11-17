@@ -146,7 +146,10 @@
           // football: one line per player, whatever he did (a QB who ran and threw: "81 pass yds · 66 rush yds, 1 rush TD")
           if (sport === "football") {
             var key = t.abbr + "|" + r.n, ex = all.filter(function (x) { return x.key === key; })[0];
-            if (!ex) { ex = { key: key, n: r.n, team: t.abbr, score: 0, bits: [], scored: false }; all.push(ex); }
+            if (!ex) { ex = { key: key, n: r.n, id: r.id, p: r.p, team: t.abbr, score: 0, bits: [], scored: false, td: 0, hero: null }; all.push(ex); }
+            ex.td += n("TD"); if (!ex.p && r.p) ex.p = r.p;
+            var hv = odd ? { v: n("TD"), l: "TD" } : { v: n("YDS"), l: gr.k === "passing" ? "PASS YDS" : gr.k === "rushing" ? "RUSH YDS" : gr.k === "receiving" ? "REC YDS" : (BX_GROUP[gr.k] || gr.k).toUpperCase() };
+            if (!ex.hero || hv.v > ex.hero.v) ex.hero = hv;
             var bit = gr.k === "passing" ? n("YDS") + " pass yds" + (n("TD") ? ", " + n("TD") + " pass TD" : "") + (n("INT") ? ", " + n("INT") + " INT" : "") + (v["C/ATT"] ? " (" + v["C/ATT"] + ")" : "")
               : gr.k === "rushing" ? n("YDS") + " rush yds" + (n("TD") ? ", " + n("TD") + " rush TD" : "")
               : gr.k === "receiving" ? n("REC") + " rec, " + n("YDS") + " yds" + (n("TD") ? ", " + n("TD") + " rec TD" : "")
@@ -155,7 +158,9 @@
             ex.score += score; ex.scored = ex.scored || (gr.k !== "passing" && n("TD") > 0); ex.line = ex.bits.join(" · ");
             return;
           }
-          all.push({ n: r.n, team: t.abbr, score: score, line: parts.join(" · "), scored: sport === "hockey" ? n("G") > 0 : false });
+          var hero = sport === "bball" ? { v: n("PTS"), l: "PTS" } : sport === "hockey" ? (v.SV != null && v.SV !== "" ? { v: n("SV"), l: "SAVES" } : { v: n("G") + n("A"), l: "PTS" })
+            : sport === "baseball" ? (v.AB != null && v.AB !== "" ? { v: n("H"), l: "HITS" } : { v: n("K"), l: "K" }) : (n("G") ? { v: n("G"), l: n("G") === 1 ? "GOAL" : "GOALS" } : { v: n("SH"), l: "SHOTS" });
+          all.push({ n: r.n, id: r.id, p: r.p, team: t.abbr, score: score, line: parts.join(" · "), hero: hero, scored: sport === "hockey" ? n("G") > 0 : false });
         });
       });
     });
@@ -163,8 +168,38 @@
     var wc = gvCard("Top performers", "gv-watch");
     // the top four, plus everyone else who scored (every touchdown and goal scorer gets a line)
     var show = all.slice(0, 4).concat(all.slice(4).filter(function (w) { return w.scored; })).slice(0, 10);
-    show.forEach(function (w) { var r = el("div", "pw"); r.appendChild(el("span", "pw-n", w.n)); r.appendChild(el("span", "pw-t", w.team)); r.appendChild(el("span", "pw-l", w.line)); wc.appendChild(r); });
+    show.forEach(function (w) { wc.appendChild(tpRow(g, sport, w, tpJerseys(g))); });
     return wc;
+  }
+  // ---- Top performers, in the live feed's look (DJ, 3.74.0: "bring this to life more") ----
+  // each player is a small card: the team's color down the left edge, their jersey with the number (football and
+  // basketball use the feed's own jerseys), the name, a position chip and team, the full stat line always on its own
+  // line under the name (so every row reads the same), and the standout number big on the right in the team's color
+  function tpJerseys(g) {
+    var cur = bx.live[g.id], sum = cur && cur.sum, out = {}; if (!sum) return out;
+    ((sum.boxscore || {}).players || []).forEach(function (t) { (t.statistics || []).forEach(function (gr) { (gr.athletes || []).forEach(function (r) { var a = r.athlete || {}; if (a.id && a.jersey) out[String(a.id)] = String(a.jersey); if (a.id && (a.position || {}).abbreviation) out["p" + a.id] = a.position.abbreviation; }); }); });
+    ((sum.rosters || [])).forEach(function (t) { (t.roster || []).forEach(function (p) { var a = p.athlete || {}; if (a.id && (p.jersey || a.jersey)) out[String(a.id)] = String(p.jersey || a.jersey); }); });
+    return out;
+  }
+  function tpSide(g, ab) { ab = String(ab || "").toUpperCase(); return ["away", "home"].filter(function (sd) { return String(abbr(g, sd) || "").toUpperCase() === ab || String(g[sd + "Abbr"] || "").toUpperCase() === ab; })[0] || ""; }
+  function tpRow(g, sport, w, jers) {
+    var sd = tpSide(g, w.team), r = el("div", "tp"), jer = (w.id && jers[w.id]) || "";
+    if (sd) { var tc = ""; try { tc = hlInk(pairColors(g)[sd]); } catch (e) {} if (tc) r.style.setProperty("--tp-team", tc); }
+    var P = { jer: jer };
+    var jj = null; try { jj = sd ? (sport === "football" ? fdJersey(g, sd, P) : sport === "bball" ? hpJersey(g, sd, P) : null) : null; } catch (e) {}
+    if (!jj) { jj = el("span", "tp-num", jer || "•"); var bc = sd ? badgeColor(g, sd) : ""; if (bc) { jj.style.background = bc; jj.style.color = hlContrast(bc, "#111111") >= hlContrast(bc, "#ffffff") ? "#111" : "#fff"; } }
+    r.appendChild(jj);
+    var m = el("div", "tp-m"), top = el("div", "tp-top");
+    var nm = String(w.n || ""), parts = nm.split(" "); top.appendChild(el("b", "tp-n", parts.length > 1 ? parts[0].charAt(0) + ". " + parts.slice(1).join(" ") : nm));
+    var pos = w.p || (w.id && jers["p" + w.id]) || ""; if (pos) top.appendChild(el("em", "fd-pos", pos));
+    top.appendChild(el("span", "tp-t", w.team));
+    var ln = el("div", "tp-l");
+    ln.appendChild(document.createTextNode(w.line));
+    m.appendChild(top); m.appendChild(ln); r.appendChild(m);
+    if (w.hero && w.hero.v) { var h = el("div", "tp-hero"); h.appendChild(el("b", null, String(w.hero.v))); h.appendChild(el("i", null, w.hero.l));
+      if (sport === "football" && w.td > 0) h.appendChild(el("span", "tp-td", "🏈 " + (w.td > 1 ? w.td + " TD" : "TD")));
+      r.appendChild(h); }
+    return r;
   }
   // part: "recap" (after the final: the recap and top performers), "pre" (the pregame preview only), or nothing (all of it)
   function previewSections(g, pv, body, part, noCl) {

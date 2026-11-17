@@ -98,8 +98,9 @@
     var w = el("div", "scs"); w.appendChild(el("p", "scs-h", "Scoring"));
     // 3.72.0 (DJ): football shows each scoring play as the live feed's box (team edge, goalposts or emoji, jerseys, stat lines, score)
     var fl = null; try { fl = fdScoringList(g, cur.sum); } catch (e) {}
-    if (fl) { w.appendChild(fl); return w; }
-    sc.forEach(function (p) {
+    // 3.74.0 (DJ): newest score first, down to the game's first
+    if (fl) { for (var ci = fl.children.length - 1; ci > 0; ci--) fl.appendChild(fl.children[ci - 1]); w.appendChild(fl); return w; }
+    sc.slice().reverse().forEach(function (p) {
       var r = el("div", "scs-r");
       r.appendChild(el("span", "scs-t", p.q + (p.ck ? " " + p.ck : "")));
       var m = el("div", "scs-m"), top = el("div", "scs-top"); top.appendChild(el("b", null, p.tm)); top.appendChild(el("span", "scs-k", p.kind)); top.appendChild(el("span", "scs-s", p.sc));
