@@ -66,15 +66,30 @@
   // 3.89.1 (DJ: "keep the original one-liners. If something is newsworthy… include it as another line beneath the one-liner and
   // make it obvious that it's extra and news"): the stats line always stays; a newsworthy note gets its own line under it,
   // with a 📰 News tag. Newsworthy = a story tag (Last game, Coaching, Injury…) or story words; plain "Slump"/"Rebounding" notes don't show
+  // 3.89.3 (DJ: "I don't like the news USA line going to two lines"): one line on every screen. The note is tightened by rule
+  // (no "USA:" prefix, filler words out, "before he starts at Manchester United" -> "before joining Man United"); if it still
+  // doesn't fit, it's cut at a clause ("Pochettino's final match in charge"); an ellipsis only as the last resort
+  var PVN_CLUB = [[/\bManchester United\b/g, "Man United"], [/\bManchester City\b/g, "Man City"], [/\bTottenham Hotspur\b/g, "Tottenham"], [/\bUnited States\b/g, "USA"], [/\bhead coach\b/gi, "coach"]];
+  function pvnShorts(t) {
+    var a = String(t || "");
+    PVN_CLUB.forEach(function (r) { a = a.replace(r[0], r[1]); });
+    a = a.replace(/\b(officially|reportedly|currently|still|now|already|actually) /gi, "")
+      .replace(/\bbefore (he|she|they) (starts?|begins?|takes over) (at|with) /i, "before joining ")
+      .replace(/\b(after|before) (he|she|they) (joins?|moves? to) /i, "$1 joining ")
+      .replace(/ (on |this |next )?(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i, "")
+      .replace(/\s+/g, " ").trim();
+    var out = [a], m = /^(.{18,}?)(,| -| before | after | as | while | with | since | when | following | ahead of | because )/.exec(a);
+    if (m && m[1].length < a.length) out.push(m[1].replace(/[,;:\s]+$/, ""));
+    return out;
+  }
   function pvNewsNode(g) {
     var n = null; try { n = pvNote(g); } catch (e) {}
     if (!n || n.sc < 60) return null;
     var st = (PV[g.id] || {}).text || ""; if (st && (st.indexOf(n.text) >= 0 || n.text.indexOf(st) >= 0)) return null;
-    var p = el("p", "hl hl-news"), tg = el("span", "hl-news-tag", "📰 News");
-    p.appendChild(tg);
-    var tm = n.side ? String(abbr(g, n.side) || "").toUpperCase() : "";
-    if (tm && !new RegExp("(^|[^A-Za-z])(" + [g[n.side], short(g, n.side), tm].filter(Boolean).map(function (w) { return String(w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")([^A-Za-z]|$)").test(n.text)) p.appendChild(el("b", "hl-tm", tm + ": "));
-    p.appendChild(document.createTextNode(n.text));
+    var p = el("p", "hl hl-news"), tg = el("span", "hl-news-tag", "📰 News"), tx = el("span", "hl-news-t"), alts = pvnShorts(n.text);
+    p.appendChild(tg); p.appendChild(tx); tx.textContent = alts[0]; p.title = n.text;
     if (n.side) p.dataset.side = n.side;
+    // once it's on screen: the longest version that fits on the one line
+    requestAnimationFrame(function () { for (var i = 1; i < alts.length && p.isConnected && p.scrollWidth > p.clientWidth + 1; i++) tx.textContent = alts[i]; });
     return p;
   }

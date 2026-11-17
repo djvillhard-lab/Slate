@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Today's Slate: news line stays on one line | src/app/105-pv-notes.js, src/styles/050-ux-review.css (hl-news only), docs/pages/slate.md | 2026-11-17 17:05 |
