@@ -38,7 +38,7 @@
     ["a", "b"].forEach(function (id) {
       var f = document.createElement("iframe"); f.className = "pn-frame"; f.id = "pn-" + id;
       f.src = location.pathname + "?pane=" + id + "#go=" + encodeURIComponent(PN.routes[id] || "lineup");
-      f.addEventListener("load", function () { pnMark(); setTimeout(pnMark, 500); });
+      f.addEventListener("load", function () { pnMark(); setTimeout(pnMark, 500); setTimeout(pnAlign, 600); });
       PN.frames[id] = f; box.appendChild(f);
     });
     var hinge = el("div", "pn-hinge");
@@ -176,13 +176,24 @@
     if (!PN.on) return;
     var w = pnWin(id);
     if (w && w.SlateApp.paneRoute) { var r = w.SlateApp.paneRoute(); if (r !== PN.routes[id]) { PN.routes[id] = r; pnSave(); } }
-    pnMark();
+    pnMark(); pnAlign(); setTimeout(pnAlign, 400);
     if ((id === pnRight() || (PN.lock && id === PN.touched)) && typeof nativeSync === "function") nativeSync();
   };
   // the left side opened a game, Live feed or team from its list: it opens on the right side instead
   window.slatePaneOpen = function (route) {
     var w = PN.on ? pnWin(pnRight()) : null; if (w && w.SlateApp.paneGo) w.SlateApp.paneGo(route);
   };
+  // DJ (Nov 17): the two sides' headers line up exactly, whatever page each shows. Each side reports where its page
+  // name sits and how tall its header is on its own; both then take the same top space and the same header height,
+  // measured on the phone itself (fonts and text size differ from any fixed number).
+  function pnAlign() {
+    if (!PN.on) return;
+    var ws = ["a", "b"].map(pnWin), hs = ws.map(function (w) { try { return w && w.SlateApp.paneHead ? w.SlateApp.paneHead() : null; } catch (e) { return null; } });
+    if (!hs[0] || !hs[1]) { ws.forEach(function (w, i) { if (w && hs[i]) w.SlateApp.paneHeadSet(0, 0); }); return; }
+    var tt = Math.max(hs[0].tt, hs[1].tt), H = Math.max(hs[0].h + tt - hs[0].tt, hs[1].h + tt - hs[1].tt);
+    ws.forEach(function (w, i) { w.SlateApp.paneHeadSet(H, tt - hs[i].tt); });
+  }
+  setInterval(pnAlign, 1500);
   window.slatePaneNudge = function (n) { state.foldNudge = Number(n) || 0; applyLayout(true); };
   // one side saved its settings: the other side and this copy take the same values
   window.slatePaneSaved = function (id, json) {
@@ -244,6 +255,19 @@
     window.SlateApp.paneState = function () {
       return JSON.stringify({ t: "state", view: state.view, date: state.date, today: todayInHome(), look: document.documentElement.getAttribute("data-look") || "dark", menuOpen: !!state.menuOpen, device: deviceMode(), back: backKind() });
     };
+    // the header's own size, with the shared spacing taken off (see pnAlign in the host)
+    window.SlateApp.paneHead = function () {
+      var t = $("toprow-r"), rs = document.documentElement.style; if (!t) return null;
+      var h0 = rs.getPropertyValue("--pn-head"), p0 = rs.getPropertyValue("--pn-tpad");
+      rs.setProperty("--pn-head", "0px"); rs.setProperty("--pn-tpad", "0px");
+      var r = t.getBoundingClientRect(), T = t.querySelector(".title .t"), out = null;
+      // sizes come back zoomed by the text size (--z on the header); the CSS values are set before that zoom
+      var z = 1; try { var zz = t.closest("[style*=zoom]") ? 1 : parseFloat(getComputedStyle(t.closest("header") || t).zoom); if (zz > 0) z = zz; } catch (e) {}
+      if (r.height > 0) out = { h: r.height / z, tt: (T ? T.getBoundingClientRect().top - r.top : 0) / z };
+      rs.setProperty("--pn-head", h0 || "0px"); rs.setProperty("--pn-tpad", p0 || "0px");
+      return out;
+    };
+    window.SlateApp.paneHeadSet = function (h, pad) { var rs = document.documentElement.style; rs.setProperty("--pn-head", (h || 0) + "px"); rs.setProperty("--pn-tpad", (pad || 0) + "px"); };
     window.SlateApp.paneMenu = function (on) { if (!!state.menuOpen === !!on) return; state.menuOpen = !!on; renderTop(); };
     window.SlateApp.paneSettings = function (json) {
       var d; try { d = JSON.parse(json); } catch (e) { return; }

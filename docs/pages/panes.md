@@ -36,8 +36,10 @@ right, so I can have two live feeds at once."
 - `?panes=off` in the URL gives the old fixed layout (slate left, pages right), which still runs before sign-in.
 - `scripts/shots.py --sizes open` now goes into the right pane (`--pane left` for the left one).
 
-- Headers (3.81.9, DJ): inside a pane `#toprow-r` is at least 70px (the slate's, the tallest), top-aligned, and the
-  second line (`.d-sub`) sits at the slate's date height, so the dividers and names line up across the two sides. One-line headers move up 3px (3.81.10).
+- Headers (3.81.9-3.81.12, DJ): fixed numbers didn't match on the phone, so `pnAlign` (host, every 1.5 s and on page
+  changes) asks each pane for its header's natural height and the page name's offset (`SlateApp.paneHead`, divided by
+  the header's text-size zoom), then sets the same `--pn-head` (min-height) on both and `--pn-tpad` (extra top padding)
+  on the one whose name sits higher (`paneHeadSet`). The dividers and page names then match.
 
 ## Open
 - A pane is about 365 points wide, a little narrower than the folded cover screen (about 382). The Live feed's score

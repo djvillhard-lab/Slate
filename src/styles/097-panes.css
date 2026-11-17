@@ -27,9 +27,7 @@ html.panes, html.panes body, .pn, .pn-hinge, .pn-grip, .pn-grip * { -webkit-user
 /* 3.81.8: nothing on the fold can pan, zoom or bounce the screen behind the two sides */
 html.panes, html.panes body { overflow: hidden; overscroll-behavior: none; touch-action: none; position: fixed; inset: 0; width: 100%; }
 .pn { touch-action: none; overflow: hidden; overscroll-behavior: none; }
-/* 3.81.9 (DJ): the two sides' headers line up whatever page each shows: the same height (the slate's, the tallest),
-   the second line (date or day) at the slate's date height, and a one-line header's title at the top like the others */
-html.in-pane #toprow-r { min-height: 70px; box-sizing: border-box; }
+/* 3.81.9-3.81.12 (DJ): the two sides' headers line up exactly. Both panes measure their own header and take the same
+   height (--pn-head) and the same top space above the page name (--pn-tpad), set by pnAlign in 288-panes.js */
+html.in-pane #toprow-r { min-height: var(--pn-head, 0px); box-sizing: border-box; align-items: flex-start !important; padding-top: calc(8px + var(--pn-tpad, 0px)) !important; }
 html.in-pane .title.has-brand > .d-sub { margin-top: 4px !important; }
-html.in-pane #toprow-r { align-items: flex-start !important; }
-html.in-pane .title.has-brand.one-line > .t, html.in-pane .title.has-brand.one-line > svg.brand { position: relative; top: -3px; }
