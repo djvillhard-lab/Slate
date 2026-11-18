@@ -658,7 +658,7 @@
     if (res) { var r1 = el("div", "mm-r1"); if (wl) r1.appendChild(el("b", "rk-wl " + wl.toLowerCase(), wl)); r1.appendChild(el("span", "rk-sc", wl ? res.slice(2) : res)); gm.appendChild(r1); }
     if (opp) gm.appendChild(el("div", "mm-r2", (home ? "vs " : "@ ") + opp));
     c.appendChild(gm);
-    plrTap(c, { id: r.id, lg: lg, name: r.name });   // 3.105.0: the card opens the player's page
+    plrTap(jj, { id: r.id, lg: lg, name: r.name });   // 3.112.2 (DJ): only the player's picture opens his page; the rest of the card keeps its own tap
     return c;
   }
   function mmPerson(r, kind, i) {

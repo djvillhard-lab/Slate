@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.112.2 (Nov 18, 2026)
+TestFlight: 3.112.0, no new build (web only)
+- Player pages open only from the player's picture now, everywhere: the headshot on a Box Office card, the face in a box score, and the jersey in Top performers. Tapping anywhere else does what it did before, so a Box Office card opens its game without the player page coming up too.
+- Back closes an open player page first, instead of moving the page behind it. That goes for the floating Back button, the app's side strip and the back swipe.
+
 ## 3.112.1 (Nov 18, 2026)
 TestFlight: 3.112.0 (48), no new build (web only)
 - Box Office: last night's top performers include the night games again. Nov 17's list was written at 3:23 PM, when only 4 college games had finished, and was marked done because the games that hadn't started yet weren't counted. So Stojakovic's 46 against Duke, and every other night game, never made it in. A day is now only marked done once every game on it has started and finished, and yesterday's list gets one more check the next day in case it was closed too early. Nov 17's list fills in on the next 10-minute update, with Stojakovic first.

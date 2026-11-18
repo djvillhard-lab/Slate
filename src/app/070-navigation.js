@@ -40,6 +40,7 @@
   // All games or On TV): Back returns there, where you were. The menu's own pages go back to the home page.
   var MENU_PAGES = ["lineup", "games", "tv", "teams", "moments", "news", "settings"];
   function goBack() {
+    if (typeof plrBack === "function" && plrBack()) return true;  // 3.112.2: an open player page closes first
     if (state.view === "news" && typeof nwCloseDeep === "function" && nwCloseDeep()) return true;  // a News breakdown: back to the News page
     if (typeof setPageBack === "function" && setPageBack()) return true;  // a Settings sub-page: back to the Settings main page
     var bk = state.backTo, cur = state.view, h0 = homeView();

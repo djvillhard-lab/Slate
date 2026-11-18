@@ -18,3 +18,11 @@ Code: `src/app/134-player.js` (its styles are in the same file, `PLR_CSS`, so no
 - Checked on folded Duo and iPhone by opening the sheet directly (NBA, NFL). The unfolded Duo wasn't seen with the
   sheet open, and the taps themselves weren't seen (no games had started; `shots.py game:` finds 0 games).
 - Soccer and college players use the same ESPN pages but weren't looked at.
+
+## 3.112.2 (DJ, Nov 18)
+- DJ: "Only show player page when selecting the player's profile picture - apply that everywhere in the app." `plrTap` now goes
+  on the picture only: `jj` (`playerFace`) on Box Office cards, `fw` (the face) in box score rows, `jj` (the jersey) in Top
+  performers rows. A tap anywhere else keeps the row's own behavior (a Box Office card opens its game). Don't put `plrTap` on a
+  whole row or a name again.
+- DJ: Back was moving the page behind the sheet. `goBack` (070-navigation.js) asks `plrBack()` first, which closes an open sheet.
+  Checked on Box Office (iPhone, folded Duo): body tap = no sheet, picture tap = sheet, Back = sheet closed, page unchanged.
