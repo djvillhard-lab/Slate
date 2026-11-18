@@ -69,6 +69,9 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
   - Action: **Archive - iOS**, distribution **TestFlight and App Store**.
   - Post-actions: **TestFlight Internal Testing** (group: you) and **TestFlight External Testing** (group: Friends).
   - Save, then **Start Build** once by hand. Builds take ~10–20 minutes and are free (25 hours a month included).
+  - If a push to main that changed `ios/` never shows up in TestFlight, look in App Store Connect > Slate >
+    Xcode Cloud > Builds for a failed build, and at Xcode Cloud > Usage for the 25 hours (Nov 18, 2026: 3.92.0
+    never arrived). Changing any file in `ios/` on main, like this one, starts a new build.
 - App Store Connect (appstoreconnect.apple.com) > Apps > Slate > TestFlight:
   - **Internal Testing:** add yourself. Your builds show up right away.
   - **External Testing:** make a group called Friends, add Drew by email (or turn on a Public Link and text it
