@@ -1070,7 +1070,11 @@ def main():
 
     # ---- 6. player rankings
     days = []
-    if not (docs.get(f"standouts/{YEST}") or {}).get("final"): days.append(YEST)
+    # 3.100.8: a "final" written during that same day (Central time) can be missing the night games (Nov 17: written at
+    # 3:23 PM with 4 games), so yesterday gets one more run the next day, which then stamps it with the next day's date
+    sy = docs.get(f"standouts/{YEST}") or {}
+    sy_at = parse(sy.get("updatedAt"))
+    if not sy.get("final") or not sy_at or sy_at.astimezone(CT).date().isoformat() <= YEST: days.append(YEST)
     for d in sorted({TODAY, D}):
         if d == YEST: continue
         started = any((sc.get(g["id"]) or {}).get("state") in ("in", "post") for g in games if g["league"] in ("nba", "wnba", "ncaam", "ncaaw", "nhl", "nfl", "ncaaf", "mlb")) if d == D else False

@@ -36,3 +36,6 @@ Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMomen
 - `renderMoments()` is now a gate: it waits while a finger is down or within 0.4 s of lifting (`agBusy`, unless the redraw comes from a tap), builds the page off screen with `mmDraw(nb)`, and skips the swap when the HTML is identical to the last one drawn. Before, score ticks and late data rebuilt #mm-body every few seconds, swapping cards out mid-tap (DJ: lost taps, an 11.8 s freeze). Checked: 0 rebuilds in 40 s on a live night, taps still open a card at once.
 - Note the name: `mmBuild(day, lg)` is the "Build this night's Box Office" request, not the page builder.
 
+## Night games missing from last night (3.112.1)
+- standouts.py dropped games that hadn't started (`events()` kept only in/post), so `pending` was never set and an afternoon run marked the day `final`; tick.py then never re-ran it. Nov 17 was frozen at 4 college games, missing Stojakovic's 46. Now `pre` games set `pending`, and tick.py re-runs yesterday once more if its `final` doc was written on that same Central-time day.
+

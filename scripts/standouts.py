@@ -36,7 +36,9 @@ def events(path, extra, day):
     for dd in (d, d + datetime.timedelta(days=1)):
         for e in get(f"https://site.api.espn.com/apis/site/v2/sports/{path}/scoreboard?dates={dd:%Y%m%d}{extra}").get("events", []):
             start = datetime.datetime.fromisoformat(e["date"].replace("Z", "+00:00")).astimezone(CT).date().isoformat()
-            if start == day and e["status"]["type"].get("state") in ("post", "in"): out[e["id"]] = e
+            # 3.100.8: keep games that haven't started too, so run() can see them and hold off on "final". Before, they were
+            # dropped here, so an afternoon run marked the day final and that night's games never made the list (Nov 17)
+            if start == day and e["status"]["type"].get("state") in ("post", "in", "pre"): out[e["id"]] = e
     return list(out.values())
 
 def bball(g):
@@ -185,6 +187,8 @@ def run(day):
         evs = {lg: ex.submit(events, p, x, day) for lg, (p, x, k) in LEAGUES.items()}
         evs = {lg: f.result() for lg, f in evs.items()}
         for lg, lst in evs.items():
+            if any(e["status"]["type"].get("state") == "pre" for e in lst): out.setdefault("pending", {})[lg] = 1
+            lst = [e for e in lst if e["status"]["type"].get("state") in ("post", "in")]
             if not lst: continue
             p, x, k = LEAGUES[lg]
             rows = [r for f in [ex.submit(game_rows, lg, p, k, e) for e in lst] for r in f.result()]
@@ -196,7 +200,6 @@ def run(day):
             out["events"][lg] = [e["id"] for e in lst if e["status"]["type"].get("state") == "post"]
             n_live = sum(1 for e in lst if e["status"]["type"].get("state") == "in")
             if n_live: out["live"][lg] = n_live
-            if any(e["status"]["type"].get("state") == "pre" for e in lst): out.setdefault("pending", {})[lg] = 1
     # final only once every game of the day is over: a run early in the morning (nothing live yet) used to mark the
     # day final with just the overnight games, so that night's top performers never showed up
     out["final"] = not out["live"] and not out.get("pending")

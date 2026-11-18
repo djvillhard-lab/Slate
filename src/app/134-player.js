@@ -1,6 +1,6 @@
   // ---- Player page (3.105.0): a sheet with one player's season, last games, next game and headlines. ----
   // Everything comes from ESPN's free athlete pages (the athlete and its overview); nothing is worked out here.
-  // Opened by tapping a player on a Box Office card, a box score row or a Top performers row (plrTap).
+  // Opened by tapping a player's picture on a Box Office card, a box score row or a Top performers row (plrTap). DJ, 3.112.2: the picture only.
   var PLR = { cache: {}, cur: null };
   var PLR_CSS =
     ".plr-sheet { gap: 14px; }" +
@@ -57,6 +57,8 @@
     document.body.appendChild(bd); return bd;
   }
   function plrClose() { var bd = document.getElementById("sheet-plr"); if (bd) bd.classList.remove("open"); PLR.cur = null; }
+  // Back (the floating button, the app's strip, a swipe) closes an open player page before anything else: goBack asks here first
+  function plrBack() { var bd = document.getElementById("sheet-plr"); if (!bd || !bd.classList.contains("open")) return false; plrClose(); return true; }
   // p: { id (ESPN athlete id), lg (Slate league key), name }
   function openPlayer(p) {
     if (!p || !p.id || !bxBase(p.lg)) return;

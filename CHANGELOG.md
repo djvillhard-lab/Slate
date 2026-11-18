@@ -13,6 +13,15 @@ TestFlight: 3.113.0, new build
 - The large widget uses its whole height: the four rows of games stretch to fill it, with no empty space underneath. It always shows the next 8 games on your slate.
 - Finished games stay 30 minutes after the final, on the widget (every size, with "Final" and the score) and on every live notification: the game card, the Board, and the Dynamic Island. Was 20 minutes.
 
+## 3.112.2 (Nov 18, 2026)
+TestFlight: 3.112.0, no new build (web only)
+- Player pages open only from the player's picture now, everywhere: the headshot on a Box Office card, the face in a box score, and the jersey in Top performers. Tapping anywhere else does what it did before, so a Box Office card opens its game without the player page coming up too.
+- Back closes an open player page first, instead of moving the page behind it. That goes for the floating Back button, the app's side strip and the back swipe.
+
+## 3.112.1 (Nov 18, 2026)
+TestFlight: 3.112.0 (48), no new build (web only)
+- Box Office: last night's top performers include the night games again. Nov 17's list was written at 3:23 PM, when only 4 college games had finished, and was marked done because the games that hadn't started yet weren't counted. So Stojakovic's 46 against Duke, and every other night game, never made it in. A day is now only marked done once every game on it has started and finished, and yesterday's list gets one more check the next day in case it was closed too early. Nov 17's list fills in on the next 10-minute update, with Stojakovic first.
+
 ## 3.112.0 (Nov 18, 2026)
 TestFlight: 3.112.0, new build
 - New home-screen widget, "Tonight's slate" (small and medium): the next three games on today's slate that haven't finished, with the start time and channel, or a red Live tag and the score once a game is on. It fills in from the last time Slate was open and moves along by itself as the evening goes (a score more than 20 minutes old just says Live). On the medium one, tap a game for its matchup.
