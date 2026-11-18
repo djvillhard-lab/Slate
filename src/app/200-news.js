@@ -449,11 +449,12 @@
     gl.appendChild(el("b", null, "Generated " + (today ? "today" : fmtDate(state.date, { weekday: "short", month: "short", day: "numeric" })) + " at " + timeText(doc.at)));
     gl.appendChild(el("span", null, [nwAgo(doc.at), parts.join(", ")].filter(Boolean).join(" · "))); gen.appendChild(gl);
     if (busy) { var sp = el("span", "nx-busy sm"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Writing a new one…")); sp.appendChild(nwElapsed(doc, "n:" + nwPagePath())); gen.appendChild(sp); }
-    else { var rg = el("button", "nx-regen"); rg.type = "button"; rg.appendChild(el("span", null, "Regenerate")); rg.addEventListener("click", function () { nw.opts = true; renderNews(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }); gen.appendChild(rg); }
+    else if (today) { var rg = el("button", "nx-regen"); rg.type = "button"; rg.appendChild(el("span", null, "Regenerate")); rg.addEventListener("click", function () { nw.opts = true; renderNews(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }); gen.appendChild(rg); }
     body.appendChild(gen);
     if (err) body.appendChild(el("p", "pv-none cl-err", nwErr(err, errAt)));
     // Top news: open until collapsed, then stays collapsed until opened again
     var top = doc.top || [];
+    if (today) nwxLgs().forEach(function (k) { if (!nw.feeds[k]) nwFeed(k).then(nwRedraw, function () {}); });  // headlines to link top stories to
     if (top.length) {
       var shut = false; try { shut = localStorage.getItem("slate-newstop") === "0"; } catch (e) {}
       var th = el("button", "nx-toph"); th.type = "button"; th.setAttribute("aria-expanded", shut ? "false" : "true");
@@ -479,7 +480,9 @@
         // swapped (3.90.3, DJ): the story's tag (Injury, Coaching...) beside the team name, why it's here (Breaking, My team...) top right
         var b = nwBox(t, x.team, [why, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain", x.tag ? nwPill(x.tag) : null);
         var hl = el("div", "nx-th2"); hl.appendChild(el("i", "nx-rank", String(i + 1))); hl.appendChild(el("b", null, x.title)); b.appendChild(hl);
-        if (x.why) b.appendChild(el("p", "nx-bx", x.why)); tw.appendChild(b);
+        if (x.why) b.appendChild(el("p", "nx-bx", x.why));
+        var xl = nwxLink(x, lg); if (xl) b.appendChild(xl);  // the matching ESPN or Athletic article, when one is loaded (3.104.0)
+        tw.appendChild(b);
       });
       if (top.length > 5) {
         var mb = el("button", "nx-more"); mb.type = "button"; mb.setAttribute("aria-expanded", more ? "true" : "false");
@@ -728,7 +731,9 @@
     }
     // News is always today's (3.82.2, DJ): the app keeps the day it was on, so after a night left open, News (and
     // Regenerate's game picker) still had last night's slate. Opening News on an earlier day moves the app to today.
-    var today0 = todayInHome(); if (state.date < today0 && !nw.toToday) { nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
+    // an earlier day picked under "Earlier" stays put (3.104.0)
+    var today0 = todayInHome(); if (state.date === today0 || state.view !== "news") nwx.past = null;
+    if (state.date < today0 && !nw.toToday && nwx.past !== state.date) { nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
     var tb = $("nw-tabs"); tb.textContent = ""; tb.hidden = true;
     var body = $("nw-body"); body.textContent = ""; body.className = "nx";
     if (!db) { body.appendChild(el("p", "pv-none", "News needs the app's saved data, which isn't available here.")); return; }
@@ -742,11 +747,19 @@
     var has = !!(doc && doc.at && ((doc.top || []).length || (doc.games || []).length || (doc.teams || []).length || (doc.leagues || []).length)), w = clWriting(doc, "n:" + path), busy = !!(w && w.busy), err = w && w.error;
     if (has && doc.took) try { localStorage.setItem("slate-newstook", String(doc.took)); } catch (e) {}
     if (has) doc.regen = !!(doc.top || []).some(function (x) { return x.new === false; });
+    if (state.date !== todayInHome()) nwxBackRow(body);
     if (!has && state.date !== todayInHome() && !busy) { body.appendChild(el("p", "pv-none", "No news was generated for " + fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + ". Go back to today to generate a page.")); return; }
     // a failed try is shown with its time, only for half an hour, and goes away once the picks change (3.47.2: an old
     // failure used to sit above the options for the rest of the day and read like a new one)
     var wat = doc && doc.writing && doc.writing.at, errAt = wat ? Date.parse(wat) : 0;
     if (err && !CL_ASK["n:" + path] && (!errAt || Date.now() - errAt > 30 * 60000 || nw.errSeen === wat)) err = null;
-    if (!has || nw.opts) { if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err, wat))); nwRenderOpts(body, has ? doc : null, busy, doc); return; }
+    var isToday = state.date === todayInHome();
+    if (!has || nw.opts) {
+      if (!has && !busy && isToday) nwxHeads(body);  // something to read before any page is written (3.104.0)
+      if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err, wat))); nwRenderOpts(body, has ? doc : null, busy, doc);
+      if (!busy && isToday) nwxDays(body);
+      return;
+    }
     nwRenderPage(body, doc, busy, err, wat);
+    if (!busy && isToday) nwxDays(body);
   }

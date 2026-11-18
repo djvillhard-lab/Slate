@@ -137,3 +137,16 @@ because its learned schedule had lost Monday. Learned days are now only added be
 off-schedule newsletters are still looked for every two hours (`offAt`). To check: compare
 `/api/athletic?slug=nfl` (or news, nba, mlb) with the `news/newsletters` doc.
 
+
+## 3.104.0 (Nov 18): headlines before generating, earlier days, story links
+Code: `src/app/202-news-extras.js` (`nwx`, `nwxHeads`, `nwxDays`, `nwxBackRow`, `nwxLink`), hooked from `200-news.js`.
+- Press Box with no page yet today opens with "Headlines right now": 6 rows from the free ESPN and Athletic feeds
+  (`nwRead`), for the person's leagues (`nwxLgs`). No Claude call, so it costs nothing. The options sit below it.
+- "Earlier" at the bottom lists the last six days that have a saved page (`mine/news-<date>`). Tapping one sets
+  `nwx.past` and the date; News normally forces today, and skips that only while `nwx.past === state.date`.
+  A past day shows "Back to today's news" and no Regenerate.
+- Top stories get "Read it on ESPN ›" when a feed headline matches (word overlap: 3+ shared words and half the
+  shorter title). Matched in the app because `worker/index.js` was claimed; asking Claude for the url in the worker
+  prompt would be more exact.
+- Open: "Earlier", the past-day view and story links were not seen on screen, since the test account has no saved
+  pages. Check on a profile that generates news.
