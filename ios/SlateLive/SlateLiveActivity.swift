@@ -321,15 +321,11 @@ private struct LockCard: View {
                     } else {
                         ClockTag(text: SlateLook.clock(s), live: live)
                     }
-                    // 3.113.0 (DJ): the Slate axe-hammer in place of "Slate •" before the league
-                    HStack(spacing: 4) {
-                        SlateMark(size: 13)
-                        Text(!down.isEmpty ? down : pre && !(s.line ?? "").isEmpty ? (s.line ?? "") : SlateLook.leagueOnly(a.league))
-                            .font(SlateLook.semi(12))
-                            .foregroundStyle(!down.isEmpty ? SlateLook.ink : SlateLook.muted)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                    }
+                    Text(!down.isEmpty ? down : pre && !(s.line ?? "").isEmpty ? (s.line ?? "") : SlateLook.leagueOnly(a.league))
+                        .font(SlateLook.semi(12))
+                        .foregroundStyle(!down.isEmpty ? SlateLook.ink : SlateLook.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                     if let tag = s.tag, !tag.isEmpty, s.state != "post" {
                         Text(tag)
                             .font(SlateLook.semi(12))
@@ -339,7 +335,7 @@ private struct LockCard: View {
                     }
                 }
                 .frame(width: 104)
-                .padding(.top, 4)
+                .padding(.top, 9)
                 PillSide(name: a.home, abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, rank: a.homeRank, logo: a.homeLogo,
                          score: pre ? nil : s.h, ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), trail: live && s.h < s.a, left: false)
             }
@@ -403,6 +399,8 @@ private struct LockCard: View {
                 }
         }
         .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
+        // 3.113.0 (DJ): the Slate axe-hammer pinned to one spot, top center over the clock, on every card
+        .overlay(alignment: .top) { SlateMark(size: 11).padding(.top, 4) }
         .foregroundStyle(SlateLook.ink)
     }
 }
