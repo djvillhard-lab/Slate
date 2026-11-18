@@ -24,6 +24,8 @@ Last updated: Nov 16, 2026, 3.56.0
   the daily report thread checks `--open` too. DJ's Project status page shows Open / Addressed and has a manual
   switch on each item (tap the item, then "Mark addressed" or "Open it again").
 
+- 3.100.0: the worker sends DJ a push (his own `prefs/push` list, Apple and web push) as soon as an item is saved (`tellDJ` in `worker/feedback.js`). The test account's sends are never stored, so they never push. An hourly check in DJ's Claude project ("New Slate feedback alert") also posts new items in the feedback thread.
+
 ## Open
 - No in-app inbox for DJ yet (the report lives in the Claude project, as DJ asked).
 - New people from the sign-up flow can send as soon as they have a passcode.

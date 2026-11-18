@@ -42,6 +42,19 @@ async function rows(env, prefix, extra) {
 }
 
 import { TEST_IDS } from "./usage.js";
+import { sendPush, sendApns } from "./alerts.js";
+// 3.x (DJ, Nov 17): a push to DJ's phones the moment feedback arrives, from his own notification list (prefs/push).
+// Only DJ's devices: other people's lists live under u/<id>/ and are never read here.
+const KIND_WORD = { bug: "Problem", idea: "Idea", other: "Feedback" };
+async function tellDJ(env, item) {
+  try {
+    const row = (await rows(env, "prefs/push")).find((x) => x.path === "prefs/push");
+    const subs = (row && row.data && row.data.subs) || [];
+    const t = item.text.replace(/\s+/g, " "), body = (t.length > 140 ? t.slice(0, 137) + "…" : t);
+    const msg = { title: "New feedback from " + item.name + " · " + (KIND_WORD[item.kind] || "Feedback"), body, tag: "feedback-" + item.id, thread: "feedback" };
+    await Promise.all(subs.map((sub) => (sub.apns ? sendApns : sendPush)(env, sub, msg).catch(() => 0)));
+  } catch (e) { /* the hourly check in DJ's Claude project still reports it */ }
+}
 export async function feedbackRoute(req, env, url, h) {
   const { rpc, whoIs, json } = h;
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
@@ -68,7 +81,9 @@ export async function feedbackRoute(req, env, url, h) {
     };
     if (shot) { const r = await put("feedback/s/" + id, { enc: await seal(env, { shot }) }); if (!r.ok) item.shot = false; }
     const r = await put("feedback/i/" + id, { at, reported: null, enc: await seal(env, item) });
-    return r.ok ? json({ ok: true, id }) : json({ error: "Couldn't save it. Try again." }, 502);
+    if (!r.ok) return json({ error: "Couldn't save it. Try again." }, 502);
+    await tellDJ(env, item);
+    return json({ ok: true, id });
   }
 
   // reading: the reader key or DJ's passcode
