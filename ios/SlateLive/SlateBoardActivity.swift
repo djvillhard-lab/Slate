@@ -30,7 +30,7 @@ struct SlateBoardActivity: Widget {
                         .padding(.trailing, 6)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    BoardGrid(games: Array(s.games.prefix(4)), dark: true, gap: 5)
+                    BoardGrid(games: Array(s.games.prefix(4)), dark: true, gap: 6)
                         .padding(.horizontal, 2)
                 }
             } compactLeading: {
@@ -99,7 +99,7 @@ private struct BoardCard: View {
     let s: SlateBoardAttributes.ContentState
 
     var body: some View {
-        BoardGrid(games: Array(s.games.prefix(4)), dark: false, gap: 6)
+        BoardGrid(games: Array(s.games.prefix(4)), dark: false, gap: 8)
             .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
             .foregroundStyle(SlateLook.ink)
     }
@@ -114,7 +114,8 @@ private struct BoardGrid: View {
         let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
         LazyVGrid(columns: games.count == 1 ? [GridItem(.flexible())] : cols, spacing: gap) {
             ForEach(games, id: \.id) { g in
-                Link(destination: SlateLook.gameURL(g.id)) { BoardLine(g: g, dark: dark, lines: !dark && games.count <= 2 ? 2 : 1) }
+                // 3.113.0 (DJ): the live notifications' new pills, the same tile as the large Tonight's slate widget
+                Link(destination: SlateLook.gameURL(g.id)) { TonightTile(g: g, dark: dark) }
             }
         }
     }

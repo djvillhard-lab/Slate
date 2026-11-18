@@ -228,11 +228,12 @@ struct LeanShape: Shape {
     }
 }
 
-// one game on the large widget, in the live notifications' look: away and home pills side by side (logo and score,
+// one game on the large widget and (3.113.0, DJ) the Board live notification, in the live notifications' look: away and home pills side by side (logo and score,
 // the score toward the middle; before the start, the team's abbreviation), and under them the clock tag (red while
 // it's on), "Final", or the start time and channel
-private struct TonightTile: View {
+struct TonightTile: View {
     let g: SlateBoardGame
+    var dark = false   // the Dynamic Island: a little smaller, on black
 
     var body: some View {
         let pre = BoardLook.pre(g), live = g.s == "in", fin = g.s == "post"
@@ -241,7 +242,7 @@ private struct TonightTile: View {
                 pill(abbr: g.aa, color: g.ac, alt: g.ax, logo: g.al, score: pre ? nil : g.a, other: g.h, left: true, fin: fin, live: live)
                 pill(abbr: g.ha, color: g.hc, alt: g.hx, logo: g.hl, score: pre ? nil : g.h, other: g.a, left: false, fin: fin, live: live)
             }
-            .frame(height: 42)
+            .frame(height: dark ? 38 : 42)
             if pre && g.d != "Live" {
                 Text([g.d, g.tv ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(SlateLook.semi(11))
@@ -251,7 +252,7 @@ private struct TonightTile: View {
                     .frame(height: 16)
             } else {
                 HStack(spacing: 5) {
-                    ClockTag(text: pre ? "Live" : BoardLook.clock(g), live: live || pre, size: 11, height: 16, fill: SlateLook.raise)
+                    ClockTag(text: pre ? "Live" : BoardLook.clock(g), live: live || pre, size: 11, height: 16, fill: dark ? Color.white.opacity(0.1) : SlateLook.raise)
                     if pre, let tv = g.tv, !tv.isEmpty {
                         Text(tv).font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted).lineLimit(1)
                     }
@@ -270,7 +271,7 @@ private struct TonightTile: View {
             if left { badge(abbr: abbr, color: color, alt: alt, logo: logo) }
             if let score {
                 Text("\(score)")
-                    .font(SlateLook.num(26))
+                    .font(SlateLook.num(dark ? 24 : 26))
                     .opacity(live && behind ? 0.6 : 1)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)

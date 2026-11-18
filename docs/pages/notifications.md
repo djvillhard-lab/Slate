@@ -7,7 +7,8 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - 3.112.0 (iPhone build, competitor review recs 8 and 9):
   - Tonight's slate widget (`ios/SlateLive/SlateTonightWidget.swift`, kind "SlateTonight", small + medium; large
     added in 3.113.0 at DJ's ask: 8 games in 2 columns of 4 as TonightTile: two LeanShape pills (fixed 10 pt lean,
-    parallel inner edges so all slants line up) with logo + score, clock/start under them; plus
+    parallel inner edges so all slants line up) with logo + score, clock/start under them. The Board activity's
+    BoardGrid uses the same TonightTile (dark in the island) since 3.113.0; BoardLine is no longer used; plus
     "N games left"; started games without a recent score show "Live" + channel; the page sends up to 12). The page
     sends `{t:"slate", date, at, games:[SlateBoardGame…]}` from livePoll (040-live.js laSlateWidget, once per change);
     WebModel saves it to the app group as tonight.json (`ios/Shared/SlateTonight.swift`) and reloads the widget.
