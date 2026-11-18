@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-// 3.112.0, the Tonight's slate widget (home screen, small and medium): the next three games on today's slate that
+// 3.112.0, the Tonight's slate widget (home screen, small and medium; 3.113.0 adds large, up to eight): the next three games on today's slate that
 // haven't finished, each with its start time and channel, or the score and clock while it's on. It reads the slate
 // the app saved the last time Slate was open (SlateTonight). A score older than 20 minutes isn't shown (the game just
 // says Live), and a game that started more than four hours ago counts as over. Tap a game (medium) for its matchup.
@@ -11,8 +11,8 @@ struct SlateTonightWidget: Widget {
             TonightView(entry: entry)
         }
         .configurationDisplayName("Tonight's slate")
-        .description("The next three games on your slate, with times and channels.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("The next games on your slate, with times and channels.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
@@ -77,14 +77,26 @@ struct TonightView: View {
     let entry: TonightEntry
 
     var body: some View {
-        let list = TonightLook.next(entry.data, at: entry.date)
+        let large = family == .systemLarge
+        // 3.113.0 (DJ): the large size fits up to eight games
+        let list = TonightLook.next(entry.data, at: entry.date, count: large ? 8 : 3)
         let fresh = TonightLook.fresh(entry.data, entry.date)
         let small = family == .systemSmall
+        let left = large ? TonightLook.next(entry.data, at: entry.date, count: 99).count : 0
         VStack(alignment: .leading, spacing: small ? 6 : 7) {
-            Text("TONIGHT'S SLATE")
-                .font(SlateLook.bold(11))
-                .foregroundStyle(SlateLook.muted)
-                .lineLimit(1)
+            HStack {
+                Text("TONIGHT'S SLATE")
+                    .font(SlateLook.bold(11))
+                    .foregroundStyle(SlateLook.muted)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                if large && left > 0 {
+                    Text(left == 1 ? "1 game left" : "\(left) games left")
+                        .font(SlateLook.semi(11))
+                        .foregroundStyle(SlateLook.muted)
+                        .lineLimit(1)
+                }
+            }
             if list.isEmpty {
                 Spacer(minLength: 0)
                 Text(entry.data == nil ? "Open Slate to load tonight's games." : "No more games on tonight's slate.")

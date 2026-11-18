@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.0 (Nov 18, 2026)
+TestFlight: 3.113.0, new build
+- The Tonight's slate widget comes in a large size: up to eight games from your slate, live ones first with the score and clock, then the rest by start time and channel, and "9 games left" in the corner. Tap a game for its matchup. Small and medium still show three.
+
 ## 3.112.0 (Nov 18, 2026)
 TestFlight: 3.112.0, new build
 - New home-screen widget, "Tonight's slate" (small and medium): the next three games on today's slate that haven't finished, with the start time and channel, or a red Live tag and the score once a game is on. It fills in from the last time Slate was open and moves along by itself as the evening goes (a score more than 20 minutes old just says Live). On the medium one, tap a game for its matchup.

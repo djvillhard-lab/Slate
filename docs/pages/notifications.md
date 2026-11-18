@@ -1,11 +1,12 @@
 # Notifications (alerts, live notifications, Dynamic Island)
-Last updated: Nov 18, 2026, 3.112.0
+Last updated: Nov 18, 2026, 3.113.0
 Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), `ios/SlateLive/SlateLiveActivity.swift`,
 `ios/Shared/SlateGameAttributes.swift`; settings page `src/app/220-notifications.js`. Plan: `docs/NOTIFICATIONS-PLAN.md`.
 
 ## Done
 - 3.112.0 (iPhone build, competitor review recs 8 and 9):
-  - Tonight's slate widget (`ios/SlateLive/SlateTonightWidget.swift`, kind "SlateTonight", small + medium). The page
+  - Tonight's slate widget (`ios/SlateLive/SlateTonightWidget.swift`, kind "SlateTonight", small + medium; large
+    added in 3.113.0 at DJ's ask: up to 8 games plus "N games left"; the page sends up to 12). The page
     sends `{t:"slate", date, at, games:[SlateBoardGame…]}` from livePoll (040-live.js laSlateWidget, once per change);
     WebModel saves it to the app group as tonight.json (`ios/Shared/SlateTonight.swift`) and reloads the widget.
     Timeline: every 15 min for 6 h plus each start; next 3 not-final games, live first; score hidden after 20 min stale;
