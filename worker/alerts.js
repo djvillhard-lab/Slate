@@ -270,7 +270,8 @@ function laState(s, id) {
   // island has two lines under the scores (the last play and the one-liner)
   if (st.pv && st.wp) delete st.wp;
   // 3.66.3: sized to fit. Under the two standouts the Lock Screen has one line (about 44 letters); alone it has two
-  if (st.pv) { st.pv = fitLine(st.pv, st.ap || st.hp || st.op ? 44 : 80); st.line = fitLine(st.pv, 60); }
+  // 3.100.9 (DJ): the face-off card has the full width under the standout, about 54 letters (it was cut at 44)
+  if (st.pv) { st.pv = fitLine(st.pv, st.ap || st.hp || st.op ? 54 : 80); st.line = fitLine(st.pv, 60); }
   return st;
 }
 // before kickoff: 0-0, the start time where the clock goes, the channel on the line under it (current app builds show both)
