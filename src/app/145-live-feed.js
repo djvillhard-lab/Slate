@@ -425,11 +425,17 @@
       b.setAttribute("aria-label", x.away + " at " + x.home + (show ? ", " + v.a + " to " + v.h : "") + ", " + (v.detail || "live"));
       if (!on) b.addEventListener("click", function () { openFeed(x); });
       w.appendChild(b); });
-    // the switcher keeps its place between updates; the chosen game slides into view only when it's off screen
-    var old = document.querySelector("#feed-body .fd-strip:not(.fd-filt)"), x0 = old ? old.scrollLeft : null;
+    // the switcher keeps its place between updates. When the chosen game changes (a tap, a swipe, the first look), the row moves so the
+    // chosen game is whole and the game before it shows whole on its left (DJ, Nov 17: the highlighted box was cut off at the left edge
+    // and the game you just left was gone). When both don't fit, the chosen game sits at the right so most of the one before it shows.
+    var old = document.querySelector("#feed-body .fd-strip:not(.fd-filt)"), x0 = old ? old.scrollLeft : null, moved = FD.stripOn !== g.id || Date.now() - (FD.stripAt || 0) < 700 /* a redraw in the middle of the slide finishes it */; if (FD.stripOn !== g.id) FD.stripAt = Date.now(); FD.stripOn = g.id;
     requestAnimationFrame(function () { if (x0 != null) w.scrollLeft = x0; var c = w.querySelector(".fd-chip.on"); if (!c || w.scrollWidth <= w.clientWidth) return;
-      var l = c.offsetLeft - 16, r = c.offsetLeft + c.offsetWidth + 16 - w.clientWidth;
-      if (x0 == null) w.scrollLeft = Math.max(0, l); else if (w.scrollLeft > l || w.scrollLeft < r) w.scrollTo({ left: Math.max(0, w.scrollLeft > l ? l : r), behavior: REDUCED ? "auto" : "smooth" }); });
+      var pad = parseFloat(getComputedStyle(w).paddingLeft) || 16, padR = parseFloat(getComputedStyle(w).paddingRight) || 16, pv = c.previousElementSibling;
+      var l = c.offsetLeft - pad, r = c.offsetLeft + c.offsetWidth + padR - w.clientWidth, to = null;
+      if (moved || x0 == null) { to = pv && c.offsetLeft + c.offsetWidth - pv.offsetLeft + pad + padR <= w.clientWidth ? pv.offsetLeft - pad : pv ? r + (padR > 20 ? 0 : 44) /* both don't fit: the chosen game sits at the right (leaving a peek of the next one where no island covers that corner), so as much as possible of the game before it shows */ : l; to = Math.max(r, Math.min(l, to)); }
+      else if (w.scrollLeft > l || w.scrollLeft < r) to = w.scrollLeft > l ? l : r;
+      if (to == null) return; to = Math.max(0, to);
+      if (x0 == null) w.scrollLeft = to; else w.scrollTo({ left: to, behavior: REDUCED ? "auto" : "smooth" }); });
     return w;
   }
   // play tags (3.35.0), all from ESPN's play data: the most important first, three at most so a row stays readable

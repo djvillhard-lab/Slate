@@ -1464,7 +1464,7 @@ html.duo .toast { left: calc(50% + var(--hinge, 0px) / 2) !important; max-width:
 .fd-pt .fd-gp { width: 1.15em; height: 1.15em; vertical-align: -0.2em; margin-right: 0.25em; }
 html .feed-go.feed-done, html .tray .feed-go.feed-done { background: var(--raise); border-color: var(--hair); }  /* 3.69.4: a finished game's feed is not red (red = live) */
 .tray .feed-go { flex-basis: 100%; box-sizing: border-box; margin: 8px 0 4px; }
-.fd-strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 8px; padding: 2px 16px 2px; scroll-snap-type: x proximity; }
+.fd-strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 8px; padding: 2px 16px 2px; scroll-snap-type: none; }  /* no snapping (DJ, Nov 17): a snapped game stopped flush against the screen edge with its border cut off, and snapping undid the row's own placing of the chosen game */
 .fd-strip::-webkit-scrollbar { display: none; }
 .fd-strip.fd-filt { gap: 18px; margin-bottom: 2px; padding-top: 0; padding-bottom: 0; scroll-snap-type: none; }  /* 3.70.0: My slate, All live and the leagues, in the secondary-filter style */
 .fd-filt .cf-tab { min-height: 44px; font-size: 15px; font-weight: 700; color: var(--muted); white-space: nowrap; }

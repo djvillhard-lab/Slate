@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.98.1 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Live feed, the row of games: the highlighted game is no longer pushed against the left edge with its border cut off. When you swipe or tap to another game, the row slides so the highlighted game is whole and the game you just left sits on its left. On a narrow screen where both don't fit, the highlighted game is whole and as much of the one before it as fits is showing.
+- The row no longer snaps games to the left edge when you scroll it by hand.
+
 ## 3.98.0 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - Live feed: the lines between plays now get their own box, with an emoji and a short title, like every other play. They used to be loose gray text.
