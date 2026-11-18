@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.97.1 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Live feed: with a delay on, the "Last play" timer now counts the delay. A new play that shows up after a 30 second delay starts at "30s ago", not at 0, because that is how long ago it really came in. With the delay off the timer works as before.
+
 ## 3.97.0 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - All games: a page never shows more than 16 games, and never more than 10 live ones, on any tab or filter. Live games come first, then games on your slate, then the rest. "Next" at the bottom shows the following games and "Previous" goes back. League headers still say how many games each league has. This replaces the "Show more" buttons from 3.96.

@@ -49,6 +49,8 @@
   function fdTake(g, sum) {
     FD.bufs = FD.bufs || {}; var B = FD.bufs[g.id] || (FD.bufs[g.id] = []), sg = fdSig(sum);
     if (!B.length || B[B.length - 1].sig !== sg) B.push({ t: Date.now(), sum: sum, sig: sg });
+    // when each newest play first reached this page, so the "Last play" timer can count the delay too (DJ, Nov 17)
+    try { FD.keyAt = FD.keyAt || {}; var KA = FD.keyAt[g.id] || (FD.keyAt[g.id] = {}), kk = fdLastAt(sum).key; if (!KA[kk]) { KA[kk] = Date.now(); var ks = Object.keys(KA); if (ks.length > 120) ks.sort(function (x, y) { return KA[x] - KA[y]; }).slice(0, ks.length - 120).forEach(function (k) { delete KA[k]; }); } } catch (e) {}
     if (B.length > 60) B.splice(0, B.length - 60);
     return fdRelease(g);
   }

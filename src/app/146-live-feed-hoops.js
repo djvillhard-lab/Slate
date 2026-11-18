@@ -311,7 +311,7 @@
     var foot = BX_SPORT[g.league] === "football";
     if (!live) { if (foot && ((sum.drives || {}).previous || []).length) { var b0 = el("div", "fd-bar"); b0.appendChild(el("p", "fd-ago", "")); b0.appendChild(fdScoringBtn()); list.insertBefore(b0, list.firstChild); } return; }
     var gid = g.id, L = fdLastAt(sum), o = FD_AGO[gid];
-    if (!o) o = FD_AGO[gid] = { key: L.key, t: L.t }; else if (o.key !== L.key) { o.key = L.key; o.t = Date.now(); }
+    if (!o) o = FD_AGO[gid] = { key: L.key, t: L.t }; else if (o.key !== L.key) { o.key = L.key; o.t = Math.min(Date.now(), ((FD.keyAt || {})[gid] || {})[L.key] || Date.now()); }  /* with a delay on, the play reached this page that long ago: the timer starts from there, not from 0 (DJ, Nov 17) */
     var t = o.t, bar = el("div", "fd-bar"), x = el("p", "fd-ago", t && Date.now() - t <= 3600000 ? "Last play " + fdAgoText(t) : ""); x.setAttribute("data-t", String(t || 0));
     bar.appendChild(x); if (foot) bar.appendChild(fdScoringBtn()); bar.appendChild(fdDelayCtl(g));  // 3.69.0: the delay control sits on the same line
     list.insertBefore(bar, list.firstChild);
