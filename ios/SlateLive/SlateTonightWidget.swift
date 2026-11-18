@@ -66,6 +66,16 @@ enum TonightLook {
         return now.timeIntervalSince1970 - d.at < 20 * 60
     }
 
+    // a game for the large size's tile: the score while it's recent; a game that has started without a recent score
+    // shows "Live" and its channel in place of the start time (never a stale or made-up score)
+    static func tile(_ g: SlateBoardGame, now: Date, fresh: Bool) -> SlateBoardGame {
+        var t = g
+        if g.s == "in" && fresh { return t }
+        if started(g, now) { t.s = "pre"; t.d = "Live"; return t }
+        if g.s == "pre" { t.d = time(g) }
+        return t
+    }
+
     static func time(_ g: SlateBoardGame) -> String {
         guard let t = g.t, t > 0 else { return g.d }
         return Date(timeIntervalSince1970: t).formatted(date: .omitted, time: .shortened)
@@ -103,6 +113,15 @@ struct TonightView: View {
                     .font(SlateLook.semi(13))
                     .foregroundStyle(SlateLook.ink)
                     .lineLimit(3)
+                Spacer(minLength: 0)
+            } else if large {
+                // 3.113.0 (DJ): the large size in the live notifications' style, 8 games in 2 columns of 4: the
+                // Board's face-off tiles (team-color halves, logos, the score and clock between them)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                    ForEach(list, id: \.id) { g in
+                        Link(destination: SlateLook.gameURL(g.id)) { BoardLine(g: TonightLook.tile(g, now: entry.date, fresh: fresh), dark: false, height: 72) }
+                    }
+                }
                 Spacer(minLength: 0)
             } else {
                 ForEach(list, id: \.id) { g in

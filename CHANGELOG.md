@@ -7,7 +7,7 @@ From 3.0.0 on, each release also says which iPhone app build in TestFlight goes 
 
 ## 3.113.0 (Nov 18, 2026)
 TestFlight: 3.113.0, new build
-- The Tonight's slate widget comes in a large size: up to eight games from your slate, live ones first with the score and clock, then the rest by start time and channel, and "9 games left" in the corner. Tap a game for its matchup. Small and medium still show three.
+- The Tonight's slate widget comes in a large size: 8 games from your slate in 2 columns of 4, as the same face-off tiles as the Board live notification (each team's color on its half, logos, the score with a red clock tag while it's on, or the start time and channel before). Live games come first, then by start time, with "9 games left" in the corner. Tap a tile for its matchup. Small and medium still show three.
 
 ## 3.112.0 (Nov 18, 2026)
 TestFlight: 3.112.0, new build
