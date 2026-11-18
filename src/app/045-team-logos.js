@@ -13,7 +13,8 @@
     intl: "soccer/fifa.friendly"   // national teams (3.77.2): about 200 countries, so World Cup qualifiers and friendlies get flags too
   };
   var LOGO_PRO = { NFL: "nfl", NBA: "nba", WNBA: "wnba", NHL: "nhl", MLB: "mlb" };
-  var LOGO_WEEK = 7 * 86400000, LOGO_KEY = "slate-logos-v1";
+  var LOGO_WEEK = 7 * 86400000, LOGO_KEY = "slate-logos-v2";   // v2 (3.104.1): every phone starts its lists fresh once
+  try { localStorage.removeItem("slate-logos-v1"); } catch (e) {}
   var LOGO_REG = (function () { try { return JSON.parse(localStorage.getItem(LOGO_KEY) || "null") || {}; } catch (e) { return {}; } })();  // { lg: { at, t: { name: [seg, c1, c2] } } }
   var LOGO_OK = (function () { try { return JSON.parse(localStorage.getItem("slate-logos-ok") || "null") || {}; } catch (e) { return {}; } })();  // logo URLs this phone has loaded before
   var LOGO_BAD = {}, logoLoading = false, logoGamesRef = null, logoGamesIdx = {};
@@ -59,11 +60,16 @@
     // 3.100.6 (DJ's phone log: News redrew about twice a second and lost taps): 3.94.2 also counted a league with an empty
     // list as due at once, so a league ESPN answers empty was fetched again on every missing logo, forever. An empty or
     // failed answer is already saved as "try again in two minutes" below, so the week's clock alone decides.
-    var now = Date.now(), due = Object.keys(LOGO_FEEDS).filter(function (lg) { return !LOGO_REG[lg] || now - (LOGO_REG[lg].at || 0) > LOGO_WEEK; });
+    // 3.104.1 (DJ: Dayton, SIUE, Man United and St. Louis CITY showed letters on his phone; every list loads fresh): a list
+    // saved empty (an ESPN hiccup, or the 3.94.2 to 3.100.5 loop) is fetched again, at most once every two minutes ("tried")
+    var now = Date.now(), due = Object.keys(LOGO_FEEDS).filter(function (lg) { var r = LOGO_REG[lg]; return !r || now - (r.at || 0) > LOGO_WEEK || (!Object.keys(r.t || {}).length && now - (r.tried || 0) > 120000); });
     if (!due.length) return;
     logoLoading = true;
+    due.forEach(function (lg) { (LOGO_REG[lg] = LOGO_REG[lg] || { at: 0, t: {} }).tried = now; });
     Promise.all(due.map(function (lg) {
-      return fetch("https://site.api.espn.com/apis/site/v2/sports/" + LOGO_FEEDS[lg] + "/teams?limit=1000").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      // a download that hangs no longer stops every later try: 25 seconds, then it counts as failed (3.104.1)
+      var cap = new Promise(function (ok, no) { setTimeout(function () { no(new Error("slow")); }, 25000); });
+      return Promise.race([fetch("https://site.api.espn.com/apis/site/v2/sports/" + LOGO_FEEDS[lg] + "/teams?limit=1000").then(function (r) { return r.ok ? r.json() : null; }), cap]).then(function (j) {
         var ts = j && j.sports && j.sports[0] && j.sports[0].leagues && j.sports[0].leagues[0] && j.sports[0].leagues[0].teams; if (!ts) return;
         var t = {};
         ts.forEach(function (x) {
@@ -72,9 +78,9 @@
           t[logoNorm(tm.displayName)] = [sg, c1, c2];
         });
         if (!Object.keys(t).length) return;   // 3.94.2 (DJ: Premier League logos missing): an empty answer from ESPN counts as a failed one, tried again in two minutes, instead of a week of letters
-        LOGO_REG[lg] = { at: now, t: t };
+        LOGO_REG[lg] = { at: now, t: t, tried: now };
       }).catch(function () {}).then(function () {
-        if (!LOGO_REG[lg] || LOGO_REG[lg].at !== now) LOGO_REG[lg] = { at: now - LOGO_WEEK + 120000, t: (LOGO_REG[lg] || {}).t || {} };   // offline or ESPN hiccup: keep what we had, try again in two minutes
+        if (!LOGO_REG[lg] || LOGO_REG[lg].at !== now) LOGO_REG[lg] = { at: now - LOGO_WEEK + 120000, t: (LOGO_REG[lg] || {}).t || {}, tried: now };   // offline or ESPN hiccup: keep what we had, try again in two minutes
       });
     })).then(function () {
       logoLoading = false;
