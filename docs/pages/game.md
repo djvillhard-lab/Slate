@@ -33,3 +33,6 @@ Last updated: Nov 16, 2026, 3.52.8
 
 ## Lockdown tag (3.100.5)
 DJ (Nov 17, 2026): Top performers tag "🔒 Lockdown" needs STL + BLK >= 5 (was 3; 3 was our own pick, not from a source).
+
+## Recaps: standouts lead (3.100.6)
+Recaps are written by Claude (Haiku 5.5, low effort) when someone taps Write/Regenerate on a finished game, from trimEspn facts (score, game leaders, team stats, quick box recap, ESPN article) plus one web search; shared by everyone and locked 12 hours (SHARE_MIN) unless the stored recap.v is older than RECAP_V (worker). tick.py marks it final 50 minutes after writing. recapStandouts(sum) in 080-claude.js lists big box-score games; the recap prompt must lead with them.

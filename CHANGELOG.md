@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.100.8 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Claude's recaps: a big individual game now leads the recap. The app pulls the night's standouts straight from the box score (30+ points or a triple-double, a hat trick, 350 passing yards, 150 rushing or receiving yards, two homers, 10 strikeouts) and Claude has to put the biggest one in the first sentences, first bullet and first star. Illinois–Duke's recap had buried Andrej Stojakovic's 46 points in its third sentence.
+- A recap written before this change can be rewritten with Regenerate right away, instead of being locked for 12 hours.
+
 ## 3.100.7 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - Box Office: taps on player cards work again, and the page no longer freezes. Box Office was redrawing itself every few seconds while live scores came in, even when nothing on it had changed, so a card could be swapped out between touching it and letting go. Now it only redraws when something on the page actually changed, and never while your finger is on the screen or for 0.4 seconds after you lift it. Tapping a card, a league or a date still changes the page right away.

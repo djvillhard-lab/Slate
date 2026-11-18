@@ -25,6 +25,35 @@
     for (var i = out.length - 1; i > 0; i--) if ((Date.parse(out[i].gameDate) || 0) - (Date.parse(out[i - 1].gameDate) || 0) > 60 * 864e5) { out = out.slice(i); break; }
     return out.filter(function (e) { var d = Date.parse(e.gameDate); return !d || t - d < 60 * 864e5; });
   }
+  // the night's big individual games straight from ESPN's box score (3.100.6, DJ: Illinois-Duke's recap buried Stojakovic's 46).
+  // 30+ points or a triple-double, a hat trick, 350 passing yards, 150 rushing or receiving yards, two homers, 10 strikeouts...
+  function recapStandouts(sum) {
+    var out = [];
+    (((sum || {}).boxscore || {}).players || []).forEach(function (tp) {
+      var ab = (tp.team || {}).abbreviation || "";
+      (tp.statistics || []).forEach(function (grp) {
+        var lb = (grp.labels || []).map(function (x) { return String(x).toUpperCase(); }), gk = String(grp.name || grp.type || "").toLowerCase();
+        (grp.athletes || []).forEach(function (a) {
+          var st = a.stats || [], v = function (l) { var i = lb.indexOf(l); return i < 0 ? 0 : parseFloat(String(st[i] || "").split("-")[0]) || 0; }, raw = function (l) { var i = lb.indexOf(l); return i < 0 ? "" : String(st[i] || ""); };
+          var nm = ((a.athlete || {}).displayName || ""), why = [];
+          if (!nm) return;
+          if (lb.indexOf("PTS") >= 0 && lb.indexOf("REB") >= 0) {
+            var tens = ["PTS", "REB", "AST", "STL", "BLK"].filter(function (l) { return v(l) >= 10; }).length;
+            if (tens >= 3) why.push("triple-double"); if (v("PTS") >= 30) why.push(v("PTS") + " points"); if (v("REB") >= 18) why.push(v("REB") + " rebounds"); if (v("AST") >= 13) why.push(v("AST") + " assists");
+            if (why.length) why.push(raw("PTS") + " PTS, " + raw("REB") + " REB, " + raw("AST") + " AST, " + raw("FG") + " FG");
+          } else if (lb.indexOf("G") >= 0 && lb.indexOf("A") >= 0 && lb.indexOf("SOG") >= 0 || gk === "forwards" || gk === "defenses") {
+            if (v("G") >= 3) why.push("hat trick"); else if (v("G") + v("A") >= 4) why.push(v("G") + " goals, " + v("A") + " assists");
+          } else if (/passing/.test(gk)) { if (v("YDS") >= 350 || v("TD") >= 4) why.push(raw("C/ATT") + ", " + v("YDS") + " passing yards, " + v("TD") + " TD"); }
+          else if (/rushing/.test(gk)) { if (v("YDS") >= 150 || v("TD") >= 3) why.push(v("CAR") + " carries, " + v("YDS") + " rushing yards, " + v("TD") + " TD"); }
+          else if (/receiving/.test(gk)) { if (v("YDS") >= 150 || v("TD") >= 3) why.push(v("REC") + " catches, " + v("YDS") + " receiving yards, " + v("TD") + " TD"); }
+          else if (/batting/.test(gk)) { if (v("HR") >= 2 || v("H") >= 4 || v("RBI") >= 5) why.push(v("H") + " hits, " + v("HR") + " HR, " + v("RBI") + " RBI"); }
+          else if (/pitching/.test(gk)) { if (v("K") >= 10 || v("IP") >= 9) why.push(raw("IP") + " IP, " + v("K") + " K, " + v("ER") + " ER"); }
+          var ln = nm + " (" + ab + "): " + why.join("; "); if (why.length && out.indexOf(ln) < 0) out.push(ln);   // NHL lists skaters twice (forwards and skaters)
+        });
+      });
+    });
+    return out.slice(0, 4);
+  }
   function trimEspn(sum, g, kind) {
     var f = {}, hd = sum.header || {}, cp = (hd.competitions || [])[0] || {};
     try {
@@ -41,6 +70,7 @@
         f.lines = (cp.competitors || []).map(function (c) { return { team: (c.team || {}).abbreviation, by: (c.linescores || []).map(function (l) { return l.displayValue || l.value; }) }; });
         f.teamStats = ((sum.boxscore || {}).teams || []).map(function (t) { return { team: (t.team || {}).abbreviation, stats: (t.statistics || []).slice(0, 14).map(function (x) { return (x.label || x.name) + " " + x.displayValue; }) }; });
         var qr = quickRecap(g); if (qr) f.quick = qr.text;
+        f.standouts = recapStandouts(sum);   // 3.100.6: a 46-point night has to lead the recap, not sit in its third sentence
         if ((sum.article || {}).headline) f.espnArticle = sum.article.headline + ". " + String(sum.article.description || "").slice(0, 300);
       }
     } catch (e) {}

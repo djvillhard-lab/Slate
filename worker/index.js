@@ -113,6 +113,7 @@ async function budgetAlert(env, capUsd) {
 // Claude cost cuts (3.85.0, security and cost review). How long one write-up is handed to everyone who asks, in
 // minutes: a second tap within this time gets the same write-up instead of a new (paid) one. News and tap-in
 // breakdowns keep 3 minutes (the News page's own rules).
+const RECAP_V = 2;  // the recap instructions' version (2: standout performances lead, 3.100.6)
 const SHARE_MIN = { preview: 360, team: 720, recap: 720, moments: 360 };
 // How each kind is written: the newer web search (it filters results before Claude reads them, so far fewer input
 // tokens), and less thinking for short write-ups. Recaps are written by Claude Haiku 5.5 (a twentieth of the price)
@@ -257,7 +258,9 @@ export default {
       if (w && w.at && !w.error && nowMs - Date.parse(w.at) < 10 * 60000) return json({ ok: true, at: w.at, shared: true }, 202);
       const last = entry && (p.kind === "recap" ? (entry.recap || {}).at : p.kind === "preview" ? entry.newsAt : entry.at);
       // (a person's own News page is the exception: Regenerate with different picks must write a new page)
-      if (last && !(p.kind === "news" && p.key === "page") && nowMs - Date.parse(last) < (SHARE_MIN[p.kind] || 3) * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
+      // 3.100.6: a recap written before the current recap instructions can be rewritten once (Regenerate), instead of waiting 12 hours
+      const oldRecap = p.kind === "recap" && entry && entry.recap && entry.recap.v !== RECAP_V;
+      if (last && !oldRecap && !(p.kind === "news" && p.key === "page") && nowMs - Date.parse(last) < (SHARE_MIN[p.kind] || 3) * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       const params = { user: me.id, kind: p.kind, date: p.date || null, id: p.id || null, key: p.key || null, at,
         game: JSON.stringify(p.game || {}).slice(0, 6000), facts: JSON.stringify(p.facts || {}).slice(0, p.kind === "moments" ? 60000 : p.kind === "news" && p.key === "page" ? 60000 : p.kind === "deep" ? 24000 : 16000) };
@@ -447,11 +450,12 @@ Answer with only this JSON inside <json></json> tags:
 Headlines: only The Athletic stories about this team from the last 2 weeks that your searches actually found, newest first, at most 4; [] if none.`;
   if (p.kind === "recap") return `Write a recap of this finished game for a sports fan's app.
 Game (JSON): ${game}
-ESPN facts (JSON: final score, box score leaders, team stats, key notes): ${facts}
+ESPN facts (JSON: final score, box score leaders, team stats, key notes, and "standouts": the night's big individual games from the box score, such as 30+ points, a triple-double, a hat trick or 150 rushing yards): ${facts}
+Standouts lead: if "standouts" has anyone, or your search finds a record or a career high, put the biggest one in the first or second sentence with its full line (Stojakovic scored 46 on 14-of-21 shooting), make it the first bullet after the score, and list that player first in "stars". Never leave a standout out.
 Do one web search for "<away> <home> recap" to find how it was decided.
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
-{"text": "4-6 sentences, 80-120 words: final score and winner, how it was decided, top performers with numbers, what it means",
+{"text": "4-6 sentences, 80-120 words: final score and winner, the standout performance if there is one, how it was decided, other top performers with numbers, what it means",
  "bullets": ["3-4 short points covering the same ground"],
  "stars": [{"name": "...", "team": "ABBR", "line": "tonight's box line"}],
  "headlines": [{"title": "...", "source": "The Athletic", "url": "..."}]}
@@ -586,7 +590,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           const g = JSON.parse(p.facts || "{}");
           await putDoc(this.env, t.path, { key: p.key, name: g.name || "", league: g.league || "", summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 6), headlines: athletic(ans.headlines), at: now, by: "request", writing: null });
         } else if (p.kind === "recap") {
-          await mergeDoc(this.env, t.path, t.patch({ recap: { text: String(ans.text || ""), bullets: strs(ans.bullets, 4), stars: (ans.stars || []).slice(0, 4), endedAt: now, at: now }, headlines: athletic(ans.headlines), writing: null, updatedAt: now }));
+          await mergeDoc(this.env, t.path, t.patch({ recap: { v: RECAP_V, text: String(ans.text || ""), bullets: strs(ans.bullets, 4), stars: (ans.stars || []).slice(0, 4), endedAt: now, at: now }, headlines: athletic(ans.headlines), writing: null, updatedAt: now }));
         } else {
           await mergeDoc(this.env, t.path, t.patch({ summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 5), watch: (ans.watch || []).slice(0, 4), series: String(ans.series || ""), headlines: athletic(ans.headlines), newsAt: now, updatedAt: now, writing: null, by: "request" }));
         }
