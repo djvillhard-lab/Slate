@@ -1,5 +1,5 @@
 # My bets (track your own bets)
-Last updated: Nov 17, 2026, 3.87.1
+Last updated: Nov 18, 2026, 3.106.0
 Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#myb-css`). Hooks: `mybCard(g)` in `140-game.js`
 (under the betting line), `mybBars(g)` in `150-game-row.js` (slate and All games cards), `mybBlock()` in `170-slate-page.js` (under Betting lines).
 
@@ -33,7 +33,15 @@ Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#m
 
 - 3.99.0 (DJ: "easily add bets from the betting line to my bets"): each Betting lines card has "+ Add to My bets" (`mybLineBtn` from `betRow`): opens the sheet prefilled (`mybFromLine` → `mybOpen(g, pre)`) with the card's line, player and stat, and the lean side; Save confirms. Already added = "✓ In My bets". Checked on a live game (ILL at DUKE under, live status on the slate).
 
+- 3.106.0 (DJ said yes to the Nov 18 review's "My bets completed"; this replaces the earlier "no stakes, odds or money" pick, but
+  both boxes are optional so a bet with neither works exactly as before): the sheet has Odds (American, `b.odds`, |n| >= 100) and
+  Stake (`b.stake`, dollars). A moneyline fills the posted price. `mybOddsOf` (odds, else the saved moneyline price), `mybNet`
+  (settled money; null without a stake, or on a win with no odds), `mybMoneyLine` (the card's money line), `mybTotals(upTo, nDays)`
+  (net of staked bets and the record per league). The slate block adds "up/down $X" to Last 7 days and a "Last 30 days" line by
+  league once two leagues have settled bets. Checked with made-up bets on iPhone and folded Duo, and the sheet on iPhone.
+
 ## Open
+- Parlays, and your line against the closing line, are still not built (the closing line would need to be saved at tip-off).
 - Not on the Live feed or in notifications yet (a "your bet" line on the live notification could ride the existing line field without a build).
 - Parlays not supported. Stake/odds/profit was option 2 on DJ's card if he wants it later.
 - Private only once DJ runs `docs/security/lockdown.sql` (data/users/* is personal); until then the docs table is readable like everything else.

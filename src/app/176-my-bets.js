@@ -65,6 +65,10 @@
     ".myb-bar .lost { color: var(--live); font-weight: 800; }",
     ".myb-rec { margin: 8px 2px 0; font-size: 13px; line-height: 1.35; color: var(--dim); font-weight: 700; }",
     ".myb-rec b { color: var(--ink); }",
+    ".myb-money { grid-column: 2; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }",
+    ".myb-money.won { color: var(--accent); }",
+    ".myb-f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }",
+    ".myb-sheet .myb-f2 input::placeholder { color: var(--dim); font-weight: 700; }",
     ".myb-sec .myb-card { margin-top: 8px; }",
     ".myb-sheet .seg { grid-template-columns: repeat(var(--n, 4), 1fr); }",
     ".myb-sheet .seg button { min-height: 44px; font-size: 15px; }",
@@ -204,6 +208,40 @@
     return { t: lv + (r.now == null ? "waiting for the box score" : tally(mybNoun(b))), c: b.ou === "under" && r.now != null ? "up" : "", lv: 1 };
   }
 
+  // ---- money (3.106.0): only for bets saved with a stake. Odds are American (-110, +150); a moneyline falls back to the price shown when it was added.
+  function mybOddsOf(b) { var o = Number(b.odds != null ? b.odds : b.price); return isNaN(o) || Math.abs(o) < 100 ? null : o; }
+  function mybWin(stake, o) { return o > 0 ? stake * o / 100 : stake * 100 / -o; }
+  function mybUsd(n) { var a = Math.abs(n), t = a >= 1000 || a === Math.round(a) ? String(Math.round(a)) : a.toFixed(2); return "$" + t.replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  // what a settled bet made or lost: null when it has no stake, isn't settled, or won with no odds to pay it at
+  function mybNet(b, r) {
+    var st = Number(b.stake); if (!(st > 0) || !r) return null;
+    if (r.s === "lost") return -st; if (r.s === "push" || r.s === "void") return 0;
+    if (r.s === "won") { var o = mybOddsOf(b); return o == null ? null : Math.round(mybWin(st, o) * 100) / 100; }
+    return null;
+  }
+  function mybMoneyLine(b, r) {
+    var st = Number(b.stake); if (!(st > 0)) return null;
+    var o = mybOddsOf(b), ot = o == null ? "" : " at " + (o > 0 ? "+" : "") + o, net = mybNet(b, r);
+    if (r.s === "won" && net != null) return { t: "Won " + mybUsd(net) + " on " + mybUsd(st) + ot, c: "won" };
+    if (r.s === "lost") return { t: "Lost " + mybUsd(st) + ot, c: "" };
+    if (r.s === "push" || r.s === "void") return { t: mybUsd(st) + " back", c: "" };
+    return { t: mybUsd(st) + ot + (o == null ? "" : " to win " + mybUsd(mybWin(st, o))), c: "" };
+  }
+  // settled bets over the days up to and including this one: the net of the ones with a stake, and the record for each league
+  function mybTotals(upTo, nDays) {
+    var out = { net: 0, staked: 0, lg: {} }, end = new Date(upTo + "T12:00:00Z").getTime();
+    Object.keys(MYB.days).forEach(function (d) {
+      var t = new Date(d + "T12:00:00Z").getTime(); if (t > end || end - t >= nDays * 864e5) return;
+      mybList(d).forEach(function (b) {
+        var r = (b.res && (b.res.fin || b.res.early)) ? b.res : null; if (!r || !/^(won|lost|push)$/.test(r.s)) return;
+        var L = out.lg[b.lg] = out.lg[b.lg] || { w: 0, l: 0, p: 0 }; L[r.s === "won" ? "w" : r.s === "lost" ? "l" : "p"]++;
+        var net = mybNet(b, r); if (net != null) { out.net += net; out.staked++; }
+      });
+    });
+    out.net = Math.round(out.net * 100) / 100; return out;
+  }
+  function mybNetText(n) { return (n > 0 ? "up " : n < 0 ? "down " : "even, ") + (n === 0 ? "$0" : mybUsd(n)); }
+
   // ---- the pieces other pages use ----
   // a row for the matchup page and the slate's My bets: badge, the bet, where it stands, and × to remove it
   function mybRow(b, opts) {
@@ -222,13 +260,14 @@
     else if (say.lv) { var lm = /^(Live[^·]*?) · (.*)$/.exec(txt); st.appendChild(el("span", "lvd", lm ? lm[1] : "Live")); if (lm) st.appendChild(el("span", null, lm[2].replace(/^./, function (x) { return x.toUpperCase(); }))); }
     else st.textContent = txt;
     row.appendChild(st);
+    var mo = mybMoneyLine(b, r); if (mo) row.appendChild(el("span", "myb-money" + (mo.c ? " " + mo.c : ""), mo.t));
     if (opts.x) {
       var x = el("span", "myb-x"); x.setAttribute("role", "button"); x.tabIndex = 0; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove your bet " + mybLabel(b, g));
       var rm = function (e) { e.stopPropagation(); e.preventDefault(); mybRemove(b); };
       x.addEventListener("click", rm); x.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") rm(e); });
       row.appendChild(x);
     }
-    row.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + ", " + mybVs(g) + ". " + say.t);
+    row.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + ", " + mybVs(g) + ". " + say.t + (mo ? ". " + mo.t : ""));
     return row;
   }
   function mybRemove(b) {
@@ -278,7 +317,14 @@
     var parts = [[n("won"), " won"], [n("lost"), " lost"], [n("push"), n("push") === 1 ? " push" : " pushes"], [n("live"), " live"], [n("pre"), " to come"]].filter(function (x) { return x[0]; }).map(function (x) { return x[0] + x[1]; });
     var rec = el("p", "myb-rec"); rec.appendChild(el("b", null, (state.date === todayInHome() ? "Today: " : "This day: ") + parts.join(", ")));
     var wk = mybRecord(state.date, 7); if (wk) rec.appendChild(document.createTextNode(" · Last 7 days " + wk));
+    var w7 = mybTotals(state.date, 7); if (w7.staked) rec.appendChild(document.createTextNode(", " + mybNetText(w7.net)));
     sec.appendChild(rec);
+    // the last 30 days by league, once two leagues have settled bets
+    var m30 = mybTotals(state.date, 30), lgs = Object.keys(m30.lg);
+    if (open && lgs.length > 1) {
+      var by = lgs.sort(function (a, b) { var A = m30.lg[a], B = m30.lg[b]; return (B.w + B.l + B.p) - (A.w + A.l + A.p); }).map(function (k) { var L = m30.lg[k]; return ((LEAGUES[k] || {}).tag || k.toUpperCase()) + " " + L.w + "-" + L.l + (L.p ? "-" + L.p : ""); });
+      sec.appendChild(el("p", "myb-rec", "Last 30 days: " + by.join(" · ") + (m30.staked ? " · " + mybNetText(m30.net) : "")));
+    }
     if (open) { var c = el("div", "myb-list"); c.style.marginTop = "8px"; list.forEach(function (b) { c.appendChild(mybRow(b, { tap: true, vs: true })); }); sec.appendChild(c); }
     return sec;
   }
@@ -315,7 +361,7 @@
   // pre: a bet to start from (a Betting lines card: kind, ou, line, and the player), so adding it is one tap on Save
   function mybOpen(g, pre) {
     var o = mybOdds(g) || {};
-    MYBS = { g: g, kind: "spread", sd: "", ou: "", line: "", pid: "", k: "", o: o, sp: mybSpreads(g, o), src: o.provider || "", typed: false };
+    MYBS = { g: g, kind: "spread", sd: "", ou: "", line: "", pid: "", k: "", o: o, sp: mybSpreads(g, o), src: o.provider || "", typed: false, odds: "", stake: "", oddsTyped: false };
     if (pre) { Object.keys(pre).forEach(function (k) { MYBS[k] = pre[k]; }); MYBS.line = String(pre.line); MYBS.typed = true; MYBS.card = MYBS.line; if (pre.src) MYBS.src = pre.src; }
     mybDraw(); mybSheet().classList.add("open");
   }
@@ -431,6 +477,17 @@
       if (S.kind === "spread") { var pm = el("button", "myb-pm", "+/−"); pm.type = "button"; pm.setAttribute("aria-label", "Switch plus and minus"); pm.addEventListener("click", function () { var n = parseFloat(S.line); if (!isNaN(n)) { S.line = String(-n); S.typed = true; mybDraw(); } }); f.appendChild(pm); }
       sh.appendChild(f);
     }
+    // optional money: odds and stake. Left empty, the bet is tracked as won or lost only, as before.
+    if (S.kind === "ml" && !S.oddsTyped) { var mp = S.sd && S.sd !== "draw" && S.o.ml ? Number(S.o.ml[S.sd]) : NaN; S.odds = isNaN(mp) ? "" : (mp > 0 ? "+" : "") + mp; }
+    else if (S.kind !== "ml" && !S.oddsTyped) S.odds = "";
+    var f2 = el("div", "myb-f2");
+    var ol = el("label", null, "Odds (optional)"), oi = el("input"); oi.type = "text"; oi.setAttribute("inputmode", "numbers-and-punctuation"); oi.autocomplete = "off"; oi.placeholder = "-110"; oi.value = S.odds;
+    oi.addEventListener("input", function () { S.odds = oi.value.replace(/[^0-9+-]/g, ""); S.oddsTyped = true; });
+    ol.appendChild(oi); f2.appendChild(ol);
+    var sl = el("label", null, "Stake $ (optional)"), si = el("input"); si.type = "text"; si.setAttribute("inputmode", "decimal"); si.autocomplete = "off"; si.placeholder = "0"; si.value = S.stake;
+    si.addEventListener("input", function () { S.stake = si.value.replace(/[^0-9.]/g, ""); });
+    sl.appendChild(si); f2.appendChild(sl);
+    sh.appendChild(f2);
     var srcNote = S.card != null && S.card === S.line ? "The line from your Betting lines card" + (S.src ? " (" + S.src + ")" : "") + ". Change it if yours was different." : S.src && S.kind !== "ml" && !S.typed && S.line !== "" ? "Filled in from " + S.src + ". Change it if your line was different." : "";
     var nt = [note, srcNote].filter(Boolean).join(" "); if (nt) sh.appendChild(el("p", "myb-note", nt));
     var save = el("button", "full-mu"); save.type = "button"; var ft = el("span", "fm-t"); ft.appendChild(el("b", null, "Save bet")); ft.appendChild(el("i", null, "Follows it live and settles at the final")); save.appendChild(ft);
@@ -447,6 +504,9 @@
     if (S.kind === "total" || S.kind === "prop") b.ou = S.ou;
     if (S.kind === "prop") { b.pid = S.pid; b.p = S.p; b.pos = S.pos; b.sd = S.psd; b.k = S.k; }
     if (S.kind === "spread" && S.sp[S.sd] != null && Number(S.sp[S.sd]) === b.line) b.src = S.src;
+    var od = parseInt(S.odds, 10), stk = Math.round(parseFloat(S.stake) * 100) / 100;
+    if (!isNaN(od) && Math.abs(od) >= 100) b.odds = od;
+    if (stk > 0) b.stake = stk;
     (MYB.days[state.date] = MYB.days[state.date] || {})[b.id] = b;
     mybSave(); mybClose(); keepScroll(render);
   }

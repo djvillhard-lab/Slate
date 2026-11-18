@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.106.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- My bets: Add my bet has two new optional boxes, Odds (like -110 or +150) and Stake. Leave them empty and a bet is tracked as won or lost, the same as before. A moneyline fills in the posted price for you.
+- With a stake, the bet's card shows the money: "$10 at -110 to win $9.09" before and during the game, then "Won $9.09 on $10", "Lost $10" or "$10 back" on a push.
+- My bets on the slate: the Last 7 days record adds how much you're up or down across the bets that had a stake. Once two leagues have settled bets, a "Last 30 days" line shows the record for each league.
+
 ## 3.105.1 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - Team logos: Dayton, SIUE, Manchester United, St. Louis CITY and other college and soccer teams showed letters (DAY, MAN) on your phone, in News' team picker and elsewhere. Every logo loads on a fresh phone, so your phone had kept an empty team list for those leagues. The app now asks ESPN again for any list it has saved empty (at most every two minutes), gives up on a download that hangs after 25 seconds instead of never trying again, and every phone starts its lists fresh once.
