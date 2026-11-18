@@ -248,6 +248,8 @@ export function slateKit(opts) {
     (qbx || []).forEach(function (q) { if (T[q.team] && q.name) add("qb1|" + q.team, 66, T[q.team].name + " QB " + q.name + " makes his first start of the season"); });
     // the betting line and ESPN's predictor
     var pk = (sum.pickcenter || [])[0], m = pk && /^([A-Z]{2,5})\s+(-[\d.]+)$/.exec(String(pk.details || "").trim());
+    // 3.101.4: only a real point spread. Without one ESPN's "details" can be the moneyline ("HOU -137"), which read as a 137-point favorite
+    if (m && !(pk.spread != null && pk.spread !== "" && Math.abs(Math.abs(parseFloat(pk.spread)) - Math.abs(parseFloat(m[2]))) < 0.01 && Math.abs(parseFloat(m[2])) <= 45)) m = null;
     if (m && byAbbr[m[1]] && (sport === "football" || sport === "bball")) { var sp = Math.abs(parseFloat(m[2])), fav = byAbbr[m[1]];
       if (sp <= 2.5) add("tight", 42, T[fav].name + " are only " + sp + "-point favorites"); else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " are " + sp + "-point favorites"); }
     if (m && byAbbr[m[1]] && byAbbr[m[1]] !== H && parseFloat(m[2]) <= -1 && sport !== "football" && sport !== "bball") {}

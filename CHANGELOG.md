@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.111.1 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- Game one-liners: the "point favorite" line uses only a real point spread. When a game had no spread yet, ESPN's moneyline was being read as one ("No. 8 Houston is a 137-point favorite"). With no spread, that line is left out.
+
 ## 3.111.0 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - Live feed for baseball. MLB games now have the same Live feed (and Game feed after the final out) as football, basketball, soccer and hockey. Built now against a finished 2026 game so it is ready for spring training.
