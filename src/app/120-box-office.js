@@ -308,9 +308,15 @@
     return null;
   }
   function onSlateRow(r, lg) {
-    var ids = slateIdsFor(state.view === "moments" ? mm.date : rk.date); if (!ids || !ids.length || !r.team || !r.opp) return false;
-    var a = String(r.team).toLowerCase(), b = String(r.opp).toLowerCase();
-    return ids.indexOf(lg + "-" + a + "-" + b) !== -1 || ids.indexOf(lg + "-" + b + "-" + a) !== -1;
+    var day = state.view === "moments" ? mm.date : rk.date, ids = slateIdsFor(day); if (!ids || !ids.length || !r.team || !r.opp) return false;
+    var a = String(r.team).toUpperCase(), b = String(r.opp).toUpperCase();
+    // the day the app has loaded: the slate's own games, matched by both teams (3.100.4: a game's id isn't always league-away-home)
+    if (day === state.date && state.slateSet) {
+      var hit = games().some(function (g) { if (g.league !== lg || !state.slateSet[g.id]) return false; var x = String(abbr(g, "away") || "").toUpperCase(), y = String(abbr(g, "home") || "").toUpperCase(); return (x === a && y === b) || (x === b && y === a); });
+      if (hit) return true;
+    }
+    var al = a.toLowerCase(), bl = b.toLowerCase(), base = function (id) { return String(id).replace(/-\d+$/, ""); };
+    return ids.some(function (id) { var k = base(id); return k === lg + "-" + al + "-" + bl || k === lg + "-" + bl + "-" + al; });
   }
   // a player's ESPN headshot in a circle of his team's color, initials underneath until it loads, the team badge at the corner.
   // Shared: Box Office's cards and Player rankings use it, and any page can (p = { id, name, team, teamName, color }, lg = the league key).
@@ -635,6 +641,8 @@
     top.appendChild(el("b", "tp-n", parts.length > 1 ? parts[0].charAt(0) + ". " + parts.slice(1).join(" ") : nm));
     var pos = r.pos || byId.pos || ""; if (pos) top.appendChild(el("em", "fd-pos", pos));
     if (r.team) top.appendChild(el("span", "tp-t", r.team));
+    // "Slate" when his game was on your slate that day (back in 3.100.4: the 3.76.0 cards had dropped it)
+    var slr = { team: r.team, opp: r.opp || byId.opp }; if (onSlateRow(slr, lg)) { var sm = el("span", "rk-slate", "Slate"); sm.title = "From a game on your slate"; top.appendChild(sm); }
     m.appendChild(top);
     // each stat stays whole when the line wraps ("3 STL", never "3" then "STL")
     if (r.line) { var ln = el("div", "tp-l mm-l"); String(r.line).replace(/\s*,\s*/g, " · ").split(" · ").forEach(function (x, i) { if (i) ln.appendChild(document.createTextNode(" · ")); ln.appendChild(el("span", null, x)); }); m.appendChild(ln); }

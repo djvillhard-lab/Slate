@@ -1,5 +1,5 @@
 # Box Office (and Player rankings)
-Last updated: Nov 17, 2026, 3.90.1
+Last updated: Nov 18, 2026, 3.100.4
 
 Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMoments`; Player rankings = the `best` view, `renderBest`, not in the menu). Styles: `src/styles/095-box-office.css` (plus older `rk-`/`mm-` rules in 040-components.css).
 
@@ -15,6 +15,8 @@ Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMomen
 - Team logos (3.89.4): every scoreboard Box Office reads (`gcBoard` for the shown day and league, and the live poll) passes each team's logo to `logoNote`, so badges don't depend on the phone's weekly team list (which missed some of last night's college teams on DJ's phone).
 
 - Headshot badge logo (3.90.1): `playerFace` uses the logo straight from Box Office's scoreboards (`MM_LOGO` via `mmLogoNote`, by league + abbreviation or #id) as a plain img; only falls back to the lettered chip / shared `addLogo` when there's none or it fails. DJ's phone showed lettered chips for most college teams through the shared lookup even after 3.89.4; not reproducible in a browser.
+
+- "Slate" chip on a card whose game was on your slate that day (`onSlateRow`): the loaded day matches the slate's games by both teams; other days use the saved lineup ids (league-away-home, a "-2" suffix ignored). The 3.76.0 cards had dropped it; back in 3.100.4.
 
 ## Open
 - Wild finishes don't follow the Power filter yet.
