@@ -110,6 +110,7 @@
         pvExtras(box);
       });
       if (sport) teamSec();
+      if (gfxOk(g)) section("gfx", "Game flow", gfxSub(g), function (box) { gfxFill(g, box); });   // 3.108.0
     } else if (kind === "live") {
       if (sport) section("box", sport === "soccer" ? "Top performers, lineups and match summary" : "Top performers and players", "Live", function (box) {
         // the game's top individual performances first, then every player
@@ -117,6 +118,7 @@
         var scb2 = live && boxShown(g) ? scoringBlock(g, true) : null; if (scb2) { var sc2c = gvCard(null, "gv-box"); sc2c.appendChild(scb2); box.appendChild(sc2c); }
         boxFill(box); });
       if (sport) teamSec();
+      if (gfxOk(g)) section("gfx", "Game flow", gfxSub(g), function (box) { gfxFill(g, box); });   // 3.108.0
       section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Not written yet", function (box) {
         previewSections(g, pv, box, "pre");
         pvExtras(box);

@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.108.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- A live or finished football or basketball game's page has a new "Game flow" section at the bottom. It opens to a win-chance line: ESPN's own number after every play, the home team's chance running up and the away team's down, with the quarters marked.
+- Basketball also gets a shot chart: one half court for each team, a filled dot for every make and a ring for every miss, with how many were made.
+- It starts closed and only loads when you open it. With scores hidden it stays hidden until you tap to show the box score. Nothing here is worked out by Slate; when ESPN doesn't send it for a game, the section says so.
+
 ## 3.107.0 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - A game's page has a new "Send" button next to "Add to slate". It opens the phone's share sheet, so you can text the game to Drew or Dad: the matchup, when it starts and the channel, with a link that opens the game in Slate. It never includes the score, so it can't spoil a game. Where a share sheet isn't available, it copies the message instead.

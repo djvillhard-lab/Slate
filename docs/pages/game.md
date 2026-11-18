@@ -44,3 +44,14 @@ Code: `src/app/142-share.js` (`shareBtn(g)`, `shareText`, `shareUrl`), one line 
 - Like "Add to slate", it isn't shown on past days or custom games.
 - Open: not tried inside the iPhone app (the share sheet there depends on the app's web view allowing `navigator.share`;
   if it doesn't, the copy fallback runs). The link opens the game only on the day the game is loaded.
+
+## 3.108.0 (Nov 18): Game flow (win-chance line, shot chart)
+Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("gfx", …)` lines in `140-game.js`.
+- Live and final football and basketball games get a "Game flow" section, closed to start. Opening it fetches ESPN's
+  game summary (`bxFindEvent` → `bxSummaryUrl`), cached per game (60 s live, kept once final).
+- Win chance: `winprobability[].homeWinPercentage`, one point per play; home up, away down; quarter marks from each
+  play's period (men's college: halves). Shot chart (basketball): `plays[].coordinate` on shooting plays, hoop at
+  (25, 0), x 0-50; free throws and heaves past half court have no spot and are skipped. Made = team color, miss = ring.
+- Hidden scores: the section shows `boxGate` until the box score is shown. Nothing is estimated.
+- Open: seen on a finished NBA game (iPhone, folded Duo). Not seen: a football game, a live game, the unfolded Duo.
+  Hockey shot map not built. `shots.py game:<team>` still finds 0 games; open a card and tap Full matchup instead.
