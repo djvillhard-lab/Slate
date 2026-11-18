@@ -83,3 +83,6 @@ Code: `src/app/175-best-bets.js`, styles under "Best bets" in `src/styles/040-co
 ## 3.72.2: each day saved (DJ: "save completed betting lines for a day")
 - PICKS (localStorage `slate-picks3`) now keeps 60 days instead of 3, and syncs to the account doc `data/users/<uid>/betlines` ({v, days}) for 45 days (worker save cap is 400 KB). `betLoad()` runs from `betsBlock` once per session; per day the copy with more settled lines wins (`betDayScore`).
 - A past day with nothing saved says "No betting lines were saved for this day."; a saved past day says "Saved from this day, with how each one finished."
+
+## 3.99.0: Add to My bets (DJ)
+- `betRow` ends with "+ Add to My bets" beside the source line (`mybLineBtn`, in 176-my-bets.js); it opens the My bets sheet filled in from the card. See docs/pages/my-bets.md.

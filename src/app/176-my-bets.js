@@ -14,6 +14,9 @@
     ".myb-chip svg { width: 14px; height: 14px; }",
     ".myb-chip::after { content: ''; position: absolute; inset: -9px -4px; }",
     ".myb-chip-row { margin: 8px 0 0; }",
+    ".bet-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }",
+    ".bet-acts .bet-src { margin: 0; }",
+    ".myb-in { font-size: 13px; font-weight: 800; color: var(--accent); }",
     ".myb-bet { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; width: 100%; box-sizing: border-box; padding: 10px 12px 10px 16px; border-radius: 8px; border: 1px solid var(--hair); background: var(--card); color: var(--ink); text-align: left; }",
     ".myb-bet::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-fill); }",
     ".myb-bet.one { background: color-mix(in srgb, var(--myb-c) 10%, var(--card)); border-color: color-mix(in srgb, var(--myb-c) 32%, var(--hair)); }",
@@ -309,10 +312,27 @@
     document.body.appendChild(bd); return bd;
   }
   function mybClose() { var bd = document.getElementById("sheet-myb"); if (bd) bd.classList.remove("open"); MYBS = null; }
-  function mybOpen(g) {
+  // pre: a bet to start from (a Betting lines card: kind, ou, line, and the player), so adding it is one tap on Save
+  function mybOpen(g, pre) {
     var o = mybOdds(g) || {};
     MYBS = { g: g, kind: "spread", sd: "", ou: "", line: "", pid: "", k: "", o: o, sp: mybSpreads(g, o), src: o.provider || "", typed: false };
+    if (pre) { Object.keys(pre).forEach(function (k) { MYBS[k] = pre[k]; }); MYBS.line = String(pre.line); MYBS.typed = true; MYBS.card = MYBS.line; if (pre.src) MYBS.src = pre.src; }
     mybDraw(); mybSheet().classList.add("open");
+  }
+  // a Betting lines card's "+ Add to My bets": opens the sheet with that line and the side the numbers lean to
+  function mybFromLine(g, b) {
+    var pre = b.game ? { kind: "total", ou: b.lean < 0 ? "under" : "over", line: b.line, src: b.src || "" }
+      : { kind: "prop", ou: b.lean < 0 ? "under" : "over", line: b.line, pid: String(b.pid), p: b.p, pos: b.pos || "", psd: b.sd, k: b.k, src: b.src || "" };
+    mybOpen(g, pre);
+  }
+  function mybHasLine(g, b) { return mybFor(g).some(function (x) { return b.game ? x.kind === "total" : x.kind === "prop" && String(x.pid) === String(b.pid) && x.k === b.k; }); }
+  function mybLineBtn(g, b) {
+    if (!mybCanAdd(g)) return null;
+    if (mybHasLine(g, b)) { var on = el("span", "myb-in", "✓ In My bets"); return on; }
+    var c = el("button", "myb-chip bet-add"); c.type = "button"; c.appendChild(icon("plus")); c.appendChild(document.createTextNode("Add to My bets"));
+    c.setAttribute("aria-label", "Add " + (b.game ? "this game total" : b.p + "'s line") + " to My bets");
+    c.addEventListener("click", function (e) { e.stopPropagation(); mybFromLine(g, b); });
+    return c;
   }
   function mybPropsFor(g) {
     var lg = g.league, sport = BX_SPORT[lg];
@@ -411,7 +431,7 @@
       if (S.kind === "spread") { var pm = el("button", "myb-pm", "+/−"); pm.type = "button"; pm.setAttribute("aria-label", "Switch plus and minus"); pm.addEventListener("click", function () { var n = parseFloat(S.line); if (!isNaN(n)) { S.line = String(-n); S.typed = true; mybDraw(); } }); f.appendChild(pm); }
       sh.appendChild(f);
     }
-    var srcNote = S.src && S.kind !== "ml" && !S.typed && S.line !== "" ? "Filled in from " + S.src + ". Change it if your line was different." : "";
+    var srcNote = S.card != null && S.card === S.line ? "The line from your Betting lines card" + (S.src ? " (" + S.src + ")" : "") + ". Change it if yours was different." : S.src && S.kind !== "ml" && !S.typed && S.line !== "" ? "Filled in from " + S.src + ". Change it if your line was different." : "";
     var nt = [note, srcNote].filter(Boolean).join(" "); if (nt) sh.appendChild(el("p", "myb-note", nt));
     var save = el("button", "full-mu"); save.type = "button"; var ft = el("span", "fm-t"); ft.appendChild(el("b", null, "Save bet")); ft.appendChild(el("i", null, "Follows it live and settles at the final")); save.appendChild(ft);
     save.disabled = !mybValid(); save.addEventListener("click", mybAdd); sh.appendChild(save);

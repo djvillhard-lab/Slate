@@ -31,6 +31,8 @@ Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#m
 
 - 3.89.5 (DJ: the big Add my bet was "too prominent"): a small outlined "+ Add bet" (`mybChip`) at the end of the odds strip on the matchup page; the Your bets card only appears with bets. The quiet look is on purpose; don't make it a big button again.
 
+- 3.99.0 (DJ: "easily add bets from the betting line to my bets"): each Betting lines card has "+ Add to My bets" (`mybLineBtn` from `betRow`): opens the sheet prefilled (`mybFromLine` → `mybOpen(g, pre)`) with the card's line, player and stat, and the lean side; Save confirms. Already added = "✓ In My bets". Checked on a live game (ILL at DUKE under, live status on the slate).
+
 ## Open
 - Not on the Live feed or in notifications yet (a "your bet" line on the live notification could ride the existing line field without a build).
 - Parlays not supported. Stake/odds/profit was option 2 on DJ's card if he wants it later.

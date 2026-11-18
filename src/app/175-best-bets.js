@@ -473,7 +473,9 @@
     (b.facts || []).forEach(function (t) { why.appendChild(el("p", "bet-fx", t)); });
     r.appendChild(why);
     var srcTxt = (b.src ? b.src + " line" : "Posted line") + (b.open != null && b.open !== b.line ? ", opened at " + b.open : "");
-    r.appendChild(el("p", "bet-src", srcTxt));
+    var addB = mybLineBtn(g, b);  // 3.98.1 (DJ): one tap puts this line in My bets
+    if (addB) { var acts = el("div", "bet-acts"); acts.appendChild(el("p", "bet-src", srcTxt)); acts.appendChild(addB); r.appendChild(acts); }
+    else r.appendChild(el("p", "bet-src", srcTxt));
     r.setAttribute("aria-label", (b.game ? vs + ", " : b.p + ", ") + "leans " + lineTxt + ": " + say + ". " + cs + " " + (b.facts || []).join(" ") + " " + srcTxt + ".");
     return r;
   }
