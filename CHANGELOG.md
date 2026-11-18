@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.101.0 (Nov 18, 2026)
+TestFlight: 3.101.0, new build
+- The Board live notification (your games in a grid) matches the new live notification look. Each game is a face-off tile: each team's color fills its half, the logos sit at the sides, and the score is in a dark band down the middle with the clock under it in the red live tag. Logos and scores are as big as the tiles allow. Before kickoff a tile shows the start time and channel. After the final it shows "Final" and dims the losing team.
+- The same tiles show in the Dynamic Island when you hold it open.
+- Live notification card (one game): redone in the Dynamic Island's style, which you liked best. Each team sits in a slanted pill of its color holding its logo and its big score, with the team's name under the pill. Between them are the clock, then the league (or the down and spot in football) and the slate's tag. The scorers, the standout and the one-liner stay underneath, two lines at most.
+- A team whose main color is gray or nearly black (the Golden Knights' steel gray) uses its second color, so its color doesn't disappear into the dark card.
+- Dynamic Island for a single game, held open: each team's color fills its whole side, behind both its logo and its score, with the slant toward the camera.
+
+
 ## 3.100.10 (Nov 17, 2026)
 TestFlight: 3.100.5, no new build (web only)
 - Live feed, basketball: a steal's box now takes the color and the team label of the player who made the steal. It used to show the team that lost the ball, because that is how ESPN files the play.

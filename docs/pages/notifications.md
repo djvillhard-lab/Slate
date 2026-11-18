@@ -48,6 +48,11 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   middle, the clock in a square-cornered tag. New ContentState keys: ag/hg (soccer scorers per side, 2 lines max),
   yl/ds (football ball spot and drive start, 0 = away goal line). The worker reads the spot from the down text and the
   drive start from situation.lastPlay.drive.start.text (not yet seen live; the bar just skips the drive without it).
+- 3.101.0 (waiting for DJ's OK): Board tiles in the face-off style (mockup: Board frame on the same canvas). Lock tiles
+  64pt tall (two rows must fit the Lock Screen's 160pt), island tiles 58pt. TeamPanel and ClockTag take sizes now.
+  Board one-liners (ln) are no longer drawn; DJ removed them earlier anyway.
+- 3.92.0's Xcode Cloud build never reached TestFlight; touching ios/WEEKEND.md on main started it again (arrived as
+  3.100.5). If a build goes missing, ask DJ for Xcode Cloud > Builds; we can't see App Store Connect.
 ## Open
 - Check the face-off card on DJ's Duo once build 47 is out: a live football game (field bar) and a soccer game with goals.
 - Hockey: ESPN's scoreboard has no per-team leaders during a game (checked Nov 16, MTL-NYR 2nd period), so no standout.

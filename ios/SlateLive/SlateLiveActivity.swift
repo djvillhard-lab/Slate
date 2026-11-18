@@ -110,6 +110,20 @@ enum SlateLook {
 
     // A team color that still shows on the Dynamic Island's black: dark ones (navy, maroon) get brighter, same hue.
     // text on a team chip: white, or dark on a light team color (England's white), so the letters always show
+    // 3.101.0: the color a team's panel uses: its own, unless that's a gray or near-black (Vegas's steel gray, which
+    // vanishes on the navy card) and its second color is more colorful
+    static func panelHex(_ hex: String, _ alt: String?) -> String {
+        func hsb(_ h: String) -> (CGFloat, CGFloat)? {
+            var s: CGFloat = 0, b: CGFloat = 0, x: CGFloat = 0, a: CGFloat = 0
+            let s0 = h.hasPrefix("#") ? String(h.dropFirst()) : h
+            guard s0.count == 6, UInt32(s0, radix: 16) != nil,
+                  UIColor(Color(slateHex: h, fallback: .gray)).getHue(&x, saturation: &s, brightness: &b, alpha: &a) else { return nil }
+            return (s, b)
+        }
+        guard let p = hsb(hex) else { return alt ?? hex }
+        if p.0 < 0.35 && p.1 < 0.4, let alt, let q = hsb(alt), q.0 > p.0 + 0.2, q.1 > 0.25 { return alt }
+        return hex
+    }
     static func onChip(_ hex: String) -> Color {
         let h = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
         guard h.count == 6, let v = UInt32(h, radix: 16) else { return .white }
@@ -202,75 +216,47 @@ private struct LockCard: View {
         let note = star == nil ? (pv.isEmpty ? (s.line ?? "") : pv) : ""
         let field = live && (s.poss == "away" || s.poss == "home") && s.yl != nil
         let down = live && (s.poss == "away" || s.poss == "home") ? BallLook.compact(s.sit ?? "") : ""
-        ZStack(alignment: .top) {
-            HStack(spacing: 0) {
-                TeamPanel(color: a.awayColor, left: true)
-                Spacer(minLength: 0)
-                TeamPanel(color: a.homeColor, left: false)
-            }
-            VStack(spacing: 0) {
-                HStack(spacing: 6) {
-                    Text(a.league)
+        // 3.101.0 (DJ liked the Dynamic Island's look best): each team in a slanted pill of its color holding its
+        // logo and its score, the name under it; between them the clock, then the league (or football's down) and
+        // the slate's tag; under it all at most two lines, as before
+        VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: 8) {
+                PillSide(name: a.away, abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, rank: a.awayRank, logo: a.awayLogo,
+                         score: pre ? nil : s.a, ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true), trail: live && s.a < s.h, left: true)
+                VStack(spacing: 4) {
+                    if pre {
+                        Text(SlateLook.clock(s))
+                            .font(SlateLook.num(22))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                            .frame(height: 22)
+                    } else {
+                        ClockTag(text: SlateLook.clock(s), live: live)
+                    }
+                    Text(!down.isEmpty ? down : pre && !(s.line ?? "").isEmpty ? (s.line ?? "") : a.league)
                         .font(SlateLook.semi(12))
-                        .foregroundStyle(SlateLook.ink.opacity(0.85))
-                    Spacer(minLength: 0)
+                        .foregroundStyle(!down.isEmpty ? SlateLook.ink : SlateLook.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                     if let tag = s.tag, !tag.isEmpty, s.state != "post" {
                         Text(tag)
                             .font(SlateLook.semi(12))
                             .foregroundStyle(SlateLook.ink)
-                    }
-                }
-                .lineLimit(1)
-                .frame(height: 16)
-
-                HStack(spacing: 0) {
-                    FaceTeam(name: a.away, abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, rank: a.awayRank, logo: a.awayLogo,
-                             ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true), left: true)
-                    Spacer(minLength: 4)
-                    VStack(spacing: 5) {
-                        if pre {
-                            Text(SlateLook.clock(s))
-                                .font(SlateLook.num(26))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.6)
-                            if let l = s.line, !l.isEmpty {
-                                Text(l).font(SlateLook.semi(12)).foregroundStyle(SlateLook.muted).lineLimit(1)
-                            }
-                        } else {
-                            HStack(spacing: 12) {
-                                Text("\(s.a)").opacity(live && s.a < s.h ? 0.6 : 1)
-                                Rectangle().fill(SlateLook.ink.opacity(0.25)).frame(width: 2, height: 22)
-                                Text("\(s.h)").opacity(live && s.h < s.a ? 0.6 : 1)
-                            }
-                            .font(SlateLook.num(40))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.6)
-                            ClockTag(text: SlateLook.clock(s), live: live)
-                        }
+                            .minimumScaleFactor(0.75)
                     }
-                    .frame(maxWidth: .infinity)
-                    Spacer(minLength: 4)
-                    FaceTeam(name: a.home, abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, rank: a.homeRank, logo: a.homeLogo,
-                             ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), left: false)
                 }
-                .frame(height: 76)
+                .frame(width: 104)
+                .padding(.top, 4)
+                PillSide(name: a.home, abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, rank: a.homeRank, logo: a.homeLogo,
+                         score: pre ? nil : s.h, ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), trail: live && s.h < s.a, left: false)
+            }
 
-                if field || !down.isEmpty {
-                    HStack(spacing: 8) {
-                        if field {
-                            FieldBar(away: a.awayColor, home: a.homeColor, ball: s.yl ?? 50, start: s.ds)
-                        }
-                        if !down.isEmpty {
-                            Text(down)
-                                .font(SlateLook.bold(12))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                                .fixedSize(horizontal: !field ? false : true, vertical: false)
-                        }
-                        if !field { Spacer(minLength: 0) }
-                    }
-                    .frame(height: 14)
-                    .padding(.top, 2)
+
+                if field {
+                    FieldBar(away: SlateLook.panelHex(a.awayColor, a.awayAlt), home: SlateLook.panelHex(a.homeColor, a.homeAlt), ball: s.yl ?? 50, start: s.ds)
+                        .padding(.top, 6)
+                        .padding(.horizontal, 2)
                 }
 
                 if goals {
@@ -318,9 +304,8 @@ private struct LockCard: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 6)
                 }
-            }
-            .padding(EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
         }
+        .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
         .foregroundStyle(SlateLook.ink)
     }
 }
@@ -331,23 +316,44 @@ enum BallLook {
 }
 
 // a team's slanted color panel at its edge of the card (3.85.0); its inner edge leans toward the middle
-private struct SlantShape: Shape {
+struct SlantShape: Shape {
     let left: Bool
+    var inset: CGFloat? = nil   // 3.101.0: how far the inner edge leans in at the bottom, in points (else a quarter of the width)
     func path(in r: CGRect) -> Path {
         var p = Path()
+        let d = inset ?? r.width * 0.26
         if left {
             p.move(to: CGPoint(x: r.minX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
-            p.addLine(to: CGPoint(x: r.minX + r.width * 0.74, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+            p.addLine(to: CGPoint(x: r.maxX - d, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
         } else {
             p.move(to: CGPoint(x: r.minX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
-            p.addLine(to: CGPoint(x: r.maxX, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX + r.width * 0.26, y: r.maxY))
+            p.addLine(to: CGPoint(x: r.maxX, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX + d, y: r.maxY))
         }
         p.closeSubpath()
         return p
     }
 }
 
-private struct TeamPanel: View {
+// 3.101.0 (DJ): a third of the card wide, whatever the screen (the unfolded Duo's card is much wider), leaning in
+// only 16 points so the team's name sits inside it; a gray or near-black team color gives way to its second color
+struct TeamPanel: View {
+    let color: String
+    var alt: String? = nil
+    let left: Bool
+    var height: CGFloat = 104
+
+    var body: some View {
+        let c = Color(slateHex: SlateLook.panelHex(color, alt), fallback: SlateLook.raise)
+        SlantShape(left: left, inset: 16)
+            .fill(LinearGradient(colors: [c.opacity(0.62), c.opacity(0.3)], startPoint: left ? .leading : .trailing, endPoint: left ? .trailing : .leading))
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+    }
+}
+
+// 3.101.0 (DJ): a team's color filling a whole area with the slanted inner edge (the Dynamic Island's team halves),
+// bright at the outside edge and fading toward the middle; left: true for the away side
+struct TeamWash: View {
     let color: String
     let left: Bool
 
@@ -355,40 +361,78 @@ private struct TeamPanel: View {
         let c = Color(slateHex: color, fallback: SlateLook.raise)
         SlantShape(left: left)
             .fill(LinearGradient(colors: [c.opacity(0.62), c.opacity(0.3)], startPoint: left ? .leading : .trailing, endPoint: left ? .trailing : .leading))
-            .frame(width: 132, height: 104)
+    }
+}
+
+// 3.101.0: the dark band behind a Board tile's score, a little wider at the bottom like the gap between the card's panels
+struct BandShape: Shape {
+    var spread: CGFloat = 8
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX + spread, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX - spread, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        p.closeSubpath()
+        return p
     }
 }
 
 // a team on the face-off card: its logo (or chip) with the name under it, the football by the name when it has the ball
-private struct FaceTeam: View {
+// 3.101.0: one team on the Lock Screen card: a slanted pill of its color with its logo and big score (the score on
+// the inside, toward the clock), the football by the score when it has the ball, the team's name under the pill
+private struct PillSide: View {
     let name: String
     let abbr: String
     let color: String
     let alt: String?
     let rank: Int?
     let logo: String?
+    let score: Int?
     let ball: Bool
     let dim: Bool
+    let trail: Bool
     let left: Bool
 
     var body: some View {
         let hasLogo = SlateLogos.image(logo) != nil
-        VStack(spacing: 4) {
-            Chip(abbr: abbr, color: color, alt: alt, width: hasLogo ? 40 : 44, height: hasLogo ? 40 : 26, size: 14, logo: logo)
-                .frame(height: 40)
+        VStack(alignment: left ? .leading : .trailing, spacing: 5) {
+            HStack(spacing: 8) {
+                if !left {
+                    scoreView
+                    if ball { icon }
+                }
+                Chip(abbr: abbr, color: color, alt: alt, width: hasLogo ? 32 : 40, height: hasLogo ? 32 : 24, size: 13, logo: logo)
+                if left {
+                    if ball { icon }
+                    scoreView
+                }
+            }
+            .padding(.leading, left ? 10 : 20)
+            .padding(.trailing, left ? 20 : 10)
+            .frame(maxWidth: .infinity, alignment: left ? .leading : .trailing)
+            .frame(height: 48)
+            .background(TeamWash(color: SlateLook.panelHex(color, alt), left: left).clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous)))
             HStack(spacing: 4) {
-                if ball && !left { icon }
-                if let rank { Text("\(rank)").font(SlateLook.bold(10)).foregroundStyle(SlateLook.ink.opacity(0.75)) }
+                if let rank { Text("\(rank)").font(SlateLook.bold(10)).foregroundStyle(SlateLook.muted) }
                 Text(name)
                     .font(SlateLook.bold(13))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                if ball && left { icon }
             }
-            .shadow(color: .black.opacity(0.45), radius: 1, y: 1)
+            .padding(.horizontal, 4)
         }
-        .frame(width: 92)
+        .frame(maxWidth: .infinity)
         .opacity(dim ? 0.5 : 1)
+    }
+
+    @ViewBuilder
+    private var scoreView: some View {
+        if let score {
+            Text("\(score)")
+                .font(SlateLook.num(34))
+                .opacity(trail ? 0.6 : 1)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
     }
 
     private var icon: some View {
@@ -404,6 +448,8 @@ struct ClockTag: View {
     let text: String
     let live: Bool
     var size: CGFloat = 13
+    var height: CGFloat = 20
+    var fill: Color = SlateLook.raise   // the tag's color after the final
 
     var body: some View {
         HStack(spacing: 5) {
@@ -414,9 +460,9 @@ struct ClockTag: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .padding(.horizontal, 7)
-        .frame(height: 20)
-        .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(live ? SlateLook.live.opacity(0.16) : SlateLook.raise))
+        .padding(.horizontal, height < 20 ? 5 : 7)
+        .frame(height: height)
+        .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(live ? SlateLook.live.opacity(0.16) : fill))
     }
 }
 
@@ -577,17 +623,18 @@ private struct IslandTeam: View {
             if ball && chipFirst { icon }
             if !chipFirst { badge }
         }
+        // 3.101.0 (DJ): the team's color behind its whole side, logo and score, with the slant toward the camera
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(TeamWash(color: SlateLook.panelHex(color, alt), left: chipFirst).clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous)))
         .opacity(dim ? 0.5 : 1)
     }
 
-    // 3.85.0: the logo a little bigger, with a short bar of the team's color under it; the chip when there's no logo
+    // the logo a little bigger (3.85.0); the chip when there's no logo
     @ViewBuilder
     private var badge: some View {
         if SlateLogos.image(logo) != nil {
-            VStack(spacing: 3) {
-                Chip(abbr: abbr, color: color, alt: alt, width: 30, height: 30, logo: logo)
-                RoundedRectangle(cornerRadius: 1).fill(SlateLook.visible(color)).frame(width: 22, height: 3)
-            }
+            Chip(abbr: abbr, color: color, alt: alt, width: 30, height: 30, logo: logo)
         } else {
             Chip(abbr: abbr, color: color, alt: alt, width: 40, height: 24, logo: logo)
         }

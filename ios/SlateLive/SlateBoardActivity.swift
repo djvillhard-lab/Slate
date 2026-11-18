@@ -120,8 +120,9 @@ private struct BoardGrid: View {
     }
 }
 
-// one game: "KC 14 – 3 ATL" (the loser dimmed once it's final), or "KC at ATL" before kickoff; under it the clock
-// with a red dot while it's being played, "Final", or the start time and channel
+// one game, as a small face-off tile (3.101.0, DJ: match the new live notifications): each team's logo on a slanted
+// panel of its color at its side, the score in the middle with the clock in a small tag under it (red while live,
+// plain after the final, the loser dimmed), or before kickoff the start time and channel
 private struct BoardLine: View {
     let g: SlateBoardGame
     let dark: Bool
@@ -129,48 +130,71 @@ private struct BoardLine: View {
 
     var body: some View {
         let pre = BoardLook.pre(g), fin = g.s == "post", live = g.s == "in"
+        // 3.101.0 (DJ): the panels stay behind the logos, clear of the score; logos and scores as big as the tile allows
+        let h: CGFloat = dark ? 58 : 64, side: CGFloat = dark ? 42 : 46, logo: CGFloat = dark ? 28 : 32
         let under = BoardLook.under(g), playing = live && !under.lowercased().contains("half")
-        VStack(spacing: 3) {
-            HStack(spacing: 6) {
-                Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 34, height: 18, size: 10, stripe: 2, radius: 3, logo: g.al)
+        let bg = dark ? Color(slateHex: "#1C1C1E") : SlateLook.raise
+        ZStack {
+            // 3.101.0 (DJ): each team's color fills its half of the tile, and a dark band down the middle keeps the
+            // score clear, the same as the big card's panels with the dark gap between them
+            HStack(spacing: 0) {
+                wash(SlateLook.panelHex(g.ac, g.ax), left: true)
+                wash(SlateLook.panelHex(g.hc, g.hx), left: false)
+            }
+            BandShape(spread: 8).fill(bg).frame(width: dark ? 74 : 80)
+            HStack(spacing: 0) {
+                badge(abbr: g.aa, color: g.ac, alt: g.ax, logo: g.al, size: logo)
+                    .frame(width: side)
                     .opacity(fin && g.a < g.h ? 0.5 : 1)
-                if pre {
-                    Text("at").font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted)
-                } else {
-                    Text("\(g.a)").font(SlateLook.num(21)).opacity(fin && g.a < g.h ? 0.5 : 1)
-                    Text("–").font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted)
-                    Text("\(g.h)").font(SlateLook.num(21)).opacity(fin && g.h < g.a ? 0.5 : 1)
+                VStack(spacing: 4) {
+                    if pre {
+                        Text(g.d)
+                            .font(SlateLook.num(dark ? 17 : 20))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                        if let tv = g.tv, !tv.isEmpty {
+                            Text(tv).font(SlateLook.semi(10)).foregroundStyle(SlateLook.muted).lineLimit(1)
+                        }
+                    } else {
+                        HStack(spacing: 5) {
+                            Text("\(g.a)").opacity(fin && g.a < g.h || live && g.a < g.h ? 0.6 : 1)
+                            Rectangle().fill(SlateLook.ink.opacity(0.25)).frame(width: 2, height: dark ? 12 : 14)
+                            Text("\(g.h)").opacity(fin && g.h < g.a || live && g.h < g.a ? 0.6 : 1)
+                        }
+                        .font(SlateLook.num(dark ? 24 : 27))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        ClockTag(text: BoardLook.clock(g), live: playing, size: 11, height: 16, fill: dark ? Color.white.opacity(0.1) : SlateLook.card)
+                    }
                 }
-                Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 34, height: 18, size: 10, stripe: 2, radius: 3, logo: g.hl)
+                .frame(maxWidth: .infinity)
+                badge(abbr: g.ha, color: g.hc, alt: g.hx, logo: g.hl, size: logo)
+                    .frame(width: side)
                     .opacity(fin && g.h < g.a ? 0.5 : 1)
-            }
-            .lineLimit(1)
-            .frame(height: 22)
-            HStack(spacing: 4) {
-                if playing { Circle().fill(SlateLook.live).frame(width: 5, height: 5) }
-                Text(under)
-                    .font(SlateLook.num(11))
-                    .foregroundStyle(live ? SlateLook.live : fin ? SlateLook.ink : SlateLook.muted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            // 3.64.0: the slate card's one-liner, small and quiet (two lines on the Lock Screen when there's one row of games)
-            if let ln = g.ln, !ln.isEmpty, !fin {
-                Text(ln)
-                    .font(SlateLook.semi(10))
-                    .foregroundStyle(SlateLook.muted)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(lines)
-                    .minimumScaleFactor(0.9)
-                    .padding(.top, 1)
             }
         }
         .foregroundStyle(SlateLook.ink)
-        .padding(EdgeInsets(top: 7, leading: 6, bottom: 6, trailing: 6))
         .frame(maxWidth: .infinity)
-        .background(dark ? Color.white.opacity(0.09) : SlateLook.raise, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .frame(height: h)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(BoardLook.spoken(g) + ((g.ln ?? "").isEmpty || fin ? "" : ". " + (g.ln ?? ""))))
+        .accessibilityLabel(Text(BoardLook.spoken(g)))
+    }
+
+    private func wash(_ hex: String, left: Bool) -> some View {
+        let c = Color(slateHex: hex, fallback: SlateLook.raise)
+        return LinearGradient(colors: [c.opacity(0.62), c.opacity(0.35)], startPoint: left ? .leading : .trailing, endPoint: left ? .trailing : .leading)
+    }
+
+    // the team's logo, or its small chip when the app hasn't saved one
+    @ViewBuilder
+    private func badge(abbr: String, color: String, alt: String?, logo: String?, size: CGFloat) -> some View {
+        if SlateLogos.image(logo) != nil {
+            Chip(abbr: abbr, color: color, alt: alt, width: size, height: size, logo: logo)
+        } else {
+            Chip(abbr: abbr, color: color, alt: alt, width: 34, height: 18, size: 10, stripe: 2, radius: 3, logo: logo)
+        }
     }
 }
 
@@ -262,8 +286,8 @@ private struct BoardChips: View {
             // before kickoff: both chips left of the camera, the countdown (or start time) right of it
             if leading {
                 HStack(spacing: 3) {
-                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.al)
-                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.hl)
+                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: SlateLogos.image(g.al) != nil ? 20 : 26, height: SlateLogos.image(g.al) != nil ? 20 : 16, size: 10, stripe: 2, radius: 3, logo: g.al)
+                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: SlateLogos.image(g.hl) != nil ? 20 : 26, height: SlateLogos.image(g.hl) != nil ? 20 : 16, size: 10, stripe: 2, radius: 3, logo: g.hl)
                 }
             } else {
                 BoardKickoff(g: g, size: 15, width: 46)
@@ -271,11 +295,11 @@ private struct BoardChips: View {
         } else {
             HStack(spacing: 5) {
                 if leading {
-                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.al)
+                    Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: SlateLogos.image(g.al) != nil ? 20 : 26, height: SlateLogos.image(g.al) != nil ? 20 : 16, size: 10, stripe: 2, radius: 3, logo: g.al)
                     Text("\(g.a)").font(SlateLook.num(15)).foregroundStyle(.white)
                 } else {
                     Text("\(g.h)").font(SlateLook.num(15)).foregroundStyle(.white)
-                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 26, height: 16, size: 10, stripe: 2, radius: 3, logo: g.hl)
+                    Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: SlateLogos.image(g.hl) != nil ? 20 : 26, height: SlateLogos.image(g.hl) != nil ? 20 : 16, size: 10, stripe: 2, radius: 3, logo: g.hl)
                 }
             }
         }
