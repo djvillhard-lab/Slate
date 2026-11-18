@@ -79,3 +79,7 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 ## 3.97.0: page limit (DJ: "not more than 10 live games ... no more than about 15 or 20")
 - Replaces 3.96's per-section Show more. `section()` queues every game of an open section (live, then on your slate, then the rest); `agWindow()` keeps at most `AG_PAGE` = 16 cards and `AG_LIVE` = 10 live ones on the page, drops sections with nothing on this page (folded ones stay), and adds "‹ Previous" / "Next games (N more) ›" (right side, 96px clear of the date and menu buttons). The page starts over for a new day, tab, filter, Live or search (`agPageKey`). Headers still show each league's full count.
 - If DJ still sees freezes, the next lever is removing sub-filters, which DJ offered; not needed so far.
+
+## 3.97.2: tabs and taps (DJ's phone log on 3.96.3)
+- Taps on the league tabs were lost (downs, no click) while `render()` ran about every 1.5s; renderTop rebuilt the tab row and the filter row on every render. The tab row now rebuilds only when its options or the picked league change (`sp._sig`), and the filter row is built aside and swapped in only when its HTML differs.
+- `render()` (240-chrome.js) is held while a finger is down and until 0.4s after it lifts (`renderHeld`, using `agBusy`/`agTapping` from this file), unless the click itself asked for it. This covers every page.

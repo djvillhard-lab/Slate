@@ -97,7 +97,7 @@
     $("nav-lineup").hidden = isDuo;
 
     // league strip (games)
-    var sp = $("strip"); sp.textContent = "";
+    var sp = $("strip");
     var gs = visibleGames(), present = {};
     gs.forEach(function (g) { present[g.league] = true; });
     // every league is always there to pick: ones playing today first, the rest dimmed
@@ -105,6 +105,10 @@
     // until DJ picks one, the filter follows the default (My teams when any play, otherwise the first league)
     // a league you picked stays picked when you change the day, even on a day it has no games (or while the day loads)
     if (state.leagueAuto !== false || !opts.some(function (o) { return o[0] === state.league; })) { state.league = firstOpt(opts); state.leagueAuto = true; }
+    // 3.97.2 (DJ's phone log: taps on the league tabs lost): the tabs are only rebuilt when they actually change, so a
+    // score update never swaps a tab out from under a finger
+    var spSig = JSON.stringify([opts, state.league]);
+    if (sp._sig !== spSig) { sp._sig = spSig; sp.textContent = "";
     opts.forEach(function (o) {
       var b = el("button", "lg-tab" + (o[2] ? " none" : ""), o[1]); b.type = "button";
       if (o[0] === "fav") b.setAttribute("aria-label", "My teams");
@@ -114,11 +118,11 @@
       sp.appendChild(b);
     });
     var eb = el("button", "lg-tab lg-edit"); eb.type = "button"; eb.setAttribute("aria-label", "Edit tabs: order and which leagues show");
-    eb.appendChild(icon("sliders")); eb.addEventListener("click", function () { openSub("tabs"); }); sp.appendChild(eb);
+    eb.appendChild(icon("sliders")); eb.addEventListener("click", function () { openSub("tabs"); }); sp.appendChild(eb); }
     sp.hidden = v !== "games" || !gs.length;
 
     // conference sub-strip (college leagues)
-    var ss = $("substrip"), ssX = ss.scrollLeft; ss.textContent = "";
+    var ssR = $("substrip"), ssX = ssR.scrollLeft, ss = document.createElement("div");  // built aside, swapped in only if it changed (3.97.2)
     var showConf = v === "games" && !!LEAGUES[state.league];
     if (v === "games" && state.league === "all") {
       if (["all", "best", "nat"].indexOf(state.conf) === -1) state.conf = "all";
@@ -157,10 +161,13 @@
         ss.appendChild(b);
       });
     }
+    var ssNew = ss.innerHTML !== ssR.innerHTML;
+    if (ssNew) { ssR.textContent = ""; while (ss.firstChild) ssR.appendChild(ss.firstChild); }
+    ss = ssR;
     ss.hidden = !(showConf || v === "tv" || (v === "games" && state.league === "all")) || !ss.childNodes.length;
     // a redraw used to snap the row back to its start, hiding the filter you'd just picked: keep the row where it was,
     // then make sure the picked one is in view (3.52.9)
-    if (!ss.hidden) { ss.scrollLeft = ssX; var ssOn = ss.querySelector('[aria-pressed="true"]'); if (ssOn) try { ssOn.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
+    if (!ss.hidden && ssNew) { ss.scrollLeft = ssX; var ssOn = ss.querySelector('[aria-pressed="true"]'); if (ssOn) try { ssOn.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
 
     // date strip (games)
     var ds = $("dates"); ds.textContent = "";
@@ -271,7 +278,15 @@
     if (!max) return;
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) + "px");
   }
-  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); updateTeamAccent(); renderTop();
+  // 3.97.2: an iPhone drops a tap when the page changes under the finger (DJ's phone log). A redraw that isn't the tap's
+  // own waits from touch until 0.4s after lifting (agBusy and agTapping live in 160-all-games.js), then runs once.
+  var rdPending = false;
+  function renderHeld() {
+    if (typeof agBusy !== "function" || agTapping || !agBusy()) return false;
+    if (!rdPending) { rdPending = true; (function wait() { setTimeout(function () { if (agBusy()) wait(); else { rdPending = false; render(); } }, 150); })(); }
+    return true;
+  }
+  function render() { if (renderHeld()) return; keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); updateTeamAccent(); renderTop();
     // 3.95.1 (speed): renderTop has just shown the page on screen and hidden the rest. Only pages on screen are redrawn;
     // a hidden page is redrawn when it's opened (every way of opening a page calls render). Before, each live score
     // update rebuilt all fourteen pages, which froze taps for a moment on a phone with 20 live games.
