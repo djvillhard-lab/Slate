@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.96.3 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- All games: the Live button and games take your tap again on College Hoops. The log from DJ's phone showed five taps landing right on Live and none going through, while the page was redrawing itself about twice a second; an iPhone drops a tap when the page changes under it. Now nothing on All games changes from the moment your finger touches until just after you lift it.
+- Behind the scenes: the tap check also records what keeps asking All games to redraw, to stop it at the source.
+
 ## 3.96.2 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - All games: the league tabs with lots of games (College Hoops, Women's College Hoops, College Football) now start with 12 games instead of 20, with live games first, and "Show 12 more games" adds the next batch. ALL keeps 6 per league.

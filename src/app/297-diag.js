@@ -32,14 +32,19 @@
     // the page froze: a timer meant to run every 100ms ran late
     var tick = Date.now();
     setInterval(function () { var n = Date.now(), late = n - tick - 100; tick = n; if (late > 250 && document.visibilityState === "visible") add({ k: "freeze", ms: late }); }, 100);
-    window.slateDiagRender = function () { renders++; };
+    var why = {};
+    window.slateDiagRender = function (st) {   // what asked for each All games redraw (function names only), counted
+      renders++;
+      var k = String(st || "").split("\n").slice(1, 9).map(function (l) { var m = l.trim().match(/^(?:at )?([\w$.<>]*)/); return (m && m[1]) || "?"; }).filter(Boolean).join("<").slice(0, 160);
+      why[k] = (why[k] || 0) + 1;
+    };
     function send() {
       if (!on() || !LOG.length) return;
       var p = ""; try { p = localStorage.getItem("slate-pass") || ""; } catch (e) {}
       if (!p) return;
       var body = { pass: p, diag: { ver: SLATE_VERSION, build: (window.SLATE_NATIVE && window.SLATE_NATIVE.build) || "", app: window.SLATE_NATIVE ? (window.SLATE_NATIVE.app || "yes") : "", pane: /[?&]pane=/.test(location.search) ? location.search : "",
-        w: window.innerWidth, h: window.innerHeight, ua: navigator.userAgent.slice(0, 160), sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller), renders: renders, at: new Date().toISOString(), log: LOG.splice(0) } };
-      renders = 0;
+        w: window.innerWidth, h: window.innerHeight, ua: navigator.userAgent.slice(0, 160), sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller), renders: renders, why: JSON.stringify(why).slice(0, 190), at: new Date().toISOString(), log: LOG.splice(0) } };
+      renders = 0; why = {};
       try { fetch("/api/usage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), keepalive: true }).then(null, function () {}); } catch (e) {}
     }
     setInterval(send, 30000);

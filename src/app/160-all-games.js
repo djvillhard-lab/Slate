@@ -330,15 +330,22 @@
   // 3.96.0: never redraw under a finger. A redraw replaces the Live button, the headers and changed cards; if that
   // happens between touching one and letting go, the tap is lost (DJ: "can't select games or hit the live button").
   // A redraw asked for while a finger is down waits until it lifts.
-  var agDown = false, agPending = false;
+  var agDown = false, agPending = false, agUpAt = 0, agHoldT = null;
+  // 3.96.3 (DJ's phone log: five taps on Live, none went through, while All games redrew about 2.5 times a second):
+  // iPhone drops a tap when the page changes under it, also just after the finger lifts, before the tap is delivered.
+  // So nothing on All games changes from the moment a finger touches until 0.4s after it lifts; then it catches up.
+  function agBusy() { return agDown || Date.now() - agUpAt < 400; }
+  function agAfter(fn) { clearTimeout(agHoldT); agHoldT = setTimeout(function () { if (agBusy()) agAfter(fn); else fn(); }, Math.max(30, 420 - (Date.now() - agUpAt))); }
   ["pointerdown", "touchstart"].forEach(function (t) { window.addEventListener(t, function () { agDown = true; }, { capture: true, passive: true }); });
   ["pointerup", "pointercancel", "touchend", "touchcancel"].forEach(function (t) { window.addEventListener(t, function () {
-    agDown = false;
-    if (agPending) setTimeout(function () { if (agDown || !agPending) return; agPending = false; if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); }, 60);
+    agDown = false; agUpAt = Date.now();
+    if (agPending) agAfter(function () { if (!agPending) return; agPending = false; if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); });
   }, { capture: true, passive: true }); });
+  var agTapping = false;  // a redraw the tap itself asked for (the Live button, Show more, a header) runs at once
+  window.addEventListener("click", function () { agTapping = true; setTimeout(function () { agTapping = false; }, 0); }, true);
   renderGames = function () {
-    if (agDown && $("games-body") && $("games-body").childNodes.length) { agPending = true; return; }
-    agPending = false; if (window.slateDiagRender) window.slateDiagRender();
+    if (!agTapping && agBusy() && $("games-body") && $("games-body").childNodes.length) { agPending = true; if (!agDown) agAfter(function () { if (!agPending) return; agPending = false; if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); }); return; }
+    agPending = false; if (window.slateDiagRender) window.slateDiagRender(new Error().stack);
     var body = $("games-body"), gen = ++agGen; clearTimeout(agBatchT);
     agOld = {}; if (body) Array.prototype.forEach.call(body.querySelectorAll(".g.panel[data-gid]"), function (r) { agOld[r.dataset.gid] = r; });
     var had = Object.keys(agOld).length;
@@ -352,6 +359,7 @@
     } catch (e) {}
     var more = function () {
       if (gen !== agGen) return;
+      if (agBusy()) { agBatchT = setTimeout(more, 150); return; }  // not while a finger is on the page
       var m = agDraw(12);
       try { if (agWiden(m)) agFitNames(); else agFitNames(m); } catch (e) {}
       if (agQ.length) agBatchT = setTimeout(more, 24);

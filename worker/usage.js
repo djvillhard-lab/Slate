@@ -96,7 +96,7 @@ export async function usageRoute(req, env, url, h) {
     let doc = { sends: [] };
     try { const cur = await getDoc(env, path); if (cur && cur.enc) doc = await open(env, cur.enc); } catch (e) { doc = { sends: [] }; }
     const d = p.diag, log = Array.isArray(d.log) ? d.log.slice(-150) : [];
-    const head = {}; for (const k of ["ver", "build", "app", "pane", "w", "h", "ua", "sw", "renders", "at"]) if (d[k] !== undefined) head[k] = String(d[k]).slice(0, 200);
+    const head = {}; for (const k of ["ver", "build", "app", "pane", "w", "h", "ua", "sw", "renders", "why", "at"]) if (d[k] !== undefined) head[k] = String(d[k]).slice(0, 200);
     head.got = new Date().toISOString();
     const clean = log.map((e) => { const o = {}; if (e && typeof e === "object") for (const k of Object.keys(e).slice(0, 12)) o[String(k).slice(0, 12)] = typeof e[k] === "number" || typeof e[k] === "boolean" ? e[k] : String(e[k]).slice(0, 200); return o; });
     doc.sends = (doc.sends || []).concat([{ head, log: clean }]);
