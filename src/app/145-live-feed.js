@@ -20,7 +20,7 @@
     if (state.view !== "feed") { FD.from = g.id;
       // 3.70.0 (DJ): which live games the switcher and the swipe go through depends on where you opened the feed. All games on a league's tab: that league.
       // All games on All, Live or My teams: every live game. Anywhere else: your slate when the game is on it, else the game's league.
-      FD.scope = state.view === "games" ? (LEAGUES[state.league] ? state.league : "all") : inLineup(g.id) ? "slate" : g.league; }  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
+      FD.scope = state.view === "games" && LEAGUES[state.league] ? state.league : inLineup(g.id) ? "slate" : g.league; }  /* DJ, Nov 17: the "All" tab is gone, so All games' own ALL tab opens the feed on My slate or the game's league */  // 3.66.9: the game the page was opened from stays in the switcher  // opening the feed is asking to see the score
     if (state.feedId !== g.id) { var c0 = bx.live[g.id]; state.feedId = g.id; clearTimeout(FD.dt); FD.bufs = FD.bufs || {}; Object.keys(FD.bufs).forEach(function (k) { if (k !== g.id) delete FD.bufs[k]; });
       FD.sum = fdDelay(g.id) ? ((FD.last || {})[g.id] || null) : ((c0 && c0.sum) || null); /* a delayed game comes back where you left it, not at ESPN's latest */ FD.id = FD.sum ? g.id : null; FD.seen = null; FD.more = 0; FD.scOnly = fdQuietStart(g); /* a finished football game opens on its scoring plays */ FD.sig = null; FD.err = 0; clearTimeout(FD.t); FD.t = null; }
     if (state.view === "feed") { renderFeed(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); } else { FD.more = 0; FD.scOnly = fdQuietStart(g); openSub("feed"); }  // coming back to the page starts folded up
@@ -368,7 +368,7 @@
   // the filters above the switcher (3.70.0): My slate, All live, then each league with a live game that has a feed. Picking one whose games
   // don't include the game on screen opens its first game.
   function fdFilters(g) {
-    var sc = FD.scope || "slate", lgs = {}, opts = [["slate", "My slate"], ["all", "All"]];
+    var sc = FD.scope || "slate", lgs = {}, opts = [["slate", "My slate"]]; if (sc === "all") sc = FD.scope = "slate";  /* DJ, Nov 17: no "All" tab */
     games().forEach(function (x) { if (feedLive(x)) lgs[x.league] = 1; });
     if (LEAGUES[sc]) lgs[sc] = 1;
     Object.keys(LEAGUES).forEach(function (k) { if (lgs[k]) opts.push([k, LEAGUES[k].tag || LEAGUES[k].name]); });
