@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 18, 2026, 3.104.1
+Last updated: Nov 18, 2026, 3.105.1
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -90,7 +90,7 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - Lost taps (3.100.6, DJ's phone log): `renderNews` waits while a finger is down and 0.4s after (agBusy/agTapping from
   160-all-games.js); `renderNews(true)` for swipe, league tab pick, opening/closing a breakdown. The redraw loop came from
   3.94.2's logo change (an empty ESPN league list was re-fetched on every missing logo); reverted the due rule.
-- Logos (3.104.1, DJ's picker showed DAY/SIUE/MAN/STL letters): lists saved empty on a phone are refetched (once per two
+- Logos (3.105.1, DJ's picker showed DAY/SIUE/MAN/STL letters): lists saved empty on a phone are refetched (once per two
   minutes, `tried` stamp), 25s cap per download, localStorage key now slate-logos-v2 (fresh start). 045-team-logos.js.
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
