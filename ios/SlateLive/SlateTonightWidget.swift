@@ -40,12 +40,13 @@ struct TonightProvider: TimelineProvider {
 }
 
 enum TonightLook {
-    // the next games at this moment: live ones first, then by start time; finals and long-started games left out
+    // the next games at this moment: live ones (and finals from the last 30 minutes, 3.113.0) first, then by start
+    // time; older finals and long-started games left out
     static func next(_ d: SlateTonight?, at now: Date, count: Int = 3) -> [SlateBoardGame] {
         guard let d, now.timeIntervalSince1970 - d.at < 20 * 3600 else { return [] }
         let n = now.timeIntervalSince1970
         let left = d.games.filter { g in
-            if g.s == "post" { return false }
+            if g.s == "post" { return recentFinal(g, now) }
             if let t = g.t, t > 0, n - t > 4 * 3600 { return false }
             return true
         }
@@ -54,6 +55,12 @@ enum TonightLook {
             if lp != lq { return lp }
             return (p.t ?? 0) < (q.t ?? 0)
         }.prefix(count).map { $0 }
+    }
+
+    // DJ (3.113.0): a finished game stays 30 minutes after it ends, like the live notifications
+    static func recentFinal(_ g: SlateBoardGame, _ now: Date) -> Bool {
+        guard g.s == "post", let e = g.e, e > 0 else { return false }
+        return now.timeIntervalSince1970 - e < 30 * 60
     }
 
     static func started(_ g: SlateBoardGame, _ now: Date) -> Bool {
@@ -70,7 +77,7 @@ enum TonightLook {
     // shows "Live" and its channel in place of the start time (never a stale or made-up score)
     static func tile(_ g: SlateBoardGame, now: Date, fresh: Bool) -> SlateBoardGame {
         var t = g
-        if g.s == "in" && fresh { return t }
+        if g.s == "post" || (g.s == "in" && fresh) { return t }
         if started(g, now) { t.s = "pre"; t.d = "Live"; return t }
         if g.s == "pre" { t.d = time(g) }
         return t
@@ -92,7 +99,7 @@ struct TonightView: View {
         let list = TonightLook.next(entry.data, at: entry.date, count: large ? 8 : 3)
         let fresh = TonightLook.fresh(entry.data, entry.date)
         let small = family == .systemSmall
-        let left = large ? TonightLook.next(entry.data, at: entry.date, count: 99).count : 0
+        let left = large ? TonightLook.next(entry.data, at: entry.date, count: 99).filter { $0.s != "post" }.count : 0
         VStack(alignment: .leading, spacing: small ? 6 : 7) {
             HStack(spacing: 5) {
                 SlateMark(size: 15)   // 3.113.0 (DJ): the Slate axe-hammer by the title
@@ -118,12 +125,24 @@ struct TonightView: View {
             } else if large {
                 // 3.113.0 (DJ): the large size in the live notifications' new look, 8 games in 2 columns of 4: each team
                 // a slanted pill of its color with its logo and score, the clock or start time under them
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    ForEach(list, id: \.id) { g in
-                        Link(destination: SlateLook.gameURL(g.id)) { TonightTile(g: TonightLook.tile(g, now: entry.date, fresh: fresh)) }
+                // DJ: no empty space under it, so the four rows share the widget's whole height (an empty slot stays
+                // blank when fewer than eight games are left)
+                VStack(spacing: 10) {
+                    ForEach(0..<4, id: \.self) { r in
+                        HStack(spacing: 10) {
+                            ForEach(0..<2, id: \.self) { c in
+                                let i = r * 2 + c
+                                if i < list.count {
+                                    Link(destination: SlateLook.gameURL(list[i].id)) { TonightTile(g: TonightLook.tile(list[i], now: entry.date, fresh: fresh), fill: true) }
+                                } else {
+                                    Color.clear
+                                }
+                            }
+                        }
+                        .frame(maxHeight: .infinity)
                     }
                 }
-                Spacer(minLength: 0)
+                .frame(maxHeight: .infinity)
             } else {
                 ForEach(list, id: \.id) { g in
                     if small {
@@ -149,7 +168,7 @@ private struct TonightRow: View {
     let fresh: Bool
 
     var body: some View {
-        let on = TonightLook.started(g, now), score = on && fresh && g.s == "in"
+        let on = TonightLook.started(g, now), score = g.s == "post" || (on && fresh && g.s == "in")
         HStack(spacing: 6) {
             Rectangle().fill(SlateLook.visible(SlateLook.panelHex(g.ac, g.ax))).frame(width: 3, height: 26)
             Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 22, height: 22, size: 9, stripe: 2, radius: 3, logo: g.al)
@@ -172,7 +191,7 @@ private struct TonightSmallRow: View {
     let fresh: Bool
 
     var body: some View {
-        let on = TonightLook.started(g, now), score = on && fresh && g.s == "in"
+        let on = TonightLook.started(g, now), score = g.s == "post" || (on && fresh && g.s == "in")
         HStack(spacing: 4) {
             Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 20, height: 20, size: 8, stripe: 2, radius: 3, logo: g.al)
             if score { Text("\(g.a)–\(g.h)").font(SlateLook.num(15)).lineLimit(1) }
@@ -193,13 +212,13 @@ private struct TonightStatus: View {
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
             if on {
-                ClockTag(text: score ? BoardLook.clock(g) : "Live", live: true, size: compact ? 11 : 12, height: compact ? 16 : 18)
+                ClockTag(text: g.s == "post" ? "Final" : score ? BoardLook.clock(g) : "Live", live: g.s != "post", size: compact ? 11 : 12, height: compact ? 16 : 18)
             } else {
                 Text(TonightLook.time(g))
                     .font(SlateLook.num(compact ? 14 : 16))
                     .lineLimit(1)
             }
-            if let tv = g.tv, !tv.isEmpty {
+            if let tv = g.tv, !tv.isEmpty, g.s != "post" {
                 Text(tv)
                     .font(SlateLook.semi(compact ? 10 : 11))
                     .foregroundStyle(SlateLook.muted)
@@ -236,6 +255,7 @@ struct TonightTile: View {
     let g: SlateBoardGame
     var dark = false   // the Dynamic Island: a little smaller, on black
     var pillHeight: CGFloat? = nil   // 3.113.0: the Board's Lock Screen, under its header
+    var fill = false   // 3.113.0: the large widget, where the pills grow to fill the row
 
     var body: some View {
         let pre = BoardLook.pre(g), live = g.s == "in", fin = g.s == "post"
@@ -244,7 +264,8 @@ struct TonightTile: View {
                 pill(abbr: g.aa, color: g.ac, alt: g.ax, logo: g.al, score: pre ? nil : g.a, other: g.h, left: true, fin: fin, live: live)
                 pill(abbr: g.ha, color: g.hc, alt: g.hx, logo: g.hl, score: pre ? nil : g.h, other: g.a, left: false, fin: fin, live: live)
             }
-            .frame(height: pillHeight ?? (dark ? 38 : 42))
+            .frame(minHeight: fill ? 42 : nil, idealHeight: fill ? 42 : nil, maxHeight: fill ? .infinity : nil)
+            .frame(height: fill ? nil : pillHeight ?? (dark ? 38 : 42))
             if pre && g.d != "Live" {
                 Text([g.d, g.tv ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(SlateLook.semi(11))

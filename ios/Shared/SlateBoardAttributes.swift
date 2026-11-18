@@ -33,4 +33,5 @@ struct SlateBoardGame: Codable, Hashable {
     var ln: String?           // 3.64.0: the slate card's one-liner (the live line while it's on, the preview line before)
     var al: String?           // 3.67.0: away and home logos ("nba/bos.png"), drawn in place of the chips once the app has saved them
     var hl: String?
+    var e: Double?            // 3.113.0: when the app saw the game go final (seconds), so the widget keeps a final 30 minutes
 }

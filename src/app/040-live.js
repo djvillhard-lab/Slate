@@ -306,20 +306,38 @@
     db.doc("prefs/livebets").set({ date: state.date, bets: bets, updatedAt: new Date().toISOString() }).then(null, function () { laBetsSent = ""; });
   }
   // 3.112.0: the Tonight's slate widget on the iPhone home screen. The app saves this list for the widget, which shows
-  // the next three games that haven't finished (start time and channel, or the score while it's on).
+  // the next games that haven't finished, plus finals from the last 30 minutes (3.113.0).
   // Sent once per change; builds before 3.112.0 ignore it.
-  var laSlateSent = "";
+  var laSlateSent = "", laEnds = null;
+  // 3.113.0 (DJ): a finished game stays on the widget 30 minutes after it ends. ESPN gives no end time, so the app notes
+  // when it sees a game it had seen live go final (kept for the day, so a restart doesn't reset it). A game that was
+  // already final when the app first saw it has no end time and is left off.
+  function laEndOf(g, st, now) {
+    if (!laEnds || laEnds.date !== state.date) {
+      laEnds = null; try { laEnds = JSON.parse(localStorage.getItem("slate.widgetEnds") || "null"); } catch (e) {}
+      if (!laEnds || laEnds.date !== state.date) laEnds = { date: state.date, live: {}, end: {} };
+    }
+    var id = String(g.id), ch = false;
+    if (st === "in" && !laEnds.live[id]) { laEnds.live[id] = 1; ch = true; }
+    if (st === "post" && laEnds.live[id] && !laEnds.end[id]) { laEnds.end[id] = now; ch = true; }
+    if (ch) try { localStorage.setItem("slate.widgetEnds", JSON.stringify(laEnds)); } catch (e) {}
+    return st === "post" ? laEnds.end[id] || 0 : 0;
+  }
   function laSlateWidget() {
     if (!NATIVE || state.date !== todayInHome() || !state.slateIds) return;
     var byId = {}; games().forEach(function (g) { byId[g.id] = g; });
+    var now = Math.floor(Date.now() / 1000);
     var list = state.slateIds.map(function (id) { return byId[id]; }).filter(Boolean).map(function (g) {
-      var at = laAttrsOf(g), s = laStateOf(g), kick = new Date(g.moved || g.start).getTime();
+      var at = laAttrsOf(g), s = laStateOf(g), kick = new Date(g.moved || g.start).getTime(), end = laEndOf(g, String(s.state), now);
       var o = { id: String(g.id), aa: String(at.awayAbbr || ""), ha: String(at.homeAbbr || ""), ac: String(at.awayColor || ""), hc: String(at.homeColor || ""), ax: String(at.awayAlt || ""), hx: String(at.homeAlt || ""),
         a: Math.round(Number(s.a)) || 0, h: Math.round(Number(s.h)) || 0, d: String(s.detail || "").slice(0, 24), s: String(s.state) };
       if (at.awayLogo) o.al = at.awayLogo; if (at.homeLogo) o.hl = at.homeLogo;
       if (kick > 0) o.t = Math.floor(kick / 1000); if (at.channel) o.tv = String(at.channel).slice(0, 16);
+      if (end) o.e = end;
       return o;
-    }).sort(function (p, q) { return (p.t || 0) - (q.t || 0); }).slice(0, 12);
+      // finals more than 30 minutes old leave the list, so the twelve sent are the ones the widget can still show
+    }).filter(function (o) { return o.s !== "post" || (o.e && now - o.e < 1800); })
+      .sort(function (p, q) { return (p.t || 0) - (q.t || 0); }).slice(0, 12);
     var k = JSON.stringify(list); if (k === laSlateSent) return;
     laSlateSent = k; nativePost({ t: "slate", date: state.date, at: Math.floor(Date.now() / 1000), games: list });
   }

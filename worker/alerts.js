@@ -5,7 +5,7 @@
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const VAPID_PUBLIC = "BGOiSg4w33W5Lui867BMvNq2fDnRLjdoOADhr5Vx_C2gOaibYV8joMK8K6ibx9o8sZFByk_K107NupNiJNORWNY";
-const LA_LINGER = 20 * 60;  // 3.112.0: a finished game's live notification stays this many seconds after the final (DJ: end 15 to 30 minutes after)
+const LA_LINGER = 30 * 60;  // a finished game's live notification stays this many seconds after the final (3.112.0: 20 minutes; 3.113.0, DJ: 30)
 const PATHS = {
   nfl: ["football/nfl"], ncaaf: ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
   nba: ["basketball/nba"], wnba: ["basketball/wnba"], ncaam: ["basketball/mens-college-basketball&groups=50&limit=500"],
@@ -358,7 +358,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
       // one started for a finished game has no token for a moment: wait a few minutes for it, so it can be ended properly
       if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; continue; }
       cur.end = 1;
-      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + LA_LINGER }, 10);  // 3.112.0: the final score stays about 20 minutes, then it goes (was 4 hours)
+      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + LA_LINGER }, 10);  // the final score stays 30 minutes (3.113.0), then it goes (was 4 hours)
       continue;
     }
     if (!tok || cur.k === key) continue;
@@ -430,7 +430,7 @@ async function runBoard(env, p, sent, la, games, sc) {
   }
   if (cur.end) return gone;
   if (done) {
-    // all four over: ended with the finals showing (about 20 minutes, 3.112.0); a new one waits a few minutes for its token
+    // all four over: ended with the finals showing (30 minutes, 3.113.0); a new one waits a few minutes for its token
     if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; return gone; }
     cur.end = 1;
     if (tok) await sendLive(env, tok, "end", { "content-state": state, "dismissal-date": Math.floor(now / 1000) + LA_LINGER }, 10);

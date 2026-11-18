@@ -9,12 +9,16 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
     added in 3.113.0 at DJ's ask: 8 games in 2 columns of 4 as TonightTile: two LeanShape pills (fixed 10 pt lean,
     parallel inner edges so all slants line up) with logo + score, clock/start under them. The Board activity's
     BoardGrid uses the same TonightTile (dark in the island) since 3.113.0; BoardLine is no longer used. SlateMark (ios/SlateLive/SlateMark.swift, the app's svg.brand redrawn as
-    Paths, SlateLook.accent green) on every live notification view (LockCard league line, Board Lock Screen header, expanded island by the clock, Board island title, compact leading before the start, Watch) and every widget size; not in minimal/narrow; plus
+    Paths, SlateLook.accent green) on every live notification view (LockCard: a top-left header row with the league, DJ wanted it fixed top left like the others; Board Lock Screen header, expanded island by the clock, Board island title, compact leading before the start, Watch) and every widget size; not in minimal/narrow; plus
     "N games left"; started games without a recent score show "Live" + channel; the page sends up to 12). The page
     sends `{t:"slate", date, at, games:[SlateBoardGame…]}` from livePoll (040-live.js laSlateWidget, once per change);
     WebModel saves it to the app group as tonight.json (`ios/Shared/SlateTonight.swift`) and reloads the widget.
     Timeline: every 15 min for 6 h plus each start; next 3 not-final games, live first; score hidden after 20 min stale;
     started > 4 h ago = over; data older than 20 h = "Open Slate".
+    3.113.0 (DJ): finals stay 30 min. ESPN has no end time, so the page notes it (laEndOf, localStorage
+    slate.widgetEnds, per day) when a game it saw live goes final and sends it as `e`; finals with no `e` or older
+    than 30 min are dropped. The large size is 4 fixed rows that stretch to the full height (TonightTile fill:true),
+    empty slots blank. LA_LINGER (worker) is 30 min for game card, Board and broadcast finals.
   - Your bet on the card: attributes.bet (SlateBet l/k/sd/ou/ln/d3), first of mybFor(g). The app sends it at start
     (laAttrsOf → laBetOf); the phone also shares today's bets to prefs/livebets (laBetsShare) so the worker's
     push-to-start has it (LBT in laAttrs). Status worked out in Swift (BetLook.say) from the score, like mybSay.
