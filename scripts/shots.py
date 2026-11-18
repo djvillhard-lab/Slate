@@ -10,7 +10,7 @@
     python3 scripts/shots.py lineup --gate                                  (the log-in page; --gate invite = the sign-up page)
     SLATE_PASS=... python3 scripts/shots.py settings --readonly --name welcome-2 --eval "document.querySelector('#acct button').click(); document.querySelector('.wl-next').click()"
 
-Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --tap "sel" (a real finger tap on the first visible match, after --click), --tomorrow (the slate's next day:
+Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --tap "sel" (a real finger tap on the first visible match, after --click), --yesterday (the day before: finished games), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
 --eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
 --pane left|right (open Duo: which side the page, game, filters and --click go to; default right; --eval runs on the whole screen),
@@ -75,6 +75,7 @@ def main():
         if a == "--league": league = args[i + 1]; i += 2; continue
         if a == "--filter": filt = args[i + 1]; i += 2; continue
         if a == "--tomorrow": tomorrow = True; i += 1; continue
+        if a == "--yesterday": tomorrow = "prev"; i += 1; continue  # the day before: finished games
         if a == "--full": full = True; i += 1; continue
         if a == "--eval": ev = args[i + 1]; i += 2; continue
         if a == "--name": name = args[i + 1]; i += 2; continue
@@ -143,7 +144,7 @@ def main():
                 try: page.wait_for_selector(".wl-skip", timeout=5000); page.click(".wl-skip"); page.wait_for_timeout(800)
                 except Exception: pass
             if S["inset"]: page.evaluate("SlateApp.setInset(%d)" % S["inset"]); page.wait_for_timeout(400)
-            if tomorrow: page.evaluate("document.getElementById('l-day-next').click()"); page.wait_for_timeout(int(wait * 1000))
+            if tomorrow: page.evaluate("document.getElementById('l-day-%s').click()" % ("prev" if tomorrow == "prev" else "next")); page.wait_for_timeout(int(wait * 1000))
             mode = page.evaluate("document.documentElement.className")
             # open Duo (3.80.0): two panes, each its own copy of the page in a frame. Pages, games, filters and clicks
             # go to the right side (--pane left for the left one); --eval and the screenshot stay on the whole screen.
@@ -226,7 +227,7 @@ def main():
                     r = page.evaluate(ev); page.wait_for_timeout(1200)
                     if r is not None: print(r)  # whatever the script returns (e.g. computed styles)
                 wide = max([page.evaluate("document.scrollingElement.scrollWidth - innerWidth")] + [fr.evaluate("document.scrollingElement.scrollWidth - innerWidth") for fr in page.frames[1:] if "pane=" in fr.url])
-                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}{'-' + name if name else ''}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{'-tomorrow' if tomorrow else ''}.png")
+                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}{'-' + name if name else ''}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{('-yesterday' if tomorrow == 'prev' else '-tomorrow') if tomorrow else ''}.png")
                 page.screenshot(path=path, full_page=full)
                 print(f"{path}  ({size}: {mode})" + (f"  WIDER THAN THE SCREEN by {wide}px" if wide > 1 else ""))
             for e in errors: print(f"  page error ({size}): {e}")

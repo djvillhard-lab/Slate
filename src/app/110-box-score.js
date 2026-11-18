@@ -52,6 +52,7 @@
       try { var nh = hlCompute(lg, r[0]); if ((nh && nh.key) !== (cur.hl && cur.hl.key) || (nh && cur.hl && nh.text !== cur.hl.text)) { cur.hl = nh; cur.hlNew = true; } } catch (e) {}
       try { if (((((r[0].header || {}).competitions || [])[0] || {}).status || {}).type && r[0].header.competitions[0].status.type.state === "post") hlcPut(g.id, (cur.hl && cur.hl.text) || "", (cur.hl && cur.hl.tm) || ""); } catch (e) {}
       try { var spx = BX_SPORT[lg]; cur.scoring = spx === "football" ? footScoring(r[0]) : spx === "hockey" || spx === "baseball" ? otherScoring(r[0], spx) : null; } catch (e) { cur.scoring = null; }
+      wwbPut(g, lg, r[0]);  // "Worth watching back" facts for a finished game (152-watch-back.js)
       cur.sum = r[0]; cur.sumAt = Date.now();  // the raw summary too: Best bets reads tonight's numbers from it
       cur.data = bxNorm(lg, r[0], r[1]); cur.data.at = new Date().toISOString(); cur.at = Date.now(); cur.busy = false; cur.err = false; bxRedraw(g);
     }, function () { cur.busy = false; cur.at = Date.now(); cur.err = true; bxRedraw(g); });

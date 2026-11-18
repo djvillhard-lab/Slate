@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.103.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- New: "Worth watching back" on finished games, on the slate and All games. When a game earned it, a line under the card says why, counted from ESPN's play list: overtime or a shootout, lead changes late (three or more in the last quarter or half of a basketball game, three or more in a football game), a game decided in the final 30 or 10 seconds, a go-ahead score in the last two minutes, a one-possession, one-score or one-goal finish, and a comeback from 15 or more down (14 in football, 2 goals in hockey).
+- It never names a team or a score, so it's safe with scores hidden. A game with none of these gets no line.
+- Basketball, football and hockey for now.
+
 ## 3.102.1 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - On TV: a new My channels button at the top. Switch off the channels and services you don't get, and they stay off the page (the button shows how many are hidden). Saved on this phone.
