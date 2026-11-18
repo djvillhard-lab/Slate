@@ -111,8 +111,8 @@
   function livePoll() {
     try { laSlateWidget(); } catch (e) {}
     try { laBetsShare(); } catch (e) {}
+    try { laLogos(); } catch (e) {}  // 3.113.0: also unfolded, so the widget and live notifications always have the slate's logos
     if (panesOn()) return;  // 3.80.0: unfolded, the two panes each keep their own scores; the page behind them rests
-    try { laLogos(); } catch (e) {}
     if (!window.SLATE_SELF || livePolling || document.hidden || !state.date) return;
     if (LIVE_DATE !== state.date) LIVE_AT = {};
     // how often each league is checked: every 10 seconds while a slate game is live or about to start,
