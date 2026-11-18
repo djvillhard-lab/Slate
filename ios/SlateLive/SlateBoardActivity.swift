@@ -123,16 +123,15 @@ private struct BoardGrid: View {
 // one game, as a small face-off tile (3.101.0, DJ: match the new live notifications): each team's logo on a slanted
 // panel of its color at its side, the score in the middle with the clock in a small tag under it (red while live,
 // plain after the final, the loser dimmed), or before kickoff the start time and channel
-struct BoardLine: View {
+private struct BoardLine: View {
     let g: SlateBoardGame
     let dark: Bool
     var lines: Int = 1
-    var height: CGFloat? = nil   // 3.113.0: the large Tonight's slate widget's taller tiles
 
     var body: some View {
         let pre = BoardLook.pre(g), fin = g.s == "post", live = g.s == "in"
         // 3.101.0 (DJ): the panels stay behind the logos, clear of the score; logos and scores as big as the tile allows
-        let h: CGFloat = height ?? (dark ? 58 : 64), side: CGFloat = dark ? 42 : 46, logo: CGFloat = dark ? 28 : 32
+        let h: CGFloat = dark ? 58 : 64, side: CGFloat = dark ? 42 : 46, logo: CGFloat = dark ? 28 : 32
         let under = BoardLook.under(g), playing = live && !under.lowercased().contains("half")
         let bg = dark ? Color(slateHex: "#1C1C1E") : SlateLook.raise
         ZStack {

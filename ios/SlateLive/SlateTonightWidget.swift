@@ -115,11 +115,11 @@ struct TonightView: View {
                     .lineLimit(3)
                 Spacer(minLength: 0)
             } else if large {
-                // 3.113.0 (DJ): the large size in the live notifications' style, 8 games in 2 columns of 4: the
-                // Board's face-off tiles (team-color halves, logos, the score and clock between them)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                // 3.113.0 (DJ): the large size in the live notifications' new look, 8 games in 2 columns of 4: each team
+                // a slanted pill of its color with its logo and score, the clock or start time under them
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                     ForEach(list, id: \.id) { g in
-                        Link(destination: SlateLook.gameURL(g.id)) { BoardLine(g: TonightLook.tile(g, now: entry.date, fresh: fresh), dark: false, height: 72) }
+                        Link(destination: SlateLook.gameURL(g.id)) { TonightTile(g: TonightLook.tile(g, now: entry.date, fresh: fresh)) }
                     }
                 }
                 Spacer(minLength: 0)
@@ -206,5 +206,95 @@ private struct TonightStatus: View {
             }
         }
         .minimumScaleFactor(0.7)
+    }
+}
+
+// 3.113.0: the pills' inner edges lean the same way by the same 10 points everywhere, so the gap between a game's
+// two pills is an even slanted stripe and every tile's slant lines up with the others (DJ: the slants should match)
+struct LeanShape: Shape {
+    let left: Bool
+    var lean: CGFloat = 10
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        if left {
+            p.move(to: CGPoint(x: r.minX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
+            p.addLine(to: CGPoint(x: r.maxX - lean, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        } else {
+            p.move(to: CGPoint(x: r.minX + lean, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
+            p.addLine(to: CGPoint(x: r.maxX, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        }
+        p.closeSubpath()
+        return p
+    }
+}
+
+// one game on the large widget, in the live notifications' look: away and home pills side by side (logo and score,
+// the score toward the middle; before the start, the team's abbreviation), and under them the clock tag (red while
+// it's on), "Final", or the start time and channel
+private struct TonightTile: View {
+    let g: SlateBoardGame
+
+    var body: some View {
+        let pre = BoardLook.pre(g), live = g.s == "in", fin = g.s == "post"
+        VStack(spacing: 5) {
+            HStack(spacing: 3) {
+                pill(abbr: g.aa, color: g.ac, alt: g.ax, logo: g.al, score: pre ? nil : g.a, other: g.h, left: true, fin: fin, live: live)
+                pill(abbr: g.ha, color: g.hc, alt: g.hx, logo: g.hl, score: pre ? nil : g.h, other: g.a, left: false, fin: fin, live: live)
+            }
+            .frame(height: 42)
+            if pre && g.d != "Live" {
+                Text([g.d, g.tv ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(SlateLook.semi(11))
+                    .foregroundStyle(SlateLook.muted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(height: 16)
+            } else {
+                HStack(spacing: 5) {
+                    ClockTag(text: pre ? "Live" : BoardLook.clock(g), live: live || pre, size: 11, height: 16, fill: SlateLook.raise)
+                    if pre, let tv = g.tv, !tv.isEmpty {
+                        Text(tv).font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted).lineLimit(1)
+                    }
+                }
+            }
+        }
+        .foregroundStyle(SlateLook.ink)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(BoardLook.spoken(g)))
+    }
+
+    private func pill(abbr: String, color: String, alt: String?, logo: String?, score: Int?, other: Int, left: Bool, fin: Bool, live: Bool) -> some View {
+        let c = Color(slateHex: SlateLook.panelHex(color, alt), fallback: SlateLook.raise)
+        let behind = score.map { $0 < other } ?? false
+        return HStack(spacing: 5) {
+            if left { badge(abbr: abbr, color: color, alt: alt, logo: logo) }
+            if let score {
+                Text("\(score)")
+                    .font(SlateLook.num(26))
+                    .opacity(live && behind ? 0.6 : 1)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            } else {
+                Text(abbr).font(SlateLook.bold(12)).lineLimit(1).minimumScaleFactor(0.6)
+            }
+            if !left { badge(abbr: abbr, color: color, alt: alt, logo: logo) }
+        }
+        .padding(left ? EdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 12) : EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 6))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: left ? .leading : .trailing)
+        .background(
+            LeanShape(left: left)
+                .fill(LinearGradient(colors: [c.opacity(0.62), c.opacity(0.3)], startPoint: left ? .leading : .trailing, endPoint: left ? .trailing : .leading))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .opacity(fin && behind ? 0.6 : 1)
+    }
+
+    @ViewBuilder
+    private func badge(abbr: String, color: String, alt: String?, logo: String?) -> some View {
+        if SlateLogos.image(logo) != nil {
+            Chip(abbr: abbr, color: color, alt: alt, width: 26, height: 26, logo: logo)
+        } else {
+            Chip(abbr: abbr, color: color, alt: alt, width: 26, height: 16, size: 8, stripe: 2, radius: 3, logo: logo)
+        }
     }
 }
