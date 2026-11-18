@@ -86,3 +86,7 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 
 ## 3.100.1: leagues start folded on ALL (DJ)
 - On the ALL tab every league section starts folded; My teams starts open. `COLLAPSED[title]` now stores 1 (folded) or 0 (opened) per phone, and a title with nothing stored uses the default. Folded sections queue no cards.
+
+## 3.100.3: finished games last (DJ)
+- Section order is live, then upcoming (slate games first), then final, everywhere (`rank` in `section()`), so with 16-game pages the finals land on the last pages.
+- Tap check: each touch now records page changes inside the touched card or header while the finger was down (MutationObserver), whether the touched element was gone, and the redraw callers with index.html line numbers. DJ's 3.100.1 log: header and filter taps all landed; card taps (names, lines, badges) got no click, and render() was called about twice a second from an unnamed caller.

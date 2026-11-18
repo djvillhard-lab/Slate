@@ -222,7 +222,7 @@
     // 3.97.0 (DJ: "not more than 10 live games ... can't be any more than about 15 or 20"): every game of an open section
     // is queued here (live first, then your slate's, then the rest in the usual order); renderGames then puts at most
     // AG_PAGE cards on the page, and at most AG_LIVE live ones, with Next and Previous to move through the rest
-    var rank = function (g) { var k = status(g).kind; return k === "live" ? 0 : inLineup(g.id) ? 1 : k === "upcoming" ? 2 : 3; };
+    var rank = function (g) { var k = status(g).kind; return k === "live" ? 0 : k === "over" ? 3 : inLineup(g.id) ? 1 : 2; };  // 3.100.3 (DJ): finished games always last
     var order = list.map(function (g, i) { return { g: g, i: i }; }).sort(function (a, b) { return rank(a.g) - rank(b.g) || a.i - b.i; });
     if (!shut) order.forEach(function (x) { agQ.push({ box: box, sec: sec, g: x.g, mine: title === "My teams", live: status(x.g).kind === "live" }); });
     body.appendChild(box);

@@ -20,8 +20,20 @@
         if (k === "touchstart") { add({ k: "touch", x: x, y: y }); return; }   // the same touch as its pointerdown
         lastDown = { at: Date.now(), x: x, y: y, clicked: false };
         add({ k: "down", x: x, y: y, el: what(ev.target), top: top === ev.target ? "same" : what(top), cancelable: !!ev.cancelable });
-        var mine = lastDown;
-        setTimeout(function () { if (!mine.clicked) add({ k: "no-tap", after: "900ms", x: mine.x, y: mine.y }); }, 900);
+        var mine = lastDown, muts = [], mo = null;
+        // 3.100.3: what changed on the page while the finger was down (a change under the finger makes an iPhone drop the tap)
+        try {
+          var box = (ev.target.closest && ev.target.closest(".g.panel, header, [id^=view-]")) || document.body;
+          mo = new MutationObserver(function (rs) { rs.forEach(function (r) { if (muts.length < 6) muts.push(r.type + ":" + what(r.target).slice(0, 50) + (r.type === "childList" ? "+" + r.addedNodes.length + "-" + r.removedNodes.length : r.attributeName ? "@" + r.attributeName : "")); }); });
+          mo.observe(box, { subtree: true, childList: true, attributes: true, characterData: true });
+          if (!document.contains(ev.target)) muts.push("target already gone");
+        } catch (e) {}
+        setTimeout(function () {
+          if (mo) mo.disconnect();
+          var gone = !document.contains(ev.target);
+          if (!mine.clicked) add({ k: "no-tap", x: mine.x, y: mine.y, gone: gone, muts: muts.join(" | ").slice(0, 190) });
+          else if (muts.length) add({ k: "tap-muts", muts: muts.join(" | ").slice(0, 190) });
+        }, 900);
       }, { capture: true, passive: true });
     });
     ["pointercancel", "touchcancel"].forEach(function (k) { window.addEventListener(k, function () { add({ k: "cancel", by: k }); }, { capture: true, passive: true }); });
@@ -35,7 +47,7 @@
     var why = {};
     window.slateDiagRender = function (st) {   // what asked for each All games redraw (function names only), counted
       renders++;
-      var k = String(st || "").split("\n").slice(1, 9).map(function (l) { var m = l.trim().match(/^(?:at )?([\w$.<>]*)/); return (m && m[1]) || "?"; }).filter(Boolean).join("<").slice(0, 160);
+      var k = String(st || "").split("\n").slice(3, 9).map(function (l) { l = l.trim(); var nm = (l.match(/^(?:at )?([\w$.]+)[ @(]/) || [])[1] || ""; var ln = (l.match(/:(\d+):\d+\)?$/) || [])[1] || ""; return (nm || "?") + (ln ? ":" + ln : ""); }).join("<").slice(0, 150);  // 3.100.3: with index.html line numbers
       why[k] = (why[k] || 0) + 1;
     };
     function send() {
@@ -43,7 +55,7 @@
       var p = ""; try { p = localStorage.getItem("slate-pass") || ""; } catch (e) {}
       if (!p) return;
       var body = { pass: p, diag: { ver: SLATE_VERSION, build: (window.SLATE_NATIVE && window.SLATE_NATIVE.build) || "", app: window.SLATE_NATIVE ? (window.SLATE_NATIVE.app || "yes") : "", pane: /[?&]pane=/.test(location.search) ? location.search : "",
-        w: window.innerWidth, h: window.innerHeight, ua: navigator.userAgent.slice(0, 160), sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller), renders: renders, why: JSON.stringify(why).slice(0, 190), at: new Date().toISOString(), log: LOG.splice(0) } };
+        w: window.innerWidth, h: window.innerHeight, ua: navigator.userAgent.slice(0, 160), sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller), renders: renders, why: JSON.stringify(why).slice(0, 890), at: new Date().toISOString(), log: LOG.splice(0) } };
       renders = 0; why = {};
       try { fetch("/api/usage", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), keepalive: true }).then(null, function () {}); } catch (e) {}
     }
