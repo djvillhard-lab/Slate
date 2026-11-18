@@ -200,15 +200,9 @@
     order.forEach(function (k) { section(body, info(groups[k][0]).name, groups[k]); });
   }
   // league sections open and close (remembered on this phone); a single-league view is always open
-  // how many cards each section shows (3.96.0); starts over for a new day, tab or filter
-  var AG_SHOW = {}, AG_SHOW_FOR = "";
-  function agShowKey(title) { return title; }
-  function agCap(title, many) {
-    var k = [state.date, state.league, state.gamesLive ? 1 : 0, state.q || ""].join("|") + "|" + (typeof state.gamesFilter === "string" ? state.gamesFilter : "");
-    if (k !== AG_SHOW_FOR) { AG_SHOW = {}; AG_SHOW_FOR = k; }
-    if (state.q) return 1e9;  // a search shows every match
-    return AG_SHOW[agShowKey(title)] || (title === "My teams" ? 12 : many ? 6 : 12);  // 3.96.2: a league tab (College Hoops, Women's Hoops) starts at 12 too
-  }
+  // which page of games is showing (3.97.0); starts over for a new day, tab, filter, Live or search
+  var AG_PAGE = 16, AG_LIVE = 10, AG_PG = { key: "", starts: [0] };
+  function agPageKey() { return [state.date, state.league, state.gamesLive ? 1 : 0, state.q || "", typeof state.gamesFilter === "string" ? state.gamesFilter : ""].join("|"); }
   var COLLAPSED = (function () { try { return JSON.parse(localStorage.getItem("slate-collapsed") || "{}") || {}; } catch (e) { return {}; } })();
   function section(body, title, list) {
     var many = state.league === "all" || state.league === "live" || (state.league !== "fav" && title === "My teams");
@@ -222,26 +216,13 @@
     if (many) sec.appendChild(icon("more"));
     body.appendChild(sec);
     var box = el("div", "glist");
-    // 3.96.0 (DJ: too many games froze the page): a section shows its first few cards (live games first, then your
-    // slate's, then the rest in the usual order) and a "Show more" button adds the next batch, so the page never
-    // holds more than a few dozen cards unless you ask for them
-    var cap = agCap(title, many);
-    var shown = list;
-    if (!shut && list.length > cap) {
-      var rank = function (g) { var k = status(g).kind; return k === "live" ? 0 : inLineup(g.id) ? 1 : k === "upcoming" ? 2 : 3; };
-      shown = list.map(function (g, i) { return { g: g, i: i }; }).sort(function (a, b) { return rank(a.g) - rank(b.g) || a.i - b.i; }).slice(0, cap)
-        .sort(function (a, b) { return a.i - b.i; }).map(function (x) { return x.g; });
-    }
-    if (!shut) shown.forEach(function (g) { agQ.push({ box: box, g: g, mine: title === "My teams" }); });  // 3.95.2: drawn in batches (agDraw)
+    // 3.97.0 (DJ: "not more than 10 live games ... can't be any more than about 15 or 20"): every game of an open section
+    // is queued here (live first, then your slate's, then the rest in the usual order); renderGames then puts at most
+    // AG_PAGE cards on the page, and at most AG_LIVE live ones, with Next and Previous to move through the rest
+    var rank = function (g) { var k = status(g).kind; return k === "live" ? 0 : inLineup(g.id) ? 1 : k === "upcoming" ? 2 : 3; };
+    var order = list.map(function (g, i) { return { g: g, i: i }; }).sort(function (a, b) { return rank(a.g) - rank(b.g) || a.i - b.i; });
+    if (!shut) order.forEach(function (x) { agQ.push({ box: box, sec: sec, g: x.g, mine: title === "My teams", live: status(x.g).kind === "live" }); });
     body.appendChild(box);
-    if (!shut && shown.length < list.length) {
-      var left = list.length - shown.length, step = many ? 10 : 12;
-      var mr = el("div", "lo-none ag-more"); mr.style.margin = "4px 0 8px";
-      var mb = el("button", "pv-get", "Show " + Math.min(step, left) + " more " + (left === 1 ? "game" : "games") + (left > step ? " (" + left + " left)" : ""));
-      mb.type = "button";
-      mb.addEventListener("click", function () { AG_SHOW[agShowKey(title)] = cap + step; keepScroll(renderGames); });
-      mr.appendChild(mb); body.appendChild(mr);
-    }
     if (many) sec.addEventListener("click", function () {
       if (COLLAPSED[title]) delete COLLAPSED[title]; else COLLAPSED[title] = 1;
       try { localStorage.setItem("slate-collapsed", JSON.stringify(COLLAPSED)); } catch (e) {}
@@ -316,6 +297,34 @@
     }
     return made;
   }
+  // keep only this page's games: at most AG_PAGE cards and AG_LIVE live ones; sections with none on this page are left
+  // out (folded ones stay); Next and Previous at the bottom
+  function agWindow(body) {
+    var k = agPageKey(); if (k !== AG_PG.key) AG_PG = { key: k, starts: [0] };
+    var all = agQ, start = AG_PG.starts[AG_PG.starts.length - 1];
+    if (start >= all.length) { AG_PG.starts = [0]; start = 0; }
+    var pick = [], live = 0, i = start;
+    for (; i < all.length && pick.length < AG_PAGE; i++) { if (all[i].live) { if (live >= AG_LIVE) break; live++; } pick.push(all[i]); }
+    var end = i;
+    agQ = pick;
+    var keep = new Set(pick.map(function (j) { return j.box; }));
+    all.forEach(function (j) { if (!keep.has(j.box)) { if (j.box.parentNode) j.box.parentNode.removeChild(j.box); if (j.sec.parentNode) j.sec.parentNode.removeChild(j.sec); } });
+    if (start > 0 || end < all.length) {
+      var row = el("div", "ag-pager"); row.style.cssText = "display:flex;gap:12px;justify-content:space-between;margin:12px 0 96px";  // clear of the date and menu buttons at the bottom
+      if (start > 0) {
+        var pv = el("button", "outline", "‹ Previous"); pv.style.padding = "0 16px"; pv.type = "button";
+        pv.addEventListener("click", function () { AG_PG.starts.pop(); window.scrollTo(0, 0); renderGames(); });
+        row.appendChild(pv);
+      } else row.appendChild(el("span"));
+      if (end < all.length) {
+        var left = all.length - end;
+        var nx = el("button", "outline", "Next games (" + left + " more) ›"); nx.style.cssText = "padding:0 16px;color:var(--accent)"; nx.type = "button";
+        nx.addEventListener("click", function () { AG_PG.starts.push(end); window.scrollTo(0, 0); renderGames(); });
+        row.appendChild(nx);
+      }
+      body.appendChild(row);
+    }
+  }
   function agWiden(rows) {  // measure only these cards' right column; widen the page's column if one needs more
     var box = $("games-body"), sides = rows.map(function (r) { return r.querySelector(".g-side"); }).filter(function (x) { return x && x.parentNode.classList.contains("g"); });
     if (!sides.length || !box.offsetParent) return false;
@@ -351,6 +360,7 @@
     var had = Object.keys(agOld).length;
     agQ = [];
     renderGames0.apply(this, arguments);
+    agWindow(body);
     var y = window.scrollY || 0, made = agDraw(Math.max(16, Math.ceil((y + 2 * (window.innerHeight || 800)) / 90)));
     var kept = body ? body.querySelectorAll(".g.panel").length - made.length : 0;
     try {
