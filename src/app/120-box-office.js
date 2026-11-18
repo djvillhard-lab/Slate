@@ -679,9 +679,26 @@
       : MM_SOCCER[lg] ? "How they're picked: Claude weighs goals, assists and the key moments of each match."
       : "How they're ranked: a one-number grade built from the box score.");
   }
+  // 3.100.6: never rebuild Box Office under a finger. A redraw while a finger is down (or within 0.4 s of lifting) waits
+  // for the finger, and a redraw that would draw exactly the same page is skipped, so score ticks and late data no longer
+  // swap the cards out mid-tap (DJ lost taps and saw an 11.8 s freeze). The page is built off screen, then swapped in.
+  var mmHoldT = 0, mmSig = "";
   function renderMoments() {
-    var body = $("mm-body"); if (!body) return; body.textContent = "";
-    if (state.view !== "moments") return;
+    var body = $("mm-body"); if (!body) return;
+    if (state.view !== "moments") { body.textContent = ""; mmSig = ""; return; }
+    if (typeof agBusy === "function" && !agTapping && agBusy() && body.firstChild) {
+      if (!mmHoldT) (function wait() { mmHoldT = setTimeout(function () { if (agBusy()) wait(); else { mmHoldT = 0; if (state.view === "moments") keepScroll(renderMoments); } }, 150); })();
+      return;
+    }
+    var nb = document.createElement("div"); mmDraw(nb);
+    var sig = nb.innerHTML;
+    if (sig === mmSig && body.firstChild) return;  // nothing changed: leave the cards (and any tap on them) alone
+    mmSig = sig; body.textContent = ""; while (nb.firstChild) body.appendChild(nb.firstChild);
+    // keep the picked league in view (centered), without moving the page
+    var strip = body.querySelector(".mm-strip"), onT = strip && strip.querySelector("[aria-pressed=true]");
+    if (onT) { var want = Math.max(0, onT.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft - (strip.clientWidth - onT.offsetWidth) / 2); strip.scrollLeft = mm.stripX != null && mm.stripLg === mm.lg ? mm.stripX : want; mm.stripLg = mm.lg; mm.stripX = strip.scrollLeft; }
+  }
+  function mmDraw(body) {
     var today = todayInHome(); if (!mm.date) mm.date = today;
     if (mm.auto && !mm.picked && mm.date === shiftDate(today, -1)) mm.date = today;  // fell back to last night before today's scores loaded: look again
     if (mm.date === today && !mm.picked) {  // opening Box Office: nothing underway today means yesterday's (but you can still pick today with the date picker)
@@ -698,9 +715,6 @@
     });
     MM_SOON.forEach(function (n) { var b = el("span", "lg-tab mm-soon"); b.appendChild(document.createTextNode(n)); b.appendChild(el("i", null, "Soon")); strip.appendChild(b); });
     body.appendChild(strip);
-    // the strip is rebuilt on every refresh: keep the picked league in view (centered), without moving the page
-    var onT = strip.querySelector("[aria-pressed=true]");
-    if (onT) { var want = Math.max(0, onT.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft - (strip.clientWidth - onT.offsetWidth) / 2); strip.scrollLeft = mm.stripX != null && mm.stripLg === mm.lg ? mm.stripX : want; mm.stripLg = mm.lg; mm.stripX = strip.scrollLeft; }
     strip.addEventListener("scroll", function () { mm.stripX = strip.scrollLeft; }, { passive: true });
     var day = mm.date, path = "moments/" + day;
     var nm0 = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
@@ -731,7 +745,7 @@
     var doc = mm.docs[path], L = doc && doc.leagues && doc.leagues[mm.lg], name = MM_LGS.filter(function (o) { return o[0] === mm.lg; })[0][1];
     if (doc && doc.leagues && L && (L.see || L.none)) {  // never sit on a league with no games that night: open one that played
       var alt = mmLgs().filter(function (o) { var x = doc.leagues[o[0]]; return !(x && (x.see || x.none)); })[0];
-      mm.auto = false; if (alt && alt[0] !== mm.lg) { mm.lg = alt[0]; return renderMoments(); }
+      mm.auto = false; if (alt && alt[0] !== mm.lg) { mm.lg = alt[0]; body.textContent = ""; return mmDraw(body); }
     }
     var night = day, when = el("p", "mm-when");
     if (L && L.see) {

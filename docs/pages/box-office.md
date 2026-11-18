@@ -31,3 +31,8 @@ Code: `src/app/120-box-office.js` (Box Office = the `moments` view, `renderMomen
 - DJ (Nov 17, 3.77.3): no slate tags (tpTags) on Box Office, too many and hard to follow. Only night-leader tags, so most cards have none. Game result stays on the right.
 - DJ (Nov 17, 3.76.1): no game counts on the league tabs (tried in 3.73.0, didn't like it); the count goes in the heading instead. Headshots, not jerseys, on Box Office cards.
 - DJ (Nov 17): wanted the per-league game count on the Box Office tabs for the picked day.
+
+## Redraws (3.100.7)
+- `renderMoments()` is now a gate: it waits while a finger is down or within 0.4 s of lifting (`agBusy`, unless the redraw comes from a tap), builds the page off screen with `mmDraw(nb)`, and skips the swap when the HTML is identical to the last one drawn. Before, score ticks and late data rebuilt #mm-body every few seconds, swapping cards out mid-tap (DJ: lost taps, an 11.8 s freeze). Checked: 0 rebuilds in 40 s on a live night, taps still open a card at once.
+- Note the name: `mmBuild(day, lg)` is the "Build this night's Box Office" request, not the page builder.
+

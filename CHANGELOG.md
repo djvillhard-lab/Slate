@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.100.7 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Box Office: taps on player cards work again, and the page no longer freezes. Box Office was redrawing itself every few seconds while live scores came in, even when nothing on it had changed, so a card could be swapped out between touching it and letting go. Now it only redraws when something on the page actually changed, and never while your finger is on the screen or for 0.4 seconds after you lift it. Tapping a card, a league or a date still changes the page right away.
+
 ## 3.100.6 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - News: taps on game cards and quick hits work again. Your phone's log showed the page rebuilding about twice a second, so a card was replaced between touching it and letting go. The cause was a logo fix from 3.94.2: when ESPN's team list for one league came back empty, the app asked for it again on every missing logo, over and over, and each answer redrew the page. That league is now tried again two minutes later, as intended.
