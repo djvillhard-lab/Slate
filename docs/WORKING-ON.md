@@ -6,5 +6,6 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Claude recaps lead with standout games | src/app/080-claude.js, worker/slate-kit.js (generated) | 2026-11-18 03:59 |
 | DJ | Sign in with Google (log-in page, Settings → Account) | worker/google.js, worker/index.js (one route, passcode check), worker/signup.js, google.html, src/boot/db-shim.js, src/app/232-welcome.js, docs/pages/security.md | 2026-11-17 23:35 |
 | DJ | Board live notification redesign (waits for build OK) | shared: ios/SlateLive/SlateBoardActivity.swift, ios/SlateLive/SlateLiveActivity.swift | 2026-11-18 03:48 |
