@@ -324,7 +324,9 @@ export function slateKit(opts) {
     var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)) && !(/^(big|tight)$/.test(c[0].k) && /^(pred|coin)$/.test(x.k)) && !(/^(pred|coin)$/.test(c[0].k) && /^(big|tight)$/.test(x.k)); })[0];
     if (c[0].k !== "art" && s2 && t.length + s2.tx.length <= 100 && s2.sc >= 30) {  // two facts when they fit in about a line and a half
       // same team twice reads as one sentence: "Canucks have lost five straight and are 1-8 at home"
-      var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
+      // 3.111.x: never join onto a line that already names both teams ("Heat have won five straight; Bucks have lost five" + "Heat are
+      // 12.5-point favorites" read as the Bucks being favorites)
+      var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 || t.indexOf("; ") >= 0 || /^Both /.test(t) ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
       var rest = who0 ? s2.tx.slice(T[who0].name.length + 1) : "";
       // 3.88.3: no repeated verb. "USA has won five in a row and has won the last four meetings" -> "...and the last four meetings";
       // "are without X and are 5-0 at home" -> "...and 5-0 at home"

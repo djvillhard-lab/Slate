@@ -310,6 +310,9 @@ html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-sh
 .g-feed-chev { width: 6px; height: 6px; border-right: 2px solid currentColor; border-top: 2px solid currentColor; transform: rotate(45deg); opacity: .6; margin-left: -1px; }
 .g.panel.has-feed > .hl { padding-right: 76px; }
 .g.panel.has-feed:has(> .tray) > .g-feed { display: none; }
+/* 3.111.x (DJ: "Cutoff text"): your bet's line under a live game wraps clear of the Feed button in the corner */
+.g.panel.has-feed > .myb-bar:not(:has(~ .myb-bar)) { margin-right: 72px; }
+.g.panel.has-feed > .myb-bar > span { white-space: normal; min-width: 0; }
 /* one header on every page (3.31.0): the mark, the page name and a second line in the same spots; the line under the
    header sits right under them everywhere, with a page's tabs below it */
 header.top { border-bottom: 0 !important; }

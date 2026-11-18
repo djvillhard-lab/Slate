@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.1 (Nov 18, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Today's Slate and All games: your bet's line on a live game ("Under 145.5 · 43 points so far, room for 102 more") wraps clear of the Feed button instead of running under it and getting cut off.
+- Game one-liners: a second fact no longer gets joined onto a line about both teams. Bucks–Heat read "Bucks have lost five and are 12.5-point favorites" when it was the Heat who were favored.
+
 ## 3.113.0 (Nov 18, 2026)
 TestFlight: 3.113.0, new build
 - The Tonight's slate widget comes in a large size: 8 games from your slate in 2 columns of 4, in the new live notification look. Each team gets a slanted pill of its color with its logo and score, and under the pills the red clock while it's on, "Final", or the start time and channel. Every slant leans the same way by the same amount, so they line up across the whole widget. Live games come first, then by start time, with "9 games left" in the corner. Tap a game for its matchup. Small and medium still show three.

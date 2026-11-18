@@ -77,3 +77,6 @@ Open: soccer and baseball (no facts yet); hockey has no late-goal fact because E
 
 ## Spread check (3.111.1)
 The favorite line needs pickcenter.spread to match the number in details (and be 45 or under); otherwise details is a moneyline and the line is skipped.
+
+## Bet line vs Feed button (Nov 18, 2026)
+On a live card with a Feed button, the last .myb-bar gets margin-right 72px (050-ux-review.css) so its text wraps clear of the button. pvCompute no longer joins a same-team second fact onto a line that names both teams (has "; " or starts "Both").
