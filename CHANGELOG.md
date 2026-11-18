@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.100.10 (Nov 17, 2026)
+TestFlight: 3.100.5, no new build (web only)
+- Live feed, basketball: a steal's box now takes the color and the team label of the player who made the steal. It used to show the team that lost the ball, because that is how ESPN files the play.
+
 ## 3.100.9 (Nov 18, 2026)
 TestFlight: 3.100.5, no new build (web only)
 - Live notifications: the line under the game's standout player is no longer cut short ("Michigan State Spartans are shooting 20%..."). The new card is wider there, so the line can be about 54 letters instead of 44.
