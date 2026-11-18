@@ -65,6 +65,7 @@
       var show = groups.filter(function (gr) { return (gr.rows || []).some(function (r) { return marks.indexOf(String(r.abbr || "").toUpperCase()) !== -1; }); });
       if (!show.length && groups.length) show = groups.slice(0, 1);
       show.forEach(function (gr) { box.appendChild(standTable((gr.name || L.name) + " standings", gr.rows || [], marks)); });
+      if (show.length && SDG_LGS.indexOf(g.league) !== -1) { var fs = el("button", "rlink", "Full " + L.name + " standings"); fs.type = "button"; fs.addEventListener("click", function () { openStandings(g.league); }); box.appendChild(fs); }
       if (Array.isArray(lg.poll) && lg.poll.length) box.appendChild(standTable(lg.pollName || "AP Top 25", lg.poll, marks));
     }
     // standings live with team stats; previews keep the Athletic links and byline

@@ -204,6 +204,7 @@
   function renderTeams() {
     var body = $("teams-body"); if (!body) return; body.textContent = "";
     if (state.view !== "teams") return;
+    sdgSeg(body); if (state.teamsTab === "standings") { sdgRender(body); return; }  // Standings tab (132-standings.js)
     var mine = myTeamList();
     var playing = {}; games().forEach(function (g) { mine.forEach(function (t) { if (g.league === t.lg && (teamMatch(g.away, t.name, t.lg) || teamMatch(g.home, t.name, t.lg))) playing[tmKey(t)] = new Date(g.moved || g.start).getTime(); }); });
     // your own order when you've set one; otherwise teams playing today first
@@ -323,7 +324,9 @@
     top.appendChild(known ? teamBadge(known) : badgeFor((e && e.abbr) || t.name.slice(0, 3).toUpperCase(), t.name));
     var nm = el("div", "tm-nm"); nm.appendChild(el("b", null, t.name));
     var sub = [(LEAGUES[t.lg] || {}).name]; if (d && d.info) { var rec = d.info.recordSummary || (((d.info.record || {}).items || [])[0] || {}).summary; if (rec) sub.push(rec); if (d.info.standingSummary) sub.push(String(d.info.standingSummary).replace(/ in (English )?Premier League$/, "").replace(new RegExp(" in " + String((LEAGUES[t.lg] || {}).name || "~").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"), "")); }
-    nm.appendChild(el("span", null, sub.filter(Boolean).join(" · "))); top.appendChild(nm);
+    nm.appendChild(el("span", null, sub.filter(Boolean).join(" · ")));
+    if (SDG_LGS.indexOf(t.lg) !== -1) { var sl = el("button", "rlink tm-stl", "Standings"); sl.type = "button"; sl.addEventListener("click", function () { openStandings(t.lg); }); nm.appendChild(sl); }
+    top.appendChild(nm);
     var fav = isFav(t.name, t.lg), st = el("button", "star" + (fav ? " on" : "")); st.type = "button"; st.appendChild(icon(fav ? "star" : "star-o"));
     st.setAttribute("aria-label", fav ? "Remove from my teams" : "Add to my teams"); st.addEventListener("click", function () { toggleFav(t.name, t.lg); });
     top.appendChild(st); hd.appendChild(top);

@@ -7,4 +7,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Sign in with Google (log-in page, Settings → Account) | worker/google.js, worker/index.js (one route, passcode check), worker/signup.js, google.html, src/boot/db-shim.js, src/app/232-welcome.js, docs/pages/security.md | 2026-11-17 23:35 |
-| DJ | Teams page: standings and playoff picture | src/app/130-teams.js, src/app/132-standings.js (new), src/app/140-game.js (one link in the standings card), docs/pages/teams.md | 2026-11-18 15:25 |

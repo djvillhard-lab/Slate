@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.102.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- New: Standings. The Teams page has two tabs at the top, My teams and Standings. Pick a league (NFL, NBA, NHL, MLB, college football, college hoops, women's hoops, Premier League, MLS, WNBA, La Liga, Serie A, Bundesliga, Ligue 1) and see every team in order with its record, straight from ESPN.
+- Playoff picture: for the NFL, NBA, NHL, MLB and WNBA each conference is listed by seed with a dashed line where the playoffs end (and the NBA's play-in line). Switch to Divisions to see each division by itself.
+- Soccer tables show wins-draws-losses, goal difference and points, with ESPN's labels for the Champions League, Europa League and relegation places, and MLS's playoff places.
+- College shows one conference at a time, with your teams' conferences first.
+- Your teams are highlighted. Tap any team to open its page.
+- Two ways in besides the Teams page: a Standings link under a team's name on its page, and "Full standings" under the standings box on a matchup.
+
 ## 3.101.3 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - Game one-liners only say what the record doesn't. Early in the season, "has won four straight" on a 4-0 team or "won four of its last five" on a 4-1 team just repeated the record, so those lines are gone when the last five games are the whole season, or when a win streak covers every game. "Still unbeaten" and "looking for a first win" are gone too. Home and road splits, injuries, the line, ESPN's win chance, matchup history and the news stay. Today's lines are worked out again the next time the slate opens.
