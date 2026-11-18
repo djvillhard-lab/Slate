@@ -9,4 +9,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | Sign in with Google (log-in page, Settings → Account) | worker/google.js, worker/index.js (one route, passcode check), worker/signup.js, google.html, src/boot/db-shim.js, src/app/232-welcome.js, docs/pages/security.md | 2026-11-17 23:35 |
 | DJ | Tonight's slate widget, large size (iPhone build, waits for DJ) | ios/SlateLive/SlateTonightWidget.swift, docs/pages/notifications.md | 2026-11-18 17:21 |
 | DJ | shared: ios/ | (same as above) | 2026-11-18 17:21 |
-| DJ | Box Office: last night's top performers missing late games | scripts/standouts.py, scripts/tick.py (player rankings step), docs/pages/box-office.md | 2026-11-18 18:02 |
