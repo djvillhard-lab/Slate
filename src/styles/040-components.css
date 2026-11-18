@@ -1608,6 +1608,27 @@ html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(
 .fd-tag.swing { background: color-mix(in srgb, #4C9BF5 18%, transparent); color: color-mix(in srgb, #4C9BF5 75%, var(--ink)); }
 .fd-tag.rz { color: var(--live, #E5484D); }
 .fd-pos { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: var(--muted); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; line-height: 15px; }
+/* baseball live feed (149-live-feed-baseball.js): now batting, the line score, the pitch line */
+.bb-top { display: grid; gap: 8px; }
+.bb-now { display: flex; align-items: center; gap: 14px; }
+.bb-dia { position: relative; flex: none; width: 44px; height: 34px; }
+.bb-b { position: absolute; width: 13px; height: 13px; transform: rotate(45deg); border: 1.5px solid var(--muted); border-radius: 2px; background: transparent; }
+.bb-b.on { background: var(--accent); border-color: var(--accent); }
+.bb-onSecond { left: 15.5px; top: 2px; } .bb-onThird { left: 3px; top: 14.5px; } .bb-onFirst { left: 28px; top: 14.5px; }
+.bb-nt { display: grid; gap: 1px; min-width: 0; font-size: 12.5px; color: var(--muted); }
+.bb-nt b { font-size: 15px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bb-nt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bb-ls { overflow-x: auto; scrollbar-width: none; } .bb-ls::-webkit-scrollbar { display: none; }
+.bb-lt { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.bb-lt th, .bb-lt td { padding: 3px 2px; text-align: center; font-weight: 600; min-width: 17px; }
+.bb-lt tr:first-child th { font-size: 10.5px; font-weight: 700; color: var(--dim); }
+.bb-lt .bb-ltm { text-align: left; font-weight: 800; color: var(--ink); padding-right: 6px; }
+.bb-lt td.bb-run { color: var(--ink); font-weight: 800; }
+.bb-lt .bb-rhe { font-weight: 700; } .bb-lt th.bb-rhe:nth-last-child(3), .bb-lt td.bb-rhe:nth-last-child(3) { border-left: 1px solid var(--hair); padding-left: 6px; }
+.bb-lt td.bb-r { color: var(--ink); font-weight: 800; }
+.bb-dec { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+.bb-pit { margin: 3px 0 0; font-size: 12px; font-weight: 600; color: var(--dim); }
+.fd-play.bb-cur { border-style: dashed; }
 /* the lines between plays as boxes (DJ, Nov 17): quiet by default; a start is tinted with the accent, a stop with amber */
 .fd-play.fd-k-note { border-left: 4px solid color-mix(in srgb, var(--ink) 28%, transparent); background: color-mix(in srgb, var(--ink) 4%, var(--card)); }
 .fd-play.fd-k-note.fd-n-go { border-left-color: var(--accent); }

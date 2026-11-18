@@ -5,15 +5,15 @@
   function feedBtn(g) {
     // 3.69.4 (DJ): a finished game keeps its feed. Nothing is saved by Slate: ESPN still serves every play, so the page reads it back
     var done = !feedLive(g), foot = BX_SPORT[g.league] === "football", socc = BX_SPORT[g.league] === "soccer";
-    var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, socc ? (done ? "The goals and cards, or every event" : "Goals, cards, subs and shots as they happen") : BX_SPORT[g.league] === "hockey" ? (done ? "The goals and penalties, or every play" : "Goals, penalties, shots and hits as they happen") : !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
+    var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, socc ? (done ? "The goals and cards, or every event" : "Goals, cards, subs and shots as they happen") : BX_SPORT[g.league] === "hockey" ? (done ? "The goals and penalties, or every play" : "Goals, penalties, shots and hits as they happen") : BX_SPORT[g.league] === "baseball" ? (done ? "The scoring plays, or every at-bat" : "Every at-bat, with the count and who's on base") : !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
     b.setAttribute("aria-label", "Open the " + (done ? "game" : "live") + " feed for " + g.away + (socc ? " v " : " at ") + g.home);
     b.addEventListener("click", function (e) { e.stopPropagation(); openFeed(g); }); return b;
   }
-  function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball" || BX_SPORT[g.league] === "soccer" || BX_SPORT[g.league] === "hockey"); }  /* soccer since 3.87.0 (147-live-feed-soccer.js), hockey since 3.88.0 (148-live-feed-hockey.js) */
+  function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball" || BX_SPORT[g.league] === "soccer" || BX_SPORT[g.league] === "hockey" || BX_SPORT[g.league] === "baseball"); }  /* soccer since 3.87.0 (147-live-feed-soccer.js), hockey since 3.88.0 (148-live-feed-hockey.js) */
   function feedLive(g) { return feedHas(g) && status(g).kind === "live"; }
   function feedOk(g) { if (!feedHas(g)) return false; var k = status(g).kind; return k === "live" || k === "over"; }  // basketball since 3.37.0 (146-live-feed-hoops.js)
   // a finished football game opens on its scoring plays, a finished soccer match on its key events (3.87.0)
-  function fdQuietStart(g) { var sp = BX_SPORT[g.league]; return (sp === "football" || sp === "soccer" || sp === "hockey") && status(g).kind === "over"; }
+  function fdQuietStart(g) { var sp = BX_SPORT[g.league]; return (sp === "football" || sp === "soccer" || sp === "hockey" || sp === "baseball") && status(g).kind === "over"; }
   function feedGame() { var id = state.feedId; return id ? games().filter(function (x) { return x.id === id; })[0] || null : null; }
   function openFeed(g) {
     if (!g) return; state.boxOpen = state.boxOpen || {}; state.boxOpen[g.id] = true;
@@ -512,6 +512,9 @@
     else if (/^end of (the )?(1st |first )?half/i.test(t)) { o.emoji = "☕"; o.title = "Halftime"; o.tone = "end"; }
     else if ((m = /^end of (?:the )?(\w+) (quarter|period)/i.exec(t))) { o.emoji = "🔔"; o.title = "End of the " + ord(m[1]) + " " + m[2].toLowerCase(); o.tone = "end"; }
     else if ((m = /^start of (?:the )?(\w+) (quarter|period)/i.exec(t)) || (m = /^(\w+) (period) start/i.exec(t))) { o.emoji = "▶️"; o.title = ord(m[1]) + " " + m[2].toLowerCase() + " under way"; o.tone = "go"; }
+    else if ((m = /^(top|bottom) of the (\w+) inning/i.exec(t))) { var tp = /top/i.test(m[1]); o.emoji = tp ? "\uD83D\uDD3C" : "\uD83D\uDD3D"; o.title = (tp ? "Top of the " : "Bottom of the ") + m[2]; o.tone = "go"; }
+    else if ((m = /^middle of the (\w+) inning/i.exec(t))) { o.emoji = "\uD83D\uDD04"; o.title = "Middle of the " + m[1]; o.tone = "end"; }
+    else if ((m = /^end of the (\w+) inning/i.exec(t))) { o.emoji = "\uD83D\uDD14"; o.title = "End of the " + m[1]; o.tone = "end"; }
     else if (/^period start/i.test(t)) { o.emoji = "▶️"; o.title = "Period under way"; o.tone = "go"; }
     else if (/^(period end|end of period|end period)/i.test(t)) { o.emoji = "🔔"; o.title = "End of the period"; o.tone = "end"; }
     else if (/^shootout start/i.test(t)) { o.emoji = "🥅"; o.title = "Shootout"; o.tone = "go"; }
@@ -557,6 +560,7 @@ function renderFeed(fromPoll) {
     var sum = FD.id === g.id ? FD.sum : null;
     if (!sum) { body.appendChild(el("p", "pv-none bx-wait fd-wait", "Loading the play-by-play…")); return; }
     if (BX_SPORT[g.league] === "soccer") return scFeed(body, g, sum, anchor, aTop, sc);  // 3.87.0: soccer, in 147-live-feed-soccer.js
+    if (BX_SPORT[g.league] === "baseball") return bbFeed(body, g, sum, anchor, aTop, sc);  // baseball, in 149-live-feed-baseball.js
     if (BX_SPORT[g.league] === "hockey") return hkFeed(body, g, sum, anchor, aTop, sc);  // 3.88.0: hockey, in 148-live-feed-hockey.js
     if (BX_SPORT[g.league] === "bball") return hpFeed(body, g, sum, anchor, aTop, sc);  // basketball draws its own court and plays
     var comp = ((sum.header || {}).competitions || [])[0] || {}, st = (comp.status || {}).type || {}, sideOf = {}, abOf = {}, scoreOf = {}, recOf = {};

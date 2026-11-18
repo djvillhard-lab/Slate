@@ -5,6 +5,17 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.111.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- Live feed for baseball. MLB games now have the same Live feed (and Game feed after the final out) as football, basketball, soccer and hockey. Built now against a finished 2026 game so it is ready for spring training.
+- The score bar shows the half inning in the middle ("▲ 6th" for the top, "▼ 6th" for the bottom).
+- While a game is live, a card under the score bar shows the count and the outs, a small diamond with the occupied bases filled in, who is at bat and who is pitching, each with their game so far.
+- The line score: runs by inning, then runs, hits and errors. After the game, the winning, losing and saving pitchers.
+- One box per at-bat, newest first: the result with an emoji ("💥 Home run", "✌️ Double", "🌀 Strikeout swinging", "🚶 Walk", "⬇️ Groundout"), ESPN's sentence, how many pitches it took with the count and the last pitch's speed and type, then the batter and the pitcher with their lines. A play that scores is tinted and tagged "Run scores" or "2 runs score".
+- Stolen bases, pitching changes and pinch hitters get their own small boxes. Each half inning starts with its own box ("🔼 Top of the 5th"). Fielders changing position are left out.
+- A "Scoring" button shows only the plays that scored (a finished game opens that way), and "Stats" shows the two teams side by side: hits, home runs, doubles, walks, strikeouts, left on base, stolen bases, pitches thrown and errors.
+- Every number is ESPN's. Nothing is estimated.
+
 ## 3.110.0 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - My bets: once a game starts, each bet shows DraftKings' closing line (its last line before the start) and whether yours was better or worse: "Closing line DUKE -9.5 · yours was 1 point better", "Closing line 167.5 · yours was 2 points worse", "Closing line ILL +350 · your +285 was worse". Player lines too. Better is green.
