@@ -207,7 +207,7 @@
     var k = [state.date, state.league, state.gamesLive ? 1 : 0, state.q || ""].join("|") + "|" + (typeof state.gamesFilter === "string" ? state.gamesFilter : "");
     if (k !== AG_SHOW_FOR) { AG_SHOW = {}; AG_SHOW_FOR = k; }
     if (state.q) return 1e9;  // a search shows every match
-    return AG_SHOW[agShowKey(title)] || (title === "My teams" ? 12 : many ? 6 : 20);
+    return AG_SHOW[agShowKey(title)] || (title === "My teams" ? 12 : many ? 6 : 12);  // 3.96.2: a league tab (College Hoops, Women's Hoops) starts at 12 too
   }
   var COLLAPSED = (function () { try { return JSON.parse(localStorage.getItem("slate-collapsed") || "{}") || {}; } catch (e) { return {}; } })();
   function section(body, title, list) {
@@ -235,7 +235,7 @@
     if (!shut) shown.forEach(function (g) { agQ.push({ box: box, g: g, mine: title === "My teams" }); });  // 3.95.2: drawn in batches (agDraw)
     body.appendChild(box);
     if (!shut && shown.length < list.length) {
-      var left = list.length - shown.length, step = many ? 10 : 20;
+      var left = list.length - shown.length, step = many ? 10 : 12;
       var mr = el("div", "lo-none ag-more"); mr.style.margin = "4px 0 8px";
       var mb = el("button", "pv-get", "Show " + Math.min(step, left) + " more " + (left === 1 ? "game" : "games") + (left > step ? " (" + left + " left)" : ""));
       mb.type = "button";

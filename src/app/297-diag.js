@@ -17,8 +17,9 @@
       window.addEventListener(k, function (ev) {
         var pt = ev.touches && ev.touches[0] ? ev.touches[0] : ev, x = Math.round(pt.clientX || 0), y = Math.round(pt.clientY || 0);
         var top = document.elementFromPoint(x, y);
+        if (k === "touchstart") { add({ k: "touch", x: x, y: y }); return; }   // the same touch as its pointerdown
         lastDown = { at: Date.now(), x: x, y: y, clicked: false };
-        add({ k: k === "touchstart" ? "touch" : "down", x: x, y: y, el: what(ev.target), top: top === ev.target ? "same" : what(top), cancelable: !!ev.cancelable });
+        add({ k: "down", x: x, y: y, el: what(ev.target), top: top === ev.target ? "same" : what(top), cancelable: !!ev.cancelable });
         var mine = lastDown;
         setTimeout(function () { if (!mine.clicked) add({ k: "no-tap", after: "900ms", x: mine.x, y: mine.y }); }, 900);
       }, { capture: true, passive: true });
