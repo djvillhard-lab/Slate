@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Sign in with Google (log-in page, Settings → Account) | worker/google.js, worker/index.js (one route, passcode check), worker/signup.js, google.html, src/boot/db-shim.js, src/app/232-welcome.js, docs/pages/security.md | 2026-11-17 23:35 |
+| DJ | News: taps lost while the page redraws (logo loop) | src/app/200-news.js, src/app/045-team-logos.js, docs/pages/news.md | 2026-11-18 03:05 |
