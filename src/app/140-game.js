@@ -202,7 +202,7 @@
       if (n("PTS") >= 30) a("🪣 " + n("PTS") + "-piece", "hot");
       if (fg[1] >= 8 && fg[0] / fg[1] >= 0.6) a("🔥 Hot hand", "hot");
       if (tp[0] >= 3) a("🎯 " + tp[0] + " threes", "good");
-      if (n("STL") + n("BLK") >= 3) a("🔒 Lockdown", "good");
+      if (n("STL") + n("BLK") >= 5) a("🔒 Lockdown", "good");   // DJ (Nov 17, 2026): five steals and blocks, not three
       if (n("AST") >= 8 && tens < 2) a("🪄 " + n("AST") + " assists", "good");
     } else if (sport === "hockey") {
       if (has("SV")) {

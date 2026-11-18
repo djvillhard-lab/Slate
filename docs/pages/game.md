@@ -30,3 +30,6 @@ Last updated: Nov 16, 2026, 3.52.8
 - The preview prompt (`worker/index.js`) now says each line must be numbers, never a role.
 - shots.py now closes the welcome screen on the test account before taking pictures.
 
+
+## Lockdown tag (3.100.5)
+DJ (Nov 17, 2026): Top performers tag "🔒 Lockdown" needs STL + BLK >= 5 (was 3; 3 was our own pick, not from a source).
