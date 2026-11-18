@@ -179,7 +179,7 @@
       scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub, .mm-strip, .fd-strip"); sx0 = scroller ? scroller.scrollLeft : 0;
       // inside a box score or stats table that scrolls sideways, the finger scrolls the table, never the page
       var wide = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, .bx-ts, .bxp, .bx");
-      if (wide || e.target.closest(".bx-pl, .gv-box")) { x0 = null; return; }  // never change pages from inside a box score
+      if (mode !== "feed" && (wide || e.target.closest(".bx-pl, .gv-box"))) { x0 = null; return; }  // never change pages from inside a box score. Except the live feed (DJ, Nov 17): there a swipe anywhere moves to the next game; a table that scrolls sideways still scrolls first
       x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     }, { passive: true });
     // the page follows the finger, then slides out and the next one slides in
