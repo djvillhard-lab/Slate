@@ -23,7 +23,7 @@ TAKE = {
     "090-box-data.js": ["BX_SPORT"],
     "110-box-score.js": ["bxBase", "bxSummaryUrl", "bxApi"],
     "100-highlights.js": ["pvCompute", "QBD", "depthOf", "pvQB"],
-    "080-claude.js": ["l5Season", "recapStandouts", "trimEspn", "clGame"],
+    "080-claude.js": ["l5Season", "recapStandouts", "clDay", "trimEspn", "clGame"],
 }
 
 def grab(lines, name, fn):

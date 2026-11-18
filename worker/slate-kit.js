@@ -246,7 +246,7 @@ export function slateKit(opts) {
       else if (q.length) add("q|" + i, 40, q[0] + " is " + (/doubt/i.test(JSON.stringify(t.injuries)) ? "doubtful" : "a question mark") + " for " + T[i].name); });
     // a quarterback's first start of the season (3.31.0): the depth chart's QB1 isn't the team's passing leader and hasn't had a starter's game yet (see pvQB)
     (qbx || []).forEach(function (q) { if (T[q.team] && q.name) add("qb1|" + q.team, 66, T[q.team].name + " QB " + q.name + " makes his first start of the season"); });
-    // the betting line and ESPN's predictor
+    // the betting line and ESPN's predictor. 3.113.2: ESPN's win chance is shown at 99% at most (its 99.6% rounded to "a 100% chance")
     var pk = (sum.pickcenter || [])[0], m = pk && /^([A-Z]{2,5})\s+(-[\d.]+)$/.exec(String(pk.details || "").trim());
     // 3.101.4: only a real point spread. Without one ESPN's "details" can be the moneyline ("HOU -137"), which read as a 137-point favorite
     if (m && !(pk.spread != null && pk.spread !== "" && Math.abs(Math.abs(parseFloat(pk.spread)) - Math.abs(parseFloat(m[2]))) < 0.01 && Math.abs(parseFloat(m[2])) <= 45)) m = null;
@@ -254,7 +254,7 @@ export function slateKit(opts) {
       if (sp <= 2.5) add("tight", 42, T[fav].name + " are only " + sp + "-point favorites"); else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " are " + sp + "-point favorites"); }
     if (m && byAbbr[m[1]] && byAbbr[m[1]] !== H && parseFloat(m[2]) <= -1 && sport !== "football" && sport !== "bball") {}
     var pr = sum.predictor; if (pr && pr.homeTeam && pr.awayTeam) { var ph = parseFloat(pr.homeTeam.gameProjection), pa = parseFloat(pr.awayTeam.gameProjection);
-      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.round(Math.max(ph, pa)); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
+      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.min(99, Math.round(Math.max(ph, pa))); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
     // the table: leaders, top-of-table and relegation clashes
     var pos = {}, grp = (((sum.standings || {}).groups || [])[0] || {}), ent = ((grp.standings || {}).entries || []);
     if (sport === "soccer" && ent.length >= 10) { ent.forEach(function (e, n) { var id = String(e.id || ""); if (T[id]) pos[id] = n + 1; });
@@ -276,11 +276,12 @@ export function slateKit(opts) {
       if (sm && who && ss.type === "head-to-head" && +sm[3] === 0 && +sm[2] >= 3) add("h2h", 50, T[who].name + " have won the last " + NW[+sm[2]] + " meetings");
       else if (sm && who && ss.type === "head-to-head" && +sm[2] >= 3) add("h2h", 34, T[who].name + " have won " + NW[+sm[2]] + " of the last " + NW[+sm[2] + +sm[3]] + " meetings");
       else if (sm && who && ss.type !== "head-to-head" && +sm[2] >= 2) add("ser", 30, T[who].name + " lead the season series " + sm[2] + "-" + sm[3]); }
-    // quieter form: four or five wins from the last five without a current streak
-    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five"); });
+    // quieter form: four wins from the last five without a current streak. 3.113.2 (DJ: accuracy review): never "five of its last five"
+    // (High Point at 6-0: the streak line is left out on an unbeaten record, and this one stepped in with it)
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && w < f.length && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five"); });
     // 3.91.2 (DJ: "Pistons (8-4) at Pelicans (5-10)" is not informative): quieter facts that only win when nothing above stands out
     // a slump: one or no wins in the last five, without a current four-game skid
-    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five"); });
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && w > 0 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five"); });
     // the division race (pro leagues; ESPN's summary carries each team's division): first place by how much, or last place
     if (/^(nba|wnba|nhl|nfl|mlb)$/.test(lg)) (((sum.standings || {}).groups) || []).forEach(function (gr) {
       var es = ((gr.standings || {}).entries || []), dv = String(gr.header || "").replace(/^\d{4}(-\d{2,4})?\s+/, "").replace(/\s+Standings$/i, "").trim();
@@ -296,7 +297,7 @@ export function slateKit(opts) {
       if (sport !== "soccer" && w.length >= 2 && Lw > 0 && W + Lw >= 6 && W / (W + Lw) >= 0.7) add("good|" + i, 30, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); });
     // ESPN's predictor leaning one way without being lopsided
     if (pr && pr.homeTeam && pr.awayTeam) { var ph2 = parseFloat(pr.homeTeam.gameProjection), pa2 = parseFloat(pr.awayTeam.gameProjection);
-      if (!isNaN(ph2) && !isNaN(pa2) && Math.abs(ph2 - pa2) > 8 && Math.max(ph2, pa2) < 85) { var pf2 = ph2 > pa2 ? H : A, pp2 = Math.round(Math.max(ph2, pa2)); add("pred", 22, "ESPN gives " + T[pf2].name + (/^(8\d|11|18)$/.test(String(pp2)) ? " an " : " a ") + pp2 + "% chance"); } }
+      if (!isNaN(ph2) && !isNaN(pa2) && Math.abs(ph2 - pa2) > 8 && Math.max(ph2, pa2) < 85) { var pf2 = ph2 > pa2 ? H : A, pp2 = Math.min(99, Math.round(Math.max(ph2, pa2))); add("pred", 22, "ESPN gives " + T[pf2].name + (/^(8\d|11|18)$/.test(String(pp2)) ? " an " : " a ") + pp2 + "% chance"); } }
     // the better team's top scorer (basketball)
     if (sport === "bball") { var bt = (parseFloat(String(T[A].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[A].rec.total).split("-")[1]) || 0) >= (parseFloat(String(T[H].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[H].rec.total).split("-")[1]) || 0) ? A : H;
       (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
@@ -400,6 +401,11 @@ export function slateKit(opts) {
     });
     return out.slice(0, 4);
   }
+  function clDay(iso, wk) {
+    var d = new Date(iso); if (!iso || isNaN(d)) return "";
+    try { return d.toLocaleDateString("en-US", wk ? { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric" } : { timeZone: "America/New_York", month: "short", day: "numeric" }); }
+    catch (e) { d = new Date(d.getTime() - 5 * 36e5); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()] + " " + d.getUTCDate(); }
+  }
   function trimEspn(sum, g, kind) {
     var f = {}, hd = sum.header || {}, cp = (hd.competitions || [])[0] || {};
     try {
@@ -410,7 +416,7 @@ export function slateKit(opts) {
       f.leaders = (sum.leaders || []).map(function (t) { return { team: (t.team || {}).abbreviation, cats: (t.leaders || []).slice(0, 4).map(function (c) { var l = (c.leaders || [])[0] || {}; return (c.displayName || c.name) + ": " + ((l.athlete || {}).displayName || "") + " " + (l.displayValue || ""); }) }; });
       // this season's results only, newest first, each with its date, so "last game" is the right one (3.91.3)
       var gd = (cp.date || (g && g.start) || "");
-      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, newestFirst: l5Season(t.events, gd).reverse().map(function (e) { var d = new Date(e.gameDate); return (isNaN(d) ? "" : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()] + " " + d.getUTCDate() + ": ") + (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
+      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, newestFirst: l5Season(t.events, gd).reverse().map(function (e) { var d = clDay(e.gameDate); return (d ? d + ": " : "") + (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
       if ((sum.seasonseries || [])[0]) f.series = sum.seasonseries[0].summary || sum.seasonseries[0].description;
       if (kind === "recap") {
         f.lines = (cp.competitors || []).map(function (c) { return { team: (c.team || {}).abbreviation, by: (c.linescores || []).map(function (l) { return l.displayValue || l.value; }) }; });
@@ -422,7 +428,7 @@ export function slateKit(opts) {
     } catch (e) {}
     return f;
   }
-  function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage", "post"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; return o; }
+  function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage", "post"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; if (g.start) o.day = clDay(g.start, true) + " (US Eastern date)"; return o; }
   state.rules = normRules(state.rules || RULE_DEFAULTS);
   return { ruleHits: ruleHits, pvCompute: pvCompute, pvQB: pvQB, trimEspn: trimEspn, clGame: clGame, short: short, sideOrder: sideOrder, sep: sep, SPORT: SPORT, SPORT_PATH: SPORT_PATH, hourCT: hourCT, rkFetch: rkFetch, bxSummaryUrl: bxSummaryUrl, info: info, abbr: abbr, BX_SPORT: BX_SPORT, LEAGUES: LEAGUES };
 }

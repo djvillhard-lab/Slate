@@ -54,6 +54,13 @@
     });
     return out.slice(0, 4);
   }
+  // 3.113.2 (DJ: accuracy review): a game's date as US fans say it, in Eastern time. ESPN's times are UTC, so every night game
+  // read as the next day ("Orlando beat Boston on Nov 17" for a Nov 16 game) in Claude's previews and recaps
+  function clDay(iso, wk) {
+    var d = new Date(iso); if (!iso || isNaN(d)) return "";
+    try { return d.toLocaleDateString("en-US", wk ? { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric" } : { timeZone: "America/New_York", month: "short", day: "numeric" }); }
+    catch (e) { d = new Date(d.getTime() - 5 * 36e5); return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()] + " " + d.getUTCDate(); }
+  }
   function trimEspn(sum, g, kind) {
     var f = {}, hd = sum.header || {}, cp = (hd.competitions || [])[0] || {};
     try {
@@ -64,7 +71,7 @@
       f.leaders = (sum.leaders || []).map(function (t) { return { team: (t.team || {}).abbreviation, cats: (t.leaders || []).slice(0, 4).map(function (c) { var l = (c.leaders || [])[0] || {}; return (c.displayName || c.name) + ": " + ((l.athlete || {}).displayName || "") + " " + (l.displayValue || ""); }) }; });
       // this season's results only, newest first, each with its date, so "last game" is the right one (3.91.3)
       var gd = (cp.date || (g && g.start) || "");
-      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, newestFirst: l5Season(t.events, gd).reverse().map(function (e) { var d = new Date(e.gameDate); return (isNaN(d) ? "" : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()] + " " + d.getUTCDate() + ": ") + (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
+      f.last5 = (sum.lastFiveGames || []).map(function (t) { return { team: (t.team || {}).abbreviation, newestFirst: l5Season(t.events, gd).reverse().map(function (e) { var d = clDay(e.gameDate); return (d ? d + ": " : "") + (e.gameResult || "") + " " + (e.atVs || "") + " " + ((e.opponent || {}).abbreviation || "") + " " + (e.score || ""); }) }; });
       if ((sum.seasonseries || [])[0]) f.series = sum.seasonseries[0].summary || sum.seasonseries[0].description;
       if (kind === "recap") {
         f.lines = (cp.competitors || []).map(function (c) { return { team: (c.team || {}).abbreviation, by: (c.linescores || []).map(function (l) { return l.displayValue || l.value; }) }; });
@@ -76,7 +83,7 @@
     } catch (e) {}
     return f;
   }
-  function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage", "post"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; return o; }
+  function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage", "post"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; if (g.start) o.day = clDay(g.start, true) + " (US Eastern date)"; return o; }
   function claudeAsk(kind, g, team) {
     var pass = slatePass(); if (!pass) { toast("Enter your passcode first (bottom of the page)"); return; }
     var k = kind === "team" ? "t:" + team.key : "g:" + state.date + ":" + g.id; CL_ASK[k] = Date.now(); keepScroll(render);

@@ -115,6 +115,9 @@
   // the longest that fits. Asides in brackets go first ("Duncan Robinson (quad) and…" -> "Duncan Robinson and…"), then the line is
   // cut where a clause starts ("…are out for the season" -> "…are out"; "The Irish open Players Era against…" -> "The Irish open Players Era")
   var PVN_BRK = /(,|;| -| (?:before|after|as|while|with|since|when|following|ahead of|because|for|against|in|at|on|and|but|to|from|despite|over|than|including|amid|behind|into|until) )/g;
+  // 3.113.2 (DJ: accuracy review): a cut never leaves a fragment: a word or two after a comma ("…Eastern Michigan, looks") or a verb
+  // waiting for its object ("Detroit Mercy takes")
+  var PVN_DANGLE = /(, \S+( \S+)?|\b(takes?|visits?|faces?|hosts?|plays?|leads?|meets?|looks?|seeks?|aims?|brings?|puts?|is|are|has|have|was|were|will|gets?|goes|go|returns?|heads?|tries|try|wants?|needs?|says?))$/i;
   function pvCuts(list) {
     var out = [];
     list.forEach(function (t) {
@@ -122,7 +125,7 @@
       var np = t.replace(/\s*\([^)]{1,40}\)/g, "").replace(/\s+/g, " ").trim();
       [t, np].forEach(function (b) {
         out.push(b); var m; PVN_BRK.lastIndex = 0;
-        while ((m = PVN_BRK.exec(b))) { var c = b.slice(0, m.index).replace(/[,;:\s-]+$/, "").replace(/\s+(the|a|an|of|and|or|to|his|her|their|its)$/i, ""); if (c.length >= 18) out.push(c); }
+        while ((m = PVN_BRK.exec(b))) { var c = b.slice(0, m.index).replace(/[,;:\s-]+$/, "").replace(/\s+(the|a|an|of|and|or|to|his|her|their|its)$/i, ""); if (c.length >= 18 && !PVN_DANGLE.test(c)) out.push(c); }
       });
     });
     out = out.filter(function (x, i) { return x && out.indexOf(x) === i; });

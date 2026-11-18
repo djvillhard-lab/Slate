@@ -5,6 +5,17 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.2 (Nov 18, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Claude's previews, recaps and News write-ups get every date right. Night games were being dated a day late, because ESPN's times are in UTC: today's Celtics–Nuggets preview said Orlando beat Boston "on Nov 17" (it was Nov 16) and that both teams lost on Nov 17. Claude now gets each game's date in Eastern time, and "today" no longer turns into tomorrow after 7 PM Eastern.
+- Claude's write-ups no longer pass off last season as this season. Clemson's preview called a March tournament loss to Iowa its "first loss of the season" (it was Georgetown, Nov 13). Claude now checks every result it finds on the web against this season's dated results and leaves out anything that isn't there.
+- Head-to-head records say "the last 5 meetings" instead of calling ESPN's short list the all-time series (USA "lead the all-time series 4-0-1" against Haiti).
+- Players to watch and Stars always show real numbers. Lines like "Boston guard" or "First start as a Raven" are left out.
+- No more "I" or "my" in Claude's writing: a game breakdown's hunch started "My hunch is…", and a league briefing said "the last table I found". Those are reworded or left out before the write-up is saved.
+- Game one-liners: ESPN's win chance tops out at 99%. It said "a 100% chance" on about 30 games tonight, which ESPN never says.
+- Game one-liners: "High Point has won five of its last five" is gone (it only repeated a 6-0 record).
+- Game one-liners never get cut into a fragment to fit a narrow screen. "Detroit Mercy takes on Eastern Michigan, looks" now shortens to "Detroit Mercy takes on Eastern Michigan".
+
 ## 3.113.1 (Nov 18, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Today's Slate and All games: your bet's line on a live game ("Under 145.5 · 43 points so far, room for 102 more") wraps clear of the Feed button instead of running under it and getting cut off.

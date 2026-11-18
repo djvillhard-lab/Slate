@@ -358,11 +358,14 @@ export default {
   }
 };
 
-const RULES = `Rules for all writing: plain text only, no citation tags or markup; every fact must come from the facts you were given or your web searches; never guess rosters or injuries; no betting talk at all (no spreads, totals, moneylines, odds or sportsbooks; the app shows the lines separately); no quote longer than five words; write in your own words, plain and specific, for a knowledgeable fan, as a news report: never in the first person (no I, me, my, we, our) and never about your own searching or sources (no "I found", "the last table I saw", "my search"); state the fact and, if it may be out of date, say as of when. Before you answer, reread every headline and line against its facts: each must say exactly who or what is affected (a player, a coach, a team, a league) and never widen it (a player out for the season is not his team's season ending; one loss is not a team eliminated; a report is not a confirmation); fix any that overstate. Then check every win, loss, streak and "last game" against each team's record and dated results: a team's latest game is the first one in its newestFirst list; a game from last season is never "recent" or "last time out"; the number of losses you mention this season can never be more than the record shows (a 4-0 team has not lost; a 3-1 team has lost once); when a web result disagrees with the record you were given, trust the record and leave that result out.`;
+// 3.113.2 (DJ: "lots of errors in the claude summaries"): today's date as US fans have it. The worker runs on UTC, so after
+// 7 PM Eastern "today" was already tomorrow, and Claude dated night games a day late
+const etToday = () => new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", year: "numeric", month: "long", day: "numeric" });
+const RULES = `Rules for all writing: plain text only, no citation tags or markup; every fact must come from the facts you were given or your web searches; never guess rosters or injuries; no betting talk at all (no spreads, totals, moneylines, odds or sportsbooks; the app shows the lines separately); no quote longer than five words; write in your own words, plain and specific, for a knowledgeable fan, as a news report: never in the first person (no I, me, my, we, our) and never about your own searching or sources (no "I found", "the last table I saw", "my search"); state the fact and, if it may be out of date, say as of when. Before you answer, reread every headline and line against its facts: each must say exactly who or what is affected (a player, a coach, a team, a league) and never widen it (a player out for the season is not his team's season ending; one loss is not a team eliminated; a report is not a confirmation); fix any that overstate. Then check every win, loss, streak and "last game" against each team's record and dated results: a team's latest game is the first one in its newestFirst list; a game from last season is never "recent" or "last time out"; the number of losses you mention this season can never be more than the record shows (a 4-0 team has not lost; a 3-1 team has lost once); when a web result disagrees with the record you were given, trust the record and leave that result out. Dates: every date you write is the US Eastern date; use the "day" given for this game and the dates in the facts as they are, and never work a date out from a UTC start time. Seasons: a game from before this season began (last season's tournament, bowl game, playoffs or March results) is last season, never a recent result, a "first loss" or a "last game"; web pages often describe last season, so check every result you take from a search against this season's dated results in the facts and leave out any that isn't there. Head-to-head lists in the facts cover only recent meetings: say "the last N meetings", never all-time. Player lines are numbers only (26.5 PPG, 7.1 AST, 3 goals), never a role, a position or a description.`;
 
 function prompt(p) {
   const game = p.game, facts = p.facts;
-  if (p.kind === "news" && p.key === "page") return `You're writing the News page of a sports fan's app: a quick-look dashboard of everything this person would want to know today. Today is ${new Date().toDateString()}.
+  if (p.kind === "news" && p.key === "page") return `You're writing the News page of a sports fan's app: a quick-look dashboard of everything this person would want to know today. Today is ${etToday()} (US Eastern).
 Facts (JSON): "cover" (what they asked this page to cover), "games" (the games on their slate today: id, league, teams, records, start time in UTC, status (not started, live now or finished), TV, note (the round or event), playoff (true for a playoff or postseason game: write about it as one, never about regular-season standings as still at stake)), "teams" (their favorite teams), "leagues" (leagues they picked), "headlines" (free ESPN and The Athletic headlines with url: byGame by slate game id, byTeam by team name, byLeague by league key, and around: the newest headlines from the major leagues, whether or not this person follows them) and "prev" (the top stories from the last time this page was written today, if any): ${facts}
 Do up to four web searches for what the headlines don't tell you: breaking news from the last day or two about these teams (injuries, trades, coaching, lineup changes), the biggest sports stories anywhere today, and the story behind the biggest games. Compile everything first, then decide what this person most needs to know.
 ${RULES}
@@ -379,7 +382,7 @@ Keep to the lengths given: with many games and teams this page is long, and an a
  "watch": [{"tag": "one or two words", "text": "one line: a specific thing to watch for"}],
  "sides": [{"team": "team name as given", "text": "one line: what this team needs tonight"}],
  "timeline": [{"when": "a short date like Nov 11", "text": "one line: what happened"}],
- "hunch": "one sentence: how you think it plays out, plainly marked by its wording as your opinion",
+ "hunch": "one sentence: how it likely plays out, worded as an opinion without first person (Expect..., Feels like..., Likeliest script:...), never My hunch or I think",
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
 watch: exactly 3. sides: both teams, away first. timeline: 3-4 dated events that led to this game, oldest first.` : type === "t" ? `{"mood": "the mood around this team in one or two words, such as Rolling, Anxious, Rebuilding",
  "take": ["two paragraphs, 90-140 words in all: the state of this team right now and what its season turns on"],
@@ -399,7 +402,7 @@ latest: 3-4, newest first. timeline: 3-4 dated events in the team's biggest curr
  "injuries": [{"player": "full name", "team": "team, full name", "status": "one or two words: Out, Out for season, Day-to-day, Questionable, Returning", "text": "one line: the injury and how long"}],
  "reads": [{"title": "...", "url": "...", "source": "..."}]}
 lead: never null. latest: 4-6 of the newest stories (last 48 hours), newest first, each a different story and not the lead; "fresh" is true only for news from today. hot and cold: up to 3 each. perf: 3-5 standout performances from the last two days. injuries: up to 4; [] if none.`;
-    return `${type === "l" ? "You're writing a league news briefing for the News page of a sports fan's app: the most up-to-date news around one league, the kind a fan taps to catch up in a minute. Lead with what happened most recently." : `You're writing a tap-in breakdown for the News page of a sports fan's app: a deeper, more creative look at one ${type === "g" ? "game" : "team"} than the dashboard card they just tapped.`} Today is ${new Date().toDateString()}.
+    return `${type === "l" ? "You're writing a league news briefing for the News page of a sports fan's app: the most up-to-date news around one league, the kind a fan taps to catch up in a minute. Lead with what happened most recently." : `You're writing a tap-in breakdown for the News page of a sports fan's app: a deeper, more creative look at one ${type === "g" ? "game" : "team"} than the dashboard card they just tapped.`} Today is ${etToday()} (US Eastern).
 Subject (JSON): ${game}
 Facts (JSON: free ESPN data and headlines with url, plus what the dashboard card already said, so go beyond it): ${facts}
 ${type === "l" ? "Do up to three web searches for the newest news around this league (today and the last two days): trades, injuries, firings, results, rankings." : "Do up to two web searches for the latest news and the story behind it (last 3 days)."}
@@ -409,7 +412,7 @@ Answer with only this JSON inside <json></json> tags:
 ${shape}
 reads: 2-3 stories most worth opening, only from the provided headlines or pages your searches actually returned, with their exact url; never invent a url. Leave out any section you have no sourced material for (use null or []). Inside the JSON strings, never use double quotation marks.`;
   }
-  if (p.kind === "news" && p.key === "slate") return `You're writing the News page of a sports fan's app, built around this person's slate of games today. Today is ${new Date().toDateString()}.
+  if (p.kind === "news" && p.key === "slate") return `You're writing the News page of a sports fan's app, built around this person's slate of games today. Today is ${etToday()} (US Eastern).
 Facts (JSON): "slate" (today's games on their slate: id, league, teams, time, TV, why it's on the slate), "byGame" (ESPN and The Athletic headlines about each slate game's teams, with url), "top" (today's top headlines across all of sports, with url), and "interests" (what this person reads most): ${facts}
 Do up to three web searches: the biggest storylines behind the most important slate games, and the biggest sports stories of the last day across all sports.
 ${RULES}
@@ -417,7 +420,7 @@ Answer with only this JSON inside <json></json> tags:
 {"games": [{"id": "the slate game's id", "game": "Away at Home", "story": "one paragraph, 70-120 words: why this is one of the day's biggest games and the story behind it (stakes, rivalry, form, a player or coach angle, injuries)", "read": {"title": "...", "url": "...", "source": "ESPN" | "The Athletic"}}],
  "around": ["4-6 quick hits, one line each, 12-25 words: the top stories in all of sports right now (not limited to the slate), most important first"]}
 games: pick only the 2-4 biggest or most meaningful games on the slate, best first; never list the rest. read: the one headline from byGame for that game (use its exact url) most worth opening, or null if none fits; never invent a url. Inside the JSON strings, never use double quotation marks.`;
-  if (p.kind === "news") return `You're writing the News page of a sports fan's app. Today is ${new Date().toDateString()}.
+  if (p.kind === "news") return `You're writing the News page of a sports fan's app. Today is ${etToday()} (US Eastern).
 This brief is for: ${JSON.parse(game || "{}").label || p.key}.
 Facts (JSON): the headlines the app already shows for this page (ESPN and The Athletic: title, source, time, description, url)${p.key === "slate" ? ", the games on this person's slate today (teams, time, TV, why it's on the slate)" : p.key === "teams" ? ", this person's favorite teams" : ""}, and what this person reads most ("interests"): ${facts}
 Do up to three web searches for the biggest storylines here right now (news from the last 2 days: injuries, trades, coaching, results, what's next). Use your own research, not just the headlines.
@@ -438,7 +441,7 @@ Answer with only this JSON inside <json></json> tags:
  "games": [{"away": "ABBR", "home": "ABBR", "score": "AWY 98, HOM 101", "tag": "Upset" | "Thriller" | "Comeback" | "Overtime" | "Blowout" | "Statement", "why": "one or two sentences, 20-40 words: what happened and how it ended"}],
  "top": [{"name": "...", "team": "ABBR", "line": "...", "why": "a few words"}]}
 over: exactly 5 players who beat their norms by the most (not just the biggest totals). under: exactly 5 established players (starters or stars, judged against their own season averages, which you may look up) who fell well short; take them from "lines" when present; never someone who left hurt unless you say so. In both lists use five different teams: one player per team. games: the 5 most dramatic games (crazy endings, upsets by rank or line, comebacks, overtime, one-score finishes), best first; fewer only if fewer were played. top: only for soccer (Premier League, Champions League: the 10 best performances from goals, assists and key moments); [] otherwise. Use only players and games in the facts. Inside the JSON strings, never use double quotation marks; use single quotes if you must quote.`;
-  if (p.kind === "team") return `Write a short summary of this team for a sports fan's app. Today is ${new Date().toDateString()}.
+  if (p.kind === "team") return `Write a short summary of this team for a sports fan's app. Today is ${etToday()} (US Eastern).
 Team facts (JSON): ${facts}
 Do two web searches for this team's news and season story (recent news from the last 4 days, and one including "The Athletic").
 ${RULES}
@@ -460,7 +463,7 @@ Answer with only this JSON inside <json></json> tags:
  "stars": [{"name": "...", "team": "ABBR", "line": "tonight's box line"}],
  "headlines": [{"title": "...", "source": "The Athletic", "url": "..."}]}
 Stars: 2-4 players. Headlines: only The Athletic stories about this game your search found; [] if none.`;
-  return `Write a preview of this upcoming game for a sports fan's app. Today is ${new Date().toDateString()}.
+  return `Write a preview of this upcoming game for a sports fan's app. Today is ${etToday()} (US Eastern).
 Game (JSON: teams, records, standings or conferences, ranks, TV, start time in UTC, notes): ${game}
 ESPN facts (JSON: injuries, season leaders, last5 (each team's results this season, newestFirst, each with its date; the first one is its most recent game), season series, venue): ${facts}
 Do two web searches: "<away short> <home short> preview" and "<away short> <home short> The Athletic". Use results from the last 3 days about this game or these teams.
@@ -478,6 +481,23 @@ Watch: 2-4 players, never one who is out. Each "line" is real numbers from the E
 }
 
 // web search answers can carry <cite index='…'>…</cite> markers: keep the words, drop the tags, everywhere in the answer
+// 3.113.2 (DJ: accuracy review): a last check on every write-up before it's saved, for the slips the instructions alone didn't stop.
+// First person ("My hunch is that…", "the last table I found") is reworded or the sentence dropped; player lines with no
+// number in them ("Boston guard", "Bicycle kick that helped decide the game") are left out of Watch and Stars.
+const FIRST = /(^|[^\w'])(I|I'm|I've|I'd|I'll|[Mm]e|[Mm]y|[Ww]e|[Ww]e're|[Ww]e've|[Oo]ur|[Oo]urs|us)(?![\w'])/;
+function noFirst(t) {
+  t = t.replace(/^(My|Our) (hunch|guess|pick|read|take|call|bet|sense) (is|says) (that )?/i, "").replace(/^I (think|expect|suspect|believe|bet|reckon|would guess|'d guess) (that )?/i, "");
+  t = t.replace(/^\s*\S/, (c) => c.toUpperCase());
+  if (!FIRST.test(t)) return t;
+  const parts = t.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [t], keep = parts.filter((x) => !FIRST.test(x));
+  return keep.length ? keep.join("").trim() : t;
+}
+function tidy(v, key) {
+  if (typeof v === "string") return /^(url|id|title|source|name|team|player|lg|key|tag|tone|reason|value)$/.test(key || "") ? v : noFirst(v);
+  if (Array.isArray(v)) return v.map((x) => tidy(x, key)).filter((x) => !((key === "watch" || key === "stars") && x && typeof x === "object" && "line" in x && !/\d/.test(String(x.line || ""))));
+  if (v && typeof v === "object") { const o = {}; for (const [k, x] of Object.entries(v)) o[k] = tidy(x, k); return o; }
+  return v;
+}
 function stripCites(v) {
   if (typeof v === "string") return v.replace(/<\/?cite\b[^>]*>/gi, "").replace(/\s{2,}/g, " ").trim();
   if (Array.isArray(v)) return v.map(stripCites);
@@ -543,7 +563,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
     const p = event.payload, t = target(p);
     try {
       const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, p.kind === "deep" && p.key[0] === "l" ? 3 : SEARCHES[p.kind], LEAN[p.kind]));
-      const ans = stripCites(res.ans || res);
+      const ans = tidy(stripCites(res.ans || res));
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, res.model || null, !!res.tooLong); } catch (e) {} return true; });
       if (res.tooLong) throw new Error("Claude's answer ran too long");
       const now = new Date().toISOString();

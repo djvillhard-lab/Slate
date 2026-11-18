@@ -103,3 +103,4 @@ Only GitHub noreply addresses go here, never a real email. Setup for a new perso
 - Read only the files for the page you're changing. Use grep with line numbers, then read just those lines.
 - End every thread by updating `docs/pages/<page>.md` (a few lines: what's done, what's open, decisions and why), in the same push as the change. The next thread on that page starts from it instead of re-reading the code.
 - Don't build your own screenshot or test setup: use `scripts/shots.py`, and improve it if it's missing something.
+- Changed the game one-liners (`100-highlights.js`, `105-pv-notes.js`)? Run `node scripts/lines_check.js` before shipping: it runs the real one-liner code on every game today and tomorrow and flags wrong or empty lines (exit 1). Changed what Claude is told (`worker/index.js` RULES, `080-claude.js` facts)? Dates go to Claude in US Eastern time, never UTC.

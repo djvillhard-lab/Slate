@@ -80,3 +80,10 @@ The favorite line needs pickcenter.spread to match the number in details (and be
 
 ## Bet line vs Feed button (Nov 18, 2026)
 On a live card with a Feed button, the last .myb-bar gets margin-right 72px (050-ux-review.css) so its text wraps clear of the button. pvCompute no longer joins a same-team second fact onto a line that names both teams (has "; " or starts "Both").
+
+## Accuracy review (3.113.2, DJ: "lots of errors in the claude summaries and the one-liners")
+Checked all of Nov 18–19's one-liners (236 games) against ESPN with the new `node scripts/lines_check.js`: it runs the real pvCompute/pvStatAlts from src/app and flags streaks longer than the record, "N of its last N", "100% chance", a second fact joined onto the wrong team, a spread on the wrong team, and shortened versions that end on a fragment. Exits 1 when anything is flagged. Run it after any change to 100-highlights.js or 105-pv-notes.js. Before 3.113.2: 36 flagged; after: 0.
+- ESPN's predictor is shown at 99% at most. form5/slump lines never say "five of its last five" / "lost five of its last five" (they stepped in when the streak line was left out on an unbeaten record).
+- pvCuts never keeps a cut that ends on a fragment (PVN_DANGLE: a word or two after a comma, or a dangling verb like "takes").
+- Claude side (080-claude.js, worker/index.js): last5 dates and the game's `day` (clGame) are US Eastern via clDay; the worker's "Today is" is Eastern (etToday). RULES now cover dates, last season vs this season (web results checked against this season's dated results), head-to-head = "last N meetings", numbers-only player lines. `tidy()` in the worker rewords or drops first-person sentences and drops Watch/Stars entries without a number, before saving.
+- Open: Claude write-ups saved before 3.113.2 keep their text (today's Celtics–Nuggets preview still has the late dates) until they're written again. A second-opinion check by a cheaper model on each write-up was considered and left for DJ (costs money per write-up).
