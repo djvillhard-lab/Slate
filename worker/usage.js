@@ -49,6 +49,13 @@ export async function usageRoute(req, env, url, h) {
     const admin = p && p.pass && ((await whoIs(env, p.pass)) || {}).admin === true;
     const reader = admin || (p && p.key && (await shaHex(p.key)) === READER_HASH);
     if (!reader) return json({ error: "Not allowed" }, 403);
+    if (p.diag === true) {   // 3.96.1: the tap check's logs (src/app/297-diag.js), newest last
+      const r = await fetch(`https://xpkzcdaawaqiqgwkkwst.supabase.co/rest/v1/docs?select=path,data&path=like.${encodeURIComponent("stats/diag/")}*&limit=20`,
+        { headers: { apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET } });
+      const rows = r.ok ? await r.json() : [], out = {};
+      for (const row of rows) { try { out[row.path] = await open(env, row.data.enc); } catch (e) { out[row.path] = { error: "unreadable" }; } }
+      return json({ ok: true, diag: out });
+    }
     let doc = { marks: {} };
     try { const cur = await getDoc(env, "stats/marks"); if (cur && cur.enc) doc = await open(env, cur.enc); } catch (e) { doc = { marks: {} }; }
     doc.marks = doc.marks || {};
@@ -83,6 +90,20 @@ export async function usageRoute(req, env, url, h) {
 
   const me = await whoIs(env, p && p.pass);
   if (!me) return json({ error: "Not allowed" }, 403);
+
+  if (url.pathname === "/api/usage" && p.diag && typeof p.diag === "object") {   // 3.96.1: the tap check (src/app/297-diag.js)
+    const path = "stats/diag/" + String(me.id).replace(/[^a-z0-9_-]/gi, "").slice(0, 40);
+    let doc = { sends: [] };
+    try { const cur = await getDoc(env, path); if (cur && cur.enc) doc = await open(env, cur.enc); } catch (e) { doc = { sends: [] }; }
+    const d = p.diag, log = Array.isArray(d.log) ? d.log.slice(-150) : [];
+    const head = {}; for (const k of ["ver", "build", "app", "pane", "w", "h", "ua", "sw", "renders", "at"]) if (d[k] !== undefined) head[k] = String(d[k]).slice(0, 200);
+    head.got = new Date().toISOString();
+    const clean = log.map((e) => { const o = {}; if (e && typeof e === "object") for (const k of Object.keys(e).slice(0, 12)) o[String(k).slice(0, 12)] = typeof e[k] === "number" || typeof e[k] === "boolean" ? e[k] : String(e[k]).slice(0, 200); return o; });
+    doc.sends = (doc.sends || []).concat([{ head, log: clean }]);
+    let n = 0; for (let i = doc.sends.length - 1; i >= 0; i--) { n += doc.sends[i].log.length; if (n > 300) { doc.sends = doc.sends.slice(i + 1); break; } }
+    const r = await putDoc(env, path, { enc: await seal(env, doc) });
+    return json({ ok: !!r.ok });
+  }
 
   if (url.pathname === "/api/usage") {
     // The iPhone app says so in its user agent ("SlateApp/<version>", every build since 3.24), which is surer than

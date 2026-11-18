@@ -338,7 +338,7 @@
   }, { capture: true, passive: true }); });
   renderGames = function () {
     if (agDown && $("games-body") && $("games-body").childNodes.length) { agPending = true; return; }
-    agPending = false;
+    agPending = false; if (window.slateDiagRender) window.slateDiagRender();
     var body = $("games-body"), gen = ++agGen; clearTimeout(agBatchT);
     agOld = {}; if (body) Array.prototype.forEach.call(body.querySelectorAll(".g.panel[data-gid]"), function (r) { agOld[r.dataset.gid] = r; });
     var had = Object.keys(agOld).length;

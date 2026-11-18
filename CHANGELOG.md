@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.96.1 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Behind the scenes, on DJ's phone only: a short log of which version the phone is really running, where each touch lands and whether a tap follows, any moment the page freezes, and any errors. It's sent every 30 seconds so Claude can see why All games stops taking taps on the phone when it works in every test. It will be removed once that's fixed.
+
 ## 3.96.0 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - All games: the page no longer loads every game at once. On ALL, each league shows its first 6 games (My teams up to 12); on a league tab like College Hoops, the first 20. Live games come first, then games on your slate. A "Show more games" button under each league adds the next 10 (20 on a league tab). Searching still shows every match. On a big night that's about 40 cards on the page instead of 150, so taps and the Live button respond right away.
