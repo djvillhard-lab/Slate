@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.3 (Nov 18, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Claude's write-ups are checked against ESPN before they're saved. Previews, recaps, game breakdowns and the News page are compared with each team's record and this season's dated results, and any sentence that contradicts them is left out. It catches a result on the wrong date ("lost 115-105 to Orlando on Nov 17" for a Nov 16 game), a record that isn't the team's, a loss to a team that isn't on this season's schedule (Clemson's "first loss, to Iowa" was last March; Duke and Illinois "both lost to UConn"), and streaks or "unbeaten" claims the results don't back up. Run on the last three days of write-ups, it left out 13 wrong sentences and no correct ones (all 9 recaps came through untouched). Some mistakes it can't check yet, like "all on the road" or a team's place in the standings. It costs nothing: no extra Claude call.
+
 ## 3.113.2 (Nov 18, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Claude's previews, recaps and News write-ups get every date right. Night games were being dated a day late, because ESPN's times are in UTC: today's Celtics–Nuggets preview said Orlando beat Boston "on Nov 17" (it was Nov 16) and that both teams lost on Nov 17. Claude now gets each game's date in Eastern time, and "today" no longer turns into tomorrow after 7 PM Eastern.

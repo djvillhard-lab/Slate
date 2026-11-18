@@ -8,6 +8,7 @@ import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad,
 import { runNewsletters, rss } from "./newsletters.js";
 import { runMorningEmail, morningApi, confirmEmail } from "./morning-email.js";
 import { feedbackRoute } from "./feedback.js";
+import { factCheck } from "./factcheck.js";
 import { usageRoute } from "./usage.js";
 import { googleRoutes } from "./google.js";
 
@@ -563,7 +564,10 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
     const p = event.payload, t = target(p);
     try {
       const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 24000 : p.kind === "deep" ? 6000 : false, p.kind === "deep" && p.key[0] === "l" ? 3 : SEARCHES[p.kind], LEAN[p.kind]));
-      const ans = tidy(stripCites(res.ans || res));
+      // 3.113.3 (DJ: "I do want the server check"): sentences that contradict ESPN's records and dated results are left out (factcheck.js)
+      const fcKind = p.kind === "recap" ? "recap" : p.kind === "preview" || !p.kind || p.kind === "deep" && p.key[0] === "g" || p.kind === "news" && p.key === "page" ? "preview" : "";
+      const chk = fcKind ? factCheck(fcKind, tidy(stripCites(res.ans || res)), p.facts, p.game) : { ans: tidy(stripCites(res.ans || res)), dropped: [] }, ans = chk.ans, fc = chk.dropped.slice(0, 20);
+      if (fc.length) console.log("fact check left out", fc.length, JSON.stringify(fc).slice(0, 1500));
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, res.model || null, !!res.tooLong); } catch (e) {} return true; });
       if (res.tooLong) throw new Error("Claude's answer ran too long");
       const now = new Date().toISOString();
@@ -582,11 +586,12 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           const teams = (Array.isArray(ans.teams) ? ans.teams : []).filter((x) => x && x.name).slice(0, 100).map((x) => ({ name: H(x.name, 60), lg: H(x.lg, 12), chip: S(x.chip, 24), tone: ["up", "down", "alert"].includes(x.tone) ? x.tone : "", line: S(x.line, 240), hits: hits(x.hits, 3) }));
           const leagues = (Array.isArray(ans.leagues) ? ans.leagues : []).filter((x) => x && x.key && x.story).slice(0, 16).map((x) => ({ key: H(x.key, 12), story: S(x.story, 700), hits: hits(x.hits, 6, 520), read: rd(x.read) }));
           if (!top.length && !games.length && !teams.length && !leagues.length) throw new Error("Claude's page came back empty");
-          await putDoc(this.env, t.path, { date: p.date, cover: f.cover || {}, top, games, teams, leagues, took: Math.max(0, Math.round((Date.parse(now) - Date.parse(p.at)) / 1000)) || 0, at: now, by: p.user || "dj", writing: null });
+          await putDoc(this.env, t.path, { date: p.date, cover: f.cover || {}, top, games, teams, leagues, fc, took: Math.max(0, Math.round((Date.parse(now) - Date.parse(p.at)) / 1000)) || 0, at: now, by: p.user || "dj", writing: null });
         } else if (p.kind === "deep") {
           const type = p.key[0], pairs = (a, n, k) => (Array.isArray(a) ? a : []).filter((x) => x && x[k] && x.text).slice(0, n).map((x) => ({ [k]: S(x[k], 60), text: S(x.text, 260) }));
           const out = { key: p.key, date: p.date, type, take: strs(ans.take, 3).map((x) => x.slice(0, 1200)), number: num(ans.number), reads: (Array.isArray(ans.reads) ? ans.reads : []).map(rd).filter(Boolean).slice(0, 3), at: now, by: p.user || "dj", writing: null };
           if (!out.take.length) throw new Error("Claude's breakdown came back empty");
+          if (fc.length) out.fc = fc;
           if (type === "g") Object.assign(out, { verdict: S(ans.verdict, 40), watch: hits(ans.watch, 3), sides: pairs(ans.sides, 2, "team"), timeline: pairs(ans.timeline, 4, "when"), hunch: S(ans.hunch, 300) });
           else if (type === "t") Object.assign(out, { mood: S(ans.mood, 32), latest: hits(ans.latest, 4), said: ans.said && ans.said.text ? { text: S(ans.said.text, 300), who: S(ans.said.who, 120) } : null, timeline: pairs(ans.timeline, 4, "when"), next: S(ans.next, 200) });
           else Object.assign(out, { lead: ans.lead && ans.lead.title ? { title: S(ans.lead.title, 140), text: S(ans.lead.text, 400), team: H(ans.lead.team, 60), url: /^https:\/\//.test(ans.lead.url || "") ? H(ans.lead.url, 600) : "" } : null,
@@ -610,9 +615,9 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           const g = JSON.parse(p.facts || "{}");
           await putDoc(this.env, t.path, { key: p.key, name: g.name || "", league: g.league || "", summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 6), headlines: athletic(ans.headlines), at: now, by: "request", writing: null });
         } else if (p.kind === "recap") {
-          await mergeDoc(this.env, t.path, t.patch({ recap: { v: RECAP_V, text: String(ans.text || ""), bullets: strs(ans.bullets, 4), stars: (ans.stars || []).slice(0, 4), endedAt: now, at: now }, headlines: athletic(ans.headlines), writing: null, updatedAt: now }));
+          await mergeDoc(this.env, t.path, t.patch({ recap: { v: RECAP_V, fc, text: String(ans.text || ""), bullets: strs(ans.bullets, 4), stars: (ans.stars || []).slice(0, 4), endedAt: now, at: now }, headlines: athletic(ans.headlines), writing: null, updatedAt: now }));
         } else {
-          await mergeDoc(this.env, t.path, t.patch({ summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 5), watch: (ans.watch || []).slice(0, 4), series: String(ans.series || ""), headlines: athletic(ans.headlines), newsAt: now, updatedAt: now, writing: null, by: "request" }));
+          await mergeDoc(this.env, t.path, t.patch({ fc, summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 5), watch: (ans.watch || []).slice(0, 4), series: String(ans.series || ""), headlines: athletic(ans.headlines), newsAt: now, updatedAt: now, writing: null, by: "request" }));
         }
         return true;
       });
