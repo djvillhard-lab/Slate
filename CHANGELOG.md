@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.102.1 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- On TV: a new My channels button at the top. Switch off the channels and services you don't get, and they stay off the page (the button shows how many are hidden). Saved on this phone.
+- On TV: a channel with more than six games lists five and a "Show all" button, so ESPN+ no longer runs for 72 games. Games on now come first, then games still to come, then finished ones.
+
 ## 3.102.0 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - New: Standings. The Teams page has two tabs at the top, My teams and Standings. Pick a league (NFL, NBA, NHL, MLB, college football, college hoops, women's hoops, Premier League, MLS, WNBA, La Liga, Serie A, Bundesliga, Ligue 1) and see every team in order with its record, straight from ESPN.
