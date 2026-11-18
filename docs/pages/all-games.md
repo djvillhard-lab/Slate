@@ -56,3 +56,9 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - Score updates wait while a finger is on the screen or the page is moving (`liveRender` in 040-live.js), at most 20s.
 - `agFitNames` resets, measures and changes all cards in batches. Date formatters are made once (030-helpers.js).
 - Result on a fast computer: long stalls went from 23 in 90s (3.3s, up to 0.38s) to 10 (1.8s, about 0.18s each). Open: All games still rebuilds every card on each score update; next step would be swapping only the cards that changed.
+
+## 3.95.3: draw in batches, keep unchanged cards (DJ: ALL tab still froze)
+- Only ALL froze because it's the biggest list (about 150 cards on a busy night); each 10s score update rebuilt all of it in one task, so on the phone the page was busy most of the time: taps were lost while scrolling (which doesn't wait for the page) still worked.
+- `section()` now queues cards (`agQ`); the `renderGames` wrapper draws the ones down to where you've scrolled right away, then 12 at a time with 24ms gaps. Each card's freshly built HTML is kept on the node (`_agHtml`); if the new card's HTML matches, the old node is put back (its preview watcher moves over) so only changed cards are laid out. Cards with a tray are always rebuilt.
+- The right column only widens between fresh pages (`agWiden` measures just the new cards); a page with no reused cards sizes it from scratch with `alignSides`.
+- Measured: long stalls in 90s went from 10 (about 0.18s each) to 1 (76ms).

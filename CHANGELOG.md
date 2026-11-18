@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.95.3 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- All games: no more freezing on busy nights. The cards on screen are drawn first and the rest follow a few at a time, so taps and swipes get through while the page fills in. When scores update, only the cards that changed are redrawn; the rest stay exactly as they were.
+
 ## 3.95.2 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - Live feed: a sideways swipe now moves to the next or previous game from anywhere on the page. Before, a swipe that started on the box score did nothing. A stats table that scrolls sideways still scrolls first, and the swipe takes over once the table is at its end.

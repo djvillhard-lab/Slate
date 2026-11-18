@@ -213,7 +213,7 @@
     if (many) sec.appendChild(icon("more"));
     body.appendChild(sec);
     var box = el("div", "glist");
-    if (!shut) list.forEach(function (g) { box.appendChild(gameRow(g, "games", { league: title === "My teams" })); });
+    if (!shut) list.forEach(function (g) { agQ.push({ box: box, g: g, mine: title === "My teams" }); });  // 3.95.2: drawn in batches (agDraw)
     body.appendChild(box);
     if (many) sec.addEventListener("click", function () {
       if (COLLAPSED[title]) delete COLLAPSED[title]; else COLLAPSED[title] = 1;
@@ -247,11 +247,11 @@
   // ---- team names never cut short (3.68.7) ----
   // In a narrow card (the open Duo's right pane) a name like "Chargers" was cut to "Char…". After each draw, a card whose name doesn't fit
   // drops both teams' records first, and if a name still doesn't fit, both rows show the team's abbreviation instead (the record stays hidden).
-  function agFitNames() {
+  function agFitNames(only) {
     var box = $("games-body"); if (!box || !box.offsetParent) return;
     // 3.95.1 (speed): every card is reset first, then all are measured, then changed, so the phone lays the page out
     // three times in all instead of two or three times per card (143 cards froze taps for a moment)
-    var cards = Array.prototype.map.call(box.querySelectorAll(".g.panel"), function (p) {
+    var cards = Array.prototype.map.call(only || box.querySelectorAll(".g.panel"), function (p) {
       var rows = Array.prototype.slice.call(p.querySelectorAll(".tm"));
       return { rows: rows, nms: rows.map(function (r) { return r.querySelector(".nm"); }).filter(Boolean), recs: rows.map(function (r) { return r.querySelector(".rec"); }).filter(Boolean) };
     }).filter(function (c) { return c.rows.length; });
@@ -268,7 +268,59 @@
     });
   }
   var renderGames0 = renderGames;
-  renderGames = function () { renderGames0.apply(this, arguments); try { alignSides($("games-body")); agFitNames(); } catch (e) {} agFitLater(); };
+  // 3.95.2 (speed, DJ: All games still froze): the cards are drawn in small batches. The ones on screen (and down to
+  // where you've scrolled) come first, then the rest about 12 at a time with gaps between, so a tap or a swipe is
+  // never stuck behind 143 cards. A card that looks exactly the same as before is kept as it is instead of being
+  // replaced, so a score update only lays out the cards that changed. The right column only widens between full
+  // redraws (a new day, league or filter starts it over).
+  var agQ = [], agGen = 0, agOld = {}, agBatchT = null;
+  function agDraw(n) {
+    var made = [];
+    while (agQ.length && n-- > 0) {
+      var j = agQ.shift(), row = gameRow(j.g, "games", { league: j.mine }), id = j.g.id + (j.mine ? ":mine" : ""), html = row.outerHTML;
+      var old = agOld[id];
+      if (old && old._agHtml === html && !row.querySelector(".tray") && !old.querySelector(".tray")) {
+        if (agFn.has(row)) { agFn.set(old, agFn.get(row)); agFn.delete(row); if (agIO) agIO.observe(old); }
+        if (agIO) agIO.unobserve(row);
+        row = old;
+      } else { row._agHtml = html; row.dataset.gid = id; made.push(row); }
+      delete agOld[id];
+      j.box.appendChild(row);
+    }
+    return made;
+  }
+  function agWiden(rows) {  // measure only these cards' right column; widen the page's column if one needs more
+    var box = $("games-body"), sides = rows.map(function (r) { return r.querySelector(".g-side"); }).filter(function (x) { return x && x.parentNode.classList.contains("g"); });
+    if (!sides.length || !box.offsetParent) return false;
+    var cur = parseFloat(box.style.getPropertyValue("--side-w")) || 0;
+    sides.forEach(function (x) { x.style.width = "auto"; });
+    var max = 0; sides.forEach(function (x) { var w = x.getBoundingClientRect().width; Array.prototype.forEach.call(x.querySelectorAll(".net, .s-cd, .s-live, .s-final"), function (n) { w = Math.max(w, n.scrollWidth + 18); }); max = Math.max(max, w); });
+    sides.forEach(function (x) { x.style.width = ""; });
+    var v = max ? Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) : 0;
+    if (v > cur) { box.style.setProperty("--side-w", v + "px"); return true; }
+    return false;
+  }
+  renderGames = function () {
+    var body = $("games-body"), gen = ++agGen; clearTimeout(agBatchT);
+    agOld = {}; if (body) Array.prototype.forEach.call(body.querySelectorAll(".g.panel[data-gid]"), function (r) { agOld[r.dataset.gid] = r; });
+    var had = Object.keys(agOld).length;
+    agQ = [];
+    renderGames0.apply(this, arguments);
+    var y = window.scrollY || 0, made = agDraw(Math.max(16, Math.ceil((y + 2 * (window.innerHeight || 800)) / 90)));
+    var kept = body ? body.querySelectorAll(".g.panel").length - made.length : 0;
+    try {
+      if (!had || !kept) { alignSides(body); agFitNames(); }  // a fresh page: size the column from what's drawn
+      else if (agWiden(made)) agFitNames(); else agFitNames(made);
+    } catch (e) {}
+    var more = function () {
+      if (gen !== agGen) return;
+      var m = agDraw(12);
+      try { if (agWiden(m)) agFitNames(); else agFitNames(m); } catch (e) {}
+      if (agQ.length) agBatchT = setTimeout(more, 24);
+    };
+    if (agQ.length) agBatchT = setTimeout(more, 24);
+    if (!had) agFitLater();  // the late re-fit is only for a fresh page (fonts and watch links settling)
+  };
   // and once more after the page settles (3.80.1: the watch links and the fonts can widen the right column after the first fit)
   var agFitT2 = null;
   function agFitLater() { clearTimeout(agFitT2); agFitT2 = setTimeout(function () { try { agFitNames(); } catch (e) {} }, 120); }
