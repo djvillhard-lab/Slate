@@ -109,6 +109,8 @@
     return out.slice(0, 8);
   }
   function livePoll() {
+    try { laSlateWidget(); } catch (e) {}
+    try { laBetsShare(); } catch (e) {}
     if (panesOn()) return;  // 3.80.0: unfolded, the two panes each keep their own scores; the page behind them rests
     try { laLogos(); } catch (e) {}
     if (!window.SLATE_SELF || livePolling || document.hidden || !state.date) return;
@@ -275,7 +277,51 @@
     ["away", "home"].forEach(function (sd) { var r = Number(g[sd + "Rank"]); if ((LEAGUES[g.league] || {}).college && Number.isInteger(r) && r > 0 && r < 26) at[sd + "Rank"] = r; });
     // 3.67.0: the team's ESPN logo ("nba/bos.png"), drawn in place of the chip once the app has saved it
     ["away", "home"].forEach(function (sd) { var lg = laLogo(g, sd); if (lg) at[sd + "Logo"] = lg; });
+    // 3.112.0: your bet on this game (My bets), shown on the live card with how it's doing; builds before 3.112.0 ignore it
+    var bt = laBetOf(g); if (bt) at.bet = bt;
     return at;
+  }
+  // the first of today's bets on the game, small enough for a live notification: the label ("DUKE -3.5", "Over 145.5")
+  // and what the iPhone needs to work out "covering by 2.5" from the score (props show the label only)
+  function laBetOf(g) {
+    try {
+      if (typeof mybFor !== "function") return null;
+      var b = mybFor(g)[0]; if (!b) return null;
+      var out = { l: String(mybLabel(b, g) || "").slice(0, 40), k: String(b.kind || "") };
+      if (!out.l) return null;
+      if (b.sd) out.sd = String(b.sd); if (b.ou) out.ou = String(b.ou);
+      var ln = Number(b.line); if (b.line != null && b.line !== "" && isFinite(ln)) out.ln = ln;
+      if (b.kind === "ml" && typeof SOCCER !== "undefined" && SOCCER[b.lg || g.league]) out.d3 = true;
+      return out;
+    } catch (e) { return null; }
+  }
+  // 3.112.0: today's bets by game, shared with Slate's server (prefs/livebets) so a live notification it starts by
+  // itself shows the bet too. Sent once per change.
+  var laBetsSent = "";
+  function laBetsShare() {
+    if (!db || !uid || !state.isOwner || state.date !== todayInHome()) return;
+    var bets = {}; games().forEach(function (g) { var bt = laBetOf(g); if (bt) bets[g.id] = bt; });
+    var k = state.date + JSON.stringify(bets); if (k === laBetsSent || (!laBetsSent && !Object.keys(bets).length)) return;
+    laBetsSent = k;
+    db.doc("prefs/livebets").set({ date: state.date, bets: bets, updatedAt: new Date().toISOString() }).then(null, function () { laBetsSent = ""; });
+  }
+  // 3.112.0: the Tonight's slate widget on the iPhone home screen. The app saves this list for the widget, which shows
+  // the next three games that haven't finished (start time and channel, or the score while it's on).
+  // Sent once per change; builds before 3.112.0 ignore it.
+  var laSlateSent = "";
+  function laSlateWidget() {
+    if (!NATIVE || state.date !== todayInHome() || !state.slateIds) return;
+    var byId = {}; games().forEach(function (g) { byId[g.id] = g; });
+    var list = state.slateIds.map(function (id) { return byId[id]; }).filter(Boolean).map(function (g) {
+      var at = laAttrsOf(g), s = laStateOf(g), kick = new Date(g.moved || g.start).getTime();
+      var o = { id: String(g.id), aa: String(at.awayAbbr || ""), ha: String(at.homeAbbr || ""), ac: String(at.awayColor || ""), hc: String(at.homeColor || ""), ax: String(at.awayAlt || ""), hx: String(at.homeAlt || ""),
+        a: Math.round(Number(s.a)) || 0, h: Math.round(Number(s.h)) || 0, d: String(s.detail || "").slice(0, 24), s: String(s.state) };
+      if (at.awayLogo) o.al = at.awayLogo; if (at.homeLogo) o.hl = at.homeLogo;
+      if (kick > 0) o.t = Math.floor(kick / 1000); if (at.channel) o.tv = String(at.channel).slice(0, 16);
+      return o;
+    }).sort(function (p, q) { return (p.t || 0) - (q.t || 0); }).slice(0, 12);
+    var k = JSON.stringify(list); if (k === laSlateSent) return;
+    laSlateSent = k; nativePost({ t: "slate", date: state.date, at: Math.floor(Date.now() / 1000), games: list });
   }
   // the game's own logo first (national teams and anyone ESPN's team lists miss), then the team lookup
   function laLogo(g, sd) { try { var own = logoSeg(g[sd + "Logo"]); if (own) return own; var t = teamLook(g[sd]); return t && t[0] ? String(t[0]) : ""; } catch (e) { return ""; } }

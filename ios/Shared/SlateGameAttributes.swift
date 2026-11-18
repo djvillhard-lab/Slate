@@ -48,6 +48,17 @@ struct SlateGameAttributes: ActivityAttributes {
     var channel: String?      // "NBC", "ESPN"…, as on the slate: the Watch button
     var awayLogo: String?     // 3.67.0: ESPN's logo for the team, "nba/bos.png": drawn in place of the chip once the app has saved it
     var homeLogo: String?
+    var bet: SlateBet?        // 3.112.0: your bet on the game (My bets), when you had one as it started
+}
+
+// 3.112.0: a bet from My bets, as the live card shows it. The card works out how it's doing from the score.
+struct SlateBet: Codable, Hashable {
+    var l: String             // the label, as in My bets: "DUKE -3.5", "Over 145.5", "DUKE to win +120", "Brown over 18.5 points"
+    var k: String             // "spread", "ml", "total" or "prop" (a prop shows its label only)
+    var sd: String?           // the side bet on: "away", "home" or "draw"
+    var ou: String?           // a total or prop: "over" or "under"
+    var ln: Double?           // the line: the spread (-3.5) or the total (145.5)
+    var d3: Bool?             // a moneyline where a tie loses (soccer)
 }
 
 // 3.67.0: team logos for live notifications. A live notification can't download a picture, so the app saves ESPN's

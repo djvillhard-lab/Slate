@@ -5,6 +5,7 @@
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const VAPID_PUBLIC = "BGOiSg4w33W5Lui867BMvNq2fDnRLjdoOADhr5Vx_C2gOaibYV8joMK8K6ibx9o8sZFByk_K107NupNiJNORWNY";
+const LA_LINGER = 20 * 60;  // 3.112.0: a finished game's live notification stays this many seconds after the final (DJ: end 15 to 30 minutes after)
 const PATHS = {
   nfl: ["football/nfl"], ncaaf: ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
   nba: ["basketball/nba"], wnba: ["basketball/wnba"], ncaam: ["basketball/mens-college-basketball&groups=50&limit=500"],
@@ -206,12 +207,22 @@ function laAttrs(id, g, s) {
   for (const side of ["away", "home"]) { const r = Number(g[side + "Rank"]); if (COLLEGE[g.league] && Number.isInteger(r) && r > 0 && r < 26) at[side + "Rank"] = r; }  // a whole number, or the app can't read the notification
   // 3.67.0: ESPN's logo for each team ("nba/bos.png"); the app draws it in place of the chip once it has saved it
   const al = s.al || logoSeg(g.awayLogo), hl = s.hl || logoSeg(g.homeLogo); if (al) at.awayLogo = al; if (hl) at.homeLogo = hl;
+  // 3.112.0: your bet on the game; only well-formed ones, since a bad field would stop the app reading the notification
+  const b = LBT[id];
+  if (b && typeof b.l === "string" && b.l && typeof b.k === "string") {
+    const bt = { l: b.l.slice(0, 40), k: b.k.slice(0, 10) };
+    if (typeof b.sd === "string") bt.sd = b.sd.slice(0, 6); if (typeof b.ou === "string") bt.ou = b.ou.slice(0, 6);
+    if (typeof b.ln === "number" && isFinite(b.ln)) bt.ln = b.ln; if (b.d3 === true) bt.d3 = true;
+    at.bet = bt;
+  }
   return at;
 }
 // "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png" -> "nba/bos.png" (the same name the page uses)
 function logoSeg(href) { const m = /\/i\/teamlogos\/([a-z0-9]+)\/500(?:-dark)?\/(?:scoreboard\/)?([\w-]+\.png)/i.exec(String(href || "")); return m ? `${m[1]}/${m[2]}`.toLowerCase() : ""; }
 // each person's preview lines for today, shared by their phone from the slate (prefs/pvlines, 3.58.0): game id → line
 let PVL = {}, LVL = {}, TGL = {};
+// 3.112.0: each person's bets for today by game (prefs/livebets, shared by their phone from My bets), for the live card
+let LBT = {};
 // 3.66.3: a one-liner made to fit a live notification instead of being cut mid-word: the first part of a two-part line
 // ("Warriors are without Curry; Pelicans have lost five in a row" -> "Warriors are without Curry"), else whole words
 // and "…". Soccer scorers drop the away side's first names already, so they fit two lines.
@@ -347,7 +358,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
       // one started for a finished game has no token for a moment: wait a few minutes for it, so it can be ended properly
       if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; continue; }
       cur.end = 1;
-      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 4 * 3600 }, 10);  // 4 hours: the longest iOS keeps an ended one (you can swipe it away sooner)
+      if (tok) await sendLive(env, tok, "end", { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + LA_LINGER }, 10);  // 3.112.0: the final score stays about 20 minutes, then it goes (was 4 hours)
       continue;
     }
     if (!tok || cur.k === key) continue;
@@ -419,10 +430,10 @@ async function runBoard(env, p, sent, la, games, sc) {
   }
   if (cur.end) return gone;
   if (done) {
-    // all four over: ended with the finals showing (up to 4 hours); a new one waits a few minutes for its token
+    // all four over: ended with the finals showing (about 20 minutes, 3.112.0); a new one waits a few minutes for its token
     if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; return gone; }
     cur.end = 1;
-    if (tok) await sendLive(env, tok, "end", { "content-state": state, "dismissal-date": Math.floor(now / 1000) + 4 * 3600 }, 10);
+    if (tok) await sendLive(env, tok, "end", { "content-state": state, "dismissal-date": Math.floor(now / 1000) + LA_LINGER }, 10);
     return gone;
   }
   if (!tok || cur.k === key) return gone;
@@ -731,7 +742,7 @@ export async function runAlerts(env) {
   const base = await getDocs(env, [`alertsets/${D}`]);
   const aset = base[`alertsets/${D}`]; if (!aset || !aset.people) return;
   const people = aset.people, games = aset.games || {};
-  const paths = []; for (const w of people) paths.push(w.prefix + "prefs/notify", w.prefix + "prefs/push", `${w.prefix}prefs/sent-${D}`, w.prefix + "prefs/liveacts", w.prefix + "prefs/pvlines");
+  const paths = []; for (const w of people) paths.push(w.prefix + "prefs/notify", w.prefix + "prefs/push", `${w.prefix}prefs/sent-${D}`, w.prefix + "prefs/liveacts", w.prefix + "prefs/pvlines", w.prefix + "prefs/livebets");
   const docs = await getDocs(env, paths);
   const hasLive = (w) => { const l = docs[w.prefix + "prefs/liveacts"] || {}; return (l.start || []).length || Object.keys(l.acts || {}).length || (l.startBoard || []).length || !!l.board; };
   const active = people.filter((w) => (((docs[w.prefix + "prefs/push"] || {}).subs) || []).length || hasLive(w));
@@ -752,6 +763,7 @@ export async function runAlerts(env) {
     { const pvd = docs[pre + "prefs/pvlines"] || {}; PVL = pvd.date === D && pvd.lines && typeof pvd.lines === "object" ? pvd.lines : {};
       LVL = pvd.date === D && pvd.live && typeof pvd.live === "object" ? pvd.live : {};
       TGL = pvd.date === D && pvd.tags && typeof pvd.tags === "object" ? pvd.tags : {}; }
+    { const bd = docs[pre + "prefs/livebets"] || {}; LBT = bd.date === D && bd.bets && typeof bd.bets === "object" ? bd.bets : {}; }
     const lt = ctParts(now, TZ);
     const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
@@ -821,7 +833,7 @@ export async function runAlerts(env) {
       for (const envName of ["production", "sandbox"]) {
         if (!g[envName]) continue;
         await bcSend(env, envName, g[envName], fin ? "end" : "update",
-          fin ? { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + 4 * 3600 } : { "content-state": st, "stale-date": Math.floor(Date.now() / 1000) + 10 * 60 }, fin || scored ? 10 : 5);
+          fin ? { "content-state": st, "dismissal-date": Math.floor(Date.now() / 1000) + LA_LINGER } : { "content-state": st, "stale-date": Math.floor(Date.now() / 1000) + 10 * 60 }, fin || scored ? 10 : 5);
       }
       g.k = key; if (fin) g.end = 1; BC.doc.dirty = true;
     }

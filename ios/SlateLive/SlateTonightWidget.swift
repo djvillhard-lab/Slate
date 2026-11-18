@@ -1,0 +1,179 @@
+import SwiftUI
+import WidgetKit
+
+// 3.112.0, the Tonight's slate widget (home screen, small and medium): the next three games on today's slate that
+// haven't finished, each with its start time and channel, or the score and clock while it's on. It reads the slate
+// the app saved the last time Slate was open (SlateTonight). A score older than 20 minutes isn't shown (the game just
+// says Live), and a game that started more than four hours ago counts as over. Tap a game (medium) for its matchup.
+struct SlateTonightWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "SlateTonight", provider: TonightProvider()) { entry in
+            TonightView(entry: entry)
+        }
+        .configurationDisplayName("Tonight's slate")
+        .description("The next three games on your slate, with times and channels.")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+struct TonightEntry: TimelineEntry {
+    let date: Date
+    let data: SlateTonight?
+}
+
+struct TonightProvider: TimelineProvider {
+    func placeholder(in context: Context) -> TonightEntry { TonightEntry(date: Date(), data: nil) }
+
+    func getSnapshot(in context: Context, completion: @escaping (TonightEntry) -> Void) {
+        completion(TonightEntry(date: Date(), data: SlateTonight.load()))
+    }
+
+    // a fresh look every 15 minutes for the next six hours, so games move from "7:30 PM" to Live to gone as the
+    // evening goes, even with Slate closed; Slate redraws it whenever the slate changes
+    func getTimeline(in context: Context, completion: @escaping (Timeline<TonightEntry>) -> Void) {
+        let data = SlateTonight.load(), now = Date()
+        var dates = (0..<24).map { now.addingTimeInterval(Double($0) * 900) }
+        for g in data?.games ?? [] { if let t = g.t, t > now.timeIntervalSince1970, t < now.timeIntervalSince1970 + 6 * 3600 { dates.append(Date(timeIntervalSince1970: t)) } }
+        let entries = Set(dates).sorted().map { TonightEntry(date: $0, data: data) }
+        completion(Timeline(entries: entries, policy: .atEnd))
+    }
+}
+
+enum TonightLook {
+    // the next games at this moment: live ones first, then by start time; finals and long-started games left out
+    static func next(_ d: SlateTonight?, at now: Date, count: Int = 3) -> [SlateBoardGame] {
+        guard let d, now.timeIntervalSince1970 - d.at < 20 * 3600 else { return [] }
+        let n = now.timeIntervalSince1970
+        let left = d.games.filter { g in
+            if g.s == "post" { return false }
+            if let t = g.t, t > 0, n - t > 4 * 3600 { return false }
+            return true
+        }
+        return left.sorted { p, q in
+            let lp = started(p, now), lq = started(q, now)
+            if lp != lq { return lp }
+            return (p.t ?? 0) < (q.t ?? 0)
+        }.prefix(count).map { $0 }
+    }
+
+    static func started(_ g: SlateBoardGame, _ now: Date) -> Bool {
+        g.s == "in" || (g.t.map { $0 > 0 && $0 <= now.timeIntervalSince1970 } ?? false)
+    }
+
+    // the score is shown only while it's recent; otherwise just "Live"
+    static func fresh(_ d: SlateTonight?, _ now: Date) -> Bool {
+        guard let d else { return false }
+        return now.timeIntervalSince1970 - d.at < 20 * 60
+    }
+
+    static func time(_ g: SlateBoardGame) -> String {
+        guard let t = g.t, t > 0 else { return g.d }
+        return Date(timeIntervalSince1970: t).formatted(date: .omitted, time: .shortened)
+    }
+}
+
+struct TonightView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: TonightEntry
+
+    var body: some View {
+        let list = TonightLook.next(entry.data, at: entry.date)
+        let fresh = TonightLook.fresh(entry.data, entry.date)
+        let small = family == .systemSmall
+        VStack(alignment: .leading, spacing: small ? 6 : 7) {
+            Text("TONIGHT'S SLATE")
+                .font(SlateLook.bold(11))
+                .foregroundStyle(SlateLook.muted)
+                .lineLimit(1)
+            if list.isEmpty {
+                Spacer(minLength: 0)
+                Text(entry.data == nil ? "Open Slate to load tonight's games." : "No more games on tonight's slate.")
+                    .font(SlateLook.semi(13))
+                    .foregroundStyle(SlateLook.ink)
+                    .lineLimit(3)
+                Spacer(minLength: 0)
+            } else {
+                ForEach(list, id: \.id) { g in
+                    if small {
+                        TonightSmallRow(g: g, now: entry.date, fresh: fresh)
+                    } else {
+                        Link(destination: SlateLook.gameURL(g.id)) { TonightRow(g: g, now: entry.date, fresh: fresh) }
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .foregroundStyle(SlateLook.ink)
+        .containerBackground(SlateLook.card, for: .widget)
+        .widgetURL(small ? SlateLook.slateURL : nil)
+    }
+}
+
+// medium: away logo and abbreviation, the score (or "at"), home; on the right the time and channel, or the clock
+private struct TonightRow: View {
+    let g: SlateBoardGame
+    let now: Date
+    let fresh: Bool
+
+    var body: some View {
+        let on = TonightLook.started(g, now), score = on && fresh && g.s == "in"
+        HStack(spacing: 6) {
+            Rectangle().fill(SlateLook.visible(SlateLook.panelHex(g.ac, g.ax))).frame(width: 3, height: 26)
+            Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 22, height: 22, size: 9, stripe: 2, radius: 3, logo: g.al)
+            Text(score ? "\(g.aa) \(g.a)" : g.aa).font(SlateLook.bold(14)).lineLimit(1)
+            Text(score ? "–" : "at").font(SlateLook.semi(12)).foregroundStyle(SlateLook.muted)
+            Text(score ? "\(g.h) \(g.ha)" : g.ha).font(SlateLook.bold(14)).lineLimit(1)
+            Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 22, height: 22, size: 9, stripe: 2, radius: 3, logo: g.hl)
+            Spacer(minLength: 4)
+            TonightStatus(g: g, on: on, score: score)
+        }
+        .minimumScaleFactor(0.8)
+        .frame(height: 28)
+    }
+}
+
+// small: both logos, then the time (or Live) and the channel under it
+private struct TonightSmallRow: View {
+    let g: SlateBoardGame
+    let now: Date
+    let fresh: Bool
+
+    var body: some View {
+        let on = TonightLook.started(g, now), score = on && fresh && g.s == "in"
+        HStack(spacing: 4) {
+            Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: 20, height: 20, size: 8, stripe: 2, radius: 3, logo: g.al)
+            if score { Text("\(g.a)–\(g.h)").font(SlateLook.num(15)).lineLimit(1) }
+            Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: 20, height: 20, size: 8, stripe: 2, radius: 3, logo: g.hl)
+            Spacer(minLength: 2)
+            TonightStatus(g: g, on: on, score: false, compact: true)
+        }
+        .frame(height: 30)
+    }
+}
+
+private struct TonightStatus: View {
+    let g: SlateBoardGame
+    let on: Bool
+    let score: Bool
+    var compact = false
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            if on {
+                ClockTag(text: score ? BoardLook.clock(g) : "Live", live: true, size: compact ? 11 : 12, height: compact ? 16 : 18)
+            } else {
+                Text(TonightLook.time(g))
+                    .font(SlateLook.num(compact ? 14 : 16))
+                    .lineLimit(1)
+            }
+            if let tv = g.tv, !tv.isEmpty {
+                Text(tv)
+                    .font(SlateLook.semi(compact ? 10 : 11))
+                    .foregroundStyle(SlateLook.muted)
+                    .lineLimit(1)
+            }
+        }
+        .minimumScaleFactor(0.7)
+    }
+}

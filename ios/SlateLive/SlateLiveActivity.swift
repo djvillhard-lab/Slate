@@ -13,9 +13,12 @@ import WidgetKit
 //   island with another live notification, just the score.
 // Tapping any of it opens that game's matchup in Slate.
 struct SlateLiveActivity: Widget {
-    var body: some WidgetConfiguration {
+    // 3.112.0: also on the Apple Watch's Smart Stack (the small size, WatchCard)
+    var body: some WidgetConfiguration { Self.config().supplementalActivityFamilies([.small]) }
+
+    static func config() -> ActivityConfiguration<SlateGameAttributes> {
         ActivityConfiguration(for: SlateGameAttributes.self) { context in
-            LockCard(a: context.attributes, s: context.state)
+            GameLock(a: context.attributes, s: context.state)
                 .activityBackgroundTint(SlateLook.card)
                 .activitySystemActionForegroundColor(SlateLook.ink)
                 .widgetURL(SlateLook.gameURL(context.attributes.gameId))
@@ -62,6 +65,77 @@ struct SlateLiveActivity: Widget {
             }
             .widgetURL(SlateLook.gameURL(a.gameId))
         }
+    }
+}
+
+// the Lock Screen card, or on the Watch (the small size) the WatchCard
+private struct GameLock: View {
+    let a: SlateGameAttributes
+    let s: SlateGameAttributes.ContentState
+
+    var body: some View {
+        if #available(iOS 18.0, *) {
+            FamilyLock(a: a, s: s)
+        } else {
+            LockCard(a: a, s: s)
+        }
+    }
+}
+
+@available(iOS 18.0, *)
+private struct FamilyLock: View {
+    @Environment(\.activityFamily) private var family
+    let a: SlateGameAttributes
+    let s: SlateGameAttributes.ContentState
+
+    var body: some View {
+        switch family {
+        case .small: WatchCard(a: a, s: s)
+        default: LockCard(a: a, s: s)
+        }
+    }
+}
+
+// 3.112.0, the Apple Watch Smart Stack: both logos and scores with the clock between them, and under them your bet
+// (with how it's doing) or the league
+private struct WatchCard: View {
+    let a: SlateGameAttributes
+    let s: SlateGameAttributes.ContentState
+
+    var body: some View {
+        let pre = s.state == "pre", live = s.state == "in"
+        VStack(spacing: 4) {
+            HStack(spacing: 5) {
+                Chip(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, width: 22, height: 22, size: 9, stripe: 2, radius: 3, logo: a.awayLogo)
+                if !pre { Text("\(s.a)").font(SlateLook.num(24)).foregroundStyle(SlateLook.lost(s, away: true) ? SlateLook.muted : SlateLook.ink) }
+                Spacer(minLength: 2)
+                Text(SlateLook.clock(s))
+                    .font(SlateLook.num(13))
+                    .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Spacer(minLength: 2)
+                if !pre { Text("\(s.h)").font(SlateLook.num(24)).foregroundStyle(SlateLook.lost(s, away: false) ? SlateLook.muted : SlateLook.ink) }
+                Chip(abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, width: 22, height: 22, size: 9, stripe: 2, radius: 3, logo: a.homeLogo)
+            }
+            if let b = a.bet {
+                let say = BetLook.say(b, s)
+                Text(say.isEmpty ? b.l : "\(b.l) · \(say)")
+                    .font(SlateLook.semi(12))
+                    .foregroundStyle(SlateLook.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            } else {
+                Text(a.league)
+                    .font(SlateLook.semi(12))
+                    .foregroundStyle(SlateLook.muted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .foregroundStyle(SlateLook.ink)
     }
 }
 
@@ -272,7 +346,8 @@ private struct LockCard: View {
                     .minimumScaleFactor(0.75)
                     .padding(.horizontal, 6)
                     .padding(.top, 6)
-                } else if star != nil || !note.isEmpty {
+                    if let b = a.bet { BetLine(bet: b, s: s).padding(.horizontal, 6).padding(.top, 2) }
+                } else if star != nil || !note.isEmpty || a.bet != nil {
                     VStack(alignment: .leading, spacing: 2) {
                         if let st = star {
                             HStack(spacing: 7) {
@@ -284,7 +359,10 @@ private struct LockCard: View {
                                     .minimumScaleFactor(0.75)
                             }
                             .lineLimit(1)
-                            if !pv.isEmpty {
+                            // 3.112.0: your bet takes the second line, in place of the slate's one-liner
+                            if let b = a.bet {
+                                BetLine(bet: b, s: s)
+                            } else if !pv.isEmpty {
                                 Text(pv)
                                     .font(SlateLook.semi(12))
                                     .foregroundStyle(SlateLook.muted)
@@ -296,10 +374,11 @@ private struct LockCard: View {
                             Text(note)
                                 .font(SlateLook.semi(13))
                                 .foregroundStyle(live ? SlateLook.live : SlateLook.muted)
-                                .lineLimit(field ? 1 : 2)
+                                .lineLimit(field || a.bet != nil ? 1 : 2)
                                 .minimumScaleFactor(0.85)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
+                        if star == nil, let b = a.bet { BetLine(bet: b, s: s) }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 6)
@@ -307,6 +386,67 @@ private struct LockCard: View {
         }
         .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
         .foregroundStyle(SlateLook.ink)
+    }
+}
+
+// 3.112.0: your bet on the live card, "YOUR BET  DUKE -3.5 · covering by 2.5", worked out from the score the same
+// way My bets does it (a prop shows just its label: the card has no player stats to check it against)
+struct BetLine: View {
+    let bet: SlateBet
+    let s: SlateGameAttributes.ContentState
+
+    var body: some View {
+        let say = BetLook.say(bet, s)
+        HStack(spacing: 7) {
+            Text("YOUR BET").font(SlateLook.bold(11)).foregroundStyle(SlateLook.muted)
+            Text(bet.l).font(SlateLook.semi(13)).foregroundStyle(SlateLook.ink)
+            if !say.isEmpty {
+                Text(say)
+                    .font(SlateLook.semi(13))
+                    .foregroundStyle(s.state == "in" ? SlateLook.live : SlateLook.ink)
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+enum BetLook {
+    static func num(_ n: Double) -> String {
+        let r = (n * 10).rounded() / 10
+        return r == r.rounded() ? String(Int(r)) : String(r)
+    }
+    // "covering by 2.5", "short by 1", "up 4", "needs 6 more", "✓ Won", "✗ Lost", "Push"; "" before it starts
+    static func say(_ b: SlateBet, _ s: SlateGameAttributes.ContentState) -> String {
+        let live = s.state == "in", fin = s.state == "post"
+        guard live || fin, b.k != "prop" else { return "" }
+        let a = Double(s.a), h = Double(s.h)
+        let mine = b.sd == "home" ? h - a : a - h
+        switch b.k {
+        case "spread":
+            guard let ln = b.ln else { return "" }
+            let m = mine + ln
+            if fin { return m > 0 ? "✓ Won" : m < 0 ? "✗ Lost" : "Push" }
+            return m > 0 ? "covering by \(num(m))" : m < 0 ? "short by \(num(-m))" : "right on the line"
+        case "ml":
+            if b.sd == "draw" {
+                if fin { return a == h ? "✓ Won" : "✗ Lost" }
+                return a == h ? "tied" : "not tied"
+            }
+            if fin { return mine > 0 ? "✓ Won" : mine < 0 || b.d3 == true ? "✗ Lost" : "Push" }
+            return mine > 0 ? "up \(num(mine))" : mine < 0 ? "down \(num(-mine))" : "tied"
+        case "total":
+            guard let ln = b.ln else { return "" }
+            let t = a + h, over = b.ou != "under"
+            if t > ln { return over ? "✓ Won" : "✗ Lost" }
+            if fin { return t < ln ? (over ? "✗ Lost" : "✓ Won") : "Push" }
+            if over { return "\(num(t)) so far, needs \(num((ln - t).rounded(.down) + 1)) more" }
+            let room = (ln - t).rounded(.up) - 1
+            return room > 0 ? "\(num(t)) so far, room for \(num(room)) more" : "\(num(t)) so far, right at the line"
+        default:
+            return ""
+        }
     }
 }
 

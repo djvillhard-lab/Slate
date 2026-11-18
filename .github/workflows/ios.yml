@@ -30,7 +30,9 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -project ios/Slate.xcodeproj -scheme Slate -configuration Debug \
-            -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -40
+            -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 \
+            || { echo "---- compile errors ----"; grep -E "error:" -A4 build.log | head -120; tail -20 build.log; exit 1; }
+          tail -40 build.log
 
       - name: Run in the simulators and take screenshots
         env:

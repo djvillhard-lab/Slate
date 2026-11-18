@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 import UserNotifications
 import WebKit
 
@@ -189,6 +190,9 @@ final class WebModel: ObservableObject {
         case "logos":
             // 3.67.0: the day's team logos, saved for live notifications to draw (SlateLogos)
             if let segs = m["segs"] as? [String] { SlateLogos.fetch(segs) }
+        case "slate":
+            // 3.112.0: today's slate for the Tonight's slate widget (SlateTonight); redrawn only when it changed
+            if SlateTonight.save(m) { WidgetCenter.shared.reloadTimelines(ofKind: "SlateTonight") }
         case "push-request":
             pushAsked = true
             requestPush()

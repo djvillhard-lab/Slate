@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.112.0 (Nov 18, 2026)
+TestFlight: 3.112.0, new build
+- New home-screen widget, "Tonight's slate" (small and medium): the next three games on today's slate that haven't finished, with the start time and channel, or a red Live tag and the score once a game is on. It fills in from the last time Slate was open and moves along by itself as the evening goes (a score more than 20 minutes old just says Live). On the medium one, tap a game for its matchup.
+- Live notifications show your bet from My bets on the card: "YOUR BET DUKE -3.5 covering by 2.5", "Over 145.5 140 so far, needs 6 more", "DUKE to win up 4", then "✓ Won" or "✗ Lost" at the final. It takes the line under the standout. Player bets show the bet only, since the card has no player stats. A bet added after the notification started shows the next time it starts.
+- On an Apple Watch, a game's live notification also shows in the Watch's Smart Stack: both logos and scores, the clock, and your bet or the league. Live notifications and the widget now need iOS 18 or later on the iPhone (the app itself still opens on iOS 17).
+- A finished game's live notification now goes away about 20 minutes after the final, instead of staying up to 4 hours. Same for the four-game Board once all its games are over.
+- Checked the narrow Dynamic Island (the folded Duo's side strip): it keeps the small logos with the scores stacked by the camera. No change.
+
 ## 3.111.1 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - Game one-liners: the "point favorite" line uses only a real point spread. When a game had no spread yet, ESPN's moneyline was being read as one ("No. 8 Houston is a 137-point favorite"). With no spread, that line is left out.

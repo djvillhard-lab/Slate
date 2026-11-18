@@ -1,9 +1,25 @@
 # Notifications (alerts, live notifications, Dynamic Island)
-Last updated: Nov 16, 2026, 3.65.8
+Last updated: Nov 18, 2026, 3.112.0
 Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), `ios/SlateLive/SlateLiveActivity.swift`,
 `ios/Shared/SlateGameAttributes.swift`; settings page `src/app/220-notifications.js`. Plan: `docs/NOTIFICATIONS-PLAN.md`.
 
 ## Done
+- 3.112.0 (iPhone build, competitor review recs 8 and 9):
+  - Tonight's slate widget (`ios/SlateLive/SlateTonightWidget.swift`, kind "SlateTonight", small + medium). The page
+    sends `{t:"slate", date, at, games:[SlateBoardGame…]}` from livePoll (040-live.js laSlateWidget, once per change);
+    WebModel saves it to the app group as tonight.json (`ios/Shared/SlateTonight.swift`) and reloads the widget.
+    Timeline: every 15 min for 6 h plus each start; next 3 not-final games, live first; score hidden after 20 min stale;
+    started > 4 h ago = over; data older than 20 h = "Open Slate".
+  - Your bet on the card: attributes.bet (SlateBet l/k/sd/ou/ln/d3), first of mybFor(g). The app sends it at start
+    (laAttrsOf → laBetOf); the phone also shares today's bets to prefs/livebets (laBetsShare) so the worker's
+    push-to-start has it (LBT in laAttrs). Status worked out in Swift (BetLook.say) from the score, like mybSay.
+    Fixed at start (attributes): a bet added later shows next time. Props show the label only.
+  - Watch Smart Stack: SlateLiveActivity adds .supplementalActivityFamilies([.small]); FamilyLock shows WatchCard
+    for .small. The SlateLive extension's deployment target is now iOS 18 (WidgetBundleBuilder can't take
+    `if #available`, so a split iOS 17/18 bundle doesn't compile); the app stays at iOS 17.
+  - Ended live notifications stay LA_LINGER = 20 min after the final (was 4 h), game and Board.
+  - 28 pt narrow island reviewed: NarrowAwareSide keeps MiniSide stacked on both sides (DJ's Duo mockup). Not
+    verifiable without an iOS 27 device.
 - Apple interruption levels: Active for starting/close/OT/upset/goal/final, Passive for brief, hourly score, and a final the
   live notification already shows. Never Time Sensitive. thread-id is `game-<id>`, so a game's alerts stack (3.32.0).
 - Live notifications start 10 min before kickoff: 0-0, start time, "On NBC"; "Starting" once the listed time passes (3.32.0, 3.33.1).
