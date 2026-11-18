@@ -1105,6 +1105,9 @@ def main():
     except Exception as e: print("slates error", e)
     try: box_requests(now)
     except Exception as e: print("box requests error", e)
+    try:  # once an hour: are ESPN's feeds still shaped the way the app expects? (scripts/feedcheck.py)
+        import feedcheck; feedcheck.run(sb_get, sb_put, iso(now))
+    except Exception as e: print("feed check error", e)
     print("writes:", WRITES or "none")
 
 if __name__ == "__main__":

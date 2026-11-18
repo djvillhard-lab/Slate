@@ -727,6 +727,7 @@ export async function runAlerts(env) {
   if (!env.SUPABASE_SECRET) return;
   const now = new Date(), D = ctParts(new Date(now.getTime() - 4 * 3600000)).date, ct = ctParts(now);
   if (now.getUTCMinutes() % 10 === 0) await putDoc(env, "stats/cron", { at: now.toISOString() });  // heartbeat: shows the minute job is running
+  if (now.getUTCMinutes() % 10 === 5) await feedsAlert(env).catch((e) => console.log("feeds alert error", String(e)));
   const base = await getDocs(env, [`alertsets/${D}`]);
   const aset = base[`alertsets/${D}`]; if (!aset || !aset.people) return;
   const people = aset.people, games = aset.games || {};
@@ -826,4 +827,23 @@ export async function runAlerts(env) {
     }
     if (BC.doc.dirty) await bcSave(env, BC.doc);
   }
+}
+
+// ---------- ESPN feed check (3.103.1) ----------
+// scripts/feedcheck.py (run hourly by tick.py) writes stats/feeds {at, problems, bad, told}. When the same check has failed
+// twice in a row, DJ gets one push saying what changed; one more when the feeds are back. Only DJ's own devices (prefs/push).
+async function feedsAlert(env) {
+  const docs = await getDocs(env, ["stats/feeds", "prefs/push"]), f = docs["stats/feeds"];
+  if (!f) return;
+  const probs = Array.isArray(f.problems) ? f.problems : [], sig = probs.join("|");
+  let msg = null, told = f.told || "";
+  if (probs.length && (f.bad || 0) >= 2 && told !== sig) {
+    msg = { title: "Slate: an ESPN feed changed", body: probs[0] + (probs.length > 1 ? " And " + (probs.length - 1) + " more." : ""), tag: "feeds", thread: "feeds" }; told = sig;
+  } else if (!probs.length && told) {
+    msg = { title: "Slate: ESPN feeds are back to normal", body: "The hourly check passed again.", tag: "feeds", thread: "feeds" }; told = "";
+  }
+  if (!msg) return;
+  await putDoc(env, "stats/feeds", Object.assign({}, f, { told }));
+  const subs = ((docs["prefs/push"] || {}).subs) || [];
+  await Promise.all(subs.map((sub) => (sub.apns ? sendApns : sendPush)(env, sub, msg).catch(() => 0)));
 }
