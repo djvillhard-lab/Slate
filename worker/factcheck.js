@@ -48,9 +48,45 @@ function teamsOf(facts, game) {
   return out;
 }
 
+// 3.113.5 (DJ: "the Heat's depth beyond Giannis"): a line that puts a player on the wrong team. teams: [{ key, names }],
+// players: { name: team key } (names that both rosters share are left out). Only phrases that say whose player it is count:
+// "the Heat's Giannis", "Heat star Giannis", "the Heat's depth beyond Giannis", "the Heat without Giannis", "Giannis leads the Heat",
+// "Giannis and the Heat". "Giannis faces the Heat" is fine. Returns "Giannis plays for MIL" or ""
+export function wrongTeamLine(s, teams, players) {
+  s = String(s || "").replace(/[‘’]/g, "'");
+  var esc = function (x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }, ROLE = "star|guard|forward|center|centre|big man|wing|rookie|veteran|quarterback|QB|receiver|running back|tight end|linebacker|goalkeeper|keeper|striker|winger|midfielder|defender|pitcher|ace|captain|scorer|sharpshooter|point guard|playmaker";
+  var names = Object.keys(players).sort(function (a, b) { return b.length - a.length; });
+  for (var i = 0; i < names.length; i++) {
+    var P = names[i], own = players[P]; if (!new RegExp("(^|[^\\w])" + esc(P) + "(?![\\w])").test(s)) continue;
+    for (var j = 0; j < teams.length; j++) { var t = teams[j]; if (t.key === own) continue;
+      var N = "(?:" + t.names.map(esc).join("|") + ")", p = esc(P), w = "(?![\\w])";
+      var rx = [N + "'s? (?:[\\w-]+ ){0,5}?(?:beyond|behind|besides|other than|around|without|apart from|alongside|next to|led by|anchored by|built around) " + p + w,
+        N + "'s? (?:(?:" + ROLE + ") )?" + p + w, N + " (?:" + ROLE + ") " + p + w,
+        N + " (?:will be |are |is |could be |may be )?(?:without|missing) " + p + w,
+        p + " (?:leads|carries|paces|powers|anchors|headlines|and) (?:the )?" + N + w, p + "'s? " + N + w, p + " (?:of|for) (?:the )?" + N + w];
+      if (rx.some(function (r) { return new RegExp("(^|[^\\w])" + r).test(s); })) return P + " plays for " + own;
+    }
+  }
+  return "";
+}
+
+// the players the facts list for each team (leaders "Points: Giannis Antetokounmpo 31.2", injuries "Name (Out)"): { name: team abbr }
+function playersOf(facts, T) {
+  const map = {}, dup = {}, put = (n, k) => { n = String(n || "").trim(); if (!k || n.length < 4) return; if (map[n] && map[n] !== k) dup[n] = 1; map[n] = k; };
+  const name = (n, k) => { n = String(n || "").replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, "").trim(); if (!n) return; put(n, k); const w = n.split(" "); if (w.length > 1) { put(w[w.length - 1], k); put(w[0], k); } };
+  (facts.leaders || []).forEach((t) => (t && t.cats || []).forEach((c) => name(String(c).replace(/^[^:]*:\s*/, "").replace(/\s+[-\d.,%]+$/, ""), t.team)));
+  (facts.injuries || []).forEach((t) => (t && t.out || []).forEach((x) => name(String(x).replace(/\s*\([^)]*\)\s*$/, ""), t.team)));
+  Object.keys(dup).forEach((n) => delete map[n]);
+  const tn = T.flatMap((t) => t.names.join(" ").toLowerCase().split(/\s+/));
+  Object.keys(map).forEach((n) => { if (tn.indexOf(n.toLowerCase()) >= 0 || !T.some((t) => t.abbr === map[n])) delete map[n]; });
+  return map;
+}
+
 // one sentence: the reason to leave it out, or ""
 function judge(s, T, kind) {
   const named = T.filter((t) => t.rx.test(s)), one = named.length === 1 ? named[0] : null;
+  // 0. a player put on the other team ("the Heat's depth beyond Giannis")
+  if (T.players && Object.keys(T.players).length) { const w = wrongTeamLine(s, T.filter((t) => t.abbr).map((t) => ({ key: t.abbr, names: t.names })), T.players); if (w) return "player: " + w; }
   // 1. a dated result: the score must be on that date (any team's list), and a team's game on that date must have that score
   const MS = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec", dm = [...s.matchAll(new RegExp("\\b(" + MS + ")\\.? (\\d{1,2})\\b", "g"))], sm = [...s.matchAll(/\b(\d{1,3})-(\d{1,3})\b/g)];
   // each score with its date: "98-93 on Nov 12", "Nov 10: … 123-101", or the sentence's only date
@@ -116,6 +152,7 @@ const sentences = (t) => String(t).match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)(?:\s+|$)|[
 export function factCheck(kind, ans, factsJson, gameJson) {
   const dropped = [];
   const facts = parse(factsJson), game = parse(gameJson), T = teamsOf(facts, game);
+  T.players = playersOf(facts, T);
   if (!T.length || !ans || typeof ans !== "object") return { ans, dropped };
   const clean = (str, where) => {
     // a sentence ending in "No." or a decimal is split back together

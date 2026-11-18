@@ -447,7 +447,7 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx-box.mx::before { content: ""; position: absolute; left: -4px; top: -1px; bottom: -1px; width: 4px; border-radius: 8px 0 0 8px; background: linear-gradient(to bottom, var(--nx-a, var(--accent-fill)) 50%, var(--nx-b, var(--accent-fill)) 50%); }
 
 /* 3.89.1: the news note under a slate card's one-liner (pvNewsNode): its own line, a small 📰 News tag, quieter text */
-.hl.hl-news { margin-top: 6px; font-size: 12.5px; color: var(--muted); opacity: 1; font-weight: 500; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* 3.89.3: always one line */
+.hl.hl-news { margin-top: 6px; font-size: 12.5px; color: var(--muted); opacity: 1; font-weight: 500; display: block; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; -webkit-line-clamp: none; }   /* 3.113.5: the whole note, wrapping when it has to (was one line with an ellipsis, 3.89.3) */
 .hl-news-tag { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 4px; background: var(--raise); border: 1px solid var(--line); color: var(--head); font-size: 11px; font-weight: 700; line-height: 16px; vertical-align: 1px; }
 .hl.hl-news .hl-tm { color: var(--head); }
 .g.panel.has-feed > .hl.hl-news { padding-right: 0; }

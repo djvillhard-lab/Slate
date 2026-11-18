@@ -81,8 +81,50 @@
     });
     PVN_IX.key = key; PVN_IX.ix = ix; return ix;
   }
+  // 3.113.5 (DJ: "the Heat's depth beyond Giannis"): a line that puts a player on the wrong team. teams: [{ key, names }],
+  // players: { name: team key } (names that both rosters share are left out). Only phrases that say whose player it is count:
+  // "the Heat's Giannis", "Heat star Giannis", "the Heat's depth beyond Giannis", "the Heat without Giannis", "Giannis leads the Heat",
+  // "Giannis and the Heat". "Giannis faces the Heat" is fine. Returns "Giannis plays for MIL" or ""
+  function wrongTeamLine(s, teams, players) {
+    s = String(s || "").replace(/[‘’]/g, "'");
+    var esc = function (x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }, ROLE = "star|guard|forward|center|centre|big man|wing|rookie|veteran|quarterback|QB|receiver|running back|tight end|linebacker|goalkeeper|keeper|striker|winger|midfielder|defender|pitcher|ace|captain|scorer|sharpshooter|point guard|playmaker";
+    var names = Object.keys(players).sort(function (a, b) { return b.length - a.length; });
+    for (var i = 0; i < names.length; i++) {
+      var P = names[i], own = players[P]; if (!new RegExp("(^|[^\\w])" + esc(P) + "(?![\\w])").test(s)) continue;
+      for (var j = 0; j < teams.length; j++) { var t = teams[j]; if (t.key === own) continue;
+        var N = "(?:" + t.names.map(esc).join("|") + ")", p = esc(P), w = "(?![\\w])";
+        var rx = [N + "'s? (?:[\\w-]+ ){0,5}?(?:beyond|behind|besides|other than|around|without|apart from|alongside|next to|led by|anchored by|built around) " + p + w,
+          N + "'s? (?:(?:" + ROLE + ") )?" + p + w, N + " (?:" + ROLE + ") " + p + w,
+          N + " (?:will be |are |is |could be |may be )?(?:without|missing) " + p + w,
+          p + " (?:leads|carries|paces|powers|anchors|headlines|and) (?:the )?" + N + w, p + "'s? " + N + w, p + " (?:of|for) (?:the )?" + N + w];
+        if (rx.some(function (r) { return new RegExp("(^|[^\\w])" + r).test(s); })) return P + " plays for " + own;
+      }
+    }
+    return "";
+  }
+  // the players ESPN lists for each side of this game (leaders, injuries, box score): { name: "away" | "home" }, names both share left out
+  function pvnPlayers(g) {
+    var cur = (bx.live || {})[g.id] || {}, sum = cur.sum, ids = {}, map = {}, dup = {};
+    var put = function (n, sd) { n = String(n || "").trim(); if (!sd || n.length < 4) return; if (map[n] && map[n] !== sd) dup[n] = 1; map[n] = sd; };
+    var name = function (n, sd) { n = String(n || "").replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, "").trim(); if (!n) return; put(n, sd); var w = n.split(" "); if (w.length > 1) { put(w[w.length - 1], sd); put(w[0], sd); } };
+    if (sum) {
+      (((sum.header || {}).competitions || [])[0] || {}).competitors && sum.header.competitions[0].competitors.forEach(function (k) { ids[String((k.team || {}).id || "")] = k.homeAway; });
+      (sum.leaders || []).forEach(function (L) { var sd = ids[String((L.team || {}).id || "")]; (L.leaders || []).forEach(function (c) { (c.leaders || []).forEach(function (x) { name((x.athlete || {}).displayName, sd); }); }); });
+      (sum.injuries || []).forEach(function (t) { var sd = ids[String((t.team || {}).id || "")]; (t.injuries || []).forEach(function (x) { name((x.athlete || {}).displayName, sd); }); });
+    }
+    Object.keys(dup).forEach(function (n) { delete map[n]; });
+    // a name that is also a team name ("Jordan", "Miami") never counts
+    var tn = [g.away, g.home, short(g, "away"), short(g, "home")].join(" ").toLowerCase().split(/\s+/);
+    Object.keys(map).forEach(function (n) { if (tn.indexOf(n.toLowerCase()) >= 0) delete map[n]; });
+    return map;
+  }
+  function pvnTeams(g) {
+    return ["away", "home"].map(function (sd) { var f = String(g[sd] || ""), w = f.split(" "), sh = short(g, sd);
+      return { key: sd, names: [f, sh, w.length > 1 ? w[w.length - 1] : ""].filter(function (x, i, a) { return x && x.length >= 3 && a.indexOf(x) === i && !/^(The|State|City|United|FC|Club)$/i.test(x); }) }; });
+  }
   function pvNote(g) {
-    var out = [], add = function (tag, text, team) { var sc = pvNoteScore(g, tag, text); if (sc >= 0) out.push({ text: pvnClean(text), sc: sc, side: pvnSide(g, team) }); };
+    var pl = pvnPlayers(g), tms = pvnTeams(g);
+    var out = [], add = function (tag, text, team) { var sc = pvNoteScore(g, tag, text); if (sc >= 0 && Object.keys(pl).length && wrongTeamLine(text, tms, pl)) sc = -1; if (sc >= 0) out.push({ text: pvnClean(text), sc: sc, side: pvnSide(g, team) }); };
     var ix = pvNewsIndex(pvnLeagues(g));
     (ix.game[g.id] || []).forEach(function (h) { add(h.tag, h.text, h.team); });
     ix.team.forEach(function (x) { if ((!x.lg || x.lg === g.league || BX_SPORT[x.lg] === BX_SPORT[g.league]) && pvnSide(g, x.name)) add(x.tag, x.text, x.name); });
@@ -142,8 +184,8 @@
     var p = el("p", "hl hl-news"), tg = el("span", "hl-news-tag", "📰 News"), tx = el("span", "hl-news-t"), alts = pvnShorts(n.text);
     p.appendChild(tg); p.appendChild(tx); tx.textContent = alts[0]; p.title = n.text;
     if (n.side) p.dataset.side = n.side;
-    // once it's on screen: the longest version that fits on the one line
-    pvFit(p, tx, alts);
+    // 3.113.5 (DJ: "Text cut off", the line ended "…how thei…"): the whole note shows, wrapping to a second line when it has to.
+    // Cutting it at a clause made fragments, and the ellipsis cut it mid-word
     return p;
   }
   // once a line is on screen: the longest version that fits on one line (3.89.6). Skipped while it isn't laid out

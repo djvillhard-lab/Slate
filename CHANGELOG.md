@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.5 (Nov 18, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- The 📰 News line under a game shows the whole note now, wrapping to a second line when it has to. It used to stay on one line and end in "…" (Bucks–Heat read "ESPN says the Heat's depth beyond Giannis could define how thei…").
+- A note that puts a player on the wrong team no longer shows. That same Bucks–Heat note talked about "the Heat's depth beyond Giannis", and Giannis plays for the Bucks. The app now checks the players ESPN lists for each team (leaders and injuries) and drops a line that ties one of them to the other team ("the Heat's Giannis", "Heat star Giannis", "the Heat without Giannis"). Lines like "Giannis faces the Heat" are fine. Claude's game write-ups get the same check on the server before they're saved.
+
 ## 3.113.4 (Nov 18, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Finished games: the line only says a team "won it on" a shot when that shot decided the game. Rutgers–Notre Dame read "Notre Dame won it on Smith's 26-foot three in overtime" in a 110-100 game; that three was only where Notre Dame went ahead for good. Now it takes a close finish (one possession in basketball, one score in football), and otherwise the line goes to the next thing worth saying, like the top performer.

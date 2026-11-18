@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Slate: News line under games | src/app/105-pv-notes.js, src/styles/050-ux-review.css | 2026-11-18T23:38Z |
