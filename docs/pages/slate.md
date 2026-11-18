@@ -67,3 +67,6 @@ ESPN's lastFiveGames pads early-season lists with last season's games (Central M
 
 ## Playoff games (3.93.0)
 scripts/slates.py `playoff_round()` sets `g.post = true` for postseason games: ESPN season type 3 / slug "post-season" (US leagues, college), or an MLS round slug ("eastern-conference-playoffs---round-one" → note "MLS Cup Playoffs · East Round One"; MLS playoff games have no ESPN note). The series summary is appended to the note. pvCompute adds a "pser" series line (72) and drops regular-season-only facts (div, table, season series) when post. clGame sends `post` to previews, News facts send `playoff`; the worker prompts tell Claude to frame them as playoffs. Other soccer cups already carry rounds in note/stage. Existing slates pick it up on the next slates.py run.
+
+## Nothing the record already shows (3.101.3)
+DJ (Nov 18, 2026): one-liners must add what the record does not. pvCompute clears a team's form when its games played <= the last-five window, skips a win streak when the team has no losses (or a losing streak with no wins), and no longer adds "still unbeaten" (unb0, unbs) or "looking for a first win". Cache flag is g5, so old lines recompute.

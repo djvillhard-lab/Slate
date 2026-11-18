@@ -350,7 +350,12 @@
     var byAbbr = {}; ids.forEach(function (i) { byAbbr[T[i].abbr] = i; });
     // form: streaks from the last five
     var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
+    // 3.100.9 (DJ: "Houston has won four straight" on a 4-0 team just repeats the record): early in a season, when the last five
+    // are the whole season, or a win streak covers every game (no losses yet), the streak lines say nothing new and are left out
+    var wl = function (i) { var r = String(T[i].rec.total || "").split("-").map(Number); return r.length === 3 ? { w: r[0], l: r[2], gp: r[0] + r[1] + r[2] } : r.length === 2 ? { w: r[0], l: r[1], gp: r[0] + r[1] } : null; };
+    ids.forEach(function (i) { var R = wl(i); if (R && R.gp && R.gp <= (form[i] || []).length) form[i] = []; T[i].wl = R; });
     ids.forEach(function (i) { var f = form[i] || []; if (f.length < 4) return; var last = f[f.length - 1], n = 0; for (var j = f.length - 1; j >= 0 && f[j] === last; j--) n++;
+      if (T[i].wl && (last === "W" && T[i].wl.l === 0 || last === "L" && T[i].wl.w === 0)) return;   // 7-0 already says "won seven straight"
       var all = n === f.length && f.length >= 5 ? " in a row" : " straight";
       if (last === "W" && n >= 4) T[i].hot = n, add("won|" + i, 36 + n * 5, T[i].name + " have won " + NW[n] + all);
       if (last === "L" && n >= 4) T[i].cold = n, add("lost|" + i, 34 + n * 5, T[i].name + " have lost " + NW[n] + all);
@@ -394,11 +399,12 @@
         else if (pos[A] > N - 4 && pos[H] > N - 4) add("relclash", 58, "Bottom-of-the-table scrap: " + T[H].name + " (" + ORD(pos[H]) + ") vs " + T[A].name + " (" + ORD(pos[A]) + ")");
         else if (top === 1) { var L1 = pos[A] === 1 ? A : H; add("leader", 48, "League leaders " + T[L1].name + (L1 === H ? " host " : " visit ") + T[oth(L1)].name + " (" + ORD(pos[oth(L1)]) + ")"); }
         else if (Math.abs(pos[A] - pos[H]) >= 12) { var hi2 = pos[A] < pos[H] ? A : H; add("gap", 30, T[hi2].name + " (" + ORD(pos[hi2]) + ") against " + T[oth(hi2)].name + " (" + ORD(pos[oth(hi2)]) + ")"); } } }
-    if (sport === "soccer") ids.forEach(function (i) { var r = String(T[i].rec.total || "").split("-"); if (r.length === 3 && +r[2] === 0 && (+r[0] + +r[1]) >= 6) add("unbs|" + i, 50, T[i].name + " are still unbeaten this season"); if (r.length === 3 && +r[0] === 0 && (+r[1] + +r[2]) >= 6) add("winless|" + i, 46, T[i].name + " are still looking for a first win"); });
+    // 3.100.9: "still unbeaten" / "looking for a first win" are on the card's record already, so these two stay off
+    if (false) ids.forEach(function (i) { var r = String(T[i].rec.total || "").split("-"); if (r.length === 3 && +r[2] === 0 && (+r[0] + +r[1]) >= 6) add("unbs|" + i, 50, T[i].name + " are still unbeaten this season"); if (r.length === 3 && +r[0] === 0 && (+r[1] + +r[2]) >= 6) add("winless|" + i, 46, T[i].name + " are still looking for a first win"); });
     // records: perfect or awful at home and on the road, unbeaten seasons
     ids.forEach(function (i) { var w = String(T[i].rec[i === H ? "home" : "road"] || "").split("-"), W = +w[0], Lw = +w[1];
       if (sport !== "soccer" && w.length >= 2 && W + Lw >= 4) { if (!Lw) add("perf|" + i, 40, T[i].name + " are " + W + "-0 " + (i === H ? "at home" : "on the road")); else if (!W || W / (W + Lw) <= 0.2) add("bad|" + i, 32, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); }
-      var tot = String(T[i].rec.total || "").split("-"); if (sport !== "soccer" && tot.length >= 2 && +tot[0] >= 5 && +tot[1] === 0) add("unb0|" + i, 52, T[i].name + " are still unbeaten at " + tot[0] + "-0"); });
+      var tot = String(T[i].rec.total || "").split("-"); if (false && tot.length >= 2 && +tot[0] >= 5 && +tot[1] === 0) add("unb0|" + i, 52, T[i].name + " are still unbeaten at " + tot[0] + "-0"); });
     // (no "ranked showdown" line: the ranks are already on the matchup)
     // head to head
     var ss = (sum.seasonseries || [])[0];
@@ -498,7 +504,7 @@
       });
     })).then(function (r) { return r.filter(Boolean); }, function () { return []; });
   }
-  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g4 || (m[k] || {}).fb) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
+  var PV = (function () { try { var m = JSON.parse(localStorage.getItem("slate-pv") || "{}"); Object.keys(m).forEach(function (k) { if (/^A ranked showdown/.test((m[k] || {}).text || "") || (/^(nfl|ncaaf)-/.test(k) ? / are without [A-Z][a-z]|^[A-Z][a-z][^ ]* is (a question mark|doubtful) for / : /(without |^|and )(G|F|C|PG|SG|SF|PF|G-F|F-G|F-C|C-F|LW|RW|D) [A-Z]/).test((m[k] || {}).text || "") || /Both on a roll: .*; |; Both on a roll|^Both on a roll: \S+ have won (\w+) straight, \S+ \1$/.test((m[k] || {}).text || "") || !("tm" in (m[k] || {})) || !(m[k] || {}).g5 || (m[k] || {}).fb) delete m[k]; }); return m; } catch (e) { return {}; } })(), pvQ = [], pvRun = 0, pvT = null;
   // the phone shares today's preview lines with Slate's server (prefs/pvlines), so live notifications and Starting now
   // alerts can carry the same line as the slate (3.58.0). Only on a phone signed in with a passcode; only when it changed.
   var pvShareT = null, pvShared = "", pvSharedAt = 0;
@@ -519,7 +525,7 @@
       db.doc("prefs/pvlines").set({ date: state.date, lines: lines, live: live, tags: tags, liveAt: Date.now(), updatedAt: new Date().toISOString() }).then(null, function () { pvShared = ""; });
     }, 8000);
   }
-  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", sc: PV[k].sc || 0, f: PV[k].f || "", fb: PV[k].fb ? 1 : 0, g4: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
+  function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", sc: PV[k].sc || 0, f: PV[k].f || "", fb: PV[k].fb ? 1 : 0, g5: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
   function pvNode(g) {
     var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
