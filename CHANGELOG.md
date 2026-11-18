@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.110.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- My bets: once a game starts, each bet shows DraftKings' closing line (its last line before the start) and whether yours was better or worse: "Closing line DUKE -9.5 · yours was 1 point better", "Closing line 167.5 · yours was 2 points worse", "Closing line ILL +350 · your +285 was worse". Player lines too. Better is green.
+- The My bets record adds how often you beat the closing line over the last 7 days: "Beat the closing line 5 of 8".
+
 ## 3.109.1 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - The "Send" button on a game's page (3.107.0) is hidden for now. It's kept in the app, switched off, so it can come back later.

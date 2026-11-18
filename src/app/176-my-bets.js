@@ -67,6 +67,8 @@
     ".myb-rec b { color: var(--ink); }",
     ".myb-money { grid-column: 2; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }",
     ".myb-money.won { color: var(--accent); }",
+    ".myb-clv { grid-column: 2; font-size: 13px; font-weight: 700; color: var(--dim); }",
+    ".myb-clv.up { color: var(--accent); }",
     ".myb-bet.myb-par { grid-template-columns: minmax(0, 1fr) auto; }",
     ".myb-par > .myb-meta, .myb-par > .myb-line, .myb-par > .myb-st, .myb-par > .myb-money, .myb-par > .myb-legs { grid-column: 1; }",
     ".myb-par > .myb-x { grid-column: 2; grid-row: 1 / span 2; }",
@@ -326,6 +328,83 @@
   }
   function mybNetText(n) { return (n > 0 ? "up " : n < 0 ? "down " : "even, ") + (n === 0 ? "$0" : mybUsd(n)); }
 
+  // ---- the closing line (3.110.0, DJ): your line against DraftKings' last line before the start ----
+  // ESPN's odds keep the sportsbook's closing numbers after the game starts (close.pointSpread, close.total, close.moneyLine;
+  // player lines keep their last pre-game number), so no server job is needed. Once read, it's saved on the bet (b.close).
+  var MYBC = {};
+  function mybCloseNum(x) { var t = String(x == null ? "" : x).trim(); if (/^even$/i.test(t)) return 100; if (/^pk$/i.test(t)) return 0; var n = parseFloat(t); return isNaN(n) ? null : n; }
+  function mybCloseGet(g, props) {
+    var key = g.id + (props ? "|p" : ""); if (MYBC[key]) return MYBC[key];
+    var cur = bx.live[g.id] || {}, lg = g.league, pp = bxBase(lg).split("/");
+    return MYBC[key] = (cur.ev ? Promise.resolve(cur.ev) : bxFindEvent(g)).then(function (ev) {
+      if (!ev || pp.length < 2) return null; cur.ev = cur.ev || ev;
+      var base = "https://sports.core.api.espn.com/v2/sports/" + pp[0] + "/leagues/" + pp[1] + "/events/" + ev + "/competitions/" + ev + "/odds";
+      var main = rkFetch(base).then(function (o) {
+        var its = (o && o.items) || [], it = its.filter(function (x) { return String((x.provider || {}).id) === "100"; })[0] || its[0];
+        if (!it) return null;
+        var side = function (k) { var c = ((it[k + "TeamOdds"] || {}).close) || {}; return { sp: mybCloseNum((c.pointSpread || {}).american), ml: mybCloseNum((c.moneyLine || {}).american) }; };
+        var A = side("away"), H = side("home");
+        return { sp: { away: A.sp, home: H.sp }, ml: { away: A.ml, home: H.ml }, tot: mybCloseNum((((it.close || {}).total) || {}).american), src: (it.provider || {}).name || "" };
+      });
+      var pr = props && BET_PROPS[lg] ? betLines(lg, ev).then(null, function () { return null; }) : Promise.resolve(null);
+      return Promise.all([main, pr]).then(function (r) { var o = r[0] || {}; o.props = {}; ((r[1] && r[1].list) || []).forEach(function (x) { o.props[x.aid + "|" + x.k] = x.line; }); return o; });
+    }).then(null, function () { delete MYBC[key]; return null; });
+  }
+  // the closing number for this bet: a line (spread, total, player) or a price (moneyline)
+  function mybClosePick(b, c) {
+    if (!c) return null;
+    if (b.kind === "spread") return c.sp && c.sp[b.sd] != null ? c.sp[b.sd] : null;
+    if (b.kind === "total") return c.tot;
+    if (b.kind === "ml") return b.sd !== "draw" && c.ml && c.ml[b.sd] != null ? c.ml[b.sd] : null;
+    if (b.kind === "prop") { var v = (c.props || {})[b.pid + "|" + b.k]; return v == null ? null : v; }
+    return null;
+  }
+  // after the start: read the close once per game, then keep it on every bet of that game
+  function mybCloseNeed(b, g) {
+    if (b.close || b.kind === "parlay" || b.closeTry > 2) return;
+    var k = status(g).kind; if (k !== "live" && k !== "over") return;
+    var props = b.kind === "prop";
+    mybCloseGet(g, props).then(function (c) {
+      if (!c) return;
+      var moved = false;
+      Object.keys(MYB.days).forEach(function (d) { Object.keys(MYB.days[d]).forEach(function (id) {
+        var x = MYB.days[d][id]; if (!x || x.gid !== g.id || x.close || (x.kind === "prop") !== props) return;
+        var v = mybClosePick(x, c);
+        if (v == null) { x.closeTry = (x.closeTry || 0) + 1; return; }
+        x.close = { v: v, src: c.src || "" }; x.ed = Date.now(); moved = true;
+      }); });
+      if (moved) { mybSave(); keepScroll(render); }
+    });
+  }
+  function mybImp(o) { return o < 0 ? -o / (-o + 100) : 100 / (o + 100); }
+  // "Closing line DUKE -9.5 · yours was 1 point better": beat is true, false or null (the same)
+  function mybClv(b, g) {
+    if (!b.close || b.close.v == null) return null;
+    var C = Number(b.close.v), d = null, shown;
+    if (b.kind === "ml") {
+      var y = mybOddsOf(b); shown = fmtOdds(C);
+      if (y == null) return { t: "Closing line " + abbr(g, b.sd) + " " + shown, beat: null, none: true };
+      var py = mybImp(y), pc = mybImp(C), beat = Math.abs(py - pc) < 0.002 ? null : py < pc;
+      return { t: "Closing line " + abbr(g, b.sd) + " " + shown + " · your " + fmtOdds(y) + (beat === null ? " was the same" : beat ? " was better" : " was worse"), beat: beat };
+    }
+    var L = Number(b.line);
+    if (b.kind === "spread") { d = L - C; shown = abbr(g, b.sd) + " " + mybSigned(C); }
+    else { d = b.ou === "under" ? L - C : C - L; shown = (b.kind === "prop" ? betSurname(b.p) + " " : "") + mybNum(C); }
+    d = Math.round(d * 10) / 10;
+    var unit = b.kind === "prop" ? mybNoun(b) : (BET_TOT[BX_SPORT[b.lg]] || "points");
+    if (Math.abs(d) === 1) unit = unit.replace(/s$/, "");
+    return { t: "Closing line " + shown + (d === 0 ? " · the same as yours" : " · yours was " + mybNum(Math.abs(d)) + " " + unit + (d > 0 ? " better" : " worse")), beat: d === 0 ? null : d > 0 };
+  }
+  // how often your line beat the close, over the days up to this one
+  function mybClvCount(upTo, nDays) {
+    var n = 0, w = 0, end = new Date(upTo + "T12:00:00Z").getTime();
+    Object.keys(MYB.days).forEach(function (d) {
+      var t = new Date(d + "T12:00:00Z").getTime(); if (t > end || end - t >= nDays * 864e5) return;
+      mybList(d).forEach(function (b) { if (b.kind === "parlay") return; var c = mybClv(b, mybGame(b)); if (!c || c.none) return; n++; if (c.beat) w++; });
+    });
+    return { n: n, w: w };
+  }
+
   // ---- the pieces other pages use ----
   // a row for the matchup page and the slate's My bets: badge, the bet, where it stands, and × to remove it
   function mybRow(b, opts) {
@@ -345,13 +424,15 @@
     else st.textContent = txt;
     row.appendChild(st);
     var mo = mybMoneyLine(b, r); if (mo) row.appendChild(el("span", "myb-money" + (mo.c ? " " + mo.c : ""), mo.t));
+    mybCloseNeed(b, g);
+    var cl = mybClv(b, g); if (cl) row.appendChild(el("span", "myb-clv" + (cl.beat ? " up" : ""), cl.t));
     if (opts.x) {
       var x = el("span", "myb-x"); x.setAttribute("role", "button"); x.tabIndex = 0; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove your bet " + mybLabel(b, g));
       var rm = function (e) { e.stopPropagation(); e.preventDefault(); mybRemove(b); };
       x.addEventListener("click", rm); x.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") rm(e); });
       row.appendChild(x);
     }
-    row.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + ", " + mybVs(g) + ". " + say.t + (mo ? ". " + mo.t : ""));
+    row.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + ", " + mybVs(g) + ". " + say.t + (mo ? ". " + mo.t : "") + (cl ? ". " + cl.t : ""));
     return row;
   }
   function mybRemove(b) {
@@ -403,6 +484,7 @@
     var rec = el("p", "myb-rec"); rec.appendChild(el("b", null, (state.date === todayInHome() ? "Today: " : "This day: ") + parts.join(", ")));
     var wk = mybRecord(state.date, 7); if (wk) rec.appendChild(document.createTextNode(" · Last 7 days " + wk));
     var w7 = mybTotals(state.date, 7); if (w7.staked) rec.appendChild(document.createTextNode(", " + mybNetText(w7.net)));
+    var cv = mybClvCount(state.date, 7); if (cv.n) rec.appendChild(document.createTextNode(" · Beat the closing line " + cv.w + " of " + cv.n));
     sec.appendChild(rec);
     // the last 30 days by league, once two leagues have settled bets
     var m30 = mybTotals(state.date, 30), lgs = Object.keys(m30.lg);

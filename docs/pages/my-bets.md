@@ -47,6 +47,11 @@ Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#m
   that walks `mybList()` must not call `mybResult` on a parlay. Parlay odds are typed, never worked out.
   Checked with made-up bets (iPhone list, folded Duo sheet).
 
+## 3.110.0: closing line (DJ, from the competitor review)
+- No worker job: ESPN's core odds (`sports.core.api.espn.com/.../competitions/<ev>/odds`, DraftKings id 100) keep `close.pointSpread`, `close.total` and `close.moneyLine` after the game, and player lines keep their last pre-game number (`betLines`). Checked on ILL at DUKE (Nov 17): close DUKE -9.5, 167.5, ILL +350.
+- `mybCloseNeed` reads it once per game after the start (`mybCloseGet`), saves `b.close = {v, src}` on every bet of that game (synced with the account), `mybClv` writes "Closing line X · yours was N points better/worse" (moneyline by implied chance, so it needs the price you saved). Green when better.
+- Record line: "Beat the closing line W of N" over 7 days (`mybClvCount`). Parlays are left out.
+
 ## Open
 - Your line against the closing line is not built (the closing line would have to be saved at the start, in the worker).
 - A parlay's legs must all be on the same day. Legs still show as single bets on their own game pages and cards.
