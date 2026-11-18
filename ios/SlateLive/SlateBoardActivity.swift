@@ -102,8 +102,16 @@ private struct BoardCard: View {
     let s: SlateBoardAttributes.ContentState
 
     var body: some View {
-        BoardGrid(games: Array(s.games.prefix(4)), dark: false, gap: 8)
-            .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
+        // 3.113.0 (DJ): the Slate axe-hammer and "Your slate" over the games; the pills a little shorter to make room
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                SlateMark(size: 13)
+                Text("Your slate").font(SlateLook.bold(11)).foregroundStyle(SlateLook.muted)
+            }
+            .frame(height: 14)
+            BoardGrid(games: Array(s.games.prefix(4)), dark: false, gap: 8, compact: true)
+        }
+            .padding(EdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10))
             .foregroundStyle(SlateLook.ink)
     }
 }
@@ -112,13 +120,14 @@ private struct BoardGrid: View {
     let games: [SlateBoardGame]
     let dark: Bool
     let gap: CGFloat
+    var compact = false   // 3.113.0: the Lock Screen's shorter pills, under the header
 
     var body: some View {
         let cols = [GridItem(.flexible(), spacing: gap), GridItem(.flexible(), spacing: gap)]
         LazyVGrid(columns: games.count == 1 ? [GridItem(.flexible())] : cols, spacing: gap) {
             ForEach(games, id: \.id) { g in
                 // 3.113.0 (DJ): the live notifications' new pills, the same tile as the large Tonight's slate widget
-                Link(destination: SlateLook.gameURL(g.id)) { TonightTile(g: g, dark: dark) }
+                Link(destination: SlateLook.gameURL(g.id)) { TonightTile(g: g, dark: dark, pillHeight: compact ? 36 : nil) }
             }
         }
     }
@@ -290,6 +299,7 @@ private struct BoardChips: View {
             // before kickoff: both chips left of the camera, the countdown (or start time) right of it
             if leading {
                 HStack(spacing: 3) {
+                    SlateMark(size: 14)   // 3.113.0 (DJ): the Slate mark leads the island before the start
                     Chip(abbr: g.aa, color: g.ac, alt: g.ax, width: SlateLogos.image(g.al) != nil ? 20 : 26, height: SlateLogos.image(g.al) != nil ? 20 : 16, size: 10, stripe: 2, radius: 3, logo: g.al)
                     Chip(abbr: g.ha, color: g.hc, alt: g.hx, width: SlateLogos.image(g.hl) != nil ? 20 : 26, height: SlateLogos.image(g.hl) != nil ? 20 : 16, size: 10, stripe: 2, radius: 3, logo: g.hl)
                 }

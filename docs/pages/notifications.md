@@ -9,7 +9,7 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
     added in 3.113.0 at DJ's ask: 8 games in 2 columns of 4 as TonightTile: two LeanShape pills (fixed 10 pt lean,
     parallel inner edges so all slants line up) with logo + score, clock/start under them. The Board activity's
     BoardGrid uses the same TonightTile (dark in the island) since 3.113.0; BoardLine is no longer used. SlateMark (ios/SlateLive/SlateMark.swift, the app's svg.brand redrawn as
-    Paths, SlateLook.accent green) sits by the widget title and the Board island's "Your slate"; plus
+    Paths, SlateLook.accent green) on every live notification view (LockCard league line, Board Lock Screen header, expanded island by the clock, Board island title, compact leading before the start, Watch) and every widget size; not in minimal/narrow; plus
     "N games left"; started games without a recent score show "Live" + channel; the page sends up to 12). The page
     sends `{t:"slate", date, at, games:[SlateBoardGame…]}` from livePoll (040-live.js laSlateWidget, once per change);
     WebModel saves it to the app group as tonight.json (`ios/Shared/SlateTonight.swift`) and reloads the widget.

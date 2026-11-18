@@ -42,8 +42,11 @@ struct SlateLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(spacing: 3) {
-                        // 3.85.0: the same square-cornered clock tag as the Lock Screen card
-                        ClockTag(text: SlateLook.clock(s), live: s.state == "in")
+                        // 3.85.0: the same square-cornered clock tag as the Lock Screen card; 3.113.0 (DJ): the Slate mark beside it
+                        HStack(spacing: 4) {
+                            SlateMark(size: 13)
+                            ClockTag(text: SlateLook.clock(s), live: s.state == "in")
+                        }
                         if s.state == "in", let sit = s.sit, !sit.isEmpty {
                             Text(sit)
                                 .font(SlateLook.semi(12))
@@ -120,17 +123,23 @@ private struct WatchCard: View {
             }
             if let b = a.bet {
                 let say = BetLook.say(b, s)
-                Text(say.isEmpty ? b.l : "\(b.l) · \(say)")
-                    .font(SlateLook.semi(12))
-                    .foregroundStyle(SlateLook.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                HStack(spacing: 4) {
+                    SlateMark(size: 12)
+                    Text(say.isEmpty ? b.l : "\(b.l) · \(say)")
+                        .font(SlateLook.semi(12))
+                        .foregroundStyle(SlateLook.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             } else {
-                Text(a.league)
-                    .font(SlateLook.semi(12))
-                    .foregroundStyle(SlateLook.muted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                HStack(spacing: 4) {
+                    SlateMark(size: 12)
+                    Text(SlateLook.leagueOnly(a.league))
+                        .font(SlateLook.semi(12))
+                        .foregroundStyle(SlateLook.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
         }
         .padding(.horizontal, 8)
@@ -148,6 +157,10 @@ enum SlateLook {
     static let ink = Color(slateHex: "#ECF1F7")
     static let muted = Color(slateHex: "#A0ACBD")
     static let live = Color(slateHex: "#FF5B4E")
+    // "Slate • CBB" -> "CBB": the mark stands in for the word (3.113.0)
+    static func leagueOnly(_ l: String) -> String {
+        l.hasPrefix("Slate • ") ? String(l.dropFirst("Slate • ".count)) : l
+    }
     static let accent = Color(slateHex: "#45A85E")   // 3.113.0: the app's green (--accent), for the Slate mark
     static let button = Color(slateHex: "#1F2733")
 
@@ -308,11 +321,15 @@ private struct LockCard: View {
                     } else {
                         ClockTag(text: SlateLook.clock(s), live: live)
                     }
-                    Text(!down.isEmpty ? down : pre && !(s.line ?? "").isEmpty ? (s.line ?? "") : a.league)
-                        .font(SlateLook.semi(12))
-                        .foregroundStyle(!down.isEmpty ? SlateLook.ink : SlateLook.muted)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
+                    // 3.113.0 (DJ): the Slate axe-hammer in place of "Slate •" before the league
+                    HStack(spacing: 4) {
+                        SlateMark(size: 13)
+                        Text(!down.isEmpty ? down : pre && !(s.line ?? "").isEmpty ? (s.line ?? "") : SlateLook.leagueOnly(a.league))
+                            .font(SlateLook.semi(12))
+                            .foregroundStyle(!down.isEmpty ? SlateLook.ink : SlateLook.muted)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
                     if let tag = s.tag, !tag.isEmpty, s.state != "post" {
                         Text(tag)
                             .font(SlateLook.semi(12))
@@ -877,6 +894,8 @@ private struct ChipsSide: View {
     var body: some View {
         HStack(spacing: 5) {
             if leading {
+                // 3.113.0 (DJ): before the start, with no score to show yet, the Slate mark leads the island
+                if s.state == "pre" { SlateMark(size: 14) }
                 Chip(abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, width: SlateLogos.image(a.awayLogo) != nil ? 20 : 26, height: SlateLogos.image(a.awayLogo) != nil ? 20 : 16, size: 10, stripe: 2, radius: 3, logo: a.awayLogo)
                 if s.state != "pre" { Text("\(s.a)").font(SlateLook.num(15)).foregroundStyle(.white) }
             } else {

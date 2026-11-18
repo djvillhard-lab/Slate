@@ -235,6 +235,7 @@ struct LeanShape: Shape {
 struct TonightTile: View {
     let g: SlateBoardGame
     var dark = false   // the Dynamic Island: a little smaller, on black
+    var pillHeight: CGFloat? = nil   // 3.113.0: the Board's Lock Screen, under its header
 
     var body: some View {
         let pre = BoardLook.pre(g), live = g.s == "in", fin = g.s == "post"
@@ -243,7 +244,7 @@ struct TonightTile: View {
                 pill(abbr: g.aa, color: g.ac, alt: g.ax, logo: g.al, score: pre ? nil : g.a, other: g.h, left: true, fin: fin, live: live)
                 pill(abbr: g.ha, color: g.hc, alt: g.hx, logo: g.hl, score: pre ? nil : g.h, other: g.a, left: false, fin: fin, live: live)
             }
-            .frame(height: dark ? 38 : 42)
+            .frame(height: pillHeight ?? (dark ? 38 : 42))
             if pre && g.d != "Live" {
                 Text([g.d, g.tv ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(SlateLook.semi(11))
