@@ -1608,6 +1608,12 @@ html[data-native].side-col:not(.duo) #feed-body .fd-strip { padding-right: calc(
 .fd-tag.swing { background: color-mix(in srgb, #4C9BF5 18%, transparent); color: color-mix(in srgb, #4C9BF5 75%, var(--ink)); }
 .fd-tag.rz { color: var(--live, #E5484D); }
 .fd-pos { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: var(--muted); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; line-height: 15px; }
+/* the lines between plays as boxes (DJ, Nov 17): quiet by default; a start is tinted with the accent, a stop with amber */
+.fd-play.fd-k-note { border-left: 4px solid color-mix(in srgb, var(--ink) 28%, transparent); background: color-mix(in srgb, var(--ink) 4%, var(--card)); }
+.fd-play.fd-k-note.fd-n-go { border-left-color: var(--accent); }
+.fd-play.fd-k-note.fd-n-go > .fd-pt { color: var(--accent); }
+.fd-play.fd-k-note.fd-n-stop, .fd-play.fd-k-note.fd-n-clock { border-left-color: #F5C518; }
+.fd-play.fd-k-note > .fd-px { color: var(--muted); opacity: 1; }
 .fd-note { margin: 2px 0; text-align: center; font-size: 12px; font-weight: 700; color: var(--dim); }
 .fd-at { text-align: center; }
 .fd-new { animation: fdIn .6s ease-out; }

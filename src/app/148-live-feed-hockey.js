@@ -93,7 +93,7 @@
       var pl = plays[i], rd = hkRead(pl), pid = hpPid(pl); seenNow[pid] = 1;
       if (rd.skip || (keyOnly && !rd.key)) continue;
       var isNew = !!(fresh && !fresh[pid]);
-      if (rd.note) { if (shown < cap) list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
+      if (rd.note) { if (shown < cap) list.appendChild(fdNoteCard(rd.title, isNew, pid, "", "")); continue; }
       total++; if (shown >= cap) continue; shown++;
       var sd = tmOf(pl), card = el("div", "fd-play sc-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); card.setAttribute("data-id", pid);
       if (sd) card.style.setProperty("--fd-team", fdTint(g, sd));

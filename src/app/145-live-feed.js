@@ -478,6 +478,48 @@
     }
     if (anchor) requestAnimationFrame(function () { var n2 = body.querySelector(anchor); if (!n2) return; var dlt = n2.getBoundingClientRect().top - aTop; if (Math.abs(dlt) > 1) { if (sc) sc.scrollTop += dlt; else window.scrollBy(0, dlt); } });
   }
+  // The lines between plays (a half starting or ending, added time, a stoppage, a two-minute warning) used to be loose gray text.
+  // DJ (Nov 17): each gets its own box with an emoji and a short title, the sentence underneath, like every other play.
+  // Only wording changes here: every fact is from ESPN's own sentence.
+  function fdNoteRead(text) {
+    var t = String(text || "").replace(/\s+/g, " ").trim(), m, o = { emoji: "📣", title: "", sub: "", tone: "" };
+    var rest = function (re) { return t.replace(re, "").replace(/^[\s,.:-]+/, "").replace(/\.$/, ""); };
+    var ord = function (n) { n = String(n).toLowerCase(); return ({ "1": "1st", "2": "2nd", "3": "3rd", "4": "4th", first: "1st", second: "2nd", third: "3rd", fourth: "4th" })[n] || n; };
+    if (/^first half begins/i.test(t)) { o.emoji = "🟢"; o.title = "Kickoff"; o.sub = rest(/^first half begins/i); o.tone = "go"; }
+    else if (/^second half begins/i.test(t)) { o.emoji = "▶️"; o.title = "Second half under way"; o.sub = rest(/^second half begins/i); o.tone = "go"; }
+    else if (/^first half ends/i.test(t)) { o.emoji = "☕"; o.title = "Halftime"; o.sub = rest(/^first half ends/i); o.tone = "end"; }
+    else if (/^second half ends/i.test(t)) { o.emoji = "\uD83D\uDD14"; o.title = "Second half over"; o.sub = rest(/^second half ends/i); o.tone = "end"; }
+    else if (/^match ends/i.test(t)) { o.emoji = "🏁"; o.title = "Full time"; o.sub = rest(/^(second half ends|match ends)/i); o.tone = "end"; }
+    else if ((m = /^(first|second) half extra time (begins|ends)/i.exec(t))) { var b1 = /begins/i.test(m[2]); o.emoji = b1 ? "⏩" : (/second/i.test(m[1]) ? "🏁" : "⏸️"); o.title = "Extra time, " + m[1].toLowerCase() + " half " + (b1 ? "under way" : "over"); o.sub = rest(/^(first|second) half extra time (begins|ends)/i); o.tone = b1 ? "go" : "end"; }
+    else if (/^penalty shootout begins/i.test(t)) { o.emoji = "🥅"; o.title = "Penalty shootout"; o.sub = rest(/^penalty shootout begins/i); o.tone = "go"; }
+    else if (/^penalty shootout ends/i.test(t)) { o.emoji = "🏁"; o.title = "Shootout over"; o.sub = rest(/^penalty shootout ends/i); o.tone = "end"; }
+    else if ((m = /announced (\d+) minutes? of added time/i.exec(t))) { o.emoji = "⏱️"; o.title = m[1] === "0" ? "No added time" : "+" + m[1] + " added time"; o.sub = m[1] === "0" ? "The fourth official added nothing" : m[1] + (m[1] === "1" ? " minute" : " minutes") + " added by the fourth official"; o.tone = "clock"; }
+    else if (/^delay over/i.test(t)) { o.emoji = "▶️"; o.title = "Back under way"; o.sub = rest(/^delay over/i); o.tone = "go"; }
+    else if (/^delay in match/i.test(t)) { var inj = /injur/i.test(t); o.emoji = inj ? "🩹" : "⏸️"; o.title = inj ? "Stopped for an injury" : "Play stopped"; o.sub = t.replace(/\.$/, ""); o.tone = "stop"; }
+    else if (/drinks break|cooling break|hydration/i.test(t)) { o.emoji = "💧"; o.title = "Drinks break"; o.sub = t.replace(/\.$/, ""); o.tone = "stop"; }
+    else if (/^lineups are announced/i.test(t)) { o.emoji = "📋"; o.title = "Lineups are in"; o.sub = rest(/^lineups are announced( and players are warming up)?/i) || "Players are warming up"; }
+    else if (/\bVAR\b/.test(t)) { o.emoji = "📺"; o.title = "VAR"; o.sub = t.replace(/\.$/, ""); o.tone = "clock"; }
+    else if (/^two-minute warning/i.test(t)) { o.emoji = "⏱️"; o.title = "Two-minute warning"; o.tone = "clock"; }
+    else if (/^tv timeout/i.test(t)) { o.emoji = "📺"; o.title = "TV timeout"; o.tone = "stop"; }
+    else if (/^(end of game|game end|end game)/i.test(t)) { o.emoji = "🏁"; o.title = "Final"; o.tone = "end"; }
+    else if (/^end of regulation/i.test(t)) { o.emoji = "⏩"; o.title = "End of regulation"; o.sub = "Overtime is next"; o.tone = "end"; }
+    else if (/^end of (the )?(1st |first )?half/i.test(t)) { o.emoji = "☕"; o.title = "Halftime"; o.tone = "end"; }
+    else if ((m = /^end of (?:the )?(\w+) (quarter|period)/i.exec(t))) { o.emoji = "🔔"; o.title = "End of the " + ord(m[1]) + " " + m[2].toLowerCase(); o.tone = "end"; }
+    else if ((m = /^start of (?:the )?(\w+) (quarter|period)/i.exec(t)) || (m = /^(\w+) (period) start/i.exec(t))) { o.emoji = "▶️"; o.title = ord(m[1]) + " " + m[2].toLowerCase() + " under way"; o.tone = "go"; }
+    else if (/^period start/i.test(t)) { o.emoji = "▶️"; o.title = "Period under way"; o.tone = "go"; }
+    else if (/^(period end|end of period|end period)/i.test(t)) { o.emoji = "🔔"; o.title = "End of the period"; o.tone = "end"; }
+    else if (/^shootout start/i.test(t)) { o.emoji = "🥅"; o.title = "Shootout"; o.tone = "go"; }
+    else if (/^shootout end/i.test(t)) { o.emoji = "🏁"; o.title = "Shootout over"; o.tone = "end"; }
+    else { var cut = t.search(/[.,]\s/); o.title = (cut > 8 && cut < 46 ? t.slice(0, cut) : t).replace(/\.$/, ""); o.sub = o.title.length < t.replace(/\.$/, "").length ? t.replace(/\.$/, "") : ""; }
+    if (o.sub && o.sub.toLowerCase() === o.title.toLowerCase()) o.sub = "";
+    return o;
+  }
+  function fdNoteCard(text, isNew, pid, left, right) {
+    var rd = fdNoteRead(text), c = el("div", "fd-play fd-k-note" + (rd.tone ? " fd-n-" + rd.tone : "") + (isNew ? " fd-new" : "")); if (pid) c.setAttribute("data-id", pid);
+    if (left || right) { var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, left || "")); if (right) ph.appendChild(el("span", "fd-psc", right)); c.appendChild(ph); }
+    c.appendChild(el("p", "fd-pt", rd.emoji + " " + rd.title)); if (rd.sub) c.appendChild(el("p", "fd-px", rd.sub));
+    return c;
+  }
   function fdIsland() {
   // 3.93.4: in the unfolded Duo's right pane the island sits over this pane's top right. The host page knows its width.
   // 3.94.1: which side this pane is on is the host's pn-right class on our <html> (288-panes.js), so the spacing follows a swap at once.
@@ -601,7 +643,7 @@ function renderFeed(fromPoll) {
           th.appendChild(el("span", null, (tq ? (tq > 4 ? "OT" : "Q" + tq) + " " : "") + ((pl.clock || {}).displayValue || "") + (tsd0 ? " \u00b7 " + abbr(g, tsd0) : "")));
           if (pl.awayScore != null && pl.homeScore != null) th.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + pl.awayScore + "  " + abbr(g, "home") + " " + pl.homeScore));
           tc.appendChild(th); tc.appendChild(fdTitle(tsd0 ? "Timeout, " + short(g, tsd0) : tab ? "Timeout, " + fdAb(tab) : rd.title)); list.appendChild(tc); continue; }
-        if (rd.note) { list.appendChild(el("p", "fd-note" + (isNew ? " fd-new" : ""), rd.title)); continue; }
+        if (rd.note) { var nq = ((pl.period || {}).number) || 0; list.appendChild(fdNoteCard(rd.title, isNew, pid, (nq ? (nq > 4 ? "OT" : "Q" + nq) + " " : "") + ((pl.clock || {}).displayValue || ""), pl.awayScore != null && pl.homeScore != null ? abbr(g, "away") + " " + pl.awayScore + "  " + abbr(g, "home") + " " + pl.homeScore : "")); continue; }
         shown++;
         var card = fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew);
         list.appendChild(card);

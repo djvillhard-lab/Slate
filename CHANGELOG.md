@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.98.0 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Live feed: the lines between plays now get their own box, with an emoji and a short title, like every other play. They used to be loose gray text.
+- Soccer: "🟢 Kickoff", "☕ Halftime", "▶️ Second half under way", "🔔 Second half over", "🏁 Full time", "⏱️ +3 added time", "⏸️ Play stopped" (or "🩹 Stopped for an injury"), "▶️ Back under way", "💧 Drinks break", "📺 VAR", "📋 Lineups are in", and extra time and shootout starts and ends. The sentence from ESPN sits underneath, with the minute and the score on top.
+- Hockey: "▶️ 1st period under way", "🔔 End of the 1st period", "🏁 Final", and the shootout. Football: "⏱️ Two-minute warning", "🔔 End of the 1st quarter", "☕ Halftime", "📺 TV timeout", "🏁 Final".
+- A start is tinted green, a stoppage or a clock note has a yellow edge, and the rest are plain. Any line Slate doesn't recognize still gets a box, with 📣.
+
 ## 3.97.2 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - All games: the league tabs (ALL, CBB, WCBB...) and the filters under them take your tap again. DJ's phone log showed taps on the tabs being lost: every score update rebuilt the tab row under the finger. The tabs and filters are now only rebuilt when they actually change.
