@@ -200,6 +200,15 @@
     order.forEach(function (k) { section(body, info(groups[k][0]).name, groups[k]); });
   }
   // league sections open and close (remembered on this phone); a single-league view is always open
+  // how many cards each section shows (3.96.0); starts over for a new day, tab or filter
+  var AG_SHOW = {}, AG_SHOW_FOR = "";
+  function agShowKey(title) { return title; }
+  function agCap(title, many) {
+    var k = [state.date, state.league, state.gamesLive ? 1 : 0, state.q || ""].join("|") + "|" + (typeof state.gamesFilter === "string" ? state.gamesFilter : "");
+    if (k !== AG_SHOW_FOR) { AG_SHOW = {}; AG_SHOW_FOR = k; }
+    if (state.q) return 1e9;  // a search shows every match
+    return AG_SHOW[agShowKey(title)] || (title === "My teams" ? 12 : many ? 6 : 20);
+  }
   var COLLAPSED = (function () { try { return JSON.parse(localStorage.getItem("slate-collapsed") || "{}") || {}; } catch (e) { return {}; } })();
   function section(body, title, list) {
     var many = state.league === "all" || state.league === "live" || (state.league !== "fav" && title === "My teams");
@@ -213,8 +222,26 @@
     if (many) sec.appendChild(icon("more"));
     body.appendChild(sec);
     var box = el("div", "glist");
-    if (!shut) list.forEach(function (g) { agQ.push({ box: box, g: g, mine: title === "My teams" }); });  // 3.95.2: drawn in batches (agDraw)
+    // 3.96.0 (DJ: too many games froze the page): a section shows its first few cards (live games first, then your
+    // slate's, then the rest in the usual order) and a "Show more" button adds the next batch, so the page never
+    // holds more than a few dozen cards unless you ask for them
+    var cap = agCap(title, many);
+    var shown = list;
+    if (!shut && list.length > cap) {
+      var rank = function (g) { var k = status(g).kind; return k === "live" ? 0 : inLineup(g.id) ? 1 : k === "upcoming" ? 2 : 3; };
+      shown = list.map(function (g, i) { return { g: g, i: i }; }).sort(function (a, b) { return rank(a.g) - rank(b.g) || a.i - b.i; }).slice(0, cap)
+        .sort(function (a, b) { return a.i - b.i; }).map(function (x) { return x.g; });
+    }
+    if (!shut) shown.forEach(function (g) { agQ.push({ box: box, g: g, mine: title === "My teams" }); });  // 3.95.2: drawn in batches (agDraw)
     body.appendChild(box);
+    if (!shut && shown.length < list.length) {
+      var left = list.length - shown.length, step = many ? 10 : 20;
+      var mr = el("div", "lo-none ag-more"); mr.style.margin = "4px 0 8px";
+      var mb = el("button", "pv-get", "Show " + Math.min(step, left) + " more " + (left === 1 ? "game" : "games") + (left > step ? " (" + left + " left)" : ""));
+      mb.type = "button";
+      mb.addEventListener("click", function () { AG_SHOW[agShowKey(title)] = cap + step; keepScroll(renderGames); });
+      mr.appendChild(mb); body.appendChild(mr);
+    }
     if (many) sec.addEventListener("click", function () {
       if (COLLAPSED[title]) delete COLLAPSED[title]; else COLLAPSED[title] = 1;
       try { localStorage.setItem("slate-collapsed", JSON.stringify(COLLAPSED)); } catch (e) {}
@@ -300,7 +327,18 @@
     if (v > cur) { box.style.setProperty("--side-w", v + "px"); return true; }
     return false;
   }
+  // 3.96.0: never redraw under a finger. A redraw replaces the Live button, the headers and changed cards; if that
+  // happens between touching one and letting go, the tap is lost (DJ: "can't select games or hit the live button").
+  // A redraw asked for while a finger is down waits until it lifts.
+  var agDown = false, agPending = false;
+  ["pointerdown", "touchstart"].forEach(function (t) { window.addEventListener(t, function () { agDown = true; }, { capture: true, passive: true }); });
+  ["pointerup", "pointercancel", "touchend", "touchcancel"].forEach(function (t) { window.addEventListener(t, function () {
+    agDown = false;
+    if (agPending) setTimeout(function () { if (agDown || !agPending) return; agPending = false; if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); }, 60);
+  }, { capture: true, passive: true }); });
   renderGames = function () {
+    if (agDown && $("games-body") && $("games-body").childNodes.length) { agPending = true; return; }
+    agPending = false;
     var body = $("games-body"), gen = ++agGen; clearTimeout(agBatchT);
     agOld = {}; if (body) Array.prototype.forEach.call(body.querySelectorAll(".g.panel[data-gid]"), function (r) { agOld[r.dataset.gid] = r; });
     var had = Object.keys(agOld).length;

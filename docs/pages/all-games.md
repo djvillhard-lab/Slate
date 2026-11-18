@@ -62,3 +62,8 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - `section()` now queues cards (`agQ`); the `renderGames` wrapper draws the ones down to where you've scrolled right away, then 12 at a time with 24ms gaps. Each card's freshly built HTML is kept on the node (`_agHtml`); if the new card's HTML matches, the old node is put back (its preview watcher moves over) so only changed cards are laid out. Cards with a tray are always rebuilt.
 - The right column only widens between fresh pages (`agWiden` measures just the new cards); a page with no reused cards sizes it from scratch with `alignSides`.
 - Measured: long stalls in 90s went from 10 (about 0.18s each) to 1 (76ms).
+
+## 3.96.0: Show more, and no redraw under a finger (DJ: still froze on ALL and College Hoops)
+- Each section shows a few cards: ALL 6 per league (My teams 12), a league tab 20. Live games first, then games on your slate, then the rest, kept in the usual order. "Show N more games" under a section adds 10 (20 on a league tab); the counts start over for a new day, tab, filter or Live. A search shows every match. Tonight: ALL 34 cards instead of 150, College Hoops 21 instead of 69.
+- Likely the real cause of lost taps: a redraw replaces the Live button, the headers and changed cards; if it lands between touching and letting go, the tap is lost. Redraws come every 10s from scores and every time a card's line or box score arrives (agRedraw, many on a big list). `renderGames` now waits while a finger is down and runs 60ms after it lifts.
+- Measured while scrolling for 60s: ALL 4 short stalls (longest 71ms), College Hoops 1 (51ms).
