@@ -40,8 +40,16 @@ Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#m
   (net of staked bets and the record per league). The slate block adds "up/down $X" to Last 7 days and a "Last 30 days" line by
   league once two leagues have settled bets. Checked with made-up bets on iPhone and folded Duo, and the sheet on iPhone.
 
+- 3.109.0 parlays: saved beside the day's bets as `{ kind: "parlay", d, legs: [ids], odds?, stake? }`; legs keep living as normal
+  bets with `par: <parlay id>` and are skipped by `mybRecord` / `mybTotals` (the parlay counts once, under "Parlays").
+  `mybParResult` (lost on the first lost leg, push/void legs drop out), `mybParRow`, `mybParRemove` (legs become single bets again),
+  the sheet `mybParOpen` / `mybParDraw` / `mybParAdd` (same `#sheet-myb`). `mybRes(b)` picks the right result function; anything
+  that walks `mybList()` must not call `mybResult` on a parlay. Parlay odds are typed, never worked out.
+  Checked with made-up bets (iPhone list, folded Duo sheet).
+
 ## Open
-- Parlays, and your line against the closing line, are still not built (the closing line would need to be saved at tip-off).
+- Your line against the closing line is not built (the closing line would have to be saved at the start, in the worker).
+- A parlay's legs must all be on the same day. Legs still show as single bets on their own game pages and cards.
 - Not on the Live feed or in notifications yet (a "your bet" line on the live notification could ride the existing line field without a build).
 - Parlays not supported. Stake/odds/profit was option 2 on DJ's card if he wants it later.
 - Private only once DJ runs `docs/security/lockdown.sql` (data/users/* is personal); until then the docs table is readable like everything else.

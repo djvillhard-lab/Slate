@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.109.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- My bets: parlays. With two or more bets on a day, "Make a parlay from these" under My bets lets you tick the bets that were one parlay and, if you like, type the parlay's odds and stake. The parlay gets its own card listing each leg with a check, an x or a live dot, "2 of 3 legs in so far" while games are on, and Won or Lost at the end.
+- A parlay loses as soon as one leg loses, and a leg that pushes drops out, the way sportsbooks settle them. Its legs stop counting as single bets in your record and money; removing the parlay turns them back into single bets. Slate doesn't work out parlay odds: type the ones you got.
+
 ## 3.108.1 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - Teams: someone following fewer than three teams no longer sees an empty page under "Find a team". It lists up to twelve teams playing today, the ones on the slate first, each with its star, so a new person can follow a team in one tap. Searching or picking a league works as before.
