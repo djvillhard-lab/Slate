@@ -53,6 +53,7 @@ def main():
         except Exception: pw = ""
     if "--gate" in args: pw = ""
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
+    prof = 0  # --profile SECONDS: record the page's CPU use for that long (after --tap) and print where the time went
     tap = None  # --tap "sel": a real touch tap, after --click
     teams = None  # --teams "Notre Dame,Duke": favorite teams for this run only (read-only, never saved)
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
@@ -68,6 +69,7 @@ def main():
         if a == "--click": click = args[i + 1]; i += 2; continue
         if a == "--text": text = args[i + 1].lower(); i += 2; continue
         if a == "--look": look = args[i + 1]; i += 2; continue
+        if a == "--profile": prof = float(args[i + 1]); i += 2; continue
         if a == "--tap": tap = args[i + 1]; i += 2; continue
         if a == "--teams": teams = [t.strip() for t in args[i + 1].split(",") if t.strip()]; i += 2; continue
         if a == "--league": league = args[i + 1]; i += 2; continue
@@ -192,6 +194,31 @@ def main():
                         hit = host.evaluate("(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? e.tagName + '.' + (e.className.baseVal !== undefined ? e.className.baseVal : e.className) : 'nothing'; })(%s)" % json.dumps([box[0] + off[0], box[1] + off[1]]))
                         print(f"  {size}: tapping {tap} at {round(box[0] + off[0])},{round(box[1] + off[1])} (top of the screen there: {hit})")
                         host.touchscreen.tap(box[0] + off[0], box[1] + off[1]); page.wait_for_timeout(1200)
+                if prof:
+                    cdp = host.context.new_cdp_session(host if page is host else page)
+                    cdp.send("Profiler.enable"); cdp.send("Profiler.setSamplingInterval", {"interval": 500}); cdp.send("Profiler.start")
+                    host.wait_for_timeout(int(prof * 1000))
+                    pr = cdp.send("Profiler.stop")["profile"]
+                    nodes = {n["id"]: n for n in pr["nodes"]}; parent = {}
+                    for n in pr["nodes"]:
+                        for c in n.get("children", []): parent[c] = n["id"]
+                    dts = pr.get("timeDeltas", []); selfms = {}; totms = {}
+                    for sid, dt in zip(pr.get("samples", []), dts[1:] + [0]):
+                        cf = nodes[sid]["callFrame"]; key = f"{cf['functionName'] or '(anon)'} :{cf['lineNumber'] + 1}"
+                        selfms[key] = selfms.get(key, 0) + dt / 1000
+                        seen = set(); nid = sid
+                        while nid in nodes:
+                            cf = nodes[nid]["callFrame"]; k2 = f"{cf['functionName'] or '(anon)'} :{cf['lineNumber'] + 1}"
+                            if k2 not in seen: totms[k2] = totms.get(k2, 0) + dt / 1000; seen.add(k2)
+                            nid = parent.get(nid)
+                    busy = sum(v for k, v in selfms.items() if not k.startswith("(idle)") and not k.startswith("(program)"))
+                    print(f"  {size}: CPU busy {busy:.0f}ms of {prof * 1000:.0f}ms")
+                    print("  most time including what they call:")
+                    for k, v in sorted(totms.items(), key=lambda x: -x[1])[:30]:
+                        if not k.startswith(("(idle)", "(root)", "(program)")): print(f"    {v:7.0f}ms  {k}")
+                    print("  most time in the function itself:")
+                    for k, v in sorted(selfms.items(), key=lambda x: -x[1])[:15]:
+                        if not k.startswith(("(idle)", "(program)")): print(f"    {v:7.0f}ms  {k}")
                 if scroll:
                     page.evaluate("(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({block: 'start'}); })(%s)" % json.dumps(scroll)); page.wait_for_timeout(500)
                 page = host

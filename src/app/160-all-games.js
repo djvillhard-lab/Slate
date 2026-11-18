@@ -249,16 +249,19 @@
   // drops both teams' records first, and if a name still doesn't fit, both rows show the team's abbreviation instead (the record stays hidden).
   function agFitNames() {
     var box = $("games-body"); if (!box || !box.offsetParent) return;
-    Array.prototype.forEach.call(box.querySelectorAll(".g.panel"), function (p) {
-      var rows = Array.prototype.slice.call(p.querySelectorAll(".tm")); if (!rows.length) return;
-      var nms = rows.map(function (r) { return r.querySelector(".nm"); }).filter(Boolean);
-      var cut = function () { return nms.some(function (n) { return n.clientWidth && n.scrollWidth > n.clientWidth; }); };  // 3.80.1: even a 1px clip shows the ellipsis
-      rows.forEach(function (r) { var rc = r.querySelector(".rec"); if (rc) rc.style.display = ""; });
-      nms.forEach(function (n) { if (n.dataset.full) { n.textContent = n.dataset.full; delete n.dataset.full; } });
-      if (!cut()) return;
-      rows.forEach(function (r) { var rc = r.querySelector(".rec"); if (rc) rc.style.display = "none"; });
-      if (!cut()) return;
-      rows.forEach(function (r) {
+    // 3.95.1 (speed): every card is reset first, then all are measured, then changed, so the phone lays the page out
+    // three times in all instead of two or three times per card (143 cards froze taps for a moment)
+    var cards = Array.prototype.map.call(box.querySelectorAll(".g.panel"), function (p) {
+      var rows = Array.prototype.slice.call(p.querySelectorAll(".tm"));
+      return { rows: rows, nms: rows.map(function (r) { return r.querySelector(".nm"); }).filter(Boolean), recs: rows.map(function (r) { return r.querySelector(".rec"); }).filter(Boolean) };
+    }).filter(function (c) { return c.rows.length; });
+    var cut = function (c) { return c.nms.some(function (n) { return n.clientWidth && n.scrollWidth > n.clientWidth; }); };  // 3.80.1: even a 1px clip shows the ellipsis
+    cards.forEach(function (c) { c.recs.forEach(function (rc) { rc.style.display = ""; }); c.nms.forEach(function (n) { if (n.dataset.full) { n.textContent = n.dataset.full; delete n.dataset.full; } }); });
+    var tight = cards.filter(cut);
+    tight.forEach(function (c) { c.recs.forEach(function (rc) { rc.style.display = "none"; }); });
+    var still = tight.filter(cut);
+    still.forEach(function (c) {
+      c.rows.forEach(function (r) {
         var n = r.querySelector(".nm"), b = r.querySelector(".badge"), t = b && Array.prototype.filter.call(b.childNodes, function (x) { return x.nodeType === 3 && x.nodeValue.trim(); })[0];
         if (n && t) { n.dataset.full = n.textContent; n.textContent = t.nodeValue.trim(); n.setAttribute("title", n.dataset.full); }
       });

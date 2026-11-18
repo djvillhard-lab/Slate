@@ -49,3 +49,10 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 
 ## 3.93.1: header counts line up
 - On a league tab, the My teams header (it folds, so it has a chevron) put "1 game" toward the middle: the Live tag and the chevron both had auto margins and split the space. Now the count takes the auto margin, and plain headers on a page that has a folding one keep 26px on the right for the missing chevron, so every count ends at the same spot (measured equal on folded and iPhone).
+
+## 3.95.1: speed (DJ: pages freezing with lots of games live)
+- Profiled with `scripts/shots.py ... --profile 60` (new). With 20 live games, each 10-second score update rebuilt all 14 pages, hidden ones included (All games alone is 143 cards), and All games measured each card one at a time.
+- `render()` (240-chrome.js) now redraws only pages that are on screen after `renderTop()`; a hidden page draws when it's opened (every way of opening a page calls render). A page renderer that touches something outside its own `#view-*` must be called when that other page shows too (renderNotify also runs on Settings).
+- Score updates wait while a finger is on the screen or the page is moving (`liveRender` in 040-live.js), at most 20s.
+- `agFitNames` resets, measures and changes all cards in batches. Date formatters are made once (030-helpers.js).
+- Result on a fast computer: long stalls went from 23 in 90s (3.3s, up to 0.38s) to 10 (1.8s, about 0.18s each). Open: All games still rebuilds every card on each score update; next step would be swapping only the cards that changed.

@@ -127,8 +127,8 @@
     if ((hl || bt) && inLineup(g.id) && (state.view === "lineup" || isDuo)) keepScroll(renderLineup);
     if (hl) agRedraw();
     if (state.view === "game" && state.gameId === g.id) keepScroll(renderGame);
-    if (state.openId === g.id && document.querySelector("#lineup-body .tray")) keepScroll(renderLineup);
-    if (state.openId === g.id && document.querySelector("#games-body .tray")) keepScroll(renderGames);
+    if (state.openId === g.id && document.querySelector("#lineup-body .tray") && $("lineup-body").offsetParent) keepScroll(renderLineup);
+    if (state.openId === g.id && document.querySelector("#games-body .tray") && $("games-body").offsetParent) keepScroll(renderGames);  // 3.95.1: not while All games is hidden
     if (state.view === "moments" && mm.pick && state.openId === g.id) keepScroll(renderMoments);
   }
   if (window.SLATE_SELF) {

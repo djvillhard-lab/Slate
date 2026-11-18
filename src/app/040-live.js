@@ -170,8 +170,18 @@
         });
       });
       state.liveAt = new Date().toISOString();
-      if (changed) render(); else freshness();
+      if (changed) liveRender(); else freshness();
     }, function () { livePolling = false; });
+  }
+  // 3.95.1 (speed): a score update waits while a finger is on the screen or the page is still moving, so a redraw
+  // never lands in the middle of a tap or a swipe; it goes through within 1.5s of letting go (at most 20s late)
+  var liveTouchAt = 0, liveRenderT = null, liveWaitFrom = 0;
+  ["pointerdown", "touchstart", "touchmove", "wheel", "scroll"].forEach(function (t) { window.addEventListener(t, function () { liveTouchAt = Date.now(); }, { capture: true, passive: true }); });
+  function liveRender() {
+    clearTimeout(liveRenderT); if (!liveWaitFrom) liveWaitFrom = Date.now();
+    var quiet = Date.now() - liveTouchAt;
+    if (quiet < 1500 && Date.now() - liveWaitFrom < 20000) { liveRenderT = setTimeout(liveRender, 1500 - quiet + 50); return; }
+    liveWaitFrom = 0; render();
   }
   if (window.SLATE_SELF) {
     setInterval(livePoll, 10000);

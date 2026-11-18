@@ -271,5 +271,11 @@
     if (!max) return;
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) + "px");
   }
-  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); updateTeamAccent(); renderTop(); renderLineup(); renderRules(); renderGame(); renderFeed(); renderBest(); renderMoments(); renderTeams(); renderTeam(); renderTabs(); renderGames(); renderTV(); renderNews(); renderSettings(); renderNotify(); renderFoot(); renderBack(); alignSides($("lineup-body")); alignSides($("games-body")); fitScores($("lineup-body")); }); }
+  function render() { keepScroll(function () { if (!state.rules) state.rules = normRules(); computeSlate(); updateTeamAccent(); renderTop();
+    // 3.95.1 (speed): renderTop has just shown the page on screen and hidden the rest. Only pages on screen are redrawn;
+    // a hidden page is redrawn when it's opened (every way of opening a page calls render). Before, each live score
+    // update rebuilt all fourteen pages, which froze taps for a moment on a phone with 20 live games.
+    var on = function (v) { var sc = $("view-" + v); return !sc || !sc.hidden; };
+    if (on("lineup")) renderLineup(); if (on("rules")) renderRules(); if (on("game")) renderGame(); if (on("feed")) renderFeed(); if (on("best")) renderBest(); if (on("moments")) renderMoments(); if (on("teams")) renderTeams(); if (on("team")) renderTeam(); if (on("tabs")) renderTabs(); if (on("games")) renderGames(); if (on("tv")) renderTV(); if (on("news")) renderNews(); if (on("settings")) renderSettings(); if (on("notify") || on("settings")) renderNotify();  // its Settings row lives on Settings
+    renderFoot(); renderBack(); if (on("lineup")) { alignSides($("lineup-body")); fitScores($("lineup-body")); } }); }
 

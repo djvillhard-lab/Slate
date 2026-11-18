@@ -20,8 +20,10 @@
     }
     s.appendChild(p); return s;
   }
-  function todayInHome() { return new Intl.DateTimeFormat("en-CA", { timeZone: HOME_TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() - 4 * 3600000)); }
+  // 3.95.1 (speed): date formatters are made once and reused; making one is slow and these run for every card
+  var homeFmt = null, homeFmtTz = "", timeFmt = null;
+  function todayInHome() { if (!homeFmt || homeFmtTz !== HOME_TZ) { homeFmt = new Intl.DateTimeFormat("en-CA", { timeZone: HOME_TZ, year: "numeric", month: "2-digit", day: "2-digit" }); homeFmtTz = HOME_TZ; } return homeFmt.format(new Date(Date.now() - 4 * 3600000)); }
   function shiftDate(iso, n) { var p = iso.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n, 12)).toISOString().slice(0, 10); }
   function fmtDate(iso, opts) { var p = iso.split("-").map(Number); opts.timeZone = "UTC"; return new Intl.DateTimeFormat("en-US", opts).format(new Date(Date.UTC(p[0], p[1] - 1, p[2], 12))); }
-  function timeText(iso) { var d = new Date(iso); return isNaN(d) ? "TBD" : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); }
+  function timeText(iso) { var d = new Date(iso); if (isNaN(d)) return "TBD"; if (!timeFmt) timeFmt = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }); return timeFmt.format(d); }
   function info(g) { var L = LEAGUES[g.league] || {}; return { tag: L.tag || (g.leagueLabel || g.league || "").toUpperCase().slice(0, 5), name: g.leagueLabel || L.name || "Other", hrs: L.hrs || 2.5, college: !!L.college }; }
