@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.105.0 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- New: player pages. Tap a player on a Box Office card, in a box score (the face or the name) or in Top performers, and a sheet slides up with his team, position, height, weight and age, his headline season numbers with his league rank, his season and career lines, his last five games with each result, his next game, and up to three headlines. "Team page" jumps to his team.
+- Everything on it comes straight from ESPN's player page; nothing is worked out by Slate. A player ESPN has no page for says so.
+
 ## 3.104.0 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - News, Press Box: before today's page is written, the page now opens with "Headlines right now": the six newest stories from your teams' leagues and tonight's slate, your teams first, straight from ESPN and The Athletic. Tap one to read it. The picker for your own page is right under it, as before. These headlines are free: Claude isn't asked for anything.

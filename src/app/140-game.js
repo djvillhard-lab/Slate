@@ -256,6 +256,7 @@
     m.appendChild(top); m.appendChild(ln); r.appendChild(m);
     // the right side: what made the night (3.75.0, DJ). Nothing qualifies, nothing shows.
     var tg = el("div", "tp-tags"); (w.tags || []).slice(0, 3).forEach(function (x) { tg.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), x.t)); }); r.appendChild(tg);
+    plrTap(r, { id: w.id, lg: g.league, name: w.n });   // 3.105.0: the row opens the player's page
     return r;
   }
   // part: "recap" (after the final: the recap and top performers), "pre" (the pregame preview only), or nothing (all of it)

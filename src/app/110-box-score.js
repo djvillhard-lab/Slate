@@ -296,6 +296,7 @@
         fw.appendChild(bxFace(g, r, team)); row.appendChild(fw);
         var right = el("div", "bxp-r"), nm = el("div", "bxp-nm");
         nm.appendChild(el("span", "bxp-n", r.n));
+        plrTap(fw, { id: r.id, lg: g.league, name: r.n }); plrTap(nm, { id: r.id, lg: g.league, name: r.n });   // 3.105.0: face and name open the player's page
         if (r.p) nm.appendChild(el("span", "bxp-p", "· " + r.p));
         if (r.st && !split && sport !== "bball") nm.appendChild(el("span", "bxp-s", "S"));
         if (r.id && team) { var ps = playerStar({ id: r.id, name: r.n, lg: g.league, team: team.abbr, teamName: team.name }); ps.classList.add("bxp-star"); nm.appendChild(ps); }
