@@ -160,4 +160,4 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 
 3.100.2 (DJ, Nov 17): "Remove the all filter option". The All tab is gone from the feed's filter row (`fdFilters`): My slate plus one tab per league with a live game. The tab choice is not saved (`FD.scope`, in memory); a feed opened from All games' ALL tab uses My slate if the game is on the slate, else its league. `fdIn` still understands "all" but nothing sets it.
 
-3.100.10 (DJ, Nov 17): a basketball steal box takes the stealer's team (color and the label on the top line). ESPN's `pl.team` on a steal is the team that turned it over; `hpFeed` now uses `rd.P.tid` when `rd.k === "stl"`. Blocks are still under the shooter's team (not asked).
+3.100.10 (DJ, Nov 17): a basketball steal box takes the stealer's team (color and the label on the top line). ESPN's `pl.team` on a steal is the team that turned it over; `hpFeed` now uses `rd.P.tid` when `rd.k === "stl"`. Blocks follow the same rule since 3.101.1 (DJ said yes): the blocker's team, when ESPN names the blocker.

@@ -207,7 +207,7 @@
         var gray = /^(miss|foul|to|end)$/.test(rd.kind), rb = rebOf[pid], rbR = rb ? hpRead(rb, ix) : null;
         if ((rd.kind === "foul" || rd.k === "tofoul") && rd.P && lastFoul[rd.P.id] === pid) { var pf = parseFloat((rd.P.st || {}).PF) || 0, ft0 = pf >= foulLimit ? "Fouled out" : pf === foulLimit - 1 ? "Foul trouble" : ""; if (ft0) tg = (tg || []).concat([{ t: ft0, c: "" }]); }
         var sd2 = sideOf[String((pl.team || {}).id || "")] || "";
-        if (rd.k === "stl" && rd.P && sideOf[String(rd.P.tid || "")]) sd2 = sideOf[String(rd.P.tid)];  /* DJ, Nov 17: ESPN files a steal under the team that lost the ball; the box is the stealer's, so it takes that team's color and label */
+        if ((rd.k === "stl" || (rd.k === "blk" && rd.P2)) && rd.P && sideOf[String(rd.P.tid || "")]) sd2 = sideOf[String(rd.P.tid)];  /* a block too (DJ said yes, Nov 17): with P2 set, P is the blocker */  /* DJ, Nov 17: ESPN files a steal under the team that lost the ball; the box is the stealer's, so it takes that team's color and label */
         var c2 = el("div", "fd-play hp-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); c2.setAttribute("data-id", pid);
         if (sd2 && rd.kind !== "to" && rd.kind !== "end") c2.style.setProperty("--hp-team", fdTint(g, sd2));
         var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck + (sd2 ? " · " + abbr(g, sd2) : "")));
