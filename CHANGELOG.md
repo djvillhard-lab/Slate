@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.100.1 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- All games: on the ALL tab, every league starts folded, so you see the list of leagues (with how many games and how many are live) and open the ones you want. My teams starts open. A league you open or fold stays that way on this phone. A folded league doesn't load its games at all.
+
 ## 3.100.0 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
 - DJ gets a Slate notification on his phone the moment anyone sends feedback from Settings → Send feedback: "New feedback from Drew · Idea" with the start of what they wrote. Only DJ's phone gets it. The full note, with any screenshot, still comes to DJ's Claude project.

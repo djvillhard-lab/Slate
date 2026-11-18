@@ -206,7 +206,10 @@
   var COLLAPSED = (function () { try { return JSON.parse(localStorage.getItem("slate-collapsed") || "{}") || {}; } catch (e) { return {}; } })();
   function section(body, title, list) {
     var many = state.league === "all" || state.league === "live" || (state.league !== "fav" && title === "My teams");
-    var shut = many && !!COLLAPSED[title];
+    // 3.100.1 (DJ): on the ALL tab every league starts folded (My teams starts open); a section you open or fold stays
+    // that way on this phone
+    var dflt = state.league === "all" && title !== "My teams" ? 1 : 0;
+    var shut = many && !!(title in COLLAPSED ? COLLAPSED[title] : dflt);
     var sec = el(many ? "button" : "div", "sec" + (many ? " sec-tg" : "") + (shut ? " shut" : ""));
     if (many) { sec.type = "button"; sec.setAttribute("aria-expanded", shut ? "false" : "true"); }
     sec.appendChild(el("h2", null, title));
@@ -224,7 +227,7 @@
     if (!shut) order.forEach(function (x) { agQ.push({ box: box, sec: sec, g: x.g, mine: title === "My teams", live: status(x.g).kind === "live" }); });
     body.appendChild(box);
     if (many) sec.addEventListener("click", function () {
-      if (COLLAPSED[title]) delete COLLAPSED[title]; else COLLAPSED[title] = 1;
+      COLLAPSED[title] = shut ? 0 : 1;
       try { localStorage.setItem("slate-collapsed", JSON.stringify(COLLAPSED)); } catch (e) {}
       keepScroll(renderGames);
     });

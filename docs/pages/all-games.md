@@ -83,3 +83,6 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 ## 3.97.2: tabs and taps (DJ's phone log on 3.96.3)
 - Taps on the league tabs were lost (downs, no click) while `render()` ran about every 1.5s; renderTop rebuilt the tab row and the filter row on every render. The tab row now rebuilds only when its options or the picked league change (`sp._sig`), and the filter row is built aside and swapped in only when its HTML differs.
 - `render()` (240-chrome.js) is held while a finger is down and until 0.4s after it lifts (`renderHeld`, using `agBusy`/`agTapping` from this file), unless the click itself asked for it. This covers every page.
+
+## 3.100.1: leagues start folded on ALL (DJ)
+- On the ALL tab every league section starts folded; My teams starts open. `COLLAPSED[title]` now stores 1 (folded) or 0 (opened) per phone, and a title with nothing stored uses the default. Folded sections queue no cards.
