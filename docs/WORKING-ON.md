@@ -8,3 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | Sign in with Google (log-in page, Settings → Account) | worker/google.js, worker/index.js (one route, passcode check), worker/signup.js, google.html, src/boot/db-shim.js, src/app/232-welcome.js, docs/pages/security.md | 2026-11-17 23:35 |
 | DJ | Live feed: the Last play timer counts the delay | src/app/145-live-feed.js, src/app/146-live-feed-hoops.js, docs/pages/live-feed.md | 2026-11-18 01:15 |
+| DJ | All games: league tabs and taps lost to redraws | src/app/160-all-games.js, shared: src/app/240-chrome.js (render and the league strip only) | 2026-11-18 01:24 |
