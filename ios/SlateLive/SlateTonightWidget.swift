@@ -94,7 +94,8 @@ struct TonightView: View {
         let small = family == .systemSmall
         let left = large ? TonightLook.next(entry.data, at: entry.date, count: 99).count : 0
         VStack(alignment: .leading, spacing: small ? 6 : 7) {
-            HStack {
+            HStack(spacing: 5) {
+                SlateMark(size: 15)   // 3.113.0 (DJ): the Slate axe-hammer by the title
                 Text("TONIGHT'S SLATE")
                     .font(SlateLook.bold(11))
                     .foregroundStyle(SlateLook.muted)

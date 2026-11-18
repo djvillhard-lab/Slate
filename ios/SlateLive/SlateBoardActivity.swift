@@ -18,10 +18,13 @@ struct SlateBoardActivity: Widget {
             let s = context.state, lead = BoardLook.lead(s)
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text("Your slate")
-                        .font(SlateLook.bold(13))
-                        .foregroundStyle(SlateLook.muted)
-                        .padding(.leading, 6)
+                    HStack(spacing: 5) {
+                        SlateMark(size: 15)   // 3.113.0 (DJ): the Slate axe-hammer by the title
+                        Text("Your slate")
+                            .font(SlateLook.bold(13))
+                            .foregroundStyle(SlateLook.muted)
+                    }
+                    .padding(.leading, 6)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(BoardLook.summary(s))

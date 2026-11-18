@@ -148,6 +148,7 @@ enum SlateLook {
     static let ink = Color(slateHex: "#ECF1F7")
     static let muted = Color(slateHex: "#A0ACBD")
     static let live = Color(slateHex: "#FF5B4E")
+    static let accent = Color(slateHex: "#45A85E")   // 3.113.0: the app's green (--accent), for the Slate mark
     static let button = Color(slateHex: "#1F2733")
 
     static func semi(_ size: CGFloat) -> Font { .custom("SlateArchivo-SemiBold", fixedSize: size) }
