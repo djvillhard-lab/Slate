@@ -18,8 +18,9 @@
     var done = function () { toast("Copied. Paste it into a message."); }, fail = function () { toast("Couldn't copy it on this phone."); };
     try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(done, fail); else fail(); } catch (e) { fail(); }
   }
+  var SHARE_ON = false;   // 3.109.1 (DJ, Nov 18): "Keep the share a game option for the future, remove for now". Set to true to bring the Send button back.
   function shareBtn(g) {
-    if (!g || g.custom || !g.id) return null;
+    if (!SHARE_ON || !g || g.custom || !g.id) return null;
     var b = el("button", "gv-act"); b.type = "button";
     var NS = "http://www.w3.org/2000/svg", s = document.createElementNS(NS, "svg"), p = document.createElementNS(NS, "path");
     s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "2.2"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round"); s.setAttribute("aria-hidden", "true");

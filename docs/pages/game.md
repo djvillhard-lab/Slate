@@ -55,3 +55,5 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
 - Hidden scores: the section shows `boxGate` until the box score is shown. Nothing is estimated.
 - Open: seen on a finished NBA game (iPhone, folded Duo). Not seen: a football game, a live game, the unfolded Duo.
   Hockey shot map not built. `shots.py game:<team>` still finds 0 games; open a card and tap Full matchup instead.
+- 3.109.1 (DJ, Nov 18: "Keep the share a game option for the future, remove for now"): the Send button is off behind
+  `SHARE_ON = false` in `142-share.js`. Don't switch it back on unless DJ asks.

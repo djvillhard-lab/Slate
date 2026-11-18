@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.109.1 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- The "Send" button on a game's page (3.107.0) is hidden for now. It's kept in the app, switched off, so it can come back later.
+
 ## 3.109.0 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - My bets: parlays. With two or more bets on a day, "Make a parlay from these" under My bets lets you tick the bets that were one parlay and, if you like, type the parlay's odds and stake. The parlay gets its own card listing each leg with a check, an x or a live dot, "2 of 3 legs in so far" while games are on, and Won or Lost at the end.
