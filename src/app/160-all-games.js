@@ -190,8 +190,7 @@
       body.appendChild(el("div", "notice", none ? "No " + lgName + " games " + when + ". Pick another day above." : "No games match."));
       return;
     }
-    var favs = list.filter(hasFav);
-    if (favs.length && state.league !== "fav") section(body, "My teams", favs);
+    // 3.101.2 (DJ): no "My teams" section on the tabs; favorites live on their own tab and the star on each card
     var groups = {}; list.forEach(function (g) { (groups[g.league] = groups[g.league] || []).push(g); });
     // sections follow your All games tab order (else the app's usual order)
     var tabOrd = (state.gamesOrder || []).length ? state.gamesOrder.concat(ORDER) : ORDER;

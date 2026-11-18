@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.101.2 (Nov 18, 2026)
+TestFlight: 3.101.0, no new build (web only)
+- All games: the "My teams" section at the top of every tab is gone. Your favorite teams' games still have their own tab, and the star next to a favorite team on each game card stays.
+
 ## 3.101.1 (Nov 17, 2026)
 TestFlight: 3.101.0, new build
 - Live feed, basketball: a blocked shot's box now takes the color and the team label of the player who blocked it, the same as steals. It used to show the shooter's team.

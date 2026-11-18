@@ -90,3 +90,6 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 ## 3.100.3: finished games last (DJ)
 - Section order is live, then upcoming (slate games first), then final, everywhere (`rank` in `section()`), so with 16-game pages the finals land on the last pages.
 - Tap check: each touch now records page changes inside the touched card or header while the finger was down (MutationObserver), whether the touched element was gone, and the redraw callers with index.html line numbers. DJ's 3.100.1 log: header and filter taps all landed; card taps (names, lines, badges) got no click, and render() was called about twice a second from an unnamed caller.
+
+## 3.101.2 (Nov 18, 2026)
+- DJ: no "My teams" section at the top of any tab (ALL, league tabs, Live). Favorites have their own ★ tab, and the star next to a favorite team on each card stays. The ALL tab's league sections all start folded.
