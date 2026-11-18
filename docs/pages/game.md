@@ -36,3 +36,11 @@ DJ (Nov 17, 2026): Top performers tag "🔒 Lockdown" needs STL + BLK >= 5 (was 
 
 ## Recaps: standouts lead (3.100.6)
 Recaps are written by Claude (Haiku 5.5, low effort) when someone taps Write/Regenerate on a finished game, from trimEspn facts (score, game leaders, team stats, quick box recap, ESPN article) plus one web search; shared by everyone and locked 12 hours (SHARE_MIN) unless the stored recap.v is older than RECAP_V (worker). tick.py marks it final 50 minutes after writing. recapStandouts(sum) in 080-claude.js lists big box-score games; the recap prompt must lead with them.
+
+## 3.107.0 (Nov 18): Send a game
+Code: `src/app/142-share.js` (`shareBtn(g)`, `shareText`, `shareUrl`), one line in `140-game.js` (the `gv-acts` row).
+- "Send" opens the phone's share sheet (`navigator.share`) with the matchup, start time, channel and a `?game=<id>` link
+  (the link a tapped alert uses). No score, ever, so it can't spoil a game. No share sheet: copies the line (`toast`).
+- Like "Add to slate", it isn't shown on past days or custom games.
+- Open: not tried inside the iPhone app (the share sheet there depends on the app's web view allowing `navigator.share`;
+  if it doesn't, the copy fallback runs). The link opens the game only on the day the game is loaded.

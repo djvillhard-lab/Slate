@@ -27,6 +27,7 @@
       sb.setAttribute("aria-label", onS ? "Remove from your slate" : "Add to your slate");
       sb.addEventListener("click", function () { toggle(g.id); keepScroll(renderGame); });
       acts.appendChild(sb);
+      var shb = shareBtn(g); if (shb) acts.appendChild(shb);   // 3.107.0: Send this game to someone
       hd.appendChild(acts);
     }
     if (feedOk(g)) hd.appendChild(feedBtn(g));
