@@ -56,7 +56,10 @@
   }
   function logoRefresh() {
     if (logoLoading || !window.fetch) return;
-    var now = Date.now(), due = Object.keys(LOGO_FEEDS).filter(function (lg) { var r = LOGO_REG[lg]; return !r || now - (r.at || 0) > LOGO_WEEK || (!Object.keys(r.t || {}).length && now - (r.at || 0) > 120000); });
+    // 3.100.6 (DJ's phone log: News redrew about twice a second and lost taps): 3.94.2 also counted a league with an empty
+    // list as due at once, so a league ESPN answers empty was fetched again on every missing logo, forever. An empty or
+    // failed answer is already saved as "try again in two minutes" below, so the week's clock alone decides.
+    var now = Date.now(), due = Object.keys(LOGO_FEEDS).filter(function (lg) { return !LOGO_REG[lg] || now - (LOGO_REG[lg].at || 0) > LOGO_WEEK; });
     if (!due.length) return;
     logoLoading = true;
     Promise.all(due.map(function (lg) {

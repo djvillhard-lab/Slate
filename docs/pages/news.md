@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 17, 2026, 3.94.2
+Last updated: Nov 18, 2026, 3.100.6
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -87,6 +87,9 @@ https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 - No first person (3.94.2, DJ): RULES say write as a news report, no I/we, no "I found"; date a fact that may be stale.
 - Logos (3.94.2): an empty ESPN team list no longer gets saved for a week (045-team-logos.js); couldn't reproduce DJ's
   missing Premier League logos on the test account.
+- Lost taps (3.100.6, DJ's phone log): `renderNews` waits while a finger is down and 0.4s after (agBusy/agTapping from
+  160-all-games.js); `renderNews(true)` for swipe, league tab pick, opening/closing a breakdown. The redraw loop came from
+  3.94.2's logo change (an empty ESPN league list was re-fetched on every missing logo); reverted the due rule.
 ## Open
 - Sizes confirmed with real generates on the test profile (Nov 16): 3 games/4 teams/4 leagues in 62 s, 12/13/4 in 98 s,
   both inside the 24,000-token limit. DJ's Nov 16 "it fails on a small selection" report was the old failure's

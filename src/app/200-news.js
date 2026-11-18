@@ -154,12 +154,12 @@
     nw.deep = d;
     // opening never asks Claude (3.51.1): a saved breakdown shows right away, otherwise the page has a Generate button
     nwSub(d.path);
-    renderNews(); renderBack(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
+    renderNews(true); renderBack(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
     var b = $("nw-body"); if (b && !REDUCED) { b.classList.remove("push-in"); void b.offsetWidth; b.classList.add("push-in"); setTimeout(function () { b.classList.remove("push-in"); }, 320); }
   }
   // Back (the dock's, a swipe, or the row at the top) returns from a breakdown to the page, where you were
   function nwCloseDeep() {
-    var d = nw.deep; if (!d) return false; nw.deep = null; renderNews(); renderBack();
+    var d = nw.deep; if (!d) return false; nw.deep = null; renderNews(true); renderBack();
     var y = d.y || 0; setTimeout(function () { if (isDuo) $("pane-r").scrollTop = y; else window.scrollTo(0, y); }, 0);
     return true;
   }
@@ -673,7 +673,7 @@
   }
   function nwBriefOf(lg) { var day = todayInHome(), d = { type: "l", lg: lg, day: day }; d.key = nwDeepKey(d); d.path = "newsdeep/" + day + "-" + d.key; return d; }
   function nwPickLg(lg) {
-    nw.lg = lg; renderNews();
+    nw.lg = lg; renderNews(true);
     if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
   }
   // a sideways swipe on News moves between Press Box and the league tabs (3.82.0, DJ: never Back); at either end it
@@ -681,7 +681,7 @@
   function nwSwipe(step) {
     var list = [null].concat(nwBriefLgs()), i = list.indexOf(nw.lg), n = i < 0 ? undefined : list[i + step];
     if (n === undefined) return false;
-    nw.lg = n; nw.stripX = null; renderNews(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
+    nw.lg = n; nw.stripX = null; renderNews(true); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
     slideIn($("nw-body"), step > 0 ? "l" : "r"); return true;
   }
   function nwStrip(body) {
@@ -716,8 +716,16 @@
     go.addEventListener("click", function () { nwAskDeep(d); }); var gb = el("div", "cl-ctl nx-bgo"); gb.appendChild(go); body.appendChild(gb);
     body.appendChild(el("p", "nx-note", "Claude reads the newest ESPN and Athletic headlines and searches the web, then writes up the latest " + tag + " news. It's saved for everyone for the day, and Update writes a fresh one."));
   }
-  function renderNews() {
+  // 3.100.6 (DJ's phone log: taps on game cards lost while News redrew under the finger): like All games, nothing on
+  // News is rebuilt from the moment a finger touches until 0.4s after it lifts, unless the tap itself asked for it
+  // (agBusy and agTapping live in 160-all-games.js). The redraw then runs once.
+  var nwHeld = false;
+  function renderNews(now) {
     if (state.view !== "news") return;
+    if (now !== true && typeof agBusy === "function" && !agTapping && agBusy() && $("nw-body") && $("nw-body").childNodes.length) {
+      if (!nwHeld) { nwHeld = true; (function wait() { setTimeout(function () { if (agBusy()) wait(); else { nwHeld = false; keepScroll(renderNews); } }, 150); })(); }
+      return;
+    }
     // News is always today's (3.82.2, DJ): the app keeps the day it was on, so after a night left open, News (and
     // Regenerate's game picker) still had last night's slate. Opening News on an earlier day moves the app to today.
     var today0 = todayInHome(); if (state.date < today0 && !nw.toToday) { nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
