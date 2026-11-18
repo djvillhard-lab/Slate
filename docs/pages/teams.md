@@ -17,3 +17,9 @@ Code: `src/app/130-teams.js` (Teams page, team pages), `src/app/132-standings.js
 ## Decisions
 - Standings lives inside Teams, not as a new menu page: a new menu entry would need the Duo strip changed too, which is an iPhone build.
 - No games-played column for soccer: it cut club names short on a regular iPhone, and W-D-L adds up to it.
+
+## 3.108.1 (Nov 18): teams playing today for new people
+- In `renderTeams` → `list()`: with nothing typed, no league picked and fewer than three teams followed, the result area lists up
+  to 12 teams from the day's games (slate games first, teams already followed left out), using the normal `row(t)` with its star.
+  Not "popular teams": Slate has no source for popularity, so it uses who is playing. The welcome walkthrough (232-welcome.js) already
+  covers first-run team and league picking; Sign in with Apple needs an iPhone build and belongs to the Security thread.

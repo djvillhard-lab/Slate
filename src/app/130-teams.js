@@ -271,6 +271,15 @@
       res.textContent = ""; state.teamQ = f.value;
       var q = f.value.trim();
       var items = q ? teamSearch(q) : state.teamBrowse ? teamIndex().filter(function (t) { return t.lg === state.teamBrowse; }).sort(function (a, b) { return a.name.localeCompare(b.name); }) : [];
+      // 3.108.1: someone with fewer than three teams and nothing typed sees the teams playing today (slate games first), each with its star
+      if (!q && !state.teamBrowse && mine.length < 3) {
+        var seen = {}, today = [];
+        games().slice().sort(function (x, y) { return (inLineup(y.id) ? 1 : 0) - (inLineup(x.id) ? 1 : 0); }).forEach(function (g) {
+          if (g.custom) return;
+          ["away", "home"].forEach(function (sd) { var t = teamByName(g[sd]); if (!t || seen[t.name] || isFav(t.name, g.league)) return; seen[t.name] = 1; today.push(t); });
+        });
+        if (today.length) { var th = el("p", "hint", "Playing " + (state.date === todayInHome() ? "today" : "this day") + ". Tap a star to follow a team."); th.style.marginTop = "12px"; res.appendChild(th); items = today.slice(0, 12); }
+      }
       items.forEach(function (t) { res.appendChild(row(t)); });
       if (q && !items.length) res.appendChild(el("p", "hint", "No team matches “" + q + "”."));
     }

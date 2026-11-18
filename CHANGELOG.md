@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.108.1 (Nov 18, 2026)
+TestFlight: 3.101.0 (47), no new build (web only)
+- Teams: someone following fewer than three teams no longer sees an empty page under "Find a team". It lists up to twelve teams playing today, the ones on the slate first, each with its star, so a new person can follow a team in one tap. Searching or picking a league works as before.
+
 ## 3.108.0 (Nov 18, 2026)
 TestFlight: 3.101.0 (47), no new build (web only)
 - A live or finished football or basketball game's page has a new "Game flow" section at the bottom. It opens to a win-chance line: ESPN's own number after every play, the home team's chance running up and the away team's down, with the quarters marked.
