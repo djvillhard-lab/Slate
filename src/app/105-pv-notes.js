@@ -25,8 +25,8 @@
     return PVN.docs[path] || (typeof nw !== "undefined" && nw.docs && nw.docs[path]) || null;
   }
   var PVN_SKIP = /^(schedule|record|ranking|rankings|matchup|home|away|tv|aggregate|standings|series|odds|tip|kickoff)$/i;
-  var PVN_TOP = /^(last game|final game|staff|coaching|coach|storyline|milestone|debut|return|returning|injury|injuries|trade|suspension|firing|fired|rivalry|revenge|history|farewell|news)$/i;
-  var PVN_WOW = /\b(final (match|game)|last (match|game)|in charge|head coach|manager|interim|fired|sacked|resign|debut|returns?|back from|milestone|career[- ]high|all-time|franchise record|suspend|traded?|farewell|first time since|rivalry)\b/i;
+  var PVN_TOP = /^(final game|staff|coaching|coach|storyline|milestone|debut|return|returning|injury|injuries|trade|suspension|firing|fired|rivalry|revenge|history|farewell|news)$/i;
+  var PVN_WOW = /\b(final (match|game)|in charge|head coach|manager|interim|fired|sacked|resign|debut|returns?|back from|milestone|career[- ]high|all-time|franchise record|suspend|traded?|farewell|first time since|rivalry)\b/i;
   var PVN_SPORT = { football: /\b(football|quarterback|touchdown)\b/i, bball: /\b(basketball|hoops|tip-off)\b/i, hockey: /\b(hockey|puck)\b/i, baseball: /\b(baseball|pitcher|inning)\b/i, soccer: /\b(soccer|football club)\b/i };
   // how much a note adds: its tag, then words that mark a real story. Under 0 = never use it
   function pvNoteScore(g, tag, text) {
@@ -36,6 +36,10 @@
     // about another sport ("On the football side, Duke's Nate Sheppard…" under a basketball game): never
     for (var k in PVN_SPORT) if (k !== sport && PVN_SPORT[k].test(text) && !(sport === "soccer" && k === "football")) return -1;
     if (/^(on the [a-z]+ side|elsewhere|meanwhile)\b/i.test(text)) return -1;
+    // 3.113.4 (DJ: "a team losing their game before isn't newsworthy"): a note that only says how a team's last game went
+    // ("The Bucks lost to the Hawks on Sunday", tagged Last game or Result) is never the News line, unless it carries a real story
+    if (/^(last game|last time out|result|results|last result|recent|form)$/i.test(tag) && !PVN_WOW.test(text)) return -1;
+    if (/^(the )?[A-Z][\w.&' -]{1,40}? (lost|fell|beat|won|defeated|edged|routed|topped|dropped|blew out|held off|survived|rallied past)\b/.test(text) && !PVN_WOW.test(text)) return -1;
     if (/\b(tip|kickoff|puck drop|first pitch) is\b|\b\d{1,2}(:\d\d)? ?(am|pm) (et|ct|pt)\b/i.test(text)) return -1;   // start time and TV are on the card
     return (PVN_TOP.test(tag) ? 62 : 46) + (PVN_WOW.test(text) ? 16 : 0);
   }

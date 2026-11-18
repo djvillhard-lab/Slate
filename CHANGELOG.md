@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.4 (Nov 18, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Finished games: the line only says a team "won it on" a shot when that shot decided the game. Rutgers–Notre Dame read "Notre Dame won it on Smith's 26-foot three in overtime" in a 110-100 game; that three was only where Notre Dame went ahead for good. Now it takes a close finish (one possession in basketball, one score in football), and otherwise the line goes to the next thing worth saying, like the top performer.
+- The 📰 News line under a game no longer shows a team's last result on its own ("The Bucks lost to the Hawks on Sunday"). A past game only shows there when it's part of a real story, like a milestone, a coaching change or a return, and Claude's News page is told not to write those notes at all.
+
 ## 3.113.3 (Nov 18, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Claude's write-ups are checked against ESPN before they're saved. Previews, recaps, game breakdowns and the News page are compared with each team's record and this season's dated results, and any sentence that contradicts them is left out. It catches a result on the wrong date ("lost 115-105 to Orlando on Nov 17" for a Nov 16 game), a record that isn't the team's, a loss to a team that isn't on this season's schedule (Clemson's "first loss, to Iowa" was last March; Duke and Illinois "both lost to UConn"), and streaks or "unbeaten" claims the results don't back up. Run on the last three days of write-ups, it left out 13 wrong sentences and no correct ones (all 9 recaps came through untouched). Some mistakes it can't check yet, like "all on the road" or a team's place in the standings. It costs nothing: no extra Claude call.

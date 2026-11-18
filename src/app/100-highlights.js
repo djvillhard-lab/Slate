@@ -42,6 +42,11 @@
     var lastSec = sport === "bball" ? per >= reg && clk <= 10 : sport === "football" ? per === reg && clk <= 30 : sport === "hockey" ? per === reg && clk <= 60 : false;
     var late = sport === "bball" ? per >= reg && clk <= 60 : sport === "football" ? per === reg && clk <= 120 : sport === "hockey" ? per === reg && clk <= 180 : sport === "baseball" ? per >= reg && teams[W].side === "home" : sport === "soccer" ? mins >= 85 : false;
     if (!ot && !late) return null;
+    // 3.113.4 (DJ: Notre Dame "won it on Smith's 26-foot three in overtime" in a 110-100 game): a score only "won it" when the game
+    // stayed close enough for it to decide it. Basketball by one possession (3 points), football by one score (8). Otherwise the
+    // last lead change is just where the winner went ahead, and the line goes to the next fact (top performer and the rest)
+    var margin = Math.abs(Number(teams[A].score) - Number(teams[H].score));
+    if (sport === "bball" && margin > 3 || sport === "football" && margin > 8) return null;
     var nm = function (x) { return String(x || "").trim().replace(/^[A-Z]\.\s*/, ""); };
     var tx = String(go.text || ""), what;
     if (sport === "football") {

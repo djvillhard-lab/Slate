@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | One-liners: "won it on" finals and News lines | src/app/100-highlights.js, src/app/105-pv-notes.js, worker/index.js (News prompt text) | 2026-11-18 23:35 |
