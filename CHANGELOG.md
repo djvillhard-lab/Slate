@@ -5,14 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
-## 3.100.2 (Nov 17, 2026)
+## 3.100.3 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
-<<<<<<< HEAD
-- Live feed: the "All" tab is gone. The tabs are My slate and one for each league with a live game. Opening a feed from the ALL tab in All games now lands on My slate when the game is on your slate, or on that game's league when it isn't.
-=======
 - All games: finished games always sit at the bottom of their league, on every tab and in My teams. The order is live, then upcoming (games on your slate first), then final. With the 16-game pages, the finals land on the last pages.
 - Behind the scenes: the tap check on DJ's phone now also records what changed on the page while a finger was down, and which code keeps redrawing All games.
->>>>>>> 70e146a (DJ: All games: finished games always sit at the bottom of their league)
+
+## 3.100.2 (Nov 17, 2026)
+TestFlight: 3.92.0 (47), no new build (web only)
+- Live feed: the "All" tab is gone. The tabs are My slate and one for each league with a live game. Opening a feed from the ALL tab in All games now lands on My slate when the game is on your slate, or on that game's league when it isn't.
 
 ## 3.100.1 (Nov 17, 2026)
 TestFlight: 3.92.0 (47), no new build (web only)
