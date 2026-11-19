@@ -38,4 +38,5 @@ struct SlateBoardGame: Codable, Hashable {
     var st: String?           //   your bet's label from My bets, and the ESPN scoreboard the Watch refreshes from
     var bl: String?
     var u: String?
+    var r: Int?               // 3.114.0: the game's place on the slate; when several are live, the higher one leads
 }

@@ -22,6 +22,7 @@ struct WatchGame: Codable, Hashable, Identifiable {
     var bl: String?                     // your bet from My bets, "DUKE -3.5"
     var ln: String?                     // the slate's one-liner
     var u: String?                      // the ESPN scoreboard with this game
+    var r: Int?                         // its place on the slate (several live: the higher one first)
 }
 
 struct WatchTonight: Codable {
@@ -76,6 +77,7 @@ enum WatchLook {
         return left.sorted { p, q in
             let lp = started(p, now), lq = started(q, now)
             if lp != lq { return lp }
+            if lp, (p.r ?? 99) != (q.r ?? 99) { return (p.r ?? 99) < (q.r ?? 99) }
             return (p.t ?? 0) < (q.t ?? 0)
         }.prefix(count).map { $0 }
     }

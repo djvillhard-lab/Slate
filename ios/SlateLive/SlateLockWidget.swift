@@ -26,6 +26,10 @@ enum LockLook {
         g.s == "post" || (g.s == "in" && fresh)
     }
     // the clock while it's on, "Final", "Live" for a started game without a recent score, or the start time
+    // games on now beyond the ones shown ("+2 live")
+    static func moreLive(_ d: SlateTonight?, now: Date, shown: Int) -> Int {
+        max(0, TonightLook.next(d, at: now, count: 99).filter { $0.s != "post" && TonightLook.started($0, now) }.count - shown)
+    }
     static func status(_ g: SlateBoardGame, now: Date, fresh: Bool) -> String {
         if g.s == "post" { return "Final" }
         if g.s == "in" && fresh { return BoardLook.clock(g) }
@@ -46,7 +50,8 @@ struct LockView: View {
             case .accessoryInline:
                 if let g = list.first {
                     let on = LockLook.showScore(g, now: entry.date, fresh: fresh) || TonightLook.started(g, entry.date)
-                    Text(on ? "\(LockLook.teams(g, score: LockLook.showScore(g, now: entry.date, fresh: fresh))) · \(LockLook.status(g, now: entry.date, fresh: fresh))"
+                    let more = LockLook.moreLive(entry.data, now: entry.date, shown: g.s != "post" && TonightLook.started(g, entry.date) ? 1 : 0)
+                    Text(on ? "\(LockLook.teams(g, score: LockLook.showScore(g, now: entry.date, fresh: fresh))) · \(LockLook.status(g, now: entry.date, fresh: fresh))\(more > 0 ? " · +\(more)" : "")"
                             : "Next: \(LockLook.teams(g, score: false)) \(LockLook.status(g, now: entry.date, fresh: fresh))")
                 } else {
                     Text(entry.data == nil ? "Open Slate to load tonight" : "No more games tonight")
@@ -56,8 +61,11 @@ struct LockView: View {
                     AccessoryWidgetBackground()
                     if let g = list.first {
                         let score = LockLook.showScore(g, now: entry.date, fresh: fresh)
+                        let more = LockLook.moreLive(entry.data, now: entry.date, shown: g.s != "post" && TonightLook.started(g, entry.date) ? 1 : 0)
                         VStack(spacing: 0) {
-                            SlateMark(color: .primary, size: 11).widgetAccentable()
+                            // several on at once: "+2" (more live) where the mark goes
+                            if more > 0 { Text("+\(more)").font(SlateLook.bold(9)).frame(height: 11).widgetAccentable() }
+                            else { SlateMark(color: .primary, size: 11).widgetAccentable() }
                             Text(g.aa).font(SlateLook.bold(11)).lineLimit(1).minimumScaleFactor(0.6)
                             if score {
                                 Text("\(g.a)–\(g.h)").font(SlateLook.num(15)).lineLimit(1).minimumScaleFactor(0.6)
@@ -82,7 +90,9 @@ struct LockView: View {
                         Text("TONIGHT").font(SlateLook.bold(10)).opacity(0.8)
                         Spacer(minLength: 2)
                         let left = TonightLook.next(entry.data, at: entry.date, count: 99).filter { $0.s != "post" }.count
-                        if left > 0 { Text("\(left) left").font(SlateLook.semi(10)).opacity(0.7) }
+                        let more = LockLook.moreLive(entry.data, now: entry.date, shown: list.filter { $0.s != "post" && TonightLook.started($0, entry.date) }.count)
+                        if more > 0 { Text("+\(more) live").font(SlateLook.bold(10)).widgetAccentable() }
+                        else if left > 0 { Text("\(left) left").font(SlateLook.semi(10)).opacity(0.7) }
                     }
                     .frame(height: 14)
                     if list.isEmpty {
