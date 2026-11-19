@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.119.1 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Today's Slate: golf and Formula 1 show only when your Slate rules pick them. Both start off, so they're gone from the slate until you turn one on. All games still shows every tournament and race weekend.
+- Slate rules: a new Golf and racing section under the leagues. Golf: Majors and big events (the four majors, the Players, the Tour Championship, the Ryder and Presidents Cups, and the LPGA's majors and CME), Every PGA Tour event, Every LPGA event. Formula 1: Race days, Qualifying and sprint days.
+
 ## 3.119.0 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Search: the magnifier is now at the top right of every page, not just All games. It opens one search for teams, players and games.

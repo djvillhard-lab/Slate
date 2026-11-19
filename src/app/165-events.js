@@ -70,7 +70,7 @@
     var detail = live ? live.name + " · Live" : kind === "over" ? "Final" : next ? next.name + " " + (next.day === day ? timeText(next.start) : fmtDate(next.day, { weekday: "short" }) + " " + timeText(next.start)) : "";
     return { id: "ev-f1-" + e.id, sport: "f1", tour: tour, name: e.name || "", kind: kind, detail: detail, start: (today[0] || ss[0] || {}).start || e.date,
       nets: evNets((e.competitions || [])[0]), link: ((e.links || [])[0] || {}).href || "", rows: shown ? shown.rows : [], rowsOf: shown ? shown.name : "",
-      sessions: ss, day: day, venue: ((e.circuit || {}).fullName) || "", slate: today.some(function (s) { return s.ab === "Race" || s.ab === "Qual" || s.ab === "Sprint"; }) || !!(live && /Race|Qual|Sprint/.test(live.ab)) };
+      sessions: ss, day: day, venue: ((e.circuit || {}).fullName) || "" };
   }
 
   // fetch a day's events (shared by every page asking at once); live days refresh every minute, others every 15
@@ -191,12 +191,73 @@
   // the All games tabs for sports with an event that day (after the leagues)
   function evTabs(day) { return EV_ORDER.filter(function (k) { return evList(day, k).length; }).map(function (k) { return [k, EV_SPORTS[k].tag]; }); }
 
+  // ---------- Slate rules (3.119.1, DJ: "golf leaderboards should not show on slate page unless that tournament falls
+  // within slate rules") ----------
+  // each sport is off until you turn on one of its rules in Slate rules; All games always shows them
+  var EV_RULES = {
+    golf: [["majors", "Majors and big events", "The four majors, the Players, the Tour Championship, the Ryder and Presidents Cups, and the LPGA's majors and CME."],
+           ["pga", "Every PGA Tour event", "Every PGA Tour tournament, all four rounds."],
+           ["lpga", "Every LPGA event", "Every LPGA tournament, all four rounds."]],
+    f1: [["race", "Race days", "The day of each Grand Prix."],
+         ["qual", "Qualifying and sprint days", "The days with qualifying or a sprint race."]]
+  };
+  var GOLF_BIG = /\bmasters\b|\bpga championship\b|\bu\.?s\.? (women's )?open\b|\bthe open\b|open championship|\bplayers championship\b|tour championship|ryder cup|presidents cup|chevron championship|evian championship|women's open|solheim cup/i;
+  function evRuleOn(x) {
+    var b = ((state.rules || {}).sports || {})[x.sport]; if (!b) return false;
+    if (x.sport === "golf") return !!((b.majors && GOLF_BIG.test(x.name)) || (b.pga && x.tour === "PGA Tour") || (b.lpga && x.tour === "LPGA"));
+    if (x.sport === "f1") return (x.sessions || []).some(function (s) {
+      var today = s.day === x.day || s.kind === "live";
+      return today && ((b.race && s.ab === "Race") || (b.qual && /^(Qual|SQ|SS|Sprint)$/.test(s.ab)));
+    });
+    return false;
+  }
+  function setEvRule(k, key, v) {
+    var r = state.rules; r.sports = Object.assign({}, r.sports || {});
+    var b = Object.assign({}, r.sports[k] || {}); if (v) b[key] = true; else delete b[key];
+    if (Object.keys(b).length) r.sports[k] = b; else delete r.sports[k];
+    rulesChanged();
+  }
+  // the Slate rules section: a card per sport, like the league cards (closed, with a one-line summary)
+  function evRulesBlock() {
+    var r = state.rules || {}, wrap = el("div");
+    var h = el("div", "sec"); h.appendChild(el("h2", null, "Golf and racing")); h.appendChild(el("span", "count", "Off unless you turn them on")); wrap.appendChild(h);
+    var cards = el("div", "lgcards");
+    EV_ORDER.forEach(function (k) {
+      var b = (r.sports || {})[k] || {}, opts = EV_RULES[k], on = opts.filter(function (x) { return b[x[0]]; });
+      var open = !!(state.lgOpen && state.lgOpen["ev-" + k]);
+      var card = el("section", "lgcard" + (on.length ? " on" : "") + (open ? " open" : ""));
+      var head = el("button", "lg-head"); head.type = "button"; head.setAttribute("aria-expanded", open ? "true" : "false");
+      var ic = svgIcon(k === "golf" ? "M8 21V3l9 4-9 4M4.5 21h9" : "M6 21V4h12l-2.5 4L18 12H6M6 8h3v4M12 4v4h3.5M12 8v4", false); ic.classList.add("sp"); head.appendChild(ic);
+      var tx = el("span", "lg-tx"); tx.appendChild(el("b", null, EV_SPORTS[k].name));
+      tx.appendChild(el("span", "lg-sum", on.length ? on.map(function (x) { return x[1]; }).join(", ") : "Off")); head.appendChild(tx);
+      var today = evList(state.date, k), hit = today.filter(evRuleOn).length;
+      head.appendChild(el("span", "lg-n" + (on.length && !hit ? " zero" : ""), on.length ? (hit ? hit + " " + whenWord() : "None " + whenWord()) : today.length ? today.length + (today.length === 1 ? " event" : " events") : ""));
+      var chev = svgIcon("m6 9 6 6 6-6", false); chev.setAttribute("stroke-width", "2.2"); chev.setAttribute("class", "lg-chev"); head.appendChild(chev);  // the league cards' chevron
+      head.addEventListener("click", function () { state.lgOpen = state.lgOpen || {}; state.lgOpen["ev-" + k] = !open; renderRules(); });
+      card.appendChild(head);
+      if (open) {
+        var body = el("div", "lg-body");
+        opts.forEach(function (x) {
+          var isOn = !!b[x[0]], row = el("div", "lopt" + (isOn ? " on" : ""));
+          var t = el("div", "rtext"), tl = el("div", "rtitle"); tl.appendChild(el("b", null, x[1])); t.appendChild(tl); t.appendChild(el("p", null, x[2]));
+          row.appendChild(t);
+          row.appendChild(switchEl(isOn, x[1] + ", " + EV_SPORTS[k].name, function (v) { setEvRule(k, x[0], v); }));
+          body.appendChild(row);
+        });
+        card.appendChild(body);
+      }
+      cards.appendChild(card);
+    });
+    wrap.appendChild(cards);
+    return wrap;
+  }
+
   // ---------- the slate ----------
-  // golf on tournament days, F1 on qualifying and race days; one folding section per sport, under the games
+  // only the events your Slate rules pick (all off to start); one folding section per sport, under the games
   function evSlateBlock() {
     var day = state.date, out = el("div", "ev-slate"), n = 0;
     EV_ORDER.forEach(function (k) {
-      var list = evList(day, k).filter(function (x) { return k !== "f1" || x.slate; });
+      var list = evList(day, k).filter(evRuleOn);
       if (liveOnly() && day === todayInHome()) list = list.filter(function (x) { return x.kind === "live"; });
       if (!list.length) return;
       n++;

@@ -38,6 +38,7 @@
     more.appendChild(el("summary", null, "More leagues (" + rest.length + ")"));
     var p3 = el("div", "lgcards"); rest.forEach(function (k) { p3.appendChild(lgCard(k, cnt, ww)); }); more.appendChild(p3);
     if (rest.length) body.appendChild(more);
+    body.appendChild(evRulesBlock());  // golf and F1 (3.119.1)
 
     // fine-tune
     var h3 = el("div", "sec"); h3.appendChild(el("h2", null, "Fine-tune")); body.appendChild(h3);

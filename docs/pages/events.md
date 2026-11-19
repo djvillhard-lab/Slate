@@ -1,5 +1,5 @@
 # Events: golf and F1 (sports without two teams)
-Last updated: Nov 19, 2026, 3.116.0
+Last updated: Nov 19, 2026, 3.119.1
 Code: `src/app/165-events.js` (data + card + All games sections + slate block), hooks in `160-all-games.js` (tabs in
 `filterOpts`, a GOLF/F1 tab in `renderGames`, sections under the leagues on ALL) and `170-slate-page.js` (`evSlateBlock`
 under the games, above Finished). Styles `src/styles/098-events.css`.
@@ -16,8 +16,15 @@ under the games, above Finished). Styles `src/styles/098-events.css`.
 - All games: GOLF and F1 tabs appear only on days with an event (a quiet tab would hit `LEAGUES[k].name` in 240-chrome.js).
   On ALL they fold like leagues (`COLLAPSED` by section title). Events don't count toward the 16/10 card caps.
 
+## 3.119.1: Slate rules (DJ: "golf leaderboards should not show on slate page unless that tournament falls within slate rules")
+- `state.rules.sports = { golf: {majors,pga,lpga}, f1: {race,qual} }`, kept by `normRules` (050-slate-engine.js) from `EV_RULES`.
+  All off by default; the slate shows an event only when `evRuleOn(x)` says yes. All games always shows everything.
+- Slate rules page: "Golf and racing" section after By league (`evRulesBlock`, cards in the league-card style).
+- Majors = `GOLF_BIG` name regex (four majors, Players, Tour Championship, Ryder/Presidents/Solheim Cups, LPGA majors, CME).
+- Server side (tick.py, alerts) doesn't know about events; they aren't in the stored slate or alerts.
+
 ## Open (DJ's order: golf, F1, then UFC, tennis, NASCAR)
 - UFC next: fight cards are head-to-head (`mma/ufc`, competitions = bouts with 2 competitors) and run every weekend.
 - Tennis (`tennis/atp`, `tennis/wta`): off until Davis Cup / the Australian Open in January. NASCAR (`racing/nascar-premier`) back in February; reuses the F1 card.
-- No way to hide golf or F1 yet (Settings' league list is built from `LEAGUES`). The Live button's count doesn't include events.
+- All games can't hide golf or F1 tabs yet (Settings' league list is built from `LEAGUES`). The Live button's count doesn't include events.
 - `site.web.api.espn.com/.../golf/leaderboard` has richer golf data (cut line, tee times) but cloud sessions can't reach it to test.
