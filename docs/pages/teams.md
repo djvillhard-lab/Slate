@@ -39,3 +39,7 @@ Code: `src/app/130-teams.js` (Teams page, team pages), `src/app/132-standings.js
 - Tested on 2025's finished playoffs: `scripts/shots.py teams --espn-swap "dates=202610=>dates=202510,dates=202611=>dates=202511,dates=202612=>dates=202512,usa.1/standings=>usa.1/standings?season=2025"` (new shots.py option) plus an `--eval` that taps Standings, then MLS. It matched the real results (Miami beat Vancouver in MLS Cup).
 - Decisions: the bracket sits in Standings, not a new menu page (that would need an iPhone build for the Duo strip). DJ picked MLS first (Nov 19) because it's the bracket being played right now.
 - Open: a "Bracket" link from a playoff game's matchup page; other leagues (see Open above).
+
+## 3.119.2 (Nov 19): DJ's bracket feedback
+- DJ: "looks great". No matchup is open by default (`BRK.sel[lg]` starts empty; a tap opens, a second tap closes).
+- MLS Cup moves above both conference trees once both finalists are set (ESPN's MLS Cup game has two teams, or both conference finals are won); at the bottom before that (`cupSet` / `cupBlock` in `brkRender`).

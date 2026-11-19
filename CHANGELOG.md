@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.119.2 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Standings → MLS bracket: no matchup is picked when you open it. Tap one to see its games, and tap it again to close them.
+- Once both MLS Cup finalists are known, the MLS Cup matchup moves to the top, above the conference brackets. Until then it stays at the bottom.
+
 ## 3.119.1 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Today's Slate: golf and Formula 1 show only when your Slate rules pick them. Both start off, so they're gone from the slate until you turn one on. All games still shows every tournament and race weekend.

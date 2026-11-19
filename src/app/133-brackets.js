@@ -213,16 +213,25 @@
     var series = brkBuild(lg, events, sd.data);
     var my = myTeamList().filter(function (t) { return t.lg === lg; });
     var mine = function (t) { return my.some(function (m) { return teamMatch(t.name, m.name, lg) || teamMatch(t.short, m.name, lg); }); };
-    // pick a series to open: the one of yours that's live or next, else the next one anyone plays
-    if (!BRK.sel[lg]) {
-      var now = Date.now(), cand = series.filter(function (s) { return s.games.some(function (e) { return brkState(e) !== "post" || now - new Date(e.date) < 86400000; }); });
-      var nextAt = function (s) { var g = s.games.filter(function (e) { return brkState(e) !== "post"; })[0]; return g ? new Date(g.date).getTime() : 9e15; };
-      cand.sort(function (a, b) { return (a.live ? 0 : 1) - (b.live ? 0 : 1) || nextAt(a) - nextAt(b); });
-      var pick = cand.filter(function (s) { return brkSide(s).some(mine); })[0] || cand[0] || series[series.length - 1];
-      BRK.sel[lg] = pick ? pick.key : "none";
-    }
+    // nothing is open until you tap a matchup (DJ, Nov 19, 2026)
     var sel = series.filter(function (s) { return s.key === BRK.sel[lg]; })[0];
+    // the final between the two conference champions
+    var cup = series.filter(function (s) { return s.rd === 4; })[0] || null;
     var champs = {};
+    cfg.confs.forEach(function (cf) { champs[cf[0]] = brkWinnerOf(series.filter(function (s) { return s.conf === cf[0] && s.rd === 3; })[0]); });
+    var cts = cup && cup.order.length === 2 ? brkSide(cup) : state.showScores && champs.E && champs.W ? [champs.E, champs.W] : cup ? brkSide(cup) : [];
+    var cupSet = cts.length === 2;
+    function cupBlock(into) {
+      var cw = el("div", "brk-conf"); cw.appendChild(el("h3", null, cfg.cup));
+      var row = el("div", "brk-cup");
+      row.appendChild(brkBox(lg, cup, cts, ["East champion", "West champion"], mine));
+      var cg = cup && cup.games[0];
+      row.appendChild(el("p", null, cg ? new Date(cg.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : cupSet ? "Date to come" : "Eastern champion against Western champion"));
+      cw.appendChild(row);
+      if (sel && sel.rd === 4) cw.appendChild(brkDetail(lg, sel, mine));
+      into.appendChild(cw);
+    }
+    if (cupSet) cupBlock(body);
     cfg.confs.forEach(function (cf) {
       var inConf = series.filter(function (s) { return s.conf === cf[0]; });
       var wrap = el("div", "brk-conf"); wrap.appendChild(el("h3", null, cf[1]));
@@ -259,20 +268,10 @@
       if (!fin && !state.showScores) fts = [];
       cell("c3", 3, 1, 4, brkBox(lg, fin, fts, null, mine));
       wrap.appendChild(tree);
-      champs[cf[0]] = brkWinnerOf(fin);
       if (sel && sel.conf === cf[0]) wrap.appendChild(brkDetail(lg, sel, mine));
       body.appendChild(wrap);
     });
-    // the final between the two conference champions
-    var cup = series.filter(function (s) { return s.rd === 4; })[0] || null;
-    var cw = el("div", "brk-conf"); cw.appendChild(el("h3", null, cfg.cup));
-    var row = el("div", "brk-cup");
-    var cts = cup ? brkSide(cup) : state.showScores ? [champs.E, champs.W].filter(Boolean) : [];
-    row.appendChild(brkBox(lg, cup, cts, ["East champion", "West champion"], mine));
-    var cg = cup && cup.games[0];
-    row.appendChild(el("p", null, cg ? new Date(cg.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "Eastern champion against Western champion"));
-    cw.appendChild(row);
-    if (sel && sel.rd === 4) cw.appendChild(brkDetail(lg, sel, mine));
-    body.appendChild(cw);
+    // MLS Cup: above the bracket once both finalists are set (DJ, Nov 19, 2026), at the bottom until then
+    if (!cupSet) cupBlock(body);
     body.appendChild(el("p", "sdg-src", "Playoff games and seeds from ESPN. Tap a matchup for its games, and a team for its page."));
   }
