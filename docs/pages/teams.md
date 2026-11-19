@@ -10,7 +10,7 @@ Code: `src/app/130-teams.js` (Teams page, team pages), `src/app/132-standings.js
 
 ## Open
 - A new person's My teams tab is still nearly empty (review item 10: offer popular teams).
-- No brackets yet (playoffs, NCAA tournament). ESPN has them per league in season.
+- Brackets for other leagues wait for DJ to like the MLS one (his rule). Next candidates: NFL (seeds already in the standings; real bracket in January), College Football Playoff (12 teams, set Dec 6), NBA Cup knockouts (December), Champions League knockouts (February), March Madness.
 - UCL, UEL and FA Cup are left out: group and cup formats need their own layout.
 - MLB's clinch letters (ESPN `clincher`) and magic numbers aren't shown.
 
@@ -31,3 +31,11 @@ Code: `src/app/130-teams.js` (Teams page, team pages), `src/app/132-standings.js
   12-hour share window (`SHARE_MIN.team`) is shorter than 24 h, so a tap on an expired take always writes a new one.
 - Team takes now go through the ESPN fact check too (`teamFacts` in worker/factcheck.js turns the page's record and recent
   results into the preview checker's shape; dates in US Eastern).
+
+## 3.118.0 (Nov 19): MLS Cup playoffs bracket
+- `src/app/133-brackets.js` (styles injected as `#brk-css`). `sdgRender` calls `brkSeg(body, lg)` right after the league tabs: for a league in `BRK_LGS` with playoff games on ESPN it draws Table / Bracket (bracket first, `BRK.view[lg]` = "table" when picked) and the bracket.
+- Data: ESPN scoreboard `?dates=YYYYMM` for last, this and next month (soccer won't take a date range), kept 10 minutes (1 minute while a game is live). Playoff games are picked by the season slug (`wild-card`, `round-one`, `semifinals`, `eastern/western-conference-playoffs---final`, `mls-cup`); canceled game 3s are dropped. Seeds = ESPN standings rank.
+- Series: games grouped by ESPN's season type (each round-one series has its own) plus shared teams; wins counted from ESPN's `winner` flag (shootouts included). Tree slots follow MLS's fixed bracket (`slot1`: 1/8, 4/5, 2/7, 3/6; no reseeding). Later rounds before they're scheduled show the teams that already won the series feeding them, otherwise TBD.
+- Tested on 2025's finished playoffs: `scripts/shots.py teams --espn-swap "dates=202610=>dates=202510,dates=202611=>dates=202511,dates=202612=>dates=202512,usa.1/standings=>usa.1/standings?season=2025"` (new shots.py option) plus an `--eval` that taps Standings, then MLS. It matched the real results (Miami beat Vancouver in MLS Cup).
+- Decisions: the bracket sits in Standings, not a new menu page (that would need an iPhone build for the Duo strip). DJ picked MLS first (Nov 19) because it's the bracket being played right now.
+- Open: a "Bracket" link from a playoff game's matchup page; other leagues (see Open above).

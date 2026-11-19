@@ -97,6 +97,7 @@
     });
     body.appendChild(tabs);
     setTimeout(function () { var on = tabs.querySelector('[aria-pressed="true"]'); if (!on) return; var a = on.getBoundingClientRect(), b = tabs.getBoundingClientRect(); if (a.right > b.right - 24 || a.left < b.left) tabs.scrollLeft += a.left - b.left - 16; }, 0);
+    if (brkSeg(body, lg)) return;  // a league with playoffs going gets Table / Bracket (133-brackets.js)
     var hasDiv = !!SDG_DIV[lg], div = hasDiv && !!SDG.div[lg];
     if (hasDiv) {
       var sg = el("div", "seg segw2");

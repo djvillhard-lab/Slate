@@ -12,6 +12,7 @@
 
 Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --tap "sel" (a real finger tap on the first visible match, after --click), --yesterday (the day before: finished games), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
+--espn-swap "a=>b,c=>d" (change ESPN request URLs, e.g. "dates=202611=>dates=202511" to show last season's games),
 --eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
 --pane left|right (open Duo: which side the page, game, filters and --click go to; default right; --eval runs on the whole screen),
 --readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite).
@@ -59,6 +60,7 @@ def main():
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
     pane = "right"
     ev, name, readonly, gate = None, "", False, None
+    swaps = []  # --espn-swap "a=>b,c=>d": change ESPN request URLs (e.g. show last season's playoffs: "dates=202611=>dates=202511")
     i = 0
     while i < len(args):
         a = args[i]
@@ -79,6 +81,7 @@ def main():
         if a == "--full": full = True; i += 1; continue
         if a == "--eval": ev = args[i + 1]; i += 2; continue
         if a == "--name": name = args[i + 1]; i += 2; continue
+        if a == "--espn-swap": swaps += [x.split("=>", 1) for x in args[i + 1].split(",") if "=>" in x]; i += 2; continue
         if a == "--readonly": readonly = True; i += 1; continue
         if a == "--gate":
             gate = "login"; i += 1
@@ -96,7 +99,9 @@ def main():
 
     def espn(route):  # ESPN, fetched from here (the browser's own requests can be blocked in a sandbox)
         try:
-            body = urllib.request.urlopen(urllib.request.Request(route.request.url, headers={"User-Agent": "slate-shots"}), timeout=20).read()
+            u = route.request.url
+            for a, b in swaps: u = u.replace(a, b)
+            body = urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "slate-shots"}), timeout=20).read()
             route.fulfill(body=body, content_type="application/json", headers={"Access-Control-Allow-Origin": "*"})
         except Exception:
             route.fulfill(status=502, body=b"{}", headers={"Access-Control-Allow-Origin": "*"})

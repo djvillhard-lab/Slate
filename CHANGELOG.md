@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.118.0 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Teams → Standings → MLS: a Bracket for the MLS Cup playoffs, next to the table (Table / Bracket at the top; the bracket opens first while the playoffs are on).
+- Each conference has its wild-card match, then a tree from round one to the semifinals and the conference final, with ESPN's seeds, team logos and wins in each series. MLS Cup sits at the bottom between the two champions. Your teams are highlighted, a live game shows a red dot, and a team that's out is grayed.
+- Tap a matchup to see its games under the tree: date, where it's played, kickoff time and TV, or the final score (with penalties when it went to a shootout). Tap a team there for its page. A wild-card winner moves into the top seed's series as soon as it's decided.
+- Everything is ESPN's own playoff schedule and results; nothing is projected. With scores hidden (Settings), the bracket hides scores, wins and who advanced.
+
 ## 3.117.0 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Follow a player: on a player's page (tap their picture anywhere in Slate) there's a Follow button at the top right. It turns green and says Following. Players you follow show up in Box Office's ★ tab, and their games come with alerts.
