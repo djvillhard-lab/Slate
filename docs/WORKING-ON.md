@@ -11,5 +11,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | Teams: Standings brackets (playoffs, tournaments) | src/app/132-standings.js, new src/app/133-brackets.js, docs/pages/teams.md | 2026-11-19 17:10 |
 | DJ | App-wide search (new) | src/app/236-search.js, docs/pages/search.md | 2026-11-19 17:15 |
 | DJ | shared: 240-chrome.js, 270-wiring.js, 070-navigation.js | (one line each: the Search button on every page, Back closes it) | 2026-11-19 17:15 |
-| DJ | Player page: follow a player, full game log, alerts for followed players | src/app/134-player.js, src/app/220-notifications.js, worker/alerts.js, src/body.html (Notifications section only), docs/pages/players.md | 2026-11-19 17:20 |
-| DJ | shared: 260-persistence.js | (one line: followed players go to the alert settings) | 2026-11-19 17:20 |

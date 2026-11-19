@@ -1,7 +1,7 @@
   // ---- Player page (3.105.0): a sheet with one player's season, last games, next game and headlines. ----
   // Everything comes from ESPN's free athlete pages (the athlete and its overview); nothing is worked out here.
   // Opened by tapping a player's picture on a Box Office card, a box score row or a Top performers row (plrTap). DJ, 3.112.2: the picture only.
-  var PLR = { cache: {}, cur: null };
+  var PLR = { cache: {}, cur: null, log: {}, full: {} };
   var PLR_CSS =
     ".plr-sheet { gap: 14px; }" +
     ".plr-head { display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: center; }" +
@@ -32,7 +32,14 @@
     ".plr-btns button { min-height: 44px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font: 800 15px var(--font); }" +
     ".plr-msg { margin: 0; color: var(--muted); font-size: 15px; }" +
     ".plr-src { margin: 0; font-size: 12px; color: var(--dim); }" +
-    ".plr-tap { cursor: pointer; }";
+    ".plr-tap { cursor: pointer; }" +
+    // 3.117.0: Follow sits top right of the sheet, beside the name; accent fill = following (DESIGN.md: accent = selected)
+    ".plr-head.has-fol { grid-template-columns: 72px 1fr auto; }" +
+    ".plr-fol { align-self: start; min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font: 800 15px var(--font); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }" +
+    ".plr-fol svg { width: 18px; height: 18px; flex: none; }" +
+    ".plr-fol[aria-pressed=true] { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }" +
+    ".plr-more { min-height: 44px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font: 800 15px var(--font); width: 100%; }" +
+    ".plr-t tr.sum td { font-weight: 800; }";
   (function () { var st = document.createElement("style"); st.id = "plr-css"; st.textContent = PLR_CSS; document.head.appendChild(st); })();
 
   function plrGet(url) { return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
@@ -80,11 +87,54 @@
     head.forEach(function (h) { hr.appendChild(el("th", null, h)); });
     var th = el("thead"); th.appendChild(hr); t.appendChild(th);
     var tb = el("tbody");
-    rows.forEach(function (r) { var tr = el("tr"); r.forEach(function (v, i) { var td = el("td", null, v == null || v === "" ? "–" : String(v)); if (i === 1 && r.wl) td.className = "w"; tr.appendChild(td); }); tb.appendChild(tr); });
+    rows.forEach(function (r) { var tr = el("tr"); if (r.sum) tr.className = "sum"; r.forEach(function (v, i) { var td = el("td", null, v == null || v === "" ? "–" : String(v)); if (i === 1 && r.wl) td.className = "w"; tr.appendChild(td); }); tb.appendChild(tr); });
     t.appendChild(tb); sc.appendChild(t); return sc;
   }
   function plrDay(iso) { var d = new Date(iso); if (isNaN(d)) return ""; return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
   function plrWhen(iso) { var d = new Date(iso); if (isNaN(d)) return ""; return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + ", " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); }
+  // ---- following a player (3.117.0): saved with the settings (state.players, the same list Box Office's ★ tab reads) and
+  // sent to the alert settings (prefs/notify players), so the server can alert when their game starts and with their final line
+  function plrFollowing(P) { return isFavPlayer(P.id, P.lg); }
+  function plrFollow(P, a) {
+    var list = (state.players || []).filter(function (x) { return x && !(String(x.id) === String(P.id) && x.lg === P.lg); }), on = list.length === (state.players || []).length;
+    var nm = a.displayName || P.name || "Player";
+    if (on) list.push({ id: String(P.id), name: nm, lg: P.lg, team: (a.team || {}).abbreviation || "", teamName: (a.team || {}).displayName || "" });
+    state.players = list.slice(-40);
+    saveSettings(); plrDraw(); render();
+    toast(on ? "Following " + nm + ". Their games now come with alerts." : "Stopped following " + nm + ".");
+  }
+  // the whole season's games, from ESPN's game log (the overview only has the last five)
+  function plrLoadLog(P) {
+    var key = P.lg + "|" + P.id, c = PLR.log[key];
+    if (c && (c.busy || (c.done && Date.now() - c.at < 600000))) return c;
+    c = PLR.log[key] = { at: Date.now(), busy: true, d: c ? c.d : null };
+    plrGet("https://site.api.espn.com/apis/common/v3/sports/" + bxBase(P.lg) + "/athletes/" + encodeURIComponent(P.id) + "/gamelog").then(function (j) {
+      c.busy = false; c.done = true; c.at = Date.now(); if (j && j.seasonTypes) c.d = j; c.failed = !c.d;
+      if (PLR.cur && PLR.cur.lg + "|" + PLR.cur.id === key) plrDraw();
+    });
+    return c;
+  }
+  function plrFullLog(sh, P) {
+    var c = plrLoadLog(P);
+    if (c.busy && !c.d) { sh.appendChild(el("p", "plr-msg", "Loading the game log from ESPN…")); return; }
+    var d = c.d; if (!d) { sh.appendChild(el("p", "plr-msg", "ESPN has no game log for this player right now.")); return; }
+    var evs = d.events || {}, labels = d.labels || [], any = false;
+    (d.seasonTypes || []).forEach(function (st) {
+      var seen = {}, list = [];
+      (st.categories || []).forEach(function (cat) { if (cat.type && cat.type !== "event") return; (cat.events || []).forEach(function (e) { if (e && e.eventId && !seen[e.eventId]) { seen[e.eventId] = 1; list.push(e); } }); });
+      if (!list.length) return;
+      list.sort(function (x, y) { return Date.parse((evs[y.eventId] || {}).gameDate || 0) - Date.parse((evs[x.eventId] || {}).gameDate || 0); });
+      var rows = list.map(function (e) {
+        var ev = evs[e.eventId] || {}, opp = (ev.opponent || {}).abbreviation || "";
+        var r = [plrDay(ev.gameDate) + (opp ? " " + (ev.atVs || "vs") + " " + opp : ""), [ev.gameResult, ev.score].filter(Boolean).join(" ")].concat(e.stats || []); r.wl = 1; return r;
+      });
+      // ESPN's own season averages and totals for this part of the season, under the games
+      ((st.summary || {}).stats || []).forEach(function (x) { if ((x.stats || []).length) { var r = [x.displayName || "", ""].concat(x.stats); r.sum = 1; rows.push(r); } });
+      var gh = el("h4", "plr-h", String(st.displayName || "Games").replace(/ Stats$/i, "")); gh.appendChild(el("span", null, list.length + " game" + (list.length === 1 ? "" : "s"))); sh.appendChild(gh);
+      sh.appendChild(plrTable(["Game", "Result"].concat(labels), rows)); any = true;
+    });
+    if (!any) sh.appendChild(el("p", "plr-msg", "No games this season yet."));
+  }
   function plrDraw() {
     var P = PLR.cur; if (!P) return;
     var bd = plrSheet(), c = PLR.cache[P.lg + "|" + P.id] || {}, a = c.a || {}, o = c.o || {};
@@ -99,7 +149,15 @@
     var team = (a.team || {}).displayName || "", pos = (a.position || {}).abbreviation || "", jer = a.displayJersey || (a.jersey ? "#" + a.jersey : "");
     var sub = [team, pos, jer].filter(Boolean).join(" · "); if (sub) hm.appendChild(el("p", "plr-sub", sub));
     var bio = [a.displayHeight, a.displayWeight, a.age ? "Age " + a.age : "", a.displayExperience].filter(Boolean).join(" · "); if (bio) hm.appendChild(el("p", "plr-bio", bio));
-    head.appendChild(hm); sh.appendChild(head);
+    head.appendChild(hm);
+    if (state.isOwner) {  // a signed-in profile (follows are saved with its settings and alerts)
+      var fol = plrFollowing(P), fb = el("button", "plr-fol"); fb.type = "button"; fb.setAttribute("aria-pressed", fol ? "true" : "false");
+      fb.appendChild(icon(fol ? "star" : "star-o")); fb.appendChild(document.createTextNode(fol ? "Following" : "Follow"));
+      fb.setAttribute("aria-label", (fol ? "Following " : "Follow ") + nm);
+      fb.addEventListener("click", function () { plrFollow(P, a); });
+      head.classList.add("has-fol"); head.appendChild(fb);
+    }
+    sh.appendChild(head);
 
     if (c.busy && !c.a && !c.o) sh.appendChild(el("p", "plr-msg", "Loading from ESPN…"));
     else if (c.failed) sh.appendChild(el("p", "plr-msg", "ESPN has no page for this player right now."));
@@ -118,9 +176,10 @@
       sh.appendChild(el("h4", "plr-h", "Season lines"));
       sh.appendChild(plrTable([""].concat(labels), splits.map(function (x) { return [x.displayName || ""].concat(x.stats); })));
     }
-    // his last games
-    var gl = o.gameLog || {}, evs = gl.events || {};
-    (gl.statistics || []).forEach(function (grp, gi) {
+    // his last games, or the whole season's once Full game log is open
+    var gl = o.gameLog || {}, evs = gl.events || {}, full = !!PLR.full[P.lg + "|" + P.id];
+    if (full) plrFullLog(sh, P);
+    else (gl.statistics || []).forEach(function (grp, gi) {
       var rows = (grp.events || []).map(function (e) {
         var ev = evs[e.eventId] || {}, opp = (ev.opponent || {}).abbreviation || "";
         var r = [plrDay(ev.gameDate) + (opp ? " " + (ev.atVs || "vs") + " " + opp : ""), [ev.gameResult, ev.score].filter(Boolean).join(" ")].concat(e.stats || []); r.wl = 1; return r;
@@ -131,6 +190,11 @@
       sh.appendChild(gh);
       sh.appendChild(plrTable(["Game", "Result"].concat(grp.labels || []), rows));
     });
+    if (c.a || c.o) {
+      var mb = el("button", "plr-more", full ? "Show the last 5 games only" : "Full game log"); mb.type = "button";
+      mb.addEventListener("click", function () { var k = P.lg + "|" + P.id; PLR.full[k] = !PLR.full[k]; plrDraw(); });
+      sh.appendChild(mb);
+    }
     // what's next
     var nx = (((o.nextGame || {}).league || {}).events || [])[0];
     if (nx && nx.date) { var np = el("p", "plr-next"); np.appendChild(el("b", null, "Next")); np.appendChild(document.createTextNode((nx.shortName || nx.name || "") + " · " + plrWhen(nx.date))); sh.appendChild(np); }

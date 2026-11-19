@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.117.0 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Follow a player: on a player's page (tap their picture anywhere in Slate) there's a Follow button at the top right. It turns green and says Following. Players you follow show up in Box Office's ★ tab, and their games come with alerts.
+- Alerts for players you follow, in Settings → Notifications → Players you follow (both on to start):
+  - Game starting: "Starting now: Victor Wembanyama, Spurs @ Lakers on ESPN". If the game already gets a start alert from your slate or teams, that alert says "You follow Victor Wembanyama" instead of sending a second one.
+  - Their final line, from ESPN's box score: "Victor Wembanyama: 31 PTS, 12 REB, 4 AST, 11-20 FG", with the final score under it. A player listed as not playing says so. With scores hidden, it only says the game has ended.
+- Player page: Full game log under the last five games shows every game this season from ESPN's game log (regular season, playoffs and preseason in their own tables), newest first, with ESPN's season averages and totals at the bottom. "Show the last 5 games only" folds it back.
+
 ## 3.116.0 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Golf and Formula 1 are in Slate. All games has a GOLF tab and an F1 tab on days they're on, and the ALL tab has a Golf and a Formula 1 section under the leagues.

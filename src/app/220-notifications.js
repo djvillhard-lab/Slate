@@ -38,6 +38,9 @@
     });
     $("nt-body").classList.toggle("off", !state.notify.enabled);
     $("nt-quiet-row").hidden = !state.notify.quiet.on;
+    var fw = (state.players || []).map(function (x) { return x.name; }).filter(Boolean);
+    $("nt-follow-who").textContent = fw.length ? "You follow " + (fw.length > 4 ? fw.slice(0, 4).join(", ") + " and " + (fw.length - 4) + " more" : fw.length > 1 ? fw.slice(0, -1).join(", ") + " and " + fw[fw.length - 1] : fw[0]) + ". Follow or stop following on a player's page (tap their picture)."
+      : "Follow a player from their page (tap their picture anywhere in Slate) to get these.";
     $("nt-spoiler").textContent = state.showScores ? "Score alerts include the score. Hide scores in Settings to get spoiler-free alerts." : "Spoiler-free: scores are hidden in Settings, so alerts only say when a game ends.";
     $("nt-state").textContent = state.notify.enabled ? "Alerts arrive as notifications." : "You won't get any game notifications.";
     pushState();

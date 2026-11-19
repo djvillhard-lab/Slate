@@ -82,7 +82,9 @@
     if (ntWriter.busy) { ntWriter.dirty = true; return; }
     ntWriter.busy = true; ntWriter.dirty = false;
     var body = clone(state.notify);
-    body.teams = state.teams.slice(); body.rules = clone(state.rules || RULE_DEFAULTS); body.spoilerFree = !state.showScores; body.updatedAt = new Date().toISOString();
+    body.teams = state.teams.slice(); body.rules = clone(state.rules || RULE_DEFAULTS); body.spoilerFree = !state.showScores;
+    body.players = (state.players || []).slice(-40).map(function (x) { return { id: String(x.id), lg: x.lg, name: x.name || "", team: x.team || "", teamName: x.teamName || "" }; });  // players you follow: their alerts (3.117.0)
+    body.updatedAt = new Date().toISOString();
     try { body.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}  // alert times use this phone's time zone
     db.doc("prefs/notify").set(body).then(function () { ntWriter.busy = false; if (ntWriter.dirty) saveNotify(); },
       function () { ntWriter.busy = false; toast("Couldn't save notification settings."); });

@@ -16,7 +16,7 @@ const PATHS = {
 };
 const DEFAULTS = { enabled: true, brief: { on: true, hour: 9, myTeams: true, lineup: true, topGames: true }, reminders: { lineup: true, myTeams: true },
   finals: { myTeams: true, lineup: false }, live: { myTeams: false }, upsets: { on: false },
-  close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, lead: 0,
+  close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, follow: { start: true, final: true }, lead: 0,
   liveAct: { on: true, lineup: true, myTeams: false }, quiet: { on: true, start: 23, end: 8 }, days: [0, 1, 2, 3, 4, 5, 6], spoilerFree: false };
 const LEAGUE_NAME = { nfl: "NFL", ncaaf: "College Football", nba: "NBA", wnba: "WNBA", ncaam: "Men's College Hoops", ncaaw: "Women's College Hoops", nhl: "NHL", mlb: "MLB", mls: "MLS",
   epl: "Premier League", ucl: "Champions League", uel: "Europa League", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "International" };
@@ -477,7 +477,70 @@ function topGames(games, sc, skip, now) {
   };
   return games.filter((g) => !skip.has(g.id) && new Date(g.start) > now).map((g) => [score(g), g]).filter((x) => x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]);
 }
-function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
+// ---------- players you follow (3.117.0) ----------
+// p.players (from the app, saved with prefs/notify): [{id, lg, name, team (ESPN abbreviation), teamName}]. A player is in a
+// game when the league matches and his team is one of its two sides, by abbreviation or ESPN's full name.
+function followedIn(p, games) {
+  const out = {}, list = (Array.isArray(p.players) ? p.players : []).filter((x) => x && x.id && x.lg).slice(0, 40);
+  if (!list.length) return out;
+  for (const [id, g] of Object.entries(games)) {
+    for (const x of list) {
+      if (g.league !== x.lg) continue;
+      const t = String(x.team || "").toUpperCase(), n = String(x.teamName || "");
+      if ((t && (String(g.awayAbbr || "").toUpperCase() === t || String(g.homeAbbr || "").toUpperCase() === t)) || (n && (g.away === n || g.home === n))) (out[id] = out[id] || []).push(x);
+    }
+  }
+  return out;
+}
+function lastName(n) { const p = String(n || "").trim().split(/\s+/); return p.length > 1 && !/^(jr\.?|sr\.?|ii|iii|iv)$/i.test(p[p.length - 1]) ? p[p.length - 1] : p.length > 2 ? p[p.length - 2] : p[0] || ""; }
+function nameList(xs) { const n = xs.map((x) => x.name || "").filter(Boolean); return n.length > 1 ? n.slice(0, -1).join(", ") + " and " + n[n.length - 1] : n[0] || ""; }
+// one player's line from ESPN's box score (the game summary), only numbers ESPN gives; "" when he isn't in it,
+// null when he's listed as not playing
+function playerLine(sum, pid, lg) {
+  const sport = SPORT[lg], id = String(pid), parts = [];
+  const z = (v) => { const n = parseFloat(String(v ?? "").replace("+", "")); return isNaN(n) ? 0 : n; };
+  if (sport === "soccer") {
+    for (const r of sum.rosters || []) for (const x of r.roster || []) {
+      if (String((x.athlete || {}).id) !== id) continue;
+      if (x.starter === false && x.subbedIn === false) return null;
+      const st = {}; for (const y of x.stats || []) st[y.name] = y.displayValue;
+      const g = z(st.totalGoals), a = z(st.goalAssists), sv = z(st.saves);
+      if (g) parts.push(`${g} goal${g === 1 ? "" : "s"}`); if (a) parts.push(`${a} assist${a === 1 ? "" : "s"}`); if (sv) parts.push(`${sv} save${sv === 1 ? "" : "s"}`);
+      if (!parts.length && z(st.shotsOnTarget)) parts.push(`${z(st.shotsOnTarget)} on target`);
+      return parts.length ? parts.join(", ") : "no goals or assists";
+    }
+    return "";
+  }
+  let found = false;
+  for (const t of (sum.boxscore || {}).players || []) for (const grp of t.statistics || []) {
+    const a = (grp.athletes || []).find((x) => String((x.athlete || {}).id) === id); if (!a) continue;
+    found = true;
+    if (a.didNotPlay || !(a.stats || []).length) continue;
+    const s = {}; (grp.labels || []).forEach((l, i) => { if (!(l in s)) s[l] = (a.stats || [])[i]; });
+    const n = (k, w, keep) => { if (s[k] != null && (keep || z(s[k]))) parts.push(`${s[k]} ${w}`); };
+    if (sport === "bball") { n("PTS", "PTS", 1); n("REB", "REB", 1); n("AST", "AST", 1); if (z(s.STL) >= 3) n("STL", "STL"); if (z(s.BLK) >= 3) n("BLK", "BLK"); if (s.FG) parts.push(`${s.FG} FG`); }
+    else if (sport === "football") {
+      const k = grp.name, q = [];
+      const m = (key, w, keep) => { if (s[key] != null && (keep || z(s[key]))) q.push(`${s[key]} ${w}`); };
+      if (k === "passing") { if (s["C/ATT"]) q.push(s["C/ATT"]); m("YDS", "pass yds", 1); m("TD", "TD"); m("INT", "INT"); }
+      else if (k === "rushing" && z(s.CAR)) { m("CAR", "car", 1); m("YDS", "rush yds", 1); m("TD", "TD"); }
+      else if (k === "receiving" && z(s.REC)) { m("REC", "rec", 1); m("YDS", "yds", 1); m("TD", "TD"); }
+      else if (k === "defensive") { if (z(s.TOT)) q.push(`${s.TOT} tackle${z(s.TOT) === 1 ? "" : "s"}`); m("SACKS", "sacks"); }
+      else if (k === "interceptions") { m("INT", "INT"); }
+      else if (k === "kicking") { if (s.FG) q.push(`${s.FG} FG`); }
+      if (q.length) parts.push(q.join(", "));
+    }
+    else if (sport === "hockey") { if (grp.name === "goalies") { n("SV", "saves", 1); n("GA", "GA", 1); } else { n("G", "G", 1); n("A", "A", 1); n("SOG", "SOG", 1); } }
+    else if (sport === "baseball") {
+      if (s["H-AB"] != null) { const q = [s["H-AB"]]; for (const [k2, w] of [["HR", "HR"], ["RBI", "RBI"], ["R", "R"], ["BB", "BB"]]) if (z(s[k2])) q.push(`${s[k2]} ${w}`); parts.push(q.join(", ")); }
+      else if (s.IP != null) { const q = [`${s.IP} IP`]; for (const [k2, w] of [["H", "H"], ["ER", "ER"], ["K", "K"]]) if (s[k2] != null) q.push(`${s[k2]} ${w}`); parts.push(q.join(", ")); }
+    }
+  }
+  if (!found) return "";
+  return parts.length ? parts.join(sport === "bball" || sport === "hockey" ? ", " : " · ") : null;
+}
+function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now, fol, box) {
+  fol = fol || {}; box = box || {};
   const spoil = !!p.spoilerFree, out = [];
   const startOf = (i) => { const s = sc[i] || {}; return new Date(s.state === "pre" && s.start ? s.start : (byid[i] || {}).start); };
   const fin = new Set([...((p.finals || {}).lineup ? slate : []), ...((p.finals || {}).myTeams ? mine : [])]);
@@ -510,7 +573,9 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
       const head = lead ? `In ${Math.round(lead / 60000)} min (${clock(t)})` : "Starting now";
       // with the slate's preview line under it (3.58.0)
       const pvl = !spoil && PVL[i] ? `\n${String(PVL[i]).slice(0, 140)}` : "";
-      out.push(["reminders", i, head, head + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}` + pvl]);
+      // a player you follow is in it (3.117.0): said here, so the game doesn't get a second start alert
+      const who = fol[i] && (p.follow || {}).start ? `\nYou follow ${nameList(fol[i])}` : "";
+      out.push(["reminders", i, head, head + (moved ? ` (moved from ${clock(orig)})` : "") + `: ${matchup(g)}` + who + pvl]);
     }
   }
   if ((p.reminders || {}).lineup) for (const c of customs || []) {
@@ -550,6 +615,31 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now) {
     const s = sc[i] || {}, g = byid[i]; if (!g || s.state !== "in" || out.some((x) => x[0] === "reminders" && x[1] === i)) continue;  // the start alert already covers this minute
     const body = `${g.awayShort} ${s.a}, ${g.homeShort} ${s.h} · ${s.detail || ""}`, last = Date.parse((sent.liveAt || {})[i] || "");
     if (sent.live[i] !== body && (isNaN(last) || now - last >= 55 * 60000)) out.push(["live", i, "Live", body]);
+  }
+  // players you follow (3.117.0): when their game starts (unless the game's own start alert already said so), and their
+  // line from ESPN's box score at the final
+  const fo = p.follow || {};
+  for (const k of ["plstart", "plfinal"]) sent[k] = sent[k] || [];
+  for (const i of Object.keys(fol).sort((x, y) => startOf(x) - startOf(y))) {
+    const g = byid[i], s = sc[i] || {}; if (!g) continue;
+    if (fo.start && !sent.plstart.includes(i) && s.state !== "post" && !rem.has(i)) {
+      const t = startOf(i), lead = Math.max(0, Math.min(60, Number(p.lead) || 0)) * 60000, at = new Date(t.getTime() - lead);
+      if (!isNaN(t) && now >= at && now - at <= 10 * 60000) {
+        const head = lead ? `In ${Math.round(lead / 60000)} min (${clock(t)})` : "Starting now";
+        out.push(["plstart", i, head, `${head}: ${nameList(fol[i])}, ${matchup(g)}`]);
+      }
+    }
+    if (fo.final && s.state === "post" && box[i]) {
+      for (const x of fol[i]) {
+        const key = `${i}:${x.id}`; if (sent.plfinal.includes(key)) continue;
+        if (spoil) { out.push(["plfinal", key, "Final", `${g.awayShort || g.away} @ ${g.homeShort || g.home} has ended. ${x.name}'s line is on the player page in Slate.`]); continue; }
+        const line = playerLine(box[i], x.id, g.league);
+        if (line === "") { sent.plfinal.push(key); continue; }  // not in the box score (traded, or a different team): nothing to say
+        const a = Number(s.a), h = Number(s.h), fin = isNaN(a) || isNaN(h) ? "" : a === h ? `Final: ${side(g, "away")} ${a}, ${side(g, "home")} ${h}`
+          : (() => { const [w, l] = a > h ? ["away", "home"] : ["home", "away"]; return `Final: ${side(g, w)} ${Math.max(a, h)}, ${side(g, l)} ${Math.min(a, h)}`; })();
+        out.push(["plfinal", key, "Final", (line === null ? `${x.name} didn't play` : `${x.name}: ${line}`) + (fin ? `\n${fin}` : "")]);
+      }
+    }
   }
   const b = p.brief || {}, hr = ctParts(now, TZ).hour, bh = Number(b.hour ?? 9);
   if (b.on && !sent.brief && hr >= bh && hr <= bh + 2) {
@@ -753,8 +843,17 @@ export async function runAlerts(env) {
     const pw = merged(docs[w.prefix + "prefs/notify"]), bd = (pw.liveAct || {}).board || {};
     for (const [i, v] of Object.entries(((pw.liveAct || {}).games) || {})) if (v === 1 && games[i]) want.add(i);  // games switched on by name get live scores too
     for (const [i, v] of Object.entries(((pw.alerts || {}).games) || {})) if (v === 1 && games[i]) want.add(i);
+    for (const i of Object.keys(followedIn(pw, games))) want.add(i);  // games of players you follow (3.117.0)
     if (bd.on && Array.isArray(bd.ids)) for (const i of bd.ids) if (games[String(i)]) { want.add(String(i)); early.add(String(i)); } }
   const sc = await liveScores(games, want, now, early);
+  // ESPN's box score for finished games with a followed player whose final line hasn't gone out yet, once per game this minute
+  const BOX = {}, boxFor = async (i) => {
+    if (i in BOX) return BOX[i];
+    const g = games[i], path = ((PATHS[(g || {}).league] || [])[0] || "").split("&")[0];
+    BOX[i] = null;
+    if (g && g.ev && path) try { const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${path}/summary?event=${encodeURIComponent(g.ev)}`); if (r.ok) BOX[i] = await r.json(); } catch (e) {}
+    return BOX[i];
+  };
   const list = Object.entries(games).map(([id, g]) => Object.assign({ id }, g)), byid = {}; for (const g of list) byid[g.id] = g;
   BC = (await apnsReady(env)) ? { doc: await bcLoad(env), want: {} } : null;
   for (const w of active) {
@@ -765,7 +864,9 @@ export async function runAlerts(env) {
       TGL = pvd.date === D && pvd.tags && typeof pvd.tags === "object" ? pvd.tags : {}; }
     { const bd = docs[pre + "prefs/livebets"] || {}; LBT = bd.date === D && bd.bets && typeof bd.bets === "object" ? bd.bets : {}; }
     const lt = ctParts(now, TZ);
-    const sent = { date: D, brief: !!s0.brief, reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
+    const fol = followedIn(p, games), box = {};
+    if ((p.follow || {}).final) for (const [i, xs] of Object.entries(fol)) if ((sc[i] || {}).state === "post" && xs.some((x) => !(s0.plfinal || []).includes(`${i}:${x.id}`))) box[i] = await boxFor(i);
+    const sent = { date: D, brief: !!s0.brief, plstart: [...(s0.plstart || [])], plfinal: [...(s0.plfinal || [])], reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
       board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null };
     const before = JSON.stringify(sent);
@@ -776,7 +877,7 @@ export async function runAlerts(env) {
       // switched on for a game off the slate: it gets the slate's alerts
       const ag = ((p.alerts || {}).games) || {}, offGames = new Set(Object.keys(ag).filter((i) => ag[i] === 0));
       const slateA = [...new Set([...(w.slate || []), ...Object.keys(ag).filter((i) => ag[i] === 1 && byid[i])])];
-      for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, slateA, w.mine || [], w.customs || [], now)) {
+      for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, slateA, w.mine || [], w.customs || [], now, fol, box)) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
         else if (kind !== "ot") sent[kind].push(key);
