@@ -199,6 +199,16 @@ final class WebModel: ObservableObject {
         case "open":
             // a link the page opens in another app (the Watch button's YouTube TV, a streaming app)
             if let u = m["url"] as? String, let url = URL(string: u), url.scheme == "https" { UIApplication.shared.open(url) }
+        case "auth":
+            // 3.114.0: Google sign-in in Apple's sign-in sheet instead of Safari (SignIn.swift)
+            if let u = m["url"] as? String, let url = URL(string: u), url.scheme == "https", url.host?.lowercased() == Self.home.host?.lowercased() {
+                SlateSignIn.shared.web(url) { [weak self] ok in self?.js("window.__slateAuthCb && __slateAuthCb(\(ok))") }
+            }
+        case "apple":
+            // 3.114.0: Sign in with Apple; the page sends Apple's token on to the server
+            SlateSignIn.shared.apple { [weak self] token, nonce, err in
+                self?.js("window.__slateAppleCb && __slateAppleCb(\(Self.quote(token ?? "")), \(Self.quote(nonce ?? "")), \(Self.quote(err ?? "")))")
+            }
         default:
             break
         }
