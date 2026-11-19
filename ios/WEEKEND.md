@@ -72,6 +72,9 @@ web app moves to 3.0.0 the same day, so the release history marks the real app a
   - If a push to main that changed `ios/` never shows up in TestFlight, look in App Store Connect > Slate >
     Xcode Cloud > Builds for a failed build, and at Xcode Cloud > Usage for the 25 hours (Nov 18, 2026: 3.92.0
     never arrived). Changing any file in `ios/` on main, like this one, starts a new build.
+  - A merge commit doesn't count (Nov 19, 2026: 3.113.0 never started). Xcode Cloud looks at what the commit it
+    sees changed, and a merge of main into a branch that already had the `ios/` work only changes web files. After
+    merging, check App Store Connect for the build; if none started, push any small change to a file in `ios/`.
 - App Store Connect (appstoreconnect.apple.com) > Apps > Slate > TestFlight:
   - **Internal Testing:** add yourself. Your builds show up right away.
   - **External Testing:** make a group called Friends, add Drew by email (or turn on a Public Link and text it
