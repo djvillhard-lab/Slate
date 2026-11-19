@@ -25,3 +25,8 @@ Full review: Claude Doc "Slate safety, security and scaling review" (Nov 17, 202
 - The Google step always runs in a browser (`google.html`), joined to the app by a one-time ticket (`users/gtickets`, 15 minutes, poll secret stays on the phone). In the iPhone app it opens in Safari and the app polls; on the website the same tab goes and comes back. No new iPhone build needed.
 - DJ's profile can connect Google but still logs in with its passcode (DJ's saves are checked in the database, `save_doc`).
 - Open: Sign in with Apple and sign-in inside the app (ASWebAuthenticationSession) need an iPhone build and DJ's yes. Retire the old plain-hash passcodes for Drew and Doug only after they've connected Google and DJ says so.
+
+## Sign in with Apple and Google inside the app (Web 3.114.0, Nov 19, 2026)
+- Web half live: `/api/google/apple` checks Apple's signed token against Apple's keys (audience com.djvillhard.slate, SHA-256 nonce), then links or signs in exactly like Google. Apple links are keyed `apple:<sub>` in `users/google`; status returns `apple`/`appleEmail`; unlink takes `p: "apple"`.
+- The page uses the new paths only when `SLATE_NATIVE.auth` is true (the next iPhone build). Then Google opens in Apple's sign-in sheet (ASWebAuthenticationSession, `google.html#t=..&app=1`, closes at `slate-auth://done`) and the log-in page shows Sign in with Apple. Older builds keep the Safari flow and show no Apple button.
+- App half: commit e10074f (SignIn.swift, WebModel "auth"/"apple", entitlement), cherry-picked into the Live notifications thread's build branch. Needs DJ's yes for the build, and the "Sign In with Apple" capability on the App ID com.djvillhard.slate.

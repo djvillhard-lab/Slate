@@ -48,7 +48,7 @@ button[disabled] { opacity: .6; }
   var t = "";
   try {
     var m = /[#&]t=([0-9a-f]{36})/.exec(location.hash);
-    if (m) { sessionStorage.setItem("slate-gt", m[1]); history.replaceState(null, "", location.pathname + location.search); }
+    if (m) { sessionStorage.setItem("slate-gt", m[1]); if (/[#&]app=1/.test(location.hash)) sessionStorage.setItem("slate-gapp", "1"); else sessionStorage.removeItem("slate-gapp"); history.replaceState(null, "", location.pathname + location.search); }
     t = sessionStorage.getItem("slate-gt") || "";
   } catch (e) {}
   var q = new URLSearchParams(location.search);
@@ -83,6 +83,13 @@ button[disabled] { opacity: .6; }
       return post("finish", { t: t, token: tok }).then(function (j) {
         sb.auth.signOut({ scope: "local" }).catch(function () {});
         clearAct();
+        var inApp = false; try { inApp = sessionStorage.getItem("slate-gapp") === "1"; } catch (e) {}
+        if (j.ok && inApp) {  // the app's sign-in sheet (3.114.0): this closes it; the app finishes the rest by itself
+          try { sessionStorage.removeItem("slate-gt"); sessionStorage.removeItem("slate-gapp"); } catch (e) {}
+          say(j.kind === "link" ? "Google is connected" : "You're signed in, " + (j.name || ""), "Going back to Slate…");
+          setTimeout(function () { location.href = "slate-auth://done"; }, 400);
+          return;
+        }
         var gs = ""; try { gs = sessionStorage.getItem("slate-gs") || ""; } catch (e) {}
         if (j.ok && gs) {  // started on this website, in this tab: finish here and go back to Slate
           return post("poll", { t: t, s: gs }).then(function (r) {
@@ -107,6 +114,8 @@ button[disabled] { opacity: .6; }
     if (j.kind === "link") say("Connect Google to " + j.name + "'s Slate profile", "Your teams, rules, favorites and alerts stay exactly as they are. Afterwards you can open Slate on any phone with Google instead of a passcode.");
     else say("Sign in to Slate with Google", "Use the Google account you connected in Slate. Only continue if you just tapped Sign in with Google in Slate yourself.");
     googleBtn();
+    var app = false; try { app = sessionStorage.getItem("slate-gapp") === "1"; } catch (e) {}
+    if (app && !q.get("error")) { var gb = document.querySelector("button.g"); if (gb) gb.click(); }  // opened by the app's own sheet: straight to Google
   });
 })();
 </script>

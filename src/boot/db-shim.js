@@ -28,6 +28,24 @@
     try { return w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.slate ? w.webkit.messageHandlers.slate : null; } catch (e) { return null; }
   }
   var gPoll = null;
+  function topWin() { try { return window.top || window; } catch (e) { return window; } }
+  // the app build can show Google in Apple's sign-in sheet and do Sign in with Apple (3.114.0; older builds can't)
+  function canSheet() { try { var n = topWin().SLATE_NATIVE; return !!(n && n.auth && nativeHost()); } catch (e) { return false; } }
+  window.slateCanApple = canSheet;
+  // Sign in with Apple (the app only): kind "link" or "signin", like slateGoogle; the answer comes straight back
+  window.slateApple = function (kind, done) {
+    done = done || function () {};
+    var host = nativeHost(); if (!host || !canSheet()) { done({ error: "Sign in with Apple needs the newest Slate app." }); return; }
+    topWin().__slateAppleCb = function (token, nonce, e) {
+      if (!token) { done({ error: e || "Sign in with Apple didn't finish. Try again." }); return; }
+      var body = { kind: kind, token: token, nonce: nonce }; if (kind === "link") body.pass = pass();
+      post("/api/google/apple", body).then(function (r) {
+        if (r.ok && r.kind === "signin" && r.pass) { signedIn(r.pass, r.id, r.name, false, r.admin); return; }
+        done(r);
+      });
+    };
+    host.postMessage({ t: "apple" });
+  };
   window.slateGoogle = function (kind, done) {
     done = done || function () {};
     var body = { kind: kind }; if (kind === "link") body.pass = pass();
@@ -38,7 +56,8 @@
         try { sessionStorage.setItem("slate-gs", j.s); sessionStorage.setItem("slate-gt", j.t); } catch (e) {}
         location.href = url; return;
       }
-      host.postMessage({ t: "open", url: url });
+      var sheet = canSheet();
+      if (sheet) host.postMessage({ t: "auth", url: url + "&app=1" }); else host.postMessage({ t: "open", url: url });
       if (gPoll) clearInterval(gPoll);
       var until = Date.now() + 15 * 60000, busy = false;
       function check() {
@@ -53,7 +72,12 @@
         });
       }
       gPoll = setInterval(check, 3000); document.addEventListener("visibilitychange", check);
-      done({ opened: true });
+      // the app's sign-in sheet closed: finished (check now) or closed early (one last check, then stop)
+      if (sheet) topWin().__slateAuthCb = function (ok) {
+        busy = false; check();
+        if (!ok) setTimeout(function () { if (!gPoll) return; clearInterval(gPoll); gPoll = null; document.removeEventListener("visibilitychange", check); done({ error: "cancel" }); }, 2500);
+      };
+      done({ opened: true, sheet: sheet });
     });
   };
   // Google sent the browser back to the home page instead of google.html: hand the answer to google.html
@@ -110,11 +134,24 @@
         if (busy) return; busy = true; err.hidden = true; gg.disabled = true;
         window.slateGoogle("signin", function (r) {
           busy = false; gg.disabled = false;
-          if (r.opened) { err.textContent = "Finish in Safari, then come back here. Slate opens by itself."; err.className = "gate-p gate-note"; err.hidden = false; return; }
+          if (r.opened) { if (!r.sheet) { err.textContent = "Finish in Safari, then come back here. Slate opens by itself."; err.className = "gate-p gate-note"; err.hidden = false; } return; }
+          if (r.error === "cancel") return;
           err.className = "gate-err"; err.textContent = r.error || "Couldn't sign in. Try again."; err.hidden = false;
         });
       });
       box.appendChild(mk("div", "gate-or", "or"));
+      if (canSheet()) {  // Apple asks apps that offer Google sign-in to offer Sign in with Apple too
+        var ga = mk("button", "gate-apple"); ga.type = "button";
+        ga.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.4 1.4c0 1.1-.5 2.3-1.2 3.1-.7.9-2 1.6-3 1.6-.1 0-.2 0-.3-.1V5.7c0-1.1.6-2.3 1.2-3 .8-.9 2.1-1.6 3.2-1.7.1.1.1.3.1.4zm4.5 15.7c0 .1-.5 1.6-1.5 3.1-.9 1.3-1.9 2.7-3.4 2.7s-1.9-.9-3.6-.9c-1.7 0-2.3.9-3.7.9-1.4 0-2.3-1.3-3.4-2.8-1.3-1.8-2.3-4.6-2.3-7.3 0-4.3 2.8-6.5 5.6-6.5 1.4 0 2.7.9 3.6.9.9 0 2.2-1 3.9-1 .6 0 2.9.1 4.4 2.2-.1.1-2.4 1.4-2.4 4.2 0 3.3 2.8 4.4 2.8 4.5z"/></svg><span>Sign in with Apple</span>';
+        ga.addEventListener("click", function () {
+          if (busy) return; busy = true; err.hidden = true; ga.disabled = true;
+          window.slateApple("signin", function (r) {
+            busy = false; ga.disabled = false; if (r.error === "cancel") return;
+            err.className = "gate-err"; err.textContent = r.error || "Couldn't sign in. Try again."; err.hidden = false;
+          });
+        });
+        box.appendChild(ga);
+      }
       box.appendChild(gg);
       links.appendChild(link("I have an invite", function () { gate("code"); }));
       links.appendChild(link("Just look around", function () { try { localStorage.setItem("slate-view-only", "1"); } catch (e) {} g.remove(); }));

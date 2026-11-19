@@ -456,14 +456,14 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
   }
   function acctGoogle() {
     var box = $("acct-google"); if (!box) return;
-    if (!gst.state) { gst.state = "load"; gCall("status").then(function (j) { gst.state = j.linked ? "linked" : "off"; gst.email = j.email || ""; acctGoogle(); }); }
+    if (!gst.state) { gst.state = "load"; gCall("status").then(function (j) { gst.state = j.linked ? "linked" : "off"; gst.email = j.email || ""; gst.apple = !!j.apple; gst.appleEmail = j.appleEmail || ""; acctGoogle(); }); }
     box.textContent = "";
     var me = ""; try { me = localStorage.getItem("slate-user") || ""; } catch (e) {}
     var r = el("div", "optrow acct-g"), t = el("div");
     t.appendChild(el("b", null, gst.state === "linked" ? "Google connected" : "Sign in with Google"));
     t.appendChild(el("span", null, gst.msg || (gst.state === "linked"
       ? gst.email + (me === "dj" ? ". Your own phone keeps logging in with your passcode for now." : ". On a new phone, tap Sign in with Google on the log-in page. Your passcode still works too.")
-      : gst.state === "wait" ? "Finish in Safari, then come back here."
+      : gst.state === "wait" ? (window.slateCanApple && window.slateCanApple() ? "Finish signing in with Google…" : "Finish in Safari, then come back here.")
       : "Connect your Google account so Slate opens on any phone without a passcode. Your teams, rules, favorites and alerts stay as they are.")));
     r.appendChild(t);
     if (gst.state === "load") { box.appendChild(r); return; }
@@ -479,11 +479,34 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       window.slateGoogle("link", function (j) {
         if (j.opened) { gst.state = "wait"; acctGoogle(); return; }
         if (j.ok) { gst.state = "linked"; gst.email = j.email || ""; toast("Google is connected"); }
-        else { gst.state = "off"; gst.msg = j.error || "Couldn't connect. Try again."; }
+        else { gst.state = "off"; gst.msg = j.error === "cancel" ? "" : j.error || "Couldn't connect. Try again."; }
         acctGoogle();
       });
     });
     r.appendChild(b); box.appendChild(r);
+    // Sign in with Apple (3.114.0): in the app (Apple's own sheet), or shown as connected anywhere
+    if (!(window.slateCanApple && window.slateCanApple()) && !gst.apple) return;
+    var ra = el("div", "optrow"), ta = el("div");
+    ta.appendChild(el("b", null, gst.apple ? "Apple connected" : "Sign in with Apple"));
+    ta.appendChild(el("span", null, gst.amsg || (gst.apple ? (gst.appleEmail || "Your Apple ID") + (me === "dj" ? ". Your own phone keeps logging in with your passcode for now." : ". On a new phone, tap Sign in with Apple on the log-in page.") : "Connect your Apple ID the same way. Everything you've set up stays.")));
+    ra.appendChild(ta);
+    var ba = el("button", "outline quiet", gst.apple ? "Disconnect" : "Connect"); ba.type = "button";
+    ba.addEventListener("click", function () {
+      if (gst.apple) {
+        if (!ba.dataset.sure) { ba.dataset.sure = "1"; ba.textContent = "Tap again"; setTimeout(function () { delete ba.dataset.sure; ba.textContent = "Disconnect"; }, 4000); return; }
+        ba.disabled = true;
+        fetch("/api/google/unlink", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: slatePass(), p: "apple" }) }).then(function (x) { return x.json(); }).catch(function () { return {}; })
+          .then(function (j) { if (j.ok) { gst.apple = false; gst.appleEmail = ""; toast("Apple disconnected. Your passcode still works."); } else toast(j.error || "Couldn't disconnect. Try again."); acctGoogle(); });
+        return;
+      }
+      ba.disabled = true; gst.amsg = "";
+      window.slateApple("link", function (j) {
+        if (j.ok) { gst.apple = true; gst.appleEmail = j.email || ""; toast("Apple is connected"); }
+        else gst.amsg = j.error === "cancel" ? "" : j.error || "Couldn't connect. Try again.";
+        acctGoogle();
+      });
+    });
+    ra.appendChild(ba); box.appendChild(ra);
   }
   // back from Google in this same tab (the website): say so once
   try { if (sessionStorage.getItem("slate-google-done")) { sessionStorage.removeItem("slate-google-done"); setTimeout(function () { toast("Google is connected"); }, 800); } } catch (e) {}
