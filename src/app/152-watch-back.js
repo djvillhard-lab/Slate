@@ -4,7 +4,7 @@
   try { WWB = JSON.parse(localStorage.getItem("slate-wwb") || "{}") || {}; } catch (e) { WWB = {}; }
   (function () { var now = Date.now(), ch = false; Object.keys(WWB).forEach(function (k) { if (now - (WWB[k].at || 0) > 4 * 864e5) { delete WWB[k]; ch = true; } }); if (ch) try { localStorage.setItem("slate-wwb", JSON.stringify(WWB)); } catch (e) {} })();
   (function () { var st = document.createElement("style"); st.id = "wwb-css"; st.textContent =
-    ".wwb { margin: 6px 0 0; font-size: 13px; line-height: 1.7; font-weight: 700; color: var(--muted); }" +
+    ".wwb { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; line-height: 1.7; font-weight: 700; color: var(--muted); }" +
     ".wwb-k { display: inline-block; margin-right: 8px; line-height: 1.3; padding: 2px 6px; border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-stretch: 88%; color: var(--head); white-space: nowrap; }";
     document.head.appendChild(st); })();
   var WWB_REG = { nba: 4, wnba: 4, ncaaw: 4, ncaam: 2, nfl: 4, ncaaf: 4, nhl: 3 };

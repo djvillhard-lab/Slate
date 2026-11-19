@@ -100,3 +100,6 @@ Not covered: "all on the road"-type claims, standings ("second in the East"), pl
 **3.113.5 (Nov 18, DJ: "Text cut off"):** the 📰 News line wraps to its full text now (no ellipsis, no clause cuts; that reverses 3.89.3's one-line rule because the cuts read as fragments). Notes that tie a player to the other team are dropped: `wrongTeamLine` in 105-pv-notes.js (players from the game's ESPN summary leaders and injuries, `pvnPlayers`) and the same function in worker/factcheck.js (players from facts.leaders/injuries). It only fires on ownership phrases ("the Heat's Giannis", "Heat star Giannis", "the Heat's depth beyond Giannis", "Giannis leads the Heat"), so "Giannis faces the Heat" stays. Limit: the client check needs the game's ESPN summary loaded; the News page itself has no player list, so the server check doesn't cover it.
 
 **3.113.7:** saved final lines (this phone's `slate-hlc` copy, the day's `live/<date>` doc, the in-memory line) go through `hlStaleWin` in 100-highlights.js: a "won it" line with a final margin over 3 (basketball) or 8 (football) is skipped, the phone copy deleted, and the game refetched so the line is worked out again.
+
+## Full width (Nov 18, 2026)
+.wwb has grid-column 1 / -1: the card is a grid, and without it the line stayed in the team column and wrapped early.
