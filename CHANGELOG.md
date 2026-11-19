@@ -9,6 +9,7 @@ From 3.0.0 on, each release also says which iPhone app build in TestFlight goes 
 TestFlight: 3.113.0, no new build (web only)
 - Getting ready for Sign in with Apple and signing in with Google without leaving the app. Both turn on with the next iPhone build. Until then, Google sign-in still opens Safari as it does now.
 - In the next build, the log-in page gets a Sign in with Apple button, and Settings → Account and people gets a Connect for Apple next to Google. Connecting keeps everything on the profile exactly as it is.
+
 ## 3.113.15 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Teams: Claude's take on a team page now expires 24 hours after it's written, so an old one (like Manchester United's from last Friday) no longer shows as if it were current. The team page says how old it is and offers "Write a fresh take". It isn't rewritten by itself, since each one costs money; the new one goes through the same ESPN fact check before it's saved.
