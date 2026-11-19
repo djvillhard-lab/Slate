@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.116.0 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Golf and Formula 1 are in Slate. All games has a GOLF tab and an F1 tab on days they're on, and the ALL tab has a Golf and a Formula 1 section under the leagues.
+- Golf: one card per tournament (PGA Tour and LPGA) with the round, the top 5 on the leaderboard (position, flag, score to par, holes played), Show top 10, and where to watch. It updates every minute while a round is on.
+- Formula 1: one card per race weekend with every session (practice, qualifying, race) in your time, and the finishing order of the latest session once it's done. During a session it shows the running order.
+- Today's Slate: golf shows on tournament days, and F1 on qualifying and race days, each in its own section under your games that folds like the others.
+- Everything comes from ESPN's free scores, so there's no cost and no limit.
+
 ## 3.115.0 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - News: injuries, trades and signings. Press Box has a new Injuries and moves section with a card for each of your NFL, NBA, NHL, MLB and WNBA teams: who's on the injury report (out, injured reserve, doubtful, questionable, day-to-day) with ESPN's latest note, then the team's signings, trades, injury-list moves and cuts from the last 10 days. Teams with the newest changes come first.

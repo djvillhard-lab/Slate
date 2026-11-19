@@ -30,6 +30,7 @@
     if (gs.some(hasFav)) opts.push(["fav", "★"]);
     opts.push(["all", "ALL"]);
     keys.forEach(function (k) { var g0 = gs.filter(function (x) { return x.league === k; })[0]; opts.push([k, info(g0).tag]); });
+    if (state.date) evTabs(state.date).forEach(function (t) { opts.push(t); });  // golf and F1 when they're on (3.116.0)
     quiet.forEach(function (k) { opts.push([k, LEAGUES[k].tag, true]); });
     var ord = state.gamesOrder || [];
     if (ord.length) {
@@ -163,6 +164,9 @@
     var body = $("games-body"); body.textContent = "";
     if (agIO) agIO.disconnect();
     $("search").hidden = !state.showSearch && !state.q;
+    // a golf or F1 tab (3.116.0): that sport's events only
+    if (EV_SPORTS[state.league]) { if (!evGamesSections(body, state.league)) body.appendChild(el("div", "notice", "No " + EV_SPORTS[state.league].name.toLowerCase() + " on this day. Pick another day above.")); return; }
+    if (!games().length && state.league === "all" && evList(state.date).length) { evGamesSections(body); return; }
     if (!games().length) { if (isDuo) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
     var list = gamesFiltered();
     if (state.date === todayInHome()) {
@@ -197,6 +201,7 @@
     var order = tabOrd.filter(function (k, i) { return groups[k] && tabOrd.indexOf(k) === i; });
     Object.keys(groups).forEach(function (k) { if (order.indexOf(k) === -1) order.push(k); });
     order.forEach(function (k) { section(body, info(groups[k][0]).name, groups[k]); });
+    if (state.league === "all" && (state.conf || "all") === "all") evGamesSections(body);  // golf and F1 under the leagues
   }
   // league sections open and close (remembered on this phone); a single-league view is always open
   // which page of games is showing (3.97.0); starts over for a new day, tab, filter, Live or search

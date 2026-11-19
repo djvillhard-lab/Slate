@@ -134,6 +134,7 @@
       else if (loading || !state.settingsLoaded || !state.lineupLoaded) n.textContent = waitMine ? "Loading your slate…" : loading ? noticeText() : "Loading games…";
       else n.textContent = "No games match your rules for this day. Loosen a rule or add games by hand.";
       if (n) body.appendChild(n);
+      if (!loading) { var evb0 = evSlateBlock(); if (evb0) body.appendChild(evb0); }  // golf and F1 (3.116.0)
     } else {
     // today: finished games move to a "Finished" group at the bottom, so live and upcoming games lead the page
     var finDone = state.date === todayInHome() && !state.slOrderEdit ? lg.filter(function (g) { return status(g).kind === "over"; }) : [];
@@ -155,6 +156,7 @@
         body.appendChild(sec);
       });
     } else body.appendChild(timeGroups(lg));
+    var evb = evSlateBlock(); if (evb) body.appendChild(evb);  // golf and F1, under the games and above Finished (3.116.0)
     if (finDone.length) {
       var fShut = !!(state.slateFold || {}).__fin, fsec = el("section", "sl-sec sl-fin" + (fShut ? " shut" : ""));
       var fh = el("button", "sl-h"); fh.type = "button"; fh.setAttribute("aria-expanded", fShut ? "false" : "true");
