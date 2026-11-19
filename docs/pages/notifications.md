@@ -109,4 +109,4 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   scores from the ESPN scoreboard URL `u` the page sends, matching games by abbreviations. Page also sends lg, st, bl.
 - Targets come from ios/tools/gen_project.py (re-run it to change settings). CI builds with a simulator destination.
 - Open: the Watch shows your bet's label only (no covering/needs line yet); logos load from ESPN on the Watch.
-
+- 3.120.1 (DJ): SlantShape leans both sides the same way (right side insets at the top); TeamWash uses a fixed 12 pt lean.

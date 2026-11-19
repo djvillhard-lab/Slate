@@ -484,7 +484,7 @@ enum BallLook {
     static func compact(_ sit: String) -> String { sit.replacingOccurrences(of: " at ", with: " · ") }
 }
 
-// a team's slanted color panel at its edge of the card (3.85.0). 3.121.0 (DJ: the slants should match): both inner
+// a team's slanted color panel at its edge of the card (3.85.0). 3.120.1 (DJ: the slants should match): both inner
 // edges lean the same way, like the widget's and the Board's pills (LeanShape), instead of mirroring each other
 struct SlantShape: Shape {
     let left: Bool
@@ -529,7 +529,7 @@ struct TeamWash: View {
 
     var body: some View {
         let c = Color(slateHex: color, fallback: SlateLook.raise)
-        SlantShape(left: left, inset: 12)   // 3.121.0: a fixed lean, so every card's slants line up
+        SlantShape(left: left, inset: 12)   // 3.120.1: a fixed lean, so every card's slants line up
             .fill(LinearGradient(colors: [c.opacity(0.62), c.opacity(0.3)], startPoint: left ? .leading : .trailing, endPoint: left ? .trailing : .leading))
     }
 }

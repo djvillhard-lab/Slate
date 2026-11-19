@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.120.1 (Nov 19, 2026)
+TestFlight: 3.120.1, new build
+- Live notifications: the two team-color pills on the Lock Screen game card (and the team halves in the Dynamic Island) now lean the same way, with the same small slant as the widget and the Board, instead of slanting toward each other.
+
 ## 3.120.0 (Nov 19, 2026)
 TestFlight: 3.120.0, new build
 - Slate on the Lock Screen: three widgets. A line over the clock shows the game that's on, or "Next: BAL at PIT 7:15". A rectangle shows your next two games. A round one shows the next game. They roll forward through the night: the game that's on comes first, a final stays 30 minutes, then the next game takes over. When several are on at once, the one highest on your slate leads (your teams and the best games first) and the rest show as "+2 live". iOS draws Lock Screen widgets in white, so they use team abbreviations instead of logos.
