@@ -498,6 +498,7 @@
       }
       body.appendChild(tw); }
     }
+    if (today) wirePress(body);  // your teams' injuries, trades and signings, from ESPN (3.114.0)
     // Games | Teams | Leagues: only the ones this page has; the leftmost opens first. Teams is only the favorite teams
     // picked in the options (3.50.1; cover.picked), not every team in the picked games; older pages have no list of
     // picks, so they show the favorites they wrote about.
@@ -747,7 +748,7 @@
     if (nw.deep) { nw.deep.date = state.date; nwRenderDeep(body); return; }
     if (nw.lg && nwBriefLgs().indexOf(nw.lg) === -1) nw.lg = null;
     nwStrip(body);
-    if (nw.lg) { var bd = nwBriefOf(nw.lg); nwSub(bd.path); nwRenderDeep(body, bd); return; }
+    if (nw.lg) { var bd = nwBriefOf(nw.lg); nwSub(bd.path); nwRenderDeep(body, bd); wireLeague(body, nw.lg); return; }
     var path = nwPagePath(); nwSub(path);
     var doc = nw.docs[path]; if (doc === undefined) { body.appendChild(el("p", "pv-none", "Loading…")); return; }
     var has = !!(doc && doc.at && ((doc.top || []).length || (doc.games || []).length || (doc.teams || []).length || (doc.leagues || []).length)), w = clWriting(doc, "n:" + path), busy = !!(w && w.busy), err = w && w.error;
@@ -761,7 +762,7 @@
     if (err && !CL_ASK["n:" + path] && (!errAt || Date.now() - errAt > 30 * 60000 || nw.errSeen === wat)) err = null;
     var isToday = state.date === todayInHome();
     if (!has || nw.opts) {
-      if (!has && !busy && isToday) nwxHeads(body);  // something to read before any page is written (3.104.0)
+      if (!has && !busy && isToday) { nwxHeads(body); wirePress(body); }  // something to read before any page is written (3.104.0); injuries and moves (3.114.0)
       if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err, wat))); nwRenderOpts(body, has ? doc : null, busy, doc);
       
       return;

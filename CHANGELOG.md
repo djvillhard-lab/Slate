@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.115.0 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- News: injuries, trades and signings. Press Box has a new Injuries and moves section with a card for each of your NFL, NBA, NHL, MLB and WNBA teams: who's on the injury report (out, injured reserve, doubtful, questionable, day-to-day) with ESPN's latest note, then the team's signings, trades, injury-list moves and cuts from the last 10 days. Teams with the newest changes come first.
+- News: each of those league tabs shows Injuries and moves under the briefing's top card: who's new on the injury report in the last 3 days, with headshots, and the league's trades and signings from the last 7 days. Your teams come first. Practice squad and minor-league shuffles are left out there.
+- Everything comes straight from ESPN's injury report and transaction list, refreshed about every 15 minutes. No Claude, nothing estimated.
+
 ## 3.114.0 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Getting ready for Sign in with Apple and signing in with Google without leaving the app. Both turn on with the next iPhone build. Until then, Google sign-in still opens Safari as it does now.

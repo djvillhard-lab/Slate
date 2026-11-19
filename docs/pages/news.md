@@ -1,10 +1,20 @@
 # News
-Last updated: Nov 18, 2026, 3.105.1
+Last updated: Nov 19, 2026, 3.115.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
 ## Done
+- Injuries, trades and signings (3.115.0, DJ picked News over team pages): `src/app/205-wire.js`, styles injected as `#wire-css`.
+  Data from the worker's `GET /api/wire?lg=` (`worker/wire.js`): ESPN's league-wide `injuries` and `transactions?limit=120`,
+  trimmed (ESPN's NFL report is ~9 MB because it lists healthy players as "Active"; those are dropped) and cached 20 minutes.
+  Leagues: NFL, NBA, NHL, MLB, WNBA (ESPN has nothing for soccer; college is near empty). Press Box: "Injuries and moves",
+  one card per followed team (`wirePress`): injuries from the last 45 days (off-season notes go stale), worst status first,
+  then moves from the last 10 days; closed shows 4 injuries + 3 moves. League tabs (`wireLeague`, placed under the briefing's
+  top card by `wirePlace`): injury changes from the last 3 days as red headshot boxes, then trades/signings/injury-list moves
+  from 7 days, minus practice squad and minor-league shuffles (`wireMinor`), your teams first. `wireKind` labels each move.
+  ESPN's `returnDate` is left out on purpose: it's often a placeholder (MLB "Mar 1"). shots.py serves /api/wire from
+  the local worker/wire.js (`scripts/wire_local.mjs`), so worker changes show before they deploy.
 - Tabs (3.80.0, DJ's ask: "the current news page called something special, first and default in a row of filter
   tabs, then one-click news for each league"): the row is the app's league tabs (`.strip` / `.lg-tab`, as in Box Office),
   built in `nwStrip()`. First tab **Press Box** (`NW_HOME`) is the personal page below; News opens on it, and the picked

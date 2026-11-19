@@ -11,6 +11,7 @@ import { feedbackRoute } from "./feedback.js";
 import { factCheck, teamFacts } from "./factcheck.js";
 import { usageRoute } from "./usage.js";
 import { googleRoutes } from "./google.js";
+import { wireRoute } from "./wire.js";
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -167,6 +168,8 @@ export default {
     const ip = req.headers.get("cf-connecting-ip") || "", whoIs = guardWho(ip);
     if (url.pathname.startsWith("/api/") && req.method === "POST" && (await failCount(ip)) >= FAIL_MAX)
       return json({ error: "Too many wrong passcodes from this network. Try again in 15 minutes." }, 429);
+    // News: ESPN's injury report and trades and signings, trimmed for the phone (worker/wire.js, 3.114.0)
+    if (url.pathname === "/api/wire") return wireRoute(req, url, { json });
     // Settings → Send feedback, and the daily report that reads it (worker/feedback.js)
     if (url.pathname.startsWith("/api/feedback")) return feedbackRoute(req, env, url, { rpc, whoIs, json });
     // how much each person uses Slate, for DJ's Project status page (worker/usage.js)

@@ -118,6 +118,14 @@ def main():
                 route.continue_()
         return handle
 
+    wire_cache = {}
+    def wire_local(route):
+        lg = route.request.url.rsplit("=", 1)[-1]
+        if lg not in wire_cache:
+            import subprocess
+            try: wire_cache[lg] = subprocess.run(["node", os.path.join(ROOT, "scripts", "wire_local.mjs"), lg], capture_output=True, text=True, timeout=60).stdout or '{"error":"none"}'
+            except Exception as e: wire_cache[lg] = json.dumps({"error": str(e)})
+        route.fulfill(body=wire_cache[lg], content_type="application/json")
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path=os.environ.get("SLATE_CHROMIUM") or None)  # SLATE_CHROMIUM: a Chromium already on the machine
         for size in sizes:
@@ -130,6 +138,7 @@ def main():
             page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/(\?.*)?(#.*)?$"), lambda r: r.fulfill(path=index, content_type="text/html"))
             page.route(re.compile(r".*/version\.json.*"), lambda r: r.fulfill(path=ver, content_type="application/json"))
             page.route(re.compile(r"^https://site\.api\.espn\.com/.*"), espn)
+            page.route(re.compile(r".*/api/wire\?lg=\w+$"), wire_local)  # News injuries and moves from this copy of worker/wire.js (3.115.0)
             page.route(re.compile(r".*supabase\.co/rest/v1/docs.*user-settings.*"), settings_for(S["device"]))
             page.route(re.compile(r".*/api/docs$"), settings_for(S["device"]))  # 3.83.1: a person's own documents come from the server
             if not pw or readonly:  # read-only: nothing this run does can be saved (the passcode check itself still goes through)
