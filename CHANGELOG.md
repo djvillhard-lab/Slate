@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.12 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- News: Generate could fail with many leagues picked ("too much for one page"). Claude's page ran past its length limit and was thrown away.
+- With more than 4 leagues picked, each league section is shorter (2 or 3 summaries instead of 3 to 5, and a shorter league story when more than 8 are picked). Claude also has more room for the whole page.
+- When a pick has a lot of headlines, the extra headlines are left out before the page goes to Claude, instead of the list being cut off partway.
+
 ## 3.113.11 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Team logos: Manchester United, St. Louis CITY and other teams could still show lettered boxes, on the Teams page and elsewhere. Their logos waited on team lists the phone downloads from ESPN, and when a list did not arrive the whole league showed letters.
