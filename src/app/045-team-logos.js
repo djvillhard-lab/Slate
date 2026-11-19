@@ -43,11 +43,25 @@
     var hx = function (c) { return /^[0-9a-f]{6}$/i.test(c || "") ? "#" + c.toLowerCase() : ""; };
     LOGO_LIVE[k] = [sg, hx(c1), hx(c2)]; clearTimeout(logoFillT); logoFillT = setTimeout(logoFill, 0); return !logoGames()[k];
   }
+  // the logo files built into the app: name -> "folder/file.png"
+  var LOGO_BUILT = null;
+  function logoBuiltIn() {
+    if (LOGO_BUILT) return LOGO_BUILT;
+    var o = {}, src = window.TEAM_LOGOS || {};
+    Object.keys(src).forEach(function (dir) { var m = src[dir] || {}; Object.keys(m).forEach(function (k) { if (!o[k]) o[k] = dir + "/" + m[k] + ".png"; }); });
+    return (LOGO_BUILT = o);
+  }
   // the team's entry: [logo segment, main color, alternate color], or null
   function teamLook(name) {
     var k = logoNorm(name); if (!k) return null;
     var hit = logoGames()[k] || LOGO_LIVE[k]; if (hit) return hit;
-    for (var lg in LOGO_REG) { var t = LOGO_REG[lg] && LOGO_REG[lg].t; if (t && t[k]) return t[k]; }
+    var reg = null; for (var lg in LOGO_REG) { var t = LOGO_REG[lg] && LOGO_REG[lg].t; if (t && t[k]) { reg = t[k]; break; } }
+    // 3.113.11 (DJ: Manchester United and St. Louis CITY still showed letters on the Teams page): every team's logo file now
+    // ships with the app (src/data/logos.js, built by scripts/logos.py), so no logo waits on a download of ESPN's team lists.
+    // The phone's own lists only add colors and teams newer than the app's list.
+    var sl = logoBuiltIn()[k];
+    if (sl) { var kc = typeof teamByName === "function" ? teamByName(name) : null; return [sl, (reg && reg[1]) || (kc && kc.c1) || "", (reg && reg[2]) || (kc && kc.c2) || ""]; }
+    if (reg) return reg;
     logoRefresh();
     // the five big pro leagues never wait on ESPN's team list (3.62.2): their logo file is the team's abbreviation,
     // which the app's own team list already has. One failed download used to leave a whole league without logos for an hour.

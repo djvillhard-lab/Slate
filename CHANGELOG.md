@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.11 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Team logos: Manchester United, St. Louis CITY and other teams could still show lettered boxes, on the Teams page and elsewhere. Their logos waited on team lists the phone downloads from ESPN, and when a list did not arrive the whole league showed letters.
+- Every team's logo is now built into the app: all NFL, NBA, WNBA, NHL, MLB and MLS teams, the big European leagues, the Champions League, Europa League and FA Cup clubs, every college team ESPN has a logo for, and national teams. 1,364 teams in all, so a logo no longer depends on that download.
+- A team ESPN has no logo for (a few small colleges and lower-league clubs) still shows its letters.
+
 ## 3.113.10 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Slate one-liners that only restate the matchup are gone. ESPN's preview headline is skipped when it says nothing past the team names ("Notre Dame Fighting Irish take on the Auburn Tigers", "Penguins take on the Blues, look to end home slide"), and the card uses the next real fact instead. When there's no real fact, the card shows no line rather than "Cincinnati at Orlando". A headline with a number or a player in it ("…after Crosby scores twice") still shows. A home or road record that is the team's whole record ("Florida State is 5-0 at home" for a 5-0 team) is skipped too.
