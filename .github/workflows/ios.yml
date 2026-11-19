@@ -27,10 +27,11 @@ jobs:
           xcrun simctl list devicetypes | grep -i iphone || true
 
       - name: Build for the simulator
+        # 3.114.0: a destination, not -sdk, so the embedded Apple Watch app builds for the Watch simulator
         run: |
           set -o pipefail
           xcodebuild -project ios/Slate.xcodeproj -scheme Slate -configuration Debug \
-            -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 \
             || { echo "---- compile errors ----"; grep -E "error:" -A4 build.log | head -120; tail -20 build.log; exit 1; }
           tail -40 build.log
 

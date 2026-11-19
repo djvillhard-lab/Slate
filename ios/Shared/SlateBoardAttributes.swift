@@ -34,4 +34,8 @@ struct SlateBoardGame: Codable, Hashable {
     var al: String?           // 3.67.0: away and home logos ("nba/bos.png"), drawn in place of the chips once the app has saved them
     var hl: String?
     var e: Double?            // 3.113.0: when the app saw the game go final (seconds), so the widget keeps a final 30 minutes
+    var lg: String?           // 3.114.0, for the Watch app: the league ("CBB"), the standout ("C. Boozer 21 PTS"),
+    var st: String?           //   your bet's label from My bets, and the ESPN scoreboard the Watch refreshes from
+    var bl: String?
+    var u: String?
 }

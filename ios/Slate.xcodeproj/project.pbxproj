@@ -12,10 +12,16 @@
 		10D9F195F0D0D6C56A33F4A5 /* Slate-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Slate-Info.plist"; sourceTree = "<group>"; };
 		69316BB31C402ACFC08E99AE /* SlateLive.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlateLive.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F694A8C9651754237EA7FDF /* SlateLive-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateLive-Info.plist"; sourceTree = "<group>"; };
+		C05DDB765B1EBD29F0E1477F /* SlateWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SlateWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		42EAE48816F139E64D1DD6CB /* SlateWatch-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateWatch-Info.plist"; sourceTree = "<group>"; };
+		A26C35AC248B4FF907B1370A /* SlateWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlateWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6E1C922DBDEF809A4CD379E /* SlateWatchWidgets-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateWatchWidgets-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXBuildFile section */
 		11D6DC24A69BED2DFDE77EB6 /* SlateLive.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 69316BB31C402ACFC08E99AE /* SlateLive.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		161FBA280F9EB3C9E014CEC5 /* SlateWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C05DDB765B1EBD29F0E1477F /* SlateWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		11DA1C1D442FFF1F62797EBD /* SlateWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A26C35AC248B4FF907B1370A /* SlateWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,6 +31,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 4E98551F74F04BA720A0012E;
 			remoteInfo = SlateLive;
+		};
+		A98523929E40A1CAFE25C7A9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8ED27768E18D12DA5E0467B0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 383EFB689AEA1B90E2BAF434;
+			remoteInfo = SlateWatch;
+		};
+		2042C7836F983B4614DE1FA6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8ED27768E18D12DA5E0467B0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C3BE81E4BD14EEBF73364972;
+			remoteInfo = SlateWatchWidgets;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -36,6 +56,28 @@
 			dstSubfolderSpec = 13;
 			files = (
 				11D6DC24A69BED2DFDE77EB6 /* SlateLive.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1CDC6F706649C2A44068A242 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				161FBA280F9EB3C9E014CEC5 /* SlateWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		85E8A50D67221FD929A38E97 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				11DA1C1D442FFF1F62797EBD /* SlateWatchWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -58,6 +100,26 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
+		A0D8B75A0B40ECB2C6E01A4E /* Common */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Common;
+			sourceTree = "<group>";
+		};
+		3E81BF9EEF24E6D1F5E15D5A /* WatchShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WatchShared;
+			sourceTree = "<group>";
+		};
+		AB15ADF88A83DB0CC47F4BB9 /* SlateWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SlateWatch;
+			sourceTree = "<group>";
+		};
+		2FA459FFBA7CA738DE56D433 /* SlateWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SlateWatchWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +137,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8B3BBA6959AC8DAA1CEB622C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EE26C9FB6685BBA43A949A83 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -84,9 +160,15 @@
 				899D8627AD69D3508648A835 /* Slate */,
 				E8A218FD8A79AA26A4A9635D /* Shared */,
 				F12D558CEA3E598A29209145 /* SlateLive */,
+				A0D8B75A0B40ECB2C6E01A4E /* Common */,
+				AB15ADF88A83DB0CC47F4BB9 /* SlateWatch */,
+				2FA459FFBA7CA738DE56D433 /* SlateWatchWidgets */,
+				3E81BF9EEF24E6D1F5E15D5A /* WatchShared */,
 				F643D304EE83ABC792B09EEA /* Slate.entitlements */,
 				10D9F195F0D0D6C56A33F4A5 /* Slate-Info.plist */,
 				0F694A8C9651754237EA7FDF /* SlateLive-Info.plist */,
+				42EAE48816F139E64D1DD6CB /* SlateWatch-Info.plist */,
+				A6E1C922DBDEF809A4CD379E /* SlateWatchWidgets-Info.plist */,
 				3BCB80553BCE55C5C679AE70 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -96,6 +178,8 @@
 			children = (
 				77D077A52DF78C538016CCD4 /* Slate.app */,
 				69316BB31C402ACFC08E99AE /* SlateLive.appex */,
+				C05DDB765B1EBD29F0E1477F /* SlateWatch.app */,
+				A26C35AC248B4FF907B1370A /* SlateWatchWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,11 +195,13 @@
 				39169D08A8B42D35C03882FE /* Frameworks */,
 				CEDE6C41B23E7F0926986469 /* Resources */,
 				B85A3C0852CF4493A3608E88 /* Embed Foundation Extensions */,
+				1CDC6F706649C2A44068A242 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				2870ADF4841C9D72E867E9D1 /* PBXTargetDependency */,
+				A3AB80862FF3ED161A03EC8A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				899D8627AD69D3508648A835 /* Slate */,
@@ -143,12 +229,63 @@
 			fileSystemSynchronizedGroups = (
 				F12D558CEA3E598A29209145 /* SlateLive */,
 				E8A218FD8A79AA26A4A9635D /* Shared */,
+				A0D8B75A0B40ECB2C6E01A4E /* Common */,
 			);
 			name = SlateLive;
 			packageProductDependencies = (
 			);
 			productName = SlateLive;
 			productReference = 69316BB31C402ACFC08E99AE /* SlateLive.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		383EFB689AEA1B90E2BAF434 /* SlateWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 329A4BABBD4522FFAA830484 /* Build configuration list for PBXNativeTarget "SlateWatch" */;
+			buildPhases = (
+				22972DD25BC7010D5218D2F2 /* Sources */,
+				8B3BBA6959AC8DAA1CEB622C /* Frameworks */,
+				F8861B3510559ADF290396E5 /* Resources */,
+				85E8A50D67221FD929A38E97 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				74E135146985B041F6C2A7CA /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AB15ADF88A83DB0CC47F4BB9 /* SlateWatch */,
+				3E81BF9EEF24E6D1F5E15D5A /* WatchShared */,
+				A0D8B75A0B40ECB2C6E01A4E /* Common */,
+			);
+			name = SlateWatch;
+			packageProductDependencies = (
+			);
+			productName = SlateWatch;
+			productReference = C05DDB765B1EBD29F0E1477F /* SlateWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C3BE81E4BD14EEBF73364972 /* SlateWatchWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 09F190300435EF6D34DA3876 /* Build configuration list for PBXNativeTarget "SlateWatchWidgets" */;
+			buildPhases = (
+				D4FDC1B907E47D1B094BB9F4 /* Sources */,
+				EE26C9FB6685BBA43A949A83 /* Frameworks */,
+				81EAA6734BE8A1074E174A71 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2FA459FFBA7CA738DE56D433 /* SlateWatchWidgets */,
+				3E81BF9EEF24E6D1F5E15D5A /* WatchShared */,
+				A0D8B75A0B40ECB2C6E01A4E /* Common */,
+			);
+			name = SlateWatchWidgets;
+			packageProductDependencies = (
+			);
+			productName = SlateWatchWidgets;
+			productReference = A26C35AC248B4FF907B1370A /* SlateWatchWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -165,6 +302,12 @@
 						CreatedOnToolsVersion = 27.0;
 					};
 					4E98551F74F04BA720A0012E = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					383EFB689AEA1B90E2BAF434 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					C3BE81E4BD14EEBF73364972 = {
 						CreatedOnToolsVersion = 27.0;
 					};
 				};
@@ -185,6 +328,8 @@
 			targets = (
 				2842FBBDD5EC2FB1D3B39946 /* Slate */,
 				4E98551F74F04BA720A0012E /* SlateLive */,
+				383EFB689AEA1B90E2BAF434 /* SlateWatch */,
+				C3BE81E4BD14EEBF73364972 /* SlateWatchWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -198,6 +343,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		43390538CBCF33412F36214E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F8861B3510559ADF290396E5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		81EAA6734BE8A1074E174A71 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -221,6 +380,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		22972DD25BC7010D5218D2F2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D4FDC1B907E47D1B094BB9F4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -228,6 +401,16 @@
 			isa = PBXTargetDependency;
 			target = 4E98551F74F04BA720A0012E /* SlateLive */;
 			targetProxy = 44246C26D5D564AEF2E20463 /* PBXContainerItemProxy */;
+		};
+		A3AB80862FF3ED161A03EC8A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 383EFB689AEA1B90E2BAF434 /* SlateWatch */;
+			targetProxy = A98523929E40A1CAFE25C7A9 /* PBXContainerItemProxy */;
+		};
+		74E135146985B041F6C2A7CA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C3BE81E4BD14EEBF73364972 /* SlateWatchWidgets */;
+			targetProxy = 2042C7836F983B4614DE1FA6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -357,13 +540,13 @@
 				INFOPLIST_FILE = "SlateLive-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slate Live";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = "18.0";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = "3.0";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.live;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -385,13 +568,13 @@
 				INFOPLIST_FILE = "SlateLive-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slate Live";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = "18.0";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = "3.0";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.live;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -399,6 +582,126 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		37E3F50063715C0B73E7E513 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SlateWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlateWatch-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Slate;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.djvillhard.slate;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = "3.0";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = "10.0";
+			};
+			name = Debug;
+		};
+		9B85278861FE7023BEC46E51 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SlateWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlateWatch-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Slate;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.djvillhard.slate;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = "3.0";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = "10.0";
+			};
+			name = Release;
+		};
+		B2EDF302E06668DC657AA8FE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SlateWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlateWatchWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Slate;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "3.0";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.watchkitapp.complications;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = "10.0";
+			};
+			name = Debug;
+		};
+		BAAD397F8734A97C68EF8153 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SlateWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GYZZCJ8WV2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlateWatchWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Slate;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "3.0";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djvillhard.slate.watchkitapp.complications;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = "10.0";
 			};
 			name = Release;
 		};
@@ -428,6 +731,24 @@
 			buildConfigurations = (
 				E5D6B8DB96862100E5FA3697 /* Debug */,
 				740894A306C1344BC275B750 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		329A4BABBD4522FFAA830484 /* Build configuration list for PBXNativeTarget "SlateWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				37E3F50063715C0B73E7E513 /* Debug */,
+				9B85278861FE7023BEC46E51 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		09F190300435EF6D34DA3876 /* Build configuration list for PBXNativeTarget "SlateWatchWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B2EDF302E06668DC657AA8FE /* Debug */,
+				BAAD397F8734A97C68EF8153 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

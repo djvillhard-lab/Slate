@@ -3,8 +3,9 @@ import SwiftUI
 // 3.113.0 (DJ): Slate's axe-hammer mark, the one beside the page titles in the app (src/body.html, svg.brand),
 // drawn from the same 24×24 paths: the hammer tilted 35°, its head filled, and the two sparkles. Used small, in the
 // app's green, on headers only (the Tonight's slate widget, the Board's Dynamic Island), never next to a score.
+// 3.114.0: in ios/Common, shared by the live notifications, the widgets and the Apple Watch app.
 struct SlateMark: View {
-    var color: Color = SlateLook.accent
+    var color: Color = Color(red: 69 / 255, green: 168 / 255, blue: 94 / 255)   // the app's green, #45A85E (SlateLook.accent)
     var size: CGFloat = 14
 
     var body: some View {

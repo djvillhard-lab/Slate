@@ -334,6 +334,13 @@
       if (at.awayLogo) o.al = at.awayLogo; if (at.homeLogo) o.hl = at.homeLogo;
       if (kick > 0) o.t = Math.floor(kick / 1000); if (at.channel) o.tv = String(at.channel).slice(0, 16);
       if (end) o.e = end;
+      // 3.114.0, for the Apple Watch app: the league, the standout line, your bet, and the ESPN scoreboard the Watch
+      // refreshes the score from by itself (builds before 3.114.0 ignore these)
+      o.lg = String(at.league || "").replace(/^Slate • /, "").slice(0, 20);
+      if (s.line) o.st = String(s.line).slice(0, 60);
+      var bt = laBetOf(g); if (bt && bt.l) o.bl = bt.l;
+      var eu = (ESPN_URLS[g.league] || [])[0]; if (eu && kick > 0) { var ep = eu.split("&");
+        o.u = ("https://site.api.espn.com/apis/site/v2/sports/" + ep[0] + "/scoreboard?dates=" + etDate(kick) + (ep.length > 1 ? "&" + ep.slice(1).join("&") : "")).slice(0, 240); }
       return o;
       // finals more than 30 minutes old leave the list, so the twelve sent are the ones the widget can still show
     }).filter(function (o) { return o.s !== "post" || (o.e && now - o.e < 1800); })

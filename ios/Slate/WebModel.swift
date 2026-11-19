@@ -192,7 +192,11 @@ final class WebModel: ObservableObject {
             if let segs = m["segs"] as? [String] { SlateLogos.fetch(segs) }
         case "slate":
             // 3.112.0: today's slate for the Tonight's slate widget (SlateTonight); redrawn only when it changed
-            if SlateTonight.save(m) { WidgetCenter.shared.reloadTimelines(ofKind: "SlateTonight") }
+            if SlateTonight.save(m) {
+                WidgetCenter.shared.reloadTimelines(ofKind: "SlateTonight")
+                WidgetCenter.shared.reloadTimelines(ofKind: "SlateLock")   // 3.114.0: the Lock Screen widgets
+                WatchLink.shared.send()                                    // 3.114.0: the Apple Watch app
+            }
         case "push-request":
             pushAsked = true
             requestPush()

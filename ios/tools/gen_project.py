@@ -27,7 +27,15 @@ P = {k: oid(k) for k in [
     "projDebug", "projRelease", "targetDebug", "targetRelease", "entRef", "plistRef",
     # the SlateLive widget extension (live notifications) and the Shared folder both targets compile
     "liveRef", "liveSync", "sharedSync", "liveTarget", "liveSources", "liveFrameworks", "liveResources", "liveList",
-    "liveDebug", "liveRelease", "livePlistRef", "embedPhase", "embedFile", "liveDep", "liveProxy"]}
+    "liveDebug", "liveRelease", "livePlistRef", "embedPhase", "embedFile", "liveDep", "liveProxy",
+    # 3.114.0: ios/Common (the Slate mark) for the widgets and the Watch; the Apple Watch app (SlateWatch, embedded in
+    # the iPhone app) and its watch-face complication (SlateWatchWidgets, embedded in the Watch app); ios/WatchShared
+    # compiles into both Watch targets
+    "commonSync", "watchSharedSync",
+    "watchRef", "watchSync", "watchTarget", "watchSources", "watchFrameworks", "watchResources", "watchList",
+    "watchDebug", "watchRelease", "watchPlistRef", "embedWatchPhase", "embedWatchFile", "watchDep", "watchProxy",
+    "wwRef", "wwSync", "wwTarget", "wwSources", "wwFrameworks", "wwResources", "wwList",
+    "wwDebug", "wwRelease", "wwPlistRef", "embedWWPhase", "embedWWFile", "wwDep", "wwProxy"]}
 
 
 def settings(d, indent="\t\t\t\t"):
@@ -104,6 +112,7 @@ target_common = {
 }
 
 live_common = {
+    "CODE_SIGN_ENTITLEMENTS": "SlateLive.entitlements",
     "CODE_SIGN_STYLE": "Automatic",
     "CURRENT_PROJECT_VERSION": BUILD,
     "DEVELOPMENT_TEAM": "GYZZCJ8WV2",
@@ -111,6 +120,7 @@ live_common = {
     "INFOPLIST_FILE": "SlateLive-Info.plist",
     "INFOPLIST_KEY_CFBundleDisplayName": "Slate Live",
     "INFOPLIST_KEY_NSHumanReadableCopyright": "",
+    "IPHONEOS_DEPLOYMENT_TARGET": "18.0",   # 3.112.0: the Watch Smart Stack and the widget bundle need iOS 18
     "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"],
     "MARKETING_VERSION": MARKETING,
     "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID + ".live",
@@ -120,6 +130,53 @@ live_common = {
     "SUPPORTS_MACCATALYST": "NO",
     "SWIFT_EMIT_LOC_STRINGS": "YES",
     "TARGETED_DEVICE_FAMILY": "1",
+}
+
+WATCH_DEPLOY = "10.0"
+watch_common = {
+    "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+    "CODE_SIGN_ENTITLEMENTS": "SlateWatch.entitlements",
+    "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": BUILD,
+    "DEVELOPMENT_TEAM": "GYZZCJ8WV2",
+    "ENABLE_PREVIEWS": "YES",
+    "GENERATE_INFOPLIST_FILE": "YES",
+    "INFOPLIST_FILE": "SlateWatch-Info.plist",
+    "INFOPLIST_KEY_CFBundleDisplayName": "Slate",
+    "INFOPLIST_KEY_UISupportedInterfaceOrientations": "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown",
+    "INFOPLIST_KEY_WKApplication": "YES",
+    "INFOPLIST_KEY_WKCompanionAppBundleIdentifier": BUNDLE_ID,
+    "INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp": "NO",
+    "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks"],
+    "MARKETING_VERSION": MARKETING,
+    "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID + ".watchkitapp",
+    "PRODUCT_NAME": "$(TARGET_NAME)",
+    "SDKROOT": "watchos",
+    "SKIP_INSTALL": "YES",
+    "SUPPORTED_PLATFORMS": "watchos watchsimulator",
+    "SWIFT_EMIT_LOC_STRINGS": "YES",
+    "TARGETED_DEVICE_FAMILY": "4",
+    "WATCHOS_DEPLOYMENT_TARGET": WATCH_DEPLOY,
+}
+ww_common = {
+    "CODE_SIGN_ENTITLEMENTS": "SlateWatchWidgets.entitlements",
+    "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": BUILD,
+    "DEVELOPMENT_TEAM": "GYZZCJ8WV2",
+    "GENERATE_INFOPLIST_FILE": "YES",
+    "INFOPLIST_FILE": "SlateWatchWidgets-Info.plist",
+    "INFOPLIST_KEY_CFBundleDisplayName": "Slate",
+    "INFOPLIST_KEY_NSHumanReadableCopyright": "",
+    "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"],
+    "MARKETING_VERSION": MARKETING,
+    "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID + ".watchkitapp.complications",
+    "PRODUCT_NAME": "$(TARGET_NAME)",
+    "SDKROOT": "watchos",
+    "SKIP_INSTALL": "YES",
+    "SUPPORTED_PLATFORMS": "watchos watchsimulator",
+    "SWIFT_EMIT_LOC_STRINGS": "YES",
+    "TARGETED_DEVICE_FAMILY": "4",
+    "WATCHOS_DEPLOYMENT_TARGET": WATCH_DEPLOY,
 }
 
 
@@ -139,10 +196,16 @@ def build():
 		{o['plistRef']} /* Slate-Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Slate-Info.plist"; sourceTree = "<group>"; }};
 		{o['liveRef']} /* SlateLive.appex */ = {{isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlateLive.appex; sourceTree = BUILT_PRODUCTS_DIR; }};
 		{o['livePlistRef']} /* SlateLive-Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateLive-Info.plist"; sourceTree = "<group>"; }};
+		{o['watchRef']} /* SlateWatch.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SlateWatch.app; sourceTree = BUILT_PRODUCTS_DIR; }};
+		{o['watchPlistRef']} /* SlateWatch-Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateWatch-Info.plist"; sourceTree = "<group>"; }};
+		{o['wwRef']} /* SlateWatchWidgets.appex */ = {{isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlateWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; }};
+		{o['wwPlistRef']} /* SlateWatchWidgets-Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SlateWatchWidgets-Info.plist"; sourceTree = "<group>"; }};
 /* End PBXFileReference section */
 
 /* Begin PBXBuildFile section */
 		{o['embedFile']} /* SlateLive.appex in Embed Foundation Extensions */ = {{isa = PBXBuildFile; fileRef = {o['liveRef']} /* SlateLive.appex */; settings = {{ATTRIBUTES = (RemoveHeadersOnCopy, ); }}; }};
+		{o['embedWatchFile']} /* SlateWatch.app in Embed Watch Content */ = {{isa = PBXBuildFile; fileRef = {o['watchRef']} /* SlateWatch.app */; settings = {{ATTRIBUTES = (RemoveHeadersOnCopy, ); }}; }};
+		{o['embedWWFile']} /* SlateWatchWidgets.appex in Embed Foundation Extensions */ = {{isa = PBXBuildFile; fileRef = {o['wwRef']} /* SlateWatchWidgets.appex */; settings = {{ATTRIBUTES = (RemoveHeadersOnCopy, ); }}; }};
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -152,6 +215,20 @@ def build():
 			proxyType = 1;
 			remoteGlobalIDString = {o['liveTarget']};
 			remoteInfo = SlateLive;
+		}};
+		{o['watchProxy']} /* PBXContainerItemProxy */ = {{
+			isa = PBXContainerItemProxy;
+			containerPortal = {o['project']} /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = {o['watchTarget']};
+			remoteInfo = SlateWatch;
+		}};
+		{o['wwProxy']} /* PBXContainerItemProxy */ = {{
+			isa = PBXContainerItemProxy;
+			containerPortal = {o['project']} /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = {o['wwTarget']};
+			remoteInfo = SlateWatchWidgets;
 		}};
 /* End PBXContainerItemProxy section */
 
@@ -163,6 +240,28 @@ def build():
 			dstSubfolderSpec = 13;
 			files = (
 				{o['embedFile']} /* SlateLive.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['embedWatchPhase']} /* Embed Watch Content */ = {{
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				{o['embedWatchFile']} /* SlateWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['embedWWPhase']} /* Embed Foundation Extensions */ = {{
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				{o['embedWWFile']} /* SlateWatchWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -185,6 +284,26 @@ def build():
 			path = Shared;
 			sourceTree = "<group>";
 		}};
+		{o['commonSync']} /* Common */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Common;
+			sourceTree = "<group>";
+		}};
+		{o['watchSharedSync']} /* WatchShared */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WatchShared;
+			sourceTree = "<group>";
+		}};
+		{o['watchSync']} /* SlateWatch */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SlateWatch;
+			sourceTree = "<group>";
+		}};
+		{o['wwSync']} /* SlateWatchWidgets */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SlateWatchWidgets;
+			sourceTree = "<group>";
+		}};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,6 +321,20 @@ def build():
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{o['watchFrameworks']} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['wwFrameworks']} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -211,9 +344,15 @@ def build():
 				{o['syncGroup']} /* Slate */,
 				{o['sharedSync']} /* Shared */,
 				{o['liveSync']} /* SlateLive */,
+				{o['commonSync']} /* Common */,
+				{o['watchSync']} /* SlateWatch */,
+				{o['wwSync']} /* SlateWatchWidgets */,
+				{o['watchSharedSync']} /* WatchShared */,
 				{o['entRef']} /* Slate.entitlements */,
 				{o['plistRef']} /* Slate-Info.plist */,
 				{o['livePlistRef']} /* SlateLive-Info.plist */,
+				{o['watchPlistRef']} /* SlateWatch-Info.plist */,
+				{o['wwPlistRef']} /* SlateWatchWidgets-Info.plist */,
 				{o['productsGroup']} /* Products */,
 			);
 			sourceTree = "<group>";
@@ -223,6 +362,8 @@ def build():
 			children = (
 				{o['appRef']} /* Slate.app */,
 				{o['liveRef']} /* SlateLive.appex */,
+				{o['watchRef']} /* SlateWatch.app */,
+				{o['wwRef']} /* SlateWatchWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -238,11 +379,13 @@ def build():
 				{o['frameworks']} /* Frameworks */,
 				{o['resources']} /* Resources */,
 				{o['embedPhase']} /* Embed Foundation Extensions */,
+				{o['embedWatchPhase']} /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				{o['liveDep']} /* PBXTargetDependency */,
+				{o['watchDep']} /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				{o['syncGroup']} /* Slate */,
@@ -270,12 +413,63 @@ def build():
 			fileSystemSynchronizedGroups = (
 				{o['liveSync']} /* SlateLive */,
 				{o['sharedSync']} /* Shared */,
+				{o['commonSync']} /* Common */,
 			);
 			name = SlateLive;
 			packageProductDependencies = (
 			);
 			productName = SlateLive;
 			productReference = {o['liveRef']} /* SlateLive.appex */;
+			productType = "com.apple.product-type.app-extension";
+		}};
+		{o['watchTarget']} /* SlateWatch */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {o['watchList']} /* Build configuration list for PBXNativeTarget "SlateWatch" */;
+			buildPhases = (
+				{o['watchSources']} /* Sources */,
+				{o['watchFrameworks']} /* Frameworks */,
+				{o['watchResources']} /* Resources */,
+				{o['embedWWPhase']} /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				{o['wwDep']} /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				{o['watchSync']} /* SlateWatch */,
+				{o['watchSharedSync']} /* WatchShared */,
+				{o['commonSync']} /* Common */,
+			);
+			name = SlateWatch;
+			packageProductDependencies = (
+			);
+			productName = SlateWatch;
+			productReference = {o['watchRef']} /* SlateWatch.app */;
+			productType = "com.apple.product-type.application";
+		}};
+		{o['wwTarget']} /* SlateWatchWidgets */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {o['wwList']} /* Build configuration list for PBXNativeTarget "SlateWatchWidgets" */;
+			buildPhases = (
+				{o['wwSources']} /* Sources */,
+				{o['wwFrameworks']} /* Frameworks */,
+				{o['wwResources']} /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				{o['wwSync']} /* SlateWatchWidgets */,
+				{o['watchSharedSync']} /* WatchShared */,
+				{o['commonSync']} /* Common */,
+			);
+			name = SlateWatchWidgets;
+			packageProductDependencies = (
+			);
+			productName = SlateWatchWidgets;
+			productReference = {o['wwRef']} /* SlateWatchWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		}};
 /* End PBXNativeTarget section */
@@ -292,6 +486,12 @@ def build():
 						CreatedOnToolsVersion = 27.0;
 					}};
 					{o['liveTarget']} = {{
+						CreatedOnToolsVersion = 27.0;
+					}};
+					{o['watchTarget']} = {{
+						CreatedOnToolsVersion = 27.0;
+					}};
+					{o['wwTarget']} = {{
 						CreatedOnToolsVersion = 27.0;
 					}};
 				}};
@@ -312,6 +512,8 @@ def build():
 			targets = (
 				{o['target']} /* Slate */,
 				{o['liveTarget']} /* SlateLive */,
+				{o['watchTarget']} /* SlateWatch */,
+				{o['wwTarget']} /* SlateWatchWidgets */,
 			);
 		}};
 /* End PBXProject section */
@@ -325,6 +527,20 @@ def build():
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
 		{o['liveResources']} /* Resources */ = {{
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['watchResources']} /* Resources */ = {{
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['wwResources']} /* Resources */ = {{
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -348,6 +564,20 @@ def build():
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{o['watchSources']} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{o['wwSources']} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -355,6 +585,16 @@ def build():
 			isa = PBXTargetDependency;
 			target = {o['liveTarget']} /* SlateLive */;
 			targetProxy = {o['liveProxy']} /* PBXContainerItemProxy */;
+		}};
+		{o['watchDep']} /* PBXTargetDependency */ = {{
+			isa = PBXTargetDependency;
+			target = {o['watchTarget']} /* SlateWatch */;
+			targetProxy = {o['watchProxy']} /* PBXContainerItemProxy */;
+		}};
+		{o['wwDep']} /* PBXTargetDependency */ = {{
+			isa = PBXTargetDependency;
+			target = {o['wwTarget']} /* SlateWatchWidgets */;
+			targetProxy = {o['wwProxy']} /* PBXContainerItemProxy */;
 		}};
 /* End PBXTargetDependency section */
 
@@ -401,6 +641,34 @@ def build():
 			}};
 			name = Release;
 		}};
+		{o['watchDebug']} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+{settings(watch_common)}
+			}};
+			name = Debug;
+		}};
+		{o['watchRelease']} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+{settings(watch_common)}
+			}};
+			name = Release;
+		}};
+		{o['wwDebug']} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+{settings(ww_common)}
+			}};
+			name = Debug;
+		}};
+		{o['wwRelease']} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+{settings(ww_common)}
+			}};
+			name = Release;
+		}};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -427,6 +695,24 @@ def build():
 			buildConfigurations = (
 				{o['liveDebug']} /* Debug */,
 				{o['liveRelease']} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{o['watchList']} /* Build configuration list for PBXNativeTarget "SlateWatch" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{o['watchDebug']} /* Debug */,
+				{o['watchRelease']} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{o['wwList']} /* Build configuration list for PBXNativeTarget "SlateWatchWidgets" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{o['wwDebug']} /* Debug */,
+				{o['wwRelease']} /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
