@@ -16,3 +16,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | shared: 240-chrome.js, 270-wiring.js | (one line each: the Search button on every page) | 2026-11-19 17:15 |
 | DJ | Player page: follow a player, full game log, alerts for followed players | src/app/134-player.js, src/app/220-notifications.js, worker/alerts.js, src/body.html (Notifications section only), docs/pages/players.md | 2026-11-19 17:20 |
 | DJ | shared: 260-persistence.js | (one line: followed players go to the alert settings) | 2026-11-19 17:20 |
+| DJ | Sign in with Apple, Google sign-in inside the app (web half; app half goes to the Live notifications build) | worker/google.js, google.html, src/boot/db-shim.js, src/app/232-welcome.js, src/styles/085-welcome.css, docs/pages/security.md | 2026-11-19 17:40 |
