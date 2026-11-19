@@ -321,13 +321,23 @@
     var b = boxFor(g); ((b && b.teams) || []).forEach(function (t) { (t.groups || []).forEach(function (gr) { (gr.rows || []).forEach(function (r) { hit(r.n, t.abbr); }); }); (t.xi || []).forEach(function (r) { hit(r.n, t.abbr); }); });
     var ks = Object.keys(found); return ks.length === 1 ? ks[0] : "";
   }
+  // 3.113.6 (DJ: Rutgers–Notre Dame still read "won it on Smith's 26-foot three in overtime" after 3.113.4): a line saved before
+  // that fix (this phone's copy, the day's shared lines) gets the same test: "won it on" only when the final margin was one possession
+  // in basketball (3) or one score in football (8). Otherwise the saved line is skipped and the card's line is worked out again
+  function hlStaleWin(g, t) {
+    if (!/\bwon it\b/.test(String(t || ""))) return false;
+    var v = scoreRaw(g.id) || {}, sp = BX_SPORT[g.league], a = Number(v.a), h = Number(v.h); if (isNaN(a) || isNaN(h) || v.a === "" || v.h === "") return false;
+    var m = Math.abs(a - h); return sp === "bball" && m > 3 || sp === "football" && m > 8;
+  }
   function hlNode(g) {
     hlWatch();
     // lines come from the app's own rules (free); a closing line Claude wrote earlier is kept for that game
     var cur = bx.live[g.id], h = cur && cur.hl, sv0 = ((HL.doc || {}).games || {})[g.id];
-    if (sv0 && sv0.final && sv0.text && !hlScorey(sv0.text)) return hlLine(g, sv0.text, "");
-    if (h && h.text) { pvShare(); return hlLine(g, h.text, h.tm); }
-    var kc = HLC[g.id]; return kc && kc.t && status(g).kind === "over" ? hlLine(g, kc.t, kc.tm) : null;
+    if (sv0 && sv0.final && sv0.text && !hlScorey(sv0.text) && !hlStaleWin(g, sv0.text)) return hlLine(g, sv0.text, "");
+    if (h && h.text && !hlStaleWin(g, h.text)) { pvShare(); return hlLine(g, h.text, h.tm); }
+    var kc = HLC[g.id];
+    if (kc && kc.t && hlStaleWin(g, kc.t)) { delete HLC[g.id]; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} if (cur) cur.hl = null; bxNeed(g); return null; }
+    return kc && kc.t && status(g).kind === "over" ? hlLine(g, kc.t, kc.tm) : null;
   }
   // ---- Preview line: one free line under an upcoming game, from ESPN's pre-game summary ----
   // streaks, injuries to a team's leaders, the betting line, ESPN's predictor, table clashes, head-to-head, ESPN's preview headline
