@@ -133,6 +133,6 @@
   });
   $("nav-rules").addEventListener("click", function () { menuGo("rules"); });
   $("btn-rules").addEventListener("click", function () { openSub("rules"); });
-  $("btn-find").addEventListener("click", function () { state.showSearch = !state.showSearch; render(); if (state.showSearch) setTimeout(function () { $("search").focus(); }, 50); });
+  $("btn-find").addEventListener("click", function () { openFind(); });  // 3.119.0: app-wide search (236-search.js)
   $("menu-fab").addEventListener("click", function () { state.menuOpen = !state.menuOpen; renderTop(); });
   $("menu-scrim").addEventListener("click", function () { state.menuOpen = false; renderTop(); });

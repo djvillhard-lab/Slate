@@ -70,11 +70,11 @@
     $("title-t").textContent = v === "news" ? "News" : v === "settings" ? setTitle() : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "feed" ? "Live feed" : v === "best" ? "Player rankings" : v === "moments" ? "Box Office" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     var tl = $("title"); if (tl) tl.classList.add("has-brand");
-    $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = v !== "games";
+    $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = !$("view-" + v);  // 3.119.0: Search on every page
     $("btn-refresh").hidden = true; $("btn-settings").hidden = true;
     $("toprow-r").classList.toggle("lineup-top", v === "lineup");
     fitTitle($("title-t")); fitTitle($("l-title-t"));
-    var pg = $("btn-copy").parentNode; pg.hidden = v !== "games"; $("btn-more").hidden = true;
+    var pg = $("btn-copy").parentNode; pg.hidden = $("btn-find").hidden; if (v !== "games") { $("btn-rules").hidden = true; $("btn-copy").hidden = true; } $("btn-more").hidden = true;
     ["l-btn-settings", "l-btn-more", "l-btn-refresh"].forEach(function (id) { var x = $(id); if (x) x.hidden = true; });
     $("title-d").hidden = isDuo || v !== "lineup";
     // every page's header has the same second line (3.31.0): the slate's date picker, the day for a page that shows

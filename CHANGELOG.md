@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.119.0 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Search: the magnifier is now at the top right of every page, not just All games. It opens one search for teams, players and games.
+- Teams come from the built-in team list, with the same star to add them to your teams. Tap one for its team page.
+- Games are the day the app is showing, matched by team, conference, league or channel, live games first. Tap one for its matchup.
+- Players come from ESPN's search, for the leagues Slate follows. Tap one for the player page.
+- Back or Close puts the search away. It remembers what you typed last, so a second look is one tap.
+
 ## 3.118.0 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Teams → Standings → MLS: a Bracket for the MLS Cup playoffs, next to the table (Table / Bracket at the top; the bracket opens first while the playoffs are on).
