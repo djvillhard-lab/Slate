@@ -235,6 +235,8 @@
     return lt ? ((items.filter(function (a) { return a.img && nwAbout(a, lt.name); })[0]) || {}).img || "" : "";
   }
   function nwLgOfTeam(t) { if (!t) return ""; for (var k in NW_TLG) if (NW_TLG[k] === t.lg && t.lg !== "College") return k; return ""; }
+  var NW_SPORT = { ncaaf: "College football", ncaam: "Men's college basketball", ncaaw: "Women's college basketball" };
+  function nwSportName(lg) { return NW_SPORT[lg] || (LEAGUES[lg] && LEAGUES[lg].tag) || ""; }
   function nwSportEm(lg) { var b = String(bxBase(lg) || ""); return /football\/(nfl|college)/.test(b) ? "🏈" : /basketball/.test(b) ? "🏀" : /hockey/.test(b) ? "🏒" : /baseball/.test(b) ? "⚾" : /soccer/.test(b) ? "⚽" : "🏆"; }
   // quick hits as feed boxes (3.83.3, DJ: the league sections in the new look): the team's color and logo, the tag
   function nwTopLgs(doc) {
@@ -464,8 +466,9 @@
       var tcard = el("div", "nx-card nx-top" + (shut ? " shut" : "")); tcard.appendChild(th);
       body.appendChild(tcard);
       // each story is a feed box (3.82.0): its rank, the team's color and logo when Claude named one, the tag and NEW.
-      // Ten stories (3.83.6, DJ): the first five show, Show 5 more opens the rest and stays open until closed
-      var more = false; try { more = localStorage.getItem("slate-newsmore") === "1"; } catch (e) {}
+      // Ten stories (3.83.6, DJ): the first five show, Show 5 more opens the rest
+      // 3.113.13 (DJ): every page opens on 5 (no longer remembered); Show 5 more stays open for this page until the app reloads
+      var more = !!doc.at && nw.moreAt === doc.at;
       if (!shut) { var tw = el("div", "nx-boxes nx-tops"); top.slice(0, more ? 10 : 5).forEach(function (x, i) {
         // the team (from Claude, else found in the story) and why it made the five: one of my teams, a game on my slate, or its league (3.83.3, DJ)
         var txt = x.title + " " + (x.why || ""), t = nwTeam(x.team, x.lg) || nwFindTeam(txt, x.lg);
@@ -479,6 +482,9 @@
         else if (lg && LEAGUES[lg]) why = nwPill(LEAGUES[lg].tag, "why", nwSportEm(lg));
         // swapped (3.90.3, DJ): the story's tag (Injury, Coaching...) beside the team name, why it's here (Breaking, My team...) top right
         var b = nwBox(t, x.team, [why, x.new && doc.regen ? nwPill("NEW", "new", "🚨") : null], t ? "" : "plain", x.tag ? nwPill(x.tag) : null);
+        // the sport beside the team (3.113.13, DJ): "Michigan Wolverines" alone doesn't say football or basketball
+        var nmEl = b.querySelector(".nx-bt > b"), spName = nwSportName(lg || (t && t.lg));
+        if (nmEl && spName) nmEl.parentNode.insertBefore(el("span", "nx-sp", spName), nmEl.nextSibling);
         var hl = el("div", "nx-th2"); hl.appendChild(el("i", "nx-rank", String(i + 1))); hl.appendChild(el("b", null, x.title)); b.appendChild(hl);
         if (x.why) b.appendChild(el("p", "nx-bx", x.why));
         var xl = nwxLink(x, lg); if (xl) b.appendChild(xl);  // the matching ESPN or Athletic article, when one is loaded (3.104.0)
@@ -487,7 +493,7 @@
       if (top.length > 5) {
         var mb = el("button", "nx-more"); mb.type = "button"; mb.setAttribute("aria-expanded", more ? "true" : "false");
         mb.appendChild(el("span", null, more ? "Show fewer" : "Show " + (Math.min(top.length, 10) - 5) + " more")); mb.appendChild(icon("more"));
-        mb.addEventListener("click", function () { try { localStorage.setItem("slate-newsmore", more ? "0" : "1"); } catch (e) {} keepScroll(renderNews); });
+        mb.addEventListener("click", function () { nw.moreAt = more ? null : doc.at; keepScroll(renderNews); });
         tw.appendChild(mb);
       }
       body.appendChild(tw); }

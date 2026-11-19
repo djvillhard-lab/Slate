@@ -428,6 +428,7 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx-bm { align-items: center; }
 .nx-bt { flex-wrap: wrap; row-gap: 4px; padding-top: 1px; }
 .nx-bt .nx-pill.why { flex: none; }
+.nx-bt .nx-sp { font-size: 12px; font-weight: 600; color: var(--dim); white-space: nowrap; }
 
 /* 3.83.6 (DJ: "no color, bad formatting"): every quick hit carries a color, tight like the top-five cards */
 .nx-box.lgx { border-left-color: var(--accent-fill); background: color-mix(in srgb, var(--accent) 6%, var(--card)); border-color: color-mix(in srgb, var(--accent) 22%, var(--hair)); border-left-color: var(--accent-fill); }

@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.13 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- News: Top news opens on 5 headlines every time, with Show 5 more for the other 5. It no longer stays open from last time.
+- News: each top headline names its sport beside the team, such as "College football", "Men's college basketball" or "NBA", so a college team is clear.
+- News: Earlier always shows the last 3 days, plus Pick a date for any other day. A day without a saved page is dimmed and says "No page".
+
 ## 3.113.12 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - News: Generate could fail with many leagues picked ("too much for one page"). Claude's page ran past its length limit and was thrown away.

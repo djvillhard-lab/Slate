@@ -3,7 +3,9 @@
   (function () { var st = document.createElement("style"); st.id = "nwx-css"; st.textContent =
     ".nwx-note { margin: 4px 0 16px; font-size: 13px; color: var(--dim); }" +
     ".nwx-days { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }" +
-    ".nwx-day { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; }" +
+    ".nwx-day { position: relative; display: inline-flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; overflow: hidden; }" +
+    ".nwx-day > span { font-size: 12px; font-weight: 600; color: var(--dim); }" +
+    ".nwx-day.none { color: var(--dim); }" +
     ".nwx-back { display: block; width: 100%; min-height: 44px; margin: 0 0 12px; text-align: left; }" +
     ".nwx-link { display: inline-block; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; min-height: 28px; }";
     document.head.appendChild(st); })();
@@ -32,23 +34,30 @@
     body.appendChild(rc);
     body.appendChild(el("p", "nwx-note", "Straight from ESPN and The Athletic. For a page written around your games and teams, pick them below."));
   }
-  // Earlier days: the last six days that have a saved page. One look-up per day, once per session.
+  // Earlier (3.113.13, DJ): the last 3 days, always, plus Pick a date for any other day. A day with no saved page is
+  // dimmed and says so (it opens on the page's options). One look-up per day, once per session.
+  function nwxOpenDay(d) { nwx.past = d; nw.opts = false; slideDir = ""; setDate(d); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
   function nwxDays(body) {
     var today = todayInHome(); if (!db) return;
+    var ds = [1, 2, 3].map(function (i) { return shiftDate(today, -i); });
     if (nwx.daysFor !== today) {
-      nwx.daysFor = today; nwx.days = null; var ds = [], t0 = new Date(today + "T12:00:00");
-      for (var i = 1; i <= 6; i++) { var d = new Date(t0.getTime() - i * 864e5); ds.push(d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2)); }
+      nwx.daysFor = today; nwx.days = null;
       Promise.all(ds.map(function (d) { return db.doc("mine/news-" + d).get().then(function (sn) { var x = sn.exists ? sn.data() : null; return x && x.at && ((x.top || []).length || (x.games || []).length || (x.teams || []).length || (x.leagues || []).length) ? d : null; }, function () { return null; }); }))
-        .then(function (r) { nwx.days = r.filter(Boolean); if (nwx.days.length) nwRedraw(); });
+        .then(function (r) { nwx.days = r.filter(Boolean); nwRedraw(); });
     }
-    if (!nwx.days || !nwx.days.length) return;
-    body.appendChild(nwSec("Earlier", "Pages already written"));
+    body.appendChild(nwSec("Earlier", "Past days' pages"));
     var row = el("div", "nwx-days");
-    nwx.days.forEach(function (d) {
-      var b = el("button", "nwx-day", fmtDate(d, { weekday: "short" }) + ", " + fmtDate(d, { month: "short", day: "numeric" })); b.type = "button";
-      b.addEventListener("click", function () { nwx.past = d; nw.opts = false; slideDir = ""; setDate(d); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); });
+    ds.forEach(function (d, i) {
+      var none = nwx.days && nwx.days.indexOf(d) === -1, b = el("button", "nwx-day" + (none ? " none" : "")); b.type = "button";
+      b.appendChild(el("b", null, i === 0 ? "Yesterday" : fmtDate(d, { weekday: "short" }) + ", " + fmtDate(d, { month: "short", day: "numeric" })));
+      if (none) b.appendChild(el("span", null, "No page"));
+      b.addEventListener("click", function () { nwxOpenDay(d); });
       row.appendChild(b);
     });
+    var pk = el("label", "nwx-day nwx-pick"); pk.appendChild(el("b", null, "📅 Pick a date"));
+    var inp = document.createElement("input"); inp.type = "date"; inp.className = "dd-input"; inp.max = shiftDate(today, -1); inp.value = shiftDate(today, -4); inp.setAttribute("aria-label", "Pick a day for News");
+    inp.addEventListener("change", function () { if (inp.value && inp.value < today) nwxOpenDay(inp.value); });
+    pk.appendChild(inp); row.appendChild(pk);
     body.appendChild(row);
   }
   function nwxBackRow(body) {
