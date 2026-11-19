@@ -556,7 +556,7 @@ async function askClaude(env, text, big, searches, lean) {
     // a long search turn can pause; hand the partial answer back so Claude finishes it
     if (body.stop_reason === "pause_turn") { msgs.push({ role: "assistant", content: body.content }); continue; }
     // an answer cut off at the limit would be cut off again: hand that back instead of throwing, so the step isn't retried (and paid for) a second time
-    if (body.stop_reason === "max_tokens") return { ans: null, tooLong: true, usage };
+    if (body.stop_reason === "max_tokens") return { ans: null, tooLong: true, usage, why: "turn " + (turn + 1) + ", " + (u.output_tokens || 0) + " out of " + (big === true ? 10000 : big || 4000) + ", " + usage.input_tokens + " in, " + usage.server_tool_use.web_search_requests + " searches" };
     break;
   }
   const all = [...out.matchAll(/<json>([\s\S]*?)<\/json>/g)], m = all.length ? all[all.length - 1] : /(\{[\s\S]*\})/.exec(out);
@@ -583,7 +583,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
       const chk = fcKind ? factCheck(fcKind, tidy(stripCites(res.ans || res)), p.facts, p.game) : { ans: tidy(stripCites(res.ans || res)), dropped: [] }, ans = chk.ans, fc = chk.dropped.slice(0, 20);
       if (fc.length) console.log("fact check left out", fc.length, JSON.stringify(fc).slice(0, 1500));
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, res.model || null, !!res.tooLong); } catch (e) {} return true; });
-      if (res.tooLong) throw new Error("Claude's answer ran too long");
+      if (res.tooLong) { console.log("ran too long", p.kind, p.key, res.why || ""); throw new Error("Claude's answer ran too long" + (res.why ? " (" + res.why + ")" : "")); }
       const now = new Date().toISOString();
       await step.do("save", { retries: { limit: 2, delay: "5 seconds" } }, async () => {
         // H cuts hard (ids, keys, urls). S is for words people read: text over the limit is cut back to a whole word
