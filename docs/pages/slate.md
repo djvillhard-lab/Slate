@@ -103,3 +103,5 @@ Not covered: "all on the road"-type claims, standings ("second in the East"), pl
 
 ## Full width (Nov 18, 2026)
 .wwb has grid-column 1 / -1: the card is a grid, and without it the line stayed in the team column and wrapped early.
+
+**3.113.9 (Players to watch):** a note claiming a team lead (top/leads/best/both…) is rewritten from ESPN season stats by `pwNote`/`pwLeads` in 080-claude.js (basketball: points, rebounds, assists; players with at least half the team's most games). Leads nothing = note dropped. Worker prompt asks Claude to name the stat.

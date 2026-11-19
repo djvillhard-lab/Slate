@@ -123,7 +123,28 @@
   // ---- Players to watch: every player shows a real season stat line from ESPN (3.66.6) ----
   // Claude picks the players and says why; the numbers come from ESPN's season stats for the team, chosen by what
   // Claude says to watch (3P% for a shooter, rebounds for a big). Never a role like "Boston guard" in place of numbers.
-  var PW = { team: {}, busy: {}, line: {}, redraw: 0 };
+  var PW = { team: {}, busy: {}, line: {}, lead: {}, redraw: 0 };
+  // 3.113.9 (DJ: Jokic "Leads Denver in both categories" with three stats listed): the categories (basketball: points, rebounds,
+  // assists) a player leads their team in, by season average, among players with at least half the team's most games
+  var PW_CATS = { bball: [["avgPoints", "points", "top scorer"], ["avgRebounds", "rebounds", "top rebounder"], ["avgAssists", "assists", "top passer"]] };
+  function pwLeads(lg, team, p) {
+    var cats = PW_CATS[BX_SPORT[lg]]; if (!cats) return null;
+    var all = Object.keys(team).map(function (k) { return team[k]; }), gp = function (x) { return pwNum(x.s.gamesPlayed); }, most = Math.max.apply(null, all.map(gp).concat([0]));
+    var pool = all.filter(function (x) { return !most || gp(x) >= most / 2; });
+    return cats.filter(function (c) { var v = pwNum(p.s[c[0]]); return v > 0 && pool.every(function (x) { return x === p || pwNum(x.s[c[0]]) <= v; }); });
+  }
+  // a note that claims a team lead ("top scorer", "leads Denver in both categories") is rewritten from the numbers: exactly what the
+  // player leads, or nothing when they lead nothing. Other notes stay as Claude wrote them
+  var PW_LEADY = /\b(lead(s|ing)?|top|best|most|both|all three|those categories|No\. ?1)\b/i;
+  function pwNote(g, w) {
+    var note = String(w.note || ""), L = PW.lead[g.id + "|" + pwKey(w.name)];
+    if (!note || !PW_LEADY.test(note) || !L || !L.leads) return note;
+    var side = ["away", "home"].filter(function (sd) { return String(abbr(g, sd) || "").toUpperCase() === L.ab; })[0], tn = side ? short(g, side) : "";
+    var c = L.leads; if (!c.length) return "";
+    if (c.length === 1) return (tn ? tn.replace(/s$/, "s'").replace(/([^s'])$/, "$1's") + " " : "The team's ") + c[0][2];
+    var cs = c.map(function (x) { return x[1]; }), list = cs.length === 2 ? cs.join(" and ") : cs.slice(0, -1).join(", ") + " and " + cs[cs.length - 1];
+    return "Leads " + (tn ? "the " + tn : "the team") + " in " + list;
+  }
   function pwKey(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, "").replace(/[^a-z]/g, ""); }
   function pwNum(v) { var n = parseFloat(String(v == null ? "" : v).replace(/,/g, "")); return isNaN(n) ? 0 : n; }
   // the game's two ESPN team ids by abbreviation, from its box or that day's scoreboard
@@ -207,6 +228,8 @@
           if (!hit) abs.forEach(function (ab, i) { if (hit || (want && abs.indexOf(want) >= 0 && ab !== want)) return; var m = Object.keys(rs[i]).filter(function (k) { var x = rs[i][k]; return x.last && nk.slice(-x.last.length) === x.last && k.charAt(0) === nk.charAt(0); }); if (m.length === 1) hit = rs[i][m[0]]; });
           var ln = hit ? pwLine(g.league, hit, (w.line || "") + " " + (w.note || "")) : "";
           PW.line[g.id + "|" + nk] = ln; if (ln) got++;
+          // 3.113.9: what this player leads the team in, from the same ESPN season stats the line shows
+          if (hit) abs.forEach(function (ab, i) { var ks = Object.keys(rs[i]); if (ks.some(function (k) { return rs[i][k] === hit; })) PW.lead[g.id + "|" + nk] = { ab: ab, leads: pwLeads(g.league, rs[i], hit) }; });
         });
         if (got) { clearTimeout(PW.redraw); PW.redraw = setTimeout(function () { keepScroll(render); }, 50); }
       });
@@ -218,7 +241,7 @@
     r.appendChild(el("span", "pw-n", w.name)); if (w.team) r.appendChild(el("span", "pw-t", w.team));
     var ln = star ? w.line : PW.line[g.id + "|" + pwKey(w.name)] || (/\d/.test(w.line || "") ? w.line : "");
     if (ln) r.appendChild(el("span", "pw-l", ln));
-    if (w.note) r.appendChild(el("span", "pw-note", w.note));
+    var nt = star ? w.note : pwNote(g, w); if (nt) r.appendChild(el("span", "pw-note", nt));
     return r;
   }
   function pwList(g, pv, stars) {

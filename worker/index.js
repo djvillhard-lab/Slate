@@ -475,7 +475,7 @@ Answer with only this JSON inside <json></json> tags:
 {"summary": "4-6 sentences, 70-110 words: lead with why this game matters, then context (standings, recent meetings, form, key absences), close with what decides it",
  "bullets": ["3-5 short one-line points, about 8-16 words each, covering the same ground"],
  "long": ["3-5 paragraphs, 250-400 words in all: how each team is playing, key matchups, storylines and history, the players who decide it, what it means"],
- "watch": [{"name": "...", "team": "ABBR", "line": "short season stat line", "note": "optional few words"}],
+ "watch": [{"name": "...", "team": "ABBR", "line": "short season stat line", "note": "optional few words; a team lead names the exact stat (\"leads Denver in rebounds and assists\"), never \"both categories\""}],
  "series": "one short line on the season series, or empty",
  "headlines": [{"title": "...", "source": "The Athletic", "url": "..."}]}
 Watch: 2-4 players, never one who is out. Each "line" is real numbers from the ESPN facts or your searches, the ones that fit why the player is worth watching (3-point percentage for a shooter, rebounds for a big man), never a role or position such as "Boston guard"; if you can't find numbers for a player, pick another. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;

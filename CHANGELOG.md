@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.9 (Nov 18, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Players to watch: a note that says a player leads their team now names exactly what they lead, checked against the season stats shown. Celtics–Nuggets read "Leads Denver in both categories" under Jokic's three stats; it now reads "Leads the Nuggets in rebounds and assists". Murray stays "Nuggets' top scorer" (26.1 points to Jokic's 24.1). A lead claim the numbers don't back up is dropped, and two players can't both be shown leading the same stat. Saved previews get the fix too, and Claude is told to name the stat from now on.
+
 ## 3.113.8 (Nov 18, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Finished games: the "Worth watching back" line now uses the card's full width. It was kept to the team column, so "6 lead changes in the 2nd half and overtime" wrapped halfway across the card.
