@@ -90,3 +90,11 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - Worth a look missing a game is usually DJ's "National TV only" setting (he turned it off Nov 15), not a bug.
 - The Cloudflare "Workers Builds" check fails on branches and sometimes on main while the site still deploys; check
   https://slate.djvillhard.workers.dev/version.json instead.
+
+## iPhone builds not starting (Nov 19, 2026)
+- 3.113.0 never reached TestFlight on its own: the push to main was a merge commit (Xcode Cloud seems to judge the
+  head commit's own changes, which were web-only), and a direct ios/WEEKEND.md change the next morning didn't start
+  one either. DJ started build 49 by hand. Xcode Cloud still reports builds back to GitHub fine.
+- `.github/workflows/xcode-cloud-watch.yml` now checks 10 minutes after every push to main that touches ios/ and
+  fails (GitHub emails DJ) if no "Slate | TestFlight" check appeared. Fix: App Store Connect > Xcode Cloud > Start Build.
+- Ship iPhone work to main as a plain fast-forward or a commit that itself changes ios/, not a merge of main into the branch.

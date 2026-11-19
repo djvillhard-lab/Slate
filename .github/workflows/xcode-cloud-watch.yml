@@ -1,0 +1,38 @@
+name: Xcode Cloud started?
+# DJ (Nov 19, 2026): iPhone 3.113.0 sat on main for a day because Xcode Cloud never started its TestFlight build,
+# and nobody noticed until DJ asked. Xcode Cloud should start a build within a minute of any push to main that
+# changes ios/ (its start condition; ios/WEEKEND.md) and report it here as a "Slate | TestFlight" check.
+# Ten minutes after such a push this looks for that check. If none showed up, this run FAILS with a title that
+# says what to do, and GitHub emails DJ about the failed run.
+on:
+  push:
+    branches: [main]
+    paths: ["ios/**"]
+permissions:
+  checks: read
+  contents: read
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for Xcode Cloud to pick up the push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          # a build can land on this commit or, if more pushes came right after, on a newer commit on main
+          found() {
+            for ref in "$SHA" main; do
+              n=$(gh api "repos/$GITHUB_REPOSITORY/commits/$ref/check-runs?per_page=100" \
+                --jq '[.check_runs[] | select(.app.slug == "xcode-cloud" or (.name | test("TestFlight")))] | length' 2>/dev/null || echo 0)
+              [ "${n:-0}" -gt 0 ] && return 0
+            done
+            return 1
+          }
+          for i in $(seq 1 20); do
+            if found; then echo "Xcode Cloud started the TestFlight build."; exit 0; fi
+            sleep 30
+          done
+          echo "::error title=Xcode Cloud did not start the iPhone build::Main changed files in ios/ ten minutes ago and no TestFlight build started. Open App Store Connect > Slate > Xcode Cloud > Builds and tap Start Build (workflow TestFlight, branch main)."
+          exit 1
