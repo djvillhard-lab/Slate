@@ -11,3 +11,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | shared: ios/ | (same as above; Sign in with Apple from the Security thread rides in this build) | 2026-11-19 17:07 |
 | DJ | Teams: Standings brackets (playoffs, tournaments) | src/app/132-standings.js, new src/app/133-brackets.js, docs/pages/teams.md | 2026-11-19 17:10 |
 | DJ | News (injuries, trades and signings) | src/app/200-news.js, src/app/205-wire.js (new), docs/pages/news.md | 2026-11-19 17:12 |
+| DJ | More sports: golf, F1, UFC as events on All games and the slate | new src/app/165-events.js, src/app/160-all-games.js, src/app/170-slate-page.js, new src/styles/095-events.css, docs/pages/events.md | 2026-11-19 17:15 |
