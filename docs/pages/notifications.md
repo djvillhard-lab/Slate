@@ -98,3 +98,15 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - `.github/workflows/xcode-cloud-watch.yml` now checks 10 minutes after every push to main that touches ios/ and
   fails (GitHub emails DJ) if no "Slate | TestFlight" check appeared. Fix: App Store Connect > Xcode Cloud > Start Build.
 - Ship iPhone work to main as a plain fast-forward or a commit that itself changes ios/, not a merge of main into the branch.
+
+## Lock Screen widgets and Apple Watch app (3.120.0)
+- SlateLockWidget (ios/SlateLive/SlateLockWidget.swift, kind "SlateLock"): inline, rectangular, circular, from the
+  same tonight.json as the home widget. Several live: the page sends each game's slate position `r`; live games sort
+  by r (TonightLook.next, WatchLook.next), extras show as "+N" / "+N live".
+- Watch: ios/SlateWatch (watchOS 10 app, bundle .watchkitapp, embedded in the iPhone app), ios/SlateWatchWidgets
+  (complication, .watchkitapp.complications), ios/WatchShared (model/look), ios/Common (SlateMark, also in SlateLive).
+  The phone sends tonight.json as WCSession application context (ios/Slate/WatchLink.swift); the Watch refreshes
+  scores from the ESPN scoreboard URL `u` the page sends, matching games by abbreviations. Page also sends lg, st, bl.
+- Targets come from ios/tools/gen_project.py (re-run it to change settings). CI builds with a simulator destination.
+- Open: the Watch shows your bet's label only (no covering/needs line yet); logos load from ESPN on the Watch.
+

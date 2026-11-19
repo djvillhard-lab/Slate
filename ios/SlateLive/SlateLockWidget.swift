@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-// 3.114.0 (DJ): Slate on the Lock Screen. Three shapes, all from the same saved slate as the Tonight's slate widget
+// 3.120.0 (DJ): Slate on the Lock Screen. Three shapes, all from the same saved slate as the Tonight's slate widget
 // (TonightProvider, TonightLook): a line over the clock (the game that's on, or the next one), a rectangle with
 // the next two games, and a round one with the next game. iOS draws Lock Screen widgets in one color over the
 // wallpaper, so they show team abbreviations, not logos. Same rules as the home-screen widget: a score more than 20

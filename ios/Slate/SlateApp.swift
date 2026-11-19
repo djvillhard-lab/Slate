@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         UNUserNotificationCenter.current().delegate = self
         // live notifications: report tokens even when iOS launches the app in the background for one
         Task { @MainActor in LiveActivities.shared.start() }
-        WatchLink.shared.start()   // 3.114.0: today's slate for the Apple Watch app
+        WatchLink.shared.start()   // 3.120.0: today's slate for the Apple Watch app
         return true
     }
 

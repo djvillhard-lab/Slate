@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.120.0 (Nov 19, 2026)
+TestFlight: 3.120.0, new build
+- Slate on the Lock Screen: three widgets. A line over the clock shows the game that's on, or "Next: BAL at PIT 7:15". A rectangle shows your next two games. A round one shows the next game. They roll forward through the night: the game that's on comes first, a final stays 30 minutes, then the next game takes over. When several are on at once, the one highest on your slate leads (your teams and the best games first) and the rest show as "+2 live". iOS draws Lock Screen widgets in white, so they use team abbreviations instead of logos.
+- Slate on the Apple Watch: a real app. "Tonight" lists your slate in the live notifications' look: team-color pills with logos and scores, the clock or start time under them. Tap a game for the big score, the standout, your bet from My bets and the slate's line for it. The list comes from your iPhone each time Slate updates it, and the Watch refreshes the scores itself from ESPN every minute while the app is open.
+- A Slate complication for your watch face: the game that's on, or the next one.
+- The iPhone app is ready for Sign in with Apple and Google sign-in without leaving the app.
+
 ## 3.119.2 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Standings → MLS bracket: no matchup is picked when you open it. Tap one to see its games, and tap it again to close them.

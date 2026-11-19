@@ -10,6 +10,6 @@ struct SlateLiveBundle: WidgetBundle {
         SlateLiveActivity()
         SlateBoardActivity()
         SlateTonightWidget()
-        SlateLockWidget()   // 3.114.0: Lock Screen widgets
+        SlateLockWidget()   // 3.120.0: Lock Screen widgets
     }
 }

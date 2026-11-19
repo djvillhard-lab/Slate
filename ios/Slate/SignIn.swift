@@ -2,7 +2,7 @@ import AuthenticationServices
 import CryptoKit
 import UIKit
 
-// Sign-in inside the app (3.114.0). The page asks for it (WebModel.handle "auth" and "apple") and gets the answer back
+// Sign-in inside the app (3.120.0). The page asks for it (WebModel.handle "auth" and "apple") and gets the answer back
 // through a JavaScript callback; the server (worker/google.js) ties the account to the Slate profile.
 //
 // Google: Google won't sign in inside a web view, so the sign-in page (google.html) opens in Apple's sign-in sheet

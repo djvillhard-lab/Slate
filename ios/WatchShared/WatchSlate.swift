@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import CoreText
 
-// 3.114.0: the Apple Watch app's copy of today's slate. The iPhone app sends the same list it saves for the
+// 3.120.0: the Apple Watch app's copy of today's slate. The iPhone app sends the same list it saves for the
 // Tonight's slate widget (WatchLink on the phone); the Watch keeps it in its own app group so the watch-face
 // complication can read it too, and refreshes the scores straight from ESPN while the app is open.
 struct WatchGame: Codable, Hashable, Identifiable {

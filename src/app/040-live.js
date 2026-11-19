@@ -335,8 +335,8 @@
       if (kick > 0) o.t = Math.floor(kick / 1000); if (at.channel) o.tv = String(at.channel).slice(0, 16);
       if (end) o.e = end;
       o.r = state.slateIds.indexOf(g.id);   // the slate's own order (your teams and the best games first): which live game leads
-      // 3.114.0, for the Apple Watch app: the league, the standout line, your bet, and the ESPN scoreboard the Watch
-      // refreshes the score from by itself (builds before 3.114.0 ignore these)
+      // 3.120.0, for the Apple Watch app: the league, the standout line, your bet, and the ESPN scoreboard the Watch
+      // refreshes the score from by itself (builds before 3.120.0 ignore these)
       o.lg = String(at.league || "").replace(/^Slate • /, "").slice(0, 20);
       if (s.line) o.st = String(s.line).slice(0, 60);
       var bt = laBetOf(g); if (bt && bt.l) o.bl = bt.l;

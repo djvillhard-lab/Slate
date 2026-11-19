@@ -2,7 +2,7 @@ import SwiftUI
 import WatchConnectivity
 import WidgetKit
 
-// 3.114.0 (DJ): Slate on the Apple Watch. "Tonight" lists the games on today's slate in the live notifications'
+// 3.120.0 (DJ): Slate on the Apple Watch. "Tonight" lists the games on today's slate in the live notifications'
 // look (two slanted team-color pills with logos and scores, the clock under them); tap one for the big score, the
 // standout, your bet and the slate's line. The list comes from the iPhone (WatchLink there) whenever Slate updates
 // it; while the app is open the Watch refreshes the scores itself from ESPN every minute.

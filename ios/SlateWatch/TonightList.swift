@@ -1,6 +1,6 @@
 import SwiftUI
 
-// 3.114.0: the Watch app's screens. TonightList: the slate, live first, two pills per game. GameView: one game big.
+// 3.120.0: the Watch app's screens. TonightList: the slate, live first, two pills per game. GameView: one game big.
 struct TonightList: View {
     @EnvironmentObject var store: WatchStore
 

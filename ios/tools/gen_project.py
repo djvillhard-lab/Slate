@@ -28,7 +28,7 @@ P = {k: oid(k) for k in [
     # the SlateLive widget extension (live notifications) and the Shared folder both targets compile
     "liveRef", "liveSync", "sharedSync", "liveTarget", "liveSources", "liveFrameworks", "liveResources", "liveList",
     "liveDebug", "liveRelease", "livePlistRef", "embedPhase", "embedFile", "liveDep", "liveProxy",
-    # 3.114.0: ios/Common (the Slate mark) for the widgets and the Watch; the Apple Watch app (SlateWatch, embedded in
+    # 3.120.0: ios/Common (the Slate mark) for the widgets and the Watch; the Apple Watch app (SlateWatch, embedded in
     # the iPhone app) and its watch-face complication (SlateWatchWidgets, embedded in the Watch app); ios/WatchShared
     # compiles into both Watch targets
     "commonSync", "watchSharedSync",

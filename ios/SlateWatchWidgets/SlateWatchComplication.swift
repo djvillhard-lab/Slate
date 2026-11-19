@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-// 3.114.0 (DJ): a Slate complication for the watch face (and the Smart Stack): the game that's on, or the next one
+// 3.120.0 (DJ): a Slate complication for the watch face (and the Smart Stack): the game that's on, or the next one
 // on your slate, from the copy the Watch app keeps (WatchTonight). Same rules as the iPhone's Lock Screen widgets:
 // a score more than 20 minutes old just says Live, finals stay 30 minutes.
 @main

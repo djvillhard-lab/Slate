@@ -53,7 +53,7 @@ enum TonightLook {
         return left.sorted { p, q in
             let lp = started(p, now), lq = started(q, now)
             if lp != lq { return lp }
-            // 3.114.0 (DJ): several live at once: the one higher on your slate (your teams, the best games) first
+            // 3.120.0 (DJ): several live at once: the one higher on your slate (your teams, the best games) first
             if lp, (p.r ?? 99) != (q.r ?? 99) { return (p.r ?? 99) < (q.r ?? 99) }
             return (p.t ?? 0) < (q.t ?? 0)
         }.prefix(count).map { $0 }
