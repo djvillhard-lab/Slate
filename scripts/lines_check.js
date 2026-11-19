@@ -14,7 +14,7 @@ function grab(file, name) {
   for (let k = s.indexOf("{", i), d = 0; k < s.length; k++) { if (s[k] === "{") d++; else if (s[k] === "}" && !--d) return s.slice(i, k + 1); }
 }
 const vline = (file, name, opt) => { const m = new RegExp("var " + name + " = (.*);\\n").exec(read(file)); if (!m) { if (opt) return "var " + name + " = /$^/;"; throw new Error(name); } return "var " + name + " = " + m[1] + ";"; };
-const app = new Function([vline("090-box-data.js", "BX_SPORT"), grab("080-claude.js", "l5Season"), grab("100-highlights.js", "pvCompute"),
+const app = new Function([vline("090-box-data.js", "BX_SPORT"), grab("080-claude.js", "l5Season"), grab("100-highlights.js", "pvCompute"), grab("100-highlights.js", "pvBlandHead"), grab("100-highlights.js", "pvAllHome"),
   vline("105-pv-notes.js", "PVN_BRK"), vline("105-pv-notes.js", "PVN_DANGLE", true), grab("105-pv-notes.js", "pvCuts"), grab("105-pv-notes.js", "pvStatAlts"),
   "return { pvCompute: pvCompute, pvStatAlts: pvStatAlts, l5Season: l5Season };"].join("\n"))();
 

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.10 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Slate one-liners that only restate the matchup are gone. ESPN's preview headline is skipped when it says nothing past the team names ("Notre Dame Fighting Irish take on the Auburn Tigers", "Penguins take on the Blues, look to end home slide"), and the card uses the next real fact instead. When there's no real fact, the card shows no line rather than "Cincinnati at Orlando". A headline with a number or a player in it ("…after Crosby scores twice") still shows. A home or road record that is the team's whole record ("Florida State is 5-0 at home" for a 5-0 team) is skipped too.
+
 ## 3.113.9 (Nov 18, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - Players to watch: a note that says a player leads their team now names exactly what they lead, checked against the season stats shown. Celtics–Nuggets read "Leads Denver in both categories" under Jokic's three stats; it now reads "Leads the Nuggets in rebounds and assists". Murray stays "Nuggets' top scorer" (26.1 points to Jokic's 24.1). A lead claim the numbers don't back up is dropped, and two players can't both be shown leading the same stat. Saved previews get the fix too, and Claude is told to name the stat from now on.

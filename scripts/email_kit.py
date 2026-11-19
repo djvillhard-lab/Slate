@@ -22,7 +22,7 @@ TAKE = {
     "060-cards.js": ["SPORT", "SPORT_PATH"],
     "090-box-data.js": ["BX_SPORT"],
     "110-box-score.js": ["bxBase", "bxSummaryUrl", "bxApi"],
-    "100-highlights.js": ["pvCompute", "QBD", "depthOf", "pvQB"],
+    "100-highlights.js": ["pvCompute", "pvBlandHead", "pvAllHome", "QBD", "depthOf", "pvQB"],
     "080-claude.js": ["l5Season", "recapStandouts", "clDay", "trimEspn", "clGame"],
 }
 

@@ -341,6 +341,8 @@
   }
   // ---- Preview line: one free line under an upcoming game, from ESPN's pre-game summary ----
   // streaks, injuries to a team's leaders, the betting line, ESPN's predictor, table clashes, head-to-head, ESPN's preview headline
+  // 3.113.10: a home or road record that is the whole record ("Florida State is 5-0 at home" on a 5-0 team) adds nothing
+  function pvAllHome(t, W, L) { var r = String((t.rec || {}).total || "").split("-").map(Number); return r.length >= 2 && r[0] === W && r.slice(1).reduce(function (a, b) { return a + (b || 0); }, 0) === L; }
   function pvCompute(lg, sum, qbx, g) {
     pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = "";
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
@@ -420,7 +422,7 @@
     if (false) ids.forEach(function (i) { var r = String(T[i].rec.total || "").split("-"); if (r.length === 3 && +r[2] === 0 && (+r[0] + +r[1]) >= 6) add("unbs|" + i, 50, T[i].name + " are still unbeaten this season"); if (r.length === 3 && +r[0] === 0 && (+r[1] + +r[2]) >= 6) add("winless|" + i, 46, T[i].name + " are still looking for a first win"); });
     // records: perfect or awful at home and on the road, unbeaten seasons
     ids.forEach(function (i) { var w = String(T[i].rec[i === H ? "home" : "road"] || "").split("-"), W = +w[0], Lw = +w[1];
-      if (sport !== "soccer" && w.length >= 2 && W + Lw >= 4) { if (!Lw) add("perf|" + i, 40, T[i].name + " are " + W + "-0 " + (i === H ? "at home" : "on the road")); else if (!W || W / (W + Lw) <= 0.2) add("bad|" + i, 32, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); }
+      if (sport !== "soccer" && w.length >= 2 && W + Lw >= 4 && !pvAllHome(T[i], W, Lw)) { if (!Lw) add("perf|" + i, 40, T[i].name + " are " + W + "-0 " + (i === H ? "at home" : "on the road")); else if (!W || W / (W + Lw) <= 0.2) add("bad|" + i, 32, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); }
       var tot = String(T[i].rec.total || "").split("-"); if (false && tot.length >= 2 && +tot[0] >= 5 && +tot[1] === 0) add("unb0|" + i, 52, T[i].name + " are still unbeaten at " + tot[0] + "-0"); });
     // (no "ranked showdown" line: the ranks are already on the matchup)
     // head to head
@@ -447,7 +449,7 @@
         else if (n === es.length - 1 && parseFloat(st(e, "GB")) >= 3) add("divlast|" + i, 30, T[i].name + " are last in the " + dv); }); });
     // a strong home or road record that the perfect-record line above doesn't cover
     ids.forEach(function (i) { var w = String(T[i].rec[i === H ? "home" : "road"] || "").split("-"), W = +w[0], Lw = +w[1];
-      if (sport !== "soccer" && w.length >= 2 && Lw > 0 && W + Lw >= 6 && W / (W + Lw) >= 0.7) add("good|" + i, 30, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); });
+      if (sport !== "soccer" && w.length >= 2 && Lw > 0 && W + Lw >= 6 && !pvAllHome(T[i], W, Lw) && W / (W + Lw) >= 0.7) add("good|" + i, 30, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); });
     // ESPN's predictor leaning one way without being lopsided
     if (pr && pr.homeTeam && pr.awayTeam) { var ph2 = parseFloat(pr.homeTeam.gameProjection), pa2 = parseFloat(pr.awayTeam.gameProjection);
       if (!isNaN(ph2) && !isNaN(pa2) && Math.abs(ph2 - pa2) > 8 && Math.max(ph2, pa2) < 85) { var pf2 = ph2 > pa2 ? H : A, pp2 = Math.min(99, Math.round(Math.max(ph2, pa2))); add("pred", 22, "ESPN gives " + T[pf2].name + (/^(8\d|11|18)$/.test(String(pp2)) ? " an " : " a ") + pp2 + "% chance"); } }
@@ -456,7 +458,7 @@
       (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
         var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
     // ESPN's preview headline: a solid fallback
-    var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90) add("art", 33, hd);
+    var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 33, hd);
     // a playoff game (3.92.0): the regular-season table, division race and season series no longer decide anything
     if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser)(\||$)/.test(x.k); });
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
@@ -546,10 +548,30 @@
     }, 8000);
   }
   function pvSave() { pvShare(); try { var keep = {}, cut = Date.now() - 2 * 864e5; Object.keys(PV).forEach(function (k) { if (PV[k].at > cut && PV[k].text != null) keep[k] = { at: PV[k].at, text: PV[k].text, tm: PV[k].tm || "", sc: PV[k].sc || 0, f: PV[k].f || "", fb: PV[k].fb ? 1 : 0, g5: 1 }; }); localStorage.setItem("slate-pv", JSON.stringify(keep)); } catch (e) {} }
+  // 3.113.10 (DJ: "some of these one-liners provide no value"): a line that only restates the matchup. ESPN's preview headline
+  // "Notre Dame Fighting Irish take on the Auburn Tigers", "Penguins take on the Blues, look to end home slide": it starts with a team
+  // and take on / host / visit / face…, and past the team names it has no number and no other name (a player, a coach)
+  function pvBlandHead(t, names) {
+    t = String(t || "").trim(); if (!t || /\d/.test(t)) return false;
+    var esc = function (x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+    names = (names || []).filter(function (x) { return x && String(x).length >= 2; }).sort(function (a, b) { return b.length - a.length; });
+    if (!names.length) return false;
+    var N = "(?:" + names.map(esc).join("|") + ")";
+    if (!new RegExp("^(the )?" + N + "('s?)? (take on|takes on|face|faces|host|hosts|visit|visits|meet|meets|battle|battles|play|plays|welcome|welcomes|square off|clash|vs\\.?|at|and)\\b", "i").test(t)) return false;
+    var rest = t.replace(new RegExp("(^|[^\\w])" + N + "('s?)?(?![\\w])", "g"), " ");
+    return !/(^|[\s,;:-])(?!(The|A|An|In|On|At|As|And|To|For|With|After|Before|Look|Looks|Seek|Seeks|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Game|Week)\b)[A-Z][a-z]/.test(rest.slice(1));
+  }
+  function pvNames(g) {
+    var out = []; ["away", "home"].forEach(function (sd) { var f = String(g[sd] || ""), w = f.split(" ");
+      out.push(f, short(g, sd), abbr(g, sd), w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""); });
+    return out.filter(function (x, i) { return x && out.indexOf(x) === i; });
+  }
   function pvNode(g) {
     var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
     if (!p || !p.text) return null;
+    // 3.113.10: the plain records line ("Cincinnati at Orlando") and a headline that only restates the matchup show nothing
+    if (p.fb || pvBlandHead(p.text, pvNames(g))) return null;
     var ln = hlLine(g, p.text, p.tm, "hl hl-pre hl-one");   // 3.89.6: one line, the longest version that fits (pvFit, 105-pv-notes.js)
     var pre = ln.querySelector(".hl-tm"); if (pre) pre.remove();   // and never an "MSU:" in front of the stats line (DJ)
     pvFit(ln, ln.lastChild, pvStatAlts(p));
