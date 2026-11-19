@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.6 (Nov 18, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- My bets: the bet note on a finished game's card no longer repeats the score, since the card already shows it ("Under 145.5 · ✗ Lost · 162 points"). The bet cards in My bets still show it.
+
 ## 3.113.5 (Nov 18, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - The 📰 News line under a game shows the whole note now, wrapping to a second line when it has to. It used to stay on one line and end in "…" (Bucks–Heat read "ESPN says the Heat's depth beyond Giannis could define how thei…").

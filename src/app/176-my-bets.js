@@ -202,10 +202,10 @@
     b.res = { s: out.s, m: out.m, now: out.now, a: out.a, h: out.h, why: out.why, fin: !!out.fin, early: !!out.early }; b.ed = Date.now(); mybSave();
   }
   // the status line: "Covering by 2.5", "47 so far, needs 1 more", "Won · Final 118-109"
-  function mybSay(b, r, g) {
+  function mybSay(b, r, g, noScore) {  // noScore: the game card already shows the score (DJ, 3.113.6)
     var sc = scoreRaw(b.gid) || {}, kind = status(g).kind;
     if (r.s === "pre") return { t: kind === "over" ? "Final" : "Starts " + timeText(g.start), c: "" };
-    var fs = r.a != null ? " · " + abbr(g, "away") + " " + r.a + ", " + abbr(g, "home") + " " + r.h : "";
+    var fs = r.a != null && !noScore ? " · " + abbr(g, "away") + " " + r.a + ", " + abbr(g, "home") + " " + r.h : "";
     var tally = function (noun) { var n = r.now == null ? 0 : r.now, room = Number(b.line) - n; var t = mybNum(n) + " " + noun + " so far"; if (r.s !== "live") return t; return t + (b.ou === "over" ? ", needs " + mybNum(Math.floor(room) + 1) + " more" : ", room for " + mybNum(Math.max(0, Math.ceil(room) - 1)) + " more"); };
     if (r.s === "won" || r.s === "lost") {
       var how = b.kind === "prop" ? " · " + mybNum(r.now) + " " + mybNoun(b) : b.kind === "total" ? " · " + mybNum(r.now) + " " + mybNoun(b) : "";
@@ -462,7 +462,7 @@
   function mybBars(g) {
     if (!g || g.custom) return [];
     return mybFor(g).map(function (b) {
-      var r = mybResult(b), say = mybSay(b, r, g), bar = mybTone(el("div", "myb-bar"), b, g);
+      var r = mybResult(b), say = mybSay(b, r, g, true), bar = mybTone(el("div", "myb-bar"), b, g);
       bar.appendChild(el("span", "myb-kind", mybKind(b))); bar.appendChild(el("b", null, mybLabel(b, g)));
       bar.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + (r.s !== "pre" ? ". " + say.t : ""));
       if (r.s !== "pre") bar.appendChild(el("span", say.c || null, say.t.replace(/^Live[^·]*· /, "")));
