@@ -23,3 +23,11 @@ Code: `src/app/130-teams.js` (Teams page, team pages), `src/app/132-standings.js
   to 12 teams from the day's games (slate games first, teams already followed left out), using the normal `row(t)` with its star.
   Not "popular teams": Slate has no source for popularity, so it uses who is playing. The welcome walkthrough (232-welcome.js) already
   covers first-run team and league picking; Sign in with Apple needs an iPhone build and belongs to the Security thread.
+
+## 3.113.15 (Nov 19): Claude's take expires after 24 hours
+- DJ: Man United's take was still last Friday's. `TM_TAKE_TTL` (24 h) in 130-teams.js: a take older than that (or with no `at`)
+  is hidden on the team page, with "Claude's take from <day> is more than a day old" and a "Write a fresh take" button.
+- Decision: no automatic rewrite. Each take costs money and DJ's rule is that paid Claude runs only when tapped. The worker's
+  12-hour share window (`SHARE_MIN.team`) is shorter than 24 h, so a tap on an expired take always writes a new one.
+- Team takes now go through the ESPN fact check too (`teamFacts` in worker/factcheck.js turns the page's record and recent
+  results into the preview checker's shape; dates in US Eastern).

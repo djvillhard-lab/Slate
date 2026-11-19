@@ -149,6 +149,16 @@ function streakCheck(s, one, kind) {
 
 const sentences = (t) => String(t).match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)(?:\s+|$)|[^.!?]*[.!?]+(?=\S)/g) || [String(t)];
 
+// 3.113.15: a team page's facts (130-teams.js: name, record, recent results oldest first) in the shape factCheck reads,
+// so Claude's take on a team gets the same record and dated-result check as a preview
+export function teamFacts(factsJson, key) {
+  const f = parse(factsJson), abbr = String(key || "").split("-").slice(1).join("-").toUpperCase() || "TEAM";
+  const day = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }); };
+  const res = (Array.isArray(f.recent) ? f.recent : []).slice().reverse().filter((r) => r && r.score && day(r.date))
+    .map((r) => day(r.date) + ": " + (r.result || "") + " " + (r.home ? "vs" : "@") + " " + (r.opp || "") + " " + r.score);
+  return JSON.stringify({ teams: [{ name: f.name, abbr, record: f.record }], last5: [{ team: abbr, newestFirst: res }] });
+}
+
 export function factCheck(kind, ans, factsJson, gameJson) {
   const dropped = [];
   const facts = parse(factsJson), game = parse(gameJson), T = teamsOf(facts, game);

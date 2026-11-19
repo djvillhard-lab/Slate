@@ -47,6 +47,7 @@
     }, function () { cur.busy = false; cur.err = true; if (state.view === "team") keepScroll(renderTeam); });
   }
   // Claude's summaries live in teams/<league>-<abbr>
+  var TM_TAKE_TTL = 24 * 3600000;   // a take older than this is hidden (3.113.15)
   function tmWatch(skey) {
     if (tm.subs[skey] || !db) return;
     tm.subs[skey] = db.doc("teams/" + skey).onSnapshot(function (snap) { tm.docs[skey] = snap.exists ? snap.data() : null; if (state.view === "team") keepScroll(renderTeam); }, function () {});
@@ -348,7 +349,11 @@
     // Claude's take
     var skey = e ? t.lg + "-" + String(e.abbr || "").toLowerCase() : null, doc = skey ? tm.docs[skey] : null;
     var cc = gvCard("Claude's take", "tm-claude");
-    if (doc && doc.summary) {
+    // 3.113.15 (DJ: Man United's take was still last Friday's): a take expires 24 hours after it's written. It isn't rewritten
+    // by itself (Claude costs money, so only a tap writes one); the old text is hidden and the button offers a fresh one
+    var tmOld = !!(doc && doc.summary && (!doc.at || Date.now() - Date.parse(doc.at) > TM_TAKE_TTL));
+    if (tmOld) cc.appendChild(el("p", "pv-none", "Claude's take" + (doc.at ? " from " + new Date(doc.at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "") + " is more than a day old, so it's hidden. Write a fresh one for the latest news."));
+    else if (doc && doc.summary) {
       cc.appendChild(readNode(doc.summary, doc.bullets, "gv-sum"));
       var tl = Array.isArray(doc.long) ? doc.long.filter(Boolean) : [];
       if (tl.length) {
@@ -373,7 +378,7 @@
         if (d && d.news) o.espnNews = d.news.slice(0, 5).map(function (a) { return a.headline; });
         return o;
       };
-      cc.appendChild(claudeCtl("team", doc, !!(doc && doc.summary), { k: "t:" + skey, go: function () { claudeAsk("team", null, { key: skey, facts: tf() }); } }, "Write Claude's take"));
+      cc.appendChild(claudeCtl("team", doc, !!(doc && doc.summary) && !tmOld, { k: "t:" + skey, go: function () { claudeAsk("team", null, { key: skey, facts: tf() }); } }, tmOld ? "Write a fresh take" : "Write Claude's take"));
     }
     body.appendChild(cc);
     if (!d) {

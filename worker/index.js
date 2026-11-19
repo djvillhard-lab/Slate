@@ -8,7 +8,7 @@ import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad,
 import { runNewsletters, rss } from "./newsletters.js";
 import { runMorningEmail, morningApi, confirmEmail } from "./morning-email.js";
 import { feedbackRoute } from "./feedback.js";
-import { factCheck } from "./factcheck.js";
+import { factCheck, teamFacts } from "./factcheck.js";
 import { usageRoute } from "./usage.js";
 import { googleRoutes } from "./google.js";
 
@@ -579,8 +579,8 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
     try {
       const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 32000 : p.kind === "deep" ? 6000 : false, p.kind === "deep" && p.key[0] === "l" ? 3 : SEARCHES[p.kind], LEAN[p.kind]));
       // 3.113.3 (DJ: "I do want the server check"): sentences that contradict ESPN's records and dated results are left out (factcheck.js)
-      const fcKind = p.kind === "recap" ? "recap" : p.kind === "preview" || !p.kind || p.kind === "deep" && p.key[0] === "g" || p.kind === "news" && p.key === "page" ? "preview" : "";
-      const chk = fcKind ? factCheck(fcKind, tidy(stripCites(res.ans || res)), p.facts, p.game) : { ans: tidy(stripCites(res.ans || res)), dropped: [] }, ans = chk.ans, fc = chk.dropped.slice(0, 20);
+      const fcKind = p.kind === "recap" ? "recap" : p.kind === "preview" || !p.kind || p.kind === "deep" && p.key[0] === "g" || p.kind === "news" && p.key === "page" || p.kind === "team" ? "preview" : "";
+      const chk = fcKind ? factCheck(fcKind, tidy(stripCites(res.ans || res)), p.kind === "team" ? teamFacts(p.facts, p.key) : p.facts, p.kind === "team" ? "{}" : p.game) : { ans: tidy(stripCites(res.ans || res)), dropped: [] }, ans = chk.ans, fc = chk.dropped.slice(0, 20);
       if (fc.length) console.log("fact check left out", fc.length, JSON.stringify(fc).slice(0, 1500));
       await step.do("log cost", async () => { try { await logUsage(this.env, p.user || "dj", res.usage || {}, res.model || null, !!res.tooLong); } catch (e) {} return true; });
       if (res.tooLong) { console.log("ran too long", p.kind, p.key, res.why || ""); throw new Error("Claude's answer ran too long" + (res.why ? " (" + res.why + ")" : "")); }
