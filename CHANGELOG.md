@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.120.2 (Nov 19, 2026)
+TestFlight: 3.120.2, new build
+- Live notifications: before a game starts, the Lock Screen game card shows "Starting" (or the start time) with the channel under it, like "ESPN", instead of repeating the game's one-liner there and showing the slate's "National TV" tag. The one-liner still shows once, at the bottom.
+
 ## 3.120.1 (Nov 19, 2026)
 TestFlight: 3.120.1, new build
 - Live notifications: the two team-color pills on the Lock Screen game card (and the team halves in the Dynamic Island) now lean the same way, with the same small slant as the widget and the Board, instead of slanting toward each other.

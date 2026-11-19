@@ -110,3 +110,5 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - Targets come from ios/tools/gen_project.py (re-run it to change settings). CI builds with a simulator destination.
 - Open: the Watch shows your bet's label only (no covering/needs line yet); logos load from ESPN on the Watch.
 - 3.120.1 (DJ): SlantShape leans both sides the same way (right side insets at the top); TeamWash uses a fixed 12 pt lean.
+- 3.120.2 (DJ): before the start, the card's center shows the channel (a.channel) under "Starting", not the one-liner
+  (it only shows once, at the bottom) or the slate tag ("National TV"); the tag still shows while the game is on.

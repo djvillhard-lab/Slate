@@ -332,16 +332,23 @@ private struct LockCard: View {
                     } else {
                         ClockTag(text: SlateLook.clock(s), live: live)
                     }
-                    // the league moved up beside the axe-hammer (3.113.0); the down (football) or the pre-game line stays here
-                    let sub = !down.isEmpty ? down : pre ? (s.line ?? "") : ""
-                    if !sub.isEmpty {
-                        Text(sub)
+                    // the league moved up beside the axe-hammer (3.113.0); football's down stays here. 3.120.2 (DJ): before the
+                    // start the center is just the start (or "Starting") and the channel; the one-liner shows once, below
+                    if !down.isEmpty {
+                        Text(down)
                             .font(SlateLook.semi(12))
-                            .foregroundStyle(!down.isEmpty ? SlateLook.ink : SlateLook.muted)
+                            .foregroundStyle(SlateLook.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                     }
-                    if let tag = s.tag, !tag.isEmpty, s.state != "post" {
+                    let ch = (a.channel ?? "").trimmingCharacters(in: .whitespaces)
+                    if pre && !ch.isEmpty {
+                        Text(ch)
+                            .font(SlateLook.semi(12))
+                            .foregroundStyle(SlateLook.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    } else if let tag = s.tag, !tag.isEmpty, s.state != "post" {
                         Text(tag)
                             .font(SlateLook.semi(12))
                             .foregroundStyle(SlateLook.ink)
