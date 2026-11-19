@@ -34,32 +34,7 @@
     body.appendChild(rc);
     body.appendChild(el("p", "nwx-note", "Straight from ESPN and The Athletic. For a page written around your games and teams, pick them below."));
   }
-  // Earlier (3.113.13, DJ): the last 3 days, always, plus Pick a date for any other day. A day with no saved page is
-  // dimmed and says so (it opens on the page's options). One look-up per day, once per session.
-  function nwxOpenDay(d) { nwx.past = d; nw.opts = false; slideDir = ""; setDate(d); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }
-  function nwxDays(body) {
-    var today = todayInHome(); if (!db) return;
-    var ds = [1, 2, 3].map(function (i) { return shiftDate(today, -i); });
-    if (nwx.daysFor !== today) {
-      nwx.daysFor = today; nwx.days = null;
-      Promise.all(ds.map(function (d) { return db.doc("mine/news-" + d).get().then(function (sn) { var x = sn.exists ? sn.data() : null; return x && x.at && ((x.top || []).length || (x.games || []).length || (x.teams || []).length || (x.leagues || []).length) ? d : null; }, function () { return null; }); }))
-        .then(function (r) { nwx.days = r.filter(Boolean); nwRedraw(); });
-    }
-    body.appendChild(nwSec("Earlier", "Past days' pages"));
-    var row = el("div", "nwx-days");
-    ds.forEach(function (d, i) {
-      var none = nwx.days && nwx.days.indexOf(d) === -1, b = el("button", "nwx-day" + (none ? " none" : "")); b.type = "button";
-      b.appendChild(el("b", null, i === 0 ? "Yesterday" : fmtDate(d, { weekday: "short" }) + ", " + fmtDate(d, { month: "short", day: "numeric" })));
-      if (none) b.appendChild(el("span", null, "No page"));
-      b.addEventListener("click", function () { nwxOpenDay(d); });
-      row.appendChild(b);
-    });
-    var pk = el("label", "nwx-day nwx-pick"); pk.appendChild(el("b", null, "📅 Pick a date"));
-    var inp = document.createElement("input"); inp.type = "date"; inp.className = "dd-input"; inp.max = shiftDate(today, -1); inp.value = shiftDate(today, -4); inp.setAttribute("aria-label", "Pick a day for News");
-    inp.addEventListener("change", function () { if (inp.value && inp.value < today) nwxOpenDay(inp.value); });
-    pk.appendChild(inp); row.appendChild(pk);
-    body.appendChild(row);
-  }
+  // Earlier days (3.113.14, DJ): the day picker by the thumb (070-navigation.js) moves News between days, up to today
   function nwxBackRow(body) {
     var b = el("button", "rlink nwx-back", "‹ Back to today's news"); b.type = "button";
     b.addEventListener("click", function () { nwx.past = null; slideDir = ""; setDate(todayInHome()); });

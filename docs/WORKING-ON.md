@@ -6,5 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | News | src/app/200-news.js, src/app/202-news-extras.js | 2026-11-19 16:02 |
-| DJ | shared: 070-navigation.js | day picker on News (one line) | 2026-11-19 16:02 |

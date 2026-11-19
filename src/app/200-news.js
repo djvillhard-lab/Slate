@@ -235,8 +235,8 @@
     return lt ? ((items.filter(function (a) { return a.img && nwAbout(a, lt.name); })[0]) || {}).img || "" : "";
   }
   function nwLgOfTeam(t) { if (!t) return ""; for (var k in NW_TLG) if (NW_TLG[k] === t.lg && t.lg !== "College") return k; return ""; }
-  var NW_SPORT = { ncaaf: "College football", ncaam: "Men's college basketball", ncaaw: "Women's college basketball" };
-  function nwSportName(lg) { return NW_SPORT[lg] || (LEAGUES[lg] && LEAGUES[lg].tag) || ""; }
+  // the league's short tag (CFB, CBB, WCBB, NBA), the same as the News tabs (3.113.14, DJ: the long names wrapped the row)
+  function nwSportName(lg) { return (LEAGUES[lg] && LEAGUES[lg].tag) || ""; }
   function nwSportEm(lg) { var b = String(bxBase(lg) || ""); return /football\/(nfl|college)/.test(b) ? "🏈" : /basketball/.test(b) ? "🏀" : /hockey/.test(b) ? "🏒" : /baseball/.test(b) ? "⚾" : /soccer/.test(b) ? "⚽" : "🏆"; }
   // quick hits as feed boxes (3.83.3, DJ: the league sections in the new look): the team's color and logo, the tag
   function nwTopLgs(doc) {
@@ -763,9 +763,9 @@
     if (!has || nw.opts) {
       if (!has && !busy && isToday) nwxHeads(body);  // something to read before any page is written (3.104.0)
       if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err, wat))); nwRenderOpts(body, has ? doc : null, busy, doc);
-      if (!busy && isToday) nwxDays(body);
+      
       return;
     }
     nwRenderPage(body, doc, busy, err, wat);
-    if (!busy && isToday) nwxDays(body);
+    
   }

@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.113.14 (Nov 19, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- News: the sport beside each top headline's team uses the short league name (CBB, CFB, WCBB, NBA), the same as the News tabs, so the row no longer wraps.
+- News: the Earlier buttons are gone. The day picker by your thumb (the one on the slate, All games and On TV) is now on News too. Its arrows step to earlier days' pages and forward, up to today, and tapping the date opens the calendar. "Back to today's news" stays at the top of an earlier day.
+
 ## 3.113.13 (Nov 19, 2026)
 TestFlight: 3.113.0, no new build (web only)
 - News: Top news opens on 5 headlines every time, with Show 5 more for the other 5. It no longer stays open from last time.

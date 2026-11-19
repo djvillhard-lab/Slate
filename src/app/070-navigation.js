@@ -14,20 +14,20 @@
   function tvSwipe(step) { var i = TV_TABS.indexOf(state.tvFilter), n = TV_TABS[i + step]; if (n) tvPick(n, step > 0 ? "l" : "r"); }
   function renderDockDay() {
     var dn = $("dock-day"); if (!dn) return;
-    var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments" || (v === "lineup" && !isDuo)) && !state.menuOpen;  // the slate too (3.49.0): the same picker under the thumb on every dated page
+    var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments" || (v === "lineup" && !isDuo) || (v === "news" && !nw.deep)) && !state.menuOpen;  // News too (3.113.14, DJ): back to earlier days' pages, up to today  // the slate too (3.49.0): the same picker under the thumb on every dated page
     var wasOn = !dn.hidden; dn.hidden = !on; if (!on) return;
     // grow in only when it appears (not every refresh, or when the page re-pins the dock while it bounces)
     if (!wasOn && !REDUCED) { dn.classList.remove("dd-in"); void dn.offsetWidth; dn.classList.add("dd-in"); clearTimeout(dn._t); dn._t = setTimeout(function () { dn.classList.remove("dd-in"); }, 300); }
     dn.textContent = "";
     var today = todayInHome(), mmMode = v === "moments", rkMode = v === "best" || mmMode, day = mmMode ? (mm.date || today) : v === "best" ? (rk.date || today) : state.date;
-    var go = function (iso) { if (mmMode) mmSetDate(iso); else if (rkMode) rkSetDate(iso); else { slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
-    var lastDay = today, atEnd = rkMode && day >= lastDay;
+    var nwMode = v === "news", go = function (iso) { if (mmMode) mmSetDate(iso); else if (rkMode) rkSetDate(iso); else { if (nwMode) { if (iso > today) iso = today; nwx.past = iso < today ? iso : null; nw.opts = false; } slideDir = iso > state.date ? "l" : "r"; setDate(iso); } };
+    var lastDay = today, atEnd = (rkMode || nwMode) && day >= lastDay;
     var nxt = el("button", "dd-arrow" + (atEnd ? " dd-end" : "")); nxt.type = "button"; nxt.setAttribute("aria-label", "Next day"); nxt.appendChild(icon("more"));
-    nxt.addEventListener("click", function () { if (atEnd) { if (!mmMode) toast("Rankings go up to today"); return; } go(shiftDate(day, 1)); });
+    nxt.addEventListener("click", function () { if (atEnd) { if (nwMode) toast("News goes up to today"); else if (!mmMode) toast("Rankings go up to today"); return; } go(shiftDate(day, 1)); });
     var lab = el("label", "dd-date");
     var dl = day === today ? "Today" : day === shiftDate(today, -1) ? "Yest." : day === shiftDate(today, 1) ? "Tmrw" : fmtDate(day, { weekday: "short" });
     lab.appendChild(el("b", null, fmtDate(day, { month: "short" }))); lab.appendChild(el("b", "dd-n", fmtDate(day, { day: "numeric" }))); lab.appendChild(el("em", null, dl));
-    var inp = document.createElement("input"); inp.type = "date"; inp.className = "dd-input"; if (rkMode) inp.max = lastDay; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
+    var inp = document.createElement("input"); inp.type = "date"; inp.className = "dd-input"; if (rkMode || nwMode) inp.max = lastDay; inp.value = day; inp.setAttribute("aria-label", "Pick a day");
     inp.addEventListener("change", function () { if (inp.value) go(inp.value); });
     lab.appendChild(inp);
     var prev = el("button", "dd-arrow dd-prev"); prev.type = "button"; prev.setAttribute("aria-label", "Previous day"); prev.appendChild(icon("more"));
