@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | One-liners: ranked matchup filler | src/app/100-highlights.js, scripts/lines_check.js, worker/slate-kit.js (generated) | 2026-11-20 02:52 |
