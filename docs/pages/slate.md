@@ -107,3 +107,6 @@ Not covered: "all on the road"-type claims, standings ("second in the East"), pl
 **3.113.9 (Players to watch):** a note claiming a team lead (top/leads/best/both…) is rewritten from ESPN season stats by `pwNote`/`pwLeads` in 080-claude.js (basketball: points, rebounds, assists; players with at least half the team's most games). Leads nothing = note dropped. Worker prompt asks Claude to name the stat.
 
 **3.113.10 (DJ: "some of these one-liners provide no value"):** `pvBlandHead` drops ESPN's preview headline when it only restates the matchup (team + take on/host/visit…, no number, no other name); pvNode hides the plain records fallback (p.fb) and such saved headlines; `pvAllHome` skips a home/road record equal to the whole record. Both functions are in lines_check.js and email_kit.py's lists.
+
+## Ranks are not news (3.120.3)
+pvBlandHead strips "No. 8" / "#8" / "8th-ranked" before its has-a-number test, so "No. 8 Houston faces No. 11 Kansas" counts as matchup-only filler. lines_check.js flags any line pvBlandHead calls filler.

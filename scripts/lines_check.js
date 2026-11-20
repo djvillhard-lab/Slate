@@ -16,7 +16,7 @@ function grab(file, name) {
 const vline = (file, name, opt) => { const m = new RegExp("var " + name + " = (.*);\\n").exec(read(file)); if (!m) { if (opt) return "var " + name + " = /$^/;"; throw new Error(name); } return "var " + name + " = " + m[1] + ";"; };
 const app = new Function([vline("090-box-data.js", "BX_SPORT"), grab("080-claude.js", "l5Season"), grab("100-highlights.js", "pvCompute"), grab("100-highlights.js", "pvBlandHead"), grab("100-highlights.js", "pvAllHome"),
   vline("105-pv-notes.js", "PVN_BRK"), vline("105-pv-notes.js", "PVN_DANGLE", true), grab("105-pv-notes.js", "pvCuts"), grab("105-pv-notes.js", "pvStatAlts"),
-  "return { pvCompute: pvCompute, pvStatAlts: pvStatAlts, l5Season: l5Season };"].join("\n"))();
+  "return { pvCompute: pvCompute, pvStatAlts: pvStatAlts, l5Season: l5Season, pvBlandHead: pvBlandHead };"].join("\n"))();
 
 const LG = { nba: "basketball/nba", nhl: "hockey/nhl", nfl: "football/nfl", ncaaf: "football/college-football", ncaam: "basketball/mens-college-basketball",
   ncaaw: "basketball/womens-college-basketball", epl: "soccer/eng.1", mls: "soccer/usa.1", ucl: "soccer/uefa.champions" };
@@ -33,6 +33,8 @@ function check(lg, sum, line, alts) {
   });
   const who = (frag) => T.filter((t) => t.names.some((n) => frag.indexOf(n + " ") >= 0 || frag.indexOf(n + "'") >= 0));
   if (/100% chance/.test(line)) out.push("100% chance");
+  // only restates the matchup, ranks included ("No. 8 Houston faces No. 11 Kansas", DJ Nov 19)
+  if (app.pvBlandHead(line, [].concat.apply([], comp.competitors.map((c) => { const tm = c.team || {}; return [tm.displayName, tm.shortDisplayName, tm.nickname, tm.location, tm.name, tm.abbreviation]; })).filter(Boolean))) out.push("only restates the matchup");
   if (/\b(\w+) of (its|their) last \1\b/.test(line)) out.push("\"N of its last N\"");
   // each clause: a streak can't be longer than the record allows
   line.split(/; /).forEach((cl) => {

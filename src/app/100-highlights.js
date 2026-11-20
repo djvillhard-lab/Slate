@@ -552,7 +552,8 @@
   // "Notre Dame Fighting Irish take on the Auburn Tigers", "Penguins take on the Blues, look to end home slide": it starts with a team
   // and take on / host / visit / face…, and past the team names it has no number and no other name (a player, a coach)
   function pvBlandHead(t, names) {
-    t = String(t || "").trim(); if (!t || /\d/.test(t)) return false;
+    // ranks are on the card already (DJ, Nov 19: "No. 8 Houston faces No. 11 Kansas" is repetitive): "No. 8", "#8", "8th-ranked" don't count as a number
+    t = String(t || "").trim().replace(/\b(?:No\.|#)\s*\d+\s+/gi, "").replace(/\b\d+(?:st|nd|rd|th)[- ]ranked\s+/gi, "").replace(/^(?:top-\d+|ranked)\s+/i, ""); if (!t || /\d/.test(t)) return false;
     var esc = function (x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
     names = (names || []).filter(function (x) { return x && String(x).length >= 2; }).sort(function (a, b) { return b.length - a.length; });
     if (!names.length) return false;

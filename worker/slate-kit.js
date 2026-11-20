@@ -97,6 +97,12 @@ export function slateKit(opts) {
     o.eventsOff = Array.isArray(r.eventsOff) ? r.eventsOff.filter(function (x) { return typeof x === "string"; }).slice(0, 200) : [];
     if ([0, 17, 18, 19, 20].indexOf(Number(r.after)) !== -1) o.after = Number(r.after);
     if ([0, 4, 6, 8, 10].indexOf(Number(r.max)) !== -1) o.max = Number(r.max);
+    // golf and F1 (3.119.1): off unless turned on in Slate rules; options in EV_RULES (165-events.js)
+    o.sports = {}; if (r.sports && typeof r.sports === "object" && EV_RULES) Object.keys(EV_RULES).forEach(function (k) {
+      var b = r.sports[k], ok = {}, any = false; if (!b || typeof b !== "object") return;
+      EV_RULES[k].forEach(function (x) { if (b[x[0]] === true) { ok[x[0]] = true; any = true; } });
+      if (any) o.sports[k] = ok;
+    });
     function put(k, key, v) { if (!LG_OPTS[k] || LG_OPTS[k].indexOf(key) === -1) return; (o.by[k] = o.by[k] || {})[key] = v; }
     if (r.v === 2) {
       if (r.by && typeof r.by === "object") Object.keys(r.by).forEach(function (k) { var b = normLg(k, r.by[k]); if (b) o.by[k] = b; });
@@ -341,7 +347,8 @@ export function slateKit(opts) {
     return t;
   }
   function pvBlandHead(t, names) {
-    t = String(t || "").trim(); if (!t || /\d/.test(t)) return false;
+    // ranks are on the card already (DJ, Nov 19: "No. 8 Houston faces No. 11 Kansas" is repetitive): "No. 8", "#8", "8th-ranked" don't count as a number
+    t = String(t || "").trim().replace(/\b(?:No\.|#)\s*\d+\s+/gi, "").replace(/\b\d+(?:st|nd|rd|th)[- ]ranked\s+/gi, "").replace(/^(?:top-\d+|ranked)\s+/i, ""); if (!t || /\d/.test(t)) return false;
     var esc = function (x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
     names = (names || []).filter(function (x) { return x && String(x).length >= 2; }).sort(function (a, b) { return b.length - a.length; });
     if (!names.length) return false;
