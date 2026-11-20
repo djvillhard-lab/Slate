@@ -195,7 +195,7 @@ export function slateKit(opts) {
   function bxApi(lg, rest) { return "https://site.api.espn.com/apis/site/v2/sports/" + bxBase(lg) + "/" + rest; }
   // ---- from src/app/100-highlights.js
   function pvCompute(lg, sum, qbx, g) {
-    pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = "";
+    pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = ""; pvCompute.recs = null;
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
       var rec = {}; (k.record || []).forEach(function (r) { rec[r.type] = r.summary || r.displayValue || ""; });
@@ -208,6 +208,12 @@ export function slateKit(opts) {
     if (g) ids.forEach(function (i) { var cn = String(g[T[i].side + "Short"] || "").trim(); if (cn && cn.length <= 22) T[i].name = cn; });
     ids.forEach(function (i) { if (T[i].rank) T[i].name = "No. " + T[i].rank + " " + T[i].name; });
     var H = ids.filter(function (i) { return T[i].side === "home"; })[0] || ids[1], A = ids[0] === H ? ids[1] : ids[0], oth = function (i) { return i === H ? A : H; };
+    // 3.120.x (DJ: "SIU Edwardsville is 4-0 at home" on a card that said 2-1 — "NEED these to be accurate always"): the records the line
+    // was built from, so the card can refuse a line it can't check against its own record (pvRecOff); and a home or road record
+    // bigger than the team's whole record is bad data and never used
+    pvCompute.recs = { away: T[A].rec.total || "", home: T[H].rec.total || "" };
+    ids.forEach(function (i) { var tt = String(T[i].rec.total || "").split("-").map(Number); ["home", "road"].forEach(function (k) { var x = String(T[i].rec[k] || "").split("-").map(Number);
+      if (x.length >= 2 && tt.length >= 2 && (x[0] > tt[0] || x[x.length - 1] > tt[tt.length - 1])) delete T[i].rec[k]; }); });
     var nm = function (i) { return (T[i].rank ? "No. " + T[i].rank + " " : "") + T[i].name; };
     var NW = ["", "one", "two", "three", "four", "five", "six"], ORD = function (n) { var v = n % 100; return n + (v >= 11 && v <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"); };
     // 3.88.3: American grammar. A college team or a soccer side is one place ("Florida is", "USA has"); pro nicknames stay plural ("Spurs have")
@@ -217,7 +223,11 @@ export function slateKit(opts) {
     var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: conj(tx) }); };
     var byAbbr = {}; ids.forEach(function (i) { byAbbr[T[i].abbr] = i; });
     // form: streaks from the last five
-    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
+    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).filter(function (e) {
+      // soccer (Nov 20, 2026): only games in this competition, so a streak can be checked against the record on the card (Bournemouth's
+      // "won five in a row" counted a Carabao Cup and a Europa League win on a 4-3-3 league record)
+      var ln = String(e.leagueName || e.leagueAbbreviation || ""), gl = String(((sum.header || {}).league || {}).name || ""), ga = String(((sum.header || {}).league || {}).abbreviation || "");
+      return sport !== "soccer" || !ln || !gl || ln === gl || ln === ga || String(e.leagueAbbreviation || "") === ga; }).map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
     // 3.100.9 (DJ: "Houston has won four straight" on a 4-0 team just repeats the record): early in a season, when the last five
     // are the whole season, or a win streak covers every game (no losses yet), the streak lines say nothing new and are left out
     var wl = function (i) { var r = String(T[i].rec.total || "").split("-").map(Number); return r.length === 3 ? { w: r[0], l: r[2], gp: r[0] + r[1] + r[2] } : r.length === 2 ? { w: r[0], l: r[1], gp: r[0] + r[1] } : null; };

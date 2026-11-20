@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.120.4 (Nov 20, 2026)
+TestFlight: 3.120.2 (53), no new build (web only)
+- Game one-liners are checked against the record on the card. A line built from a different record than the card shows is not shown, and a home or road record bigger than the team's whole record is never used. SIU Edwardsville's women's card (Sun, Nov 22) said 2-1 under "SIU Edwardsville is 4-0 at home": the line was right (ESPN has SIUE at 4-2, 4-0 at home), but the card's record was stale.
+- That stale record came from a college day loaded early (Nov 11), whose full list of games was never refreshed. Days loaded early now get fresh records with every morning update.
+- Soccer streaks count only games in the same competition, so "won five in a row" can't include a cup or Europa League win the league record doesn't show.
+
 ## 3.120.3 (Nov 19, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - Slate one-liners: a headline that only names the two ranked teams ("No. 8 Houston faces No. 11 Kansas") is now treated as filler like any other matchup-only line, so the card shows the next real fact or no line. The rank numbers had counted as real information, but they're already on the card.

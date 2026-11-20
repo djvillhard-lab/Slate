@@ -288,6 +288,10 @@ def run(dates, on_demand):
             extra = [g for gs in col.values() for g in gs if big(g)]
             allg = sorted(pro + extra, key=lambda g: g["start"])
             sb_put(f"slates/{d}", {"date": d, "updatedAt": stamp, "source": "ESPN feeds; college: national TV, ranked or DJ's teams", "games": clean(allg)})
+            # a college day that was loaded in full earlier (DJ asked for it) keeps its own documents: refresh them too, or their
+            # records go stale (Nov 20, 2026: SIUE showed 2-1 from Nov 11 while it was 4-2, under a correct "4-0 at home" line)
+            for lg, gs in col.items():
+                if old.get(f"slates/{d}-{lg}"): sb_put(f"slates/{d}-{lg}", {"date": d, "updatedAt": stamp, "source": "ESPN scoreboard and standings feeds", "games": clean(gs)})
             summary.append(f"{d}: {len(pro)} pro/soccer + {len(extra)} college")
         if on_demand and datetime.date.fromisoformat(d) < today:
             sc = {}

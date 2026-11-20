@@ -110,3 +110,6 @@ Not covered: "all on the road"-type claims, standings ("second in the East"), pl
 
 ## Ranks are not news (3.120.3)
 pvBlandHead strips "No. 8" / "#8" / "8th-ranked" before its has-a-number test, so "No. 8 Houston faces No. 11 Kansas" counts as matchup-only filler. lines_check.js flags any line pvBlandHead calls filler.
+
+## Verified against the card record (3.120.4)
+pvCompute stores the total records it used (recs); pvRecOff hides a line whose records differ from g.awayRecord/g.homeRecord (checked when computed and when drawn; cache flag g6). Home/road records bigger than the total are dropped. Soccer form only counts games in the same competition. slates.py refreshes slates/D-ncaa* documents that already exist for days 2+ ahead (they went stale after an early load). lines_check.js flags home/road records bigger than the total and treats a missing record as unknown.

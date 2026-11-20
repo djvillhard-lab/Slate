@@ -28,11 +28,14 @@ const J = (u) => fetch(u).then((r) => r.json());
 
 function check(lg, sum, line, alts) {
   const out = [], comp = sum.header.competitions[0], T = comp.competitors.map((c) => {
-    const tm = c.team || {}, rec = String(((c.record || []).find((r) => r.type === "total") || {}).summary || "").split("-").map(Number);
+    const tm = c.team || {}, rs = String(((c.record || []).find((r) => r.type === "total") || {}).summary || ""), rec = rs ? rs.split("-").map(Number) : [NaN, NaN];   // no record (MLS playoffs): unknown, not 0-0
     return { names: [tm.nickname, tm.shortDisplayName, tm.location, tm.name].filter(Boolean), abbr: tm.abbreviation, w: rec[0], l: rec.length === 3 ? (/^soccer/.test(LG[lg]) ? rec[2] : rec[1] + rec[2]) : rec[1], gp: rec.reduce((a, b) => a + b, 0) || 0 };
   });
   const who = (frag) => T.filter((t) => t.names.some((n) => frag.indexOf(n + " ") >= 0 || frag.indexOf(n + "'") >= 0));
   if (/100% chance/.test(line)) out.push("100% chance");
+  // any home or road record has to fit inside that team's whole record (DJ, Nov 20: "SIU Edwardsville is 4-0 at home")
+  line.split(/; /).forEach((cl) => { const t = who(cl + " "); const re = /(\d+)-(\d+) (at home|on the road)/g; let m;
+    while ((m = re.exec(cl))) { if (t.length === 1 && (+m[1] > t[0].w || +m[2] > t[0].l)) out.push("home/road record bigger than " + t[0].abbr + "'s record"); } });
   // only restates the matchup, ranks included ("No. 8 Houston faces No. 11 Kansas", DJ Nov 19)
   if (app.pvBlandHead(line, [].concat.apply([], comp.competitors.map((c) => { const tm = c.team || {}; return [tm.displayName, tm.shortDisplayName, tm.nickname, tm.location, tm.name, tm.abbreviation]; })).filter(Boolean))) out.push("only restates the matchup");
   if (/\b(\w+) of (its|their) last \1\b/.test(line)) out.push("\"N of its last N\"");
