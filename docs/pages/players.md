@@ -12,6 +12,10 @@ Code: `src/app/134-player.js` (its styles are in the same file, `PLR_CSS`, so no
 - `plrTap(node, p)` makes a node open the page; it does nothing when the row has no ESPN id. Used by Box Office cards
   (`mmCard`), box score rows (face and name, `110-box-score.js`) and Top performers rows (`tpRow` in `140-game.js`).
 
+- 3.121.1 (Drew's feedback, DJ chose top left): an X (`.plr-x`) closes the sheet. It sits in a sticky top bar
+  (`.plr-bar`) with Follow on the right, so both stay in reach while the sheet scrolls. Follow moved out of the
+  name row into that bar (the name now gets the full width). The Close button at the bottom stays.
+
 ## Open
 - Not a full page: it's a sheet, so it has no Back history and no menu entry (a new view would need the Duo strip
   and an iPhone build).

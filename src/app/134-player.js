@@ -39,7 +39,12 @@
     ".plr-fol svg { width: 18px; height: 18px; flex: none; }" +
     ".plr-fol[aria-pressed=true] { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }" +
     ".plr-more { min-height: 44px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font: 800 15px var(--font); width: 100%; }" +
-    ".plr-t tr.sum td { font-weight: 800; }";
+    ".plr-t tr.sum td { font-weight: 800; }" +
+    // 3.121.1 (Drew's feedback, DJ's call): an X top left closes the sheet from anywhere; it stays put while the sheet scrolls
+    // Follow moved up into the same bar, top right, so the name gets the full width under them
+    ".plr-bar { position: sticky; top: -16px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: -16px -16px 0; padding: 12px 16px 8px; background: var(--card); }" +
+    ".plr-x { flex: none; width: 44px; height: 44px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; padding: 0; }" +
+    ".plr-x svg { width: 20px; height: 20px; }";
   (function () { var st = document.createElement("style"); st.id = "plr-css"; st.textContent = PLR_CSS; document.head.appendChild(st); })();
 
   function plrGet(url) { return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
@@ -139,6 +144,10 @@
     var P = PLR.cur; if (!P) return;
     var bd = plrSheet(), c = PLR.cache[P.lg + "|" + P.id] || {}, a = c.a || {}, o = c.o || {};
     var sh = el("div", "sheet plr-sheet");
+    var xb = el("button", "plr-x"); xb.type = "button"; xb.setAttribute("aria-label", "Close");
+    xb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    xb.addEventListener("click", plrClose);
+    var bar = el("div", "plr-bar"); bar.appendChild(xb); sh.appendChild(bar);
     // who he is
     var head = el("div", "plr-head"), face = el("div", "plr-face"), nm = a.displayName || P.name || "Player";
     var ini = nm.split(" "); face.textContent = ((ini[0] || "")[0] || "") + ((ini.length > 1 ? ini[ini.length - 1] : "")[0] || "");
@@ -155,7 +164,7 @@
       fb.appendChild(icon(fol ? "star" : "star-o")); fb.appendChild(document.createTextNode(fol ? "Following" : "Follow"));
       fb.setAttribute("aria-label", (fol ? "Following " : "Follow ") + nm);
       fb.addEventListener("click", function () { plrFollow(P, a); });
-      head.classList.add("has-fol"); head.appendChild(fb);
+      bar.appendChild(fb);
     }
     sh.appendChild(head);
 
