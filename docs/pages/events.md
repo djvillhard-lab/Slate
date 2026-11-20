@@ -1,5 +1,5 @@
 # Events: golf and F1 (sports without two teams)
-Last updated: Nov 19, 2026, 3.119.1
+Last updated: Nov 20, 2026, 3.121.2
 Code: `src/app/165-events.js` (data + card + All games sections + slate block), hooks in `160-all-games.js` (tabs in
 `filterOpts`, a GOLF/F1 tab in `renderGames`, sections under the leagues on ALL) and `170-slate-page.js` (`evSlateBlock`
 under the games, above Finished). Styles `src/styles/098-events.css`.
@@ -23,8 +23,13 @@ under the games, above Finished). Styles `src/styles/098-events.css`.
 - Majors = `GOLF_BIG` name regex (four majors, Players, Tour Championship, Ryder/Presidents/Solheim Cups, LPGA majors, CME).
 - Server side (tick.py, alerts) doesn't know about events; they aren't in the stored slate or alerts.
 
+## 3.121.2: men's and women's golf apart (DJ)
+- Two sports: `golf` (Men's golf, PGA tab, `golf/pga`) and `wgolf` (Women's golf, LPGA tab, `golf/lpga`); both have `golf: true`
+  in EV_SPORTS and events carry `x.golf`. Separate sections, Slate rules cards (majors / every event each) and slate sections.
+- normRules moves an old `sports.golf.lpga` / `.majors` to `sports.wgolf` once.
+
 ## Open (DJ's order: golf, F1, then UFC, tennis, NASCAR)
-- UFC next: fight cards are head-to-head (`mma/ufc`, competitions = bouts with 2 competitors) and run every weekend.
+- UFC: on hold (DJ, Nov 20). When it's a go: fight cards are head-to-head (`mma/ufc`, competitions = bouts with 2 competitors) and run every weekend.
 - Tennis (`tennis/atp`, `tennis/wta`): off until Davis Cup / the Australian Open in January. NASCAR (`racing/nascar-premier`) back in February; reuses the F1 card.
 - All games can't hide golf or F1 tabs yet (Settings' league list is built from `LEAGUES`). The Live button's count doesn't include events.
 - `site.web.api.espn.com/.../golf/leaderboard` has richer golf data (cut line, tee times) but cloud sessions can't reach it to test.

@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.2 (Nov 20, 2026)
+TestFlight: 3.113.0, no new build (web only)
+- Golf: men's and women's golf are separate. All games has a PGA tab (Men's golf) and an LPGA tab (Women's golf), and the ALL tab has a section for each.
+- Slate rules: Golf and racing has a Men's golf card (Majors and big events, Every PGA Tour event) and a Women's golf card (Majors and big events, Every LPGA event). Anything you'd turned on for LPGA moved over to Women's golf.
+
 ## 3.121.1 (Nov 20, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - Every game with two known teams now gets a real one-liner. When nothing stands out, the line falls back to a fact the card doesn't show: a team's top goal scorer (hockey, soccer), its place in the division, both places in the soccer table, or its home or road record. Before, quiet NHL games like Penguins at Predators showed no line at all.

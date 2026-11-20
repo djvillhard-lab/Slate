@@ -89,6 +89,10 @@
       EV_RULES[k].forEach(function (x) { if (b[x[0]] === true) { ok[x[0]] = true; any = true; } });
       if (any) o.sports[k] = ok;
     });
+    // 3.121.2: before golf was split, one Golf card held both tours; carry its picks over to Women's golf
+    var og = r.sports && r.sports.golf; if (og && typeof og === "object" && !r.sports.wgolf && (og.lpga === true || og.majors === true)) {
+      o.sports.wgolf = {}; if (og.lpga === true) o.sports.wgolf.lpga = true; if (og.majors === true) o.sports.wgolf.majors = true;
+    }
     function put(k, key, v) { if (!LG_OPTS[k] || LG_OPTS[k].indexOf(key) === -1) return; (o.by[k] = o.by[k] || {})[key] = v; }
     if (r.v === 2) {
       if (r.by && typeof r.by === "object") Object.keys(r.by).forEach(function (k) { var b = normLg(k, r.by[k]); if (b) o.by[k] = b; });

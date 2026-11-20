@@ -4,10 +4,13 @@
   // finishing order. All games gets a tab per sport and a section on ALL; the slate shows golf on tournament days and
   // F1 on qualifying and race days. Only what ESPN gives is shown: position, name, flag, score to par, holes played.
   var EV_SPORTS = {
-    golf: { tag: "GOLF", name: "Golf", feeds: [["golf/pga", "PGA Tour"], ["golf/lpga", "LPGA"]] },
+    // men's and women's golf are separate sports (3.121.2, DJ: "Ensure that men's and women's golf is separated"):
+    // their own tabs, sections and Slate rules, like college hoops and women's college hoops
+    golf: { tag: "PGA", name: "Men's golf", golf: true, feeds: [["golf/pga", "PGA Tour"]] },
+    wgolf: { tag: "LPGA", name: "Women's golf", golf: true, feeds: [["golf/lpga", "LPGA"]] },
     f1: { tag: "F1", name: "Formula 1", feeds: [["racing/f1", "Formula 1"]] }
   };
-  var EV_ORDER = ["golf", "f1"];
+  var EV_ORDER = ["golf", "wgolf", "f1"];
   var EV = {}, EV_OPEN = {}, evPollT = null;
   var evEtFmt = null, evHomeFmt = null;
   function evDay(iso, tz) {  // "2026-11-19" for a time, in that time zone
@@ -23,7 +26,7 @@
 
   // golf: one leaderboard per tour. Position is ESPN's order (ties when the totals match); the total is the sum of
   // the rounds ESPN has scored, and "thru" counts the holes it lists for the round being played.
-  function evGolf(e, tour, day) {
+  function evGolf(e, tour, day, sp) {
     var c = (e.competitions || [])[0] || {}, st = c.status || e.status || {}, kind = evKind(e.status || st);
     var start = evDay(e.date, "et"), end = evDay(e.endDate || e.date, "et");
     if (day < start || day > end) return null;
@@ -44,7 +47,7 @@
     var detail = (st.type || {}).shortDetail || (st.type || {}).detail || "";
     if (kind === "upcoming") detail = "Starts " + fmtDate(start, { weekday: "short", month: "short", day: "numeric" });
     var link = ((e.links || [])[0] || {}).href || "";
-    return { id: "ev-golf-" + e.id, sport: "golf", tour: tour, name: e.name || "", kind: kind, detail: detail.replace(/ - /g, " · "),
+    return { id: "ev-" + sp + "-" + e.id, sport: sp, golf: true, tour: tour, name: e.name || "", kind: kind, detail: detail.replace(/ - /g, " · "),
       start: e.date, nets: evNets(c), link: link, rows: scored, round: period, field: rows.length };
   }
 
@@ -83,7 +86,7 @@
       EV_SPORTS[sp].feeds.forEach(function (f) {
         jobs.push(fetch("https://site.api.espn.com/apis/site/v2/sports/" + f[0] + "/scoreboard?dates=" + ymd, { cache: "no-store" })
           .then(function (r) { return r.ok ? r.json() : null; }, function () { return null; })
-          .then(function (d) { return ((d && d.events) || []).map(function (ev) { try { return sp === "golf" ? evGolf(ev, f[1], day) : evF1(ev, f[1], day); } catch (x) { return null; } }).filter(Boolean); }));
+          .then(function (d) { return ((d && d.events) || []).map(function (ev) { try { return EV_SPORTS[sp].golf ? evGolf(ev, f[1], day, sp) : evF1(ev, f[1], day); } catch (x) { return null; } }).filter(Boolean); }));
       });
     });
     Promise.all(jobs).then(function (rs) {
@@ -103,12 +106,12 @@
   function evList(day, sp) { evNeed(day); return ((EV[day] || {}).list || []).filter(function (x) { return !sp || x.sport === sp; }); }
 
   // ---------- the card ----------
-  function evRowsFor(x, open) { var n = open ? 10 : x.sport === "golf" ? 5 : 3; return x.rows.slice(0, n); }
+  function evRowsFor(x, open) { var n = open ? 10 : x.golf ? 5 : 3; return x.rows.slice(0, n); }
   function evCard(x, where) {
     var open = !!EV_OPEN[x.id], card = el("div", "ev-card panel" + (x.kind === "over" && state.date >= todayInHome() ? " over" : ""));
     var top = el("div", "ev-top");
     var lg = el("span", "g-lg ev-lg"); lg.appendChild(el("span", "nt", x.tour)); top.appendChild(lg);
-    var bug = el("span", "bug" + (x.kind === "live" ? " live" : ""), x.kind === "live" ? (x.sport === "golf" ? (x.round ? "Round " + x.round : "Live") : "Live") : x.kind === "over" ? "Final" : x.sport === "golf" ? "Upcoming" : timeText(x.start));
+    var bug = el("span", "bug" + (x.kind === "live" ? " live" : ""), x.kind === "live" ? (x.golf ? (x.round ? "Round " + x.round : "Live") : "Live") : x.kind === "over" ? "Final" : x.golf ? "Upcoming" : timeText(x.start));
     top.appendChild(bug);
     card.appendChild(top);
     card.appendChild(el("div", "ev-name", x.name));
@@ -135,14 +138,14 @@
         if (r.flag.src) { var im = el("img", "ev-flag"); im.src = r.flag.src; im.alt = r.flag.alt; im.loading = "lazy"; im.width = 18; im.height = 12; nm.appendChild(im); }
         nm.appendChild(el("span", "ev-pn", r.name));
         li.appendChild(nm);
-        if (x.sport === "golf") {
+        if (x.golf) {
           li.appendChild(el("span", "ev-thru", r.thru || ""));
           li.appendChild(el("span", "ev-val" + (r.tot < 0 ? " under" : ""), r.val || ""));
         }
         tb.appendChild(li);
       });
       card.appendChild(tb);
-    } else if (x.sport === "golf" && x.kind === "upcoming") card.appendChild(el("div", "ev-none", "The leaderboard starts with the first round."));
+    } else if (x.golf && x.kind === "upcoming") card.appendChild(el("div", "ev-none", "The leaderboard starts with the first round."));
     var foot = el("div", "ev-foot");
     if (x.rows.length > evRowsFor(x, false).length) {
       var more = el("button", "ev-more", open ? "Show fewer" : "Show top 10"); more.type = "button";
@@ -195,16 +198,17 @@
   // within slate rules") ----------
   // each sport is off until you turn on one of its rules in Slate rules; All games always shows them
   var EV_RULES = {
-    golf: [["majors", "Majors and big events", "The four majors, the Players, the Tour Championship, the Ryder and Presidents Cups, and the LPGA's majors and CME."],
-           ["pga", "Every PGA Tour event", "Every PGA Tour tournament, all four rounds."],
-           ["lpga", "Every LPGA event", "Every LPGA tournament, all four rounds."]],
+    golf: [["majors", "Majors and big events", "The Masters, the PGA Championship, the U.S. Open, the Open, the Players, the Tour Championship, and the Ryder and Presidents Cups."],
+           ["pga", "Every PGA Tour event", "Every PGA Tour tournament, all four rounds."]],
+    wgolf: [["majors", "Majors and big events", "The Chevron, the U.S. Women's Open, the Women's PGA, the Evian, the Women's Open, the CME Group Tour Championship and the Solheim Cup."],
+            ["lpga", "Every LPGA event", "Every LPGA tournament, all four rounds."]],
     f1: [["race", "Race days", "The day of each Grand Prix."],
          ["qual", "Qualifying and sprint days", "The days with qualifying or a sprint race."]]
   };
   var GOLF_BIG = /\bmasters\b|\bpga championship\b|\bu\.?s\.? (women's )?open\b|\bthe open\b|open championship|\bplayers championship\b|tour championship|ryder cup|presidents cup|chevron championship|evian championship|women's open|solheim cup/i;
   function evRuleOn(x) {
     var b = ((state.rules || {}).sports || {})[x.sport]; if (!b) return false;
-    if (x.sport === "golf") return !!((b.majors && GOLF_BIG.test(x.name)) || (b.pga && x.tour === "PGA Tour") || (b.lpga && x.tour === "LPGA"));
+    if (x.golf) return !!((b.majors && GOLF_BIG.test(x.name)) || b.pga || b.lpga);
     if (x.sport === "f1") return (x.sessions || []).some(function (s) {
       var today = s.day === x.day || s.kind === "live";
       return today && ((b.race && s.ab === "Race") || (b.qual && /^(Qual|SQ|SS|Sprint)$/.test(s.ab)));
@@ -227,7 +231,7 @@
       var open = !!(state.lgOpen && state.lgOpen["ev-" + k]);
       var card = el("section", "lgcard" + (on.length ? " on" : "") + (open ? " open" : ""));
       var head = el("button", "lg-head"); head.type = "button"; head.setAttribute("aria-expanded", open ? "true" : "false");
-      var ic = svgIcon(k === "golf" ? "M8 21V3l9 4-9 4M4.5 21h9" : "M6 21V4h12l-2.5 4L18 12H6M6 8h3v4M12 4v4h3.5M12 8v4", false); ic.classList.add("sp"); head.appendChild(ic);
+      var ic = svgIcon(EV_SPORTS[k].golf ? "M8 21V3l9 4-9 4M4.5 21h9" : "M6 21V4h12l-2.5 4L18 12H6M6 8h3v4M12 4v4h3.5M12 8v4", false); ic.classList.add("sp"); head.appendChild(ic);
       var tx = el("span", "lg-tx"); tx.appendChild(el("b", null, EV_SPORTS[k].name));
       tx.appendChild(el("span", "lg-sum", on.length ? on.map(function (x) { return x[1]; }).join(", ") : "Off")); head.appendChild(tx);
       var today = evList(state.date, k), hit = today.filter(evRuleOn).length;
