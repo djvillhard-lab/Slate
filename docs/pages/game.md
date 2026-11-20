@@ -57,3 +57,6 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
   Hockey shot map not built. `shots.py game:<team>` still finds 0 games; open a card and tap Full matchup instead.
 - 3.109.1 (DJ, Nov 18: "Keep the share a game option for the future, remove for now"): the Send button is off behind
   `SHARE_ON = false` in `142-share.js`. Don't switch it back on unless DJ asks.
+
+## 3.121.6 (Nov 20, 2026)
+- Players to watch (pwNote, 080-claude.js): "Leads Dayton in…" for college/soccer, "Leads the Nuggets in…" for pro.

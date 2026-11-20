@@ -143,7 +143,9 @@
     var c = L.leads; if (!c.length) return "";
     if (c.length === 1) return (tn ? tn.replace(/s$/, "s'").replace(/([^s'])$/, "$1's") + " " : "The team's ") + c[0][2];
     var cs = c.map(function (x) { return x[1]; }), list = cs.length === 2 ? cs.join(" and ") : cs.slice(0, -1).join(", ") + " and " + cs[cs.length - 1];
-    return "Leads " + (tn ? "the " + tn : "the team") + " in " + list;
+    // Nov 20, 2026 (DJ: "Leads the Dayton"): a school or a club is one place ("Leads Dayton"); pro nicknames take "the" ("Leads the Nuggets")
+    var one = (LEAGUES[g.league] || {}).college || BX_SPORT[g.league] === "soccer" || /^ncaa/.test(g.league);
+    return "Leads " + (tn ? (one ? "" : "the ") + tn : "the team") + " in " + list;
   }
   function pwKey(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, "").replace(/[^a-z]/g, ""); }
   function pwNum(v) { var n = parseFloat(String(v == null ? "" : v).replace(/,/g, "")); return isNaN(n) ? 0 : n; }
