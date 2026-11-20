@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Player page (X to close) | src/app/134-player.js, docs/pages/players.md | 2026-11-20 14:50 |
+| DJ | Golf: men's and women's apart | src/app/165-events.js, src/app/050-slate-engine.js, docs/pages/events.md | 2026-11-20 14:53 |
