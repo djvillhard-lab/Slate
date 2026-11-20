@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.7 (Nov 20, 2026)
+TestFlight: 3.120.2 (53), no new build (web only)
+- One-liners saved on your phone from before 3.121.5 are thrown out, so the new wording ("Murray State has won four of its last five, losing only to NC State last time out") shows as soon as the app opens instead of up to 30 minutes later.
+
 ## 3.121.6 (Nov 20, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - Players to watch: "Leads Dayton in points and rebounds" instead of "Leads the Dayton". College teams and soccer clubs go without "the"; pro teams keep it ("Leads the Nuggets").

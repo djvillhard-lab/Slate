@@ -130,3 +130,6 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 
 ## 3.121.5 (Nov 20, 2026): the odd game, by name
 - DJ: "I'd like to know who Murray State lost to." form5/slump lines add ", losing only to X" / ", beating only X" (+ " last time out" when it was the latest game), from lastFiveGames opponent; short name from TEAM_LIST col 6. A line with a ", " clause is never "and"-merged with a same-team fact. Soccer slump needs no draws.
+
+## 3.121.7
+- PV cache flag g6 -> g7: saved lines from before 3.121.5 are dropped on load. Bump it again whenever line wording changes and DJ needs it at once.
