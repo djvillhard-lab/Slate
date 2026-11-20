@@ -372,11 +372,16 @@
     var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: conj(tx) }); };
     var byAbbr = {}; ids.forEach(function (i) { byAbbr[T[i].abbr] = i; });
     // form: streaks from the last five
-    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).filter(function (e) {
+    var form = {}, formEv = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).filter(function (e) {
       // soccer (Nov 20, 2026): only games in this competition, so a streak can be checked against the record on the card (Bournemouth's
       // "won five in a row" counted a Carabao Cup and a Europa League win on a 4-3-3 league record)
       var ln = String(e.leagueName || e.leagueAbbreviation || ""), gl = String(((sum.header || {}).league || {}).name || ""), ga = String(((sum.header || {}).league || {}).abbreviation || "");
-      return sport !== "soccer" || !ln || !gl || ln === gl || ln === ga || String(e.leagueAbbreviation || "") === ga; }).map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
+      return sport !== "soccer" || !ln || !gl || ln === gl || ln === ga || String(e.leagueAbbreviation || "") === ga; }); formEv[i] = form[i]; form[i] = form[i].map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
+    // Nov 20, 2026 (DJ: "I'd like to know who Murray State lost to"): the one game that broke a four-of-five run, by name
+    var oppNm = function (o) { var dn = String((o || {}).displayName || ""), row = ((typeof window !== "undefined" && window.TEAM_LIST) || []).filter(function (r) { return r[0] === dn; })[0]; return row && row[5] && row[5].length <= 18 ? row[5] : dn; };
+    var odd = function (i, res) { var ev = formEv[i] || [], k = -1, n = 0; ev.forEach(function (e, j) { if (e.gameResult !== "W" && res === "W" || e.gameResult === "W" && res !== "W") { n++; k = j; } }); if (n !== 1 || !(ev[k].opponent || {}).displayName) return "";
+      var o = (sing ? "" : "the ") + oppNm(ev[k].opponent), lt = k === ev.length - 1 ? " last time out" : "", r0 = ev[k].gameResult;
+      return res === "W" ? (r0 === "L" ? ", losing only to " + o + lt : r0 === "D" ? ", with a draw against " + o + lt : "") : ", beating only " + o + lt; };
     // 3.100.9 (DJ: "Houston has won four straight" on a 4-0 team just repeats the record): early in a season, when the last five
     // are the whole season, or a win streak covers every game (no losses yet), the streak lines say nothing new and are left out
     var wl = function (i) { var r = String(T[i].rec.total || "").split("-").map(Number); return r.length === 3 ? { w: r[0], l: r[2], gp: r[0] + r[1] + r[2] } : r.length === 2 ? { w: r[0], l: r[1], gp: r[0] + r[1] } : null; };
@@ -443,10 +448,10 @@
       else if (sm && who && ss.type !== "head-to-head" && +sm[2] >= 2) add("ser", 30, T[who].name + " lead the season series " + sm[2] + "-" + sm[3]); }
     // quieter form: four wins from the last five without a current streak. 3.113.2 (DJ: accuracy review): never "five of its last five"
     // (High Point at 6-0: the streak line is left out on an unbeaten record, and this one stepped in with it)
-    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && w < f.length && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five"); });
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && w < f.length && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five" + odd(i, "W")); });
     // 3.91.2 (DJ: "Pistons (8-4) at Pelicans (5-10)" is not informative): quieter facts that only win when nothing above stands out
     // a slump: one or no wins in the last five, without a current four-game skid
-    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && w > 0 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five"); });
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && w > 0 && f.indexOf("D") < 0 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five" + odd(i, "L")); });
     // the division race (pro leagues; ESPN's summary carries each team's division): first place by how much, or last place
     if (/^(nba|wnba|nhl|nfl|mlb)$/.test(lg)) (((sum.standings || {}).groups) || []).forEach(function (gr) {
       var es = ((gr.standings || {}).entries || []), dv = String(gr.header || "").replace(/^\d{4}(-\d{2,4})?\s+/, "").replace(/\s+Standings$/i, "").trim();
@@ -507,7 +512,7 @@
       // same team twice reads as one sentence: "Canucks have lost five straight and are 1-8 at home"
       // 3.111.x: never join onto a line that already names both teams ("Heat have won five straight; Bucks have lost five" + "Heat are
       // 12.5-point favorites" read as the Bucks being favorites)
-      var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 || t.indexOf("; ") >= 0 || /^Both /.test(t) ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
+      var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 || t.indexOf("; ") >= 0 || t.indexOf(", ") >= 0 || /^Both /.test(t) ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
       var rest = who0 ? s2.tx.slice(T[who0].name.length + 1) : "";
       // 3.88.3: no repeated verb. "USA has won five in a row and has won the last four meetings" -> "...and the last four meetings";
       // "are without X and are 5-0 at home" -> "...and 5-0 at home"

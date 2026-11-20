@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.5 (Nov 20, 2026)
+TestFlight: 3.120.2 (53), no new build (web only)
+- "Won four of its last five" now says who the one loss was to, and "lost four of its last five" says who the one win was over: "Murray State has won four of its last five, losing only to NC State last time out". "Last time out" is added when that game was the most recent one.
+- Soccer: a team with draws in its last five is no longer said to have "lost four of its last five".
+
 ## 3.121.4 (Nov 20, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - The slate says how many games are on it for that day ("9 games on your slate"), just above Time, League and Live. Drew asked for it.
