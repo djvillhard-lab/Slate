@@ -872,6 +872,13 @@ def slates_work(now):
     morning = loc.replace(hour=4, minute=0, second=0, microsecond=0)
     if loc.hour >= 4 and (not up or up < morning):
         SL.run([(loc.date() + datetime.timedelta(days=k)).isoformat() for k in range(4)], False)
+        return
+    # days loaded in full ahead of time (their own college documents) get fresh records at least every 6 hours (Nov 20, 2026:
+    # SIUE's women showed 2-1 from a Nov 11 load while they were 4-2). Checked every tick; one day per tick, oldest first
+    ahead = [(loc.date() + datetime.timedelta(days=k)).isoformat() for k in range(2, 8)]
+    docs = sb_get([f"slates/{x}-{lg}" for x in ahead for lg in ("ncaam", "ncaaw", "ncaaf")])
+    stale = sorted({p.split("/")[1][:10] for p, v in docs.items() if (parse((v or {}).get("updatedAt")) or now) < now - datetime.timedelta(hours=6)})
+    if stale: SL.run(stale[:1], False); print("refreshed early-loaded day", stale[0])
 
 def main():
     if not KEY: sys.exit("SUPABASE_SECRET is not set")

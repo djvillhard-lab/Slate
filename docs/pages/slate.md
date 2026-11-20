@@ -113,3 +113,6 @@ pvBlandHead strips "No. 8" / "#8" / "8th-ranked" before its has-a-number test, s
 
 ## Verified against the card record (3.120.4)
 pvCompute stores the total records it used (recs); pvRecOff hides a line whose records differ from g.awayRecord/g.homeRecord (checked when computed and when drawn; cache flag g6). Home/road records bigger than the total are dropped. Soccer form only counts games in the same competition. slates.py refreshes slates/D-ncaa* documents that already exist for days 2+ ahead (they went stale after an early load). lines_check.js flags home/road records bigger than the total and treats a missing record as unknown.
+
+## Early-loaded days stay fresh (Nov 20, 2026)
+tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 days ahead older than 6 hours is refreshed (one day per tick) through slates.run(non-full), which rewrites existing college documents.
