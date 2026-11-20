@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.9 (Nov 20, 2026)
+TestFlight: 3.121.9, new build
+- Tonight's Slate widget (large size): each game has a small league tag before its time, like "CBB 4:30 PM · ESPN2", with the same short names as News (CBB, CFB, NBA, WCBB).
+
 ## 3.121.8 (Nov 20, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - The "who they lost to" part of a one-liner now survives on a narrow card. When "Murray State has won four of its last five, losing only to NC State" is too long for one line, the card shows "Murray State's only loss in the last five: NC State" instead of cutting it back to "won four of its last five".

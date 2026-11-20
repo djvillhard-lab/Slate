@@ -6,5 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Home Screen widget: league labels (iPhone build, waits for DJ) | ios/SlateLive/SlateTonightWidget.swift | 2026-11-20 17:05 |
-| DJ | shared: ios/ | (same as above) | 2026-11-20 17:05 |

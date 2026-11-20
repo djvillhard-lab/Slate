@@ -135,7 +135,7 @@ struct TonightView: View {
                             ForEach(0..<2, id: \.self) { c in
                                 let i = r * 2 + c
                                 if i < list.count {
-                                    Link(destination: SlateLook.gameURL(list[i].id)) { TonightTile(g: TonightLook.tile(list[i], now: entry.date, fresh: fresh), fill: true) }
+                                    Link(destination: SlateLook.gameURL(list[i].id)) { TonightTile(g: TonightLook.tile(list[i], now: entry.date, fresh: fresh), fill: true, league: true) }
                                 } else {
                                     Color.clear
                                 }
@@ -160,6 +160,25 @@ struct TonightView: View {
         .foregroundStyle(SlateLook.ink)
         .containerBackground(SlateLook.card, for: .widget)
         .widgetURL(small ? SlateLook.slateURL : nil)
+    }
+}
+
+// 3.121.9 (DJ): the game's league as a small muted tag ("CBB", "NBA"), the same short names News uses; the page sends
+// them in lg (3.120.0). A long name (a league without a short tag) is left out rather than squeezed in.
+struct LeagueTag: View {
+    let g: SlateBoardGame
+    var body: some View {
+        let t = (g.lg ?? "").trimmingCharacters(in: .whitespaces).uppercased()
+        if !t.isEmpty && t.count <= 5 {
+            Text(t)
+                .font(SlateLook.bold(9))
+                .foregroundStyle(SlateLook.muted)
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 4)
+                .frame(height: 14)
+                .background(RoundedRectangle(cornerRadius: 3, style: .continuous).fill(SlateLook.raise))
+        }
     }
 }
 
@@ -258,6 +277,7 @@ struct TonightTile: View {
     var dark = false   // the Dynamic Island: a little smaller, on black
     var pillHeight: CGFloat? = nil   // 3.113.0: the Board's Lock Screen, under its header
     var fill = false   // 3.113.0: the large widget, where the pills grow to fill the row
+    var league = false   // 3.121.9 (DJ): the large widget, a small league tag ("CBB") before the time
 
     var body: some View {
         let pre = BoardLook.pre(g), live = g.s == "in", fin = g.s == "post"
@@ -269,14 +289,18 @@ struct TonightTile: View {
             .frame(minHeight: fill ? 42 : nil, idealHeight: fill ? 42 : nil, maxHeight: fill ? .infinity : nil)
             .frame(height: fill ? nil : pillHeight ?? (dark ? 38 : 42))
             if pre && g.d != "Live" {
-                Text([g.d, g.tv ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(SlateLook.semi(11))
-                    .foregroundStyle(SlateLook.muted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .frame(height: 16)
+                HStack(spacing: 5) {
+                    if league { LeagueTag(g: g) }
+                    Text([g.d, g.tv ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
+                        .font(SlateLook.semi(11))
+                        .foregroundStyle(SlateLook.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .frame(height: 16)
             } else {
                 HStack(spacing: 5) {
+                    if league { LeagueTag(g: g) }
                     ClockTag(text: pre ? "Live" : BoardLook.clock(g), live: live || pre, size: 11, height: 16, fill: dark ? Color.white.opacity(0.1) : SlateLook.raise)
                     if pre, let tv = g.tv, !tv.isEmpty {
                         Text(tv).font(SlateLook.semi(11)).foregroundStyle(SlateLook.muted).lineLimit(1)

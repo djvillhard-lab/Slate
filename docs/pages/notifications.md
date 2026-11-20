@@ -112,3 +112,5 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - 3.120.1 (DJ): SlantShape leans both sides the same way (right side insets at the top); TeamWash uses a fixed 12 pt lean.
 - 3.120.2 (DJ): before the start, the card's center shows the channel (a.channel) under "Starting", not the one-liner
   (it only shows once, at the bottom) or the slate tag ("National TV"); the tag still shows while the game is on.
+- 3.121.9 (DJ): large Tonight's slate widget shows LeagueTag (lg, 5 chars max, else none) before each game's time;
+  TonightTile(league: true) only there. Medium/small unchanged (DJ didn't ask).
