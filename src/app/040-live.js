@@ -108,11 +108,52 @@
     (c.competitors || []).forEach(function (k) { var tm = (k.team || {}).abbreviation || ""; (k.leaders || []).forEach(function (L) { if (/^(points|goals|rating)$/.test(L.name)) take(L, tm); }); });
     return out.slice(0, 8);
   }
+  // 3.120.x: team records stay current inside the app. ESPN's scoreboard carries each team's record as of now, so every
+  // scoreboard the app reads (live scores, plus one light check per league and day) updates the cards' records.
+  // Keyed by league and team, so a record learned from Wednesday's final also fixes Saturday's card.
+  var REC_NOW = {}, REC_AT = {};
+  function recKey(lg, name) { return lg + "|" + String(name || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+  function recLearn(lg, evs) {
+    var changed = false;
+    (evs || []).forEach(function (e) { ((e.competitions && e.competitions[0] || {}).competitors || []).forEach(function (k) {
+      var tm = k.team || {}, r = ((k.records || [])[0] || {}).summary;   // the same record the slate is built from (slates.py)
+      if (!tm.displayName || !r || !/^\d+(-\d+)+$/.test(r)) return;
+      var key = recKey(lg, tm.displayName); if (REC_NOW[key] !== r) { REC_NOW[key] = r; changed = true; }
+    }); });
+    return changed;
+  }
+  // put the newest records on a game (games() calls this for every game it hands out)
+  function recApply(g) {
+    ["away", "home"].forEach(function (sd) { var r = REC_NOW[recKey(g.league, g[sd])]; if (r && g[sd + "Record"] !== r) g[sd + "Record"] = r; });
+  }
+  // one scoreboard per league and day shown, at most every 30 minutes, never retried on failure; the page redraws
+  // only if a record actually changed, and that redraw waits for the finger to lift (liveRender)
+  var recSweeping = false;
+  function recSweep() {
+    if (recSweeping || document.hidden || !state.date) return;
+    var now = Date.now(), want = {};
+    games().forEach(function (g) {
+      if (g.custom || !ESPN_URLS[g.league]) return; var t = new Date(g.moved || g.start).getTime(); if (isNaN(t)) return;
+      var k = g.league + "|" + etDate(t); if (now - (REC_AT[k] || 0) > 30 * 60000) want[k] = 1;
+    });
+    var reqs = []; Object.keys(want).slice(0, 6).forEach(function (k) {
+      REC_AT[k] = now; var lg = k.split("|")[0], d = k.split("|")[1];
+      ESPN_URLS[lg].forEach(function (u) { var parts = u.split("&"); reqs.push({ lg: lg, url: "https://site.api.espn.com/apis/site/v2/sports/" + parts[0] + "/scoreboard?dates=" + d + (parts.length > 1 ? "&" + parts.slice(1).join("&") : "") }); });
+    });
+    if (!reqs.length) return;
+    recSweeping = true;
+    Promise.all(reqs.map(function (r) { return fetch(r.url).then(function (x) { return x.ok ? x.json() : null; }).then(function (j) { return { lg: r.lg, j: j }; }, function () { return { lg: r.lg, j: null }; }); })).then(function (res) {
+      recSweeping = false; var changed = false;
+      res.forEach(function (r) { if (r.j && recLearn(r.lg, r.j.events)) changed = true; });
+      if (changed) liveRender();
+    }, function () { recSweeping = false; });
+  }
   function livePoll() {
     try { laSlateWidget(); } catch (e) {}
     try { laBetsShare(); } catch (e) {}
     try { laLogos(); } catch (e) {}  // 3.113.0: also unfolded, so the widget and live notifications always have the slate's logos
     if (panesOn()) return;  // 3.80.0: unfolded, the two panes each keep their own scores; the page behind them rests
+    if (window.SLATE_SELF) { try { recSweep(); } catch (e) {} }
     if (!window.SLATE_SELF || livePolling || document.hidden || !state.date) return;
     if (LIVE_DATE !== state.date) LIVE_AT = {};
     // how often each league is checked: every 10 seconds while a slate game is live or about to start,
@@ -145,6 +186,7 @@
       var changed = false, norm = function (x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]/g, ""); };
       res.forEach(function (r) {
         var evs = r.j && r.j.events || [];
+        if (recLearn(r.lg, evs)) changed = true;
         evs.forEach(function (e) { ((e.competitions && e.competitions[0] || {}).competitors || []).forEach(function (k) { var tm = k.team || {}; if (logoNote(tm.displayName, tm.logo, tm.color, tm.alternateColor)) changed = true; }); });   // team logos ride along with the scores
         list.forEach(function (g) {
           if (g.league !== r.lg) return;
@@ -166,6 +208,7 @@
             if (st.state !== "in" && st.state !== "post") break;
             var v = { a: Number(A.score), h: Number(H.score), state: st.state, detail: st.shortDetail || st.detail || "", live: true, p: Number((c.status || e.status || {}).period) || 0, ck: Number((c.status || e.status || {}).clock) || 0, ld: liveLeaders(c), sit: liveSit(c) };
             var old = LIVE[g.id];
+            if (v.state === "post" && (!old || old.state !== "post")) REC_AT[g.league + "|" + etDate(new Date(e.date).getTime())] = Date.now() - 25 * 60000;   // records once ESPN has counted it
             if (!old || old.a !== v.a || old.h !== v.h || old.state !== v.state || old.detail !== v.detail || old.sit !== v.sit) { LIVE[g.id] = v; changed = true; }
             break;
           }
@@ -487,6 +530,7 @@
     SLATE_PARTS.forEach(function (k) { var p = (state.slateParts || {})[k]; if (p) take(p.games); });
     // start times move (a delay, an earlier game running long): ESPN's current time wins over the loaded one
     return out.map(function (g) {
+      recApply(g);
       if (flipKnown(g.id)) g = flipGame(g);
       var fix = (LIVE_DATE === state.date && LIVE_START[g.id]) || (state.scores && state.scores[g.id] && state.scores[g.id].start);
       if (!fix || fix === g.start || isNaN(new Date(fix))) return g;

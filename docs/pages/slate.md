@@ -116,3 +116,7 @@ pvCompute stores the total records it used (recs); pvRecOff hides a line whose r
 
 ## Early-loaded days stay fresh (Nov 20, 2026)
 tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 days ahead older than 6 hours is refreshed (one day per tick) through slates.run(non-full), which rewrites existing college documents.
+
+## 3.121.0 (Nov 20, 2026): records update in the app
+- 040-live.js: REC_NOW (league|team → record) is learned from every ESPN scoreboard read (livePoll, plus recSweep: one scoreboard per league and day shown, at most every 30 min, no retries). games() applies it via recApply. A game going final re-checks its day's records 5 min later.
+- 100-highlights.js pvNode: a cached line whose records disagree with the card is rebuilt within a minute instead of 30.

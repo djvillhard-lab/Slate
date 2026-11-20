@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.0 (Nov 20, 2026)
+TestFlight: 3.120.2 (53), no new build (web only)
+- Team records on game cards update while the app is open. Every scoreboard the app reads from ESPN (live scores, plus one light check per league for the day you're looking at, at most every 30 minutes) brings each team's current record, and the cards switch to it.
+- When a game goes final, its teams' records are checked again a few minutes later, once ESPN has counted the result. A record learned from one day's game also fixes that team's card on any other day you open.
+- A game one-liner built from an older record is rebuilt right away when the card's record changes, instead of waiting up to 30 minutes.
+
 ## 3.120.4 (Nov 20, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - Game one-liners are checked against the record on the card. A line built from a different record than the card shows is not shown, and a home or road record bigger than the team's whole record is never used. SIU Edwardsville's women's card (Sun, Nov 22) said 2-1 under "SIU Edwardsville is 4-0 at home": the line was right (ESPN has SIUE at 4-2, 4-0 at home), but the card's record was stale.

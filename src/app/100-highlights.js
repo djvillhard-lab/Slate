@@ -585,6 +585,7 @@
   function pvNode(g) {
     var p = PV[g.id]; if (p && p.text) pvShare();
     if (!p || (!p.busy && Date.now() - p.at > 30 * 60000)) pvNeed(g);
+    else if (p.text && !p.busy && pvRecOff(g, p.recs) && Date.now() - p.at > 60000) pvNeed(g);   // a record just changed: build the line again now
     if (!p || !p.text) return null;
     // 3.113.10: the plain records line ("Cincinnati at Orlando") and a headline that only restates the matchup show nothing
     if (p.fb || pvBlandHead(p.text, pvNames(g)) || pvRecOff(g, p.recs)) return null;
