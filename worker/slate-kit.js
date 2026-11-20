@@ -305,9 +305,13 @@ export function slateKit(opts) {
       var st = function (e, ab) { var s = (e.stats || []).filter(function (x) { return x.abbreviation === ab; })[0]; return s ? s.displayValue : ""; };
       var gp = function (e) { return (+st(e, "W") || 0) + (+st(e, "L") || 0); };
       es.forEach(function (e, n) { var i = String(e.id || ""); if (!T[i] || gp(e) < 8) return;
-        if (n === 0) { var gb2 = parseFloat(st(es[1], "GB")); if (!(gb2 > 0)) return;
-          add("div|" + i, 38, T[i].name + " lead the " + dv + " by " + (gb2 === 1 ? "a game" : gb2 === 0.5 ? "half a game" : gb2 + " games")); }
-        else if (n === es.length - 1 && parseFloat(st(e, "GB")) >= 3) add("divlast|" + i, 30, T[i].name + " are last in the " + dv); }); });
+        // hockey standings have no games-behind: the lead is in points (Nov 20, 2026)
+        var pts = lg === "nhl", gap0 = pts ? (+st(e, "PTS") || 0) - (+st(es[1], "PTS") || 0) : 0, back = pts ? (+st(es[0], "PTS") || 0) - (+st(e, "PTS") || 0) : parseFloat(st(e, "GB"));
+        if (n === 0) { var gb2 = pts ? gap0 : parseFloat(st(es[1], "GB")); if (!(gb2 > 0)) return;
+          add("div|" + i, 38, T[i].name + " lead the " + dv + " by " + (pts ? (gb2 === 1 ? "a point" : gb2 + " points") : gb2 === 1 ? "a game" : gb2 === 0.5 ? "half a game" : gb2 + " games")); }
+        else if (n === es.length - 1 && back >= (pts ? 5 : 3)) add("divlast|" + i, 30, T[i].name + " are last in the " + dv);
+        // Nov 20, 2026 (DJ: a line on every slate game): the place in the division, a real fact the card doesn't show
+        else add("place|" + i, 16 - n / 10, T[i].name + " are " + ORD(n + 1) + " in the " + dv); }); });
     // a strong home or road record that the perfect-record line above doesn't cover
     ids.forEach(function (i) { var w = String(T[i].rec[i === H ? "home" : "road"] || "").split("-"), W = +w[0], Lw = +w[1];
       if (sport !== "soccer" && w.length >= 2 && Lw > 0 && W + Lw >= 6 && !pvAllHome(T[i], W, Lw) && W / (W + Lw) >= 0.7) add("good|" + i, 30, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); });
@@ -318,6 +322,17 @@ export function slateKit(opts) {
     if (sport === "bball") { var bt = (parseFloat(String(T[A].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[A].rec.total).split("-")[1]) || 0) >= (parseFloat(String(T[H].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[H].rec.total).split("-")[1]) || 0) ? A : H;
       (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
         var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
+    // Nov 20, 2026 (DJ: "We need some one-liner text to show for every slate game"): last real facts before the plain records line
+    // the top scorer in goals (hockey, soccer), from ESPN's team leaders
+    if (sport === "hockey" || sport === "soccer") { var gl0 = null; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; (L.leaders || []).forEach(function (cat) { if (!/^goals$/i.test(cat.name || "")) return;
+        var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseInt(x && x.displayValue, 10); if (a.displayName && v >= 3 && (!gl0 || v > gl0.v)) gl0 = { i: i, n: a.displayName, v: v }; }); });
+      if (gl0) add("goals|" + gl0.i, 19, gl0.n + " leads " + (sing ? "" : "the ") + T[gl0.i].name + " with " + gl0.v + " goals"); }
+    // the soccer table, both places
+    if (sport === "soccer" && pos[A] && pos[H] && Math.abs(pos[A] - pos[H]) < 12) add("table", 15, T[H].name + " (" + ORD(pos[H]) + ") host " + T[A].name + " (" + ORD(pos[A]) + ")");
+    // a home or road record the lines above didn't use, whatever it is (the card shows only the overall record)
+    ids.forEach(function (i) { var r0 = String(T[i].rec[i === H ? "home" : "road"] || ""), w = r0.split("-").map(Number);
+      if (sport !== "soccer" && w.length >= 2 && !w.some(isNaN) && w[0] + w[1] >= 3 && !pvAllHome(T[i], w[0], w[1]) && !c.some(function (x) { return x.k === "perf|" + i || x.k === "bad|" + i || x.k === "good|" + i; }))
+        add("split|" + i, 12 + Math.abs(w[0] / (w[0] + w[1]) - 0.5) * 6, T[i].name + " are " + r0 + " " + (i === H ? "at home" : "on the road")); });
     // ESPN's preview headline: a solid fallback
     var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 33, hd);
     // a playoff game (3.92.0): the regular-season table, division race and season series no longer decide anything

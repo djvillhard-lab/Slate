@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.1 (Nov 20, 2026)
+TestFlight: 3.120.2 (53), no new build (web only)
+- Every game with two known teams now gets a real one-liner. When nothing stands out, the line falls back to a fact the card doesn't show: a team's top goal scorer (hockey, soccer), its place in the division, both places in the soccer table, or its home or road record. Before, quiet NHL games like Penguins at Predators showed no line at all.
+- NHL division lines work: "Oilers lead the Pacific Division by 6 points". Hockey standings count points, not games behind, so these never showed before.
+- Tournament games whose teams aren't set yet (TBD vs TBD) still show no line.
+
 ## 3.121.0 (Nov 20, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - Team records on game cards update while the app is open. Every scoreboard the app reads from ESPN (live scores, plus one light check per league for the day you're looking at, at most every 30 minutes) brings each team's current record, and the cards switch to it.

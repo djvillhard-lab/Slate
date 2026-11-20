@@ -22,7 +22,7 @@ const LG = { nba: "basketball/nba", nhl: "hockey/nhl", nfl: "football/nfl", ncaa
   ncaaw: "basketball/womens-college-basketball", epl: "soccer/eng.1", mls: "soccer/usa.1", ucl: "soccer/uefa.champions" };
 const NW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
 const etDay = (d) => new Date(d).toLocaleDateString("en-CA", { timeZone: "America/New_York" }).replace(/-/g, "");
-const args = process.argv.slice(2), all = args.includes("--all");
+const args = process.argv.slice(2), all = args.includes("--all"), missing = args.includes("--missing");
 let days = args.filter((a) => /^\d{8}$/.test(a)); if (!days.length) days = [etDay(Date.now()), etDay(Date.now() + 864e5)];
 const J = (u) => fetch(u).then((r) => r.json());
 
@@ -55,19 +55,19 @@ function check(lg, sum, line, alts) {
 }
 
 (async () => {
-  let n = 0, bad = 0;
+  let n = 0, bad = 0, nl = 0;
   for (const lg of Object.keys(LG)) for (const d of days) {
     let sb; try { sb = await J(`https://site.api.espn.com/apis/site/v2/sports/${LG[lg]}/scoreboard?dates=${d}&limit=400${/ncaa[mw]/.test(lg) ? "&groups=50" : ""}`); } catch (e) { continue; }
     for (const e of (sb.events || []).filter((e) => e.status.type.state === "pre")) {
       let sum; try { sum = await J(`https://site.api.espn.com/apis/site/v2/sports/${LG[lg]}/summary?event=${e.id}`); } catch (x) { continue; }
       let line = null, alts = [];
       try { line = app.pvCompute(lg, sum, [], null); if (line) alts = app.pvStatAlts({ text: line, f: app.pvCompute.f }); } catch (x) { line = "ERROR " + x.message; }
-      if (!line || app.pvCompute.fb) continue;
+      if (!line || app.pvCompute.fb || (app.pvBlandHead && app.pvBlandHead(line, []))) { nl++; if (missing) console.log("○ " + lg + " " + e.shortName + ": no line" + (line ? " (" + line + ")" : "")); continue; }
       n++; const probs = /^ERROR/.test(line) ? ["crashed"] : check(lg, sum, line, alts);
       if (probs.length) bad++;
       if (probs.length || all) console.log((probs.length ? "✗ " : "  ") + lg + " " + e.shortName + ": " + line + (probs.length ? "\n    " + probs.join("\n    ") : ""));
     }
   }
-  console.log(`\n${n} lines checked, ${bad} flagged`);
+  console.log(`\n${n} lines checked, ${bad} flagged, ${nl} games with no line`);
   process.exit(bad ? 1 : 0);
 })();

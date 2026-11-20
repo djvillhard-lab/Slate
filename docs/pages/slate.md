@@ -120,3 +120,7 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 ## 3.121.0 (Nov 20, 2026): records update in the app
 - 040-live.js: REC_NOW (league|team → record) is learned from every ESPN scoreboard read (livePoll, plus recSweep: one scoreboard per league and day shown, at most every 30 min, no retries). games() applies it via recApply. A game going final re-checks its day's records 5 min later.
 - 100-highlights.js pvNode: a cached line whose records disagree with the card is rebuilt within a minute instead of 30.
+
+## 3.121.1 (Nov 20, 2026): a one-liner on every game
+- DJ: "We need some one-liner text to show for every slate game." pvCompute's last real-fact fallbacks (below pred/scorer): goals leader (hockey, soccer, 19), division place (pro, 16), soccer table places (15), any home/road split not already used (12-15). NHL div lines use PTS (no GB in hockey standings).
+- `node scripts/lines_check.js --missing` lists games with no usable line; Nov 20-22: only TBD-vs-TBD tournament games.
