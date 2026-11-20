@@ -201,8 +201,13 @@
   // longest first: both facts with filler cut ("going into the second leg"), then the strongest fact alone, then that fact cut
   function pvStatAlts(p) {
     var cut = function (t) { return String(t || "").replace(/ going into the second leg/, "").replace(/ in their last five\b/, " in the last five").replace(/\bis only a ([\d.]+)-point favorite/, "is only a $1-pt favorite").replace(/\b(is|are) a ([\d.]+)-point favorite/, "$1 a $2-pt favorite").replace(/\s+/g, " ").trim(); };
-    var out = [p.text, cut(p.text)];
-    if (p.f && p.f !== p.text) out.push(p.f, cut(p.f));
+    // Nov 20, 2026 (DJ: "I'd like to know who Murray State lost to"): the four-of-five line keeps the opponent when it's shortened
+    // ("Murray State's lone loss in five: NC State") instead of losing the clause that names it
+    var odd = function (t) { var m = /^(.+?) (?:have|has) (won|lost) four of (?:their|its) last five, (?:losing only to|beating only) (.+?)(?: last time out)?(;.*)?$/.exec(String(t || "")); if (!m) return [];
+      var own = m[1] + (/s$/.test(m[1]) ? "'" : "'s"), what = m[2] === "won" ? "loss" : "win", rest = m[4] || "";
+      return [own + " only " + what + " in the last five: " + m[3] + rest, own + " lone " + what + " in five: " + m[3] + rest, own + " lone " + what + " in five: " + m[3]]; };
+    var out = [p.text, cut(p.text)].concat(odd(p.text));
+    if (p.f && p.f !== p.text) out.push(p.f, cut(p.f)), out = out.concat(odd(p.f));
     // last: the strongest fact up to its first clause ("No. 10 Illinois visits No. 5 Duke after Ivisic's 28-point outing" -> "...visits No. 5 Duke")
     // then every shorter cut of those (pvCuts), longest first; the two-fact line always comes before a cut of it
     var head = out.filter(function (x, i) { return x && out.indexOf(x) === i; });

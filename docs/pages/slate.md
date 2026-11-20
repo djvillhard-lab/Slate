@@ -133,3 +133,4 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 
 ## 3.121.7
 - PV cache flag g6 -> g7: saved lines from before 3.121.5 are dropped on load. Bump it again whenever line wording changes and DJ needs it at once.
+- 3.121.8: pvStatAlts (105-pv-notes.js) adds short forms of the odd-game line ("X's only loss in the last five: Y", "X's lone loss in five: Y") ahead of pvCuts, which used to drop the clause on one-line cards.
