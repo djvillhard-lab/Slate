@@ -124,3 +124,6 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 ## 3.121.1 (Nov 20, 2026): a one-liner on every game
 - DJ: "We need some one-liner text to show for every slate game." pvCompute's last real-fact fallbacks (below pred/scorer): goals leader (hockey, soccer, 19), division place (pro, 16), soccer table places (15), any home/road split not already used (12-15). NHL div lines use PTS (no GB in hockey standings).
 - `node scripts/lines_check.js --missing` lists games with no usable line; Nov 20-22: only TBD-vs-TBD tournament games.
+
+## 3.121.4 (Nov 20, 2026): game count
+- Drew (feedback 20261120152537-bro-8074): "N games on your slate" (.sl-count, 050-ux-review.css) sits above the Time/League/Board/Live row in renderLineup; counts the whole day even with Live only on.

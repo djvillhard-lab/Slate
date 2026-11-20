@@ -95,6 +95,8 @@
         lo.appendChild(seg);
       }
       if (lo) {
+        // 3.121.4 (Drew: "tell me how many games are on my slate for that day"): the day's count, above the sort row
+        body.appendChild(el("div", "sl-count", lg.length + (lg.length === 1 ? " game" : " games") + " on your slate"));
         body.appendChild(lo);
       }
       if (state.date === todayInHome() && lg.length) {

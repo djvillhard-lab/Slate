@@ -468,3 +468,6 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .nx-wrt { font-size: 40px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
 .nx-wr .nx-note { margin: 4px 0 0; max-width: 34ch; }
 @media (prefers-reduced-motion: reduce) { .nx-wrh i { animation: none; } }
+
+/* 3.121.4: the day's game count above the slate's sort row (Drew) */
+.sl-count { margin: 14px 2px -6px; font-size: 13px; font-weight: 600; color: var(--dim); }
