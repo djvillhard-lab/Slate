@@ -134,3 +134,6 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 ## 3.121.7
 - PV cache flag g6 -> g7: saved lines from before 3.121.5 are dropped on load. Bump it again whenever line wording changes and DJ needs it at once.
 - 3.121.8: pvStatAlts (105-pv-notes.js) adds short forms of the odd-game line ("X's only loss in the last five: Y", "X's lone loss in five: Y") ahead of pvCuts, which used to drop the clause on one-line cards.
+
+## 3.121.10 (Nov 21, 2026)
+- Worth a look hide X (.wal-x) gets margin-right = strip width on html.side-col (not in the left pane), like .rlink, so the folded island never covers it.

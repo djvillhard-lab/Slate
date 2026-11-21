@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.10 (Nov 21, 2026)
+TestFlight: 3.120.2 (53), no new build (web only)
+- Worth a look: on the folded iPhone Duo (and the open Duo's right side), the ✕ that hides a suggestion sits left of the clock and Wi-Fi column, so the top one can be tapped. It used to sit right under the island.
+
 ## 3.121.9 (Nov 20, 2026)
 TestFlight: 3.121.9, new build
 - Tonight's Slate widget (large size): each game has a small league tag before its time, like "CBB 4:30 PM · ESPN2", with the same short names as News (CBB, CFB, NBA, WCBB).

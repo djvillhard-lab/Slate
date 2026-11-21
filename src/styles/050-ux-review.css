@@ -35,6 +35,8 @@ html[data-native] .toprow.lineup-top:not(#pane-l .toprow) > .pillgroup { positio
 html.side-col.zoomed .toprow.lineup-top:not(#pane-l .toprow) > .pillgroup { grid-template-columns: calc(44px / var(--z, 1)) !important; grid-template-rows: repeat(2, calc(44px / var(--z, 1))) !important; }
 html[data-native] .toprow.lineup-top:not(#pane-l .toprow) #title-t { font-size: clamp(16px, calc((100vw - var(--strip-w, 0px) - 122px - 75px * var(--z, 1)) / 8.2 / var(--z, 1)), 28px); }
 html.side-col .rlink:not(#pane-l .rlink) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
+/* 3.121.10 (DJ: "Can't x out the top worth a look because of iPhone Duo island"): the hide X stops left of the side column, folded and in the right pane */
+html.side-col .wal-x:not(#pane-l .wal-x) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
 html.side-col.zoomed .toprow.lineup-top:not(#pane-l .toprow) #title-t { font-size: clamp(16px, calc((100vw - var(--strip-w, 0px) - 70px - 75px * var(--z, 1)) / 8.2 / var(--z, 1)), 28px); }
 #l-btn-refresh, #l-btn-add, #l-btn-copy, .toprow.lineup-top > .pillgroup #btn-refresh, .toprow.lineup-top > .pillgroup #btn-rules, .toprow.lineup-top > .pillgroup #btn-copy { display: none !important; }
 .more-btn { display: grid !important; place-items: center; }
