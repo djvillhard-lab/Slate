@@ -63,7 +63,9 @@
     if (g[s + "Rank"]) w.appendChild(el("span", "rk", String(g[s + "Rank"])));
     w.appendChild(el("span", "nm", short(g, s)));
     if (isFav(g[s], g.league)) { var f = starIcon(true); f.setAttribute("class", "fv"); f.setAttribute("aria-label", "One of your teams"); w.appendChild(f); }
-    if (g[s + "Record"]) w.appendChild(el("span", "rec", g[s + "Record"]));
+    // 3.121.11 (DJ): soccer shows the team's place in the table with its record (wins-draws-losses, ESPN's order): "7-0-3 · 3rd"
+    var tp = BX_SPORT[g.league] === "soccer" && !g.post && /^\d+(st|nd|rd|th)\b/.test(String(g[s + "Standing"] || "")) ? String(g[s + "Standing"]) : "";
+    if (g[s + "Record"] || tp) { var rcx = el("span", "rec", g[s + "Record"] || ""); if (tp) rcx.appendChild(el("span", "tp", (g[s + "Record"] ? " · " : "") + tp)); w.appendChild(rcx); }
     row.appendChild(w);
     row.appendChild(sc ? el("span", "sc", String(s === "away" ? sc.a : sc.h)) : el("span"));
     return row;

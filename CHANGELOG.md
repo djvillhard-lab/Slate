@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.11 (Nov 21, 2026)
+TestFlight: 3.101.0, no new build (web only)
+- Soccer game cards (All games, the slate, On TV) show each team's place in the table next to its record: "Man City 7-0-3 · 3rd". The record is wins, draws, losses, so draws are already in the middle (ESPN's order).
+- Soccer one-liners say what the table means instead of repeating the places: "Arsenal is five points clear at the top", "Fulham is only two points above the drop zone", "Sunderland is a point from safety", "Only a point between them in the table".
+- The top scorer line now works for soccer ("Erling Haaland leads Man City with 9 goals"). It never showed before because ESPN words soccer goals differently.
+- Soccer sides that haven't won in their last five league games get "winless in its last five".
+- "Has won three of the last five meetings" still shows, but only when nothing better stands out.
+
 ## 3.121.10 (Nov 21, 2026)
 TestFlight: 3.120.2 (53), no new build (web only)
 - Worth a look: on the folded iPhone Duo (and the open Duo's right side), the ✕ that hides a suggestion sits left of the clock and Wi-Fi column, so the top one can be tapped. It used to sit right under the island.

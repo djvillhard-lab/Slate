@@ -391,7 +391,8 @@
       var all = n === f.length && f.length >= 5 ? " in a row" : " straight";
       if (last === "W" && n >= 4) T[i].hot = n, add("won|" + i, 36 + n * 5, T[i].name + " have won " + NW[n] + all);
       if (last === "L" && n >= 4) T[i].cold = n, add("lost|" + i, 34 + n * 5, T[i].name + " have lost " + NW[n] + all);
-      if (sport === "soccer" && f.indexOf("L") < 0 && f.length >= 5) add("unb|" + i, 40, T[i].name + " are unbeaten in their last five"); });
+      if (sport === "soccer" && f.indexOf("L") < 0 && f.length >= 5) add("unb|" + i, 40, T[i].name + " are unbeaten in their last five");
+      if (sport === "soccer" && f.indexOf("W") < 0 && f.length >= 5 && last !== "L") add("winl|" + i, 40, T[i].name + " are winless in their last five"); });
     if (T[A].hot && T[H].cold || T[H].hot && T[A].cold) { var ho = T[A].hot ? A : H; add("form", 64, T[ho].name + " have won " + NW[T[ho].hot] + " straight; " + T[oth(ho)].name + " have lost " + NW[T[oth(ho)].cold]); }
     if (T[A].hot && T[H].hot) add("bothhot", 60, T[A].hot === T[H].hot ? "Both teams have won " + NW[T[A].hot] + " in a row" : "Both on a roll: " + T[A].name + " have won " + NW[T[A].hot] + " straight, " + T[H].name + " " + NW[T[H].hot]);
     // a two-legged tie's second leg (3.88.3): the aggregate score is the story ("USA leads 6-0 on aggregate going into the second leg")
@@ -427,12 +428,21 @@
       if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.min(99, Math.round(Math.max(ph, pa))); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
     // the table: leaders, top-of-table and relegation clashes
     var pos = {}, grp = (((sum.standings || {}).groups || [])[0] || {}), ent = ((grp.standings || {}).entries || []);
-    if (sport === "soccer" && ent.length >= 10) { ent.forEach(function (e, n) { var id = String(e.id || ""); if (T[id]) pos[id] = n + 1; });
-      if (pos[A] && pos[H]) { var N = ent.length, top = Math.min(pos[A], pos[H]);
-        if (pos[A] <= 4 && pos[H] <= 4) add("topclash", 66, ORD(pos[H]) + " hosts " + ORD(pos[A]) + ": " + T[H].name + " vs " + T[A].name);
-        else if (pos[A] > N - 4 && pos[H] > N - 4) add("relclash", 58, "Bottom-of-the-table scrap: " + T[H].name + " (" + ORD(pos[H]) + ") vs " + T[A].name + " (" + ORD(pos[A]) + ")");
-        else if (top === 1) { var L1 = pos[A] === 1 ? A : H; add("leader", 48, "League leaders " + T[L1].name + (L1 === H ? " host " : " visit ") + T[oth(L1)].name + " (" + ORD(pos[oth(L1)]) + ")"); }
-        else if (Math.abs(pos[A] - pos[H]) >= 12) { var hi2 = pos[A] < pos[H] ? A : H; add("gap", 30, T[hi2].name + " (" + ORD(pos[hi2]) + ") against " + T[oth(hi2)].name + " (" + ORD(pos[oth(hi2)]) + ")"); } } }
+    if (sport === "soccer" && ent.length >= 10) { var PT = [], GPn = 0; ent.forEach(function (e, n) { var id = String(e.id || ""), sv = {}; (e.stats || []).forEach(function (x) { sv[x.abbreviation] = x.displayValue; });
+        PT[n] = parseInt(sv.P, 10); GPn = Math.max(GPn, parseInt(sv.GP, 10) || 0); if (T[id]) pos[id] = n + 1; });
+      // 3.121.11 (DJ: "These one-liners don't provide a ton of value for soccer"): the card shows each team's place now, so the line
+      // says what the place means in points (ESPN's own table): the lead at the top, the gap to the leaders, the gap to the drop zone,
+      // or how close two sides are. Never just the two places again
+      var N = ent.length, ptsOf = function (i) { return PT[pos[i] - 1]; }, pw = function (n) { return n === 1 ? "a point" : NW[n] && n <= 6 ? NW[n] + " points" : n + " points"; };
+      var DZ = { epl: 3, laliga: 3, seriea: 3, bundesliga: 2, ligue1: 2 }[lg] || 0, drop = DZ && N >= 18 ? N - DZ + 1 : 0;   // the first place in the drop zone (direct relegation; no relegation in MLS or Europe)
+      if (pos[A] && pos[H] && GPn >= 5 && PT.every(function (x) { return !isNaN(x); })) {
+        ids.forEach(function (i) { var p0 = pos[i], me = ptsOf(i);
+          if (p0 === 1) { var g1 = me - PT[1]; if (g1 > 0) add("top|" + i, 50 + Math.min(g1, 6), T[i].name + " are " + pw(g1) + " clear at the top"); else add("top|" + i, 50, T[i].name + " lead the table on goal difference"); }
+          else if (p0 <= 3) { var gb = PT[0] - me; if (gb <= 6) add("chase|" + i, 46 - gb, T[i].name + " are " + (gb ? pw(gb) + " behind" : "level on points with") + " the leaders"); }
+          if (drop && p0 >= drop) { var safe = PT[drop - 2] - me; add("drop|" + i, 48, T[i].name + (safe > 0 ? " are " + pw(safe) + " from safety" : " are in the drop zone on goal difference")); }
+          else if (drop && p0 >= drop - 3) { var ab = me - PT[drop - 1]; if (ab >= 0 && ab <= 3) add("drop|" + i, 44, T[i].name + (ab ? " are only " + pw(ab) + " above the drop zone" : " are level on points with the drop zone")); } });
+        var dp = Math.abs(ptsOf(A) - ptsOf(H)); if (Math.abs(pos[A] - pos[H]) <= 4 && dp <= 2) add("close", 40, dp ? "Only " + pw(dp) + " between them in the table" : "Level on points in the table");
+        else if (Math.abs(pos[A] - pos[H]) <= 4 && dp <= 3) add("close", 34, "A win would lift " + T[ptsOf(A) < ptsOf(H) ? A : H].name + " level on points with " + T[ptsOf(A) < ptsOf(H) ? H : A].name); } }
     // 3.100.9: "still unbeaten" / "looking for a first win" are on the card's record already, so these two stay off
     if (false) ids.forEach(function (i) { var r = String(T[i].rec.total || "").split("-"); if (r.length === 3 && +r[2] === 0 && (+r[0] + +r[1]) >= 6) add("unbs|" + i, 50, T[i].name + " are still unbeaten this season"); if (r.length === 3 && +r[0] === 0 && (+r[1] + +r[2]) >= 6) add("winless|" + i, 46, T[i].name + " are still looking for a first win"); });
     // records: perfect or awful at home and on the road, unbeaten seasons
@@ -443,8 +453,8 @@
     // head to head
     var ss = (sum.seasonseries || [])[0];
     if (ss) { var sm = /^(\w+) leads? (?:series|season) (\d+)-(\d+)/i.exec(String(ss.summary || "")), who = sm && byAbbr[sm[1]];
-      if (sm && who && ss.type === "head-to-head" && +sm[3] === 0 && +sm[2] >= 3) add("h2h", 50, T[who].name + " have won the last " + NW[+sm[2]] + " meetings");
-      else if (sm && who && ss.type === "head-to-head" && +sm[2] >= 3) add("h2h", 34, T[who].name + " have won " + NW[+sm[2]] + " of the last " + NW[+sm[2] + +sm[3]] + " meetings");
+      if (sm && who && ss.type === "head-to-head" && +sm[3] === 0 && +sm[2] >= 3) add("h2h", sport === "soccer" ? 30 : 50, T[who].name + " have won the last " + NW[+sm[2]] + " meetings");
+      else if (sm && who && ss.type === "head-to-head" && +sm[2] >= 3) add("h2h", sport === "soccer" ? 18 : 34, T[who].name + " have won " + NW[+sm[2]] + " of the last " + NW[+sm[2] + +sm[3]] + " meetings");
       else if (sm && who && ss.type !== "head-to-head" && +sm[2] >= 2) add("ser", 30, T[who].name + " lead the season series " + sm[2] + "-" + sm[3]); }
     // quieter form: four wins from the last five without a current streak. 3.113.2 (DJ: accuracy review): never "five of its last five"
     // (High Point at 6-0: the streak line is left out on an unbeaten record, and this one stepped in with it)
@@ -478,11 +488,12 @@
         var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
     // Nov 20, 2026 (DJ: "We need some one-liner text to show for every slate game"): last real facts before the plain records line
     // the top scorer in goals (hockey, soccer), from ESPN's team leaders
-    if (sport === "hockey" || sport === "soccer") { var gl0 = null; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; (L.leaders || []).forEach(function (cat) { if (!/^goals$/i.test(cat.name || "")) return;
-        var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseInt(x && x.displayValue, 10); if (a.displayName && v >= 3 && (!gl0 || v > gl0.v)) gl0 = { i: i, n: a.displayName, v: v }; }); });
-      if (gl0) add("goals|" + gl0.i, 19, gl0.n + " leads " + (sing ? "" : "the ") + T[gl0.i].name + " with " + gl0.v + " goals"); }
+    if (sport === "hockey" || sport === "soccer") { var gl0 = null; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; (L.leaders || []).forEach(function (cat) { if (!/^goals(Leaders)?$/i.test(cat.name || "")) return;
+        // soccer's value reads "Matches: 10, Goals: 9" (3.121.11: the line never showed for soccer before)
+        var x = (cat.leaders || [])[0], a = x && x.athlete || {}, dv = String(x && x.displayValue || ""), v = /Goals:\s*(\d+)/i.test(dv) ? +/Goals:\s*(\d+)/i.exec(dv)[1] : parseInt(dv, 10); if (a.displayName && v >= 3 && (!gl0 || v > gl0.v)) gl0 = { i: i, n: a.displayName, v: v }; }); });
+      if (gl0) add("goals|" + gl0.i, sport === "soccer" && gl0.v >= 5 ? 36 + Math.min(gl0.v, 12) / 2 : 19, gl0.n + " leads " + (sing ? "" : "the ") + T[gl0.i].name + " with " + gl0.v + " goals"); }
     // the soccer table, both places
-    if (sport === "soccer" && pos[A] && pos[H] && Math.abs(pos[A] - pos[H]) < 12) add("table", 15, T[H].name + " (" + ORD(pos[H]) + ") host " + T[A].name + " (" + ORD(pos[A]) + ")");
+    // (no "Bournemouth (7th) host Forest (16th)": the card shows each team's place, 3.121.11)
     // a home or road record the lines above didn't use, whatever it is (the card shows only the overall record)
     ids.forEach(function (i) { var r0 = String(T[i].rec[i === H ? "home" : "road"] || ""), w = r0.split("-").map(Number);
       if (sport !== "soccer" && w.length >= 2 && !w.some(isNaN) && w[0] + w[1] >= 3 && !pvAllHome(T[i], w[0], w[1]) && !c.some(function (x) { return x.k === "perf|" + i || x.k === "bad|" + i || x.k === "good|" + i; }))
@@ -490,7 +501,7 @@
     // ESPN's preview headline: a solid fallback
     var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 33, hd);
     // a playoff game (3.92.0): the regular-season table, division race and season series no longer decide anything
-    if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser)(\||$)/.test(x.k); });
+    if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser|top|chase|drop|close)(\||$)/.test(x.k); });
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
       var rc = function (x) { return T[x].rec.total ? " (" + T[x].rec.total + ")" : ""; };
       pvCompute.fb = true;
@@ -520,7 +531,7 @@
         if (p1[0] === p2[0] && /^(have|has)$/.test(p1[0]) && p1[1] === p2[1]) rest = p2.slice(2).join(" ");
         else if (p1[0] === p2[0] && /^(are|is|have|has)$/.test(p1[0]) && !/^(still|only|looking)$/.test(p2[1] || "")) rest = p2.slice(1).join(" ");
         else if (!/^(are|have|is|has|leads?) /.test(rest)) rest = ""; }
-      t = who0 && rest ? t + " and " + rest : who0 ? t : t + "; " + s2.tx;
+      t = who0 && rest ? t + " and " + rest : who0 ? t : t + "; " + (s2.k === "close" ? s2.tx.charAt(0).toLowerCase() + s2.tx.slice(1) : s2.tx);
       if (!who0 && idIn(s2.k) !== idIn(c[0].k)) pvCompute.tm = "";  // two teams' facts: no single team
     }
     return t;

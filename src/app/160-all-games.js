@@ -271,8 +271,12 @@
       return { rows: rows, nms: rows.map(function (r) { return r.querySelector(".nm"); }).filter(Boolean), recs: rows.map(function (r) { return r.querySelector(".rec"); }).filter(Boolean) };
     }).filter(function (c) { return c.rows.length; });
     var cut = function (c) { return c.nms.some(function (n) { return n.clientWidth && n.scrollWidth > n.clientWidth; }); };  // 3.80.1: even a 1px clip shows the ellipsis
-    cards.forEach(function (c) { c.recs.forEach(function (rc) { rc.style.display = ""; }); c.nms.forEach(function (n) { if (n.dataset.full) { n.textContent = n.dataset.full; delete n.dataset.full; } }); });
-    var tight = cards.filter(cut);
+    var tps = function (c) { return c.recs.map(function (rc) { return rc.querySelector(".tp"); }).filter(Boolean); };
+    cards.forEach(function (c) { c.recs.forEach(function (rc) { rc.style.display = ""; }); tps(c).forEach(function (t) { t.style.display = ""; }); c.nms.forEach(function (n) { if (n.dataset.full) { n.textContent = n.dataset.full; delete n.dataset.full; } }); });
+    // 3.121.11: a soccer card that's too tight drops the table place first, then the records
+    var tight = cards.filter(cut), tpd = tight.filter(function (c) { return tps(c).length; });
+    tpd.forEach(function (c) { tps(c).forEach(function (t) { t.style.display = "none"; }); });
+    if (tpd.length) tight = tight.filter(cut);
     tight.forEach(function (c) { c.recs.forEach(function (rc) { rc.style.display = "none"; }); });
     var still = tight.filter(cut);
     still.forEach(function (c) {

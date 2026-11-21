@@ -93,3 +93,7 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 
 ## 3.101.2 (Nov 18, 2026)
 - DJ: no "My teams" section at the top of any tab (ALL, league tabs, Live). Favorites have their own ★ tab, and the star next to a favorite team on each card stays. The ALL tab's league sections all start folded.
+
+## 3.121.11 (Nov 21, 2026)
+- Soccer cards show the table place after the record ("7-0-3 · 3rd", from the slate's `<side>Standing`, set by slates.py; not on playoff games). ESPN's soccer record is already W-D-L. When a card is too tight, agFitNames drops the place (`.rec .tp`) first, then the records.
+- Soccer one-liners (100-highlights.js): rank-only lines replaced by points facts from ESPN's table (clear at the top, behind the leaders, from safety / above the drop zone for epl/laliga/seriea bottom 3 and bundesliga/ligue1 bottom 2, points between them). Top scorer line fixed for soccer ("Matches: 10, Goals: 9"). Winless-in-five added. Head-to-head lines rank low for soccer.

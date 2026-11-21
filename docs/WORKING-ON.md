@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Soccer cards: table position, one-liners | src/app/100-highlights.js; shared: 060-cards.js | 2026-11-21 04:35 |
