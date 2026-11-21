@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.12 (Nov 21, 2026)
+TestFlight: 3.101.0, no new build (web only)
+- Soccer games now read like every other sport: the away team on top, the home team underneath, and "@" between them ("Fulham @ Man City"). Before, soccer put the home side on top with "vs", the opposite of every other game and of the Board, so Man City's home game looked like Fulham's. Cards, the matchup page, team stats, odds and shared text all follow the same order. "vs" is only for neutral grounds.
+
 ## 3.121.11 (Nov 21, 2026)
 TestFlight: 3.101.0, no new build (web only)
 - Soccer game cards (All games, the slate, On TV) show each team's place in the table next to its record: "Man City 7-0-3 · 3rd". The record is wins, draws, losses, so draws are already in the middle (ESPN's order).

@@ -10,9 +10,11 @@
     c._flip = true; return c;
   }
   function noteFlip(g, swapped) { var k = state.date + "|" + g.id, want = swapped ? !g._flip : !!g._flip; if (LIVE_FLIP[k] === want) return false; LIVE_FLIP[k] = want; return true; }
-  // soccer is shown home team first ("Arsenal vs Chelsea"); everything else away @ home
-  function sideOrder(g) { return SOCCER[g.league] ? ["home", "away"] : ["away", "home"]; }
-  function sep(g) { return SOCCER[g.league] || g.neutral ? " vs " : " @ "; }
+  // every sport, soccer too, is shown away on top and home below ("Fulham @ Man City"). 3.121.12 (DJ: "Man City is playing at home
+  // against Fulham… I thought Fulham was home"): soccer used to put the home side on top with "vs", the other way round from every other
+  // sport and from the Board and Lock Screen. "vs" is only for neutral grounds
+  function sideOrder(g) { return ["away", "home"]; }
+  function sep(g) { return g.neutral ? " vs " : " @ "; }
   var LIVE_PRE = {};  // games ESPN still lists as pre-game, by id: when it was last seen that way
   function scoreRaw(id) { if (LIVE_DATE === state.date && LIVE[id]) return LIVE[id]; return state.scores && state.scores[id]; }
   var ESPN_URLS = {
@@ -487,7 +489,7 @@
       var ck = el("span", "board-ck"); if (on) ck.appendChild(icon("check")); r.appendChild(ck);
       var tm = el("span", "board-tm");
       tm.appendChild(badgeFor(abbr(g, "away"), g.away, g.awayColor, g.awayAlt));
-      tm.appendChild(el("span", "board-at", SOCCER[g.league] || g.neutral ? "vs" : "@"));
+      tm.appendChild(el("span", "board-at", g.neutral ? "vs" : "@"));
       tm.appendChild(badgeFor(abbr(g, "home"), g.home, g.homeColor, g.homeAlt));
       r.appendChild(tm);
       r.appendChild(el("span", "board-st" + (st === "live" ? " live" : ""), boardStatus(g)));

@@ -174,7 +174,6 @@
   function bxNum(v) { var n = parseFloat(String(v == null ? "" : v).replace(/,/g, "")); return isNaN(n) ? -1 : n; }
   function bxTeamStats(g, b, compact) {
     var A = b.teams[0], H = b.teams[1]; if (!A || !H) return null;
-    if (SOCCER[g.league]) { var swp = A; A = H; H = swp; }
     var hm = {}; (H.stats || []).forEach(function (s) { hm[s[0]] = s; });
     var rows = (A.stats || []).filter(function (s) { return hm[s[0]]; });
     if (compact) {
