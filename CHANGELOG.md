@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.129.3 (Nov 22, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Settings is now a round button next to Search at the top of every page, always there. It is no longer in the row that opens from the hammer, which is now Box Office, On TV and Teams.
+- News, On TV and Box Office: the same day arrows as the slate sit bottom right, with Today as its own button and the date as a label when you are on another day. The Today button at the top is gone there too.
+
 ## 3.129.2 (Nov 22, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - The slate and All games, on another day: the Today button at the top is gone. Bottom right, Today is now its own glass button, and the date you are looking at is a separate small label under it.

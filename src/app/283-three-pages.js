@@ -7,7 +7,7 @@
   // its header. The old layout is kept whole: Settings > Look and text size > Navigation > Classic menu.
   // The iPhone app draws its own menu button, so this layout only runs there on builds that can hand the bottom of the
   // screen to the page (SLATE_NATIVE.webNav); older builds stay on the Classic menu by themselves.
-  var N3_PAGES = ["news", "lineup", "games"], N3_MORE = [["moments", "Box Office"], ["tv", "On TV"], ["teams", "Teams"], ["settings", "Settings"]];
+  var N3_PAGES = ["news", "lineup", "games"], N3_MORE = [["moments", "Box Office"], ["tv", "On TV"], ["teams", "Teams"]];  // 3.129.3 (DJ): Settings moved to a button beside Search
   var N3 = { row: false, filt: false, el: null, sig: "", fsig: "", told: null };
   function n3Pref() { try { return localStorage.getItem("slate-nav") === "classic" ? "classic" : "three"; } catch (e) { return "three"; } }
   function n3HostNative() { if (!PANE) return NATIVE; try { return window.parent.slateHostNative(); } catch (e) { return NATIVE; } }
@@ -28,7 +28,7 @@
   function n3FiltOn() { return n3BarOn() && state.view === "games" && deviceMode() === "duo" && games().length > 0; }
   // page swipes: only on the three pages, and not on the unfolded Duo (both sides are in view there; the bar picks pages)
   // the day arrows (3.129.1, DJ: one tap, never two): the slate gets a glass pair of arrows bottom right, always showing
-  function n3DayOn() { return n3BarOn() && (state.view === "lineup" || state.view === "games"); }  // 3.129.2: All games too
+  function n3DayOn() { return n3BarOn() && n3Dated(); }  // 3.129.2: All games too; 3.129.3: News, On TV and Box Office too
   function n3SwipeOk() { return n3BarOn() && !PANE && N3_PAGES.indexOf(state.view) !== -1 && !N3.row && !N3.filt; }
   function n3Next(step) { var i = N3_PAGES.indexOf(state.view); return i === -1 ? null : N3_PAGES[i + step] || null; }
   function n3Go(v) {
@@ -88,11 +88,11 @@
     var dr = el("div", "n3-dr"); dr.id = "n3-dr"; dr.setAttribute("role", "group"); dr.setAttribute("aria-label", "Change day"); dr.hidden = true;
     var rp = el("button", "n3-dra"); rp.type = "button"; rp.setAttribute("aria-label", "Previous day"); rp.appendChild(n3Svg("M15 5l-7 7 7 7"));
     var rn = el("button", "n3-dra"); rn.type = "button"; rn.setAttribute("aria-label", "Next day"); rn.appendChild(n3Svg("M9 5l7 7-7 7"));
-    rp.addEventListener("click", function () { slideDir = "r"; setDate(shiftDate(state.date, -1)); });
-    rn.addEventListener("click", function () { slideDir = "l"; setDate(shiftDate(state.date, 1)); });
+    rp.addEventListener("click", function () { n3SetDay(shiftDate(n3DayOf(), -1)); });
+    rn.addEventListener("click", function () { n3SetDay(shiftDate(n3DayOf(), 1)); });
     dr.appendChild(rp); dr.appendChild(rn); root.appendChild(dr);
     var dt = el("button", "n3-dt"); dt.type = "button"; dt.id = "n3-dt"; dt.hidden = true; dt.appendChild(el("b", null, "Today"));
-    dt.addEventListener("click", function () { var t = todayInHome(); if (state.date === t) return; slideDir = state.date > t ? "r" : "l"; setDate(t); });
+    dt.addEventListener("click", function () { n3SetDay(todayInHome()); });
     root.appendChild(dt);
     // 3.129.2 (DJ): the date you are on is its own label, apart from the Today button
     var dd = el("div", "n3-dd"); dd.id = "n3-dd"; dd.hidden = true; root.appendChild(dd);
@@ -141,7 +141,8 @@
     if (bar && state.date === todayInHome()) liveAny = games().some(function (g) { return status(g).kind === "live"; });
     var lgTag = "";
     if (filt && state.league !== "all") filterOpts(visibleGames()).forEach(function (o) { if (o[0] === state.league) lgTag = o[1]; });
-    var offDay = dayb && state.date !== todayInHome() ? fmtDate(state.date, { weekday: "short" }) + " " + fmtDate(state.date, { month: "short", day: "numeric" }) : "";
+    var dNow = dayb ? n3DayOf() : "";
+    var offDay = dayb && dNow !== todayInHome() ? fmtDate(dNow, { weekday: "short" }) + " " + fmtDate(dNow, { month: "short", day: "numeric" }) : "";
     var sig = [on, bar, filt, dayb, offDay, state.view, N3.row, N3.filt, liveAny, lgTag].join("|");
     if (sig !== N3.sig) {
       N3.sig = sig;
@@ -180,11 +181,17 @@
   function n3SetDay(iso) {
     var v = state.view, today = todayInHome(), cur = n3DayOf();
     if (!iso || iso === cur) return;
-    if (v === "moments") { mmSetDate(iso); return; }
+    if (v === "moments") { mmSetDate(iso); renderTop(); return; }
     if (v === "news") { if (iso > today) { if (cur >= today) { toast("News goes up to today"); return; } iso = today; } nwx.past = iso < today ? iso : null; nw.opts = false; }
     slideDir = iso > state.date ? "l" : "r"; setDate(iso);
   }
+  // 3.129.3 (DJ): Settings is a permanent button beside Search at the top of every page (not on Settings itself)
+  function n3Gear() {
+    var on = n3On() && state.view !== "settings";
+    ["btn-settings", "l-btn-settings"].forEach(function (id) { var b = $(id), f = $(id.replace("settings", "find")); if (b && on && f && !f.hidden) { b.hidden = false; if (f.parentNode === b.parentNode) f.parentNode.insertBefore(b, f); } });
+  }
   function n3Top() {
+    n3Gear();
     if (!n3On() || !n3Dated()) return;
     var td = $("title-d"), sub = $("title-sub"), tl = $("title"), today = todayInHome(), day = n3DayOf();
     td.hidden = false; if (sub) sub.hidden = true; if (tl) tl.classList.remove("one-line");
@@ -192,7 +199,7 @@
     var shortDate = fmtDate(day, { weekday: "short" }) + ", " + fmtDate(day, { month: "short", day: "numeric" });
     $("day-label").textContent = Math.abs(away) <= 1 || state.view !== "lineup" ? shortDate : away > 0 ? "In " + away + " days" : -away + " days ago";
     $("day-input").value = day;
-    $("day-today").hidden = day === today || n3DayOn();  // 3.129.2 (DJ): on the slate and All games, Today is bottom right only   // the Back button used to jump to today; the bar took its place
+    $("day-today").hidden = day === today || n3DayOn();  // 3.129.2 (DJ): Today is bottom right only   // the Back button used to jump to today; the bar took its place
   }
   // News and Box Office keep their own day; the header's arrows are the slate's, so their taps are taken here first
   (function () {

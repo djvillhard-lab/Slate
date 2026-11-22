@@ -11,6 +11,8 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 - Unfolded Duo (two panes): bar only in the right pane, controls only that pane. No bar on the left. Swipes in panes are unchanged.
 - html attributes: `data-nav3` (layout on), `data-n3bar` (bar showing), `data-n3f` (filter button mode).
 
+- 3.129.3 (DJ): Settings is a permanent round button beside Search in every page header (`n3Gear` un-hides the existing `#btn-settings` / `#l-btn-settings`); the hammer row is Box Office, On TV, Teams. The day arrows, Today button and date label are on every dated page (slate, All games, News, On TV, Box Office) through `n3SetDay` / `n3DayOf`; no Today button in any header.
+
 ## Classic menu
 - Settings > Look and text size > Navigation: Three pages / Classic menu. Stored in `localStorage["slate-nav"]` ("classic", anything else = three).
 - The iPhone app draws its own menu button natively, so Three pages only runs in the app when the build says it can (`SLATE_NATIVE.webNav`). Builds up to 3.121.9 (54) don't, so they stay on Classic by themselves and the switch explains why.
