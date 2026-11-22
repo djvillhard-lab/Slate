@@ -1,5 +1,5 @@
 # Glass controls (Liquid Glass look)
-Last updated: Nov 22, 2026, 3.126.0
+Last updated: Nov 22, 2026, 3.127.0
 The review with before and after pictures: https://claude.ai/artifact/Rs1HiiTausoiKqduM5Zo4m. DJ chose level A: glass on
 controls, content stays solid Scorebug. Rules are in `docs/DESIGN.md`, "Glass".
 Code: `src/styles/100-glass.css` only (loaded last in `src/shell.html`). No JS.
@@ -14,9 +14,12 @@ Code: `src/styles/100-glass.css` only (loaded last in `src/shell.html`). No JS.
   at 16px with a lit edge (`.full-mu`, `.feed-go`, `.cl-go`, `.nx-go`); capsule fields and pickers (`input.field`,
   `input.search`, `select.sel`); segmented choices (`.seg`) as capsules; a glass switch track (`.switch`); the Live
   feed's switcher (`.fd-strip.fd-filt`) as a capsule with a lit lozenge.
+- Part 3, 3.127.0: `.sheet` floats 8px in from the edges with 24px corners and blurred glass over a lighter scrim;
+  `.more-pop`, `.top-undo` and `.toast` are blurred glass; `.solid` and the search sheet's Close are capsules;
+  `.app-upd` is painted glass. The menu (`#menu-pop`, `.fab`) and the bottom bar are NOT styled here: the three-page
+  navigation thread owns them.
 
 ## Open (in the order DJ saw in the review)
-- Part 3: sheets, pop-ups, Undo, the update banner as floating glass sheets.
 - Idea to try: a pinned glass score bar on the Live feed.
 - One iPhone build (needs DJ's yes): Home Screen widget clear/tinted styles, layered app icon, Watch buttons.
 - Left alone on purpose: quick-look drop-downs (`.tdd-h`, plain rows), "It lists" chips (`.lgchip`: capsules crowded

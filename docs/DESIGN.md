@@ -44,6 +44,8 @@ notes `docs/pages/glass.md`). All of it lives in `src/styles/100-glass.css`.
 - A selected tab is a lit lozenge (`--lg-lit`, `--ink` text). The accent still marks the chosen filter in a second
   row and the chosen side of a segmented control. Red is still only live.
 - The header has no bar and no hairline: content blurs and fades under it.
+- Sheets float 8px in from the screen's edges with 24px corners; pop-up menus, Undo and toasts are glass capsules or
+  panels (3.127.0).
 - Reduce Transparency and Increase Contrast get solid fills (the media query at the end of the file).
 
 ## Type
