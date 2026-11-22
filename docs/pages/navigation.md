@@ -15,6 +15,6 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 - The iPhone app draws its own menu button natively, so Three pages only runs in the app when the build says it can (`SLATE_NATIVE.webNav`). Builds up to 3.121.9 (54) don't, so they stay on Classic by themselves and the switch explains why.
 
 ## Open
-- iPhone app half (branch `claude/project-thread-87wft6`, needs DJ's yes for a TestFlight build): boot flag `webNav: true`, message `{t:"nav", web:true|false}`, and RootView hides its FloatMenu while the page draws the bar.
+- iPhone app half shipped in 3.128.1 (DJ said yes Nov 22): boot flag `webNav: true`, message `{t:"nav", web:true|false}`, RootView hides its FloatMenu while the page draws the bar. Not compiled in the cloud; first real check is the TestFlight build.
 - `scripts/shots.py` pretends to be a new build by default; `--old-app` shows what today's build gets.
 - Not decided: whether swipes in the unfolded panes should also become page-only.

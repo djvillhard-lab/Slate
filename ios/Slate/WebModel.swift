@@ -18,6 +18,7 @@ final class WebModel: ObservableObject {
     @Published var device = ""   // Settings > Phone: "duo" or "iphone", as the page reports it
     @Published var look = "dark"
     @Published private(set) var strip = false
+    @Published private(set) var webNav = false  // Three pages (3.128.0): the page draws its own bottom bar, so the app's menu button and Back step aside
     @Published private(set) var float = false   // the app's floating menu (wherever the strip isn't)
     @Published var edgeInsets = EdgeInsets()
     @Published var loadError: String?
@@ -168,11 +169,15 @@ final class WebModel: ObservableObject {
         case "ready":
             loadError = nil
             pageReady = true
+            webNav = false  // a fresh page says again whether it draws the bar
             js("window.SlateApp && SlateApp.setStrip(\(strip)); window.SlateApp && SlateApp.setInset && SlateApp.setInset(\(Int(stripInset.rounded()))); window.SlateApp && SlateApp.setFloat && SlateApp.setFloat(\(float))")
             sendMenuAnchor()
             sendFold()
             LiveActivities.shared.reportShowing()
             runPendingCall()
+        case "nav":
+            let on = m["web"] as? Bool ?? false
+            if on != webNav { webNav = on; if on { stripOpen = false } }
         case "state":
             if let v = m["view"] as? String { view = v }
             if let l = m["look"] as? String { look = l }

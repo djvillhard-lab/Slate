@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.128.1 (Nov 22, 2026)
+TestFlight: 3.128.1 (55), new build
+- iPhone app: Three pages now works in the app. The app's own menu button and Back step aside, and the glass bar, the hammer's row and the All games filter button take their place. Choosing Classic menu in Settings brings the app's menu button back.
+- Until this build is on your phone, the app keeps the Classic menu.
+
 ## 3.128.0 (Nov 22, 2026)
 TestFlight: 3.121.9 (54), no new build (web only). The iPhone app keeps the Classic menu until its next build; Safari and the Home Screen copy get Three pages now.
 - Three pages. News, the slate and All games now sit side by side: the slate in the middle, News one swipe to the right, All games one swipe to the left.
