@@ -83,3 +83,7 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
 - Layout with pictures: pitch is 10:13.5, camera `D` 130, keeper at 0.02 and lines from 0.27 up; picture circle 46px with the number on a badge; event tags sit centered above the head; a player who came off is greyscale.
 - Ideas if the slow first load bothers DJ: warm the pictures from the worker's cron for today's lineups and keep them in Supabase instead of the per-city edge cache.
 - TheSportsDB and its image host are blocked from Claude's cloud sessions; test through the live worker (`/api/photos?...&debug=1`).
+
+## Long press on a game card (3.124.1)
+- Holding a card's teams for 450 ms (iPhone, folded Duo, All games in either pane) opens the full matchup at once, while the finger is still down (`lpT` in `150-game-row.js`).
+- DJ (Nov 22): "a delay and shows a different page first". Cause: the open ran from a timer with the finger down, so `renderHeld` (240-chrome.js) held the redraw until 0.4s after lifting, while `setView` had already scrolled the slate to its top (the "different page"). Fix: the open runs as the press's own redraw (`agTapping`), the press stops counting as a finger down (`agDown = false`), and letting go doesn't add the 0.4s wait (`agSwipeAt`). Test: the long-press script in the thread drove a touchstart and timed the page switch (slate jumped at ~600 ms and the matchup never drew while held; now the matchup is up at ~500 ms).

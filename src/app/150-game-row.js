@@ -108,10 +108,16 @@
         main.addEventListener("touchstart", function (e) {
           if (e.touches.length !== 1 || (e.target.closest && e.target.closest(".net, .tray"))) return;
           lpFired = false; lpX = e.touches[0].clientX; lpY = e.touches[0].clientY;
-          clearTimeout(lpT); lpT = setTimeout(function () { lpFired = true; row.classList.add("lp"); setTimeout(function () { row.classList.remove("lp"); openMatchup(g); }, 90); }, 450);
+          // 3.124.1 (DJ: "a delay and shows a different page first"): the matchup opens the moment the press is long enough.
+          // Before, the open counted as a redraw under a finger (renderHeld, 240-chrome.js), so the page scrolled to the top
+          // and the matchup only drew 0.4s after you let go. A finger resting on the card isn't a tap that a redraw could drop.
+          clearTimeout(lpT); lpT = setTimeout(function () {
+            lpFired = true; agDown = false; row.classList.add("lp"); setTimeout(function () { row.classList.remove("lp"); }, 250);
+            var was = agTapping; agTapping = true; try { openMatchup(g); } finally { agTapping = was; }
+          }, 450);
         }, { passive: true });
         main.addEventListener("touchmove", function (e) { var t = e.touches[0]; if (Math.abs(t.clientX - lpX) > 10 || Math.abs(t.clientY - lpY) > 10) clearTimeout(lpT); }, { passive: true });
-        main.addEventListener("touchend", function () { clearTimeout(lpT); }, { passive: true });
+        main.addEventListener("touchend", function () { clearTimeout(lpT); if (lpFired) agSwipeAt = agUpAt = Date.now(); }, { passive: true });  // letting go after a long press: no 0.4s wait for the matchup's data to draw
         main.addEventListener("touchcancel", function () { clearTimeout(lpT); }, { passive: true });
         main.addEventListener("contextmenu", function (e) { e.preventDefault(); });
       }
