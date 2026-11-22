@@ -10,6 +10,7 @@ import { runMorningEmail, morningApi, confirmEmail } from "./morning-email.js";
 import { feedbackRoute } from "./feedback.js";
 import { factCheck, teamFacts } from "./factcheck.js";
 import { usageRoute } from "./usage.js";
+import { photosRoute } from "./photos.js";
 import { googleRoutes } from "./google.js";
 import { wireRoute } from "./wire.js";
 
@@ -170,6 +171,8 @@ export default {
       return json({ error: "Too many wrong passcodes from this network. Try again in 15 minutes." }, 429);
     // News: ESPN's injury report and trades and signings, trimmed for the phone (worker/wire.js, 3.114.0)
     if (url.pathname === "/api/wire") return wireRoute(req, url, { json });
+    // Soccer player pictures for the lineup pitch, from TheSportsDB (worker/photos.js, 3.124.0)
+    if (url.pathname === "/api/photos") return photosRoute(req, url, ctx, { json });
     // Settings → Send feedback, and the daily report that reads it (worker/feedback.js)
     if (url.pathname.startsWith("/api/feedback")) return feedbackRoute(req, env, url, { rpc, whoIs, json });
     // how much each person uses Slate, for DJ's Project status page (worker/usage.js)
