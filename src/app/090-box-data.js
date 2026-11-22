@@ -160,7 +160,7 @@
   function socLineup(g, t, b) {
     if (!t || !t.xi || !t.xi.length) return null;
     var wrap = el("div", "soc-lu"), hd = el("div", "soc-lu-h");
-    hd.appendChild(el("b", null, b && b.state === "pre" ? "Starting lineup" : "Lineup")); if (t.form) hd.appendChild(el("span", "soc-form", t.form));
+    hd.appendChild(el("b", null, b && b.state === "pre" ? "Starting lineup" : "Lineup"));
     wrap.appendChild(hd);
     // marks from the timeline: goals, cards, subbed off
     var marks = {}, mk0 = function (k) { return marks[k] = marks[k] || { g: 0, a: 0, yc: 0, rc: 0, off: "", on: "" }; };
@@ -185,21 +185,41 @@
     else shape.forEach(function (n) { lines.push(out.slice(i, i + n)); i += n; });
     lines.unshift(gk);
     }
-    var pitch = el("div", "soc-pitch"), col = socTeamColor(g, t);
-    lines.slice().reverse().forEach(function (ln) {  // attack at the top, keeper at the bottom
-      var row = el("div", "soc-line");
-      (spots && Object.keys(byFp).length === 11 ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); })).forEach(function (p) {
-        var c = el("div", "soc-p" + (p.off ? " off" : "")), dot = el("span", "soc-n", p.num || "");
-        dot.style.background = col; dot.style.color = socInk(col); c.appendChild(dot);
-        var mk = markOf(p), tags = el("span", "soc-tags");
-        for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
-        for (var k2 = 0; k2 < (mk.a || 0); k2++) tags.appendChild(el("i", "soc-ast", "A"));
-        if (mk.yc) tags.appendChild(el("i", "soc-card y")); if (mk.rc) tags.appendChild(el("i", "soc-card r"));
-        if (tags.childNodes.length) c.appendChild(tags);
-        c.appendChild(el("span", "soc-nm", p.n)); if (mk.off) c.appendChild(el("span", "soc-sub", "↓ " + mk.off + "'"));
-        row.appendChild(c);
-      });
-      pitch.appendChild(row);
+    // The floodlit pitch (3.123.0, DJ's pick): a night game seen from behind the team's own goal, so players further
+    // up the pitch stand smaller. D is how far back the camera sits, L how much of the pitch shows (in metres).
+    var pitch = el("div", "soc-pitch"), col = socTeamColor(g, t), D = 95, L = 58, far = D / (D + L);
+    var P = function (x, y) { var sc = D / (D + y); return [50 + (x - 34) / 68 * 112 * sc, 97 - 78 * (1 - sc) / (1 - far), sc]; };
+    var pt = function (x, y) { var q = P(x, y); return q[0].toFixed(2) + "," + (q[1] * 1.2).toFixed(2); };
+    var ln0 = function (pts) { return '<polyline class="soc-ch" points="' + pts.map(function (q) { return pt(q[0], q[1]); }).join(" ") + '"/>'; };
+    var arc = function (cx, cy, r, a0, a1) { var q = []; for (var a = a0; a <= a1 + 1e-6; a += (a1 - a0) / 24) q.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); return ln0(q); };
+    var svg = "";
+    for (var k0 = 0; k0 < 8; k0++) svg += '<polygon class="soc-gr' + (k0 % 2) + '" points="' + pt(-4, k0 * L / 8) + " " + pt(72, k0 * L / 8) + " " + pt(72, (k0 + 1) * L / 8) + " " + pt(-4, (k0 + 1) * L / 8) + '"/>';
+    svg += ln0([[0, L], [0, 0], [68, 0], [68, L]]) + ln0([[0, 52.5], [68, 52.5]]) + ln0([[13.84, 0], [13.84, 16.5], [54.16, 16.5], [54.16, 0]]) + ln0([[24.84, 0], [24.84, 5.5], [43.16, 5.5], [43.16, 0]]);
+    svg += arc(34, 11, 9.15, 0.645, Math.PI - 0.645) + arc(34, 52.5, 9.15, 0, Math.PI * 2);
+    var art = document.createElementNS("http://www.w3.org/2000/svg", "svg"); art.setAttribute("viewBox", "0 0 100 120"); art.setAttribute("preserveAspectRatio", "none"); art.setAttribute("aria-hidden", "true");
+    art.innerHTML = svg; pitch.appendChild(art);
+    pitch.appendChild(el("i", "soc-fade")); pitch.appendChild(el("i", "soc-lamp l")); pitch.appendChild(el("i", "soc-lamp r"));
+    var cap = el("div", "soc-cap"); cap.appendChild(el("b", null, (typeof short === "function" && t.side ? short(g, t.side) : "") || t.name || t.abbr || "")); if (t.form) cap.appendChild(el("span", "soc-form", t.form));
+    pitch.appendChild(cap);
+    var useSpots = !!(spots && Object.keys(byFp).length === 11), pins = [];
+    lines.forEach(function (ln, i) {  // keeper nearest, attack furthest away
+      var row = useSpots ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }), w = row.length;
+      var up = i === 0 ? 0.04 : 0.2 + 0.72 * (i - 1) / Math.max(1, lines.length - 2);
+      row.forEach(function (p, j) { pins.push({ p: p, i: i, w: w, up: up, x: w === 1 ? 50 : w === 2 ? (j ? 66 : 34) : w === 3 ? 20 + 30 * j : 10 + 80 * j / (w - 1) }); });
+    });
+    pins.sort(function (a, b2) { return b2.up - a.up; }).forEach(function (o) {  // far players first, so nearer ones draw over them
+      var p = o.p, q = P(o.x / 100 * 68, 3 + o.up * 52), sc = (0.68 + 0.32 * (q[2] - far) / (1 - far)) * (lines.length > 5 ? 0.84 : 1);  // five lines of outfield players stand closer together, so they draw smaller
+      var c = el("div", "soc-p" + (p.off ? " off" : "") + (o.w > 4 ? " tight" : "")), dot = el("span", "soc-n", p.num || "");
+      c.style.left = q[0].toFixed(2) + "%"; c.style.top = q[1].toFixed(2) + "%"; c.style.transform = "translate(-50%, -100%) scale(" + sc.toFixed(3) + ")";
+      if (o.i === 0) dot.classList.add("gk"); else { dot.style.background = col; dot.style.color = socInk(col); }
+      c.appendChild(dot);
+      var mk = markOf(p), tags = el("span", "soc-tags");
+      for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
+      for (var k2 = 0; k2 < (mk.a || 0); k2++) tags.appendChild(el("i", "soc-ast", "A"));
+      if (mk.yc) tags.appendChild(el("i", "soc-card y")); if (mk.rc) tags.appendChild(el("i", "soc-card r"));
+      if (tags.childNodes.length) c.appendChild(tags);
+      c.appendChild(el("span", "soc-nm", p.n + (mk.off ? " ↓" + mk.off + "'" : ""))); c.appendChild(el("i", "soc-stem"));
+      pitch.appendChild(c);
     });
     wrap.appendChild(pitch);
     if ((t.bench || []).length) {

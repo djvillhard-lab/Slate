@@ -909,19 +909,27 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .soc-lu { margin: 8px 0 12px; }
 .soc-lu-h { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 8px; }
 .soc-lu-h b { font-size: 13px; font-weight: 800; color: var(--muted); }
-.soc-form { font-size: 13px; font-weight: 800; color: var(--head); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
-.soc-pitch { position: relative; display: grid; gap: 12px; padding: 16px 8px 12px; border-radius: 8px; background: color-mix(in srgb, #2f8f4e 14%, var(--raise)); border: 1px solid var(--hair); overflow: hidden; }
-.soc-pitch::before { content: ""; position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; }
-.soc-pitch::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(255,255,255,.08); }
-.soc-line { position: relative; z-index: 1; display: flex; justify-content: space-evenly; gap: 4px; }
-.soc-p { position: relative; flex: 1 1 0; min-width: 0; display: grid; justify-items: center; gap: 3px; }
-.soc-n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.18); font-variant-numeric: tabular-nums; }
-.soc-nm { max-width: 100%; font-size: 11px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.soc-p.off .soc-nm { color: var(--muted); }
-.soc-sub { font-size: 11px; font-weight: 700; color: var(--dim); margin-top: -2px; }
-.soc-tags { position: absolute; top: -4px; left: calc(50% + 10px); display: flex; gap: 2px; align-items: center; }
+/* The floodlit pitch (3.123.0): a night game seen from behind the goal. It is a broadcast graphic, so it keeps its own night colors in every look. */
+.soc-pitch { position: relative; aspect-ratio: 10 / 12; border-radius: 8px; overflow: hidden; background: radial-gradient(120% 60% at 50% 0%, #1d2b3d 0%, #0a0f17 70%); }
+.soc-pitch svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.soc-gr0 { fill: #1a5c34; } .soc-gr1 { fill: #1f6b3c; }
+.soc-ch { fill: none; stroke: rgba(255,255,255,.55); stroke-width: .35; }
+.soc-fade { position: absolute; left: 0; right: 0; top: 0; height: 28%; background: linear-gradient(#0a0f17, rgba(10,15,23,.85) 75%, rgba(10,15,23,0)); }
+.soc-lamp { position: absolute; top: -12%; width: 46%; height: 40%; background: radial-gradient(closest-side, rgba(255,255,255,.22), transparent); pointer-events: none; }
+.soc-lamp.l { left: -10%; } .soc-lamp.r { right: -10%; }
+.soc-cap { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: #fff; }
+.soc-cap b { min-width: 0; font-size: 20px; font-weight: 800; font-stretch: 112%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soc-form { flex: none; font-size: 22px; font-weight: 800; font-stretch: 66%; letter-spacing: .04em; color: #fff; opacity: .9; font-variant-numeric: tabular-nums; }
+.soc-p { position: absolute; width: 96px; display: grid; justify-items: center; transform-origin: 50% 100%; }
+.soc-n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; font-weight: 800; font-stretch: 66%; color: #fff; background: var(--raise); box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 6px 10px rgba(0,0,0,.5); font-variant-numeric: tabular-nums; }
+.soc-n.gk { background: #e9edf2; color: #111820; }
+.soc-nm { margin-top: 4px; max-width: 96px; padding: 2px 6px; border-radius: 4px; background: rgba(8,12,18,.78); color: #fff; font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soc-p.tight .soc-nm { max-width: 70px; padding: 2px 4px; font-stretch: 85%; }
+.soc-stem { width: 2px; height: 5px; background: rgba(255,255,255,.7); }
+.soc-p.off .soc-n { opacity: .55; } .soc-p.off .soc-nm { color: rgba(255,255,255,.7); }
+.soc-tags { position: absolute; top: -5px; left: calc(50% + 12px); display: flex; gap: 2px; align-items: center; padding: 2px 3px; border-radius: 4px; background: rgba(8,12,18,.78); }
 .soc-ball { font-style: normal; font-size: 11px; line-height: 1; }
-.soc-ast { font-style: normal; width: 13px; height: 13px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: var(--ink); color: var(--bg); }
+.soc-ast { font-style: normal; width: 13px; height: 13px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: #fff; color: #0a0f17; }
 .soc-card { display: inline-block; width: 8px; height: 11px; border-radius: 4px; }
 .soc-pk { display: grid; place-items: center; width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid currentColor; font: 800 9px/1 system-ui; font-style: normal; color: var(--text); }
 .soc-pk.x { color: var(--muted); text-decoration: line-through; }
