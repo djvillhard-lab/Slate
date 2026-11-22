@@ -1,5 +1,5 @@
 # Glass controls (Liquid Glass look)
-Last updated: Nov 22, 2026, 3.127.0
+Last updated: Nov 22, 2026, 3.129.0
 The review with before and after pictures: https://claude.ai/artifact/Rs1HiiTausoiKqduM5Zo4m. DJ chose level A: glass on
 controls, content stays solid Scorebug. Rules are in `docs/DESIGN.md`, "Glass".
 Code: `src/styles/100-glass.css` only (loaded last in `src/shell.html`). No JS.
@@ -18,10 +18,16 @@ Code: `src/styles/100-glass.css` only (loaded last in `src/shell.html`). No JS.
   `.more-pop`, `.top-undo` and `.toast` are blurred glass; `.solid` and the search sheet's Close are capsules;
   `.app-upd` is painted glass. The menu (`#menu-pop`, `.fab`) and the bottom bar are NOT styled here: the three-page
   navigation thread owns them.
+- iPhone build, 3.129.0 (DJ: "Build and ship it"): the Tonight's slate Home Screen widget reads
+  `widgetRenderingMode`. Outside full color (iOS's clear and tinted Home Screen styles, where every solid color is
+  flattened to one tint) `Chip`, `ClockTag`, `LeagueTag` and `TonightTile`'s pills use see-through white fills, logos
+  keep their colors (`widgetAccentedRenderingMode(.fullColor)`), and the Slate mark and live tags are
+  `widgetAccentable`. Compiled on GitHub's Xcode check; not seen on a real Home Screen yet, so ask DJ how it looks.
 
 ## Open (in the order DJ saw in the review)
 - Idea to try: a pinned glass score bar on the Live feed.
-- One iPhone build (needs DJ's yes): Home Screen widget clear/tinted styles, layered app icon, Watch buttons.
+- Layered app icon: has to be made in Apple's Icon Composer on a Mac (not done). The Watch app needs nothing: it has
+  no buttons of its own and watchOS draws its bar as glass.
 - Left alone on purpose: quick-look drop-downs (`.tdd-h`, plain rows), "It lists" chips (`.lgchip`: capsules crowded
   their check boxes), On/Off pairs drawn as switches (`#score-seg`, `.seg2[data-pref]`), Live feed game chips.
 - Not from this work: at Text size XL on the folded Duo the slate's Time/League pill is cut off at the left edge

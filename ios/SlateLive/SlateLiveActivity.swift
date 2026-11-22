@@ -249,12 +249,16 @@ struct Chip: View {
     var stripe: CGFloat = 3
     var radius: CGFloat = 4
     var logo: String? = nil   // 3.67.0: the team's ESPN logo ("nba/bos.png"), when the app has saved it; else the chip
+    // 3.128.0: iOS's clear and tinted Home Screen styles flatten every solid color to one tint, so a solid chip with
+    // letters on it would be a blank block. There the logo keeps its own colors and the chip is a see-through tile.
+    @Environment(\.widgetRenderingMode) var mode
 
     @ViewBuilder
     var body: some View {
         if let img = SlateLogos.image(logo) {
             Image(uiImage: img)
                 .resizable()
+                .widgetAccentedRenderingMode(.fullColor)
                 .scaledToFit()
                 .frame(width: width, height: height)
                 .accessibilityLabel(Text(abbr))
@@ -267,14 +271,14 @@ struct Chip: View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         return Text(abbr)
             .font(SlateLook.num(size))
-            .foregroundStyle(SlateLook.onChip(color))
+            .foregroundStyle(mode == .fullColor ? SlateLook.onChip(color) : Color.white)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .padding(.horizontal, 2)
             .padding(.bottom, max(0, stripe - 1))
             .frame(width: width, height: height)
             .background {
-                shape.fill(Color(slateHex: color, fallback: .gray))
+                shape.fill(mode == .fullColor ? Color(slateHex: color, fallback: .gray) : Color.white.opacity(0.16))
                     .overlay(alignment: .bottom) {
                         Rectangle().fill(Color(slateHex: alt ?? "", fallback: .clear)).frame(height: stripe)
                     }
@@ -627,6 +631,7 @@ struct ClockTag: View {
     var size: CGFloat = 13
     var height: CGFloat = 20
     var fill: Color = SlateLook.raise   // the tag's color after the final
+    @Environment(\.widgetRenderingMode) var mode   // 3.128.0: see-through in the clear and tinted styles
 
     var body: some View {
         HStack(spacing: 5) {
@@ -639,7 +644,8 @@ struct ClockTag: View {
         }
         .padding(.horizontal, height < 20 ? 5 : 7)
         .frame(height: height)
-        .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(live ? SlateLook.live.opacity(0.16) : fill))
+        .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(live ? SlateLook.live.opacity(0.16) : (mode == .fullColor ? fill : Color.white.opacity(0.14))))
+        .widgetAccentable(live)
     }
 }
 

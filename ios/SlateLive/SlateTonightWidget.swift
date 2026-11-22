@@ -105,6 +105,7 @@ struct TonightView: View {
         VStack(alignment: .leading, spacing: small ? 6 : 7) {
             HStack(spacing: 5) {
                 SlateMark(size: 15)   // 3.113.0 (DJ): the Slate axe-hammer by the title
+                    .widgetAccentable()   // 3.128.0: takes the Home Screen's tint in the tinted style
                 Text("TONIGHT'S SLATE")
                     .font(SlateLook.bold(11))
                     .foregroundStyle(SlateLook.muted)
@@ -167,6 +168,7 @@ struct TonightView: View {
 // them in lg (3.120.0). A long name (a league without a short tag) is left out rather than squeezed in.
 struct LeagueTag: View {
     let g: SlateBoardGame
+    @Environment(\.widgetRenderingMode) var mode   // 3.128.0: see-through in the clear and tinted styles
     var body: some View {
         let t = (g.lg ?? "").trimmingCharacters(in: .whitespaces).uppercased()
         if !t.isEmpty && t.count <= 5 {
@@ -177,7 +179,7 @@ struct LeagueTag: View {
                 .fixedSize()
                 .padding(.horizontal, 4)
                 .frame(height: 14)
-                .background(RoundedRectangle(cornerRadius: 3, style: .continuous).fill(SlateLook.raise))
+                .background(RoundedRectangle(cornerRadius: 3, style: .continuous).fill(mode == .fullColor ? SlateLook.raise : Color.white.opacity(0.14)))
         }
     }
 }
@@ -278,6 +280,9 @@ struct TonightTile: View {
     var pillHeight: CGFloat? = nil   // 3.113.0: the Board's Lock Screen, under its header
     var fill = false   // 3.113.0: the large widget, where the pills grow to fill the row
     var league = false   // 3.121.9 (DJ): the large widget, a small league tag ("CBB") before the time
+    // 3.128.0: in iOS's clear and tinted Home Screen styles the team-color pills become even see-through glass tiles
+    // (the system would flatten the colors anyway, and the scores must stay readable on them)
+    @Environment(\.widgetRenderingMode) var mode
 
     var body: some View {
         let pre = BoardLook.pre(g), live = g.s == "in", fin = g.s == "post"
@@ -333,7 +338,9 @@ struct TonightTile: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: left ? .leading : .trailing)
         .background(
             LeanShape(left: left)
-                .fill(LinearGradient(colors: [c.opacity(0.62), c.opacity(0.3)], startPoint: left ? .leading : .trailing, endPoint: left ? .trailing : .leading))
+                .fill(mode == .fullColor
+                      ? AnyShapeStyle(LinearGradient(colors: [c.opacity(0.62), c.opacity(0.3)], startPoint: left ? .leading : .trailing, endPoint: left ? .trailing : .leading))
+                      : AnyShapeStyle(Color.white.opacity(0.14)))
         )
         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .opacity(fin && behind ? 0.6 : 1)
