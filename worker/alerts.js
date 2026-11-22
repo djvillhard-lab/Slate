@@ -502,7 +502,7 @@ function playerLine(sum, pid, lg) {
   if (sport === "soccer") {
     for (const r of sum.rosters || []) for (const x of r.roster || []) {
       if (String((x.athlete || {}).id) !== id) continue;
-      if (x.starter === false && x.subbedIn === false) return null;
+      if (x.starter === false && !(x.subbedIn === true || (x.subbedIn && x.subbedIn.didSub === true))) return null;  // ESPN now sends subbedIn as {didSub}
       const st = {}; for (const y of x.stats || []) st[y.name] = y.displayValue;
       const g = z(st.totalGoals), a = z(st.goalAssists), sv = z(st.saves);
       if (g) parts.push(`${g} goal${g === 1 ? "" : "s"}`); if (a) parts.push(`${a} assist${a === 1 ? "" : "s"}`); if (sv) parts.push(`${sv} save${sv === 1 ? "" : "s"}`);

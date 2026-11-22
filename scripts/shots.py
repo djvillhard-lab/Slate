@@ -174,6 +174,8 @@ def main():
                 kind, _, team = pg.partition(":")
                 if kind in ("game", "feed", "look"):
                     page.evaluate("SlateApp.go('games')"); page.wait_for_timeout(2500)
+                    if league:  # --league: look under that league's tab (the ALL tab starts with leagues collapsed)
+                        page.evaluate("(T => { const b = [...document.querySelectorAll('#strip button')].find(x => x.innerText.trim().toLowerCase() === T.toLowerCase()); if (b) b.click(); })(%s)" % json.dumps(league)); page.wait_for_timeout(1500)
                     hit = page.evaluate("""(T => { const r = [...document.querySelectorAll('#games-body .g')].find(x => x.innerText.indexOf(T) !== -1);
                         if (!r) return false; (r.querySelector('.g-main') || r).click(); return true; })(%s)""" % json.dumps(team))
                     if not hit:  # not under the page's current filter (e.g. Your teams): look again under ALL
@@ -192,7 +194,7 @@ def main():
                         page.evaluate("document.querySelector('.tray .full-mu').click()"); page.wait_for_timeout(2000)
                 else:
                     page.evaluate("SlateApp.go(%s)" % json.dumps(kind)); page.wait_for_timeout(2500)
-                for sel, want in (("#strip button", league), ("#substrip button", filt)):  # tap a league tab and/or a filter, by its text
+                for sel, want in (("#strip button", league if kind not in ("game", "feed", "look") else ""), ("#substrip button", filt)):  # tap a league tab and/or a filter, by its text
                     if not want: continue
                     if not page.evaluate("""((S, T) => { const b = [...document.querySelectorAll(S)].find(x => x.innerText.trim().toLowerCase() === T.toLowerCase()); if (!b) return false; b.click(); return true; })(%s, %s)""" % (json.dumps(sel), json.dumps(want))):
                         print(f"  {size}: no '{want}' button in {sel}")

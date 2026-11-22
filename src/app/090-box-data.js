@@ -72,11 +72,11 @@
         var roster = (ro && ro.roster) || [];
         if (roster.some(function (p) { return p.starter; })) {
           t.form = (ro && ro.formation) || "";
-          t.xi = roster.filter(function (p) { return p.starter; }).map(function (p) { return { n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, off: p.subbedOut ? 1 : 0 }; });
-          t.bench = roster.filter(function (p) { return !p.starter; }).map(function (p) { return { n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), on: p.subbedIn ? 1 : 0 }; });
+          t.xi = roster.filter(function (p) { return p.starter; }).map(function (p) { return { n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, off: socSubbed(p.subbedOut) }; });
+          t.bench = roster.filter(function (p) { return !p.starter; }).map(function (p) { return { n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), on: socSubbed(p.subbedIn) }; });
         }
         ((ro && ro.roster) || []).forEach(function (p) {
-          if (!p.starter && !p.subbedIn) return;
+          if (!p.starter && !socSubbed(p.subbedIn)) return;
           var m = {}; (p.stats || []).forEach(function (s) { m[s.name] = s.displayValue; });
           rows.push({ n: bxName(p.athlete), id: String((p.athlete || {}).id || ""), p: (p.position || {}).abbreviation || "", st: p.starter ? 1 : 0, s: BX_SOCCER.map(function (c2) { return m[c2[0]] != null ? String(m[c2[0]]) : "0"; }) });
         });
@@ -148,8 +148,13 @@
     return out.sort(function (x, y) { return x.sv - y.sv; });
   }
   // ---- soccer: lineups on a little pitch, and the match timeline ----
+  // ESPN's subbedIn/subbedOut used to be true/false; now it's {didSub: false}, an object that always reads as "yes" (3.121.15)
+  function socSubbed(v) { return v === true || !!(v && typeof v === "object" && v.didSub === true) ? 1 : 0; }
   var SOC_DEPTH = function (p) { p = String(p || "").toUpperCase(); return p === "G" || p === "GK" ? 0 : /^(CD|CB|RB|LB|D|WB|RWB|LWB|SW)/.test(p) ? 1 : /^DM/.test(p) ? 2 : /^AM/.test(p) ? 4 : /^(F|CF|ST|S|LW|RW|W)/.test(p) ? 5 : 3; };
   var SOC_SIDE = function (p) { p = String(p || "").toUpperCase(); return /-L$|^L/.test(p) ? 0 : /-R$|^R/.test(p) ? 2 : 1; };
+  // Opta's formation spots (ESPN's formationPlace): for each formation, the lines from the back four to the strikers,
+  // each listed left to right as seen with the team attacking up the screen (left back on the left). Source: mplsoccer's Opta table.
+  var SOC_SPOTS = {"31213":"4,5,6|8|3,2|7|11,9,10","31312":"4,5,6|7|3,8,2|9|11,10","3142":"6,4,5|8|3,11,7,2|10,9","3241":"4,5,6|3,2|11,8,7,10|9","3331":"4,5,6|3,8,2|11,7,10|9","3412":"4,5,6|3,8,7,2|9|11,10","3421":"4,5,6|3,8,7,2|11,10|9","343":"4,5,6|3,8,7,2|11,9,10","3511":"4,6,5|3,8,11,7,2|10|9","352":"4,5,6|3,8,11,7,2|9,10","41212":"3,6,5,2|4|11,7|8|9,10","4132":"3,6,5,2|4|11,8,7|10,9","4141":"3,6,5,2|4|11,10,8,7|9","4222":"3,6,5,2|8,4|11,7|9,10","4231":"3,6,5,2|4,8|11,10,7|9","424":"3,6,5,2|8,4|11,10,9,7","4312":"3,6,5,2|11,4,7|8|10,9","4321":"3,6,5,2|7,4,8|11,10|9","433":"3,6,5,2|8,4,7|11,9,10","4411":"3,6,5,2|11,8,4,7|10|9","442":"3,6,5,2|11,8,4,7|9,10","451":"3,6,5,2|11,8,10,4,7|9","532":"3,4,5,6,2|11,8,7|9,10","541":"3,4,5,6,2|11,10,8,7|9"};
   function socTeamColor(g, t) { var sd = t.side || "away", c = badgeColor(g, sd); return c || "var(--raise)"; }
   function socInk(c) { var m = /^#?([0-9a-f]{6})$/i.exec(String(c || "").trim()); if (!m) return "#fff"; var n = parseInt(m[1], 16), r = n >> 16, g2 = n >> 8 & 255, b2 = n & 255; return (0.299 * r + 0.587 * g2 + 0.114 * b2) > 170 ? "#111820" : "#fff"; }
   function socLineup(g, t, b) {
@@ -169,13 +174,21 @@
     var gk = t.xi.filter(function (p) { return SOC_DEPTH(p.p) === 0; }), out = t.xi.filter(function (p) { return SOC_DEPTH(p.p) !== 0; });
     out.sort(function (a, b2) { return SOC_DEPTH(a.p) - SOC_DEPTH(b2.p) || a.fp - b2.fp; });
     var shape = String(t.form || "").split("-").map(Number).filter(function (n) { return n > 0; }), lines = [], i = 0;
+    var spots = SOC_SPOTS[String(t.form || "").replace(/\D/g, "")], byFp = {};
+    t.xi.forEach(function (p) { if (p.fp) byFp[p.fp] = p; });
+    if (spots && Object.keys(byFp).length === 11) {
+      // ESPN's formationPlace is Opta's numbered spot in the formation, so each player goes exactly where the team lines up
+      spots.split("|").forEach(function (r) { lines.push(r.split(",").map(function (n) { return byFp[n]; }).filter(Boolean)); });
+      lines.unshift(gk.length ? gk : [byFp[1]].filter(Boolean));
+    } else {
     if (shape.reduce(function (a, n) { return a + n; }, 0) !== out.length) { shape = []; var byD = {}; out.forEach(function (p) { var d = SOC_DEPTH(p.p); (byD[d] = byD[d] || []).push(p); }); Object.keys(byD).sort().forEach(function (d) { lines.push(byD[d]); }); }
     else shape.forEach(function (n) { lines.push(out.slice(i, i + n)); i += n; });
     lines.unshift(gk);
+    }
     var pitch = el("div", "soc-pitch"), col = socTeamColor(g, t);
     lines.slice().reverse().forEach(function (ln) {  // attack at the top, keeper at the bottom
       var row = el("div", "soc-line");
-      ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }).forEach(function (p) {
+      (spots && Object.keys(byFp).length === 11 ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); })).forEach(function (p) {
         var c = el("div", "soc-p" + (p.off ? " off" : "")), dot = el("span", "soc-n", p.num || "");
         dot.style.background = col; dot.style.color = socInk(col); c.appendChild(dot);
         var mk = markOf(p), tags = el("span", "soc-tags");

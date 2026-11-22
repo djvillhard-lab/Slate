@@ -60,3 +60,9 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
 
 ## 3.121.6 (Nov 20, 2026)
 - Players to watch (pwNote, 080-claude.js): "Leads Dayton in…" for college/soccer, "Leads the Nuggets in…" for pro.
+
+## Soccer lineup pitch (3.121.15)
+- Players are placed by ESPN's `formationPlace`, which is Opta's numbered spot (1 keeper, 2 right back, 3 left back, 5/6 centre backs, 4/8 midfield pair, 7/11 wide, 9/10 forwards). `SOC_SPOTS` in `090-box-data.js` lists each of the 24 Opta formations as rows from the back line forward, left to right with the team attacking up the screen (from mplsoccer's Opta table; checked against ESPN games that send detailed positions like CD-L, AM-R). Unknown formations fall back to the old guess from position letters.
+- Root cause of the Man United at Liverpool bug (Nov 22): that game only had G/D/M/F positions, and the old code sorted by depth then place number, so 4-2-3-1 put the right winger (7) in the holding pair and the RB on the left.
+- ESPN changed `subbedIn`/`subbedOut` from true/false to `{didSub: false}`; read through `socSubbed()` (and in `worker/alerts.js`). Before this, every bench player showed ↑ and starters were greyed.
+- Open: DJ asked for a redesign of the lineup graphic (options in /mnt/project-files/lineups/, waiting on DJ's pick).

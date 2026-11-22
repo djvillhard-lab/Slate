@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.15 (Nov 22, 2026)
+TestFlight: 3.121.9 (54), no new build (web only)
+- Soccer lineups put every player in his real spot. ESPN numbers each starter's place in the formation, and Slate now reads those numbers the way they're meant (the standard formation spots used across the game) instead of guessing from "defender" or "midfielder". Before, in games like Man United at Liverpool, the right back drew on the left, a winger landed in the holding-midfield pair and a holding midfielder was pushed up with the attackers. Left backs now sit on the left, right backs on the right, for every formation.
+- Before kickoff, the bench no longer shows every substitute with an ↑ as if he'd come on, and starters are no longer greyed out as if subbed off. ESPN changed how it marks substitutions; Slate reads the new way. Goal alerts for a player who came off the bench read it the new way too.
+
 ## 3.121.14 (Nov 22, 2026)
 TestFlight: 3.121.9 (54), no new build (web only)
 - All games: your teams' games (and other slate games) are no longer pulled to the top of a league. They sit in normal start-time order with the rest, live games first and finished games last; the star still marks your teams.
