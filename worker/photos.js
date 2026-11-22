@@ -28,6 +28,18 @@ async function lookup(name, team) {
 }
 
 export async function photosRoute(req, url, ctx, h) {
+  // the picture itself, passed through and kept for 7 days, so the phone only ever talks to Slate
+  if (url.pathname === "/api/photos/img") {
+    const u = String(url.searchParams.get("u") || "");
+    if (!/^https:\/\/(r2|www)\.thesportsdb\.com\/images\/media\/player\/[a-z]+\/[a-z0-9]+\.(png|jpg)(\/(tiny|small|medium))?$/i.test(u)) return h.json({ error: "bad picture" }, 400);
+    const ck = new Request("https://slate.cache/photo-img/" + encodeURIComponent(u));
+    const c = await caches.default.match(ck); if (c) return c;
+    const r = await fetch(u);
+    if (!r.ok) return new Response("", { status: 404 });
+    const res = new Response(r.body, { headers: { "content-type": r.headers.get("content-type") || "image/png", "cache-control": "public, max-age=" + FOUND_SECS } });
+    ctx.waitUntil(caches.default.put(ck, res.clone()));
+    return res;
+  }
   const team = String(url.searchParams.get("team") || "").slice(0, 60);
   const names = String(url.searchParams.get("p") || "").split("|").map((s) => s.trim()).filter((s) => s && s.length <= 50 && !/[<>\/\\]/.test(s)).slice(0, 14);
   if (!team || !names.length) return h.json({ error: "team and p needed" }, 400);
@@ -44,7 +56,7 @@ export async function photosRoute(req, url, ctx, h) {
       if (v.wait) { wait = true; if (debug) notes[name] = v; continue; }
       ctx.waitUntil(cache.put(key, new Response(JSON.stringify(v), { headers: { "content-type": "application/json", "cache-control": "max-age=" + (v.url ? FOUND_SECS : NONE_SECS) } })));
     }
-    out[name] = v.url || "";
+    out[name] = v.url ? "/api/photos/img?u=" + encodeURIComponent(v.url) : "";
     if (debug) notes[name] = v;
   }
   return new Response(JSON.stringify(debug ? { photos: out, wait, notes } : { photos: out, wait }), { headers: { "content-type": "application/json", "cache-control": wait ? "no-store" : "public, max-age=3600" } });
