@@ -1,5 +1,5 @@
 /* Glass controls (3.125.0, DJ Nov 22 2026): the controls layer is Liquid Glass, the content stays Scorebug.
-   Release 1: page header (no bar, no line; a blurred scroll edge), header buttons as glass circles, tab rows as one
+   Part 1 (3.125.0): page header (no bar, no line; a blurred scroll edge), header buttons as glass circles, tab rows as one
    glass capsule with a lit lozenge, the small toggles as glass pills.
    Rules (docs/DESIGN.md, "Glass"): blur only on things that stay put (the header); anything that scrolls with the
    page is painted glass (fill + lit edge, no backdrop-filter). Reduce Transparency / Increase Contrast get solid fills.
@@ -37,6 +37,36 @@ html body .substrip > button[aria-pressed="true"] { color: var(--accent) !import
 /* 3. small toggles (Time/League, Board, Live): glass pills. They scroll with the page, so painted, not blurred */
 .sl-seg, .lo-btn { background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; border-radius: 999px !important; }
 .sl-seg button[aria-pressed="true"] { background: var(--lg-lit) !important; box-shadow: var(--lg-hi) !important; }
+
+/* ---- Part 2 (3.126.0): buttons, the main action, fields, switches, segmented choices, the Live feed switcher.
+   Everything here scrolls with the page, so it is painted glass (no blur). ---- */
+/* 4. buttons on cards and in pages: capsules with a lit edge */
+.g-feed, .gv-act:not(.wait), .myb-chip, .outline, .chwatch, .csp-c, .fd-scf, .bx-more, .nx-all, .tray-acts button, .tray .pv-get, .tray .pv-more, .today-btn { border-radius: 999px !important; box-shadow: var(--lg-hi) !important; }
+.gv-act:not(.wait), .outline, .chwatch, .csp-c, .fd-scf:not(.on), .nx-all, .tray-acts button { background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; }
+.tray-acts button.on { border-color: color-mix(in srgb, var(--accent) 55%, transparent) !important; }
+html .tray-acts button:not(#_):not(#_), html .ta-nt:not(#_):not(#_) { border-radius: 999px !important; background: var(--lg-fill) !important; box-shadow: var(--lg-hi) !important; }
+html .ta-nt:not(.on):not(#_):not(#_) { border: 1px solid var(--lg-edge) !important; }
+/* On TV: My channels / Close all channels */
+.tv-bar .rlink { padding: 0 12px !important; min-height: 32px; border-radius: 999px !important; background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; }
+/* 5. the one main action: rounder, lit edge (its color is unchanged) */
+html .full-mu:not(#_):not(#_), html .feed-go:not(#_):not(#_), html .cl-go:not(#_):not(#_), html .nx-go:not(#_):not(#_) { border-radius: 16px !important; box-shadow: var(--lg-hi) !important; }
+/* 6. search boxes and pickers: glass capsules */
+input.field, input.search, select.sel { border-radius: 999px !important; background-color: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; padding-left: 16px !important; }
+/* 7. segmented choices: a capsule; the chosen side keeps its fill. On/Off pairs that draw as a switch
+   (#score-seg, .seg2[data-pref]; 070-ux-review-3.css) are left alone */
+html .seg:not(#score-seg):not(.seg2[data-pref]):not(#_):not(#_) { border-radius: 999px !important; background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; }
+html .seg:not(#score-seg):not(.seg2[data-pref]) button:not(#_):not(#_) { border-radius: 999px !important; }
+html .seg:not(#score-seg):not(.seg2[data-pref]) button[aria-pressed="true"] { box-shadow: inset 0 1px 0 rgba(255,255,255,.3), var(--lg-drop) !important; }
+/* 8. switches: a glass track with a lit edge; on is still the accent */
+.switch { box-shadow: inset 0 1px 2px rgba(0,0,0,.25), 0 0 0 1px var(--lg-edge) !important; }
+.switch:not([aria-checked="true"]) { background: var(--lg-fill) !important; }
+.switch .knob { box-shadow: 0 1px 3px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.9) !important; }
+/* 9. Live feed: My slate / leagues switcher as a glass capsule with a lit lozenge, like the tab rows */
+html body .fd-strip.fd-filt { gap: 2px !important; padding: 4px !important; margin: 0 0 8px !important; border-radius: 999px !important; background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; }
+html body .fd-filt .cf-tab { position: relative; min-height: 36px !important; height: 36px !important; padding: 0 13px !important; font-size: 14px !important; border-radius: 999px !important; flex: none; }
+html body .fd-filt .cf-tab::before { display: none !important; }
+html body .fd-filt .cf-tab::after { content: "" !important; display: block !important; position: absolute !important; inset: -5px 0 !important; width: auto !important; height: auto !important; background: none !important; border: 0 !important; transform: none !important; }
+html body .fd-filt .cf-tab[aria-pressed="true"] { background: var(--lg-lit) !important; color: var(--ink) !important; box-shadow: var(--lg-hi), var(--lg-drop) !important; }
 
 @media (prefers-reduced-motion: reduce) { html body .strip > button, html body .nw-tabs > button { transition: none; } }
 /* Reduce Transparency or Increase Contrast: solid fills, no blur */

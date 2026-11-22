@@ -5,6 +5,16 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.126.0 (Nov 22, 2026)
+TestFlight: 3.121.9 (54), no new build (web only)
+- Glass controls, part 2. The buttons inside pages now match the glass look from part 1. Games, scores and one-liners are still solid.
+- Buttons on cards and pages are capsules with a lit edge: Feed, Add to slate, Add to My bets, Watch, Live notification, Game alerts, Leaders, Scoring and Delay on the Live feed, and My channels and Close all channels on On TV.
+- The one big button on a page (Live feed, Write Claude's preview, Generate news) has rounder corners and a lit edge. Its color is the same.
+- Search boxes and drop-down pickers are glass capsules.
+- Choices with two or three sides (My teams / Standings, and the ones in Settings) are a capsule. The side you picked keeps its color.
+- Switches have a glass track. On is still your accent color.
+- Live feed: My slate and the leagues are one glass capsule with a lit lozenge, like the tabs on All games.
+
 ## 3.125.0 (Nov 22, 2026)
 TestFlight: 3.121.9 (54), no new build (web only)
 - Glass controls, part 1. The things you tap at the top of every page now match the floating menu button's Liquid Glass look, while games, scores and one-liners stay solid and sharp.
