@@ -27,7 +27,7 @@
   // the filter button: All games on the iPhone Duo (folded, or a side of the unfolded screen)
   function n3FiltOn() { return n3BarOn() && state.view === "games" && deviceMode() === "duo" && games().length > 0; }
   // page swipes: only on the three pages, and not on the unfolded Duo (both sides are in view there; the bar picks pages)
-  // the day button (3.128.3, DJ): the slate gets the same glass button bottom right, opening just the day control
+  // the day arrows (3.129.1, DJ: one tap, never two): the slate gets a glass pair of arrows bottom right, always showing
   function n3DayOn() { return n3BarOn() && state.view === "lineup"; }
   function n3SwipeOk() { return n3BarOn() && !PANE && N3_PAGES.indexOf(state.view) !== -1 && !N3.row && !N3.filt; }
   function n3Next(step) { var i = N3_PAGES.indexOf(state.view); return i === -1 ? null : N3_PAGES[i + step] || null; }
@@ -81,10 +81,19 @@
     var fb = el("button", "n3-fb"); fb.type = "button"; fb.id = "n3-fb"; fb.setAttribute("aria-label", "Filter: league and day"); fb.setAttribute("aria-haspopup", "true"); fb.hidden = true;
     var fi = el("span", "n3-fi"); fi.appendChild(n3Svg("M4 7h16M7 12h10M10 17h4")); fb.appendChild(fi);
     var fx = el("span", "n3-x"); fx.appendChild(n3Svg("M6 6l12 12M18 6L6 18")); fb.appendChild(fx);
-    var ci = el("span", "n3-ci"); ci.appendChild(n3Svg("M5 6h14v14H5zM5 10.5h14M9 3v4M15 3v4")); fb.appendChild(ci);
     fb.appendChild(el("em", "n3-tag"));
     fb.addEventListener("click", function () { N3.filt = !N3.filt; N3.row = false; n3Draw(); if (N3.filt) { var r = $("n3-rail"); if (r) r.scrollTop = r.scrollHeight; } });
     root.appendChild(fb);
+    // the slate: yesterday and tomorrow, one tap each; off today a Today chip sits just above
+    var dr = el("div", "n3-dr"); dr.id = "n3-dr"; dr.setAttribute("role", "group"); dr.setAttribute("aria-label", "Change day"); dr.hidden = true;
+    var rp = el("button", "n3-dra"); rp.type = "button"; rp.setAttribute("aria-label", "Previous day"); rp.appendChild(n3Svg("M15 5l-7 7 7 7"));
+    var rn = el("button", "n3-dra"); rn.type = "button"; rn.setAttribute("aria-label", "Next day"); rn.appendChild(n3Svg("M9 5l7 7-7 7"));
+    rp.addEventListener("click", function () { slideDir = "r"; setDate(shiftDate(state.date, -1)); });
+    rn.addEventListener("click", function () { slideDir = "l"; setDate(shiftDate(state.date, 1)); });
+    dr.appendChild(rp); dr.appendChild(rn); root.appendChild(dr);
+    var dt = el("button", "n3-dt"); dt.type = "button"; dt.id = "n3-dt"; dt.hidden = true; dt.appendChild(el("b", null, "Today")); dt.appendChild(el("span"));
+    dt.addEventListener("click", function () { var t = todayInHome(); if (state.date === t) return; slideDir = state.date > t ? "r" : "l"; setDate(t); });
+    root.appendChild(dt);
     document.body.appendChild(root);
     N3.el = root;
   }
@@ -121,7 +130,7 @@
   function n3Draw() {
     var h = document.documentElement, on = n3On(), bar = n3BarOn(), filt = n3FiltOn(), dayb = n3DayOn();
     if (!N3.el) { if (!on) { n3Tell(false); h.removeAttribute("data-nav3"); return; } n3Build(); }
-    if (!bar) N3.row = false; if (state.view !== "lineup") N3.row = false; if (!filt && !dayb) N3.filt = false;
+    if (!bar) N3.row = false; if (state.view !== "lineup") N3.row = false; if (!filt) N3.filt = false;
     if (on) h.setAttribute("data-nav3", ""); else h.removeAttribute("data-nav3");
     if (bar) h.setAttribute("data-n3bar", ""); else h.removeAttribute("data-n3bar");
     if (filt) h.setAttribute("data-n3f", ""); else h.removeAttribute("data-n3f");
@@ -130,8 +139,8 @@
     if (bar && state.date === todayInHome()) liveAny = games().some(function (g) { return status(g).kind === "live"; });
     var lgTag = "";
     if (filt && state.league !== "all") filterOpts(visibleGames()).forEach(function (o) { if (o[0] === state.league) lgTag = o[1]; });
-    if (dayb && state.date !== todayInHome()) lgTag = fmtDate(state.date, { month: "short", day: "numeric" });
-    var sig = [on, bar, filt, dayb, state.view, N3.row, N3.filt, liveAny, lgTag].join("|");
+    var offDay = dayb && state.date !== todayInHome() ? fmtDate(state.date, { weekday: "short" }) + " " + fmtDate(state.date, { month: "short", day: "numeric" }) : "";
+    var sig = [on, bar, filt, dayb, offDay, state.view, N3.row, N3.filt, liveAny, lgTag].join("|");
     if (sig !== N3.sig) {
       N3.sig = sig;
       N3.el.hidden = !on;
@@ -143,14 +152,13 @@
         if (p === "games") b.classList.toggle("has-live", liveAny && !cur);
       });
       $("n3-row").hidden = !N3.row;
-      $("n3-fb").hidden = !filt && !dayb; $("n3-fb").setAttribute("aria-expanded", N3.filt ? "true" : "false");
-      $("n3-fb").setAttribute("data-m", dayb ? "day" : "filter"); $("n3-fb").setAttribute("aria-label", dayb ? "Pick a day" : "Filter: league and day");
-      $("n3-fp").classList.toggle("n3-fp-day", dayb); $("n3-rail").hidden = dayb;
+      $("n3-fb").hidden = !filt; $("n3-fb").setAttribute("aria-expanded", N3.filt ? "true" : "false");
+      $("n3-dr").hidden = !dayb || N3.row; $("n3-dt").hidden = !offDay || N3.row; $("n3-dt").lastChild.textContent = offDay;
       var tg = $("n3-fb").querySelector(".n3-tag"); tg.textContent = lgTag; tg.hidden = !lgTag || N3.filt;
       $("n3-fp").hidden = !N3.filt;
       $("n3-scrim").hidden = !(N3.row || N3.filt);
     }
-    if (N3.filt) { if (dayb) n3DayLab(); else n3Rail(); }
+    if (N3.filt) n3Rail();
     n3Pin();
   }
   // the app is told when the page draws the bottom of the screen itself, so it puts its own menu button away

@@ -50,11 +50,17 @@ html[data-n3f] #strip { display: none !important; }
 .n3-fb .n3-x { display: none; color: var(--accent); }
 .n3-fb[aria-expanded="true"] .n3-fi { display: none; }
 .n3-fb[aria-expanded="true"] .n3-x { display: block; }
-.n3-fb .n3-ci, .n3-fb[data-m="day"] .n3-fi { display: none; }
-.n3-fb[data-m="day"] .n3-ci { display: block; }
-.n3-fb[data-m="day"][aria-expanded="true"] .n3-ci { display: none; }
-/* the slate's day button (3.128.3): the day control opens straight above it */
-.n3-fp-day .n3-day { right: max(12px, calc((var(--strip-w, 0px) - 56px) / 2)); width: min(230px, calc(100vw - 24px)); }
+/* the slate's day arrows (3.129.1, DJ: one tap to change day): a glass pair bottom right, beside the bar; Today above when off today */
+.n3-dr { position: absolute; right: max(8px, calc((var(--strip-w, 0px) - 88px) / 2)); bottom: 0; z-index: 2; width: min(88px, calc(50vw - 112px)); height: 56px; border-radius: 28px; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden;
+  background: var(--n3-glass); border: 1px solid var(--n3-line); -webkit-backdrop-filter: blur(6px) saturate(1.8); backdrop-filter: blur(6px) saturate(1.8); box-shadow: var(--n3-hi); }
+.n3-dra { display: grid; place-items: center; height: 54px; color: var(--ink); background: none; border: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+.n3-dra:active { background: var(--n3-lit); }
+.n3-dra svg { width: 20px; height: 20px; }
+.n3-dra + .n3-dra { border-left: 1px solid var(--n3-line); }
+.n3-dt { position: absolute; right: max(8px, calc((var(--strip-w, 0px) - 88px) / 2)); bottom: 64px; z-index: 2; min-width: min(88px, calc(50vw - 112px)); height: 44px; padding: 0 10px; border-radius: 22px; display: grid; justify-items: center; align-content: center; line-height: 1.15; color: var(--ink);
+  background: var(--n3-panel); border: 1px solid var(--n3-line); -webkit-backdrop-filter: blur(10px) saturate(1.8); backdrop-filter: blur(10px) saturate(1.8); box-shadow: var(--n3-hi); animation: n3Grow .2s cubic-bezier(.2,.8,.2,1); transform-origin: 100% 100%; -webkit-tap-highlight-color: transparent; }
+.n3-dt b { font-size: 13px; font-weight: 800; font-stretch: 88%; letter-spacing: .02em; text-transform: uppercase; color: var(--accent); }
+.n3-dt span { font-size: 10px; font-weight: 700; white-space: nowrap; }
 .n3-tag { position: absolute; left: 50%; bottom: -3px; transform: translateX(-50%); padding: 1px 6px; border-radius: 8px; background: var(--accent-fill, var(--accent)); color: var(--on-accent, #0c1a10); font-style: normal; font-size: 10px; font-weight: 800; font-stretch: 88%; white-space: nowrap; }
 .n3-fp { position: absolute; right: 0; bottom: 64px; z-index: 2; pointer-events: none; }
 .n3-fp > * { pointer-events: auto; }
@@ -91,4 +97,4 @@ html[data-nav3] #title-d .today-btn { margin-left: 0 !important; padding: 0 7px 
 @keyframes n3Lit { from { transform: scale(.7); opacity: .4; } to { transform: none; opacity: 1; } }
 @keyframes n3Fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .n3-row, .n3-rail, .n3-day, .n3-scrim, .n3-b[aria-current="page"] { animation: none; } .n3-b, .n3-fb { transition: none; } }
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .n3-bar, .n3-fb, .n3-row, .n3-rail, .n3-day { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); border-color: var(--line); } }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .n3-bar, .n3-fb, .n3-row, .n3-rail, .n3-day, .n3-dr, .n3-dt { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); border-color: var(--line); } }

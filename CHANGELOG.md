@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.129.1 (Nov 22, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- The slate: changing the day is one tap again. The date button is gone. A glass pair of arrows sits bottom right, always showing: left for the day before, right for the day after. When you are on another day, a Today button with that date appears just above them.
+
 ## 3.129.0 (Nov 22, 2026)
 TestFlight: 3.129.0 (57), new build
 - Home Screen widget (Tonight's slate): it now works with iOS's clear and tinted Home Screen styles. When your icons are set to Clear or Tinted, the widget turns to glass with them: the team pills, the league tags and the Final tag become see-through tiles, team logos keep their own colors, and scores stay easy to read. The Slate mark and the live clock take your tint color. In the normal style the widget looks the same as before.
