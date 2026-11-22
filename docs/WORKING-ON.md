@@ -7,4 +7,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Soccer lineup graphic (players in wrong spots, then a redesign) | src/app/090-box-data.js (redesign waiting on DJ's pick) | 2026-11-22 16:20 |
-| DJ | Folded Duo: keep pages clear of the clock and Wi-Fi (every page's top-right corner) | new src/styles/099-duo-corner.css | 2026-11-22 16:24 |

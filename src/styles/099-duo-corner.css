@@ -1,0 +1,31 @@
+/* Folded iPhone Duo (3.122.0, DJ Nov 22): iOS draws the clock and Wi-Fi at the top of its right column, over the page,
+   about 53 points wide (385-438 of 466) and 152 points down from the top of the screen. The top bar and the rows of
+   buttons already stop short of the column (--strip-w, 040-components.css). These rules move the buttons and details
+   that sit at the top right of a page's first block out from under it, so nothing is covered when a page opens.
+   Only the first block of each page: further down, content runs edge to edge as before (DJ rejected a full gutter in
+   3.36.1 and extra top space in 3.36.3). --duo-cut ends the content about 7 points left of the clock. */
+html[data-native].side-col:not(.duo) { --duo-cut: calc(var(--strip-w, 0px) / var(--z, 1) - 12px); }
+
+/* inside a card (16-point padding): its right-hand column */
+html[data-native].side-col:not(.duo) #game-body > .gv-head:first-child .g-side,   /* matchup: countdown or score, bell, On your slate */
+html[data-native].side-col:not(.duo) #team-body .tm-head .tm-top > .star {          /* team page: the star */
+  margin-right: calc(var(--duo-cut) - 16px);
+}
+
+/* whole rows and cards at the top of a page */
+html[data-native].side-col:not(.duo) .set-acts > .navrow.sa:first-child,            /* Settings: Slate rules row (its arrow) */
+html[data-native].side-col:not(.duo) #rules-body > .rsum:first-child,               /* Slate rules: the summary card */
+html[data-native].side-col:not(.duo) #view-notify > .optrow.master,                 /* Notifications: the On/Off switch */
+html[data-native].side-col:not(.duo) #me-set > .optrow:first-child,                 /* Settings > Morning email: the switch */
+html[data-native].side-col:not(.duo) .optrow:has(> #score-seg),                     /* Settings > Slate and games: Scores */
+html[data-native].side-col:not(.duo) #acct > .sec:first-child + .optrow,            /* Settings > Account: Log out */
+html[data-native].side-col:not(.duo) #ver-row,                                      /* Settings > About: Check for updates */
+html[data-native].side-col:not(.duo) #nw-body > .nx-strip + .nx-sec {               /* News: the leagues line beside Headlines */
+  padding-right: var(--duo-cut) !important;
+}
+
+/* pickers that run the full width: end them short of the clock instead */
+html[data-native].side-col:not(.duo) #teams-body > .sdg-top,                        /* Teams: My teams / Standings */
+html[data-native].side-col:not(.duo) #device-seg {                                  /* Settings > Look: iPhone Duo / iPhone */
+  margin-right: var(--duo-cut) !important;
+}
