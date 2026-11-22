@@ -50,6 +50,11 @@ html[data-n3f] #strip { display: none !important; }
 .n3-fb .n3-x { display: none; color: var(--accent); }
 .n3-fb[aria-expanded="true"] .n3-fi { display: none; }
 .n3-fb[aria-expanded="true"] .n3-x { display: block; }
+.n3-fb .n3-ci, .n3-fb[data-m="day"] .n3-fi { display: none; }
+.n3-fb[data-m="day"] .n3-ci { display: block; }
+.n3-fb[data-m="day"][aria-expanded="true"] .n3-ci { display: none; }
+/* the slate's day button (3.128.3): the day control opens straight above it */
+.n3-fp-day .n3-day { right: max(12px, calc((var(--strip-w, 0px) - 56px) / 2)); width: min(230px, calc(100vw - 24px)); }
 .n3-tag { position: absolute; left: 50%; bottom: -3px; transform: translateX(-50%); padding: 1px 6px; border-radius: 8px; background: var(--accent-fill, var(--accent)); color: var(--on-accent, #0c1a10); font-style: normal; font-size: 10px; font-weight: 800; font-stretch: 88%; white-space: nowrap; }
 .n3-fp { position: absolute; right: 0; bottom: 64px; z-index: 2; pointer-events: none; }
 .n3-fp > * { pointer-events: auto; }
@@ -76,6 +81,9 @@ html[data-n3f] #strip { display: none !important; }
 html[data-nav3] .toast { bottom: 142px !important; }
 /* the day arrows in every dated page's header use the slate's own picker; its Today button is back in this layout */
 html[data-nav3] #title-d .today-btn:not([hidden]) { display: inline-flex; }
+/* 3.128.3: off today the calendar mark steps aside so Today fits before the search button */
+html[data-nav3] #title-d:has(.today-btn:not([hidden])) .dpick svg { display: none; }
+html[data-nav3] #title-d .today-btn { margin-left: 0 !important; padding: 0 7px !important; align-items: center; justify-content: center; }
 
 @keyframes n3Grow { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 .n3-row { animation-name: n3GrowC; }
