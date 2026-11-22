@@ -28,7 +28,7 @@
   function n3FiltOn() { return n3BarOn() && state.view === "games" && deviceMode() === "duo" && games().length > 0; }
   // page swipes: only on the three pages, and not on the unfolded Duo (both sides are in view there; the bar picks pages)
   // the day arrows (3.129.1, DJ: one tap, never two): the slate gets a glass pair of arrows bottom right, always showing
-  function n3DayOn() { return n3BarOn() && state.view === "lineup"; }
+  function n3DayOn() { return n3BarOn() && (state.view === "lineup" || state.view === "games"); }  // 3.129.2: All games too
   function n3SwipeOk() { return n3BarOn() && !PANE && N3_PAGES.indexOf(state.view) !== -1 && !N3.row && !N3.filt; }
   function n3Next(step) { var i = N3_PAGES.indexOf(state.view); return i === -1 ? null : N3_PAGES[i + step] || null; }
   function n3Go(v) {
@@ -76,9 +76,9 @@
     dp.addEventListener("click", function () { slideDir = "r"; setDate(shiftDate(state.date, -1)); });
     dn.addEventListener("click", function () { slideDir = "l"; setDate(shiftDate(state.date, 1)); });
     dl.addEventListener("click", function () { var t = todayInHome(); if (state.date === t) return; slideDir = state.date > t ? "r" : "l"; setDate(t); });
-    day.appendChild(dp); day.appendChild(dl); day.appendChild(dn); fp.appendChild(day);
+    day.appendChild(dp); day.appendChild(dl); day.appendChild(dn);  // 3.129.2 (DJ): no day control inside the filter; the arrows under the filter button do it
     root.appendChild(fp);
-    var fb = el("button", "n3-fb"); fb.type = "button"; fb.id = "n3-fb"; fb.setAttribute("aria-label", "Filter: league and day"); fb.setAttribute("aria-haspopup", "true"); fb.hidden = true;
+    var fb = el("button", "n3-fb"); fb.type = "button"; fb.id = "n3-fb"; fb.setAttribute("aria-label", "Filter by league"); fb.setAttribute("aria-haspopup", "true"); fb.hidden = true;
     var fi = el("span", "n3-fi"); fi.appendChild(n3Svg("M4 7h16M7 12h10M10 17h4")); fb.appendChild(fi);
     var fx = el("span", "n3-x"); fx.appendChild(n3Svg("M6 6l12 12M18 6L6 18")); fb.appendChild(fx);
     fb.appendChild(el("em", "n3-tag"));
@@ -91,9 +91,11 @@
     rp.addEventListener("click", function () { slideDir = "r"; setDate(shiftDate(state.date, -1)); });
     rn.addEventListener("click", function () { slideDir = "l"; setDate(shiftDate(state.date, 1)); });
     dr.appendChild(rp); dr.appendChild(rn); root.appendChild(dr);
-    var dt = el("button", "n3-dt"); dt.type = "button"; dt.id = "n3-dt"; dt.hidden = true; dt.appendChild(el("b", null, "Today")); dt.appendChild(el("span"));
+    var dt = el("button", "n3-dt"); dt.type = "button"; dt.id = "n3-dt"; dt.hidden = true; dt.appendChild(el("b", null, "Today"));
     dt.addEventListener("click", function () { var t = todayInHome(); if (state.date === t) return; slideDir = state.date > t ? "r" : "l"; setDate(t); });
     root.appendChild(dt);
+    // 3.129.2 (DJ): the date you are on is its own label, apart from the Today button
+    var dd = el("div", "n3-dd"); dd.id = "n3-dd"; dd.hidden = true; root.appendChild(dd);
     document.body.appendChild(root);
     N3.el = root;
   }
@@ -153,7 +155,7 @@
       });
       $("n3-row").hidden = !N3.row;
       $("n3-fb").hidden = !filt; $("n3-fb").setAttribute("aria-expanded", N3.filt ? "true" : "false");
-      $("n3-dr").hidden = !dayb || N3.row; $("n3-dt").hidden = !offDay || N3.row; $("n3-dt").lastChild.textContent = offDay;
+      $("n3-dr").hidden = !dayb || N3.row; $("n3-dt").hidden = !offDay || N3.row || N3.filt; $("n3-dd").hidden = !offDay || N3.row || N3.filt; $("n3-dd").textContent = offDay;
       var tg = $("n3-fb").querySelector(".n3-tag"); tg.textContent = lgTag; tg.hidden = !lgTag || N3.filt;
       $("n3-fp").hidden = !N3.filt;
       $("n3-scrim").hidden = !(N3.row || N3.filt);
@@ -190,7 +192,7 @@
     var shortDate = fmtDate(day, { weekday: "short" }) + ", " + fmtDate(day, { month: "short", day: "numeric" });
     $("day-label").textContent = Math.abs(away) <= 1 || state.view !== "lineup" ? shortDate : away > 0 ? "In " + away + " days" : -away + " days ago";
     $("day-input").value = day;
-    $("day-today").hidden = day === today;   // the Back button used to jump to today; the bar took its place
+    $("day-today").hidden = day === today || n3DayOn();  // 3.129.2 (DJ): on the slate and All games, Today is bottom right only   // the Back button used to jump to today; the bar took its place
   }
   // News and Box Office keep their own day; the header's arrows are the slate's, so their taps are taken here first
   (function () {

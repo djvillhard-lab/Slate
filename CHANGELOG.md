@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.129.2 (Nov 22, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- The slate and All games, on another day: the Today button at the top is gone. Bottom right, Today is now its own glass button, and the date you are looking at is a separate small label under it.
+- All games: the day arrows from the slate are bottom right here too, always showing, on every phone. On the iPhone Duo the filter button moved up to sit just above them, and the day control that opened beside the leagues is gone.
+- All games on the folded Duo: the open league column stops below the clock and Wi-Fi.
+
 ## 3.129.1 (Nov 22, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - The slate: changing the day is one tap again. The date button is gone. A glass pair of arrows sits bottom right, always showing: left for the day before, right for the day after. When you are on another day, a Today button with that date appears just above them.
