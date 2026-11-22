@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | All games: favorites in normal order | src/app/160-all-games.js | 2026-11-22 16:06 |
