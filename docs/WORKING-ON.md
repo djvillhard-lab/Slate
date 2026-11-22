@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | All games: favorites in normal order | src/app/160-all-games.js | 2026-11-22 16:06 |
+| DJ | Claude write-ups: show when generated (game preview, team page, News, Box Office) | src/app/080-claude.js, 140-game.js, 130-teams.js, 200-news.js, 120-box-office.js | 2026-11-22 16:12 |
