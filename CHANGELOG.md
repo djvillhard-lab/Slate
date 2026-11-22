@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.125.0 (Nov 22, 2026)
+TestFlight: 3.121.9 (54), no new build (web only)
+- Glass controls, part 1. The things you tap at the top of every page now match the floating menu button's Liquid Glass look, while games, scores and one-liners stay solid and sharp.
+- Page headers: the solid bar and the line under it are gone. The page name floats, and games blur and fade away as they scroll up under it.
+- Search (and the other header buttons) is a round glass button.
+- League and section tabs (All games, News, Box Office) are one glass capsule, and the tab you are on is a lit lozenge instead of an underline. The second row of filters stays plain words, with your accent color on the one you picked.
+- Time/League, Board and Live on the slate and All games are glass pills. Live is still red when it is on.
+- With Reduce Transparency or Increase Contrast turned on in iOS, all of this falls back to solid shapes.
+
 ## 3.124.1 (Nov 22, 2026)
 TestFlight: 3.121.9 (54), no new build (web only)
 - Holding a game card now opens its full matchup the moment the hold is long enough, while your finger is still down. Before, the page under your finger jumped to the top first and the matchup only appeared a moment after you let go.

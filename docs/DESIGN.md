@@ -7,8 +7,8 @@ whichever is wrong, in the same change.
 ## The look in one paragraph
 "Scorebug": sharp, clean, broadcast (the note at the top of the Scorebug section in `src/styles/030-duo.css`). A navy
 night base (black and light looks too), one type family (Archivo) used at different widths, team chips like a TV score
-bug, thin hairlines between things instead of boxes around them. Content has small, sharp corners; only the floating
-menu is soft glass. **Red means live. The accent means selected or yours.** Nothing else gets a color of its own.
+bug, thin hairlines between things instead of boxes around them. Two layers (3.125.0): **content is Scorebug** (solid,
+small sharp corners, hairlines) and **controls are glass** (anything you tap to move, switch or act: see "Glass"). **Red means live. The accent means selected or yours.** Nothing else gets a color of its own.
 
 ## Color
 Use the theme variables. They change with the look (navy, black, light) and the accent is DJ's own setting, so a
@@ -33,6 +33,19 @@ Allowed fixed colors: team colors (always through `badgeFor()` / `badgeColor()`,
 broadcast conventions inside a graphic (the blue line of scrimmage and yellow line to gain on the Live feed's field).
 Blend with `color-mix(in srgb, var(--accent) 10%, var(--card))` for tinted cards rather than new colors.
 
+## Glass (the controls layer, 3.125.0)
+DJ chose "glass controls, solid content" on Nov 22, 2026 (review: https://claude.ai/artifact/Rs1HiiTausoiKqduM5Zo4m;
+notes `docs/pages/glass.md`). All of it lives in `src/styles/100-glass.css`.
+- Glass goes on controls only: the page header and its buttons, tab rows, toggles, the floating menu, Back and day
+  pill. Never on content (game cards, scores, one-liners, box scores, news cards), and never glass on top of glass.
+- Blur (`backdrop-filter`) only on things that stay put while the page scrolls: the header's scroll edge, the bottom
+  controls, an open sheet. Anything that scrolls with the page is painted glass: `--lg-fill`, a `--lg-edge` border and
+  the `--lg-hi` lit edge, no blur.
+- A selected tab is a lit lozenge (`--lg-lit`, `--ink` text). The accent still marks the chosen filter in a second
+  row and the chosen side of a segmented control. Red is still only live.
+- The header has no bar and no hairline: content blurs and fades under it.
+- Reduce Transparency and Increase Contrast get solid fills (the media query at the end of the file).
+
 ## Type
 - One family: Archivo (`--font`). Width does the work: `font-stretch` about **66%** for scores and times (condensed
   numerals), **78–92%** for chips and small labels, **112–118%** for page titles and league tabs.
@@ -43,8 +56,8 @@ Blend with `color-mix(in srgb, var(--accent) 10%, var(--card))` for tinted cards
 
 ## Shape and spacing
 - Corners: **4px** for chips, tags and channel links (`.badge`, `.bug`, `.net`), **8px** for cards, buttons,
-  tabs, inputs and segmented controls. **999px** only for the small toggle pills (`.lo-btn`: Time/League, Board, Live).
-  The floating menu capsule is the one soft shape.
+  inputs and segmented controls. **999px** capsules for glass controls: tab rows, the small toggle pills (`.lo-btn`,
+  `.sl-seg`), round header buttons and the floating menu.
 - Spacing steps: 4, 8, 12, 16, 24. Page side padding 16. Between sections 18–24.
 - Rows are separated by `--hair` lines; use a card (`--card`, 8px) only for something that's one tappable unit.
 - Tap targets are at least 44 points tall (40 is the floor for header icons).
