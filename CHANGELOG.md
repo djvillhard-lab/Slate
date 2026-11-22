@@ -5,16 +5,20 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.14 (Nov 22, 2026)
+TestFlight: 3.121.9 (54), no new build (web only)
+- All games: your teams' games (and other slate games) are no longer pulled to the top of a league. They sit in normal start-time order with the rest, live games first and finished games last; the star still marks your teams.
+
 ## 3.121.13 (Nov 22, 2026)
-TestFlight: 3.101.0, no new build (web only)
+TestFlight: 3.121.9 (54), no new build (web only)
 - Swiping between days, leagues and tabs keeps up with your thumb. Before, after each swipe the page waited almost half a second before drawing the next day or league (a guard meant for taps), so quick swipes showed the old page sliding back in and you lost track of where you were. Now the next page draws as the swipe ends, and a swipe that starts before the last one finished lands the last one first, so every swipe counts. Taps keep their protection from live score redraws.
 
 ## 3.121.12 (Nov 21, 2026)
-TestFlight: 3.101.0, no new build (web only)
+TestFlight: 3.121.9 (54), no new build (web only)
 - Soccer games now read like every other sport: the away team on top, the home team underneath, and "@" between them ("Fulham @ Man City"). Before, soccer put the home side on top with "vs", the opposite of every other game and of the Board, so Man City's home game looked like Fulham's. Cards, the matchup page, team stats, odds and shared text all follow the same order. "vs" is only for neutral grounds.
 
 ## 3.121.11 (Nov 21, 2026)
-TestFlight: 3.101.0, no new build (web only)
+TestFlight: 3.121.9 (54), no new build (web only)
 - Soccer game cards (All games, the slate, On TV) show each team's place in the table next to its record: "Man City 7-0-3 · 3rd". The record is wins, draws, losses, so draws are already in the middle (ESPN's order).
 - Soccer one-liners say what the table means instead of repeating the places: "Arsenal is five points clear at the top", "Fulham is only two points above the drop zone", "Sunderland is a point from safety", "Only a point between them in the table".
 - The top scorer line now works for soccer ("Erling Haaland leads Man City with 9 goals"). It never showed before because ESPN words soccer goals differently.

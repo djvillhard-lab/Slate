@@ -100,3 +100,6 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 
 ## 3.121.12 (Nov 21, 2026)
 - DJ thought Fulham was home at Man City: soccer now uses the same order as every sport (away on top, home below, "@"; "vs" only for neutral grounds). sideOrder/sep in 040-live.js, the Board, and the soccer team-stats swap in 110-box-score.js all follow it.
+
+## 3.121.14 (Nov 22, 2026)
+- DJ: favorites (and slate games) are no longer pulled to the top of a league section; order is live, then by start time, then finished. The star and "Your team" tag mark them.
