@@ -17,9 +17,9 @@ function sameClub(a, b) {
 
 async function lookup(name, team) {
   const r = await fetch("https://www.thesportsdb.com/api/v1/json/" + KEY + "/searchplayers.php?p=" + encodeURIComponent(name));
-  if (r.status === 429) return { wait: true };
-  if (!r.ok) return { wait: true, status: r.status };
-  let d = null; try { d = await r.json(); } catch (e) { return { wait: true }; }
+  const body = await r.text();
+  if (!r.ok) return { wait: true, status: r.status, body: body.slice(0, 200) };
+  let d = null; try { d = JSON.parse(body); } catch (e) { return { wait: true, status: r.status, body: body.slice(0, 200) }; }
   const all = ((d && d.player) || []).filter((p) => /soccer/i.test(p.strSport || ""));
   const exact = all.filter((p) => norm(p.strPlayer) === norm(name));
   const hit = all.filter((p) => sameClub(p.strTeam, team) || sameClub(p.strTeam2, team))[0] || (exact.length === 1 ? exact[0] : null);
@@ -40,7 +40,7 @@ export async function photosRoute(req, url, ctx, h) {
     try { const c = await cache.match(key); if (c) v = await c.json(); } catch (e) {}
     if (!v) {
       if (wait) continue;  // the free limit was hit this minute: leave the rest for the next ask
-      v = await lookup(name, team).catch(() => ({ wait: true }));
+      v = await lookup(name, team).catch((e) => ({ wait: true, err: String(e) }));
       if (v.wait) { wait = true; if (debug) notes[name] = v; continue; }
       ctx.waitUntil(cache.put(key, new Response(JSON.stringify(v), { headers: { "content-type": "application/json", "cache-control": "max-age=" + (v.url ? FOUND_SECS : NONE_SECS) } })));
     }
