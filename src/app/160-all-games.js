@@ -354,7 +354,10 @@
   // 3.96.3 (DJ's phone log: five taps on Live, none went through, while All games redrew about 2.5 times a second):
   // iPhone drops a tap when the page changes under it, also just after the finger lifts, before the tap is delivered.
   // So nothing on All games changes from the moment a finger touches until 0.4s after it lifts; then it catches up.
-  function agBusy() { return agDown || Date.now() - agUpAt < 400; }
+  // 3.121.13 (DJ: "swiping pages has a slight delay"): the 0.4s after lifting is only for taps. A lift that ends a page
+  // swipe (agSwipeAt, set in 280-ios-bridge.js) can't drop a tap, so the next page draws right away instead of 0.4s later.
+  var agSwipeAt = 0;
+  function agBusy() { return agDown || (Date.now() - agUpAt < 400 && Math.abs(agUpAt - agSwipeAt) > 150); }
   function agAfter(fn) { clearTimeout(agHoldT); agHoldT = setTimeout(function () { if (agBusy()) agAfter(fn); else fn(); }, Math.max(30, 420 - (Date.now() - agUpAt))); }
   ["pointerdown", "touchstart"].forEach(function (t) { window.addEventListener(t, function () { agDown = true; }, { capture: true, passive: true }); });
   ["pointerup", "pointercancel", "touchend", "touchcancel"].forEach(function (t) { window.addEventListener(t, function () {

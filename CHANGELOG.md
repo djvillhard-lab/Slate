@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.121.13 (Nov 22, 2026)
+TestFlight: 3.101.0, no new build (web only)
+- Swiping between days, leagues and tabs keeps up with your thumb. Before, after each swipe the page waited almost half a second before drawing the next day or league (a guard meant for taps), so quick swipes showed the old page sliding back in and you lost track of where you were. Now the next page draws as the swipe ends, and a swipe that starts before the last one finished lands the last one first, so every swipe counts. Taps keep their protection from live score redraws.
+
 ## 3.121.12 (Nov 21, 2026)
 TestFlight: 3.101.0, no new build (web only)
 - Soccer games now read like every other sport: the away team on top, the home team underneath, and "@" between them ("Fulham @ Man City"). Before, soccer put the home side on top with "vs", the opposite of every other game and of the Board, so Man City's home game looked like Fulham's. Cards, the matchup page, team stats, odds and shared text all follow the same order. "vs" is only for neutral grounds.

@@ -170,7 +170,15 @@
       if (state.view !== homeView() && state.view !== "lineup") return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }
+    // 3.121.13 (DJ): quick repeat swipes. A swipe's page change runs at once, even while a finger is down (agTapping lets
+    // the redraw through the hold that protects taps). If the next swipe starts before the last one's slide-out finished,
+    // the last one lands first, so every swipe counts and the next drag moves the new page.
+    var swAct = null, swT = 0;
+    function swRun(fn) { var was = agTapping; agTapping = true; try { fn(); } finally { agTapping = was; } }
+    function swLater(fn, ms) { swAct = fn; swT = setTimeout(function () { swAct = null; fn(); }, ms); }
+    function swFlush() { if (!swAct) return; clearTimeout(swT); var f = swAct; swAct = null; f(); }
     document.addEventListener("touchstart", function (e) {
+      swFlush();
       x0 = null; if (e.touches.length !== 1) return;
       var t = e.touches[0];
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
@@ -228,7 +236,9 @@
       if ((Math.abs(dx) < 60 && !fast) || Math.abs(dy) > Math.abs(dx) * 0.7 || ms > 1200 || (scroller && Math.abs(scroller.scrollLeft - sx0) > 2)) { snapBack(d); return; }
       if (mode === "back" && dx < 0) { snapBack(d); return; }
       var dir = dx < 0 ? "l" : "r", before = where();
-      function act() {
+      agSwipeAt = Date.now();  // this lift was a swipe, not a tap: redraws needn't wait the tap's 0.4s
+      function act() { swRun(act0); }
+      function act0() {
         if (mode === "back") goBack();
         else if (mode === "league") swipeFilter(dx < 0 ? 1 : -1);
         else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
@@ -242,13 +252,13 @@
       if (mode === "feed") {  // carry on from where the finger let go, off the side, then the next game comes in from the other side
         var vw = window.innerWidth, going = !(dx > 0 && (state.feedId && fdAtFirst()));
         each(d, function (el2) { el2.style.transition = "transform .16s cubic-bezier(.3,.6,.4,1), opacity .16s"; el2.style.transform = "translate3d(" + (dx < 0 ? -vw : vw) + "px,0,0)"; el2.style.opacity = going ? "0.2" : "0"; });
-        setTimeout(function () { var before2 = where(); act(); if (where() === before2) { clearDrag(d); each(d, function (el2) { el2.classList.remove("sl-l", "sl-r"); void el2.offsetWidth; el2.classList.add(dir === "l" ? "sl-r" : "sl-l"); }); return; } clearDrag(d);
+        swLater(function () { var before2 = where(); act(); if (where() === before2) { clearDrag(d); each(d, function (el2) { el2.classList.remove("sl-l", "sl-r"); void el2.offsetWidth; el2.classList.add(dir === "l" ? "sl-r" : "sl-l"); }); return; } clearDrag(d);
           if (state.view !== "feed") { var nv2 = $("view-" + state.view); if (nv2) { nv2.classList.remove("sl-l", "sl-r"); void nv2.offsetWidth; nv2.classList.add("sl-r"); setTimeout(function () { nv2.classList.remove("sl-r"); }, 300); } } }, 160);
         return;
       }
       each(d, function (el2) { el2.style.transition = "transform .11s cubic-bezier(.4,0,1,1), opacity .11s"; el2.style.transform = "translate3d(" + (dx < 0 ? -40 : 40) + "%,0,0)"; el2.style.opacity = "0"; });
-      setTimeout(function () {
-        var stay = where() === before; act();
+      swLater(function () {
+        act();
         if (where() === before) { clearDrag(d); each(d, function (el2) { el2.classList.remove("sl-l", "sl-r"); void el2.offsetWidth; el2.classList.add(dir === "l" ? "sl-r" : "sl-l"); }); return; }   // nothing further that way: come back
         clearDrag(d);
         if (mode === "back" || (mode === "feed" && state.view !== "feed")) { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("sl-l", "sl-r"); void nv.offsetWidth; nv.classList.add("sl-r"); setTimeout(function () { nv.classList.remove("sl-r"); }, 300); } }
