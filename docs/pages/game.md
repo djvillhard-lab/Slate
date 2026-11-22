@@ -77,3 +77,4 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
 - It keeps fixed night colors in every look on purpose (a broadcast graphic, like the Live feed's field). The keeper's pin is white; the rest use the team color.
 - Formations with five outfield lines draw pins 16% smaller so far rows don't overlap. Lines of five use narrower name plates (`.tight`).
 - Not done: players who came on don't take a place on the pitch (they show on the Bench line with ↑ minute), same as before.
+- 3.123.1 (DJ: "don't like the small line beneath each player's name... too small, can we get player pictures in?"): the tick under the name is gone, pins 40px and names 13px, the minute a player came off moved into the tag by his number. Player pictures: ESPN has almost no soccer headshots (1 of 22 starters in Man United at Liverpool, about half of an MLS roster), which is why `bxFace` skips soccer. Photos need another source; waiting on DJ's choice.

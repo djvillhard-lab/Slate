@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.123.1 (Nov 22, 2026)
+TestFlight: 3.121.9 (54), no new build (web only)
+- Soccer lineups (the floodlit pitch): the small tick under each player's name is gone, and the players' numbers and names are bigger.
+
 ## 3.123.0 (Nov 22, 2026)
 TestFlight: 3.121.9 (54), no new build (web only)
 - Soccer lineups have a new look: the floodlit pitch. The starting eleven stand on a night pitch seen from behind their own goal, under the floodlights, so the keeper and back line are nearest and the strikers are up the far end. The team and its formation sit in the corner. Goals, assists, cards and the minute a player came off still show on each player. It keeps its night colors in every theme, like a TV graphic.

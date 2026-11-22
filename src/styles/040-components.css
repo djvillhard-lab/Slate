@@ -921,13 +921,13 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .soc-cap b { min-width: 0; font-size: 20px; font-weight: 800; font-stretch: 112%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .soc-form { flex: none; font-size: 22px; font-weight: 800; font-stretch: 66%; letter-spacing: .04em; color: #fff; opacity: .9; font-variant-numeric: tabular-nums; }
 .soc-p { position: absolute; width: 96px; display: grid; justify-items: center; transform-origin: 50% 100%; }
-.soc-n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; font-weight: 800; font-stretch: 66%; color: #fff; background: var(--raise); box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 6px 10px rgba(0,0,0,.5); font-variant-numeric: tabular-nums; }
+.soc-n { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; font-weight: 800; font-stretch: 66%; color: #fff; background: var(--raise); box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 6px 10px rgba(0,0,0,.5); font-variant-numeric: tabular-nums; }
 .soc-n.gk { background: #e9edf2; color: #111820; }
-.soc-nm { margin-top: 4px; max-width: 96px; padding: 2px 6px; border-radius: 4px; background: rgba(8,12,18,.78); color: #fff; font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soc-nm { margin-top: 3px; max-width: 96px; padding: 2px 6px; border-radius: 4px; background: rgba(8,12,18,.78); color: #fff; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .soc-p.tight .soc-nm { max-width: 70px; padding: 2px 4px; font-stretch: 85%; }
-.soc-stem { width: 2px; height: 5px; background: rgba(255,255,255,.7); }
 .soc-p.off .soc-n { opacity: .55; } .soc-p.off .soc-nm { color: rgba(255,255,255,.7); }
-.soc-tags { position: absolute; top: -5px; left: calc(50% + 12px); display: flex; gap: 2px; align-items: center; padding: 2px 3px; border-radius: 4px; background: rgba(8,12,18,.78); }
+.soc-tags { position: absolute; top: -5px; left: calc(50% + 15px); display: flex; gap: 2px; align-items: center; padding: 2px 3px; border-radius: 4px; background: rgba(8,12,18,.78); }
+.soc-off { font-style: normal; font-size: 11px; font-weight: 800; font-stretch: 85%; line-height: 1; color: #fff; white-space: nowrap; }
 .soc-ball { font-style: normal; font-size: 11px; line-height: 1; }
 .soc-ast { font-style: normal; width: 13px; height: 13px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: #fff; color: #0a0f17; }
 .soc-card { display: inline-block; width: 8px; height: 11px; border-radius: 4px; }

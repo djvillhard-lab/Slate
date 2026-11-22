@@ -217,8 +217,9 @@
       for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
       for (var k2 = 0; k2 < (mk.a || 0); k2++) tags.appendChild(el("i", "soc-ast", "A"));
       if (mk.yc) tags.appendChild(el("i", "soc-card y")); if (mk.rc) tags.appendChild(el("i", "soc-card r"));
+      if (mk.off) tags.appendChild(el("i", "soc-off", "↓" + mk.off + "'"));  // the minute he came off sits by his number, so the name is never cut short
       if (tags.childNodes.length) c.appendChild(tags);
-      c.appendChild(el("span", "soc-nm", p.n + (mk.off ? " ↓" + mk.off + "'" : ""))); c.appendChild(el("i", "soc-stem"));
+      c.appendChild(el("span", "soc-nm", p.n));
       pitch.appendChild(c);
     });
     wrap.appendChild(pitch);
