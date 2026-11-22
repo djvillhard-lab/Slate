@@ -9,3 +9,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | Soccer lineup graphic (player pictures, bigger players) | src/app/090-box-data.js, worker/photos.js, worker/index.js (one route line) | 2026-11-22 18:20 |
 | DJ | shared: styles/040-components.css (soccer lineup graphic styles only) | src/styles/040-components.css | 2026-11-22 18:20 |
 | DJ | Game card long press into the full matchup | src/app/150-game-row.js | 2026-11-22 18:40 |
+| DJ | Game quick look: show where a live or finished game is played | src/app/110-box-score.js | 2026-11-22 18:45 |
