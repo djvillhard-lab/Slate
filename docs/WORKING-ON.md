@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | shared: glass controls look, part 3 (sheets, pop-ups, Undo, update banner; not the menu or bottom bar) | src/styles/100-glass.css | 2026-11-22 21:17 |
