@@ -2,10 +2,11 @@
 // ESPN has almost no soccer headshots, so these come from TheSportsDB (thesportsdb.com), a free community sports
 // database. One lookup per player by name; a player only gets a picture when TheSportsDB's player is a soccer player
 // at the same club (or the only soccer player with exactly that name), so nobody gets a stranger's face.
-// Each answer is kept at the edge: a found picture for 7 days, "no picture" for a day. The free key allows about
-// 30 lookups a minute, so a busy minute answers "wait" for the rest and the app asks again later.
+// Each answer is kept at the edge: a found picture for 30 days, "no picture" for a day. The free key allows about
+// 10 lookups, then refuses for about 3 minutes; the rest get "wait" and the app asks again every minute or so.
 const KEY = "123";  // TheSportsDB's public free key
-const FOUND_SECS = 7 * 86400, NONE_SECS = 86400;
+const FOUND_SECS = 30 * 86400, NONE_SECS = 86400, COOL_SECS = 200;  // TheSportsDB shuts the door for about 3 minutes after roughly 10 lookups (measured Nov 22, 2026)
+const COOL = new Request("https://slate.cache/photo-cool");
 
 const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9 ]/g, " ").replace(/\b(fc|cf|afc|sc|ac|cd|club|de|the)\b/g, " ").replace(/\s+/g, " ").trim();
 function sameClub(a, b) {
@@ -46,6 +47,7 @@ export async function photosRoute(req, url, ctx, h) {
   const cache = caches.default, debug = url.searchParams.get("debug") === "1";
   const out = {}, notes = {};
   let wait = false;
+  try { if (await cache.match(COOL)) wait = true; } catch (e) {}  // still shut out: answer from what is kept, ask nothing new
   for (const name of names) {
     const key = new Request("https://slate.cache/photo/" + encodeURIComponent(norm(team)) + "/" + encodeURIComponent(norm(name)));
     let v = null;
@@ -53,7 +55,7 @@ export async function photosRoute(req, url, ctx, h) {
     if (!v) {
       if (wait) continue;  // the free limit was hit this minute: leave the rest for the next ask
       v = await lookup(name, team).catch((e) => ({ wait: true, err: String(e) }));
-      if (v.wait) { wait = true; if (debug) notes[name] = v; continue; }
+      if (v.wait) { wait = true; ctx.waitUntil(cache.put(COOL, new Response("1", { headers: { "cache-control": "max-age=" + COOL_SECS } }))); if (debug) notes[name] = v; continue; }
       ctx.waitUntil(cache.put(key, new Response(JSON.stringify(v), { headers: { "content-type": "application/json", "cache-control": "max-age=" + (v.url ? FOUND_SECS : NONE_SECS) } })));
     }
     out[name] = v.url ? "/api/photos/img?u=" + encodeURIComponent(v.url) : "";

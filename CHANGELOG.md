@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.124.0 (Nov 22, 2026)
+TestFlight: 3.121.9 (54), no new build (web only)
+- Soccer lineups now show player pictures on the floodlit pitch. Each starter's face sits in a circle ringed in his team's color, with his number on a small badge. ESPN has almost no soccer headshots, so the pictures come from TheSportsDB, a free sports database, matched by the player's name and club. A player it has no picture for keeps his number circle.
+
 ## 3.123.2 (Nov 22, 2026)
 TestFlight: 3.121.9 (54), no new build (web only)
 - Game quick look: where the game is played (arena and city, and "neutral site" for tournament games like the Charleston Classic) now stays on the card once the game starts. It used to disappear at tip-off; it now sits at the bottom, under the box score.

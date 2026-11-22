@@ -72,7 +72,7 @@
         var roster = (ro && ro.roster) || [];
         if (roster.some(function (p) { return p.starter; })) {
           t.form = (ro && ro.formation) || "";
-          t.xi = roster.filter(function (p) { return p.starter; }).map(function (p) { return { n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, off: socSubbed(p.subbedOut) }; });
+          t.xi = roster.filter(function (p) { return p.starter; }).map(function (p) { return { full: String((p.athlete || {}).displayName || ""), n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, off: socSubbed(p.subbedOut) }; });
           t.bench = roster.filter(function (p) { return !p.starter; }).map(function (p) { return { n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), on: socSubbed(p.subbedIn) }; });
         }
         ((ro && ro.roster) || []).forEach(function (p) {
@@ -155,6 +155,32 @@
   // Opta's formation spots (ESPN's formationPlace): for each formation, the lines from the back four to the strikers,
   // each listed left to right as seen with the team attacking up the screen (left back on the left). Source: mplsoccer's Opta table.
   var SOC_SPOTS = {"31213":"4,5,6|8|3,2|7|11,9,10","31312":"4,5,6|7|3,8,2|9|11,10","3142":"6,4,5|8|3,11,7,2|10,9","3241":"4,5,6|3,2|11,8,7,10|9","3331":"4,5,6|3,8,2|11,7,10|9","3412":"4,5,6|3,8,7,2|9|11,10","3421":"4,5,6|3,8,7,2|11,10|9","343":"4,5,6|3,8,7,2|11,9,10","3511":"4,6,5|3,8,11,7,2|10|9","352":"4,5,6|3,8,11,7,2|9,10","41212":"3,6,5,2|4|11,7|8|9,10","4132":"3,6,5,2|4|11,8,7|10,9","4141":"3,6,5,2|4|11,10,8,7|9","4222":"3,6,5,2|8,4|11,7|9,10","4231":"3,6,5,2|4,8|11,10,7|9","424":"3,6,5,2|8,4|11,10,9,7","4312":"3,6,5,2|11,4,7|8|10,9","4321":"3,6,5,2|7,4,8|11,10|9","433":"3,6,5,2|8,4,7|11,9,10","4411":"3,6,5,2|11,8,4,7|10|9","442":"3,6,5,2|11,8,4,7|9,10","451":"3,6,5,2|11,8,10,4,7|9","532":"3,4,5,6,2|11,8,7|9,10","541":"3,4,5,6,2|11,10,8,7|9"};
+  // Player pictures on the pitch (3.124.0). ESPN has almost no soccer headshots, so they come from TheSportsDB through
+  // /api/photos (worker/photos.js): asked once per team, remembered for the session, and a player with no picture
+  // keeps his number. "wait" means the free lookup limit was hit; ask again a little later.
+  var socPhotos = {}, socPhotoAsk = {};
+  function socPhotoFor(t, p) { return (p.full && (socPhotos[t.name] || {})[p.full]) || ""; }
+  function socPhotoPut(pin, src) {
+    var dot = pin.querySelector(".soc-n"); if (!dot || dot.querySelector("img")) return;
+    var im = document.createElement("img"); im.alt = ""; im.decoding = "async";
+    im.onload = function () { pin.classList.add("pic"); }; im.onerror = function () { im.remove(); };
+    im.src = src; dot.appendChild(im);
+  }
+  function socPhotoLoad(t, pitch) {
+    var names = (t.xi || []).map(function (p) { return p.full; }).filter(function (n) { return n && !(n in (socPhotos[t.name] || {})); });
+    if (!t.name || !names.length || (socPhotoAsk[t.name] || 0) > Date.now()) return;
+    socPhotoAsk[t.name] = Date.now() + 30000;
+    fetch("/api/photos?team=" + encodeURIComponent(t.name) + "&p=" + encodeURIComponent(names.join("|"))).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || !j.photos) return;
+      var m = socPhotos[t.name] = socPhotos[t.name] || {}; Object.keys(j.photos).forEach(function (k) { m[k] = j.photos[k]; });
+      if (!j.wait) socPhotoAsk[t.name] = Date.now() + 3600000;
+      // the free picture source only answers about 10 players every few minutes: keep asking for the rest while this pitch is on screen
+      else { socPhotoAsk[t.name] = Date.now() + 60000; setTimeout(function () { var live = document.querySelector('.soc-pitch[data-team="' + String(t.id || "") + '"]'); if (live) socPhotoLoad(t, live); }, 70000); }
+      if (!pitch.isConnected) pitch = document.querySelector('.soc-pitch[data-team="' + String(t.id || "") + '"]');  // redrawn since: fill the one showing now
+      if (!pitch) return;
+      Array.prototype.forEach.call(pitch.querySelectorAll(".soc-p[data-full]"), function (pin) { var src = m[pin.getAttribute("data-full")]; if (src) socPhotoPut(pin, src); });
+    }).catch(function () {});
+  }
   function socTeamColor(g, t) { var sd = t.side || "away", c = badgeColor(g, sd); return c || "var(--raise)"; }
   function socInk(c) { var m = /^#?([0-9a-f]{6})$/i.exec(String(c || "").trim()); if (!m) return "#fff"; var n = parseInt(m[1], 16), r = n >> 16, g2 = n >> 8 & 255, b2 = n & 255; return (0.299 * r + 0.587 * g2 + 0.114 * b2) > 170 ? "#111820" : "#fff"; }
   function socLineup(g, t, b) {
@@ -187,16 +213,16 @@
     }
     // The floodlit pitch (3.123.0, DJ's pick): a night game seen from behind the team's own goal, so players further
     // up the pitch stand smaller. D is how far back the camera sits, L how much of the pitch shows (in metres).
-    var pitch = el("div", "soc-pitch"), col = socTeamColor(g, t), D = 95, L = 58, far = D / (D + L);
+    var pitch = el("div", "soc-pitch"), col = socTeamColor(g, t), D = 130, L = 61, far = D / (D + L);
     var P = function (x, y) { var sc = D / (D + y); return [50 + (x - 34) / 68 * 112 * sc, 97 - 78 * (1 - sc) / (1 - far), sc]; };
-    var pt = function (x, y) { var q = P(x, y); return q[0].toFixed(2) + "," + (q[1] * 1.2).toFixed(2); };
+    var pt = function (x, y) { var q = P(x, y); return q[0].toFixed(2) + "," + (q[1] * 1.35).toFixed(2); };
     var ln0 = function (pts) { return '<polyline class="soc-ch" points="' + pts.map(function (q) { return pt(q[0], q[1]); }).join(" ") + '"/>'; };
     var arc = function (cx, cy, r, a0, a1) { var q = []; for (var a = a0; a <= a1 + 1e-6; a += (a1 - a0) / 24) q.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); return ln0(q); };
     var svg = "";
     for (var k0 = 0; k0 < 8; k0++) svg += '<polygon class="soc-gr' + (k0 % 2) + '" points="' + pt(-4, k0 * L / 8) + " " + pt(72, k0 * L / 8) + " " + pt(72, (k0 + 1) * L / 8) + " " + pt(-4, (k0 + 1) * L / 8) + '"/>';
     svg += ln0([[0, L], [0, 0], [68, 0], [68, L]]) + ln0([[0, 52.5], [68, 52.5]]) + ln0([[13.84, 0], [13.84, 16.5], [54.16, 16.5], [54.16, 0]]) + ln0([[24.84, 0], [24.84, 5.5], [43.16, 5.5], [43.16, 0]]);
     svg += arc(34, 11, 9.15, 0.645, Math.PI - 0.645) + arc(34, 52.5, 9.15, 0, Math.PI * 2);
-    var art = document.createElementNS("http://www.w3.org/2000/svg", "svg"); art.setAttribute("viewBox", "0 0 100 120"); art.setAttribute("preserveAspectRatio", "none"); art.setAttribute("aria-hidden", "true");
+    var art = document.createElementNS("http://www.w3.org/2000/svg", "svg"); art.setAttribute("viewBox", "0 0 100 135"); art.setAttribute("preserveAspectRatio", "none"); art.setAttribute("aria-hidden", "true");
     art.innerHTML = svg; pitch.appendChild(art);
     pitch.appendChild(el("i", "soc-fade")); pitch.appendChild(el("i", "soc-lamp l")); pitch.appendChild(el("i", "soc-lamp r"));
     var cap = el("div", "soc-cap"); cap.appendChild(el("b", null, (typeof short === "function" && t.side ? short(g, t.side) : "") || t.name || t.abbr || "")); if (t.form) cap.appendChild(el("span", "soc-form", t.form));
@@ -204,15 +230,17 @@
     var useSpots = !!(spots && Object.keys(byFp).length === 11), pins = [];
     lines.forEach(function (ln, i) {  // keeper nearest, attack furthest away
       var row = useSpots ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }), w = row.length;
-      var up = i === 0 ? 0.04 : 0.2 + 0.72 * (i - 1) / Math.max(1, lines.length - 2);
+      var up = i === 0 ? 0.02 : 0.27 + 0.75 * (i - 1) / Math.max(1, lines.length - 2);
       row.forEach(function (p, j) { pins.push({ p: p, i: i, w: w, up: up, x: w === 1 ? 50 : w === 2 ? (j ? 66 : 34) : w === 3 ? 20 + 30 * j : 10 + 80 * j / (w - 1) }); });
     });
     pins.sort(function (a, b2) { return b2.up - a.up; }).forEach(function (o) {  // far players first, so nearer ones draw over them
       var p = o.p, q = P(o.x / 100 * 68, 3 + o.up * 52), sc = (0.68 + 0.32 * (q[2] - far) / (1 - far)) * (lines.length > 5 ? 0.84 : 1);  // five lines of outfield players stand closer together, so they draw smaller
       var c = el("div", "soc-p" + (p.off ? " off" : "") + (o.w > 4 ? " tight" : "")), dot = el("span", "soc-n", p.num || "");
       c.style.left = q[0].toFixed(2) + "%"; c.style.top = q[1].toFixed(2) + "%"; c.style.transform = "translate(-50%, -100%) scale(" + sc.toFixed(3) + ")";
-      if (o.i === 0) dot.classList.add("gk"); else { dot.style.background = col; dot.style.color = socInk(col); }
+      if (o.i === 0) dot.classList.add("gk"); else { dot.style.background = col; dot.style.color = socInk(col); c.style.setProperty("--tc", col); c.style.setProperty("--tk", socInk(col)); }
+      var num = el("b", null, p.num || ""); dot.textContent = ""; dot.appendChild(num);
       c.appendChild(dot);
+      if (p.full) { c.setAttribute("data-full", p.full); var ph = socPhotoFor(t, p); if (ph) socPhotoPut(c, ph); }
       var mk = markOf(p), tags = el("span", "soc-tags");
       for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
       for (var k2 = 0; k2 < (mk.a || 0); k2++) tags.appendChild(el("i", "soc-ast", "A"));
@@ -222,7 +250,9 @@
       c.appendChild(el("span", "soc-nm", p.n));
       pitch.appendChild(c);
     });
+    pitch.setAttribute("data-team", String(t.id || ""));
     wrap.appendChild(pitch);
+    socPhotoLoad(t, pitch);
     if ((t.bench || []).length) {
       var bn = el("p", "soc-bench"), on = t.bench.filter(function (p) { return p.on; }), rest = t.bench.filter(function (p) { return !p.on; });
       bn.appendChild(el("b", null, "Bench "));
