@@ -5,7 +5,7 @@ Last updated: Nov 16, 2026, 3.52.8
 - Header: league, teams (tap for team page), status, standings, location, Add to slate, Live feed button.
 - Betting line strip under the header, then Claude's button (write preview / write recap / Regenerate) right under it, in every sport.
 - Upcoming: Preview, Player stats (this season, not soccer), Team stats (this season). Live: Top performers and players, Team stats, Preview. Final: Recap and players, Team stats.
-- Quick look (tray, `trayBlock` in `110-box-score.js`), before the start: location, betting line, Claude's preview or button, then the rest. Soccer shows lineups once announced, no season player stats.
+- Quick look (tray, `trayBlock` in `110-box-score.js`), before the start: location, betting line, Claude's preview or button, then the rest. Once a game is live or final, the location moves to the foot of the tray, under the box score (3.123.2: DJ missed it on a live neutral-site game, Dayton vs Northwestern; it used to vanish at tip-off). Soccer shows lineups once announced, no season player stats.
 - Code: `src/app/140-game.js` (`renderGame`, `previewSections`); Claude's button is `gameClaudeCtl` in `080-claude.js`.
 
 ## Open

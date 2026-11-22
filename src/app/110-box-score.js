@@ -442,9 +442,10 @@
     lc.appendChild(document.createTextNode(vn.name + (vn.place ? ", " + vn.place : "") + (g.neutral ? " (neutral site)" : ""))); return lc;
   }
   // the slate tray: a live or finished game shows its box score where the preview was
-  // the venue only before tip-off: once a game is on, the room goes to the score and box score
+  // before tip-off the venue leads; once a game is on, the score and box score lead and the venue sits at the foot (DJ, 3.123.2: it used to vanish at tip-off)
   function trayBlock(g) {
-    var tb = trayBlock0(g), k = status(g).kind, vl = k === "live" || k === "over" ? null : venueLine(g, "gv-loc tray-loc"); if (tb && vl) tb.insertBefore(vl, tb.firstChild);
+    var tb = trayBlock0(g), k = status(g).kind, vl = venueLine(g, "gv-loc tray-loc" + (k === "live" || k === "over" ? " tray-loc-end" : ""));
+    if (tb && vl) { if (k === "live" || k === "over") tb.appendChild(vl); else tb.insertBefore(vl, tb.firstChild); }
     // an upcoming game: the venue and the betting line lead, then Claude's preview (or the button to write one), then the rest (DJ, 3.52.8)
     if (tb && k !== "live" && k !== "over") {
       var os = tb.querySelector(":scope > .odds-strip, :scope > .pv-odds");
