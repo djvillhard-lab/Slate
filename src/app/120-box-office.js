@@ -799,6 +799,7 @@
       }
     }
     var lk = wrote ? mmLookup(mm.lg, night) : null;
+    if (wrote) { var mst = clStamp(L.at, "mm-at"); if (mst) body.appendChild(mst); }
     if (wrote && mmPowerOnly(L.over || [], night, mm.lg).length) { body.appendChild(mmSec("Overachievers", "Beat their norm")); var ol = el("div", "bs-list mm-list mm-cards"); mmPowerOnly(L.over, night, mm.lg).forEach(function (r) { ol.appendChild(mmCard(r, "▲", "over", lk)); }); ol.style.setProperty("--rows", Math.ceil(L.over.length / 2)); body.appendChild(ol); }
     if (wrote && mmPowerOnly(L.under || [], night, mm.lg).length) { body.appendChild(mmSec("Underachievers", "Off nights")); var ul = el("div", "bs-list mm-list mm-cards"); mmPowerOnly(L.under, night, mm.lg).forEach(function (r) { ul.appendChild(mmCard(r, "▼", "under", lk)); }); ul.style.setProperty("--rows", Math.ceil(L.under.length / 2)); body.appendChild(ul); }
     var fins = wrote && (L.games || []).length ? L.games : ((L && L.auto && L.auto.games) || []);
@@ -814,7 +815,7 @@
       gl.style.setProperty("--rows", Math.ceil(fins.length / 2));
       body.appendChild(gl);
     }
-    if (wrote) body.appendChild(el("p", "pv-at", "Written by Claude from ESPN box scores · " + new Date(L.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })));
+    if (wrote) body.appendChild(el("p", "pv-at", "Over and underachievers picked by Claude from ESPN box scores. Finishes come straight from the box scores."));
     else if (fins.length) body.appendChild(el("p", "pv-at", "Top performers and finishes from ESPN box scores."));
   }
   var MM_ASK = {}, MM_BUILD = {};

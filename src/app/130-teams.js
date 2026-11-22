@@ -364,7 +364,7 @@
         cc.appendChild(dh);
         if (lrOpen) tl.forEach(function (para) { cc.appendChild(el("p", "gv-p", para)); });
       }
-      if (doc.at) cc.appendChild(el("p", "pv-at", "Written " + new Date(doc.at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })));
+      var tst = clStamp(doc.at); if (tst) cc.appendChild(tst);
     } else cc.appendChild(el("p", "pv-none", "No Claude summary for this team yet."));
     if (skey && window.SLATE_SELF) {
       var tf = function () {

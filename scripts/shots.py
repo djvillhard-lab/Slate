@@ -182,6 +182,10 @@ def main():
                         page.evaluate("(() => { const b = [...document.querySelectorAll('#strip button')].find(x => x.innerText.trim() === 'ALL'); if (b) b.click(); })()"); page.wait_for_timeout(1500)
                         hit = page.evaluate("""(T => { const r = [...document.querySelectorAll('#games-body .g')].find(x => x.innerText.indexOf(T) !== -1);
                             if (!r) return false; (r.querySelector('.g-main') || r).click(); return true; })(%s)""" % json.dumps(team))
+                    if not hit:  # leagues on ALL start collapsed (3.100.x): open them all and look once more
+                        page.evaluate("document.querySelectorAll('#games-body [aria-expanded=false]').forEach(b => b.click())"); page.wait_for_timeout(1500)
+                        hit = page.evaluate("""(T => { const r = [...document.querySelectorAll('#games-body .g')].find(x => x.innerText.indexOf(T) !== -1);
+                            if (!r) return false; (r.querySelector('.g-main') || r).click(); return true; })(%s)""" % json.dumps(team))
                     if not hit: print(f"  {size}: no game with '{team}' on All games ({page.evaluate('document.querySelectorAll(\'#games-body .g\').length')} games, {page.url})"); continue
                     page.wait_for_timeout(2000)
                     if kind == "feed":

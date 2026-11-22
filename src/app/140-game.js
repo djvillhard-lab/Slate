@@ -74,7 +74,6 @@
       if (!sport) standFill(box);
       var ath = athFor(g.league, [short(g, "away"), short(g, "home")]);
       if (ath.length) box.appendChild(linkList("From The Athletic", ath.slice(0, 5)));
-      if (pv) { var by = byLine(pv); if (by) box.appendChild(el("p", "pv-at gv-at", by)); }
     }
     function boxFill(box) {
       if (live) {
@@ -282,11 +281,12 @@
     var rc = part === "pre" ? null : recapOf(pv), rcOpen = rc && recapShown(g);
     if (rc) {
       var rq = gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap");
-      if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); }
+      if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); if (!rc.quick) { var rs = clStamp(pvAt(pv, rc)); if (rs) rq.appendChild(rs); } }
       else rq.appendChild(recapGate(g));
       body.appendChild(rq);
     } else if (pv.summary) {
       var q = gvCard("The quick read"); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
+      var qs = clStamp(pvAt(pv)); if (qs) q.appendChild(qs);
       body.appendChild(q);
     }
     if (part === "recap") {
