@@ -15,7 +15,8 @@ struct RootView: View {
                 SlateWebView(model: model)
                     .ignoresSafeArea(.container, edges: .all)
                     .ignoresSafeArea(.keyboard)
-                if model.float || model.strip {
+                // Three pages (3.128.0): the page draws the bar, Back and the filter button itself; Classic menu brings this back
+                if (model.float || model.strip) && !model.webNav {
                     // one glass capsule: Back, the menu button, and the pages when it's open (3.31.0). With no side column
                     // (open and upright, or a regular iPhone) it floats bottom right; on the folded Duo the app draws it
                     // itself, centered in iOS's side column, so the pages always line up with the menu button
