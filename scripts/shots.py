@@ -14,6 +14,7 @@ Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --l
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
 --espn-swap "a=>b,c=>d" (change ESPN request URLs, e.g. "dates=202611=>dates=202511" to show last season's games),
 --eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
+--old-app (an iPhone app build from before Three pages: shows the Classic menu; without it the app hands the bottom of the screen to the page),
 --pane left|right (open Duo: which side the page, game, filters and --click go to; default right; --eval runs on the whole screen),
 --readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite).
 
@@ -58,6 +59,7 @@ def main():
     tap = None  # --tap "sel": a real touch tap, after --click
     teams = None  # --teams "Notre Dame,Duke": favorite teams for this run only (read-only, never saved)
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
+    oldapp = False
     pane = "right"
     ev, name, readonly, gate = None, "", False, None
     swaps = []  # --espn-swap "a=>b,c=>d": change ESPN request URLs (e.g. show last season's playoffs: "dates=202611=>dates=202511")
@@ -79,6 +81,7 @@ def main():
         if a == "--tomorrow": tomorrow = True; i += 1; continue
         if a == "--yesterday": tomorrow = "prev"; i += 1; continue  # the day before: finished games
         if a == "--full": full = True; i += 1; continue
+        if a == "--old-app": oldapp = True; i += 1; continue  # an iPhone app build from before Three pages (3.128.0): the Classic menu
         if a == "--eval": ev = args[i + 1]; i += 2; continue
         if a == "--name": name = args[i + 1]; i += 2; continue
         if a == "--espn-swap": swaps += [x.split("=>", 1) for x in args[i + 1].split(",") if "=>" in x]; i += 2; continue
@@ -139,7 +142,7 @@ def main():
             page = ctx.new_page()
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
-            page.add_init_script("window.SLATE_NATIVE={platform:'ios',app:'3.0',strip:%s};try{var k='lineup.look',v=JSON.parse(localStorage.getItem(k)||'{}');v.device='%s';localStorage.setItem(k,JSON.stringify(v));}catch(e){}" % ("true" if S["strip"] else "false", S["device"]))
+            page.add_init_script("window.SLATE_NATIVE={platform:'ios',app:'3.0',strip:%s,webNav:%s};try{var k='lineup.look',v=JSON.parse(localStorage.getItem(k)||'{}');v.device='%s';localStorage.setItem(k,JSON.stringify(v));}catch(e){}" % ("true" if S["strip"] else "false", "false" if oldapp else "true", S["device"]))
             page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/(\?.*)?(#.*)?$"), lambda r: r.fulfill(path=index, content_type="text/html"))
             page.route(re.compile(r".*/version\.json.*"), lambda r: r.fulfill(path=ver, content_type="application/json"))
             page.route(re.compile(r"^https://site\.api\.espn\.com/.*"), espn)

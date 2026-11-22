@@ -5,6 +5,17 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.128.0 (Nov 22, 2026)
+TestFlight: 3.121.9 (54), no new build (web only). The iPhone app keeps the Classic menu until its next build; Safari and the Home Screen copy get Three pages now.
+- Three pages. News, the slate and All games now sit side by side: the slate in the middle, News one swipe to the right, All games one swipe to the left.
+- A small glass bar floats at the bottom center with the three pages as icons. The page you are on is lit. It replaces the menu button and the date picker at the bottom.
+- Tap the hammer while you are on the slate and Box Office, On TV, Teams and Settings open in a row above the bar.
+- On these three pages a swipe only changes page. Days change with the arrows next to the date at the top of the page (Today is there too when you are on another day). News sections and All games leagues change by tapping.
+- All games on the iPhone Duo: the league row at the top is gone. One glass filter button sits bottom right. Tap it and every league rises in a column over the page, ALL nearest your thumb, with the day beside it. Leagues with no games that day are gray and can't be picked. The button shows the league you picked. A regular iPhone keeps the league row at the top.
+- Pages you open (a game, a team, a Settings page) show Back alone in the bottom right corner, and the bar comes back when you go back.
+- iPhone Duo unfolded: the bar sits at the bottom of the right side and only changes the right side's page. Swipes there work as before.
+- The old menu is kept: Settings > Look and text size > Navigation > Classic menu.
+
 ## 3.127.0 (Nov 22, 2026)
 TestFlight: 3.121.9 (54), no new build (web only)
 - Glass controls, part 3. The panels that slide up from the bottom (search, Board view, Add a game, Add a bet, a player's card, Send feedback) are now glass that floats just inside the screen's edges, rounded on all four corners, with the page showing dimly behind them.

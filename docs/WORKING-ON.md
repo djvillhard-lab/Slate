@@ -6,4 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | shared: three-page navigation (bottom bar, hammer row, page swipes, All games filter button, Classic menu switch) | new src/app/275-three-pages.js, src/styles/101-three-pages.css; small hooks in 070-navigation.js, 280-ios-bridge.js, 240-chrome.js, 230-settings.js, 260-persistence.js, 160-all-games.js, shell.html; ios/ on a branch only | 2026-11-22 21:20 |
+| DJ | shared: ios/ for three-page navigation (hide the app's own menu button when the page draws the bar). Branch only, waiting for DJ's yes | ios/Slate/RootView.swift, ios/Slate/WebModel.swift, ios/Slate/SlateWebView.swift | 2026-11-22 21:20 |

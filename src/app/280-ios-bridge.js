@@ -159,7 +159,8 @@
     function belowStrip(id, t) { var s2 = document.querySelector(id); if (!s2 || !t) return false; var r = s2.getBoundingClientRect(); return r.height > 0 && t.clientY > r.bottom; }
     function swipeMode(target, t) {
       if (!target || !target.closest || state.menuOpen) return null;
-      if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip, .bs-pills")) return null;
+      if (target.closest(".ticker, input, select, textarea, .sheet-backdrop, .menu-pop, nav.dock, .strip, .dates, .substrip, .bs-pills, .n3")) return null;
+      if (n3SwipeOk()) return "page";  // 3.128.0 (DJ): on News, the slate and All games a swipe only ever changes page
       if (isDuo && target.closest("#pane-l")) return "day";
       if (state.view === "games" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#strip", t) || target.closest("#view-games"))) return "league";
       if (state.view === "best" && !target.closest(".rk-day, nav.dock, .menu-pop") && (belowStrip(".rk-strip", t) || target.closest("#view-best"))) return "rk";
@@ -200,7 +201,7 @@
       if (mode === "tv") return slideKids($("tv-body"));
       if (mode === "feed") return fdKids();
       if (mode === "news") return slideKids($("nw-body"));
-      if (mode === "back") { var v = $("view-" + state.view); return v ? [v] : []; }
+      if (mode === "back" || mode === "page") { var v = $("view-" + state.view); return v ? [v] : []; }
       return [];
     }
     function each(list, fn) { (list || []).forEach(fn); }
@@ -222,6 +223,7 @@
       }
       if (scroller && Math.abs(scroller.scrollLeft - sx0) > 2) { snapBack(drag); drag = null; x0 = null; locked = false; return; }
       if (mode === "back" && dx < 0) dx = 0;  // pages you open only swipe back (to the right)
+      if (mode === "page" && !n3Next(dx < 0 ? 1 : -1)) dx = 0;  // no page further that way
       var m = mode === "feed" ? dx : dx * 0.7, op = String(1 - Math.min(Math.abs(dx) / (mode === "feed" ? 900 : 700), mode === "feed" ? 0.2 : 0.3));  // the live feed follows the finger one to one
       each(drag, function (el2) { el2.style.transform = "translate3d(" + m + "px,0,0)"; el2.style.opacity = op; });
     }, { passive: true });
@@ -235,11 +237,13 @@
       var fast = Math.abs(dx) >= 35 && Math.abs(dx) / Math.max(ms, 1) > 0.45;
       if ((Math.abs(dx) < 60 && !fast) || Math.abs(dy) > Math.abs(dx) * 0.7 || ms > 1200 || (scroller && Math.abs(scroller.scrollLeft - sx0) > 2)) { snapBack(d); return; }
       if (mode === "back" && dx < 0) { snapBack(d); return; }
+      if (mode === "page" && !n3Next(dx < 0 ? 1 : -1)) { snapBack(d); return; }
       var dir = dx < 0 ? "l" : "r", before = where();
       agSwipeAt = Date.now();  // this lift was a swipe, not a tap: redraws needn't wait the tap's 0.4s
       function act() { swRun(act0); }
       function act0() {
         if (mode === "back") goBack();
+        else if (mode === "page") n3Page(dx < 0 ? 1 : -1);
         else if (mode === "league") swipeFilter(dx < 0 ? 1 : -1);
         else if (mode === "rk") rkSwipe(dx < 0 ? 1 : -1);
         else if (mode === "mm") mmSwipe(dx < 0 ? 1 : -1);
@@ -262,6 +266,7 @@
         if (where() === before) { clearDrag(d); each(d, function (el2) { el2.classList.remove("sl-l", "sl-r"); void el2.offsetWidth; el2.classList.add(dir === "l" ? "sl-r" : "sl-l"); }); return; }   // nothing further that way: come back
         clearDrag(d);
         if (mode === "back" || (mode === "feed" && state.view !== "feed")) { var nv = $("view-" + state.view); if (nv) { nv.classList.remove("sl-l", "sl-r"); void nv.offsetWidth; nv.classList.add("sl-r"); setTimeout(function () { nv.classList.remove("sl-r"); }, 300); } }
+        if (mode === "page") { var np = $("view-" + state.view), nc = dir === "l" ? "sl-l" : "sl-r"; if (np) { np.classList.remove("sl-l", "sl-r"); void np.offsetWidth; np.classList.add(nc); setTimeout(function () { np.classList.remove(nc); }, 300); } }
       }, 110);
     }, { passive: true });
     document.addEventListener("touchcancel", function () { FD.drag = false; x0 = null; if (drag) snapBack(drag); drag = null; locked = false; }, { passive: true });
