@@ -25,7 +25,9 @@
     return v === "lineup" || v === "games" || v === "tv" || v === "teams" || v === "moments";
   }
   // the filter button: All games on the iPhone Duo (folded, or a side of the unfolded screen)
-  function n3FiltOn() { return n3BarOn() && state.view === "games" && deviceMode() === "duo" && games().length > 0; }
+  // 3.129.x (DJ, Nov 23): News too, in place of its row of tabs (Press Box and the leagues), not inside a breakdown
+  function n3FiltOn() { return n3BarOn() && deviceMode() === "duo" && (state.view === "games" ? games().length > 0 : state.view === "news" && !(typeof nw !== "undefined" && nw.deep)); }
+  function n3NewsOpts() { return [[null, NW_HOME]].concat(nwBriefLgs().map(function (k) { return [k, (LEAGUES[k] || {}).tag || k]; })); }
   // page swipes: only on the three pages, and not on the unfolded Duo (both sides are in view there; the bar picks pages)
   // the day arrows (3.129.1, DJ: one tap, never two): the slate gets a glass pair of arrows bottom right, always showing
   function n3DayOn() { return n3BarOn() && n3Dated(); }  // 3.129.2: All games too; 3.129.3: News, On TV and Box Office too
@@ -102,6 +104,18 @@
   // the league rail: every league, nearest the thumb first (ALL at the bottom); a league with no games that day is gray
   function n3Rail() {
     var rail = $("n3-rail"); if (!rail) return;
+    if (state.view === "news") {  // News: Press Box and the league briefings, Press Box nearest the thumb
+      var nsig = JSON.stringify(["news", n3NewsOpts(), nw.lg]);
+      if (N3.fsig !== nsig) {
+        N3.fsig = nsig; rail.textContent = "";
+        n3NewsOpts().slice().reverse().forEach(function (o) {
+          var b = el("button", "n3-lg", o[1]); b.type = "button"; b.setAttribute("aria-pressed", nw.lg === o[0] ? "true" : "false");
+          b.addEventListener("click", function () { N3.filt = false; if (nw.lg !== o[0]) nwPickLg(o[0]); n3Draw(); });
+          rail.appendChild(b);
+        });
+      }
+      return;
+    }
     var gs = visibleGames(), opts = filterOpts(gs), liveLg = {};
     gs.forEach(function (g) { if (status(g).kind === "live") liveLg[g.league] = 1; });
     var sig = JSON.stringify([opts, state.league, Object.keys(liveLg).sort()]);
@@ -140,7 +154,8 @@
     var liveAny = false;
     if (bar && state.date === todayInHome()) liveAny = games().some(function (g) { return status(g).kind === "live"; });
     var lgTag = "";
-    if (filt && state.league !== "all") filterOpts(visibleGames()).forEach(function (o) { if (o[0] === state.league) lgTag = o[1]; });
+    if (filt && state.view === "news") lgTag = nw.lg ? (LEAGUES[nw.lg] || {}).tag || nw.lg : "";
+    else if (filt && state.league !== "all") filterOpts(visibleGames()).forEach(function (o) { if (o[0] === state.league) lgTag = o[1]; });
     var dNow = dayb ? n3DayOf() : "";
     var offDay = dayb && dNow !== todayInHome() ? fmtDate(dNow, { weekday: "short" }) + " " + fmtDate(dNow, { month: "short", day: "numeric" }) : "";
     var sig = [on, bar, filt, dayb, offDay, state.view, N3.row, N3.filt, liveAny, lgTag].join("|");

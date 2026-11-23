@@ -29,3 +29,9 @@ html[data-native].side-col:not(.duo) #teams-body > .sdg-top,                    
 html[data-native].side-col:not(.duo) #device-seg {                                  /* Settings > Look: iPhone Duo / iPhone */
   margin-right: var(--duo-cut) !important;
 }
+
+/* News (DJ, Nov 23): the Generate / Regenerate button on the first card stops short of the clock and Wi-Fi.
+   The card has 12 points of padding inside the page's 16, so the button moves in by the cut less 28, plus 10 more to clear the ring around the Wi-Fi. */
+html[data-native].side-col:not(.duo) #nw-body > .nx-gen:first-child .nx-regen {
+  margin-right: calc(var(--duo-cut) - 18px);
+}

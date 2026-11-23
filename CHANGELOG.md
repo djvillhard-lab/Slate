@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.130.7 (Nov 23, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- News on the iPhone Duo: Press Box and the league tabs moved off the top into the glass filter button at the bottom right, the same as All games. It sits above the day arrows. Tap it for Press Box (nearest your thumb) and each league's briefing. Once you're on a league, the button shows its name.
+- News on the folded Duo: the Generate and Regenerate button at the top now stops short of the clock and Wi-Fi, so it's no longer covered.
+- A regular iPhone keeps the row of tabs at the top, like All games.
+
 ## 3.130.6 (Nov 22, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Soccer lineups: fixed a team showing numbered circles instead of headshots. The pictures were only remembered at the one Cloudflare location that first looked them up, so a phone that reached another location started over and hit the picture source's limit of about 10 lookups every few minutes. Every picture found is now saved once for all locations and kept on the phone for 30 days, so a team's faces show right away. If the sharper picture fails to load, the smaller one is used instead of falling back to the number.

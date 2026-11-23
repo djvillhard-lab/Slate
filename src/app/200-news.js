@@ -708,7 +708,7 @@
   }
   function nwBriefOf(lg) { var day = todayInHome(), d = { type: "l", lg: lg, day: day }; d.key = nwDeepKey(d); d.path = "newsdeep/" + day + "-" + d.key; return d; }
   function nwPickLg(lg) {
-    nw.lg = lg; renderNews(true);
+    nw.lg = lg; renderNews(true); if (typeof n3Draw === "function") n3Draw();
     if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
   }
   // a sideways swipe on News moves between Press Box and the league tabs (3.82.0, DJ: never Back); at either end it
@@ -720,6 +720,8 @@
     slideIn($("nw-body"), step > 0 ? "l" : "r"); return true;
   }
   function nwStrip(body) {
+    // on the iPhone Duo the tabs live in the glass filter button bottom right instead (3.129.x, DJ: like All games)
+    if (typeof n3FiltOn === "function" && n3FiltOn()) return;
     var strip = el("div", "strip nx-strip"), list = [[null, NW_HOME]].concat(nwBriefLgs().map(function (k) { return [k, (LEAGUES[k] || {}).tag || k]; }));
     strip.setAttribute("role", "tablist"); strip.setAttribute("aria-label", "News");
     list.forEach(function (o) {

@@ -6,7 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | News | src/app/200-news.js | 2026-11-23 16:50 |
-| DJ | shared: 283-three-pages.js, styles/099-duo-corner.css | News filter button, Generate clear of the clock | 2026-11-23 16:50 |
-| DJ | Navigation (hint at the hammer row) | src/styles/101-three-pages.css | 2026-11-23 16:50 |
 | DJ | shared: 280-ios-bridge.js | Teams page: no swipe Back | 2026-11-23 16:55 |
