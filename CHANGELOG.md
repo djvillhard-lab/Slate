@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.130.8 (Nov 23, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- The slate: the lit Slate (hammer) button at the bottom now has a small up arrow on top, a hint that Box Office, On TV and Teams sit above it. Each time the slate opens, the arrow nudges up twice. It goes away while the row is open, and takes no room on the page.
+- Teams: a sideways swipe no longer takes you back, so the standings tables and brackets can scroll sideways freely. Use the bar at the bottom (or Back in the Classic menu) to leave.
+
 ## 3.130.7 (Nov 23, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - News on the iPhone Duo: Press Box and the league tabs moved off the top into the glass filter button at the bottom right, the same as All games. It sits above the day arrows. Tap it for Press Box (nearest your thumb) and each league's briefing. Once you're on a league, the button shows its name.

@@ -168,6 +168,7 @@
       if (state.view === "tv" && !target.closest(".tray, nav.dock, .menu-pop") && (belowStrip("#substrip", t) || target.closest("#view-tv"))) return "tv";
       if (state.view === "feed") return "feed";
       if (state.view === "news") return nw.deep ? null : "news";  // 3.82.0 (DJ): News swipes between its tabs, never Back  // left: next live game; right: the game before, or back from the first one
+      if (state.view === "teams") return null;  // 3.130.7 (DJ): the Teams page never swipes Back; its tables and brackets scroll sideways
       if (state.view !== homeView() && state.view !== "lineup") return "back";
       return !isDuo && state.view === "lineup" ? "day" : null;
     }

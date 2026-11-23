@@ -135,7 +135,8 @@ def main():
             except Exception as e: wire_cache[lg] = json.dumps({"error": str(e)})
         route.fulfill(body=wire_cache[lg], content_type="application/json")
     with sync_playwright() as p:
-        browser = p.chromium.launch(executable_path=os.environ.get("SLATE_CHROMIUM") or None)  # SLATE_CHROMIUM: a Chromium already on the machine
+        _px = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")  # a cloud session reaches the web only through its proxy
+        browser = p.chromium.launch(executable_path=os.environ.get("SLATE_CHROMIUM") or None, proxy={"server": _px, "bypass": "localhost,127.0.0.1"} if _px else None)  # SLATE_CHROMIUM: a Chromium already on the machine
         for size in sizes:
             S = SIZES[size]
             ctx = browser.new_context(viewport={"width": S["w"], "height": S["h"]}, service_workers="block", device_scale_factor=2, has_touch=True, is_mobile=True, timezone_id="America/Chicago")

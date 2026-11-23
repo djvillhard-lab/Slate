@@ -13,6 +13,11 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 
 - 3.129.3 (DJ): Settings is a permanent round button beside Search in every page header (`n3Gear` un-hides the existing `#btn-settings` / `#l-btn-settings`); the hammer row is Box Office, On TV, Teams. The day arrows, Today button and date label are on every dated page (slate, All games, News, On TV, Box Office) through `n3SetDay` / `n3DayOf`; no Today button in any header.
 
+## Hint at the hammer row (3.130.8)
+- DJ (Nov 23): people couldn't tell Box Office, On TV and Teams live above the hammer. Cue must be subtle and take no page space.
+- Built: a small up chevron at the top of the lit hammer disc (CSS only, `::before` on `.n3-b[data-p=lineup][aria-current=page][aria-expanded=false]` in 101-three-pages.css), the hammer drops 2px to make room; it nudges up twice each time the slate lights (none with Reduce Motion). Hidden while the row is open (the X shows).
+- Not built (options if DJ wants more): a one-time peek of the row on first launch; a tiny label "More" under the hammer.
+
 ## Classic menu
 - Settings > Look and text size > Navigation: Three pages / Classic menu. Stored in `localStorage["slate-nav"]` ("classic", anything else = three).
 - The iPhone app draws its own menu button natively, so Three pages only runs in the app when the build says it can (`SLATE_NATIVE.webNav`). Builds up to 3.121.9 (54) don't, so they stay on Classic by themselves and the switch explains why.
