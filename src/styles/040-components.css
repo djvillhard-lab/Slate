@@ -917,7 +917,8 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .soc-fade { position: absolute; left: 0; right: 0; top: 0; height: 24%; background: linear-gradient(#0a0f17, rgba(10,15,23,.85) 75%, rgba(10,15,23,0)); }
 .soc-lamp { position: absolute; top: -12%; width: 46%; height: 40%; background: radial-gradient(closest-side, rgba(255,255,255,.22), transparent); pointer-events: none; }
 .soc-lamp.l { left: -10%; } .soc-lamp.r { right: -10%; }
-.soc-cap { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: #fff; }
+/* the formation sits right after the team name, on the left: on the folded Duo the top right is under the clock and Wi-Fi (DJ, Nov 22, 2026) */
+.soc-cap { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; justify-content: flex-start; align-items: baseline; gap: 12px; color: #fff; }
 .soc-cap b { min-width: 0; font-size: 20px; font-weight: 800; font-stretch: 112%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .soc-form { flex: none; font-size: 22px; font-weight: 800; font-stretch: 66%; letter-spacing: .04em; color: #fff; opacity: .9; font-variant-numeric: tabular-nums; }
 .soc-p { position: absolute; width: 96px; display: grid; justify-items: center; transform-origin: 50% 100%; }

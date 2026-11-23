@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | A game: lineup pitch pictures not showing, formation label | `src/app/090-box-data.js`, `worker/photos.js`, `worker/index.js` (the photos route line only); shared: styles/040-components.css (.soc-cap only) | 2026-11-23 04:17 |

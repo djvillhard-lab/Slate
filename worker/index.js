@@ -172,7 +172,7 @@ export default {
     // News: ESPN's injury report and trades and signings, trimmed for the phone (worker/wire.js, 3.114.0)
     if (url.pathname === "/api/wire") return wireRoute(req, url, { json });
     // Soccer player pictures for the lineup pitch, from TheSportsDB (worker/photos.js, 3.124.0)
-    if (url.pathname === "/api/photos" || url.pathname === "/api/photos/img") return photosRoute(req, url, ctx, { json });
+    if (url.pathname === "/api/photos" || url.pathname === "/api/photos/img") return photosRoute(req, url, ctx, { json, env });
     // Settings → Send feedback, and the daily report that reads it (worker/feedback.js)
     if (url.pathname.startsWith("/api/feedback")) return feedbackRoute(req, env, url, { rpc, whoIs, json });
     // how much each person uses Slate, for DJ's Project status page (worker/usage.js)

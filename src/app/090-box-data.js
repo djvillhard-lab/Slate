@@ -159,6 +159,21 @@
   // /api/photos (worker/photos.js): asked once per team, remembered for the session, and a player with no picture
   // keeps his number. "wait" means the free lookup limit was hit; ask again a little later.
   var socPhotos = {}, socPhotoAsk = {};
+  // 3.130.6: pictures already found are also kept on the phone for 30 days, so a team's faces show at once and don't
+  // depend on the picture source answering again (DJ saw a whole team fall back to numbers, Nov 22, 2026)
+  var SOC_PHOTO_KEY = "slate-soc-photos", socPhotoKept = {};
+  try { socPhotoKept = JSON.parse(localStorage.getItem(SOC_PHOTO_KEY) || "{}") || {}; } catch (e) { socPhotoKept = {}; }
+  Object.keys(socPhotoKept).forEach(function (tn) {
+    var row = socPhotoKept[tn]; if (!row || !row.at || Date.now() - row.at > 30 * 86400000 || !row.p) { delete socPhotoKept[tn]; return; }
+    socPhotos[tn] = {}; Object.keys(row.p).forEach(function (k) { socPhotos[tn][k] = row.p[k]; });
+  });
+  function socPhotoKeep(tn) {
+    var m = socPhotos[tn] || {}, p = {}; Object.keys(m).forEach(function (k) { if (m[k]) p[k] = m[k]; });  // only real pictures: "none yet" is asked again next time
+    if (!Object.keys(p).length) return;
+    socPhotoKept[tn] = { at: Date.now(), p: p };
+    var names = Object.keys(socPhotoKept); if (names.length > 60) names.sort(function (a, b) { return socPhotoKept[a].at - socPhotoKept[b].at; }).slice(0, names.length - 60).forEach(function (k) { delete socPhotoKept[k]; });
+    try { localStorage.setItem(SOC_PHOTO_KEY, JSON.stringify(socPhotoKept)); } catch (e) {}
+  }
   function socPhotoFor(t, p) { return (p.full && (socPhotos[t.name] || {})[p.full]) || ""; }
   // Where the face is in a cut-out picture (the player from the waist up on a clear background): measure how wide his head is near
   // the top, walk down until the picture gets much wider than that (his shoulders), then frame a square around what is above them.
@@ -198,8 +213,14 @@
       if (f) { im.className = "face"; im.style.width = im.style.height = (100 / f.s) + "%"; im.style.left = (-100 * f.x / f.s) + "%"; im.style.top = (-100 * f.y / f.s) + "%"; }
       pin.classList.add("pic");
     };
-    im.onerror = function () { box.remove(); };
-    im.src = String(src).replace(/%2Fsmall$/, "%2Fmedium");  // the middle size (350px), so a face cut out of it is still sharp
+    var big = String(src).replace(/%2Fsmall$/, "%2Fmedium"), tries = 0;
+    im.onerror = function () {  // the sharper picture didn't come: use the small one, then try once more a little later, before giving up
+      tries++;
+      if (tries === 1 && big !== src) im.src = src;
+      else if (tries <= 2) setTimeout(function () { if (im.isConnected) im.src = big; }, 15000);
+      else box.remove();
+    };
+    im.src = big;  // the middle size (350px), so a face cut out of it is still sharp
     box.appendChild(im); dot.insertBefore(box, dot.firstChild);
   }
   function socPhotoLoad(t, pitch) {
@@ -209,6 +230,7 @@
     fetch("/api/photos?team=" + encodeURIComponent(t.name) + "&p=" + encodeURIComponent(names.join("|"))).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (!j || !j.photos) return;
       var m = socPhotos[t.name] = socPhotos[t.name] || {}; Object.keys(j.photos).forEach(function (k) { m[k] = j.photos[k]; });
+      socPhotoKeep(t.name);
       if (!j.wait) socPhotoAsk[t.name] = Date.now() + 3600000;
       // the free picture source only answers about 10 players every few minutes: keep asking for the rest while this pitch is on screen
       else { socPhotoAsk[t.name] = Date.now() + 60000; setTimeout(function () { var live = document.querySelector('.soc-pitch[data-team="' + String(t.id || "") + '"]'); if (live) socPhotoLoad(t, live); }, 70000); }

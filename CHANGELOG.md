@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.130.6 (Nov 22, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Soccer lineups: fixed a team showing numbered circles instead of headshots. The pictures were only remembered at the one Cloudflare location that first looked them up, so a phone that reached another location started over and hit the picture source's limit of about 10 lookups every few minutes. Every picture found is now saved once for all locations and kept on the phone for 30 days, so a team's faces show right away. If the sharper picture fails to load, the smaller one is used instead of falling back to the number.
+- Soccer lineups: the formation (4-2-3-1) now sits right after the team name on the left, so it is no longer under the clock and Wi-Fi on the folded Duo.
+
 ## 3.130.5 (Nov 23, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Soccer games put the home team first again, the way soccer is written: on top where the two teams are stacked, on the left where they sit side by side, with "vs" between them ("Vancouver vs Real Salt Lake"). This covers MLS and every other soccer league, on game cards (slate, All games, On TV, News, search), the matchup page and its team stats and box score tabs, the Live feed's score bar, scorers, possession and match stats, Best bets and My bets, the Board picker, shared text, and alerts ("Final: Vancouver 2, Real Salt Lake 0"). It undoes 3.121.12, which had put soccer away first like the US sports.
