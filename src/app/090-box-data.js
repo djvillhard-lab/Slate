@@ -266,7 +266,7 @@
     var useSpots = !!(spots && Object.keys(byFp).length === 11), pins = [];
     lines.forEach(function (ln, i) {  // keeper nearest, attack furthest away
       var row = useSpots ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }), w = row.length;
-      var up = i === 0 ? 0.02 : 0.27 + 0.75 * (i - 1) / Math.max(1, lines.length - 2);
+      var up = i === 0 ? 0.02 : 0.25 + 0.77 * Math.pow((i - 1) / Math.max(1, lines.length - 2), 1.12);  // the far lines sit a little further apart on the field, because the view squeezes them together
       row.forEach(function (p, j) { pins.push({ p: p, i: i, w: w, up: up, x: w === 1 ? 50 : w === 2 ? (j ? 66 : 34) : w === 3 ? 20 + 30 * j : 10 + 80 * j / (w - 1) }); });
     });
     pins.sort(function (a, b2) { return b2.up - a.up; }).forEach(function (o) {  // far players first, so nearer ones draw over them

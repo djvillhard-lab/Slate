@@ -5,6 +5,10 @@
   // The six jobs: GK keeper, CB centre back, FB full back or wing-back, MID central or holding midfielder,
   // ATT winger or attacking midfielder, ST striker. docs/pages/soccer-rating.md has the table in plain words.
   var SOC_RATE_BASE = 6.0, SOC_RATE_MIN_MINUTES = 15;
+  // 3.130.3 (DJ, Nov 23, 2026, after comparing with FotMob's Liverpool 4-0 Man United ratings; he said all four gaps
+  // need adjusting): a big chance missed costs less, goals conceded cost defenders and midfielders more, a keeper's
+  // clean sheet is worth less, and above 8.5 each extra point counts 0.55 so a great game lands near 9.4, not 10.
+  var SOC_RATE_SOFT = 8.5, SOC_RATE_SOFT_KEEP = 0.55;
   //                                         what he did                  GK     CB     FB     MID    ATT    ST
   var SOC_RATE = [
     ["goal",    "Goals",                      "goal",                    [1.5,   1.2,   1.1,   1.0,   0.9,   0.85]],
@@ -13,7 +17,7 @@
     ["key",     "Chances created",            "chance created",          [0.1,   0.12,  0.14,  0.14,  0.12,  0.12]],
     ["big",     "Big chances created",        "big chance created",      [0.12,  0.12,  0.12,  0.12,  0.12,  0.12]],
     ["sot",     "Shots on target (saved)",    "shot on target",          [0.05,  0.08,  0.08,  0.08,  0.1,   0.1]],
-    ["miss",    "Big chances missed",         "big chance missed",       [-0.2,  -0.2,  -0.2,  -0.2,  -0.25, -0.3]],
+    ["miss",    "Big chances missed",         "big chance missed",       [-0.1,  -0.1,  -0.1,  -0.1,  -0.1,  -0.12]],
     ["drib",    "Dribbles won",               "dribble won",             [0,     0.05,  0.08,  0.08,  0.1,   0.1]],
     ["box",     "Touches in their box",       "touch in their box",      [0,     0,     0.02,  0.02,  0.02,  0.03]],
     ["pass",    "Passes completed",           "pass completed",          [0.008, 0.01,  0.008, 0.01,  0.006, 0.005]],
@@ -37,8 +41,8 @@
     ["og",      "Own goals",                  "own goal",                [-1.2,  -1.2,  -1.2,  -1.2,  -1.2,  -1.2]],
     ["pkc",     "Penalties given away",       "penalty given away",      [-0.8,  -0.8,  -0.8,  -0.8,  -0.8,  -0.8]],
     ["pkm",     "Penalties missed",           "penalty missed",          [-0.8,  -0.8,  -0.8,  -0.8,  -0.8,  -0.8]],
-    ["cs",      "Clean sheet",                "clean sheet",             [0.9,   0.7,   0.6,   0.2,   0,     0]],
-    ["conc",    "Goals conceded while on",    "goal conceded",           [-0.25, -0.25, -0.2,  -0.08, 0,     0]],
+    ["cs",      "Clean sheet",                "clean sheet",             [0.5,   0.7,   0.6,   0.2,   0,     0]],
+    ["conc",    "Goals conceded while on",    "goal conceded",           [-0.25, -0.4,  -0.3,  -0.12, 0,     0]],
     ["save",    "Saves",                      "save",                    [0.25,  0,     0,     0,     0,     0]],
     ["prev",    "Goals prevented (ESPN's shot quality)", "goal prevented", [0.5, 0,     0,     0,     0,     0]],
     ["pks",     "Penalties saved",            "penalty saved",           [1.2,   0,     0,     0,     0,     0]],
@@ -74,7 +78,8 @@
       var pts = cnt * w; total += pts; parts.push({ k: row[0], label: row[1], one: row[2], n: cnt, each: w, pts: pts });
     });
     parts.sort(function (a, b) { return Math.abs(b.pts) - Math.abs(a.pts); });
-    return { score: Math.max(3, Math.min(10, Math.round(total * 10) / 10)), raw: total, role: SOC_ROLES[ri], minutes: c.minutes, parts: parts };
+    var sq = total > SOC_RATE_SOFT ? (total - SOC_RATE_SOFT) * (SOC_RATE_SOFT_KEEP - 1) : 0; total += sq;  // the squeeze at the top
+    return { score: Math.max(3, Math.min(10, Math.round(total * 10) / 10)), raw: total, squeeze: sq, role: SOC_ROLES[ri], minutes: c.minutes, parts: parts };
   }
   // a starter's job from where he lines up: `lines` is the keeper's row, then each line from the back to the strikers, left to right
   function socRoleAt(lines, i, j) {
@@ -149,6 +154,7 @@
       var det = el("div", "soc-rt-det"); det.hidden = !socRtOpen[id];
       det.appendChild(el("p", "soc-rt-line base", "Starts at 6.0"));
       x.r.parts.forEach(function (q) { var ln = el("p", "soc-rt-line"); ln.appendChild(el("span", null, cnt(q))); ln.appendChild(el("b", q.pts < 0 ? "neg" : null, pts(q.pts))); det.appendChild(ln); });
+      if (x.r.squeeze) { var sqz = el("p", "soc-rt-line"); sqz.appendChild(el("span", null, "Above " + SOC_RATE_SOFT.toFixed(1) + ", each extra point counts " + SOC_RATE_SOFT_KEEP)); sqz.appendChild(el("b", "neg", pts(x.r.squeeze))); det.appendChild(sqz); }
       var tot = el("p", "soc-rt-line total"); tot.appendChild(el("span", null, "Slate rating")); tot.appendChild(el("b", null, x.r.score.toFixed(1))); det.appendChild(tot);
       row.setAttribute("aria-expanded", socRtOpen[id] ? "true" : "false");
       row.addEventListener("click", function (e) { e.stopPropagation(); socRtOpen[id] = !socRtOpen[id]; det.hidden = !socRtOpen[id]; row.setAttribute("aria-expanded", socRtOpen[id] ? "true" : "false"); });

@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.130.3 (Nov 23, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Soccer lineups: the headshots are bigger. Each circle is now about a seventh of the pitch's width and never under 52 points, instead of a fixed 46. The pitch is a little taller and the lines stand further apart, so the bigger faces don't cover each other's names.
+- Slate ratings: four adjustments DJ picked after comparing with FotMob's ratings for Liverpool 4-0 Manchester United. A big chance missed now costs 0.1 instead of 0.25 to 0.3 (Barcola 5.9 to 6.3, Isak 6.4 to 6.7). Each goal conceded costs a centre back 0.4, a full back 0.3 and a midfielder 0.12, up from 0.25, 0.2 and 0.08 (de Ligt 6.4 to 5.8, Martínez 5.5 to 5.1, Dalot 5.7 to 5.3). A keeper's clean sheet is worth 0.5 instead of 0.9 (Alisson 8.3 to 7.9). And above 8.5 each extra point counts 0.55, so a great game lands near 9.4 instead of running into 10.0 (Wirtz 10.0 to 9.4, Szoboszlai 9.6 to 9.1); the player's points breakdown shows that as its own line.
+
 ## 3.130.2 (Nov 23, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Slate ratings are back to how they were scored in 3.130.0. The tuning toward FotMob in 3.130.1 is undone: DJ wants to look at the Slate and FotMob numbers side by side first and decide what to change. The headshots and the end of graying out subbed-off players stay.

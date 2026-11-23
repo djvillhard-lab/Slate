@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | A game: soccer Slate rating values | `src/app/092-soc-rating.js` | Nov 23, 00:40 |
