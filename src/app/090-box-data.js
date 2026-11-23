@@ -240,6 +240,7 @@
       if (o.i === 0) dot.classList.add("gk"); else { dot.style.background = col; dot.style.color = socInk(col); c.style.setProperty("--tc", col); c.style.setProperty("--tk", socInk(col)); }
       var num = el("b", null, p.num || ""); dot.textContent = ""; dot.appendChild(num);
       c.appendChild(dot);
+      if (p.id) c.setAttribute("data-id", p.id);
       if (p.full) { c.setAttribute("data-full", p.full); var ph = socPhotoFor(t, p); if (ph) socPhotoPut(c, ph); }
       var mk = markOf(p), tags = el("span", "soc-tags");
       for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
@@ -259,6 +260,9 @@
       on.concat(rest).forEach(function (p, j) { var sp = el("span", p.on ? "on" : null, p.n + (p.on && markOf(p).on ? " ↑" + markOf(p).on + "'" : p.on ? " ↑" : "")); if (j) bn.appendChild(document.createTextNode(" · ")); bn.appendChild(sp); });
       wrap.appendChild(bn);
     }
+    // the Slate rating (092-soc-rating.js): on each circle and in a list under the bench, once the match is on
+    var rtb = socRatingBox(g, t, b, lines.map(function (ln) { return useSpots ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }); }));
+    if (rtb) { wrap.appendChild(rtb); socRtFill(rtb, socRtCtx[rtb.getAttribute("data-key")]); }
     return wrap;
   }
   // the match in a few bullet points: goals with the running score, penalties, red cards, half-time and full-time,

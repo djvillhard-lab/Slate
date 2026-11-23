@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.130.0 (Nov 22, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Soccer games now have Slate ratings. Once a match starts, every player who has played 15 minutes gets a score to one decimal (like 7.4) on his circle on the floodlit pitch, and a "Slate ratings" list sits under the bench, best first. Tap a player to see exactly where his points came from.
+- It is Slate's own score, not an official rating: no free source publishes one. Every player starts at 6.0, and ESPN's real match stats (goals, assists, chances created, passes, tackles, interceptions, headers, saves, cards and more) add or take points. Each position has its own values: keeper, centre back, full back, midfielder, winger or attacking midfielder, and striker. A tackle is worth more for a centre back, a chance created more for a winger, and saves count only for the keeper. "How it works" in the list explains it.
+
 ## 3.129.3 (Nov 22, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Settings is now a round button next to Search at the top of every page, always there. It is no longer in the row that opens from the hammer, which is now Box Office, On TV and Teams.
