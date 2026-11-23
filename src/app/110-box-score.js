@@ -174,6 +174,7 @@
   function bxNum(v) { var n = parseFloat(String(v == null ? "" : v).replace(/,/g, "")); return isNaN(n) ? -1 : n; }
   function bxTeamStats(g, b, compact) {
     var A = b.teams[0], H = b.teams[1]; if (!A || !H) return null;
+    if (homeFirst(g)) { var swp = A; A = H; H = swp; }   // 3.130.5: soccer's home side on the left
     var hm = {}; (H.stats || []).forEach(function (s) { hm[s[0]] = s; });
     var rows = (A.stats || []).filter(function (s) { return hm[s[0]]; });
     if (compact) {
@@ -317,10 +318,12 @@
   }
   function bxPlayers(g, b, compact, season) {
     state.bxSide = state.bxSide || {};
-    var side = state.bxSide[g.id]; if (side == null) side = isFav(g.home, g.league) && !isFav(g.away, g.league) ? 1 : 0;
+    var side = state.bxSide[g.id], hf = homeFirst(g);
+    if (side == null) side = hf ? (isFav(g.away, g.league) && !isFav(g.home, g.league) ? 0 : 1) : (isFav(g.home, g.league) && !isFav(g.away, g.league) ? 1 : 0);
     var sport = BX_SPORT[g.league] || "", wrap = el("div", "bx-pl"), seg = el("div", "bx-tabs2");  // same team tabs in the quick look and the full box score
     seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Pick a team");
-    b.teams.forEach(function (t, i) {
+    (hf ? [1, 0] : [0, 1]).forEach(function (i) {   // 3.130.5: soccer's home team is the first tab
+      var t = b.teams[i]; if (!t) return;
       var bt = el("button"); bt.type = "button";
       var sd = i ? "home" : "away", bdg = badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]), tc = bdg.style.background || "";
       bdg.setAttribute("aria-hidden", "true"); bt.appendChild(bdg); bt.appendChild(el("span", "bx-tn", short(g, sd) || t.abbr || abbr(g, sd)));  // 3.43.2: badge and team name

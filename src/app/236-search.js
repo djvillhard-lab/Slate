@@ -110,7 +110,7 @@
     var b = el("button", "find-row"); b.type = "button";
     var sc = scoreRaw(g.id), st = status(g), has = sc && (sc.state === "in" || sc.state === "post");
     var box = el("div", "find-g");
-    ["away", "home"].forEach(function (s) {
+    sideOrder(g).forEach(function (s) {   // soccer: home on top (3.130.5)
       var ln = el("div", "ln");
       ln.appendChild(badgeFor(abbr(g, s), g[s], g[s + "Color"], g[s + "Alt"]));
       ln.appendChild(el("span", "n", g[s + "Short"] || g[s]));

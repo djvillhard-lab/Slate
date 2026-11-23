@@ -98,7 +98,7 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - Soccer cards show the table place after the record ("7-0-3 · 3rd", from the slate's `<side>Standing`, set by slates.py; not on playoff games). ESPN's soccer record is already W-D-L. When a card is too tight, agFitNames drops the place (`.rec .tp`) first, then the records.
 - Soccer one-liners (100-highlights.js): rank-only lines replaced by points facts from ESPN's table (clear at the top, behind the leaders, from safety / above the drop zone for epl/laliga/seriea bottom 3 and bundesliga/ligue1 bottom 2, points between them). Top scorer line fixed for soccer ("Matches: 10, Goals: 9"). Winless-in-five added. Head-to-head lines rank low for soccer.
 
-## 3.121.12 (Nov 21, 2026)
+## 3.121.12 (Nov 21, 2026) (undone in 3.130.5: soccer is home first again, docs/pages/soccer-order.md)
 - DJ thought Fulham was home at Man City: soccer now uses the same order as every sport (away on top, home below, "@"; "vs" only for neutral grounds). sideOrder/sep in 040-live.js, the Board, and the soccer team-stats swap in 110-box-score.js all follow it.
 
 ## 3.121.14 (Nov 22, 2026)

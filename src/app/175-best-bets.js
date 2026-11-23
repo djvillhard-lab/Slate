@@ -437,7 +437,7 @@
   function betRow(g, b, res) {
     var kind = status(g).kind, s = res.s, lv = kind === "live", sc = scoreRaw(g.id) || {}, fin = kind === "over", over = b.lean > 0, ok = betRight(b, res);
     var r = el("div", "bet" + (ok === true ? " won" : ok === false ? " lost" : lv && s === "live" ? " on" : "")), m = el("div", "bet-m");
-    var vs = b.game ? abbr(g, "away") + " at " + abbr(g, "home") : (b.sd === "away" ? "at " + abbr(g, "home") : "vs " + abbr(g, "away"));
+    var vs = b.game ? pairText(g, function (sd) { return abbr(g, sd); }, " at ") : (b.sd === "away" ? "at " + abbr(g, "home") : "vs " + abbr(g, "away"));
     var noun = betNoun(b), lineTxt = (over ? "Over " : "Under ") + b.line + " " + noun;
     // top line: where the game is (start time, Live with the clock, Final), the lean or how it went, and remove
     var top = el("div", "bet-top"), gst = el("span", "bet-st" + (lv ? " lv" : fin ? " fin" : ""));
@@ -452,10 +452,10 @@
     var x = el("button", "bet-x"); x.type = "button"; x.appendChild(icon("x")); x.setAttribute("aria-label", "Remove " + (b.game ? "this game total" : b.p) + " and show the next line");
     x.addEventListener("click", function (e) { e.stopPropagation(); betRemove(b); });
     top.appendChild(x); r.appendChild(top);
-    if (b.game) teamStripe(r, g, ["away", "home"]); else teamStripe1(r, g, b.sd);   // 3.91.0: team colors down the left edge
+    if (b.game) teamStripe(r, g, sideOrder(g)); else teamStripe1(r, g, b.sd);   // 3.91.0: team colors down the left edge
     if (b.game) {  // a game total: both teams' badges, away over home, like a matchup card (3.52.11)
       var pr = el("span", "bet-pair"); pr.setAttribute("aria-hidden", "true");
-      ["away", "home"].forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); });
+      sideOrder(g).forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); });   // soccer: home on top (3.130.5)
       r.appendChild(pr);
     }
     else r.appendChild(badgeFor(abbr(g, b.sd), g[b.sd], g[b.sd + "Color"], g[b.sd + "Alt"]));

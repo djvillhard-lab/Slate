@@ -199,7 +199,23 @@ export async function sendApns(env, sub, msg) {
 // 3.68.0 (DJ): the live notification's header, "Slate • CBB", with short league codes
 const LA_CODE = { nfl: "NFL", ncaaf: "CFB", nba: "NBA", wnba: "WNBA", ncaam: "CBB", ncaaw: "WCBB", nhl: "NHL", mlb: "MLB", mls: "MLS",
   epl: "EPL", ucl: "UCL", uel: "UEL", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "Intl" };
-function laAttrs(id, g, s) {
+// 3.130.5 (DJ: "Soccer home team should be on top or left side"): the iPhone draws the "away" side first (left, or on top), so a
+// soccer game goes out with its two sides swapped: the home team in the away fields and the other way round, scores, scorers,
+// standouts and the bet's side with them. Every other sport stays away first.
+const LA_PAIRS = [["away", "home"], ["awayAbbr", "homeAbbr"], ["awayColor", "homeColor"], ["awayAlt", "homeAlt"], ["awayRank", "homeRank"], ["awayLogo", "homeLogo"],
+  ["a", "h"], ["aa", "ha"], ["ac", "hc"], ["ax", "hx"], ["al", "hl"], ["ag", "hg"], ["ap", "hp"], ["at", "ht"]];
+const LA_SIDE = { away: "home", home: "away" };
+export function laFlip(o) {
+  if (!o || typeof o !== "object") return o;
+  const out = Object.assign({}, o);
+  for (const [x, y] of LA_PAIRS) { delete out[x]; delete out[y]; if (o[y] !== undefined) out[x] = o[y]; if (o[x] !== undefined) out[y] = o[x]; }
+  for (const k of ["poss", "p", "po"]) if (LA_SIDE[o[k]]) out[k] = LA_SIDE[o[k]];
+  if (o.bet && LA_SIDE[o.bet.sd]) out.bet = Object.assign({}, o.bet, { sd: LA_SIDE[o.bet.sd] });
+  return out;
+}
+function laHomeFirst(g) { return !!g && SPORT[g.league] === "soccer"; }
+function laAttrs(id, g, s) { const at = laAttrs0(id, g, s); return laHomeFirst(g) ? laFlip(at) : at; }
+function laAttrs0(id, g, s) {
   const at = { gameId: id, league: `Slate • ${LA_CODE[g.league] || String(g.league || "").toUpperCase()}`, away: g.awayShort || g.away || "", home: g.homeShort || g.home || "",
     awayAbbr: s.aa || g.awayAbbr || (g.awayShort || g.away || "").slice(0, 3).toUpperCase(), homeAbbr: s.ha || g.homeAbbr || (g.homeShort || g.home || "").slice(0, 3).toUpperCase(), awayColor: s.ac || g.awayColor || "", homeColor: s.hc || g.homeColor || "",
     // 3.20.0, the scorebug design: each chip's second-color stripe, college ranks, and the channel for the Watch button (all optional in the app)
@@ -313,7 +329,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
     // before kickoff (3.32.0): a new one starts 10 minutes early, showing 0-0 with the start time and channel
     const kick = Date.parse(s.start || g.start) || 0, soon = s.state === "pre" && kick > 0 && Date.now() >= kick - 10 * 60000 && Date.now() - kick <= 60 * 60000;
     if (s.state === "pre" && !cur && !soon) continue;
-    const st = s.state === "pre" ? preState(g, kick, id) : laState(s, id), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}-${st.tag || ""}`;
+    const st = laHomeFirst(g) ? laFlip(s.state === "pre" ? preState(g, kick, id) : laState(s, id)) : s.state === "pre" ? preState(g, kick, id) : laState(s, id), key = `${st.a}-${st.h}-${st.detail}-${st.sit || ""}-${st.lp || ""}-${st.ap || ""}-${st.hp || ""}-${st.pv || ""}-${st.tag || ""}`;
     let tok = (la.acts || {})[id];
     // switched off on the slate while it's showing (live, or a final still on the Lock Screen): off right away
     if (cur && !cur.off && per[id] === 0) {
@@ -336,7 +352,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
       const asked = per[id] === 1, fin = s.state === "post";
       if (!want.has(id) || !(s.state === "in" || soon || (fin && asked)) || !(cfg.on || asked) || (silent && !asked) || !(la.start || []).length || running + started >= 4) continue;
       const at = laAttrs(id, g, s), body = { "attributes-type": "SlateGameAttributes", attributes: at, "content-state": st,
-        alert: { title: `${at.away} @ ${at.home}`, body: soon ? (kick > Date.now() ? `Starts at ${clock(new Date(kick))}` : "Starting now") + (at.channel ? ` on ${at.channel}` : "")
+        alert: { title: `${at.away} ${laHomeFirst(g) ? "vs" : "@"} ${at.home}`, body: soon ? (kick > Date.now() ? `Starts at ${clock(new Date(kick))}` : "Starting now") + (at.channel ? ` on ${at.channel}` : "")
           : `${fin ? "Final" : "Live now"}: ${at.awayAbbr} ${st.a}, ${at.homeAbbr} ${st.h}` } };
       // started listening on the game's broadcast channel (3.28.0) when there is one: its updates then reach it whether
       // or not the phone ever hands back a token
@@ -376,6 +392,7 @@ async function runLive(env, p, sent, la, ids, games, sc, silent) {
 function boardGame(id, g, s) {
   s = s || {};
   const at = laAttrs(id, g, s), st = s.state === "in" || s.state === "post" ? s.state : "pre";
+  if (laHomeFirst(g)) s = laFlip(s);   // 3.130.5: soccer's scores in the same home-first order as laAttrs gave the teams
   const kick = Date.parse(s.start || g.start) || 0;
   // past the start time but not under way yet (tip-off comes a few minutes after the listed time): "Starting", not a time already gone
   const d = st === "pre" ? (kick > 0 && Date.now() >= kick ? "Starting" : clock(new Date(s.start || g.start))) : st === "post" ? (s.detail || "Final") : (s.detail || "");
@@ -422,7 +439,7 @@ async function runBoard(env, p, sent, la, games, sc) {
     // it starts 15 minutes before the first pick (a live notification only lasts 8 hours), or right away once one is on
     if (!(live || soon || done) || !(la.startBoard || []).length) return gone;
     const body = { "attributes-type": "SlateBoardAttributes", attributes: { title: "Your slate" }, "content-state": state,
-      alert: { title: "Your slate", body: list.map((x) => x.s === "pre" ? `${x.aa} @ ${x.ha} ${x.d}` : `${x.aa} ${x.a}, ${x.ha} ${x.h}`).join(" · ") } };
+      alert: { title: "Your slate", body: list.map((x) => x.s === "pre" ? `${x.aa} ${laHomeFirst(games[x.id]) ? "vs" : "@"} ${x.ha} ${x.d}` : `${x.aa} ${x.a}, ${x.ha} ${x.h}`).join(" · ") } };
     for (const t of la.startBoard) { const r = await sendLive(env, t, "start", body, 10); if (r === 410) { t.gone = true; gone = true; } }
     if (gone) la.startBoard = la.startBoard.filter((t) => !t.gone);
     sent.board = { k: key, t: now, lead: list[lead].id, sc: scores };
@@ -450,7 +467,10 @@ function merged(p) {
   return out;
 }
 function side(g, s) { const r = g[s + "Rank"]; return (r && COLLEGE[g.league] ? `No. ${r} ` : "") + (g[s + "Short"] || g[s] || ""); }
-function matchup(g) { const tv = g.tv || []; return `${side(g, "away")} @ ${side(g, "home")}` + (tv.length ? ` on ${tv[0]}` : ""); }
+// 3.130.5: the two teams as the app shows them, soccer home first with "vs" ("Man City vs Fulham"), everything else away @ home
+function pair(g, f) { f = f || ((sd) => side(g, sd)); return laHomeFirst(g) ? `${f("home")} vs ${f("away")}` : `${f("away")} @ ${f("home")}`; }
+function plain(g, sd) { return g[sd + "Short"] || g[sd] || ""; }
+function matchup(g) { const tv = g.tv || []; return pair(g) + (tv.length ? ` on ${tv[0]}` : ""); }
 function inQuiet(p, hr) { const q = p.quiet || {}; if (!q.on) return false; const a = Number(q.start ?? 23), b = Number(q.end ?? 8); return a < b ? (hr >= a && hr < b) : a > b ? (hr >= a || hr < b) : false; }
 function lateTrailing(g, s) {
   const det = String(s.detail || ""), lg = g.league, a = Number(s.a), h = Number(s.h);
@@ -549,8 +569,8 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now, fol, box
     if (!g || s.state !== "post" || sent.finals.includes(i)) continue;
     const a = Number(s.a), h = Number(s.h); if (isNaN(a) || isNaN(h)) continue;
     let body;
-    if (spoil) body = `${g.awayShort || g.away} @ ${g.homeShort || g.home} has ended`;
-    else if (a === h) body = `Final: ${side(g, "away")} ${a}, ${side(g, "home")} ${h} (tied)`;
+    if (spoil) body = `${pair(g, (sd) => plain(g, sd))} has ended`;
+    else if (a === h) body = laHomeFirst(g) ? `Final: ${side(g, "home")} ${h}, ${side(g, "away")} ${a} (tied)` : `Final: ${side(g, "away")} ${a}, ${side(g, "home")} ${h} (tied)`;
     else { const [w, l] = a > h ? ["away", "home"] : ["home", "away"]; body = `Final: ${side(g, w)} ${Math.max(a, h)}, ${side(g, l)} ${Math.min(a, h)}`; }
     out.push(["finals", i, "Final", body]);
   }
@@ -594,7 +614,7 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now, fol, box
     const s = sc[i] || {}, g = byid[i]; if (!g || s.state !== "in") continue;
     const a = Number(s.a), h = Number(s.h); if (isNaN(a) || isNaN(h)) continue;
     const m = Math.abs(a - h), det = String(s.detail || ""), sport = SPORT[g.league] || "", per = s.p || 0, ck = s.ck || 0, ot = /\b(OT|SO|ET)\b|extra time|shootout/i.test(det);
-    const score = spoil ? `${g.awayShort || g.away} @ ${g.homeShort || g.home}` : `${side(g, "away")} ${a}, ${side(g, "home")} ${h} · ${det}`;
+    const score = spoil ? pair(g, (sd) => plain(g, sd)) : (laHomeFirst(g) ? `${side(g, "home")} ${h}, ${side(g, "away")} ${a}` : `${side(g, "away")} ${a}, ${side(g, "home")} ${h}`) + ` · ${det}`;
     if (otSet.has(i) && ot && !sent.ot.includes(i)) { out.push(["ot", i, "Overtime", `Overtime: ${score}`]); sent.ot.push(i); continue; }
     if (closeSet.has(i) && !ot && !sent.close.includes(i)) {
       const min = parseInt(det, 10) || 0, inn = /(Top|Bot|Mid|End) (\d+)/i.exec(det);
@@ -632,7 +652,7 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now, fol, box
     if (fo.final && s.state === "post" && box[i]) {
       for (const x of fol[i]) {
         const key = `${i}:${x.id}`; if (sent.plfinal.includes(key)) continue;
-        if (spoil) { out.push(["plfinal", key, "Final", `${g.awayShort || g.away} @ ${g.homeShort || g.home} has ended. ${x.name}'s line is on the player page in Slate.`]); continue; }
+        if (spoil) { out.push(["plfinal", key, "Final", `${pair(g, (sd) => plain(g, sd))} has ended. ${x.name}'s line is on the player page in Slate.`]); continue; }
         const line = playerLine(box[i], x.id, g.league);
         if (line === "") { sent.plfinal.push(key); continue; }  // not in the box score (traded, or a different team): nothing to say
         const a = Number(s.a), h = Number(s.h), fin = isNaN(a) || isNaN(h) ? "" : a === h ? `Final: ${side(g, "away")} ${a}, ${side(g, "home")} ${h}`

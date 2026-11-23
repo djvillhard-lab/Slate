@@ -2,7 +2,7 @@
     opts = opts || {};
     var on = inLineup(g.id), st = status(g), pick = mode !== "lineup", closed = pick && isPastDay(), openTray = null;
     var row = el(pick && !closed && mode !== "games" ? "button" : "div", "g panel" + (st.kind === "over" && state.date >= todayInHome() ? " over" : "") + (pick ? " gpick" : ""));
-    var label = g.custom ? g.home : g.away + (g.neutral ? " versus " : " at ") + g.home;
+    var label = g.custom ? g.home : pairText(g, function (sd) { return g[sd]; }, homeFirst(g) || g.neutral ? " versus " : " at ");
     if (pick && !closed) {
       row.type = "button";
       row.setAttribute("aria-pressed", on ? "true" : "false");
@@ -139,7 +139,7 @@
     if ((mode === "lineup" || mode === "games") && feedOk(g) && status(g).kind === "live") {   // 3.77.1: live games only (DJ); 3.91.4 (DJ): on All games too
       var fl = status(g).kind === "live", fb = el("button", "g-feed" + (fl ? " on" : "")); fb.type = "button";
       if (fl) fb.appendChild(el("i", "g-feed-dot")); fb.appendChild(el("span", null, "Feed")); fb.appendChild(el("i", "g-feed-chev"));
-      fb.setAttribute("aria-label", "Open the " + (fl ? "live" : "game") + " feed for " + g.away + " at " + g.home);
+      fb.setAttribute("aria-label", "Open the " + (fl ? "live" : "game") + " feed for " + pairText(g, function (sd) { return g[sd]; }, " at "));
       fb.addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); openFeed(g); });
       row.appendChild(fb); row.classList.add("has-feed");
     }

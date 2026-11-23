@@ -37,7 +37,7 @@
         try {
           if (v === "game" || v === "feed") {
             var g = games().filter(function (x) { return x.id === state.gameId; })[0];
-            if (g) sfb.lastDetail = (g.custom ? String(g.home) : g.away + " at " + g.home) + (g.league ? ", " + g.league : "");
+            if (g) sfb.lastDetail = (g.custom ? String(g.home) : pairText(g, function (sd) { return g[sd]; }, " at ")) + (g.league ? ", " + g.league : "");
           }
         } catch (e) {}
       }

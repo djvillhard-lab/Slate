@@ -92,20 +92,23 @@
     var over = st.state === "post", pre = st.state === "pre", live = st.state === "in", per = Number(cst.period) || 0, det = String(st.shortDetail || st.detail || "");
     var ht = live && /^ht$|half.?time/i.test(det), ix = scIndex(sum), lg = g.league;
     // the score bar: badges, records, the score, then the half and the minute ("2H 67'"), HT at the break, FT when it's over
+    // 3.130.5 (DJ): the home side on the left, as soccer is written ("Man City 2-1 Fulham"); SL and SR are the sides left and right,
+    // and the left/right classes (fd-tm-away is the left one) keep their places
+    var SL = "home", SR = "away", pos = function (sd) { return sd === SL ? "away" : "home"; };
     var bug = el("div", "fd-bug");
-    ["away", "mid", "home"].forEach(function (sd) {
+    [SL, "mid", SR].forEach(function (sd) {
       if (sd === "mid") { var mid = el("div", "fd-mid");
         if (ht) mid.appendChild(fdHT("b")); else { var ck = el("span", "fd-ck");
           if (live) ck.appendChild(el("i", null, per === 1 ? "1H" : per === 2 ? "2H" : per === 5 ? "Pens" : per > 2 ? "ET" : ""));
           ck.appendChild(el("b", null, over ? (det || "FT") : pre ? timeText(g.start) : per === 5 ? "" : (cst.displayClock || det || ""))); mid.appendChild(ck); }
-        if (penOf.away != null && penOf.home != null && (over || per === 5)) mid.appendChild(el("i", "sc-pens", "Pens " + penOf.away + "–" + penOf.home));
+        if (penOf.away != null && penOf.home != null && (over || per === 5)) mid.appendChild(el("i", "sc-pens", "Pens " + penOf[SL] + "–" + penOf[SR]));
         var mw = fdWatch(g, over); if (mw) mid.appendChild(mw);
         bug.appendChild(mid); return; }
-      var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
+      var tm = el("div", "fd-tm fd-tm-" + pos(sd)); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
       var aS = Number(scoreOf.away), hS = Number(scoreOf.home);
       var scn = el("b", "fd-sc" + (over && (sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), pre ? "–" : String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
-      if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
+      if (sd === SL) { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });
     body.appendChild(bug);
     var hdr = document.querySelector("#pane-r > header.top"); $("view-feed").style.setProperty("--fd-top", (hdr ? hdr.offsetHeight : 0) + "px");
@@ -116,15 +119,15 @@
       if (!nm) return; var e = byP[k]; if (!e) { e = byP[k] = { nm: nm, red: !!d.redCard, mins: [] }; cols[sd].push(e); }
       e.mins.push(min + (d.penaltyKick ? " pen" : "") + (d.ownGoal ? " og" : "")); });
     var whoEl = function (cs) { var two = el("div", "sc-who");
-      ["away", "home"].forEach(function (sd) { var c = el("div", "sc-whoc sc-who-" + sd); cs[sd].forEach(function (e) { var r = el("p", "sc-wl"); r.appendChild(el("span", "sc-wi", e.red ? "🟥" : "⚽")); r.appendChild(el("b", null, e.nm)); r.appendChild(el("i", null, e.mins.join(", "))); c.appendChild(r); }); two.appendChild(c); });
+      [SL, SR].forEach(function (sd) { var c = el("div", "sc-whoc sc-who-" + pos(sd)); cs[sd].forEach(function (e) { var r = el("p", "sc-wl"); r.appendChild(el("span", "sc-wi", e.red ? "🟥" : "⚽")); r.appendChild(el("b", null, e.nm)); r.appendChild(el("i", null, e.mins.join(", "))); c.appendChild(r); }); two.appendChild(c); });
       return two; };
     if (cols.away.length || cols.home.length) top.appendChild(whoEl(cols));
     var stOf = {}; ((sum.boxscore || {}).teams || []).forEach(function (t) { var sd = sdOf(t.team); if (!sd) return; stOf[sd] = {}; (t.statistics || []).forEach(function (s) { stOf[sd][s.name] = s.displayValue; }); });
     var hasStats = !pre && stOf.away && stOf.home, pa = hasStats ? parseFloat(stOf.away.possessionPct) : NaN, ph0 = hasStats ? parseFloat(stOf.home.possessionPct) : NaN;
-    if (!isNaN(pa) && !isNaN(ph0) && pa + ph0 > 0) { var ap = Math.round(pa), hp = 100 - ap, wr = el("div", "fd-wp hp-wp1");
-      wr.appendChild(el("p", "fd-wpl hp-wpl1", "Possession")); wr.appendChild(el("span", null, abbr(g, "away") + " " + ap + "%"));
-      var bar = el("span", "fd-wpb"), ba = el("i"), bh = el("i"); ba.style.width = ap + "%"; ba.style.background = fdTint(g, "away"); bh.style.width = hp + "%"; bh.style.background = fdTint(g, "home"); bar.appendChild(ba); bar.appendChild(bh); wr.appendChild(bar);
-      wr.appendChild(el("span", null, hp + "% " + abbr(g, "home"))); wr.setAttribute("aria-label", "Possession: " + abbr(g, "away") + " " + ap + " percent, " + abbr(g, "home") + " " + hp + " percent"); top.appendChild(wr); }
+    if (!isNaN(pa) && !isNaN(ph0) && pa + ph0 > 0) { var hp = Math.round(ph0), ap = 100 - hp, wr = el("div", "fd-wp hp-wp1");
+      wr.appendChild(el("p", "fd-wpl hp-wpl1", "Possession")); wr.appendChild(el("span", null, abbr(g, "home") + " " + hp + "%"));
+      var bar = el("span", "fd-wpb"), bh = el("i"), ba = el("i"); bh.style.width = hp + "%"; bh.style.background = fdTint(g, "home"); ba.style.width = ap + "%"; ba.style.background = fdTint(g, "away"); bar.appendChild(bh); bar.appendChild(ba); wr.appendChild(bar);
+      wr.appendChild(el("span", null, ap + "% " + abbr(g, "away"))); wr.setAttribute("aria-label", "Possession: " + abbr(g, "home") + " " + hp + " percent, " + abbr(g, "away") + " " + ap + " percent"); top.appendChild(wr); }
     if (top.firstChild) body.appendChild(top);
     // the events, oldest first, with the score as it stood after each one (from ESPN's own "Goal! A 1, B 0." line; counted when it isn't there)
     var evs = (sum.commentary || []).filter(function (c) { return c && (c.text || c.play); }).map(scFill), fromKey = false;
@@ -152,12 +155,12 @@
       var R = rows[i], rd = R.rd; seenNow[R.pid] = 1;
       if (keyOnly && !rd.key) continue;
       var isNew = !!(fresh && !fresh[R.pid]);
-      if (rd.note) { if (shown < cap) list.appendChild(fdNoteCard(rd.title, isNew, R.pid, R.min, abbr(g, "away") + " " + R.a + "  " + abbr(g, "home") + " " + R.h)); continue; }
+      if (rd.note) { if (shown < cap) list.appendChild(fdNoteCard(rd.title, isNew, R.pid, R.min, abbr(g, "home") + " " + R.h + "  " + abbr(g, "away") + " " + R.a)); continue; }
       total++; if (shown >= cap) continue; shown++;
       var card = el("div", "fd-play sc-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); card.setAttribute("data-id", R.pid);
       if (R.sd && rd.kind !== "to" && rd.kind !== "yc") card.style.setProperty("--fd-team", fdTint(g, R.sd));
       var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, R.min + (R.sd ? (R.min ? " · " : "") + abbr(g, R.sd) : "")));
-      ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + R.a + "  " + abbr(g, "home") + " " + R.h)); card.appendChild(ph);
+      ph.appendChild(el("span", "fd-psc", abbr(g, "home") + " " + R.h + "  " + abbr(g, "away") + " " + R.a)); card.appendChild(ph);
       card.appendChild(el("p", "fd-pt", (rd.emoji ? rd.emoji + " " : "") + rd.title));
       var tx = rd.tx.replace(/^Goal!\s+.+? \d+, .+? \d+\.\s*/, "").replace(/^Attempt (saved|missed|blocked)\.\s*/i, "").replace(/^Substitution, [^.]+\.\s*/i, "");
       if (tx && tx !== rd.title && !fromKey && !(rd.sub && rd.names.length > 1))  /* a key-events-only match has no sentence, just "X Goal at 72'" */ card.appendChild(el("p", "fd-px", tx));
@@ -173,9 +176,9 @@
         sb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-stats", on ? "0" : "1"); } catch (e) {} fdKeepY(renderFeed); });
         fb.insertBefore(sb, after.nextSibling); after = sb;
         if (on) { var card2 = el("div", "fd-field sc-stats"), rowsS = [["totalShots", "Shots"], ["shotsOnTarget", "On target"], ["wonCorners", "Corners"], ["foulsCommitted", "Fouls"], ["offsides", "Offsides"], ["saves", "Saves"], ["yellowCards", "Yellow cards"], ["redCards", "Red cards"]];
-          var hd2 = el("div", "sc-sr sc-srh"); hd2.appendChild(el("b", null, abbr(g, "away"))); hd2.appendChild(el("span", null, "Match stats")); hd2.appendChild(el("b", null, abbr(g, "home"))); card2.appendChild(hd2);
-          rowsS.forEach(function (r) { var a = stOf.away[r[0]], h = stOf.home[r[0]]; if (a == null || h == null) return; var x = el("div", "sc-sr"); x.appendChild(el("b", null, String(a))); x.appendChild(el("span", null, r[1])); x.appendChild(el("b", null, String(h))); card2.appendChild(x); });
-          if (stOf.away.totalPasses != null && stOf.home.totalPasses != null && stOf.away.accuratePasses != null && stOf.home.accuratePasses != null) { var x2 = el("div", "sc-sr"); x2.appendChild(el("b", null, stOf.away.accuratePasses + "/" + stOf.away.totalPasses)); x2.appendChild(el("span", null, "Passes completed")); x2.appendChild(el("b", null, stOf.home.accuratePasses + "/" + stOf.home.totalPasses)); card2.appendChild(x2); }
+          var hd2 = el("div", "sc-sr sc-srh"); hd2.appendChild(el("b", null, abbr(g, SL))); hd2.appendChild(el("span", null, "Match stats")); hd2.appendChild(el("b", null, abbr(g, SR))); card2.appendChild(hd2);
+          rowsS.forEach(function (r) { var a = stOf[SL][r[0]], h = stOf[SR][r[0]]; if (a == null || h == null) return; var x = el("div", "sc-sr"); x.appendChild(el("b", null, String(a))); x.appendChild(el("span", null, r[1])); x.appendChild(el("b", null, String(h))); card2.appendChild(x); });
+          if (stOf.away.totalPasses != null && stOf.home.totalPasses != null && stOf.away.accuratePasses != null && stOf.home.accuratePasses != null) { var x2 = el("div", "sc-sr"); x2.appendChild(el("b", null, stOf[SL].accuratePasses + "/" + stOf[SL].totalPasses)); x2.appendChild(el("span", null, "Passes completed")); x2.appendChild(el("b", null, stOf[SR].accuratePasses + "/" + stOf[SR].totalPasses)); card2.appendChild(x2); }
           var aft = list.querySelector(".fd-dlrow") || fb; list.insertBefore(card2, aft.nextSibling); } }
       if (!fromKey && rows.length) { var kb = el("button", "fd-scf" + (keyOnly ? " on" : ""), "Key events"); kb.type = "button"; kb.setAttribute("aria-pressed", keyOnly ? "true" : "false");
         kb.addEventListener("click", function () { FD.scOnly = !FD.scOnly; fdKeepY(renderFeed); }); fb.insertBefore(kb, after.nextSibling); } }

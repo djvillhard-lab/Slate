@@ -24,7 +24,7 @@
       gr.list.forEach(function (g, n) {
         if (n) sum.appendChild(el("span", "tg-sep", "·"));
         var it = el("span", "tg-m"); if (status(g).kind === "live") it.appendChild(el("span", "tg-dot"));
-        it.appendChild(document.createTextNode((abbr(g, "away") || g.away || "") + "–" + (abbr(g, "home") || g.home || ""))); sum.appendChild(it);
+        it.appendChild(document.createTextNode(pairText(g, function (sd) { return abbr(g, sd) || g[sd] || ""; }, "–"))); sum.appendChild(it);
       });
       sec.appendChild(sum);
       var list = el("div", "tg-games"); gr.list.forEach(function (g) { list.appendChild(gameRow(g, "lineup")); });

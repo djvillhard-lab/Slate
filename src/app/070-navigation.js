@@ -106,7 +106,7 @@
     var sc = scoreOf(g); if (!sc || sc.state !== "post") return null;
     var b = boxFor(g); if (!b || b.state !== "post") { bxNeed(g); }
     var a = Number(sc.a), h = Number(sc.h), an = short(g, "away"), hn = short(g, "home");
-    var text = a === h ? "Final: " + an + " " + a + ", " + hn + " " + h + " (tied)."
+    var text = a === h ? "Final: " + (homeFirst(g) ? hn + " " + h + ", " + an + " " + a : an + " " + a + ", " + hn + " " + h) + " (tied)."
       : "Final: " + (a > h ? an + " " + a + ", " + hn + " " + h : hn + " " + h + ", " + an + " " + a) + ".";
     if (sc.detail && /OT|SO|\/\d|extra/i.test(sc.detail)) text = text.replace(/\.$/, " (" + sc.detail.replace(/^Final\/?/i, "") + ").").replace(" ().", ".");
     var stars = [];

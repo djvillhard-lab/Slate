@@ -10,11 +10,16 @@
     c._flip = true; return c;
   }
   function noteFlip(g, swapped) { var k = state.date + "|" + g.id, want = swapped ? !g._flip : !!g._flip; if (LIVE_FLIP[k] === want) return false; LIVE_FLIP[k] = want; return true; }
-  // every sport, soccer too, is shown away on top and home below ("Fulham @ Man City"). 3.121.12 (DJ: "Man City is playing at home
-  // against Fulham… I thought Fulham was home"): soccer used to put the home side on top with "vs", the other way round from every other
-  // sport and from the Board and Lock Screen. "vs" is only for neutral grounds
-  function sideOrder(g) { return ["away", "home"]; }
-  function sep(g) { return g.neutral ? " vs " : " @ "; }
+  // 3.130.5 (DJ: "Soccer home team should be on top or left side"): soccer lists the home side first, on top or on the left,
+  // with "vs" between ("Man City vs Fulham"), the way soccer is written everywhere. Every other sport is away first, "@" before
+  // the home team (3.121.12 had put soccer away first too). "vs" also marks a neutral ground in the US sports.
+  // homeFirst(g) is the same rule for code that draws the two sides itself (the Lock Screen, widgets and the Board).
+  function homeFirst(g) { return !!(g && SOCCER[g.league]); }
+  function sideOrder(g) { return homeFirst(g) ? ["home", "away"] : ["away", "home"]; }
+  function sep(g) { return homeFirst(g) || g.neutral ? " vs " : " @ "; }
+  // the two sides in the order they're shown, joined: pairText(g, function (sd) { return short(g, sd); }) -> "Man City vs Fulham" /
+  // "Bulls @ Knicks"; the joiner can be passed ("–", " at "): a soccer game always gets " vs " in place of " at "
+  function pairText(g, f, j) { var o = sideOrder(g); j = j == null ? sep(g) : homeFirst(g) && / at | @ /.test(j) ? " vs " : j; return f(o[0]) + j + f(o[1]); }
   var LIVE_PRE = {};  // games ESPN still lists as pre-game, by id: when it was last seen that way
   function scoreRaw(id) { if (LIVE_DATE === state.date && LIVE[id]) return LIVE[id]; return state.scores && state.scores[id]; }
   var ESPN_URLS = {
@@ -315,7 +320,18 @@
   var LA_LG = { nfl: "NFL", ncaaf: "CFB", nba: "NBA", wnba: "WNBA", ncaam: "CBB", ncaaw: "WCBB", nhl: "NHL", mlb: "MLB", mls: "MLS",
     epl: "EPL", ucl: "UCL", uel: "UEL", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "Intl" };
   function laHex(c) { var m = /^#?([0-9a-f]{6})$/i.exec(String(c || "").trim()); return m ? "#" + m[1].toUpperCase() : ""; }
-  function laAttrsOf(g) {
+  // 3.130.5 (DJ): the iPhone draws the "away" fields first (left, or on top), so soccer goes out with the two sides swapped: the home
+  // team in the away fields, with its score, logo, colors and the bet's side. Slate's server does the same (worker/alerts.js laFlip).
+  var LA_PAIRS = [["away", "home"], ["awayAbbr", "homeAbbr"], ["awayColor", "homeColor"], ["awayAlt", "homeAlt"], ["awayRank", "homeRank"], ["awayLogo", "homeLogo"], ["a", "h"], ["ap", "hp"], ["at", "ht"]];
+  function laFlip(o) {
+    var out = {}, sw = { away: "home", home: "away" }; Object.keys(o).forEach(function (k) { out[k] = o[k]; });
+    LA_PAIRS.forEach(function (pr) { delete out[pr[0]]; delete out[pr[1]]; if (o[pr[1]] !== undefined) out[pr[0]] = o[pr[1]]; if (o[pr[0]] !== undefined) out[pr[1]] = o[pr[0]]; });
+    if (sw[o.poss]) out.poss = sw[o.poss];
+    if (o.bet && sw[o.bet.sd]) { out.bet = {}; Object.keys(o.bet).forEach(function (k) { out.bet[k] = o.bet[k]; }); out.bet.sd = sw[o.bet.sd]; }
+    return out;
+  }
+  function laAttrsOf(g) { var at = laAttrs0(g); return homeFirst(g) ? laFlip(at) : at; }
+  function laAttrs0(g) {
     var at = { gameId: g.id, league: "Slate • " + (LA_LG[g.league] || info(g).name), away: short(g, "away") || g.away || "", home: short(g, "home") || g.home || "",
       awayAbbr: abbr(g, "away"), homeAbbr: abbr(g, "home"), awayColor: laHex(g.awayColor), homeColor: laHex(g.homeColor),
       awayAlt: laHex(g.awayAlt), homeAlt: laHex(g.homeAlt), channel: String((g.tv || [])[0] || "") };
@@ -405,7 +421,8 @@
     var list = Object.keys(segs).sort(), k = list.join(","); if (!list.length || k === laLogosSent) return;
     laLogosSent = k; nativePost({ t: "logos", segs: list });
   }
-  function laStateOf(g) {
+  function laStateOf(g) { var st = laState0(g); return homeFirst(g) ? laFlip(st) : st; }
+  function laState0(g) {
     var v = scoreRaw(g.id) || {}, k = status(g).kind, st = k === "over" ? "post" : k === "live" ? "in" : "pre";
     var out = { a: Number(v.a) || 0, h: Number(v.h) || 0, detail: st === "post" ? (v.detail || "Final") : st === "pre" ? timeText(g.start) : (v.detail || ""), state: st };
     var x = (v.ld || []).slice().sort(function (p, q) { return (q.v || 0) - (p.v || 0); })[0]; if (x && x.n && x.d) out.line = (x.n + " " + x.d).slice(0, 60);
@@ -488,12 +505,13 @@
       r.setAttribute("aria-pressed", on ? "true" : "false");
       var ck = el("span", "board-ck"); if (on) ck.appendChild(icon("check")); r.appendChild(ck);
       var tm = el("span", "board-tm");
-      tm.appendChild(badgeFor(abbr(g, "away"), g.away, g.awayColor, g.awayAlt));
-      tm.appendChild(el("span", "board-at", g.neutral ? "vs" : "@"));
-      tm.appendChild(badgeFor(abbr(g, "home"), g.home, g.homeColor, g.homeAlt));
+      var bo = sideOrder(g);
+      tm.appendChild(badgeFor(abbr(g, bo[0]), g[bo[0]], g[bo[0] + "Color"], g[bo[0] + "Alt"]));
+      tm.appendChild(el("span", "board-at", sep(g).trim()));
+      tm.appendChild(badgeFor(abbr(g, bo[1]), g[bo[1]], g[bo[1] + "Color"], g[bo[1] + "Alt"]));
       r.appendChild(tm);
       r.appendChild(el("span", "board-st" + (st === "live" ? " live" : ""), boardStatus(g)));
-      r.setAttribute("aria-label", short(g, "away") + sep(g) + short(g, "home") + ", " + boardStatus(g) + (on ? ", picked" : full ? ", 4 already picked" : ""));
+      r.setAttribute("aria-label", short(g, bo[0]) + sep(g) + short(g, bo[1]) + ", " + boardStatus(g) + (on ? ", picked" : full ? ", 4 already picked" : ""));
       r.addEventListener("click", function () {
         var ids = picked.slice(), i = ids.indexOf(g.id);
         if (i >= 0) ids.splice(i, 1); else if (ids.length < 4) ids.push(g.id); else return;

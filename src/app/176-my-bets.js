@@ -159,11 +159,11 @@
   // the card's colors: the team bet on (a player's team for a player line), both teams for a total or a draw
   function mybTone(node, b, g) {
     var c = function (sd) { var x = ""; try { x = badgeColor(g, sd); } catch (e) {} return x || ""; };
-    if (b.kind === "total" || b.sd === "draw" || !b.sd) { var a = c("away"), h = c("home"); if (a && h) { node.style.setProperty("--myb-a", a); node.style.setProperty("--myb-h", h); node.classList.add("two"); } }
+    if (b.kind === "total" || b.sd === "draw" || !b.sd) { var o = sideOrder(g), a = c(o[0]), h = c(o[1]); if (a && h) { node.style.setProperty("--myb-a", a); node.style.setProperty("--myb-h", h); node.classList.add("two"); } }
     else { var k = c(b.sd); if (k) { node.style.setProperty("--myb-c", k); node.classList.add("one"); } }
     return node;
   }
-  function mybVs(g) { return abbr(g, "away") + (g.neutral ? " vs " : " at ") + abbr(g, "home"); }
+  function mybVs(g) { return pairText(g, function (sd) { return abbr(g, sd); }, g.neutral ? " vs " : " at "); }
 
   // ---- where a bet stands: s is pre, live, won, lost, push or void; m is the margin for the live line ----
   // Counting numbers only go up, so an over that has passed its line is won (and an under lost) before the final.
@@ -205,7 +205,7 @@
   function mybSay(b, r, g, noScore) {  // noScore: the game card already shows the score (DJ, 3.113.6)
     var sc = scoreRaw(b.gid) || {}, kind = status(g).kind;
     if (r.s === "pre") return { t: kind === "over" ? "Final" : "Starts " + timeText(g.start), c: "" };
-    var fs = r.a != null && !noScore ? " · " + abbr(g, "away") + " " + r.a + ", " + abbr(g, "home") + " " + r.h : "";
+    var fs = r.a != null && !noScore ? " · " + pairText(g, function (sd) { return abbr(g, sd) + " " + (sd === "away" ? r.a : r.h); }, ", ") : "";
     var tally = function (noun) { var n = r.now == null ? 0 : r.now, room = Number(b.line) - n; var t = mybNum(n) + " " + noun + " so far"; if (r.s !== "live") return t; return t + (b.ou === "over" ? ", needs " + mybNum(Math.floor(room) + 1) + " more" : ", room for " + mybNum(Math.max(0, Math.ceil(room) - 1)) + " more"); };
     if (r.s === "won" || r.s === "lost") {
       var how = b.kind === "prop" ? " · " + mybNum(r.now) + " " + mybNoun(b) : b.kind === "total" ? " · " + mybNum(r.now) + " " + mybNoun(b) : "";
@@ -412,7 +412,7 @@
     var g = mybGame(b), r = mybResult(b), say = mybSay(b, r, g);
     var row = el(opts.tap ? "button" : "div", "myb-bet" + (r.s === "won" ? " won" : "")); if (opts.tap) { row.type = "button"; row.addEventListener("click", function () { openMatchup(g); }); }
     mybTone(row, b, g);
-    if (b.kind === "total" || b.sd === "draw" || !b.sd) { var pr = el("span", "myb-pair"); pr.setAttribute("aria-hidden", "true"); ["away", "home"].forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); }); row.appendChild(pr); }
+    if (b.kind === "total" || b.sd === "draw" || !b.sd) { var pr = el("span", "myb-pair"); pr.setAttribute("aria-hidden", "true"); sideOrder(g).forEach(function (sd) { pr.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"])); }); row.appendChild(pr); }
     else row.appendChild(badgeFor(abbr(g, b.sd), g[b.sd], g[b.sd + "Color"], g[b.sd + "Alt"]));
     // top: the kind of bet and the game; then the bet itself, big; then where it stands
     var meta = el("span", "myb-meta"); meta.appendChild(el("span", "myb-kind", mybKind(b))); meta.appendChild(el("span", null, mybVs(g))); row.appendChild(meta);

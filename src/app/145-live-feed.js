@@ -6,7 +6,7 @@
     // 3.69.4 (DJ): a finished game keeps its feed. Nothing is saved by Slate: ESPN still serves every play, so the page reads it back
     var done = !feedLive(g), foot = BX_SPORT[g.league] === "football", socc = BX_SPORT[g.league] === "soccer";
     var b = el("button", "feed-go" + (done ? " feed-done" : "")); b.type = "button"; if (!done) b.appendChild(el("i", "lo-dot")); var t = el("span"); t.appendChild(el("b", null, done ? "Game feed" : "Live feed")); t.appendChild(el("em", null, socc ? (done ? "The goals and cards, or every event" : "Goals, cards, subs and shots as they happen") : BX_SPORT[g.league] === "hockey" ? (done ? "The goals and penalties, or every play" : "Goals, penalties, shots and hits as they happen") : BX_SPORT[g.league] === "baseball" ? (done ? "The scoring plays, or every at-bat" : "Every at-bat, with the count and who's on base") : !done ? "Every play as it happens" : foot ? "The scoring plays, or every play" : "Every play, from the final buzzer back")); b.appendChild(t); b.appendChild(icon("more"));
-    b.setAttribute("aria-label", "Open the " + (done ? "game" : "live") + " feed for " + g.away + (socc ? " v " : " at ") + g.home);
+    b.setAttribute("aria-label", "Open the " + (done ? "game" : "live") + " feed for " + (socc ? g.home + " v " + g.away : g.away + " at " + g.home));
     b.addEventListener("click", function (e) { e.stopPropagation(); openFeed(g); }); return b;
   }
   function feedHas(g) { return !!g && !g.custom && (BX_SPORT[g.league] === "football" || BX_SPORT[g.league] === "bball" || BX_SPORT[g.league] === "soccer" || BX_SPORT[g.league] === "hockey" || BX_SPORT[g.league] === "baseball"); }  /* soccer since 3.87.0 (147-live-feed-soccer.js), hockey since 3.88.0 (148-live-feed-hockey.js) */
@@ -419,10 +419,10 @@
       if (fdDelay(x.id)) { var dsum = on && FD.id === x.id ? FD.sum : (FD.last || {})[x.id], dfs = dsum ? fdSumScore(x.id, dsum) : null, dst = dsum ? ((((dsum.header || {}).competitions || [])[0] || {}).status || {}).type || {} : {};
         v = dfs ? { a: dfs.a, h: dfs.h, detail: dst.shortDetail || dst.detail || "Live" } : { detail: "Delayed" }; }  // 3.69.0: no score ahead of the delay
       var show = boxShown(x) && v.a != null && !isNaN(v.a);
-      ["away", "home"].forEach(function (sd) { var r = el("span", "fd-cr"); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });
+      sideOrder(x).forEach(function (sd) { var r = el("span", "fd-cr"); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });  // soccer: home first (3.130.5)
       var qd = String(v.detail || "").replace(/^(\d{1,2}:\d{2}(?:\.\d)?)\s*-\s*(.+)$/, "$2 $1");  /* 3.77.4 (DJ): the quarter reads first, "4th 8:39", same as the score bar */
       b.appendChild(fdIsHT(v.detail, x.league) ? fdHT("i") : el("i", null, qd || "Live"));
-      b.setAttribute("aria-label", x.away + " at " + x.home + (show ? ", " + v.a + " to " + v.h : "") + ", " + (v.detail || "live"));
+      var xo = sideOrder(x); b.setAttribute("aria-label", x[xo[0]] + sep(x) + x[xo[1]] + (show ? ", " + (xo[0] === "home" ? v.h + " to " + v.a : v.a + " to " + v.h) : "") + ", " + (v.detail || "live"));
       if (!on) b.addEventListener("click", function () { openFeed(x); });
       w.appendChild(b); });
     // the switcher keeps its place between updates. When the chosen game changes (a tap, a swipe, the first look), the row moves so the

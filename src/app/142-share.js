@@ -2,7 +2,7 @@
   // with one line about the game and a link that opens it in Slate (?game=<id>, the same link a tapped alert uses).
   // Never includes the score, so it can't spoil a game for the person getting it. No share sheet: the line is copied instead.
   function shareText(g) {
-    var kind = status(g).kind, who = g.away + (g.neutral ? " vs " : " at ") + g.home, tv = (g.tv || []).filter(Boolean).slice(0, 2).join(" / ");
+    var kind = status(g).kind, who = pairText(g, function (sd) { return g[sd]; }, g.neutral ? " vs " : " at "), tv = (g.tv || []).filter(Boolean).slice(0, 2).join(" / ");
     if (kind === "live") return who + " is on right now" + (tv ? " on " + tv : "") + ".";
     if (kind === "over") return who + " is final. No score here, in case you want to watch it back.";
     var d = new Date(g.start), when = isNaN(d) ? "" : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + ", " + timeText(g.start);

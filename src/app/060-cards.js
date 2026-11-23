@@ -77,7 +77,7 @@
       e.stopPropagation(); e.preventDefault();
       if (!state.notifyLoaded) { toast("Loading your notifications…"); return; }
       var undo = undoPer(g); setPer("live", g, false); setPer("alerts", g, false); saveNotify(); render(); laNow(g, false);
-      toast("Notifications off for " + short(g, "away") + sep(g) + short(g, "home"), undo);
+      toast("Notifications off for " + pairText(g, function (sd) { return short(g, sd); }), undo);
     });
     return b;
   }

@@ -356,7 +356,7 @@
     // the result is the card's job (3.50.1): each team's score beside it once the game is live or over, and Final, the
     // live clock or the start time on the right, the same free ESPN numbers as the slate
     var st = status(g), sc = state.showScores ? scoreOf(g) : null;
-    ["away", "home"].forEach(function (sd) {
+    sideOrder(g).forEach(function (sd) {   // soccer: home on top (3.130.5)
       var r = el("div", "nx-tm"); r.appendChild(nwTeamBadge(g[sd], g, sd)); r.appendChild(el("span", "nx-nm", short(g, sd))); if (g[sd + "Record"]) r.appendChild(el("span", "nx-rec", g[sd + "Record"]));
       if (sc) { var mine = Number(sd === "away" ? sc.a : sc.h), other = Number(sd === "away" ? sc.h : sc.a); r.appendChild(el("b", "nx-sc" + (sc.state === "post" && mine < other ? " lose" : ""), String(sd === "away" ? sc.a : sc.h))); }
       l.appendChild(r);
@@ -421,7 +421,7 @@
       wrap.appendChild(ch);
     };
     group(state.date === todayInHome() ? "Today's slate" : "This day's slate", gs, "g", function (g) { return g.id; }, o.gs.ids, function (v) { o.gs.ids = v; }, function (c, g) {
-      c.setAttribute("aria-label", g.away + " at " + g.home + ", " + info(g).name + ", " + timeText(g.start));
+      c.setAttribute("aria-label", pairText(g, function (sd) { return g[sd]; }, " at ") + ", " + info(g).name + ", " + timeText(g.start));
       c.appendChild(el("span", "nx-cm", info(g).tag + " · " + timeText(g.start)));
       var r = el("span", "nx-cr"); r.appendChild(nwTeamBadge(g.away, g, "away")); r.appendChild(el("i", null, "@")); r.appendChild(nwTeamBadge(g.home, g, "home")); c.appendChild(r);
     }, "Nothing on the slate yet");
@@ -545,8 +545,8 @@
         var ok = "g:" + g.id, open = nwIsOpen(ok), c = el("div", "nx-card nx-game nx-dd" + (open ? "" : " shut")), gh = nwGameHead(g);
         // the edge carries both teams' colors, away on top (3.82.0)
         var hx = function (v) { v = String(v || ""); return hexOk(v) ? v : hexOk("#" + v) ? "#" + v : ""; };
-        var pcs = pairColors(g); ["away", "home"].forEach(function (sd) { var v = hx(pcs[sd]) || hx(g[sd + "Color"]) || ((nwTeam(g[sd], g.league) || {}).c1) || ""; if (hexOk(v)) c.style.setProperty(sd === "away" ? "--nx-a" : "--nx-h", v); });
-        gh.appendChild(icon("more")); nwFoldBtn(gh, ok, open, short(g, "away") + " at " + short(g, "home")); c.appendChild(gh);
+        var pcs = pairColors(g), so = sideOrder(g); so.forEach(function (sd) { var v = hx(pcs[sd]) || hx(g[sd + "Color"]) || ((nwTeam(g[sd], g.league) || {}).c1) || ""; if (hexOk(v)) c.style.setProperty(sd === so[0] ? "--nx-a" : "--nx-h", v); });
+        gh.appendChild(icon("more")); nwFoldBtn(gh, ok, open, pairText(g, function (sd) { return short(g, sd); }, " at ")); c.appendChild(gh);
         if (open) {
           var bd = el("div", "nx-bd"); bd.appendChild(el("p", "nx-story", x.story)); if (x.hits && x.hits.length) bd.appendChild(nwBoxHits(x.hits, g.league, nwSides(g))); c.appendChild(bd);
           if (x.read) c.appendChild(nwRead(x.read));
