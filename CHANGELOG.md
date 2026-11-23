@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.130.4 (Nov 22, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Soccer Slate ratings: "How it works" above the ratings list now explains the whole calculation. It gives the rules in plain words (everyone starts at 6.0, what adds and takes points, how a player's job is decided, how scores above 8.5 are squeezed, who gets a rating), then shows every point value for one job at a time: tap Keeper, Centre back, Full back, Midfielder, Winger or Striker to see what a goal, a tackle, a save or a goal conceded is worth for that job. The values come straight from the ones the ratings use, so they always match.
+
 ## 3.130.3 (Nov 23, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Soccer lineups: the headshots are bigger. Each circle is now about a seventh of the pitch's width and never under 52 points, instead of a fixed 46. The pitch is a little taller and the lines stand further apart, so the bigger faces don't cover each other's names.

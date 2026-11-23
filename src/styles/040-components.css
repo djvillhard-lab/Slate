@@ -952,6 +952,16 @@ nav.dock, html.corner nav.dock, html.corner.roomy nav.dock, html.duo nav.dock { 
 .soc-rt-h b { font-size: 15px; font-weight: 800; color: var(--head); }
 .soc-rt-box .soc-rt-how { min-height: 40px; padding: 0 2px; background: none; border: 0; border-radius: 0; box-shadow: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .soc-rt-note, .soc-rt-wait { margin: 0 2px 8px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+/* How it works, opened: the rules, then the points for one job at a time (3.130.4) */
+.soc-rt-note { padding: 10px 12px 8px; border: 1px solid var(--hair); border-radius: 8px; }
+.soc-rt-note p { margin: 0 0 8px; }
+.soc-rt-rule b { margin-right: 6px; }
+.soc-rt-rule b { color: var(--ink); font-weight: 800; }
+.soc-rt-note .soc-rt-sub { margin: 12px 0 6px; font-size: 13px; font-weight: 800; color: var(--head); }
+.soc-rt-jobs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+.soc-rt-box .soc-rt-jobs button { flex: none; height: 44px; max-height: none; min-width: 0; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: none; box-shadow: none; font: inherit; font-size: 13px; font-weight: 800; color: var(--muted); white-space: nowrap; }
+.soc-rt-box .soc-rt-jobs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.soc-rt-note .soc-rt-tbl .soc-rt-line { margin: 0; }
 .soc-rt-box .soc-rt-row { width: 100%; height: auto; max-height: none; min-height: 48px; line-height: 1.25; overflow: visible; display: grid; grid-template-columns: 52px minmax(0, 1fr) 20px; align-items: center; gap: 8px; padding: 8px 2px; background: none; border: 0; border-top: 1px solid var(--hair); border-radius: 0; box-shadow: none; font: inherit; color: var(--ink); text-align: left; }
 .soc-rt-row svg { width: 16px; height: 16px; color: var(--dim); transition: transform .15s; }
 .soc-rt-row[aria-expanded="true"] svg { transform: rotate(180deg); }

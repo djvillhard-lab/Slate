@@ -137,7 +137,35 @@
     box.textContent = "";
     var hd = el("div", "soc-rt-h"); hd.appendChild(el("b", null, "Slate ratings"));
     var how = el("button", "soc-rt-how", "How it works"); how.type = "button"; hd.appendChild(how); box.appendChild(hd);
-    var note = el("p", "soc-rt-note", "Slate's own score, not an official rating. Every player starts at 6.0. Each thing he did in ESPN's match stats adds or takes points, and how much it's worth depends on his job: a tackle counts more for a centre back, a chance created more for a winger, a save only for the keeper. Tap a player to see his points. No rating under " + SOC_RATE_MIN_MINUTES + " minutes.");
+    // How it works (DJ, Nov 22, 2026: "Ensure users can see how the ratings are calculated in the app"): the rules in plain
+    // words, then every point value for one job at a time, straight from the SOC_RATE table so it can never drift from the math.
+    var note = el("div", "soc-rt-note");
+    note.appendChild(el("p", null, "Slate's own score, not an official rating. It is worked out from ESPN's match stats for each player."));
+    [["Start", "Every player starts at 6.0."],
+     ["Add and take", "Each thing he did adds or takes points, times how often he did it. What it's worth depends on his job: a tackle counts more for a centre back, a chance created more for a winger, a save only for the keeper."],
+     ["His job", "A starter's job comes from where he lines up in the formation. A substitute's comes from his listed position."],
+     ["Top end", "Above " + SOC_RATE_SOFT.toFixed(1) + ", each extra point counts " + SOC_RATE_SOFT_KEEP + ", so only a rare game gets near 10. No score goes under 3.0 or over 10.0."],
+     ["Who gets one", "Anyone who played " + SOC_RATE_MIN_MINUTES + " minutes or more. Tap a player below to see his own sums."]
+    ].forEach(function (r) { var ln = el("p", "soc-rt-rule"); ln.appendChild(el("b", null, r[0])); ln.appendChild(el("span", null, r[1])); note.appendChild(ln); });
+    note.appendChild(el("p", "soc-rt-sub", "Points for each thing, by job"));
+    var jobs = el("div", "soc-rt-jobs"), tbl = el("div", "soc-rt-tbl"); jobs.setAttribute("role", "group"); jobs.setAttribute("aria-label", "Job on the field");
+    var JOB_SHORT = { GK: "Keeper", CB: "Centre back", FB: "Full back", MID: "Midfielder", ATT: "Winger", ST: "Striker" };
+    var drawJob = function () {
+      var job = socRtOpen.job || "MID", ri = SOC_ROLES.indexOf(job);
+      Array.prototype.forEach.call(jobs.children, function (bn) { bn.setAttribute("aria-pressed", bn.getAttribute("data-job") === job ? "true" : "false"); });
+      tbl.textContent = "";
+      SOC_RATE.forEach(function (row) {
+        var w = row[3][ri]; if (!w) return;
+        var ln = el("p", "soc-rt-line"); ln.appendChild(el("span", null, row[1]));
+        ln.appendChild(el("b", w < 0 ? "neg" : null, (w > 0 ? "+" : "−") + String(Math.abs(w)))); tbl.appendChild(ln);
+      });
+    };
+    SOC_ROLES.forEach(function (job) {
+      var bn = el("button", null, JOB_SHORT[job]); bn.type = "button"; bn.setAttribute("data-job", job);
+      bn.addEventListener("click", function (e) { e.stopPropagation(); socRtOpen.job = job; drawJob(); });
+      jobs.appendChild(bn);
+    });
+    note.appendChild(jobs); note.appendChild(tbl); drawJob();
     note.hidden = !socRtOpen.how; box.appendChild(note);
     how.setAttribute("aria-expanded", socRtOpen.how ? "true" : "false");
     how.addEventListener("click", function (e) { e.stopPropagation(); socRtOpen.how = !socRtOpen.how; note.hidden = !socRtOpen.how; how.setAttribute("aria-expanded", socRtOpen.how ? "true" : "false"); });
