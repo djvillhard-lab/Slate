@@ -160,11 +160,47 @@
   // keeps his number. "wait" means the free lookup limit was hit; ask again a little later.
   var socPhotos = {}, socPhotoAsk = {};
   function socPhotoFor(t, p) { return (p.full && (socPhotos[t.name] || {})[p.full]) || ""; }
+  // Where the face is in a cut-out picture (the player from the waist up on a clear background): measure how wide his head is near
+  // the top, walk down until the picture gets much wider than that (his shoulders), then frame a square around what is above them.
+  // Answers {x, y, s} as shares of the picture, or null when it has no clear background or the shape makes no sense.
+  function socFace(im) {
+    try {
+      var N = 96, cv = document.createElement("canvas"); cv.width = cv.height = N;
+      var cx = cv.getContext("2d"); cx.drawImage(im, 0, 0, N, N);
+      var d = cx.getImageData(0, 0, N, N).data, rows = [], top = -1;
+      for (var y = 0; y < N; y++) {
+        var lo = -1, hi = -1;
+        for (var x = 0; x < N; x++) if (d[(y * N + x) * 4 + 3] > 110) { if (lo < 0) lo = x; hi = x; }
+        if (lo >= 0 && hi - lo >= 2 && top < 0) top = y;
+        rows.push(lo < 0 ? null : [lo, hi]);
+      }
+      if (top < 0 || d[3] > 110) return null;  // nothing there, or a plain photo with no clear background
+      var wid = function (y) { var r = y < N ? rows[y] : null; return r ? r[1] - r[0] + 1 : 0; };
+      var head = 0, sh = -1, y2;
+      for (y2 = top; y2 <= top + N * 0.12; y2++) head = Math.max(head, wid(y2));  // how wide his head is, from its top rows
+      for (y2 = top; y2 <= top + head * 0.8; y2++) head = Math.max(head, wid(y2));
+      for (y2 = top + Math.floor(head * 0.9); y2 < N; y2++) if (wid(y2) > head * 1.45) { sh = y2; break; }  // the shoulders
+      if (sh < 0) return null;
+      var hh = sh - top, mids = [];
+      for (var y3 = top; y3 <= top + hh * 0.8; y3++) if (rows[y3]) mids.push((rows[y3][0] + rows[y3][1] + 1) / 2);
+      mids.sort(function (a, b) { return a - b; });
+      var side = Math.max(hh * 1.2, head * 1.6), mid = mids[mids.length >> 1];  // the face and a little of the shoulders
+      if (!mids.length || side < N * 0.12 || side > N * 0.6) return null;
+      return { x: (mid - side / 2) / N, y: (top - side * 0.06) / N, s: side / N };
+    } catch (e) { return null; }
+  }
   function socPhotoPut(pin, src) {
     var dot = pin.querySelector(".soc-n"); if (!dot || dot.querySelector("img")) return;
+    var box = document.createElement("span"); box.className = "soc-ph";
     var im = document.createElement("img"); im.alt = ""; im.decoding = "async";
-    im.onload = function () { pin.classList.add("pic"); }; im.onerror = function () { im.remove(); };
-    im.src = src; dot.appendChild(im);
+    im.onload = function () {
+      var f = socFace(im);  // a headshot: only the face goes in the circle, not the whole shirt
+      if (f) { im.className = "face"; im.style.width = im.style.height = (100 / f.s) + "%"; im.style.left = (-100 * f.x / f.s) + "%"; im.style.top = (-100 * f.y / f.s) + "%"; }
+      pin.classList.add("pic");
+    };
+    im.onerror = function () { box.remove(); };
+    im.src = String(src).replace(/%2Fsmall$/, "%2Fmedium");  // the middle size (350px), so a face cut out of it is still sharp
+    box.appendChild(im); dot.insertBefore(box, dot.firstChild);
   }
   function socPhotoLoad(t, pitch) {
     var names = (t.xi || []).map(function (p) { return p.full; }).filter(function (n) { return n && !(n in (socPhotos[t.name] || {})); });

@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.130.1 (Nov 23, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Soccer lineups: the player pictures on the floodlit pitch are now headshots. Each circle shows just the player's face, close up and sharper, instead of him from the waist up.
+- A player who was subbed off is no longer grayed out. His picture, circle and name look like everyone else's, and the small "↓65'" tag over his head still shows when he came off.
+- Slate ratings are tuned closer to FotMob's, using its ratings for Liverpool 4-0 Manchester United. ESPN's expected goals and expected assists now count, so a forward who kept getting good chances is not sunk for missing them (Barcola 5.9 to 7.2, Isak 6.4 to 7.6; FotMob had 7.9 and 7.7). Conceding costs defenders more (de Ligt 6.4 to 5.9, Martínez 5.5 to 5.1, Dalot 5.7 to 5.3), a keeper's clean sheet is worth less (Alisson 8.3 to 7.9), and above 8.5 extra points count about half, so a great game lands near 9.5 instead of 10.0 (Wirtz 10.0 to 9.5, Szoboszlai 9.6 to 9.3). Across the 21 players the average gap to FotMob went from about half a point to a quarter.
+
 ## 3.130.0 (Nov 22, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Soccer games now have Slate ratings. Once a match starts, every player who has played 15 minutes gets a score to one decimal (like 7.4) on his circle on the floodlit pitch, and a "Slate ratings" list sits under the bench, best first. Tap a player to see exactly where his points came from.
