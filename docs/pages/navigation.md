@@ -26,3 +26,6 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 - iPhone app half shipped in 3.128.1 (DJ said yes Nov 22): boot flag `webNav: true`, message `{t:"nav", web:true|false}`, RootView hides its FloatMenu while the page draws the bar. It is TestFlight 3.128.1 (56), on DJ's phone Nov 22.
 - `scripts/shots.py` pretends to be a new build by default; `--old-app` shows what today's build gets.
 - Not decided: whether swipes in the unfolded panes should also become page-only.
+
+## Short messages (toast), 3.130.9 (Nov 24, 2026)
+- With Three pages on, the toast sits 142px from the bottom, above the glass bar (`101-three-pages.css`). It must also set `top: auto !important`: `050-ux-review.css` pins toasts to the top with `!important`, and with both set the toast stretched into a tall capsule covering the page (3.128.0 to 3.130.8). Checked folded, open (both panes) and iPhone.

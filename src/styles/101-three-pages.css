@@ -93,7 +93,8 @@ html[data-n3f] #strip { display: none !important; }
 .n3-dl span { font-size: 11px; font-weight: 700; white-space: nowrap; }
 
 /* a short message sits above the bar, never on it */
-html[data-nav3] .toast { bottom: 142px !important; }
+html[data-nav3] .toast { top: auto !important; bottom: 142px !important; height: auto !important; }
+/* 3.130.9: the top-pinned rule (050-ux-review.css) left top set too, which stretched the message from the top of the page down to the bar */
 /* the day arrows in every dated page's header use the slate's own picker; its Today button is back in this layout */
 html[data-nav3] #title-d .today-btn:not([hidden]) { display: inline-flex; }
 /* 3.128.3: off today the calendar mark steps aside so Today fits before the search button */
