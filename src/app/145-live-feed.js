@@ -342,18 +342,56 @@
   // football's leaders card (3.70.0, DJ: the NFL feed had nothing like basketball's top-rated card). ESPN gives football no player rating, so nothing is
   // ranked here: these are ESPN's own leaders from the game summary, each team's passer, rusher and receiver, with ESPN's stat line.
   function fdLdOpen() { try { return localStorage.getItem("slate-feed-leaders") === "1"; } catch (e) { return false; } }
-  function fdLeaders(g, sum, sideOf, over) {
-    var want = [["passingYards", "PASS"], ["rushingYards", "RUSH"], ["receivingYards", "REC"]], cols = {}, any = false;
-    (sum.leaders || []).forEach(function (t) { var sd = sideOf[String((t.team || {}).id || "")]; if (!sd) return; var col = el("div", "fd-ldc");
-      want.forEach(function (w) { var L = (t.leaders || []).filter(function (x) { return x.name === w[0]; })[0], top = L && (L.leaders || [])[0], a = top && top.athlete; if (!a || !top.displayValue) return;
-        var row = el("div", "fd-pl"); row.appendChild(fdJersey(g, sd, { jer: a.jersey || "", id: a.id }));
-        var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, a.shortName || a.displayName || "")); nmw.appendChild(el("em", "fd-pos", w[1]));
-        nmw.appendChild(el("i", null, String(top.displayValue).replace(/\bYDS\b/g, "yds").replace(/\bCAR\b/g, "car").replace(/\bREC\b/g, "rec"))); row.appendChild(nmw); col.appendChild(row); any = true; });
-      if (col.firstChild) cols[sd] = col; });
+  // 3.146.0 (DJ: "add equivalents for all sports"): the Leaders card for every sport. Football, basketball, hockey and soccer use ESPN's own
+  // leaders from the game summary (each team's leader in each of ESPN's categories, with ESPN's line); baseball has none from ESPN, so it shows
+  // each team's pitcher now in the game (its starter once the game is over) and its best batter so far by the box score (hits, then RBIs, then home runs).
+  var FD_LD = {
+    football: [["passingYards", "PASS"], ["rushingYards", "RUSH"], ["receivingYards", "REC"]],
+    bball: [["points", "PTS", "pts"], ["rebounds", "REB", "reb"], ["assists", "AST", "ast"]],
+    hockey: [["goals", "G", "goal"], ["assists", "A", "assist"], ["points", "PTS", "point"]],
+    soccer: [["totalShots", "SHOTS", "shot"], ["accuratePasses", "PASSES", "accurate pass"], ["defensiveInterventions", "DEF", "defensive action"], ["saves", "SAVES", "save"]]
+  };
+  function fdLdRow(g, sd, a, lab, txt) {
+    var row = el("div", "fd-pl"), P = { jer: a.jersey || a.jer || "", id: a.id, name: a.displayName || a.name || "" };
+    row.appendChild(BX_SPORT[g.league] === "bball" ? hpJersey(g, sd, P) : fdJersey(g, sd, P));
+    var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, a.shortName || fdShort(P))); nmw.appendChild(el("em", "fd-pos", lab)); if (txt) nmw.appendChild(el("i", null, txt)); row.appendChild(nmw); return row;
+  }
+  function fdLeaders(g, sum, sideOf, over, order) {
+    var sp = BX_SPORT[g.league], cols = {}, any = false;
+    if (sp === "baseball") {
+      var ix = bbIndex(sum), pick = {};
+      ((sum.boxscore || {}).players || []).forEach(function (t) { var sd = sideOf[String((t.team || {}).id || "")]; if (!sd) return; pick[sd] = pick[sd] || {};
+        (t.statistics || []).forEach(function (gr) { if (/pitch/i.test(gr.type || gr.name || "")) { var at = gr.athletes || []; if (at.length) pick[sd].p = String(((over ? at[0] : at[at.length - 1]).athlete || {}).id || ""); } }); });
+      var hv = function (P) { var b = P.bat || {}, n = function (k) { return parseInt(b[k], 10) || 0; }; return n("hits") * 10000 + n("RBIs") * 100 + n("homeRuns"); };
+      Object.keys(ix).forEach(function (id) { var P = ix[id], sd = sideOf[P.tid]; if (!sd || !P.bat || !hv(P)) return; pick[sd] = pick[sd] || {}; if (!pick[sd].b || hv(P) > hv(ix[pick[sd].b])) pick[sd].b = id; });
+      Object.keys(pick).forEach(function (sd) { var col = el("div", "fd-ldc"), pp = ix[pick[sd].p], bb = ix[pick[sd].b];
+        if (pp && pp.pit) { col.appendChild(fdLdRow(g, sd, pp, over ? "STARTER" : "PITCHING", bbLine(pp, true))); any = true; }
+        if (bb) { col.appendChild(fdLdRow(g, sd, bb, "BAT", bbLine(bb, false))); any = true; }
+        if (col.firstChild) cols[sd] = col; });
+    } else {
+      var want = FD_LD[sp]; if (!want) return null;
+      (sum.leaders || []).forEach(function (t) { var sd = sideOf[String((t.team || {}).id || "")]; if (!sd) return; var col = el("div", "fd-ldc");
+        want.forEach(function (w) { var L = (t.leaders || []).filter(function (x) { return x.name === w[0]; })[0], top = L && (L.leaders || [])[0], a = top && top.athlete; if (!a || !top.displayValue) return;
+          var txt;
+          if (sp === "football") txt = String(top.displayValue).replace(/\bYDS\b/g, "yds").replace(/\bCAR\b/g, "car").replace(/\bREC\b/g, "rec");
+          else { var v = top.displayValue, n = parseFloat(v); if (!(n > 0)) return; var u = w[2]; if (n !== 1 && !/^(pts|reb|ast)$/.test(u)) u += /ss$/.test(u) ? "es" : "s"; txt = v + " " + u + (w[0] === "points" && sp === "bball" && top.summary ? ", " + String(top.summary).split(",")[0] : ""); }  /* basketball points add the shooting (8/13 FG); the rest is the count alone, so it fits a phone */
+          col.appendChild(fdLdRow(g, sd, a, w[1], txt)); any = true; });
+        if (col.firstChild) cols[sd] = col; });
+    }
     if (!any) return null;
     var card = el("div", "fd-field hp-top fd-ld"); card.appendChild(el("p", "fd-wpl hp-tl", "Leaders" + (over ? "" : " so far")));
-    var two = el("div", "hp-two"); ["away", "home"].forEach(function (sd) { var hd = el("div", "fd-ldc"); if (cols[sd]) { cols[sd].insertBefore(el("p", "fd-ldt", abbr(g, sd)), cols[sd].firstChild); two.appendChild(cols[sd]); } else two.appendChild(hd); });
+    var two = el("div", "hp-two"); (order || ["away", "home"]).forEach(function (sd) { var hd = el("div", "fd-ldc"); if (cols[sd]) { cols[sd].insertBefore(el("p", "fd-ldt", abbr(g, sd)), cols[sd].firstChild); two.appendChild(cols[sd]); } else two.appendChild(hd); });
     card.appendChild(two); return card;
+  }
+  // the Leaders button on the "Last play" line, for every sport: it sits just before the Delay control and opens the card right under the line.
+  // Open or closed is remembered on this phone (one setting for every sport).
+  function fdLdHook(list, g, sum, sideOf, over, order) {
+    var ldc = fdLeaders(g, sum, sideOf, over, order); if (!ldc) return;
+    var fb = list.querySelector(".fd-bar"); if (!fb) { fb = el("div", "fd-bar"); fb.appendChild(el("p", "fd-ago", "")); list.insertBefore(fb, list.firstChild); }
+    var ldOn = fdLdOpen(), lb = el("button", "fd-scf fd-ldb" + (ldOn ? " on" : ""), "Leaders"); lb.type = "button"; lb.setAttribute("aria-expanded", ldOn ? "true" : "false");
+    lb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-leaders", ldOn ? "0" : "1"); } catch (e) {} fdKeepY(renderFeed); });
+    fb.insertBefore(lb, fb.querySelector(".fd-dlw"));
+    if (ldOn) { var aft = list.querySelector(".fd-dlrow") || fb, nx = aft.nextSibling; while (nx && nx.classList && nx.classList.contains("sc-stats")) nx = nx.nextSibling; list.insertBefore(ldc, nx); }
   }
   // the live games in the switcher's order: your slate's first, then by start time
   function fdIn(x, sc) { return feedLive(x) && (sc === "all" || (sc === "slate" ? inLineup(x.id) : x.league === sc)); }
@@ -664,11 +702,7 @@ function renderFeed(fromPoll) {
     fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
     // 3.73.1 (DJ: the top of the page left no room for plays on the folded Duo): the leaders card is folded away behind a Leaders button on the
     // "Last play" line, and opens right under that line. Open or closed is remembered on this phone.
-    var ldBar = list.querySelector(".fd-bar");
-    if (ldBar && (sum.leaders || []).length) { var ldOn = fdLdOpen(), lb = el("button", "fd-scf fd-ldb" + (ldOn ? " on" : ""), "Leaders"); lb.type = "button"; lb.setAttribute("aria-expanded", ldOn ? "true" : "false");
-      lb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-leaders", ldOn ? "0" : "1"); } catch (e) {} fdKeepY(renderFeed); });
-      var ago0 = ldBar.querySelector(".fd-ago"); ldBar.insertBefore(lb, ago0 ? ago0.nextSibling : ldBar.firstChild);
-      if (ldOn) { var ldc = fdLeaders(g, sum, sideOf, over), aft = list.querySelector(".fd-dlrow") || ldBar; if (ldc) list.insertBefore(ldc, aft.nextSibling); } }
+    if (allPlays.length) fdLdHook(list, g, sum, sideOf, over);
     fdMoreRow(list, !scOnly && allPlays.length > shown && shown >= cap, scOnly);
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);  // the box score under the plays (3.40.3)
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));

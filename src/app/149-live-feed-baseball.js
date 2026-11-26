@@ -199,6 +199,7 @@
           var aft = list.querySelector(".fd-dlrow") || fb; list.insertBefore(c3, aft.nextSibling); } }
       if (plays.length) { var kb = el("button", "fd-scf" + (keyOnly ? " on" : ""), "Scoring"); kb.type = "button"; kb.setAttribute("aria-pressed", keyOnly ? "true" : "false");
         kb.addEventListener("click", function () { FD.scOnly = !FD.scOnly; fdKeepY(renderFeed); }); fb.insertBefore(kb, after.nextSibling); } }
+    if (fb) fdLdHook(list, g, sum, sideOf, over, null);  // 3.146.0: the Leaders button, as on football
     if (keyOnly && !total && plays.length) list.appendChild(el("p", "pv-none", "No runs yet."));
     body.appendChild(list);
     fdMoreRow(list, !keyOnly && total > shown, keyOnly);

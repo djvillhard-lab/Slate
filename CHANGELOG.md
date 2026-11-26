@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.146.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed: every sport now has a Leaders button, like football's. It opens each team's leaders so far, from ESPN: points, rebounds and assists in basketball; goals, assists and points in hockey; shots, passes, defensive actions and saves in soccer. Baseball shows each team's pitcher in the game (the starter once it's over) and its best batter so far.
+- Live feed: basketball gets a Big plays button, its version of football's Scoring. It shows only lead changes, ties, runs, and-ones, buzzer-beaters, clutch plays, big win-probability swings, made threes and dunks. Hockey (Goals & penalties), soccer (Key events) and baseball (Scoring) already had theirs.
+- The buttons drop to a second line when they don't fit on a narrow screen.
+
 ## 3.145.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: the sections moved under your thumb. A round button at the bottom right, where the day arrows used to be, opens the list of sections (Home, Just In, On Deck, In the Books, Stat Sheet and each league) with Home nearest the thumb. It shows the section you are in and a dot when something there is new. The pills on top are gone; inside a section, its name is at the top with "Back to Home".

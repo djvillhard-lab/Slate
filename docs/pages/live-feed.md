@@ -173,3 +173,13 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   before (it was on the Nov 25 scoreboard), but `bxFindEvent` (110-box-score.js) only looked at the Eastern date of the start (Nov 26).
 - Fix: `bxDayEvents` fetches one league-day list; `bxFindEvent` tries the start's Eastern date, then the day before (or the day after for a
   start after noon ET). `sbOdds` reads both lists; the live score poller (040-live.js) also asks the day before for games before 6 AM ET (`etHour`).
+
+## 3.146.0: Leaders and Big plays for every sport (DJ: "add equivalents for all sports" of football's Scoring and Leaders)
+- Leaders button on every sport (`fdLdHook` + `fdLeaders` in 145, spec `FD_LD`): ESPN's own `sum.leaders` for football (pass/rush/rec),
+  basketball (pts/reb/ast; points add ESPN's FG line), hockey (goals/assists/points), soccer (shots, accurate passes, defensive actions, saves; home team first).
+  Baseball has no ESPN leaders: each team's pitcher in the game (its starter once final) and best batter by the box score (hits, then RBIs, then HRs).
+  One open/closed setting on this phone for every sport (`slate-feed-leaders`). The button sits just before Delay; the card opens under the line (after Stats).
+- Basketball Big plays (146, uses `FD.scOnly`): only plays with a tag (lead change, tie, run, and-one, buzzer-beater, clutch, win-prob swing) plus made threes and dunks.
+  Hockey (Goals & penalties), soccer (Key events) and baseball (Scoring) already had their filter.
+- `.fd-bar` wraps (040-components.css) so up to four buttons plus "Last play" fit the folded Duo.
+- Open: golf and F1 have no Live feed, so nothing to add there. Baseball checked against a September game's data only (no MLB games in November).

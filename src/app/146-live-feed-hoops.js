@@ -169,7 +169,7 @@
     }
     // the plays, newest first: scores and big plays as cards, everything else (misses, rebounds, fouls) as one plain line; subs left out
     FD.hpOpen = FD.hpOpen || {};
-    var list = el("div", "fd-list"), items = 0, cap2 = 12 * (1 + (+FD.more || 0)), fresh = FD.seen || null, seenNow = {}, total = 0;
+    var bigOnly = !!FD.scOnly, nBig = 0, list = el("div", "fd-list"), items = 0, cap2 = bigOnly ? 1e9 : 12 * (1 + (+FD.more || 0)), fresh = FD.seen || null, seenNow = {}, total = 0;
     // a trip to the line (same shooter, same moment) shows as one card with the last free throw
     var trips = {}, tripOf = {};
     plays.forEach(function (p) { if (!hpFT(p)) return; var a = ((p.participants || [])[0] || {}).athlete || {}, k = ((p.period || {}).number) + "|" + ((p.clock || {}).displayValue) + "|" + a.id; (trips[k] = trips[k] || []).push(p); tripOf[hpPid(p)] = trips[k]; });
@@ -203,6 +203,10 @@
           tg = tm2.length ? tm2.slice(0, 3) : null;
         }
         if (rd.minor === "Sub" || rebSkip[pid]) continue;  // subs are left out; a rebound that follows a miss is on the miss's box
+        // 3.146.0 (DJ: football's Scoring button, for every sport): Big plays shows only the plays with a tag (lead change, tie, run, and-one,
+        // buzzer-beater, clutch, a big win-probability swing) plus every made three and dunk
+        if (bigOnly && !(tg && tg.length) && !(pl.scoringPlay && /three point|dunk/i.test(String((pl.type || {}).text || "") + " " + String(pl.text || "")))) continue;
+        if (bigOnly) nBig++;
         flush(); items++;
         var gray = /^(miss|foul|to|end)$/.test(rd.kind), rb = rebOf[pid], rbR = rb ? hpRead(rb, ix) : null;
         if ((rd.kind === "foul" || rd.k === "tofoul") && rd.P && lastFoul[rd.P.id] === pid) { var pf = parseFloat((rd.P.st || {}).PF) || 0, ft0 = pf >= foulLimit ? "Fouled out" : pf === foulLimit - 1 ? "Foul trouble" : ""; if (ft0) tg = (tg || []).concat([{ t: ft0, c: "" }]); }
@@ -224,8 +228,14 @@
       flush();
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", st.state === "pre" ? "Plays show up here once the game tips off." : "No plays yet."));
-    fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
-    fdMoreRow(list, plays.length > total, false);
+    if (bigOnly && plays.length && !nBig) list.appendChild(el("p", "pv-none", "No big plays yet."));
+    fdAgo(list, sum, st.state === "in", g);
+    if (plays.length) { var fb = list.querySelector(".fd-bar"); if (!fb) { fb = el("div", "fd-bar"); fb.appendChild(el("p", "fd-ago", "")); list.insertBefore(fb, list.firstChild); }
+      var kb = el("button", "fd-scf" + (bigOnly ? " on" : ""), "Big plays"); kb.type = "button"; kb.setAttribute("aria-pressed", bigOnly ? "true" : "false");
+      kb.addEventListener("click", function () { FD.scOnly = !FD.scOnly; fdKeepY(renderFeed); }); fb.insertBefore(kb, fb.querySelector(".fd-dlw"));
+      fdLdHook(list, g, sum, sideOf, over); }
+    body.appendChild(list);
+    fdMoreRow(list, !bigOnly && plays.length > total, bigOnly);
     var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);

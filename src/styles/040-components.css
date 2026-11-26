@@ -1540,7 +1540,7 @@ html .feed-go.feed-done, html .tray .feed-go.feed-done { background: var(--raise
 .fd-mid b { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
 .fd-mid i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--live, #E5484D); }
 /* 3.69.0: the line above the newest play: "Last play 12s ago" on the left, the delay control (minus, value, plus) on the right */
-.fd-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; margin: -4px 0 0; }
+.fd-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; row-gap: 6px; min-height: 44px; margin: -4px 0 0; }  /* 3.146.0: Leaders on every sport; the buttons wrap to a second line on a narrow screen */
 .fd-bar .fd-ago { margin: 0 0 0 2px; font-size: 11px; font-weight: 600; line-height: 1.2; color: var(--muted); font-variant-numeric: tabular-nums; }
 /* 3.69.1: football's Scoring filter (accent = selected), and the two buttons under the plays side by side */
 .fd-scf { flex: none; min-height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--hair); background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: 800; position: relative; }

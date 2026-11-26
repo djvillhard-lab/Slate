@@ -182,6 +182,7 @@
           var aft = list.querySelector(".fd-dlrow") || fb; list.insertBefore(card2, aft.nextSibling); } }
       if (!fromKey && rows.length) { var kb = el("button", "fd-scf" + (keyOnly ? " on" : ""), "Key events"); kb.type = "button"; kb.setAttribute("aria-pressed", keyOnly ? "true" : "false");
         kb.addEventListener("click", function () { FD.scOnly = !FD.scOnly; fdKeepY(renderFeed); }); fb.insertBefore(kb, after.nextSibling); } }
+    if (fb) fdLdHook(list, g, sum, sideOf, over, [SL, SR]);  // 3.146.0: the Leaders button, as on football
     body.appendChild(list);
     fdMoreRow(list, !keyOnly && total > shown, keyOnly);
     var bxw = null; try { bxw = feedBox(g, sum); } catch (e) { bxw = null; } if (bxw) body.appendChild(bxw);
