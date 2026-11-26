@@ -199,3 +199,6 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   traced on a thin field; drive, score and player lines). Turn it on once DJ likes basketball's; it was checked on data only, never on screen.
 - Not seen on the unfolded Duo: shots.py couldn't reach a finished game there (16-game cap). The feed pane there is phone width, same cards.
 - Motion: the banner wipes in and the newest dot pops, only on `.fd-new`, off with Reduce Motion.
+- 3.161.1 (DJ: the score was repeated): a banner whose number is the score leaves the score off the card's top line.
+- 3.161.1 (DJ): basketball's "Top rated so far" card removed (Leaders button covers it); win probability sits alone in a slim card (`.hp-wponly`). Football, hockey, soccer and baseball never had a top-players card.
+- 3.161.1 (DJ: "the dots are confusing"): shot dots removed. Instead: `.hp-plus` points stamp on made baskets (+1/+2/+3, a trip to the line adds up), streak tags from hpStory (`st.tag`: Heating up at 3 straight makes, On fire at 4+, Ice cold at 4+ straight misses), and context lines: Second-chance points (basket within 12s of the team's offensive rebound), Points off the turnover (within 8s), Answers right back (within 10s of the other team's basket).

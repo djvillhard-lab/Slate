@@ -129,5 +129,5 @@ Only on the News page, at DJ's request (Nov 16, 2026): one emoji in front of a s
 🚑 Injuries, 🔢 The number, ⭐ Performances, 🚨 New). Never inside body text, and not on other pages unless DJ asks.
 The Live feed's play tags too (DJ, Nov 16, 2026): one emoji in front of each tag (🔥 Big play or a run, 🔄 lead change,
 🤝 tie, ✅ converted, 🛑 stopped, ⛓️ 1st down, 📈 win-probability swing, 🚩 flag, 🚨 red zone or buzzer-beater,
-⏱️ two-minute drill or clutch, 💪 and-one), never in the play text. `fdTagText` in `146-live-feed-hoops.js`.
+⏱️ two-minute drill or clutch, 💪 and-one, 🔥 heating up or on fire, 🧊 ice cold), never in the play text. `fdTagText` in `146-live-feed-hoops.js`.
 Hot tags on News are red (`--live`) with their 🔥, DJ's approved exception to "red = live" (Nov 16, 2026).

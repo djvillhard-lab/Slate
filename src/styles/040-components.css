@@ -1940,14 +1940,12 @@ html .gv-head .gv-act { position: relative; min-height: 0 !important; height: 30
 .fd-new .fd-tr-run { animation: fdRun .3s ease-out .1s both; }
 @media (prefers-reduced-motion: reduce) { .fd-new .fd-ban, .fd-new .fd-tr-run { animation: none; } }
 
-/* basketball's part of the play cards with more flair (3.159.0): the shooter's last five shots as dots, at the end of the shooter's row */
-.hp-dots { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding-left: 8px; flex: none; }
-.hp-dots span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.hp-dots i { width: 9px; height: 9px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid color-mix(in srgb, var(--ink) 38%, transparent); }
-.hp-dots i.on { border-color: var(--hp-team, var(--accent)); background: var(--hp-team, var(--accent)); }
-.hp-dots i.now { width: 12px; height: 12px; }
+/* basketball's part of the play cards with more flair (3.159.0; 3.161.1: the shot dots are gone, DJ found them confusing): a points stamp beside a made basket's headline */
+.hp-plus { display: inline-block; margin-left: 8px; padding: 1px 7px 2px; border-radius: 6px; vertical-align: 1px; font-size: 13px; font-weight: 900; font-stretch: 85%; line-height: 1.2; font-variant-numeric: tabular-nums;
+  color: var(--hp-team, var(--accent)); background: color-mix(in srgb, var(--hp-team, var(--accent)) 16%, transparent); border: 1px solid color-mix(in srgb, var(--hp-team, var(--accent)) 45%, transparent); }
+.hp-plus.hp-plus3 { font-size: 15px; background: color-mix(in srgb, var(--hp-team, var(--accent)) 28%, transparent); }
 .hp-play > .fd-story { border-left-color: color-mix(in srgb, var(--hp-team, var(--accent)) 70%, transparent); }
 .fd-play.hp-play.fd-moment[style*="--hp-team"] { border-left-color: var(--hp-team); }
 @keyframes hpDot { from { transform: scale(0); } to { transform: none; } }
-.fd-new .hp-dots i.now { animation: hpDot .3s cubic-bezier(.2,1.4,.4,1) .15s both; }
-@media (prefers-reduced-motion: reduce) { .fd-new .hp-dots i.now { animation: none; } }
+.fd-new .hp-plus { animation: hpDot .3s cubic-bezier(.2,1.4,.4,1) .15s both; }
+@media (prefers-reduced-motion: reduce) { .fd-new .hp-plus { animation: none; } }

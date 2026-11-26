@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.161.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed, basketball: a play whose banner shows the score ("Takes the lead, 70-68") no longer repeats the score on the line under it.
+- Live feed, basketball: the "Top rated so far" box is gone now that the Leaders button shows each team's leaders. Win probability keeps its own slim row under the score. No other sport had a box like it.
+- Live feed, basketball: the shot dots are gone. In their place: a points stamp beside every made basket ("+3"), streak tags ("Heating up" at 3 straight makes, "On fire" at 4 or more, "Ice cold" at 4 straight misses), and more lines on how the basket came about: "Second-chance points" after an offensive rebound, "Points off the turnover", "Answers right back".
+
 ## 3.161.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: every section on the News home is now a wheel you swipe sideways. The Breakdown, On Deck, In the Books, Stat Sheet, League Check and Just In each hold all of their cards side by side, with "2 of 5" beside the title, so nothing opens a new page to show the rest. The "All 4 previews" style buttons are gone.

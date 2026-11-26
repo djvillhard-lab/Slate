@@ -125,7 +125,7 @@
   }
   // ---- the story of each play (DJ, Nov 26: "more creativity and flair to live plays ... more than the basic sentence") ----
   // Basketball first (DJ's pick). All of it is counted from ESPN's own plays, nothing estimated. Per play: a banner in the team's color on the
-  // big moments (the same ones as Big plays, plus a player reaching 30, 40 or 50 points), the shooter's last five shots as dots, and one line
+  // big moments (the same ones as Big plays, plus a player reaching 30, 40 or 50 points), a points stamp on made baskets, hot and cold streak tags, and one line
   // of what it means: "First CLEM points in 4:12", "Thompson has scored CLEM's last 8", "That's 20 for Thompson", "4th three of the game",
   // "First double-digit lead of the game", "One-possession game".
   function hpStory(plays, g, sideOf, ix, TG) {
@@ -134,6 +134,7 @@
     var el0 = function (pl) { var n = Number((pl.period || {}).number) || 1, s = hpSecs((pl.clock || {}).displayValue); return n <= reg ? (n - 1) * len + (len - s) : reg * len + (n - reg - 1) * 300 + (300 - s); };
     var who = function (id) { return PL[id] || (PL[id] = { pts: 0, sh: [], t3: 0, blk: 0, stl: 0 }); };
     var last = function (P) { return P ? String(P.name).split(" ").slice(1).join(" ").replace(/\s+(Jr|Sr|II|III|IV|V)\.?$/, "") || P.name : ""; };
+    var EV = null, LS = null;
     var mmss = function (s) { return Math.floor(s / 60) + ":" + ("0" + Math.round(s % 60)).slice(-2); };
     plays.forEach(function (pl) {
       var pid = hpPid(pl), tx = String(pl.text || ""), st = { lines: [] }, per = Number((pl.period || {}).number) || 0;
@@ -155,8 +156,13 @@
         var S = who(aid); S.sh.push(pl.scoringPlay ? 1 : 0);
         var three = /three point/i.test(tx) || Number(pl.scoreValue) === 3, k = 0; for (var i = S.sh.length - 1; i >= 0 && S.sh[i] === S.sh[S.sh.length - 1]; i--) k++;
         if (pl.scoringPlay && three) { S.t3++; if (S.t3 >= 3 && A) st.lines.push(fdPoss(last(A)) + " " + ordN(S.t3) + " three of the game"); }
-        if (k >= 4 && A) st.lines.push(pl.scoringPlay ? last(A) + " has made " + k + " shots in a row" : last(A) + " has missed " + k + " in a row");
-        if (S.sh.length >= 3) st.dots = S.sh.slice(-5);
+        // 3.161.1 (DJ: "the dots are confusing"): the shooter's streak is said in a tag instead of drawn as dots
+        if (pl.scoringPlay && k >= 3) st.tag = { t: k >= 5 ? "On fire: " + k + " straight makes" : k === 4 ? "On fire" : "Heating up", c: "hot" };
+        else if (!pl.scoringPlay && k >= 4) st.tag = { t: "Ice cold: " + k + " straight misses", c: "" };
+        if (pl.scoringPlay && sc) { st.plus = pts;
+          if (EV && EV.k === "oreb" && EV.sd === sc && t - EV.t <= 12) st.lines.push("Second-chance points");
+          else if (EV && EV.k === "to" && EV.sd !== sc && t - EV.t <= 8) st.lines.push("Points off the turnover");
+          else if (LS && LS.sd !== sc && t - LS.t <= 10 && t > LS.t) st.lines.push("Answers right back"); }
       }
       var rd = null; if (/block|steal|turnover|travel/i.test(tx + " " + String((pl.type || {}).text || "")) && !isFT) rd = hpRead(pl, ix);
       if (rd && rd.k === "blk" && rd.P2 && rd.P) { var nb = ++who(rd.P.id).blk; if (nb >= 3) st.lines.push(fdPoss(last(rd.P)) + " " + ordN(nb) + " block of the game"); }
@@ -171,16 +177,15 @@
         else if ((x = has(/-0 run$/)) && sc) st.ban = { sd: sc, word: x.t.replace(/^\S+\s+/, "") };
         else if ((x = has(/^\+\d+% /))) { var ab = x.t.replace(/^\+\d+% /, ""), ssd = abbr(g, "away") === ab ? "away" : "home"; st.ban = { sd: ssd, word: "Big swing", big: x.t.split(" ")[0] }; }
       }
-      if (st.ban || st.dots || st.lines.length) out[pid] = st;
+      // what came just before, for the next basket: an offensive rebound (second chance) or a turnover (points off it)
+      var ty0 = String((pl.type || {}).text || ""), psd = sideOf[String((pl.team || {}).id || "")] || "";
+      if (/offensive.*rebound/i.test(ty0 + " " + tx) && psd) EV = { k: "oreb", sd: psd, t: t }; else if (rd && rd.kind === "turn" && /^(to|tofoul|stl)$/.test(rd.k) && psd) EV = { k: "to", sd: psd, t: t }; else if (shot || isFT || /rebound|timeout|foul/i.test(ty0)) { if (!(isFT && EV && EV.k === "oreb")) EV = null; }
+      if (pts > 0 && sc) LS = { sd: sc, t: t };
+      if (isFT && pl.scoringPlay) st.plus = pts;
+      if (st.ban || st.tag || st.plus || st.lines.length) out[pid] = st;
       pa = aS; ph = hS;
     });
     return out;
-  }
-  // the shooter's last five shots, oldest first: a filled dot is a make
-  function hpDots(d, made) {
-    var w = el("div", "hp-dots"); w.setAttribute("role", "img"); w.setAttribute("aria-label", "Last " + d.length + " shots: " + d.map(function (x) { return x ? "made" : "missed"; }).join(", "));
-    w.appendChild(el("span", null, "Last " + d.length + " shots")); d.forEach(function (x, i) { w.appendChild(el("i", (x ? "on" : "") + (i === d.length - 1 ? " now" : ""))); });
-    return w;
   }
   function hpFeed(body, g, sum, anchor, aTop, sc) {
     var comp = ((sum.header || {}).competitions || [])[0] || {}, cst = comp.status || {}, st = cst.type || {}, sideOf = {}, scoreOf = {}, recOf = {}, lines = {};
@@ -214,7 +219,8 @@
       Object.keys(ix).forEach(function (id) { var P = ix[id]; if (!rated[sd] && sideOf[P.tid] === sd && P.name === L.full && (P.st || {}).PTS != null) rated[sd] = P; }); });
     Object.keys(ix).forEach(function (id) { var P = ix[id], sd = sideOf[P.tid], pts = parseFloat((P.st || {}).PTS) || 0; if (sd && (!lead[sd] || pts > (parseFloat(lead[sd].st.PTS) || 0))) lead[sd] = P; });
     var nR = (rated.away ? 1 : 0) + (rated.home ? 1 : 0); ["away", "home"].forEach(function (sd) { if (rated[sd]) lead[sd] = rated[sd]; });
-    if (lead.away || lead.home) {
+    // 3.161.1 (DJ: "Don't need top rated so far here anymore because of the leaders button"): the card is off; the win probability keeps a card of its own
+    if (false && (lead.away || lead.home)) {
       var nL = (lead.away ? 1 : 0) + (lead.home ? 1 : 0), ttl = nR === nL ? "Top rated" : nR ? "Top players" : "Top scorers";
       card = el("div", "fd-field hp-top"); card.appendChild(el("p", "fd-wpl hp-tl", ttl + (over ? "" : " so far")));
       // 3.67.3 (DJ: the card wasn't using its space): the two players sit side by side, name over stats, and the win probability is one row
@@ -225,6 +231,7 @@
     }
     var wp = (sum.winprobability || [])[(sum.winprobability || []).length - 1];
     if (!over && wp && wp.homeWinPercentage != null) {
+      if (!card) { card = el("div", "fd-field hp-top hp-wponly"); body.appendChild(card); }
       var host = card || body, hp = Math.round(wp.homeWinPercentage * 100), ap = 100 - hp, wr = el("div", "fd-wp");
       wr.appendChild(el("span", null, abbr(g, "away") + " " + ap + "%"));
       var bar = el("span", "fd-wpb"), ba = el("i"), bh = el("i"); ba.style.width = ap + "%"; ba.style.background = fdTint(g, "away"); bh.style.width = hp + "%"; bh.style.background = fdTint(g, "home"); bar.appendChild(ba); bar.appendChild(bh); wr.appendChild(bar);
@@ -277,20 +284,24 @@
         var sd2 = sideOf[String((pl.team || {}).id || "")] || "";
         if ((rd.k === "stl" || (rd.k === "blk" && rd.P2)) && rd.P && sideOf[String(rd.P.tid || "")]) sd2 = sideOf[String(rd.P.tid)];  /* a block too (DJ said yes, Nov 17): with P2 set, P is the blocker */  /* DJ, Nov 17: ESPN files a steal under the team that lost the ball; the box is the stealer's, so it takes that team's color and label */
         // the play's story (hpStory): a trip to the line takes the banner and lines of any of its free throws
-        var sty = story[pid] || null; if (T && T.length > 1) { sty = { lines: [], ban: null, dots: null }; T.forEach(function (x) { var s0 = story[hpPid(x)]; if (!s0) return; if (s0.ban) sty.ban = s0.ban; s0.lines.forEach(function (l) { if (/has scored .* last \d+$/.test(l)) sty.lines = sty.lines.filter(function (o) { return !/has scored .* last \d+$/.test(o); }); if (sty.lines.indexOf(l) < 0) sty.lines.push(l); }); }); }
+        var sty = story[pid] || null; if (T && T.length > 1) { sty = { lines: [], ban: null, plus: 0 }; T.forEach(function (x) { var s0 = story[hpPid(x)]; if (!s0) return; if (s0.ban) sty.ban = s0.ban; sty.plus += s0.plus || 0; s0.lines.forEach(function (l) { if (/has scored .* last \d+$/.test(l)) sty.lines = sty.lines.filter(function (o) { return !/has scored .* last \d+$/.test(o); }); if (sty.lines.indexOf(l) < 0) sty.lines.push(l); }); }); }
+        if (sty && sty.tag) tg = (tg || []).concat([sty.tag]).slice(0, 3);
         if (sty && sty.ban && tg) { tg = tg.filter(function (x) { return !/Lead change|Tie game|-0 run$|Buzzer-beater/.test(x.t) && !(sty.ban.word === "Big swing" && /^\+\d+% /.test(x.t)); }); if (!tg.length) tg = null; }
         var c2 = el("div", "fd-play hp-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "") + (sty && sty.ban ? " fd-moment" : "")); c2.setAttribute("data-id", pid);
         if (sty && sty.ban) c2.appendChild(fdBanner(g, sty.ban));
         if (sd2 && rd.kind !== "to" && rd.kind !== "end") c2.style.setProperty("--hp-team", fdTint(g, sd2));
         var ph = el("div", "fd-ph"); ph.appendChild(el("span", null, hpPerName(lg, pn) + " " + ck + (sd2 ? " · " + abbr(g, sd2) : "")));
-        ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""))); c2.appendChild(ph);
+        /* 3.161.1 (DJ: "the game score is somewhat repetitive"): a banner that already shows the score ("Takes the lead, 70-68") leaves it off the line under it */
+        if (!(sty && sty.ban && /^\d+-\d+$/.test(String(sty.ban.big || "")))) ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""))); c2.appendChild(ph);
         if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); c2.appendChild(tw); }
-        c2.appendChild(fdTitle(rd.title));
+        var ttl = fdTitle(rd.title); c2.appendChild(ttl);
+        // the points stamp beside a made basket's headline: "+3"
+        if (sty && sty.plus > 0 && rd.kind === "score") { var pls = el("b", "hp-plus" + (sty.plus >= 3 ? " hp-plus3" : ""), "+" + sty.plus); pls.setAttribute("aria-label", sty.plus + (sty.plus === 1 ? " point" : " points")); ttl.appendChild(pls); }
         // the gray and red boxes say it in the headline and the player's line; ESPN's sentence is kept where it adds something
         if (raw && raw !== rd.title && (!gray || (!rd.P && rd.kind === "miss" && !rd.reb))) c2.appendChild(el("p", "fd-px", raw));
         if (sty && sty.lines.length) c2.appendChild(el("p", "fd-story", sty.lines.join(" · ")));
         if (rd.P) c2.appendChild(plRow(rd.P, rd.k, sd2, ""));
-        if (sty && sty.dots && rd.P && rd.k !== "ft" && c2.lastChild) c2.lastChild.appendChild(hpDots(sty.dots));
+
         if (rd.P2) c2.appendChild(plRow(rd.P2, rd.k2, sd2, rd.l2));
         if (rbR) { if (rbR.P) c2.appendChild(plRow(rbR.P, "reb", "", rbR.off ? "offensive rebound" : "rebound")); else { var rsd = sideOf[String((rb.team || {}).id || "")] || ""; c2.appendChild(el("p", "fd-px hp-treb", "Team rebound" + (rsd ? ", " + abbr(g, rsd) : ""))); } }
         list.appendChild(c2);
@@ -404,6 +415,6 @@
     t = String(t || "");
     var e = /takes the lead|lead change/i.test(t) ? "🔄" : /ties it|tie game/i.test(t) ? "🤝" : /big play/i.test(t) ? "🔥" : /-0 run$/i.test(t) ? "🔥"
       : /^converted/i.test(t) ? "✅" : /^stopped/i.test(t) ? "🛑" : /^1st down/i.test(t) ? "⛓️" : /^\+\d+%/.test(t) ? "📈" : /^flag/i.test(t) ? "🚩"
-      : /red zone/i.test(t) ? "🚨" : /two-minute|clutch/i.test(t) ? "⏱️" : /and-one/i.test(t) ? "💪" : /buzzer/i.test(t) ? "🚨" : /^fouled out/i.test(t) ? "🚪" : /^foul trouble/i.test(t) ? "⚠️" : "";
+      : /red zone/i.test(t) ? "🚨" : /two-minute|clutch/i.test(t) ? "⏱️" : /and-one/i.test(t) ? "💪" : /buzzer/i.test(t) ? "🚨" : /^(on fire|heating up)/i.test(t) ? "🔥" : /^ice cold/i.test(t) ? "🧊" : /^fouled out/i.test(t) ? "🚪" : /^foul trouble/i.test(t) ? "⚠️" : "";
     return e ? e + " " + t : t;
   }
