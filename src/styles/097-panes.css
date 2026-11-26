@@ -49,17 +49,22 @@ html.in-pane .title.has-brand.one-line > svg.brand { width: 42px !important; hei
 .pn-one .pn-hinge { display: none; }
 /* the page uses the whole width */
 html.in-pane.pn-full main.wrap, html.in-pane.pn-full .top-inner { max-width: none !important; }
-/* the slate: its times run in two columns */
-html.in-pane.pn-full #lineup-body .tgroups { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+/* the slate (3.158, DJ picked "times down the left side"): one time per row, the time in a narrow strip on the left,
+   its games two across beside it; a game left over at the end takes the whole row */
+html.in-pane.pn-full #lineup-body .tgroups { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+html.in-pane.pn-full #lineup-body .tgroup { grid-template-columns: 46px minmax(0, 1fr); column-gap: 10px; }
+html.in-pane.pn-full #lineup-body .tg-time { padding-left: 2px; }
+html.in-pane.pn-full #lineup-body .tg-time b { font-size: 19px; }
+html.in-pane.pn-full #lineup-body .tg-time i { font-size: 12px; }
+html.in-pane.pn-full #lineup-body .tg-games { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; }
+html.in-pane.pn-full #lineup-body .tg-games > :last-child:nth-child(odd), html.in-pane.pn-full #lineup-body .tg-games > :has(> .tray) { grid-column: 1 / -1; }
+/* the game left over (a 1st, 3rd, 5th at one time) is a feature card: the game on the left half as on every other card,
+   its one-liners on the right half in bigger type behind a divider (DJ: "do something creative with the unused space") */
+html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):has(> .hl):not(:has(> .tray)) { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 14px; }
+html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):not(:has(> .tray)) > .hl { grid-column: 3; grid-row: 1 / span 2; align-self: stretch; margin: 0; padding: 26px 0 30px 16px; border-left: 1px solid var(--line); -webkit-line-clamp: 6; }
+html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):not(:has(> .tray)) > .hl .hl-row + .hl-row { margin-top: 6px; }
 /* All games in "2 columns": three across */
 html.in-pane.pn-full #games-body.ag2 .glist { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-/* each column is as wide as a folded-phone page, so the time sits above its games as it does there */
-html.in-pane.pn-full #lineup-body .tgroup { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
-html.in-pane.pn-full #lineup-body .tg-time { display: flex; align-items: baseline; gap: 4px; padding: 0 2px; }
-html.in-pane.pn-full #lineup-body .tg-time b { font-size: 22px; }
-html.in-pane.pn-full #lineup-body .tg-time i { margin: 0; font-size: 13px; }
-html.in-pane.pn-full #lineup-body .tg-chev { margin: 0 0 0 6px; align-self: center; }
-html.in-pane.pn-full #lineup-body button.tg-time { min-height: 32px; }
 
 /* ---------- full-screen pages use the width (DJ, Nov 26: "review each page ... utilize the screen size and space
    well ... same detail and features"). Rules for every page live here, scoped to html.in-pane.pn-full, so the pages'
