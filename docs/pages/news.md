@@ -4,6 +4,9 @@ Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/sty
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
+## Featured day card (3.164.0)
+DJ, Nov 26: "thanksgiving day should be like its own section card, and include a Claude paragraph, and the three matchups listed, and stories related to those matchups within the section, then continue with other news beneath it." General pattern for any featured day. Worker writes `page.feature` {title, text, games [{g,label,text}], stories [{n,title,text}]} (replaces `page.theme`; an old doc's theme still shows as the plain banner). Featured games are taken out of On Deck so they are not listed twice. Client: `section.nf-ft` in nlRender, before everything else on Home.
+
 ## News today: the Front Page (3.139.0). READ THIS FIRST; most of "Done" below is retired
 DJ, Nov 25, 2026 (late): "Remove the tabs. Keep just front page. Make this page the same for every user and update on a
 schedule. No generation or customization. What Claude does well is the ability to preview, summarize, and recap games

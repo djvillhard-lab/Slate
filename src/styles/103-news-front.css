@@ -345,3 +345,19 @@
 .nf-qa > div + div { border-top: 1px solid var(--line); }
 .nf-qa h4 { font-size: 16px; font-weight: 800; line-height: 1.25; color: var(--ink); }
 .nl .nf-qa p { font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+
+/* ---------- 3.164.0 (DJ: the featured day is its own card: paragraph, matchups, their stories) ---------- */
+.nf-ft { display: grid; gap: 10px; margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad) 16px; background: color-mix(in srgb, var(--accent) 7%, var(--card)); border-top: 3px solid var(--accent); border-bottom: 1px solid var(--line); }
+.nf-fth { display: grid; gap: 8px; margin: 0 calc(-1 * var(--pad)); padding: 18px var(--pad) 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 28%, var(--card)), transparent 75%); }
+.nf-fth span { font-size: 11.5px; font-weight: 800; font-stretch: 110%; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.nf-fth h2 { font-size: 30px; font-weight: 900; font-stretch: 122%; line-height: 1.02; text-transform: uppercase; letter-spacing: .01em; color: var(--ink); overflow-wrap: anywhere; }
+.nl .nf-fth p { font-size: 15.5px; line-height: 1.5; color: var(--ink); }
+.nf-ft h5 { margin-top: 4px; font-size: 12px; font-weight: 900; font-stretch: 120%; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.nf-ft > .nf-g { background: var(--bg, var(--card)); }
+.nf-fsl { display: grid; border-radius: 8px; background: var(--bg, var(--card)); padding: 0 12px; }
+.nf-fs { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; color: inherit; text-decoration: none; }
+.nf-fs + .nf-fs { border-top: 1px solid var(--line); }
+.nf-fs > .badge { flex: none; margin-top: 2px; }
+.nf-fs > div { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.nf-fs h4 { font-size: 16px; font-weight: 800; line-height: 1.25; color: var(--ink); }
+.nl .nf-fs p { font-size: 14.5px; line-height: 1.45; color: var(--muted); }
