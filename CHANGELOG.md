@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.137.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Slate rules has a new layout. "Every league" and "By league" are gone. The page now shows what your slate picks, then Your rules: only the rules you have on, one row each in plain words with how many games it picks tonight.
+- Tap a rule to change it on its own page, with its choices, tonight's count for each, and Remove this rule (with Undo). Done takes you back to your rules.
+- Add a rule opens a sheet of everything you could add, grouped as Your teams and events, College, Pro, Soccer, and Golf and racing, with how many games each has tonight. Tap a league to pick which of its games you want.
+- Starts after and Most games sit at the bottom under Limits. Everyone's rules carry over exactly as they were.
+
 ## 3.136.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: the redesign ideas are now real tabs to try, in a row at the top of News (DJ's account only for now): Current, Combo, Wire 1, Wire 2, Wire 3, Rundown, Wire, Daily and Deck. Current is News as it was. Every other tab shows the same stories laid out a different way, with real photos, links to ESPN and The Athletic, and tonight's games.

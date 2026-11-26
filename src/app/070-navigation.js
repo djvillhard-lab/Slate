@@ -43,6 +43,7 @@
     if (typeof plrBack === "function" && plrBack()) return true;  // 3.112.2: an open player page closes first
     if (typeof findBack === "function" && findBack()) return true;  // 3.119.0: then an open search
     if (state.view === "news" && typeof nwCloseDeep === "function" && nwCloseDeep()) return true;  // a News breakdown: back to the News page
+    if (typeof rulesBack === "function" && rulesBack()) return true;  // 3.136.0: Slate rules: the Add sheet, then a rule's page, back to the rules list
     if (typeof setPageBack === "function" && setPageBack()) return true;  // a Settings sub-page: back to the Settings main page
     var bk = state.backTo, cur = state.view, h0 = homeView();
     if (bk && bk.view && bk.view !== cur && bk.view !== h0 && MENU_PAGES.indexOf(cur) === -1 && $("view-" + bk.view)) {

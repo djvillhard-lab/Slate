@@ -30,4 +30,4 @@ saved as `state.pvStyle`). The small switch that sat on the quick read, the reca
 Don't add a per-card switch back.
 
 ## Open
-- Notifications and Slate rules are still separate views rather than `setpg` blocks. They work the same to the eye.
+- Notifications and Slate rules are still separate views rather than `setpg` blocks. They work the same to the eye. Slate rules has its own note: `docs/pages/rules.md` (3.136.0 layout).

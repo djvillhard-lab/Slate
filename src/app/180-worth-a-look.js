@@ -474,29 +474,14 @@
     if (!Object.keys(b).length) delete r.by[k];
     rulesChanged();
   }
-  function lgCard(k, cnt, when) {
-    var b = lgRules(k), opts = LG_OPTS[k] || [], on = opts.filter(function (key) { return b[key]; }), c = cnt[k] || 0;
-    var open = !!(state.lgOpen && state.lgOpen[k]);
-    var card = el("section", "lgcard" + (on.length ? " on" : "") + (open ? " open" : ""));
-    var head = el("button", "lg-head"); head.type = "button"; head.setAttribute("aria-expanded", open ? "true" : "false");
-    var ic = sportIcon(k); if (ic) { ic.classList.add("sp"); head.appendChild(ic); } else head.appendChild(el("span"));
-    var tx = el("span", "lg-tx"); tx.appendChild(el("b", null, LEAGUES[k].name));
-    var picked = on.length ? countMatching(function (g) { return g.league === k && !!lgHit(g); }) : 0;
-    var sum = on.length ? (b.all ? "Every game" : on.map(function (key) { return optShort(k, key, b[key]); }).join(", ")) : "Off";
-    var sm = el("span", "lg-sum", sum);
-    tx.appendChild(sm); head.appendChild(tx);
-    head.appendChild(el("span", "lg-n" + (on.length && !picked ? " zero" : ""), on.length ? (picked ? picked + " " + when : "None " + when) : c ? c + (c === 1 ? " game" : " games") : ""));
-    var NS = "http://www.w3.org/2000/svg", chev = document.createElementNS(NS, "svg"), cp = document.createElementNS(NS, "path");
-    chev.setAttribute("viewBox", "0 0 24 24"); chev.setAttribute("fill", "none"); chev.setAttribute("stroke", "currentColor"); chev.setAttribute("stroke-width", "2.2"); chev.setAttribute("stroke-linecap", "round"); chev.setAttribute("stroke-linejoin", "round"); chev.setAttribute("aria-hidden", "true"); chev.setAttribute("class", "lg-chev");
-    cp.setAttribute("d", "m6 9 6 6 6-6"); chev.appendChild(cp); head.appendChild(chev);
-    head.addEventListener("click", function () { state.lgOpen = state.lgOpen || {}; state.lgOpen[k] = !open; renderRules(); });
-    card.appendChild(head);
-    if (!open) return card;
-    var body = el("div", "lg-body");
+  // a league's choices on its Slate rules page (190-rules.js): one row per choice with a switch, tonight's count and,
+  // where a choice has kinds (ranked: both / top 10 / any), the same chips as Worth a look settings
+  function lgOptRows(k, when) {
+    var b = lgRules(k), opts = LG_OPTS[k] || [], c = countMatching(function (g) { return g.league === k; }), out = [];
     var list = b.all ? ["all"] : opts;
     list.forEach(function (key) {
       var oi = optInfo(k, key), val = b[key], isOn = !!val;
-      var row = el("div", "lopt" + (isOn ? " on" : ""));
+      var row = el("div", "lopt rl-opt" + (isOn ? " on" : ""));
       var t = el("div", "rtext"), tl = el("div", "rtitle"); tl.appendChild(el("b", null, oi.t));
       var probe = isOn ? val : oi.c ? oi.c[0][0] : true;
       var n = key === "all" ? c : countMatching(function (g) { return g.league === k && !!MATCH[key](g, probe); });
@@ -514,11 +499,10 @@
       }
       row.appendChild(t);
       row.appendChild(switchEl(isOn, oi.t + ", " + LEAGUES[k].name, function (v) { setLg(k, key, v ? (oi.c ? oi.c[0][0] : true) : null); }));
-      body.appendChild(row);
+      out.push(row);
     });
-    if (b.all) body.appendChild(el("p", "lg-note", "Every game is in, so the other " + LEAGUES[k].name + " rules are hidden. Turn this off to pick by rule."));
-    card.appendChild(body);
-    return card;
+    if (b.all) out.push(el("p", "lg-note", "Every game is in, so the other " + LEAGUES[k].name + " choices are hidden. Turn this off to pick by kind of game."));
+    return out;
   }
   // Big events: every event, or only the ones DJ picks from the full list of upcoming events (built daily by the script)
   var EVCAT = null, evCatAsked = false;

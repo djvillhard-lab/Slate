@@ -1,0 +1,41 @@
+/* ---- Slate rules page (3.136.0, DJ Nov 26, 2026): Your rules list, Add a rule sheet, a page per rule, Limits ---- */
+.rl-list { background: var(--card); border-radius: 8px; }
+.rl-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 14px; text-align: left; color: var(--ink); background: none; border: 0; font: inherit; }
+.rl-row + .rl-row { border-top: 1px solid var(--hair); }
+.rl-ic { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--raise); color: var(--accent); }
+.rl-ic svg { width: 19px; height: 19px; }
+.rl-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rl-tx b { font-size: 16px; font-weight: 800; }
+.rl-tx > span { font-size: 13px; font-weight: 700; color: var(--muted); line-height: 1.3; }
+.rl-n { flex: none; font-size: 13px; font-weight: 700; font-stretch: 88%; color: var(--accent); white-space: nowrap; }
+.rl-n.zero { color: var(--dim); }
+.rl-row .chev { flex: none; color: var(--dim); font-size: 20px; line-height: 1; }
+.rl-row > svg { flex: none; width: 20px; height: 20px; color: var(--accent); }
+.rl-empty { margin: 0; padding: 16px; font-size: 15px; line-height: 1.4; color: var(--muted); }
+.rl-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 48px; margin-top: 12px; border-radius: 8px; border: 1.5px dashed color-mix(in srgb, var(--accent) 60%, transparent); background: none; color: var(--accent); font: inherit; font-size: 16px; font-weight: 800; }
+.rl-add svg { width: 18px; height: 18px; }
+.rl-lims { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rl-lim { background: var(--card); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.rl-lim > span { font-size: 13px; font-weight: 700; color: var(--dim); }
+.rl-foot { margin: 16px 2px 0; }
+/* a rule's own page */
+.rl-head { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
+.rl-head .rl-ic { width: 48px; height: 48px; }
+.rl-head .rl-ic svg { width: 24px; height: 24px; }
+.rl-head .rl-tx b { font-size: 22px; font-stretch: 112%; }
+.rl-head .rl-n { font-size: 15px; font-stretch: 100%; }
+.rl-opts { padding-top: 4px; padding-bottom: 4px; }
+.rl-ask { margin: 12px 0 0; font-size: 15px; font-weight: 800; color: var(--head); }
+.rl-hint, .rl-say { margin: 4px 0 8px; font-size: 13px; line-height: 1.4; color: var(--muted); }
+.rl-say { font-size: 15px; color: var(--ink); margin: 12px 0; }
+.lopt.rl-opt { padding-left: 0; }
+.rl-opt .rchoice button { height: 44px; }
+.rl-opts .evpick { padding-bottom: 8px; }
+.rl-remove { width: 100%; height: 44px; margin-top: 16px; }
+.rl-done { width: 100%; height: 48px; margin-top: 10px; }
+/* the Add a rule sheet */
+.rl-sheet { gap: 8px !important; }
+.rl-sh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rl-sh-x { height: 44px; padding: 0 16px; }
+.rl-sh-sec { margin: 10px 2px 0; font-size: 15px; font-weight: 800; color: var(--head); }
+.rl-sheet .rl-list { background: color-mix(in srgb, var(--raise) 60%, transparent); }
