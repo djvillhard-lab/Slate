@@ -183,3 +183,8 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   Hockey (Goals & penalties), soccer (Key events) and baseball (Scoring) already had their filter.
 - `.fd-bar` wraps (040-components.css) so up to four buttons plus "Last play" fit the folded Duo.
 - Open: golf and F1 have no Live feed, so nothing to add there. Baseball checked against a September game's data only (no MLB games in November).
+
+## 3.147.1: basketball Big plays tightened, Leaders show full lines (DJ: "big plays has too many plays"; "leaders should show all stats")
+- Big plays = `hpTags(...).big` only: a lead change, tie, or go-ahead basket in the last 5 minutes of regulation or in OT; the basket that first makes a run 10-0;
+  buzzer-beaters; ESPN win-probability swings of 15%+. Routine threes, dunks, and-ones and early lead changes are out (a close game had 8, a blowout 1).
+- Basketball Leaders rows show pts, reb, ast from the box score for every leader (`hix` in `fdLeaders`).

@@ -357,7 +357,7 @@
     var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, a.shortName || fdShort(P))); nmw.appendChild(el("em", "fd-pos", lab)); if (txt) nmw.appendChild(el("i", null, txt)); row.appendChild(nmw); return row;
   }
   function fdLeaders(g, sum, sideOf, over, order) {
-    var sp = BX_SPORT[g.league], cols = {}, any = false;
+    var sp = BX_SPORT[g.league], cols = {}, any = false, hix = sp === "bball" ? hpIndex(sum) : null;
     if (sp === "baseball") {
       var ix = bbIndex(sum), pick = {};
       ((sum.boxscore || {}).players || []).forEach(function (t) { var sd = sideOf[String((t.team || {}).id || "")]; if (!sd) return; pick[sd] = pick[sd] || {};
@@ -374,6 +374,9 @@
         want.forEach(function (w) { var L = (t.leaders || []).filter(function (x) { return x.name === w[0]; })[0], top = L && (L.leaders || [])[0], a = top && top.athlete; if (!a || !top.displayValue) return;
           var txt;
           if (sp === "football") txt = String(top.displayValue).replace(/\bYDS\b/g, "yds").replace(/\bCAR\b/g, "car").replace(/\bREC\b/g, "rec");
+          else if (hix) { var Pb = hix[String(a.id || "")], sb = (Pb && Pb.st) || {}, nb = function (k) { return parseFloat(sb[k]) || 0; }; if (!(parseFloat(top.displayValue) > 0)) return;
+            /* 3.147.1 (DJ: "leaders should show all stats"): every basketball leader shows points, rebounds and assists from the box score */
+            txt = Pb ? nb("PTS") + " pts, " + nb("REB") + " reb, " + nb("AST") + " ast" : top.displayValue + " " + w[2]; }
           else { var v = top.displayValue, n = parseFloat(v); if (!(n > 0)) return; var u = w[2]; if (n !== 1 && !/^(pts|reb|ast)$/.test(u)) u += /ss$/.test(u) ? "es" : "s"; txt = v + " " + u + (w[0] === "points" && sp === "bball" && top.summary ? ", " + String(top.summary).split(",")[0] : ""); }  /* basketball points add the shooting (8/13 FG); the rest is the count alone, so it fits a phone */
           col.appendChild(fdLdRow(g, sd, a, w[1], txt)); any = true; });
         if (col.firstChild) cols[sd] = col; });

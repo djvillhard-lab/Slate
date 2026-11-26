@@ -95,7 +95,7 @@
   }
   // tags (right side of a card), all from ESPN's plays: lead change, tie, a scoring run, and-one, buzzer-beater, clutch, win probability swing
   function hpTags(plays, sum, g, sideOf, ix) {
-    var out = {}, wpBy = {}, prevWp = null, pa = 0, ph = 0, run = { sd: "", n: 0 }, reg = hpHalves(g.league) ? 2 : 4, ft1 = {};
+    var out = {}, bigM = {}, wpBy = {}, prevWp = null, pa = 0, ph = 0, run = { sd: "", n: 0 }, reg = hpHalves(g.league) ? 2 : 4, ft1 = {};
     (sum.winprobability || []).forEach(function (w) { if (w && w.playId != null && w.homeWinPercentage != null) wpBy[String(w.playId)] = w.homeWinPercentage; });
     plays.forEach(function (pl) { if (hpFT(pl) && /1 of 1/i.test(String((pl.type || {}).text || "") + " " + String(pl.text || "")) && !/technical|flagrant/i.test(String(pl.text || ""))) { var a = ((pl.participants || [])[0] || {}).athlete || {}; ft1[((pl.period || {}).number) + "|" + ((pl.clock || {}).displayValue) + "|" + a.id] = 1; } });
     plays.forEach(function (pl) {
@@ -104,19 +104,24 @@
       var lead0 = pa > ph ? "away" : ph > pa ? "home" : "", lead1 = aS > hS ? "away" : hS > aS ? "home" : "", pts = (aS - pa) + (hS - ph);
       if (pts > 0) {
         if (lead0 && lead1 && lead0 !== lead1) add(1, "Lead change", "hot"); else if (lead0 && !lead1) add(1, "Tie game", "hot");
-        var who = aS !== pa ? "away" : "home"; if (run.sd === who) run.n += pts; else run = { sd: who, n: pts };
+        var who = aS !== pa ? "away" : "home", run0 = run.sd === who ? run.n : 0; if (run.sd === who) run.n += pts; else run = { sd: who, n: pts };
         if (run.n >= 8) add(2, abbr(g, who) + " " + run.n + "-0 run", "good");
+        // 3.147.1 (DJ: "big plays has too many plays"): Big plays keeps only a lead change or tie in the last 5 minutes (or overtime), the basket that
+        // first makes a run 10-0, a buzzer-beater, and a win-probability swing of 15% or more
+        var per0 = Number((pl.period || {}).number) || 0, late = per0 > reg || (per0 === reg && hpSecs((pl.clock || {}).displayValue) <= 300);
+        if (late && lead1 !== lead0 && (lead1 || lead0)) bigM[pid] = 1;
+        if (run.n >= 10 && run0 < 10) bigM[pid] = 1;
         var a1 = ((pl.participants || [])[0] || {}).athlete || {};
         if (pl.shootingPlay && !hpFT(pl) && ft1[((pl.period || {}).number) + "|" + ((pl.clock || {}).displayValue) + "|" + a1.id]) add(3, "And-one", "hot");
-        if (pl.shootingPlay && !hpFT(pl) && hpSecs((pl.clock || {}).displayValue) <= 1 && /\./.test(String((pl.clock || {}).displayValue || "")) ) add(2, "Buzzer-beater", "hot");
+        if (pl.shootingPlay && !hpFT(pl) && hpSecs((pl.clock || {}).displayValue) <= 1 && /\./.test(String((pl.clock || {}).displayValue || "")) ) { add(2, "Buzzer-beater", "hot"); bigM[pid] = 1; }
       }
       pa = aS; ph = hS;
       var per = Number((pl.period || {}).number) || 0, big = pts > 0 || /turnover|blocks|steals/i.test(String(pl.text || "") + String((pl.type || {}).text || ""));
       if (big && per >= reg && hpSecs((pl.clock || {}).displayValue) <= 300 && Math.abs(aS - hS) <= 5) add(4, "Clutch", "rz");
-      var w = wpBy[pid]; if (w != null) { if (prevWp != null && Math.abs(w - prevWp) >= 0.08) { var up = w > prevWp ? "home" : "away"; add(5, "+" + Math.round(Math.abs(w - prevWp) * 100) + "% " + abbr(g, up), "swing"); } prevWp = w; }
+      var w = wpBy[pid]; if (w != null) { if (prevWp != null && Math.abs(w - prevWp) >= 0.08) { var up = w > prevWp ? "home" : "away"; add(5, "+" + Math.round(Math.abs(w - prevWp) * 100) + "% " + abbr(g, up), "swing"); if (Math.abs(w - prevWp) >= 0.15) bigM[pid] = 1; } prevWp = w; }
       if (pid && t.length) out[pid] = t.sort(function (a, b) { return a.p - b.p; }).slice(0, 3);
     });
-    return { tags: out, run: run };
+    return { tags: out, run: run, big: bigM };
   }
   function hpFeed(body, g, sum, anchor, aTop, sc) {
     var comp = ((sum.header || {}).competitions || [])[0] || {}, cst = comp.status || {}, st = cst.type || {}, sideOf = {}, scoreOf = {}, recOf = {}, lines = {};
@@ -203,9 +208,8 @@
           tg = tm2.length ? tm2.slice(0, 3) : null;
         }
         if (rd.minor === "Sub" || rebSkip[pid]) continue;  // subs are left out; a rebound that follows a miss is on the miss's box
-        // 3.146.0 (DJ: football's Scoring button, for every sport): Big plays shows only the plays with a tag (lead change, tie, run, and-one,
-        // buzzer-beater, clutch, a big win-probability swing) plus every made three and dunk
-        if (bigOnly && !(tg && tg.length) && !(pl.scoringPlay && /three point|dunk/i.test(String((pl.type || {}).text || "") + " " + String(pl.text || "")))) continue;
+        // 3.146.0 Big plays (football's Scoring, for basketball); 3.147.1 (DJ: too many): only the moments hpTags marks big
+        if (bigOnly && !(TG.big[pid] || (T && T.some(function (x) { return TG.big[hpPid(x)]; })))) continue;
         if (bigOnly) nBig++;
         flush(); items++;
         var gray = /^(miss|foul|to|end)$/.test(rd.kind), rb = rebOf[pid], rbR = rb ? hpRead(rb, ix) : null;
