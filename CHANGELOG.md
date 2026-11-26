@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.171.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed: the round collapse button is now a focus view for every sport and every screen: folded, unfolded upright, unfolded sideways (each page has its own button now) and a regular iPhone. Tap it and the page header, the league pills and the extra cards above the plays go away, leaving the score on one slim line and the plays. Football keeps the field pinned under the score. Tap it again for the full feed.
+- In the focus view the score line is now a row of the live games. The game you are watching comes first, outlined in green. The other live games sit beside it with their scores and clocks: tap one to switch to it, or slide the row sideways to see more. Swiping the page sideways still moves to the next game too.
+- Football's down and distance ("DET 2nd & 6 at DET 43") moves to the top of the field when the row of games is showing, or on a narrow screen, so it is never cut off.
+- Picture in Picture on the top half of the unfolded Duo: the focus view did not switch on by itself. It now also counts the space the video takes when iOS keeps the app full size behind it, and looks again every couple of seconds while the Live feed is open.
+
 ## 3.170.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Box scores, less empty space: in groups with only a few stats (football's passing, rushing and receiving, and other short ones) a player no longer takes a tall row with the right half empty. On a phone the name and the stats now share one line, with a smaller photo, so about twice as many players fit on screen. On the unfolded Duo held upright, players sit two to a row. This is the same in the Live feed, the quick look and the matchup page. Wide groups like basketball's already fill the width and are unchanged.
