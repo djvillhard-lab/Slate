@@ -135,14 +135,19 @@
   function nlStoryClose() { var r = nl.back || "news"; nl.story = null; nl.back = null; if (r !== "news" && window.SlateApp && window.SlateApp.paneGo) window.SlateApp.paneGo(r); else renderNews(true); }
   setTimeout(function () { if (window.SlateApp) window.SlateApp.newsStory = function (json) { try { nlStoryShow(JSON.parse(json)); } catch (e) {} }; }, 0);
   // the story on its own half. Returns true when it drew.
-  function nlBackBtn(label, fn) { var b = el("button", "nf-bk"); b.type = "button"; b.appendChild(icon("back")); b.appendChild(el("span", null, label)); b.addEventListener("click", fn); return b; }
-  function nlFab(label, fn) { var b = nlBackBtn(label, fn); b.classList.add("nf-fab"); return b; }
+  // 3.149.2 (DJ: "Only need one back button. Match the layout and design and placement of other places it is used in the
+  // app"): an opened story or section is a page you opened, so the app's own Back button shows (bottom right, in place
+  // of the bar; goBack calls nwCloseDeep in 200-news.js, which closes the story, then the section). Where the app's Back
+  // is not on screen (the left half of the unfolded Duo has no bar or Back of its own), News draws the same round button.
+  function nlOpen() { return !!nl.story || nl.f !== "home"; }
+  function nlChrome() { var sg = (nl.story ? "s" : "") + nl.f; if (nl.csig === sg) return; nl.csig = sg; if (typeof n3Draw === "function") n3Draw(); if (typeof renderBack === "function") renderBack(); }
+  function nlFab(fn) { var b = el("button", "nf-fab"); b.type = "button"; b.setAttribute("aria-label", "Back"); b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'; b.addEventListener("click", fn); return b; }
   function nlStoryRender(body) {
     var x = nl.story; if (!x) return false;
     // 3.148.1 (DJ got stuck here: Close sat top right, under the Dynamic Island): Back is on the left, away from the island,
     // and again as a button under the thumb that stays on screen
-    var wrap = nlWrap(body, "nl-sv"), bar = el("div", "nl-svbar"), cb = nlBackBtn("Back", nlStoryClose); bar.appendChild(cb); bar.appendChild(el("b", null, "News story")); wrap.appendChild(bar);
-    wrap.appendChild(nlFab("Back", nlStoryClose));
+    var wrap = nlWrap(body, "nl-sv"), bar = el("div", "nl-svbar"); bar.appendChild(el("b", null, "News story")); wrap.appendChild(bar); nlChrome();
+    var dbk = $("dock-back"); if (!dbk || !dbk.offsetWidth) wrap.appendChild(nlFab(nlStoryClose));
     var num = (x.kind === "number" || x.kind === "fun") && x.value, im = !num && x.img ? nwImg(nwPic(x.img, 800), "nl-svp") : null; if (im) wrap.appendChild(im);
     var art = el("div", "nl-sva"); if (x.c) art.style.setProperty("--c", x.c);
     var top = nlTags(x); top.appendChild(el("span", "nl-tm", nlTime(x.ms || Date.now()))); art.appendChild(top);
@@ -258,11 +263,11 @@
   // (283-three-pages.js draws the button and its list from nlTabs); the pills on top stay only where that bar isn't shown
   function nlTabs() { return nl.story ? [] : (nl.opts || []).map(function (o) { return [o[0], o[1], o[3], !!o[4], nl.f === o[0]]; }); }
   function nlTabNow() { var t = ""; (nl.opts || []).forEach(function (o) { if (o[0] === nl.f && o[0] !== "home") t = o[1]; }); return t; }
-  function nlBarTabs() { return typeof n3BarOn === "function" && n3BarOn(); }
+  function nlBarTabs() { return typeof n3On === "function" && n3On() && !n3Left() && !(typeof panesOn === "function" && panesOn()); }   // the three-page bar is this page's menu (even while Back stands in for it)
   function nlPills(body, M) {
     var opts = nl.opts = nlOpts(M);
     if (opts.length < 2) return;
-    if (nlBarTabs()) { if (nl.f !== "home") { var cur = opts.filter(function (o) { return o[0] === nl.f; })[0], hb = el("div", "nf-cur"); hb.appendChild(nlBackBtn("Home", function () { nlPick("home"); })); hb.appendChild(el("b", null, cur ? cur[1] : "")); body.appendChild(hb); } return; }
+    if (nlBarTabs()) { if (nl.f !== "home") { var cur = opts.filter(function (o) { return o[0] === nl.f; })[0], hb = el("div", "nf-cur"); hb.appendChild(el("b", null, cur ? cur[1] : "")); body.appendChild(hb); } return; }
     var row = el("div", "nf-pills"); row.setAttribute("role", "tablist"); row.setAttribute("aria-label", "Filter the news");
     opts.forEach(function (o) {
       var b = el("button", "nf-pill" + (o[0].indexOf("lg:") === 0 ? " lg" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", nl.f === o[0] ? "true" : "false");
@@ -332,7 +337,6 @@
       if (M.leagues.length) { wrap.appendChild(nlH(NL_T.leagues, "Claude's snapshots")); M.leagues.forEach(function (x) { wrap.appendChild(nlLeagueCard(x, true)); }); }
       headlines(M.items.filter(function (x) { return jin.indexOf(x) === -1 && !isNumX(x); }), !M.has);
     }
-    if (f !== "home") { var eb = nlBackBtn("Back to News Home", function () { nlPick("home"); }); eb.classList.add("wide"); wrap.appendChild(eb); }
-    if (nlBarTabs() && typeof n3Draw === "function") n3Draw();   // the section button follows the page
+    nlChrome(); if (nlBarTabs() && typeof n3Draw === "function") n3Draw();   // the section button follows the page
     return true;
   }

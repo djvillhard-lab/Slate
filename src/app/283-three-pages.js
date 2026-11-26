@@ -20,7 +20,7 @@
   function n3BarOn() {
     if (!n3On() || n3Left() || (typeof panesOn === "function" && panesOn())) return false;
     var v = state.view;
-    if (v === "news") return !(typeof nw !== "undefined" && nw.deep);
+    if (v === "news") return !(typeof nw !== "undefined" && nw.deep) && !(typeof nlOpen === "function" && nlOpen());   // an opened News story or section is a page you opened: Back instead of the bar
     if (v === "settings") return !state.setPage;
     return v === "lineup" || v === "games" || v === "tv" || v === "teams" || v === "moments";
   }
