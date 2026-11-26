@@ -348,7 +348,7 @@
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
   // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
   // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
-  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.141.1") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.141.1"); } } catch (e) {} })();
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.144.1") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.144.1"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
@@ -518,6 +518,16 @@
     if (m && byAbbr[m[1]] && (sport === "football" || sport === "bball")) { var sp = Math.abs(parseFloat(m[2])), fav = byAbbr[m[1]];
       if (sp <= 2.5) add("tight", 42, T[fav].name + " are only " + sp + "-point favorites"); else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " are " + sp + "-point favorites"); }
     if (m && byAbbr[m[1]] && byAbbr[m[1]] !== H && parseFloat(m[2]) <= -1 && sport !== "football" && sport !== "bball") {}
+    // 3.144.1 (DJ: "I expect more with the one liners"): how the betting line has moved since it opened (DraftKings, in ESPN's pick center)
+    var psp = (pk && pk.pointSpread) || {}, oH = parseFloat(((psp.home || {}).open || {}).line), cH = parseFloat(((psp.home || {}).close || {}).line);
+    // never at a neutral site, where ESPN's opening line is sometimes from the other side (Kansas State "opened 12.5-point favorites"
+    // over Alabama, now 15.5-point underdogs); a flip only when the line moved 6 points or less
+    if (!comp.neutralSite && !isNaN(oH) && !isNaN(cH) && oH !== cH && Math.abs(cH) <= 45) {
+      if (oH * cH < 0 && Math.abs(oH - cH) <= 6) { var nf = cH < 0 ? H : A; add("flip|" + nf, 54, T[nf].name + " have become the favorite after opening as " + Math.abs(oH) + "-point underdogs"); }
+      else if (oH * cH > 0 && Math.abs(cH - oH) >= 2) { var fv = cH < 0 ? H : A, o1 = Math.abs(oH), c1 = Math.abs(cH);
+        add("move|" + fv, 40, T[fv].name + (c1 > o1 ? " have grown from " : " have dropped from ") + o1 + "- to " + c1 + "-point favorites since the line opened"); } }
+    var tto = (pk && pk.total && pk.total.over) || {}, tO = parseFloat(String(((tto.open || {}).line) || "").replace(/^[ou]/, "")), tC = parseFloat(String(((tto.close || {}).line) || "").replace(/^[ou]/, ""));
+    if (!isNaN(tO) && !isNaN(tC) && Math.abs(tC - tO) >= (sport === "football" ? 3 : sport === "bball" ? 4 : 99)) add("tot", 32, "The over/under has " + (tC > tO ? "climbed" : "dropped") + " from " + tO + " to " + tC);
     var pr = sum.predictor; if (pr && pr.homeTeam && pr.awayTeam) { var ph = parseFloat(pr.homeTeam.gameProjection), pa = parseFloat(pr.awayTeam.gameProjection);
       if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.min(99, Math.round(Math.max(ph, pa))); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
     // the table: leaders, top-of-table and relegation clashes
@@ -580,12 +590,26 @@
     if (sport === "bball") { var bt = (parseFloat(String(T[A].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[A].rec.total).split("-")[1]) || 0) >= (parseFloat(String(T[H].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[H].rec.total).split("-")[1]) || 0) ? A : H;
       (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
         var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
+    // 3.144.1: each team's season leader, so every team can carry a real fact of its own (the card has one row per team)
+    (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; var cats = {};
+      (L.leaders || []).forEach(function (cat) { var x = (cat.leaders || [])[0]; if (x && x.athlete && x.athlete.displayName) cats[cat.name || ""] = { n: x.athlete.displayName, v: String(x.displayValue || "") }; });
+      var num = function (v, rx) { var m0 = rx.exec(v); return m0 ? parseFloat(m0[1].replace(/,/g, "")) : NaN; };
+      if (sport === "football") { var ps = cats.passingYards, ru = cats.rushingYards, re = cats.receivingYards, pick = null;
+        if (ru && num(ru.v, /([\d,]+) YDS/) >= 900) pick = ru.n + " has " + num(ru.v, /([\d,]+) YDS/).toLocaleString("en-US") + " rushing yds" + (num(ru.v, /(\d+) TD/) ? " and " + num(ru.v, /(\d+) TD/) + " TD" : "");
+        else if (re && num(re.v, /([\d,]+) YDS/) >= 900) pick = re.n + " has " + num(re.v, /([\d,]+) YDS/).toLocaleString("en-US") + " receiving yds" + (num(re.v, /(\d+) TD/) ? " and " + num(re.v, /(\d+) TD/) + " TD" : "");
+        else if (ps && num(ps.v, /(\d+) TD/) >= 8) pick = ps.n + " has " + num(ps.v, /(\d+) TD/) + " TD passes and " + (num(ps.v, /(\d+) INT/) || 0) + " INT";
+        if (pick) add("lead|" + i, 22, pick + " for " + T[i].abbr); }
+      if (sport === "bball" && !c.some(function (x) { return x.k === "scorer|" + i; })) { var pt = cats.points || cats.pointsPerGame; var pv0 = pt ? parseFloat(pt.v) : NaN;
+        if (pt && pv0 >= 12) add("scorer|" + i, 20, pt.n + " averages " + pv0 + " points for " + T[i].abbr); }
+      if ((sport === "hockey" || sport === "soccer") && !c.some(function (x) { return x.k === "goals|" + i; })) { var gq = cats.goals || cats.goalsLeaders; var gv = gq ? (/Goals:\s*(\d+)/i.test(gq.v) ? +/Goals:\s*(\d+)/i.exec(gq.v)[1] : parseInt(gq.v, 10)) : NaN;
+        if (gq && gv >= 3) add("goals|" + i, 18, gq.n + " has " + gv + " goals for " + T[i].abbr); }
+    });
     // Nov 20, 2026 (DJ: "We need some one-liner text to show for every slate game"): last real facts before the plain records line
     // the top scorer in goals (hockey, soccer), from ESPN's team leaders
     if (sport === "hockey" || sport === "soccer") { var gl0 = null; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; (L.leaders || []).forEach(function (cat) { if (!/^goals(Leaders)?$/i.test(cat.name || "")) return;
         // soccer's value reads "Matches: 10, Goals: 9" (3.121.11: the line never showed for soccer before)
         var x = (cat.leaders || [])[0], a = x && x.athlete || {}, dv = String(x && x.displayValue || ""), v = /Goals:\s*(\d+)/i.test(dv) ? +/Goals:\s*(\d+)/i.exec(dv)[1] : parseInt(dv, 10); if (a.displayName && v >= 3 && (!gl0 || v > gl0.v)) gl0 = { i: i, n: a.displayName, v: v }; }); });
-      if (gl0) add("goals|" + gl0.i, sport === "soccer" && gl0.v >= 5 ? 36 + Math.min(gl0.v, 12) / 2 : 19, gl0.n + " leads " + (sing ? "" : "the ") + T[gl0.i].name + " with " + gl0.v + " goals"); }
+      if (gl0 && !c.some(function (x) { return x.k === "goals|" + gl0.i; })) add("goals|" + gl0.i, sport === "soccer" && gl0.v >= 5 ? 36 + Math.min(gl0.v, 12) / 2 : 19, gl0.n + " leads " + (sing ? "" : "the ") + T[gl0.i].name + " with " + gl0.v + " goals"); }
     // the soccer table, both places
     // (no "Bournemouth (7th) host Forest (16th)": the card shows each team's place, 3.121.11)
     // a home or road record the lines above didn't use, whatever it is (the card shows only the overall record)
@@ -593,7 +617,7 @@
       if (sport !== "soccer" && w.length >= 2 && !w.some(isNaN) && w[0] + w[1] >= 3 && !pvAllHome(T[i], w[0], w[1]) && !c.some(function (x) { return x.k === "perf|" + i || x.k === "bad|" + i || x.k === "good|" + i; }))
         add("split|" + i, 12 + Math.abs(w[0] / (w[0] + w[1]) - 0.5) * 6, T[i].name + " are " + r0 + " " + (i === H ? "at home" : "on the road")); });
     // ESPN's preview headline: a solid fallback
-    var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 33, hd);
+    var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 120 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 44, hd);   // 3.144.1: ESPN's preview headline is the storyline (rivalry, holiday, what's at stake)
     // a playoff game (3.92.0): the regular-season table, division race and season series no longer decide anything
     if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser|top|chase|drop|close)(\||$)/.test(x.k); });
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
@@ -609,25 +633,19 @@
     var idIn = function (k) { return String(k || "").split("|").filter(function (x) { return T[x]; })[0] || ""; };
     pvCompute.tm = idIn(c[0].k) ? T[idIn(c[0].k)].abbr : "";
     pvCompute.sc = c[0].sc; pvCompute.f = c[0].k === "art" ? "" : c[0].tx;   // for pvBlend (105-pv-notes.js): how strong the line is, and its best fact alone
-    // the second fact must add something: after "Both on a roll" or a hot-vs-cold line, the streaks are already said
-    var STREAK = /^(form|bothhot|won|lost|unb|form5)$/, streaky = STREAK.test(c[0].k.split("|")[0]);
-    var qbFirst = c[0].k.indexOf("qb1|") === 0;  // "Raiders QB Mendoza makes his first start" doesn't read on into "and are without…": the second fact is the other team's
-    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)) && !(/^(big|tight)$/.test(c[0].k) && /^(pred|coin)$/.test(x.k)) && !(/^(pred|coin)$/.test(c[0].k) && /^(big|tight)$/.test(x.k)); })[0];
-    if (c[0].k !== "art" && s2 && t.length + s2.tx.length <= 100 && s2.sc >= 30) {  // two facts when they fit in about a line and a half
-      // same team twice reads as one sentence: "Canucks have lost five straight and are 1-8 at home"
-      // 3.111.x: never join onto a line that already names both teams ("Heat have won five straight; Bucks have lost five" + "Heat are
-      // 12.5-point favorites" read as the Bucks being favorites)
-      var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 || t.indexOf("; ") >= 0 || t.indexOf(", ") >= 0 || /^Both /.test(t) ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
-      var rest = who0 ? s2.tx.slice(T[who0].name.length + 1) : "";
-      // 3.88.3: no repeated verb. "USA has won five in a row and has won the last four meetings" -> "...and the last four meetings";
-      // "are without X and are 5-0 at home" -> "...and 5-0 at home"
-      if (who0) { var p1 = t.slice(T[who0].name.length + 1).split(" "), p2 = rest.split(" ");
-        if (p1[0] === p2[0] && /^(have|has)$/.test(p1[0]) && p1[1] === p2[1]) rest = p2.slice(2).join(" ");
-        else if (p1[0] === p2[0] && /^(are|is|have|has)$/.test(p1[0]) && !/^(still|only|looking)$/.test(p2[1] || "")) rest = p2.slice(1).join(" ");
-        else if (!/^(are|have|is|has|leads?) /.test(rest)) rest = ""; }
-      t = who0 && rest ? t + " and " + rest : who0 ? t : t + "; " + (s2.k === "close" ? s2.tx.charAt(0).toLowerCase() + s2.tx.slice(1) : s2.tx);
-      if (!who0 && idIn(s2.k) !== idIn(c[0].k)) pvCompute.tm = "";  // two teams' facts: no single team
-    }
+    // 3.144.1 (DJ: "I expect more with the one liners for my slate tomorrow"): the card shows one "ABBR: fact" row per team, so the
+    // line gives each team its own facts: a storyline or matchup fact first (ESPN's preview headline, both streaks, a coin flip, the
+    // spread or the over/under moving), then each team's best fact, plus its second best when it's strong and short
+    var STREAK = /^(form|bothhot|won|lost|unb|form5|slump)$/, k0 = function (x) { return x.k.split("|")[0]; };
+    var mu = c.filter(function (x) { return !idIn(x.k) && x.sc >= 28; })[0], streaky = mu && /^(form|bothhot)$/.test(mu.k);
+    var used = mu ? [mu] : [], order = sport === "soccer" ? [H, A] : [A, H], parts = mu ? [mu.k === "close" ? mu.tx : mu.tx] : [];
+    order.forEach(function (i) {
+      var mine = c.filter(function (x) { return idIn(x.k) === i && x.k !== "art" && used.indexOf(x) < 0 && !(streaky && STREAK.test(k0(x))) && !(mu && /^(tight|big)$/.test(mu.k) && /^(pred|coin)$/.test(k0(x))); });
+      var f1 = mine[0]; if (!f1) return; used.push(f1); parts.push(f1.tx);
+      var f2 = mine.filter(function (x) { return k0(x) !== k0(f1) && !(STREAK.test(k0(x)) && STREAK.test(k0(f1))) && !(/^(qb1)$/.test(k0(f1))); })[0];
+      if (f2 && f2.sc >= 28 && f1.tx.length + f2.tx.length <= 110) { used.push(f2); parts.push(f2.tx); } });
+    var t = parts.length ? parts.join("; ") : c[0].tx;
+    if (parts.length > 1) pvCompute.tm = "";
     return t;
   }
   // football, before kickoff: is either team starting a quarterback for the first time this season? The depth chart's QB1 against the team's season
@@ -693,8 +711,10 @@
     names = (names || []).filter(function (x) { return x && String(x).length >= 2; }).sort(function (a, b) { return b.length - a.length; });
     if (!names.length) return false;
     var N = "(?:" + names.map(esc).join("|") + ")";
-    if (!new RegExp("^(the )?" + N + "('s?)? (take on|takes on|face|faces|host|hosts|visit|visits|meet|meets|battle|battles|play|plays|welcome|welcomes|square off|clash|vs\\.?|at|and)\\b", "i").test(t)) return false;
+    if (!new RegExp("^(the )?" + N + "('s?)? (take on|takes on|face|faces|host|hosts|visit|visits|meet|meets|battle|battles|play|plays|welcome|welcomes|square off|squares off|face off|faces off|tip off|tips off|clash|vs\\.?|at|and)\\b", "i").test(t)) return false;
     var rest = t.replace(new RegExp("(^|[^\\w])" + N + "('s?)?(?![\\w])", "g"), " ");
+    // 3.144.1: where they play ("…meet in Cypress Lake, Florida") and a school's state tag ("Saint Mary's (CA)") aren't news either
+    rest = rest.replace(/\([^)]{1,12}\)/g, " ").replace(/\s+(in|at)\s+[A-Z][\w'.-]*(\s+[A-Z][\w'.-]*)*(,\s+[A-Z][\w.]*(\s+[A-Z][\w.]*)*)?\s*$/, "");
     return !/(^|[\s,;:-])(?!(The|A|An|In|On|At|As|And|To|For|With|After|Before|Look|Looks|Seek|Seeks|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Game|Week)\b)[A-Z][a-z]/.test(rest.slice(1));
   }
   function pvNames(g) {

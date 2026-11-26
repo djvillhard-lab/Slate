@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.144.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- The slate: pre-game one-liners say more. Each team gets its own row with its best fact, and a second one when it's strong, plus a storyline row on top when there is one. For example, Eagles at Cowboys: "Cowboys really need back-to-back wins this time with rival Eagles visiting on Thanksgiving", "PHI: Without LB Baun and QB Hurts", "DAL: Grown from 1.5- to 8.5-point favorites since the line opened".
+- New facts: ESPN's preview storyline (rivalries, the holiday, what's at stake), how the betting line and the over/under have moved since they opened, and each team's season leader (a top scorer's average, a 1,000-yard rusher, a goal leader).
+- Headlines that only say where two teams meet ("…meet in Las Vegas, Nevada") are no longer used.
+- Every one-liner saved on your phone is cleared once more so you see the new lines.
+
 ## 3.144.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Everywhere: the buttons at the bottom (the bar, the day arrows, the filter and layout buttons, Back) slide out of the way while you scroll down a page, and come back the moment you scroll back up at all. They also come back at the top of a page and when you change page.
