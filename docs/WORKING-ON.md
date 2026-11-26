@@ -10,3 +10,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | All games (two-column compact view option) | src/app/160-all-games.js, new src/styles/102-all-games-compact.css, src/shell.html, docs/pages/all-games.md | 2026-11-26 01:27 |
 | DJ | Live scoreboard (Board) rolls through the slate all day | src/app/040-live.js, src/app/170-slate-page.js (Board button only), worker/alerts.js (runBoard), docs/pages/notifications.md | 2026-11-26 01:45 |
 | DJ | shared: 280-ios-bridge.js (Board switch only) | src/app/280-ios-bridge.js | 2026-11-26 01:45 |
+| DJ | News (custom news page starts closed) | src/app/201-news-custom.js, docs/pages/news.md | 2026-11-26 01:39 |
