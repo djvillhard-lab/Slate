@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Slate control row and Live feed focus view on the folded Duo (clear of the clock and Wi-Fi) | src/styles/109-slate-two.css, src/styles/108-feed-compact.css, docs/pages/panes.md, docs/pages/slate.md | 2026-11-26 22:10 |
