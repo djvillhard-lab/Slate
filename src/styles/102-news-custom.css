@@ -1,6 +1,9 @@
 /* News: Custom news page card + automatic headlines (3.131.0, DJ Nov 25, 2026). Code: src/app/201-news-custom.js */
 .nc { display: grid; gap: 8px; padding: 12px; margin-top: 2px; }
-.nc-hd { display: flex; align-items: center; gap: 8px; min-height: 24px; }
+.nc-hd { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: -10px 0 -8px; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; justify-self: start; }
+.nc-hd svg:last-child { width: 14px; height: 14px; color: var(--dim); transform: rotate(-90deg); }
+.nc.shut .nc-hd svg:last-child { transform: rotate(90deg); }
+.nc.shut .nc-hd { margin-bottom: -10px; }
 .nc-hd svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
 .nc-hd b { font-size: 16px; font-weight: 800; color: var(--head); }
 .nc-sub { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.35; color: var(--muted); }

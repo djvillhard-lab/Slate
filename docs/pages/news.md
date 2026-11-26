@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 25, 2026, 3.131.0
+Last updated: Nov 25, 2026, 3.131.2
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -191,3 +191,6 @@ Code: `src/app/201-news-custom.js` (`nc*`), styles `src/styles/102-news-custom.c
 - Past days still show their saved page inline, read only.
 - Open: "Breaking" relies on ESPN's own HeadlineNews type (its short news bites), not a breaking flag; ESPN has none.
   A real generate from the new card wasn't run in checks (costs money); it uses the same request as before.
+- 3.131.2 (DJ): the Custom news page card folds from its title (`.nc-hd` button, chevron right after the title so it
+  never sits under the folded Duo's clock). Open to start; remembered per phone in localStorage `slate-newscustom` ("0" = folded).
+  Folded it keeps one line: when the page was generated, or that Claude is writing it.
