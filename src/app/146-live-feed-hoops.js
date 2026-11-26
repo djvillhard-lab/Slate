@@ -295,8 +295,7 @@
         if (!(sty && sty.ban && /^\d+-\d+$/.test(String(sty.ban.big || "")))) ph.appendChild(el("span", "fd-psc", abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""))); c2.appendChild(ph);
         if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); c2.appendChild(tw); }
         var ttl = fdTitle(rd.title); c2.appendChild(ttl);
-        // the points stamp beside a made basket's headline: "+3"
-        if (sty && sty.plus > 0 && rd.kind === "score") { var pls = el("b", "hp-plus" + (sty.plus >= 3 ? " hp-plus3" : ""), "+" + sty.plus); pls.setAttribute("aria-label", sty.plus + (sty.plus === 1 ? " point" : " points")); ttl.appendChild(pls); }
+        // 3.161.2 (DJ: "I don't like the +2 and +3"): the points stamp beside a made basket's headline is gone
         // the gray and red boxes say it in the headline and the player's line; ESPN's sentence is kept where it adds something
         if (raw && raw !== rd.title && (!gray || (!rd.P && rd.kind === "miss" && !rd.reb))) c2.appendChild(el("p", "fd-px", raw));
         if (sty && sty.lines.length) c2.appendChild(el("p", "fd-story", sty.lines.join(" · ")));
