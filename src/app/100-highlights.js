@@ -447,6 +447,9 @@
       var t = cl;
       // a matchup line ("Jacksonville State and Pacific play in Las Vegas", "Iowa vs Ohio State") keeps its sentence and gets no label
       if (sd && a >= 0 && h >= 0 && new RegExp("^" + rx[sd] + " (?:and|vs\\.?|at|v) ").test(cl)) sd = null;
+      // 3.148.1 (DJ: "Bills chiefs tomorrow should have the line about the qbs above the individual team lines"): in a line of
+      // several clauses, a first one that names both teams is about the matchup: it gets no label and sits on top
+      if (!ps && ci === 0 && parts.length > 1 && a >= 0 && h >= 0) sd = null;
       if (sd && rx[sd]) { var R = rx[sd];
         t = t.replace(new RegExp("^" + R + "(?:'s?|’s?)? (?:(?:has|have|is|are) )?"), "");
         t = t.replace(new RegExp(" (?:for|to keep) " + R + "(?=$|[,.])"), "");
@@ -456,6 +459,7 @@
       var same = rows.filter(function (r) { return r.side === sd; })[0];   // one row per team, in the order the line names them
       if (same) same.text += "; " + t; else rows.push({ side: sd, text: t });
     });
+    rows = rows.filter(function (r) { return !r.side; }).concat(rows.filter(function (r) { return r.side; }));
     return rows.length ? rows : [{ side: tmSide || null, text: String(text || "") }];
   }
   // which team a free-text line is about: the players it names, matched to the game's leaders and box score (one team only)
