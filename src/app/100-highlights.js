@@ -557,11 +557,16 @@
       if (/series/i.test(sx) && !/^\s*series starts/i.test(sx)) add("pser", 72, sx.charAt(0).toUpperCase() + sx.slice(1)); }
     // the team's leaders who won't play
     var lead = {}; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); (L.leaders || []).forEach(function (cat) { (cat.leaders || []).slice(0, 1).forEach(function (x) { var a = x.athlete || {}; if (a.displayName) (lead[i] = lead[i] || {})[a.displayName] = { pos: (a.position || {}).abbreviation || "", cat: cat.displayName || cat.name, v: x.displayValue }; }); }); });
+    var keyOut = {};
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
       (t.injuries || []).forEach(function (x) { var n = ((x.athlete || {}).displayName) || "", stt = String(x.status || ""); if (!(lead[i] || {})[n]) return; var ln = (x.athlete || {}).lastName || n.split(" ").slice(1).join(" ") || n;
         // with the position in front ("QB Wilson"), from the injury report or the team's leaders (3.29.2)
         var pos = ((x.athlete || {}).position || {}).abbreviation || ((lead[i] || {})[n] || {}).pos || ""; if (pos && sport === "football") ln = pos + " " + ln;  // football only (3.46.1): "QB Wilson" reads; "G Curry" in the NBA doesn't
         if (/out|reserve|suspen/i.test(stt)) outs.push(ln); else if (/question|doubt|day-to-day/i.test(stt)) q.push(ln); });
+      // 3.153.2: who might explain a big line move: a quarterback or one of the team's leaders who is out
+      (t.injuries || []).forEach(function (x) { var a0 = x.athlete || {}, n = a0.displayName || "", ps0 = (a0.position || {}).abbreviation || "";
+        if (!/out|reserve|suspen/i.test(String(x.status || "")) || !(ps0 === "QB" && sport === "football" || (lead[i] || {})[n])) return;
+        (keyOut[i] = keyOut[i] || []).push((sport === "football" && ps0 ? ps0 + " " : "") + (a0.lastName || n.split(" ").slice(1).join(" ") || n)); });
       if (outs.length) add("out|" + i, 58 + outs.length * 4, T[i].name + " are without " + outs.slice(0, 2).join(" and "));
       else if (q.length) add("q|" + i, 40, q[0] + " is " + (/doubt/i.test(JSON.stringify(t.injuries)) ? "doubtful" : "a question mark") + " for " + T[i].name); });
     // a quarterback's first start of the season (3.31.0): the depth chart's QB1 isn't the team's passing leader and hasn't had a starter's game yet (see pvQB)
@@ -578,9 +583,16 @@
     // never at a neutral site, where ESPN's opening line is sometimes from the other side (Kansas State "opened 12.5-point favorites"
     // over Alabama, now 15.5-point underdogs); a flip only when the line moved 6 points or less
     if (!comp.neutralSite && !isNaN(oH) && !isNaN(cH) && oH !== cH && Math.abs(cH) <= 45) {
-      if (oH * cH < 0 && Math.abs(oH - cH) <= 6) { var nf = cH < 0 ? H : A; add("flip|" + nf, 54, T[nf].name + " have become the favorite after opening as " + Math.abs(oH) + "-point underdogs"); }
-      else if (oH * cH > 0 && Math.abs(cH - oH) >= 2) { var fv = cH < 0 ? H : A, o1 = Math.abs(oH), c1 = Math.abs(cH);
-        add("move|" + fv, 40, T[fv].name + (c1 > o1 ? " have grown from " : " have dropped from ") + o1 + "- to " + c1 + "-point favorites since the line opened"); } }
+      // 3.153.2 (DJ: "Become the favorite" read badly; "more valuable to say WHY the line moved"): the line now, then where it opened
+      // (DraftKings' first line, often posted a week or more ahead). Shown only with a reason: a QB or one of the team's leaders
+      // out for the side the line moved against, or that side's QB making his first start. A move with no reason is left out
+      var why = function (fv0) { var o0 = oth(fv0), k1 = keyOut[o0] || [], k0 = k1.filter(function (n) { return /^QB /.test(n); }).concat(k1.filter(function (n) { return !/^QB /.test(n); })).slice(0, 1);
+        if (k0.length) c = c.filter(function (x) { return x.k !== "out|" + o0; });  // the injury is in the line-move sentence instead
+        var q0 = (qbx || []).filter(function (q) { return q.team === o0 && q.name; })[0];
+        return k0.length ? ", with " + T[o0].name + " " + k0.join(" and ") + " out" : q0 ? ", with " + T[o0].name + " QB " + q0.name + " making his first start" : ""; };
+      if (oH * cH < 0 && Math.abs(oH - cH) <= 6) { var nf = cH < 0 ? H : A, wy = why(nf); if (wy) add("flip|" + nf, 54, T[nf].name + " are now " + Math.abs(cH) + "-point favorites after opening as " + Math.abs(oH) + "-point underdogs" + wy); }
+      else if (oH * cH > 0 && Math.abs(cH - oH) >= 2) { var fv = cH < 0 ? H : A, o1 = Math.abs(oH), c1 = Math.abs(cH), wy2 = why(c1 > o1 ? fv : oth(fv));
+        if (wy2) add("move|" + fv, 46, T[fv].name + " are now " + c1 + "-point favorites, " + (c1 > o1 ? "up" : "down") + " from " + o1 + " when the line opened" + wy2); } }
     var tto = (pk && pk.total && pk.total.over) || {}, tO = parseFloat(String(((tto.open || {}).line) || "").replace(/^[ou]/, "")), tC = parseFloat(String(((tto.close || {}).line) || "").replace(/^[ou]/, ""));
     if (!isNaN(tO) && !isNaN(tC) && Math.abs(tC - tO) >= (sport === "football" ? 3 : sport === "bball" ? 4 : 99)) add("tot", 32, "The over/under has " + (tC > tO ? "climbed" : "dropped") + " from " + tO + " to " + tC);
     var pr = sum.predictor; if (pr && pr.homeTeam && pr.awayTeam) { var ph = parseFloat(pr.homeTeam.gameProjection), pa = parseFloat(pr.awayTeam.gameProjection);
