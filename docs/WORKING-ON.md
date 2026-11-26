@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | On TV: TV watch setups | src/app/210-tv.js, src/app/215-tv-setups.js (new), docs/pages/tv.md | 2026-11-26 03:14 |
