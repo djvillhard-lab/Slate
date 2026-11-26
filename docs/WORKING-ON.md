@@ -10,3 +10,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | shared: 020-look.js (one line: a full-screen pane keeps the two-page text size) | src/app/020-look.js | 2026-11-26 07:25 |
 | DJ | Live feed: Leaders and Big plays buttons for every sport | src/app/145-149 live feed files, docs/pages/live-feed.md | 2026-11-26 07:27 |
 | DJ | shared: styles/040-components.css (Live feed button row wraps) | src/styles/040-components.css | 2026-11-26 07:27 |
+| DJ | One-liners: how the game went on finals | src/app/100-highlights.js, docs/pages/slate.md | 2026-11-26 07:32 |
