@@ -233,7 +233,7 @@
     c.appendChild(el("p", null, x.text || x.line)); return c;
   }
   // the pills: what's on the page. Each says how much is behind it; Breaking wears a red dot when something is new.
-  function nlPills(body, M) {
+  function nlOpts(M) {
     var brk = [M.lead].concat(M.stories, M.items).filter(function (x) { return x && x.kind === "breaking"; }), opts = [["home", "Home", "🏠", 0]];
     if (brk.length) opts.push(["breaking", NL_T.brk, "🚨", brk.length, brk.some(function (x) { return x.nw; })]);
     if (M.previews.length) opts.push(["next", NL_T.next, "🔭", M.previews.length, M.previews.some(function (x) { return x.nw; })]);
@@ -243,7 +243,17 @@
     [M.lead].concat(M.stories, M.items.filter(function (x) { return !x.free; }), M.previews, M.recaps).forEach(bump); M.leagues.forEach(function (x) { cnt[x.key] = (cnt[x.key] || 0) + 1; });
     Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).forEach(function (k) { opts.push(["lg:" + k, LEAGUES[k].tag, "", cnt[k]]); });
     if (!opts.some(function (o) { return o[0] === nl.f; })) nl.f = "home";
+    return opts;
+  }
+  // 3.145.0 (DJ picked "Section button"): with the three-page bar on screen the sections live in its bottom-right button
+  // (283-three-pages.js draws the button and its list from nlTabs); the pills on top stay only where that bar isn't shown
+  function nlTabs() { return (nl.opts || []).map(function (o) { return [o[0], o[1], o[3], !!o[4], nl.f === o[0]]; }); }
+  function nlTabNow() { var t = ""; (nl.opts || []).forEach(function (o) { if (o[0] === nl.f && o[0] !== "home") t = o[1]; }); return t; }
+  function nlBarTabs() { return typeof n3BarOn === "function" && n3BarOn(); }
+  function nlPills(body, M) {
+    var opts = nl.opts = nlOpts(M);
     if (opts.length < 2) return;
+    if (nlBarTabs()) { if (nl.f !== "home") { var cur = opts.filter(function (o) { return o[0] === nl.f; })[0], hb = el("button", "nf-cur"); hb.type = "button"; hb.appendChild(el("b", null, cur ? cur[1] : "")); hb.appendChild(el("span", null, "Back to Home")); hb.addEventListener("click", function () { nlPick("home"); }); body.appendChild(hb); } return; }
     var row = el("div", "nf-pills"); row.setAttribute("role", "tablist"); row.setAttribute("aria-label", "Filter the news");
     opts.forEach(function (o) {
       var b = el("button", "nf-pill" + (o[0].indexOf("lg:") === 0 ? " lg" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", nl.f === o[0] ? "true" : "false");
@@ -313,5 +323,6 @@
       if (M.leagues.length) { wrap.appendChild(nlH(NL_T.leagues, "Claude's snapshots")); M.leagues.forEach(function (x) { wrap.appendChild(nlLeagueCard(x, true)); }); }
       headlines(M.items.filter(function (x) { return jin.indexOf(x) === -1 && !isNumX(x); }), !M.has);
     }
+    if (nlBarTabs() && typeof n3Draw === "function") n3Draw();   // the section button follows the page
     return true;
   }

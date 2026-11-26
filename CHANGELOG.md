@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.145.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: the sections moved under your thumb. A round button at the bottom right, where the day arrows used to be, opens the list of sections (Home, Just In, On Deck, In the Books, Stat Sheet and each league) with Home nearest the thumb. It shows the section you are in and a dot when something there is new. The pills on top are gone; inside a section, its name is at the top with "Back to Home".
+
 ## 3.144.4 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: the test write-up with six web searches came back longer than allowed and was not saved. Write-ups have more room now and Claude is told to write only the finished page, and the test runs once more.

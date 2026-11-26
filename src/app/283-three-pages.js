@@ -27,7 +27,9 @@
   // the filter button: All games on the iPhone Duo (folded, or a side of the unfolded screen)
   // 3.129.x (DJ, Nov 23): News too, in place of its row of tabs (Press Box and the leagues), not inside a breakdown
   // 3.144.0 (DJ, Nov 26): not on News any more; the Front Page filters with its own pills
-  function n3FiltOn() { return n3BarOn() && deviceMode() === "duo" && state.view === "games" && games().length > 0; }
+  // News (DJ, Nov 26: the section tabs under the thumb instead of pills on top): the same button, on every phone shape
+  function n3NewsTabs() { return state.view === "news" && typeof nlTabs === "function" && nlTabs().length > 1; }
+  function n3FiltOn() { return n3BarOn() && ((deviceMode() === "duo" && state.view === "games" && games().length > 0) || n3NewsTabs()); }
   function n3NewsOpts() { return [[null, NW_HOME]].concat(nwBriefLgs().map(function (k) { return [k, (LEAGUES[k] || {}).tag || k]; })); }
   // page swipes: only on the three pages, and not on the unfolded Duo (both sides are in view there; the bar picks pages)
   // the day arrows (3.129.1, DJ: one tap, never two): the slate gets a glass pair of arrows bottom right, always showing
@@ -117,13 +119,15 @@
   // the league rail: every league, nearest the thumb first (ALL at the bottom); a league with no games that day is gray
   function n3Rail() {
     var rail = $("n3-rail"); if (!rail) return;
-    if (state.view === "news") {  // News: Press Box and the league briefings, Press Box nearest the thumb
-      var nsig = JSON.stringify(["news", n3NewsOpts(), nw.lg]);
+    rail.classList.toggle("nws", state.view === "news");
+    if (state.view === "news") {  // News: its sections, Home nearest the thumb (the rail fills from the bottom)
+      var nt = typeof nlTabs === "function" ? nlTabs() : [], nsig = JSON.stringify(["news", nt]);
       if (N3.fsig !== nsig) {
         N3.fsig = nsig; rail.textContent = "";
-        n3NewsOpts().slice().reverse().forEach(function (o) {
-          var b = el("button", "n3-lg", o[1]); b.type = "button"; b.setAttribute("aria-pressed", nw.lg === o[0] ? "true" : "false");
-          b.addEventListener("click", function () { N3.filt = false; if (nw.lg !== o[0]) nwPickLg(o[0]); n3Draw(); });
+        nt.forEach(function (o) {
+          var b = el("button", "n3-lg"); b.type = "button"; b.setAttribute("aria-pressed", o[4] ? "true" : "false");
+          b.appendChild(el("b", null, o[1])); if (o[2]) b.appendChild(el("i", null, String(o[2]))); if (o[3]) b.appendChild(el("u"));
+          b.addEventListener("click", function () { N3.filt = false; nlPick(o[0]); n3Draw(); });
           rail.appendChild(b);
         });
       }
@@ -163,18 +167,18 @@
     if (!bar) N3.row = false; if (state.view !== "lineup") N3.row = false; if (!filt) N3.filt = false;
     if (on) h.setAttribute("data-nav3", ""); else h.removeAttribute("data-nav3");
     if (bar) h.setAttribute("data-n3bar", ""); else h.removeAttribute("data-n3bar");
-    if (filt) h.setAttribute("data-n3f", ""); else h.removeAttribute("data-n3f");
+    if (filt && state.view !== "news") h.setAttribute("data-n3f", ""); else h.removeAttribute("data-n3f");   // News has no day arrows under the button, so it sits in the corner
     n3Tell(on);
     var liveAny = false;
     if (bar && state.date === todayInHome()) liveAny = games().some(function (g) { return status(g).kind === "live"; });
     var lgTag = "";
-    if (filt && state.view === "news") lgTag = nw.lg ? (LEAGUES[nw.lg] || {}).tag || nw.lg : "";
+    if (filt && state.view === "news") lgTag = typeof nlTabNow === "function" ? nlTabNow() : "";
     else if (filt && state.league !== "all") filterOpts(visibleGames()).forEach(function (o) { if (o[0] === state.league) lgTag = o[1]; });
     var dNow = dayb ? n3DayOf() : "";
     var offDay = dayb && dNow !== todayInHome() ? fmtDate(dNow, { weekday: "short" }) + " " + fmtDate(dNow, { month: "short", day: "numeric" }) : "";
     // the layout button: only on the side of the unfolded Duo the bar works ("full" or "two")
     var lay = PANE && on && h.classList.contains("pn-right") ? (h.classList.contains("pn-full") ? "full" : "two") : "";
-    var sig = [on, bar, filt, dayb, offDay, state.view, N3.row, N3.filt, liveAny, lgTag, lay].join("|");
+    var sig = [on, bar, filt, dayb, offDay, state.view, N3.row, N3.filt, liveAny, lgTag, lay, filt && state.view === "news" ? nlTabs().some(function (o) { return o[3]; }) : ""].join("|");
     if (sig !== N3.sig) {
       N3.sig = sig;
       N3.el.hidden = !on;
@@ -193,6 +197,8 @@
       $("n3-fb").hidden = !filt; $("n3-fb").setAttribute("aria-expanded", N3.filt ? "true" : "false");
       $("n3-dr").hidden = !dayb || N3.row; $("n3-dt").hidden = !offDay || N3.row || N3.filt; $("n3-dd").hidden = !offDay || N3.row || N3.filt; $("n3-dd").textContent = offDay;
       var tg = $("n3-fb").querySelector(".n3-tag"); tg.textContent = lgTag; tg.hidden = !lgTag || N3.filt;
+      $("n3-fb").classList.toggle("nws-new", filt && state.view === "news" && nlTabs().some(function (o) { return o[3]; }));
+      $("n3-fb").setAttribute("aria-label", state.view === "news" ? "News sections" : "Filter by league");
       $("n3-fp").hidden = !N3.filt;
       $("n3-scrim").hidden = !(N3.row || N3.filt);
     }

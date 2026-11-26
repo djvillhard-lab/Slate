@@ -309,3 +309,14 @@
 .nf-ld { margin-top: -6px; padding: 4px 12px 12px; }
 .nf-ld .nf-dp { border-top: 0; }
 .nl-sva .nf-dp { margin-top: 10px; }
+
+/* ---------- 3.145.0 (DJ picked "Section button"): the News sections in the bar's bottom-right button ---------- */
+.n3-rail.nws { width: 172px; border-radius: 22px; align-items: stretch; padding: 6px; }
+.n3-rail.nws .n3-lg { width: auto; height: 44px; border-radius: 16px; display: flex; align-items: center; gap: 8px; padding: 0 12px; text-align: left; font-size: 14px; font-stretch: 96%; }
+.n3-rail.nws .n3-lg b { flex: 1; min-width: 0; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n3-rail.nws .n3-lg i { flex: none; font-style: normal; font-size: 11.5px; font-weight: 800; color: var(--dim); font-variant-numeric: tabular-nums; }
+.n3-rail.nws .n3-lg u { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.n3-fb.nws-new::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.nf-cur { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; margin-right: calc(var(--nf-isl, 0px) / var(--z, 1)); }
+.nf-cur b { font-size: 22px; font-weight: 900; font-stretch: 120%; text-transform: uppercase; letter-spacing: .04em; color: var(--ink); }
+.nf-cur span { flex: none; font-size: 13px; font-weight: 800; color: var(--accent); }
