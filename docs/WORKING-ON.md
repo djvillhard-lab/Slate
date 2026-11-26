@@ -8,4 +8,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | shared: ios/ (Live Activity football by the score) | ios/SlateLive/SlateLiveActivity.swift | 2026-11-26 01:22 |
 | DJ | All games (two-column compact view option) | src/app/160-all-games.js, new src/styles/102-all-games-compact.css, src/shell.html, docs/pages/all-games.md | 2026-11-26 01:27 |
-| DJ | Slate one-liners (same full line on every phone) | src/app/100-highlights.js, src/app/105-pv-notes.js, src/app/150-game-row.js (one line), src/styles/050-ux-review.css, docs/pages/slate.md | 2026-11-26 01:33 |

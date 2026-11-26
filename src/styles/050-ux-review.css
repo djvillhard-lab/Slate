@@ -455,7 +455,7 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .hl.hl-news .hl-tm { color: var(--head); }
 .g.panel.has-feed > .hl.hl-news { padding-right: 0; }
 /* 3.89.6: the stats one-liner under an upcoming slate game is one line too (pvFit picks a version that fits) */
-.hl.hl-one { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl.hl-one { display: block; white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: none; }   /* 3.131.1: the same full line on every phone, two lines when it has to (was one line, cut to fit, 3.89.6) */
 
 /* 3.91.0 (DJ): the News game cards' split team-color edge on every matchup card (teamStripe in 155-team-stripe.js).
    One layer the size of the card, rounded like it, painting two 4px pieces on its left: away above the split, home below */

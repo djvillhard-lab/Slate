@@ -620,9 +620,11 @@
     if (!p || !p.text) return null;
     // 3.113.10: the plain records line ("Cincinnati at Orlando") and a headline that only restates the matchup show nothing
     if (p.fb || pvBlandHead(p.text, pvNames(g)) || pvRecOff(g, p.recs)) return null;
-    var ln = hlLine(g, p.text, p.tm, "hl hl-pre hl-one");   // 3.89.6: one line, the longest version that fits (pvFit, 105-pv-notes.js)
+    // 3.131.1 (DJ: "one liners on regular iPhone are shorter than duo. Make sure all are the same"): the full line on every phone,
+    // wrapping to a second line when it has to. It used to be cut to the longest version that fit one line (pvFit), so narrower
+    // screens got shorter lines
+    var ln = hlLine(g, p.text, p.tm, "hl hl-pre hl-one");
     var pre = ln.querySelector(".hl-tm"); if (pre) pre.remove();   // and never an "MSU:" in front of the stats line (DJ)
-    pvFit(ln, ln.lastChild, pvStatAlts(p));
     return ln;
   }
   function pvNeed(g) {

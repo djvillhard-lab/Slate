@@ -51,7 +51,8 @@ function check(lg, sum, line, alts) {
   const sp = /^(.*?) (?:is|are) (?:only )?an? ([\d.]+)-point favorites?/.exec(line) || /(\S+(?: \S+)?) (?:is|are) (?:only )?([\d.]+)-point favorites/.exec(line);
   const pk = (sum.pickcenter || [])[0], dm = pk && /^([A-Z&]{2,6})\s+-([\d.]+)$/.exec(String(pk.details || "").trim());
   if (sp && dm) { const t = who(sp[1] + " "); if (t.length === 1 && t[0].abbr !== dm[1]) out.push("favorite is " + dm[1] + ", line names " + t[0].abbr); }
-  alts.forEach((a) => { if (a !== line && /(, \S+( \S+)?|\b(takes?|visits?|faces?|hosts?|plays?|leads?|meets?|looks?|is|are|has|have))$/i.test(a)) out.push("short version ends on a fragment: \"" + a + "\""); });
+  // 3.131.1: the app no longer shows shorter versions (the full line wraps on every phone), so they are not checked
+  if (false) alts.forEach((a) => { if (a !== line && /(, \S+( \S+)?|\b(takes?|visits?|faces?|hosts?|plays?|leads?|meets?|looks?|is|are|has|have))$/i.test(a)) out.push("short version ends on a fragment: \"" + a + "\""); });
   return out;
 }
 

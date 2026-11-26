@@ -137,3 +137,7 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 
 ## 3.121.10 (Nov 21, 2026)
 - Worth a look hide X (.wal-x) gets margin-right = strip width on html.side-col (not in the left pane), like .rlink, so the folded island never covers it.
+
+## 3.131.1 (Nov 25, 2026): the same one-liner on every phone
+- DJ: "one liners on regular iPhone are shorter than duo. Make sure all are the same, lean towards the longer current versions and make them two lines if needed." The shortening was in drawing, not in writing the line: `.hl-one` forced one line and `pvFit` swapped in the longest shorter version (`pvStatAlts`) that fit, so the 390pt iPhone got shorter lines than the wider folded Duo.
+- Now `.hl-one` wraps (no clamp) and pvNode / All games no longer call pvFit, so every phone shows the full line, two lines when needed. `pvFit`, `pvStatAlts` and `pvCuts` stay in 105-pv-notes.js (unused by the stats line now); lines_check.js no longer flags shorter versions.
