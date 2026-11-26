@@ -56,6 +56,13 @@ async function board(lg, path, weight, ymd) {
   }).filter(Boolean);
 }
 
+// The cheap first look, from the every-minute job (one read): inside the hours, under the day's count, and long enough
+// since the last pass for anything to be due.
+export async function wireSoon(env, getDoc, nowMs) {
+  const now = nowMs || Date.now(), ct = ctParts(now); if (ct.hour < WIRE_AUTO.FROM_HOUR) return false;
+  const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}; if (saved.day !== ct.day) return true;
+  return (saved.n || 0) < WIRE_AUTO.DAY_MAX && (now - (Number(saved.lastAt) || 0)) / 60000 >= WIRE_AUTO.GAP_BREAK;
+}
 // Should Claude write now? Returns null (no), or { facts, day, state } for the caller to start the write-up with.
 export async function wireDue(env, getDoc, nowMs) {
   const now = nowMs || Date.now(), ct = ctParts(now);

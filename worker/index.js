@@ -13,7 +13,7 @@ import { usageRoute } from "./usage.js";
 import { photosRoute } from "./photos.js";
 import { googleRoutes } from "./google.js";
 import { wireRoute } from "./wire.js";
-import { wireDue } from "./newswire.js";  // the News wire, written without a tap when there is news (3.138.0)
+import { wireDue, wireSoon } from "./newswire.js";  // the News wire, written without a tap when there is news (3.138.0)
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -156,17 +156,22 @@ async function startTick(env) {
 // (new headlines, time since the last write, at most 8 a day); this starts the same write-up the Update button does.
 // It stops at Slate's daily Claude budget like everyone else, and its cost is logged under the name "wire".
 async function runNewsWire(env) {
-  const due = await wireDue(env, getDoc); if (!due) return;
+  // 3.139.2: the check itself (about 35 requests to ESPN and The Athletic) runs inside the workflow, not here. The
+  // every-minute job shares one request allowance with the phone alerts, and the first scheduled pass never started.
+  if (!(await wireSoon(env, getDoc))) return;
+  await env.SUMMARY.create({ params: { kind: "wirecheck", at: new Date().toISOString() } });
+}
+// inside the workflow: is a pass due? If so, mark the page as being written and hand back the write-up's parameters
+async function newsWireStart(env) {
+  const due = await wireDue(env, getDoc); if (!due) return { skip: "nothing new" };
   const p = { kind: "deep", key: "w-wire", date: due.day, user: "wire" }, t = target(p), at = new Date().toISOString();
   const cur = (await getDoc(env, t.path)) || {}, w = cur.writing, now = Date.now();
-  if (w && w.at && !w.error && now - Date.parse(w.at) < 10 * 60000) return;   // someone's tap is being written right now
+  if (w && w.at && !w.error && now - Date.parse(w.at) < 10 * 60000) return { skip: "already writing" };
   const day = (((await getDoc(env, "stats/usage")) || {}).days || {})[ctDay()] || {};
-  if ((Number(day.usd) || 0) >= (Number(env.CLAUDE_DAY_USD) || 15)) return;
+  if ((Number(day.usd) || 0) >= (Number(env.CLAUDE_DAY_USD) || 15)) return { skip: "daily budget" };
   await putDoc(env, "newsdeep/wire-auto", due.state);
   await mergeDoc(env, t.path, t.patch({ writing: { at, kind: "deep" } }));
-  const params = { user: "wire", kind: "deep", date: due.day, id: null, key: "w-wire", at, size: null, game: JSON.stringify({ page: "News wire" }), facts: JSON.stringify(due.facts).slice(0, 40000) };
-  try { await env.SUMMARY.create({ params }); console.log("news wire: writing", due.fresh, "new"); }
-  catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: "deep", error: "Couldn't start: " + String(e).slice(0, 120) } })); }
+  return { p: { user: "wire", kind: "deep", date: due.day, id: null, key: "w-wire", at, size: null, game: JSON.stringify({ page: "News wire" }), facts: JSON.stringify(due.facts).slice(0, 40000) } };
 }
 
 export default {
@@ -613,7 +618,15 @@ const strs = (a, n) => (Array.isArray(a) ? a : []).map((x) => String(x || "").tr
 
 export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
-    const p = event.payload, t = target(p);
+    let p = event.payload;
+    if (p.kind === "wirecheck") {   // the News page's scheduled check (worker/newswire.js); most runs end right here
+      let st;
+      try { st = await step.do("news wire: anything new?", { retries: { limit: 0, delay: "20 seconds" }, timeout: "2 minutes" }, async () => newsWireStart(this.env)); }
+      catch (e) { await step.do("news wire: note the failure", async () => { await putDoc(this.env, "newsdeep/wire-log", { at: new Date().toISOString(), error: String(e && e.message || e).slice(0, 300) }); return true; }); return; }
+      if (!st || !st.p) return;
+      p = st.p;
+    }
+    const t = target(p);
     try {
       const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 32000 : p.kind === "deep" ? (p.key[0] === "w" ? 12000 : 6000) : false, p.kind === "deep" && p.key[0] === "l" ? 3 : p.kind === "deep" && p.key[0] === "w" ? 4 : SEARCHES[p.kind], LEAN[p.kind]));
       // 3.113.3 (DJ: "I do want the server check"): sentences that contradict ESPN's records and dated results are left out (factcheck.js)

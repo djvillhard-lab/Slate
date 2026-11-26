@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.139.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: the scheduled pass was not starting, so the page stayed on the last hand-made write-up. The check for new stories now runs on its own in the background instead of inside the every-minute alerts job, which had no room left for it.
+
 ## 3.139.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - One-liners: the team label before the colon is now the team's abbreviation, for example "ARIZ: Motiejus Krivas had 31 pts and 17 reb (11-13 FG)", on the slate, All games and Worth a look.
