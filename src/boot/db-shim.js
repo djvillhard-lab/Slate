@@ -82,6 +82,14 @@
   };
   // Google sent the browser back to the home page instead of google.html: hand the answer to google.html
   try { if (/[?&](code|error)=/.test(location.search) && sessionStorage.getItem("slate-gt")) location.replace("/google.html" + location.search); } catch (e) {}
+  // the iPhone app's public TestFlight link (3.155.0): the server sends it with the invite check and sign-up, and the
+  // end of the walkthrough (232-welcome.js) offers it. Only someone on an iPhone or iPad in a browser is pointed to it.
+  function keepApp(j) { try { if (j && typeof j.app === "string") localStorage.setItem("slate-app-link", j.app); } catch (e) {} }
+  window.slateWantsApp = function () {
+    var u = ""; try { u = localStorage.getItem("slate-app-link") || ""; } catch (e) {}
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    return u && ios && !window.SLATE_NATIVE && !nativeHost() && !/[?&]native=/.test(location.search) ? u : "";
+  };
   function mk(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function signedIn(passcode, id, name, fresh, admin) {
     try {
@@ -163,12 +171,18 @@
       go.textContent = "Continue"; box.appendChild(go);
       box.addEventListener("submit", function (e) {
         e.preventDefault(); var v = cd.value.trim().replace(/^.*invite=/i, ""); if (!v) { cd.focus(); return; }
-        run("Checking…", post("/api/invite-check", { code: v }), function (j) { if (j.ok) { inviteCode = v; gate("signup"); return ""; } return j.error || "Couldn't check that just now. Try again."; });
+        run("Checking…", post("/api/invite-check", { code: v }), function (j) { if (j.ok) { keepApp(j); inviteCode = v; gate("signup"); return ""; } return j.error || "Couldn't check that just now. Try again."; });
       });
       links.appendChild(link("I already have a passcode", function () { gate("login"); }));
     } else {
       box.appendChild(mk("h1", null, "Set up your Slate"));
       box.appendChild(mk("p", "gate-p", "Pick a name and a passcode. You'll use the passcode to log in on any phone, so make it one you'll remember."));
+      if (window.slateWantsApp() || preview) {
+        // the whole trip, so the iPhone app at the end isn't a surprise
+        var st = mk("ol", "gate-steps");
+        ["Make your account", "Pick your teams and games", "Get the iPhone app"].forEach(function (t, i) { var li = mk("li", i ? null : "on"); li.appendChild(mk("i", null, String(i + 1))); li.appendChild(mk("span", null, t)); st.appendChild(li); });
+        box.appendChild(st);
+      }
       var nm = field("First name", "text", "given-name");
       var p1 = field("Passcode (8 or more characters)", "password", "new-password"), p2 = field("Passcode again", "password", "new-password");
       showBox([p1, p2]); box.appendChild(err);
@@ -182,7 +196,7 @@
         if (m) { err.textContent = m; err.hidden = false; return; }
         if (preview) { g.remove(); preview(n); return; }  // DJ trying the new user setup: nothing is sent or saved
         run("Setting up…", post("/api/signup", { code: inviteCode, name: n, pass: a }), function (j) {
-          if (j.ok && j.id) { signedIn(a, j.id, j.name, true); return ""; }
+          if (j.ok && j.id) { keepApp(j); signedIn(a, j.id, j.name, true); return ""; }
           return j.error || "Couldn't set that up just now. Try again.";
         });
       });
@@ -198,14 +212,15 @@
   try {
     var gmsg = ""; try { gmsg = sessionStorage.getItem("slate-gate-msg") || ""; sessionStorage.removeItem("slate-gate-msg"); } catch (e) {}
     if (inviteCode && !pass()) whenBody(function () {
-      post("/api/invite-check", { code: inviteCode }).then(function (j) { if (j.ok) gate("signup"); else { var m = j.error || ""; inviteCode = ""; gate("code", m); } });
+      post("/api/invite-check", { code: inviteCode }).then(function (j) { if (j.ok) { keepApp(j); gate("signup"); } else { var m = j.error || ""; inviteCode = ""; gate("code", m); } });
     });
     else if (!pass() && (gmsg || !localStorage.getItem("slate-view-only"))) whenBody(function () { gate("login", gmsg); });
   } catch (e) {}
   // a change on a phone with no passcode (view only): show the log-in page right then, once, instead of failing quietly
   var asked = false;
   function askPassNow() {
-    if (asked) return; asked = true;
+    // never over the sign-up page: a save while the page starts used to swap an invite for "Log in" (3.155.0)
+    if (asked || inviteCode || document.getElementById("gate")) return; asked = true;
     setTimeout(function () { gate("login", "This phone isn't logged in, so changes can't save."); }, 50);
   }
   // Settings > Account > Try the new user setup (DJ): the sign-up page as a preview, then done(name)

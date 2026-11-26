@@ -18,7 +18,8 @@ upcoming games), --full (the whole page, not just the first screen), --wait seco
 --old-app (an iPhone app build from before Three pages: shows the Classic menu; without it the app hands the bottom of the screen to the page),
 --pane left|right (open Duo: which side the page, game, filters and --click go to; default right; --eval runs on the whole screen),
 --two (open Duo, 3.141.0: show two pages side by side; without it the page is full screen),
---readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite).
+--readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite),
+--safari (the website in Safari on an iPhone, not the app; invites get a pretend TestFlight link).
 
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
 plus game:<team> (that game's matchup page), look:<team> (its quick look on All games) and feed:<team> (its Live feed), found on All games by team name.
@@ -63,6 +64,7 @@ def main():
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
     oldapp = False
     two = False
+    safari = False  # --safari: the website in Safari on an iPhone (no app shell), with a pretend TestFlight link for invites
     simple = ""  # --simple [l|xl|xxl]: Simple mode on for this run (287-simple.js), at that text size
     pane = "right"
     ev, name, readonly, gate = None, "", False, None
@@ -95,6 +97,7 @@ def main():
         if a == "--name": name = args[i + 1]; i += 2; continue
         if a == "--espn-swap": swaps += [x.split("=>", 1) for x in args[i + 1].split(",") if "=>" in x]; i += 2; continue
         if a == "--readonly": readonly = True; i += 1; continue
+        if a == "--safari": safari = True; i += 1; continue
         if a == "--gate":
             gate = "login"; i += 1
             if i < len(args) and args[i] == "invite": gate = "invite"; i += 1
@@ -148,11 +151,13 @@ def main():
         browser = p.chromium.launch(executable_path=os.environ.get("SLATE_CHROMIUM") or None, proxy={"server": _px, "bypass": "localhost,127.0.0.1"} if _px else None)  # SLATE_CHROMIUM: a Chromium already on the machine
         for size in sizes:
             S = SIZES[size]
-            ctx = browser.new_context(viewport={"width": S["w"], "height": S["h"]}, service_workers="block", device_scale_factor=2, has_touch=True, is_mobile=True, timezone_id="America/Chicago")
+            ua = {"user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"} if safari else {}
+            ctx = browser.new_context(viewport={"width": S["w"], "height": S["h"]}, service_workers="block", device_scale_factor=2, has_touch=True, is_mobile=True, timezone_id="America/Chicago", **ua)
             page = ctx.new_page()
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
-            page.add_init_script("window.SLATE_NATIVE={platform:'ios',app:'3.0',strip:%s,webNav:%s};try{var k='lineup.look',v=JSON.parse(localStorage.getItem(k)||'{}');v.device='%s';localStorage.setItem(k,JSON.stringify(v));}catch(e){}" % ("true" if S["strip"] else "false", "false" if oldapp else "true", S["device"]))
+            if safari: page.add_init_script("try{localStorage.setItem('slate-app-link','https://testflight.apple.com/join/SHOTS123')}catch(e){}")
+            else: page.add_init_script("window.SLATE_NATIVE={platform:'ios',app:'3.0',strip:%s,webNav:%s};try{var k='lineup.look',v=JSON.parse(localStorage.getItem(k)||'{}');v.device='%s';localStorage.setItem(k,JSON.stringify(v));}catch(e){}" % ("true" if S["strip"] else "false", "false" if oldapp else "true", S["device"]))
             if simple: page.add_init_script("try{localStorage.setItem('slate-simple',JSON.stringify({on:true,size:'%s'}));}catch(e){}" % simple)
             page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/(\?.*)?(#.*)?$"), lambda r: r.fulfill(path=index, content_type="text/html"))
             page.route(re.compile(r".*/version\.json.*"), lambda r: r.fulfill(path=ver, content_type="application/json"))
@@ -164,7 +169,7 @@ def main():
                 page.route("**/*", lambda r: r.abort() if r.request.method not in ("GET", "HEAD", "OPTIONS") and "/api/whoami" not in r.request.url and "/api/docs" not in r.request.url else r.fallback())
             if not pw and not gate:  # no passcode: just looking, without the log-in page on top
                 page.add_init_script("try{localStorage.setItem('slate-view-only','1')}catch(e){}")
-            if gate == "invite": page.route("**/api/invite-check", lambda r: r.fulfill(body='{"ok":true}', content_type="application/json"))
+            if gate == "invite": page.route("**/api/invite-check", lambda r: r.fulfill(body='{"ok":true,"app":"%s"}' % ("https://testflight.apple.com/join/SHOTS123" if safari else ""), content_type="application/json"))
             page.goto(SITE + ("#pass=" + pw if pw else "#invite=SHOTS2TEST234" if gate == "invite" else ""))
             page.wait_for_timeout(int(wait * 1000))
             # a new test profile opens on the welcome: close it ("Skip for now") unless the welcome is what's being checked

@@ -2,8 +2,10 @@
 // their own name and passcode, and lands in users/registry like someone added with the "Add a person" action.
 //   POST /api/invite        {pass, action: "new" | "list" | "cancel" | "remove", note, k, id}   an admin's passcode only (whoIs: admin)
 //                           every answer carries the invites ("list") and the people with accounts ("people")
-//   POST /api/invite-check  {code}                → {ok, note} or {error}
-//   POST /api/signup        {code, name, pass}    → {ok, id, name} or {error}
+//   POST /api/invite-check  {code}                → {ok, note, app} or {error}
+//   POST /api/signup        {code, name, pass}    → {ok, id, name, app} or {error}
+// "app" is the iPhone app's public TestFlight link (3.155.0), which the admin pastes in once on the invite sheet
+// (action "applink", {url}); kept in config/app. The invite page and the end of the walkthrough point new people to it.
 // The docs table can be read by anyone with the page's public key, so nothing stored here can be used by itself:
 // invite codes and new passcodes are kept only as HMAC-SHA256 keyed with the worker's SUPABASE_SECRET (a plain
 // SHA-256 of a passcode someone chose could be guessed offline). If that secret is ever replaced, people who signed
@@ -22,6 +24,8 @@ export const passKey = async (env, pass) => "h2:" + (await hmac(env, "pass:" + p
 const codeKey = (env, code) => hmac(env, "invite:" + String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, ""));
 const newCode = () => [...crypto.getRandomValues(new Uint8Array(12))].map((x) => ABC[x % ABC.length]).join("");
 const expired = (v) => Date.now() - Date.parse(v.at || 0) > DAYS * 86400000;
+const APP_RE = /^https:\/\/testflight\.apple\.com\/join\/[A-Za-z0-9]{4,20}$/;
+const appLink = async (getDoc, env) => { const u = String(((await getDoc(env, "config/app")) || {}).testflight || ""); return APP_RE.test(u) ? u : ""; };
 const state = (v) => (v.used ? "used" : v.tries >= MAX_TRIES ? "locked" : expired(v) ? "expired" : "open");
 
 export async function signupRoutes(req, env, url, h) {
@@ -47,6 +51,13 @@ export async function signupRoutes(req, env, url, h) {
     } else if (p.action === "cancel") {
       const k = Object.keys(d.list).find((x) => x.slice(0, 10) === String(p.k || ""));
       if (k && !d.list[k].used) { delete d.list[k]; await putDoc(env, "users/invites", d); }
+    }
+    // the iPhone app's public TestFlight link: set, or cleared with an empty url
+    if (p.action === "applink") {
+      const u = String(p.url || "").trim().replace(/\/+$/, "");
+      if (u && !APP_RE.test(u)) return json({ error: "That isn't a TestFlight public link. It looks like https://testflight.apple.com/join/AbCd1234" }, 400);
+      const w = await putDoc(env, "config/app", { testflight: u, at: new Date().toISOString() });
+      if (!w.ok) return json({ error: "Couldn't save. Try again." }, 502);
     }
     // the people with accounts (however they were added), with today's Claude summaries; "remove" takes one off
     const reg = (await getDoc(env, "users/registry")) || {}, users = reg.users || {};
@@ -80,13 +91,13 @@ export async function signupRoutes(req, env, url, h) {
     Object.values(users).forEach((u) => { if (!u.id || seen[u.id] || TEST_IDS.includes(u.id)) return; seen[u.id] = 1; people.push({ id: u.id, name: u.name || u.id, admin: u.admin === true, at: u.at || "", via: u.via || "", today: Number(by[u.id]) || 0, cap: Math.min(Number(u.cap) || 10, 10) }); });
     const list = Object.keys(d.list).map((k) => ({ k: k.slice(0, 10), at: d.list[k].at, note: d.list[k].note || "", state: state(d.list[k]), name: d.list[k].name || "" }))
       .sort((a, b) => (a.at < b.at ? 1 : -1));
-    return json({ ok: true, code, days: DAYS, list, people });
+    return json({ ok: true, code, days: DAYS, list, people, app: await appLink(getDoc, env) });
   }
 
   const d = await load(), ck = await codeKey(env, p.code), inv = d.list[ck];
   const st = inv ? state(inv) : "none";
   const why = { none: "That invite link isn't right. Ask DJ for a new one.", used: "That invite was already used. Ask DJ for a new one.", expired: "That invite ran out. Ask DJ for a new one.", locked: "That invite is locked. Ask DJ for a new one." };
-  if (url.pathname === "/api/invite-check") return st === "open" ? json({ ok: true, note: inv.note || "" }) : json({ error: why[st] }, 403);
+  if (url.pathname === "/api/invite-check") return st === "open" ? json({ ok: true, note: inv.note || "", app: await appLink(getDoc, env) }) : json({ error: why[st] }, 403);
 
   if (url.pathname === "/api/signup") {
     if (st !== "open") return json({ error: why[st] }, 403);
@@ -116,7 +127,7 @@ export async function signupRoutes(req, env, url, h) {
     if (!w.ok) return json({ error: "Couldn't save. Try again." }, 502);
     inv.used = new Date().toISOString(); inv.name = name; inv.id = id;
     await putDoc(env, "users/invites", d);
-    return json({ ok: true, id, name });
+    return json({ ok: true, id, name, app: await appLink(getDoc, env) });
   }
   return json({ error: "bad request" }, 400);
 }

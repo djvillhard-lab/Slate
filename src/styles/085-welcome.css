@@ -91,3 +91,18 @@ html.side-col:not(.duo) .sheet.inv { padding-right: calc(16px + var(--strip-w, 0
 .acct-people .hint, #acct .hint { margin: 8px 0 0; }
 .acct .optrow .outline { white-space: nowrap; }
 .acct-tag { flex: none; padding: 4px 8px; border-radius: 4px; background: var(--raise); font-size: 13px; font-weight: 800; font-stretch: 88%; color: var(--muted); }
+
+/* One-link invites (3.155.0): the trip shown on the sign-up page, and "Get the app" at the end of the walkthrough */
+.gate-steps, .wl-app-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.gate-steps li, .wl-app-steps li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--hair); }
+.gate-steps li:last-child, .wl-app-steps li:last-child { border-bottom: 1px solid var(--hair); }
+.gate-steps i, .wl-app-steps i { font-style: normal; font-weight: 800; font-size: 20px; font-stretch: 66%; line-height: 1.1; color: var(--dim); }
+.gate-steps span { font-size: 15px; font-weight: 700; color: var(--muted); }
+.gate-steps li.on i { color: var(--accent); }
+.gate-steps li.on span { color: var(--ink); font-weight: 800; }
+.wl-app { display: grid; gap: 8px; margin-top: 16px; padding: 12px; border-radius: 8px; border: 1.5px solid var(--accent-fill); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+.wl-app h2 { margin: 0; font-size: 18px; font-weight: 800; font-stretch: 100%; color: var(--ink); }
+.wl-app-steps i { color: var(--accent); }
+.wl-app-steps span { font-size: 15px; line-height: 1.35; color: var(--ink); }
+.inv-row span { overflow-wrap: anywhere; }
+.inv-acts > :only-child { grid-column: 1 / -1; }

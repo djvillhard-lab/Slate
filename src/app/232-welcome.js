@@ -111,7 +111,8 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       if (a.notify.email && !a.notify.emailWas) patch.time = "07:00";
       meCall(patch).then(function (j) { meInfo.loaded = true; meInfo.p = j.prefs; meDraw(); }, function (e) { toast("Morning email wasn't saved: " + e.message, null, 6000); });
     }
-    wlMarkDone({ answers: { leagues: a.leagues.slice(), size: a.size, ranked: a.ranked, national: a.national, events: a.events, after: a.after } });
+    var wantsAlerts = a.notify.teams || a.notify.slate || a.notify.brief;
+    wlMarkDone({ answers: { leagues: a.leagues.slice(), size: a.size, ranked: a.ranked, national: a.national, events: a.events, after: a.after }, askPush: !!(wantsAlerts && window.slateWantsApp && window.slateWantsApp()) });
     wlClose();
     if (!isDuo) setView("lineup"); else render();
     toast("Your slate is set. Change any of it in Settings > Slate rules.", null, 6000);
@@ -289,7 +290,9 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       var ph = el("div", "wl-phone"), txt = el("p", "wl-p"), pb = el("button", "outline wl-phone-b", "Turn on notifications for this phone"); pb.type = "button";
       var draw = function () {
         var blocked = pushInfo.native === "denied" || (!isNativeApp() && window.Notification && Notification.permission === "denied");
-        if (!pushOk()) { txt.textContent = "To get alerts on this phone, add Slate to your Home Screen (Share, then Add to Home Screen) and open it from there. Then turn them on in Settings > Notifications."; pb.hidden = true; }
+        // heading for the app next (3.155.0): the app asks for notifications itself, so Safari doesn't
+        if (window.slateWantsApp && window.slateWantsApp()) { txt.textContent = "You'll get these in the Slate app. It asks to send notifications the first time you open it."; pb.hidden = true; }
+        else if (!pushOk()) { txt.textContent = "To get alerts on this phone, add Slate to your Home Screen (Share, then Add to Home Screen) and open it from there. Then turn them on in Settings > Notifications."; pb.hidden = true; }
         else if (blocked) { txt.textContent = "Notifications are blocked for Slate. Turn them on in iPhone Settings > Notifications > Slate."; pb.hidden = true; }
         else if (!pushInfo.checked) { txt.textContent = "Checking this phone…"; pb.hidden = true; }
         else if (pushInfo.on) { txt.textContent = "Alerts are on for this phone."; pb.hidden = true; }
@@ -309,7 +312,26 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       if (wl.preview) body.appendChild(el("p", "notice", "This is a preview. A new person would land on this slate; yours stays as it is."));
       else if (!wl.fresh) body.appendChild(el("p", "notice", "This replaces the slate rules you have now."));
       next.textContent = wl.preview ? "Finish preview" : wl.fresh ? "See my slate" : "Replace my rules"; nextFn = wlFinish;
-      foot.appendChild(back); foot.appendChild(next);
+      // someone new on an iPhone, in Safari: the app is the last stop (3.155.0). Their slate is saved first, so the
+      // app opens straight onto it after they log in with the passcode they just made.
+      var app = (wl.fresh || wl.preview) && window.slateWantsApp ? window.slateWantsApp() : "";
+      if (wl.preview && !app) try { app = localStorage.getItem("slate-app-link") || ""; } catch (e) {}
+      if (app) {
+        var ap = el("div", "wl-app");
+        ap.appendChild(el("h2", null, "Last step: get the iPhone app"));
+        var ol = el("ol", "wl-app-steps");
+        ["Tap Get the app. Apple opens TestFlight, its app for trying new apps. Install TestFlight if you don't have it.",
+         "In TestFlight, tap Accept, then Install, then Open.",
+         "In Slate, log in with the passcode you just made. Your teams and slate are already there."].forEach(function (t, i) {
+          var li = el("li"); li.appendChild(el("i", null, String(i + 1))); li.appendChild(el("span", null, t)); ol.appendChild(li);
+        });
+        ap.appendChild(ol); body.appendChild(ap);
+        next.textContent = wl.preview ? "Finish preview" : "Get the app";
+        // a new tab, so the saves still in flight from this page aren't cut off
+        nextFn = function () { if (wl.preview) { wlFinish(); return; } var w = null; try { w = window.open(app, "_blank"); } catch (e) {} wlFinish(); if (!w) setTimeout(function () { location.href = app; }, 1500); };
+        var stay = el("button", "outline quiet wl-back", "Use it here"); stay.type = "button"; stay.addEventListener("click", wlFinish);
+        foot.appendChild(stay); foot.appendChild(next);
+      } else { foot.appendChild(back); foot.appendChild(next); }
     }
   }
 
@@ -352,16 +374,22 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       if (flag) { wlStart(true); return; }
       // logging in for the first time on this phone: new if nothing of theirs has been saved yet
       var c = db.collection("data/users/" + uid);
-      Promise.all([c.doc("settings").get(), c.doc("welcome").get()]).then(function (r) { if (!r[0].exists && !r[1].exists && !wl.open) wlStart(true); }, function () {});
+      Promise.all([c.doc("settings").get(), c.doc("welcome").get()]).then(function (r) {
+        if (!r[0].exists && !r[1].exists && !wl.open) { wlStart(true); return; }
+        // set up in Safari, now in the app for the first time (3.155.0): ask for notifications once, the way the
+        // walkthrough's notifications step would have
+        var w = r[1].exists ? r[1].data() || {} : {}, k = "slate-push-asked";
+        try { if (w.askPush && window.SLATE_NATIVE && !localStorage.getItem(k)) { localStorage.setItem(k, "1"); setTimeout(pushTurnOn, 1500); } } catch (e) {}
+      }, function () {});
     }, 500);
   })();
 
   // ---------- Settings > Account: the walkthrough, invites (DJ), log out ----------
-  var inv = { list: [], link: "", busy: false, err: "" };
+  var inv = { list: [], link: "", busy: false, err: "", app: "", editApp: false };
   function invCall(body) {
     body.pass = slatePass();
     return fetch("/api/invite", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json(); }).then(function (j) { return j || {}; }, function () { return { error: "No connection. Try again." }; });
+      .then(function (r) { return r.json(); }).then(function (j) { j = j || {}; if (typeof j.app === "string") { inv.app = j.app; try { localStorage.setItem("slate-app-link", j.app); } catch (e) {} } return j; }, function () { return { error: "No connection. Try again." }; });
   }
   function invSheet() {
     var bd = $("sheet-invite");
@@ -369,14 +397,15 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     bd.textContent = ""; bd.classList.add("open");
     var sh = el("div", "sheet inv"); bd.appendChild(sh);
     sh.appendChild(el("h3", null, "Invite someone"));
-    sh.appendChild(el("p", "inv-p", "Make a link and send it. They pick their own name and passcode, then get the welcome walkthrough. A link works once and lasts 7 days. Everyone you invite gets 10 Claude summaries a day."));
+    sh.appendChild(el("p", "inv-p", inv.app ? "Make a link and text it. On their iPhone it sets up their account, walks them through their teams and slate rules, then gets them the app. A link works once and lasts 7 days. Everyone you invite gets 10 Claude summaries a day."
+      : "Make a link and send it. They pick their own name and passcode, then get the welcome walkthrough. A link works once and lasts 7 days. Everyone you invite gets 10 Claude summaries a day."));
     if (inv.link) {
       var box = el("div", "inv-link"); box.appendChild(el("span", null, inv.link)); sh.appendChild(box);
       var acts = el("div", "inv-acts");
       var share = el("button", "solid", navigator.share ? "Send the link" : "Copy the link"); share.type = "button";
       share.addEventListener("click", function () {
         var copy = function () { try { navigator.clipboard.writeText(inv.link).then(function () { toast("Link copied"); }, function () { toast("Couldn't copy. Press and hold the link to copy it."); }); } catch (e) { toast("Press and hold the link to copy it."); } };
-        if (navigator.share) navigator.share({ title: "Slate", text: "Here's your invite to Slate, my sports app. It works once.", url: inv.link }).catch(function (e) { if (!e || e.name !== "AbortError") copy(); }); else copy();
+        if (navigator.share) navigator.share({ title: "Slate", text: inv.app ? "Here's your invite to Slate, my sports app. Open it on your iPhone: it sets up your account and gets you the app. The link works once." : "Here's your invite to Slate, my sports app. It works once.", url: inv.link }).catch(function (e) { if (!e || e.name !== "AbortError") copy(); }); else copy();
       });
       acts.appendChild(share);
       var again = el("button", "outline quiet", "Make another"); again.type = "button"; again.addEventListener("click", function () { inv.link = ""; invSheet(); }); acts.appendChild(again);
@@ -414,7 +443,33 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       });
       sh.appendChild(list);
     }
+    invAppRow(sh);
     var done = el("button", "outline quiet inv-done", "Done"); done.type = "button"; done.addEventListener("click", function () { bd.classList.remove("open"); }); sh.appendChild(done);
+  }
+  // the iPhone app's public TestFlight link (3.155.0): pasted in once, then every invite ends with "Get the app"
+  function invAppRow(sh) {
+    var h = el("div", "sec"); h.appendChild(el("h2", null, "iPhone app link")); sh.appendChild(h);
+    if (inv.app && !inv.editApp) {
+      var row = el("div", "inv-row"), t = el("div");
+      t.appendChild(el("b", null, "Invites end with Get the app")); t.appendChild(el("span", null, inv.app.replace(/^https:\/\//, "")));
+      row.appendChild(t);
+      var ch = el("button", "outline quiet", "Change"); ch.type = "button"; ch.addEventListener("click", function () { inv.editApp = true; invSheet(); }); row.appendChild(ch);
+      sh.appendChild(row); return;
+    }
+    sh.appendChild(el("p", "inv-p dim", "Paste Slate's public TestFlight link (App Store Connect > TestFlight > your external group > Public Link). Then someone opening an invite on an iPhone gets the app at the end. Without it, they use Slate in Safari."));
+    var f = el("input", "field"); f.type = "url"; f.placeholder = "https://testflight.apple.com/join/…"; f.value = inv.app || ""; f.setAttribute("aria-label", "TestFlight public link"); f.setAttribute("autocapitalize", "off"); f.setAttribute("autocorrect", "off"); sh.appendChild(f);
+    var acts = el("div", "inv-acts");
+    var sv = el("button", "solid", "Save the link"); sv.type = "button";
+    sv.addEventListener("click", function () {
+      sv.disabled = true; sv.textContent = "Saving…";
+      invCall({ action: "applink", url: f.value.trim() }).then(function (j) {
+        if (j.ok) { inv.app = j.app || ""; inv.editApp = false; toast(inv.app ? "Invites now end with Get the app" : "App link removed"); invSheet(); }
+        else { sv.disabled = false; sv.textContent = "Save the link"; toast(j.error || "Couldn't save. Try again.", null, 6000); }
+      });
+    });
+    acts.appendChild(sv);
+    if (inv.editApp) { var cx = el("button", "outline quiet", "Cancel"); cx.type = "button"; cx.addEventListener("click", function () { inv.editApp = false; invSheet(); }); acts.appendChild(cx); }
+    sh.appendChild(acts);
   }
   // admin-only rows (invites, People, the new user preview): shown to an admin, and the server checks every one of
   // their actions again (whoIs in worker/index.js)
@@ -536,7 +591,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     }
     if (signed && isAdmin()) {
       head("People");
-      row("Invite someone", "A one-time link to sign up with their own passcode.", "Invite", function () {
+      row("Invite someone", "One link to text: their account, their slate and the iPhone app.", "Invite", function () {
         inv.link = ""; inv.err = ""; invSheet(); invCall({ action: "list" }).then(function (j) { if (j.list) { inv.list = j.list; if ($("sheet-invite") && $("sheet-invite").classList.contains("open")) invSheet(); } if (j.people) { ppl.list = j.people; acctPeople(); } });
       });
       var pb = el("div", "acct-people"); pb.id = "acct-people"; wrap.appendChild(pb);

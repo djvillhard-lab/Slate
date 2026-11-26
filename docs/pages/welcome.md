@@ -68,5 +68,25 @@ answers, a favorite's event, Settings > Account, DJ's invite sheet), `src/styles
 - "Skip late games" doesn't exist as a rule (the engine only has "starts after"), so the walkthrough asks for an
   earliest start instead. A latest-start rule would be a change to `050-slate-engine.js` and the Slate rules page.
 - The thumbs up/down learning could feed the walkthrough's starting rules later.
-- An invite link opens in Safari. Someone using the TestFlight app signs up in Safari, then logs in to the app with
-  their passcode (or taps "I have an invite" in the app and types the code).
+- The app still needs one passcode typed in after the Safari setup. Skipping that (the invite opening the app itself
+  and logging it in) needs a new iPhone build: universal links (Associated Domains + an apple-app-site-association
+  file) or a slate:// URL scheme in `onOpenURL`. Not built; ask DJ first.
+
+## One-link invites (3.155.0, DJ Nov 26)
+DJ texts one link; on an iPhone it goes: sign-up page (shows the 3 steps) > walkthrough > "Last step: get the iPhone
+app" > TestFlight public link > log in to the app with the new passcode (their slate is already saved). Web only.
+- The TestFlight **public link** lives in the `config/app` doc (`testflight`), set by an admin on the invite sheet
+  ("iPhone app link", `/api/invite` action `applink`; only `https://testflight.apple.com/join/…` is accepted). The
+  server sends it as `app` with `/api/invite-check`, `/api/signup` and every `/api/invite` answer; the phone keeps it
+  as `slate-app-link`. `window.slateWantsApp()` (db-shim.js) returns it only on an iPhone/iPad in a browser, never in
+  the app. No link set = the old flow (Slate in Safari).
+- Done step: "Get the app" saves (`wlFinish`) and opens TestFlight in a new tab so the saves aren't cut off;
+  "Use it here" just finishes. The notifications step says the app will ask, and the `welcome` doc gets
+  `askPush: true`; the app's first open (startup check in 232-welcome.js) then calls `pushTurnOn()` once
+  (`slate-push-asked` flag), which existing builds support.
+- Fixed: a save at page start called `askPassNow`, which replaced the sign-up page with "Log in". It now never
+  covers an open gate or a pending invite.
+- `scripts/shots.py --safari` shoots the website as Safari on an iPhone (no app shell, pretend TestFlight link),
+  e.g. `shots.py lineup --gate invite --safari`.
+- DJ's side (App Store Connect): TestFlight > the external group (Friends) > Public Link > Enable; the newest build
+  must be in that group and through Apple's beta review. External testers wait for review on new versions.

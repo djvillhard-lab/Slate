@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.155.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Inviting someone is now one link. Text it, and on their iPhone it sets up their account (name and passcode), walks them through their teams and slate rules, then ends with "Get the app": Apple's TestFlight opens, they install Slate and log in with the passcode they just made, and their slate is already there.
+- Settings, Account and people, Invite someone has a new "iPhone app link" box. Paste Slate's public TestFlight link there once; until then, invites work the way they did and people use Slate in Safari.
+- The invite page shows the three steps up top (make your account, pick your teams and games, get the iPhone app), and the text that goes with a shared invite says what it does.
+- When someone sets up in Safari and then opens the app for the first time, the app asks to send notifications right away (if they turned any on), instead of leaving them to find it in Settings.
+- Fixed: opening an invite link could jump from "Set up your Slate" to a "Log in" page with "This phone isn't logged in" before the person typed anything.
+
 ## 3.154.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Simple mode: every game now says what it is. The sport's icon and the league sit at the top of each card ("NFL", "College Hoops · Maui Invitational"), and on the game's own page.
