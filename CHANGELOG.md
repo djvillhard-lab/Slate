@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.171.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed: the focus button now matches the Back button beside it: the same size, the same clear glass and the same height on the screen, on every phone shape. It gets a light green tint while the focus view is on.
+- Every page: the Settings and Search buttons at the top now match each other. Search had no fill or edge and a different icon color; both are the same glass circle with the same icon color and size now.
+- Live feed focus view: the row of other live games beside the score (added in 3.171.0) is gone again, as DJ asked. The score stays on its single line. Swiping the page sideways still changes game.
+
 ## 3.171.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Football Live feed: the end zones on the field now show each team's logo in place of the letters "CHI" and "DET". The thin field on each play card has small logos in its end zones too. Each end zone is dark with an edge in the team's color so the logo is easy to see.

@@ -1,8 +1,8 @@
   // ---- Focus view of the Live feed (DJ, Nov 26, 2026; first shipped as "compact" in 3.168.0) ----
   // One round button beside Back, on every sport and every phone shape (folded, unfolded upright and sideways, iPhone):
   // the page header, the league pills and the extra cards above the plays go away, the score becomes one slim line and
-  // (football) the field stays pinned above the newest plays. The other live games sit beside the score as a row to tap
-  // or swipe through, with the game on screen outlined (styles/108-feed-compact.css; the row is the feed's own .fd-strip).
+  // (football) the field stays pinned above the newest plays (styles/108-feed-compact.css). No game switcher in this
+  // view (DJ tried a row of live games beside the score in 3.171.0 and took it back); a sideways swipe still changes game.
   // It also turns on by itself when the app only has a short, wide space: Picture in Picture on the top half of the
   // unfolded Duo held upright. The choice is remembered apart for that short space and for normal screens.
   // Nothing in the Live feed's own files is touched: this only sets html.fd-cmp.
@@ -24,7 +24,7 @@
     function apply() {
       var on = want() && !root.classList.contains("panes");  // the two-page screen itself never changes; its pages do
       if (root.classList.contains("fd-cmp") !== on) root.classList.toggle("fd-cmp", on);
-      if (btn && btn.getAttribute("aria-pressed") !== (on ? "true" : "false")) { btn.setAttribute("aria-pressed", on ? "true" : "false"); btn.setAttribute("aria-label", on ? "Focus view is on. Tap for the full Live feed" : "Focus on this game: score, live games and plays only"); }
+      if (btn && btn.getAttribute("aria-pressed") !== (on ? "true" : "false")) { btn.setAttribute("aria-pressed", on ? "true" : "false"); btn.setAttribute("aria-label", on ? "Focus view is on. Tap for the full Live feed" : "Focus on this game: score and plays only"); }
     }
     function build() {
       btn = document.createElement("button"); btn.type = "button"; btn.className = "fdc-btn"; btn.id = "fdc-btn";
@@ -38,7 +38,21 @@
       });
       document.body.appendChild(btn);
     }
-    build(); apply();
+    // 3.171.2 (DJ: "Match up the collapse button with the back button"): the button sits level with Back, 8 points to its
+    // left, wherever Back is on this phone shape. Measured only while Back is on screen and standing still.
+    function place() {
+      var bk = document.getElementById("dock-back"), dk = document.querySelector("nav.dock");
+      if (!bk || !btn.offsetWidth || !bk.offsetWidth || root.classList.contains("dock-away") || (dk && (dk.classList.contains("n3-away") || dk.style.transform))) return;
+      var r = bk.getBoundingClientRect(), m = btn.getBoundingClientRect(), k = m.width ? btn.offsetWidth / m.width : 1;  // k: page zoom, if any
+      if (r.width < 20 || r.bottom > window.innerHeight + 1) return;
+      var rr = Math.round((window.innerWidth - r.left + 8) * k) + "px", bb = Math.round((window.innerHeight - r.bottom) * k) + "px";
+      if (btn.style.getPropertyValue("--fdc-r") !== rr) btn.style.setProperty("--fdc-r", rr);
+      if (btn.style.getPropertyValue("--fdc-b") !== bb) btn.style.setProperty("--fdc-b", bb);
+    }
+    function placeSoon() { requestAnimationFrame(place); setTimeout(place, 350); }
+    build(); apply(); placeSoon();
+    new MutationObserver(function () { if (root.getAttribute("data-view") === "feed") placeSoon(); }).observe(root, { attributes: true, attributeFilter: ["data-view", "class"] });
+    window.addEventListener("resize", placeSoon);
     // reading down hides the button with the others (DJ's rule for every floating button); any scroll up brings it back
     var y0 = 0;
     window.addEventListener("scroll", function () {

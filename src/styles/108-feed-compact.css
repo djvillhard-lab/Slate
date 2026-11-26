@@ -19,34 +19,22 @@ html.fd-cmp[data-view="feed"] #feed-body > .fd-field > .fd-wp { display: none; }
 /* basketball and the other sports: the card of top players and win probability above the plays is on the full feed */
 html.fd-cmp[data-view="feed"] #feed-body > .fd-field.hp-top { display: none !important; }
 
-/* 3.171.0 (DJ: "games could actually show in a carousel where the current score is, and make it clear that the current
-   game is selected, and allow me to choose other live games or swipe there"). When other live games exist, the top line
-   is a row: the game on screen first, outlined in the accent color, then the feed's own game chips (.fd-strip, minus the
-   chosen one) to tap, or slide sideways when they don't all fit. The page's own sideways swipe still changes game too.
-   #feed-body becomes a wrapping flex row only so those two can share a line; everything else takes a full line.
-   Football's down and distance moves from the score line to the top of the pinned field, where there is room. */
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) { display: flex; flex-wrap: wrap; align-items: flex-start; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > * { flex: 0 0 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-bug { order: -2; flex: 0 0 auto; max-width: 72%; overflow: visible; z-index: 4; padding: 0 10px !important; border: 1.5px solid var(--accent); border-radius: 8px !important; background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-strip:not(.fd-filt) { display: flex !important; order: -1; flex: 1 1 0; align-items: stretch; position: -webkit-sticky; position: sticky; top: var(--fd-top, 0px); z-index: 3; height: 42px; margin: 0; padding-top: 0; padding-bottom: 0; padding-left: 6px; gap: 6px; background: var(--bg); box-shadow: 0 -14px 0 var(--bg); }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-strip > .fd-chip.on { display: none; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-strip > .fd-chip { min-height: 0; height: 42px; box-sizing: border-box; padding: 0 9px; gap: 7px; border-radius: 8px; border-width: 1px; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-strip > .fd-chip .fd-cr b, html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-strip > .fd-chip .fd-cr span { font-size: 13px !important; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-strip > .fd-chip .fd-cr { gap: 4px; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-field:not(.hp-top) { top: calc(var(--fd-top) + 48px); margin-top: 6px; border-radius: 8px !important; border-top: 1px solid var(--hair); box-shadow: 0 -7px 0 var(--bg), 0 10px 14px -8px var(--bg); }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-bug > .fd-sit { position: absolute; left: 10px; top: calc(100% + 12px); z-index: 5; margin: 0; white-space: nowrap; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-bug:has(> .fd-sit) ~ .fd-field:not(.hp-top) { padding-top: 32px; }
-html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-list { margin-top: 8px; }
+/* (3.171.0 put the other live games beside the score as a row; DJ, a few minutes later: "Never mind on the other live
+   game selection from collapsed view. I like the current version." Removed in 3.171.2. Swiping the page sideways still
+   changes game.) */
 /* the button: beside Back, bottom right, on the Live feed only (not inside the two sides of the unfolded Duo sideways) */
-.fdc-btn { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 84px); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 60; width: 52px; height: 52px; border-radius: 50%; display: none; place-items: center; padding: 0; color: var(--ink); background: color-mix(in srgb, var(--raise) 82%, transparent); border: 1px solid var(--hair); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); cursor: pointer; }
+/* 3.171.2 (DJ: "Match up the collapse button with the back button. Not quite the same"): the same 46-point clear glass
+   circle as Back (050-ux-review.css, nav.dock .dock-back), with a 20-point icon. 289-feed-compact.js lines it up with
+   Back (same height on screen, 8 points to its left) by setting --fdc-r and --fdc-b; the values here are the fallback. */
+.fdc-btn { position: fixed; right: var(--fdc-r, calc(env(safe-area-inset-right, 0px) + 66px)); bottom: var(--fdc-b, max(12px, env(safe-area-inset-bottom, 0px))); z-index: 12; width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; display: none; place-items: center; padding: 0; color: var(--accent); background: var(--glass-clear); border: 1px solid var(--glass-edge); -webkit-backdrop-filter: blur(6px) saturate(180%); backdrop-filter: blur(6px) saturate(180%); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(0,0,0,.28); cursor: pointer; }
 html[data-view="feed"] .fdc-btn { display: grid; }
 html.panes .fdc-btn { display: none !important; }  /* the two-page screen itself; each page inside it has its own */
-.fdc-btn svg { width: 24px; height: 24px; }
+.fdc-btn svg { width: 20px; height: 20px; }
 .fdc-btn:active { transform: scale(.92); }
 /* like every other floating button, it slides away while you read down and comes back on any scroll up */
 .fdc-btn { transition: translate .25s ease, opacity .25s ease; }
 .fdc-btn.fdc-away { translate: 0 150px; opacity: 0; pointer-events: none; }
-html.fd-cmp .fdc-btn { color: var(--accent); }
+html.fd-cmp .fdc-btn { background: color-mix(in srgb, var(--accent) 22%, var(--glass-clear)); }  /* on: a light accent tint, the icon stays the same green as Back's arrow */
 html.fd-cmp .fdc-btn .fdc-in, html:not(.fd-cmp) .fdc-btn .fdc-out { display: none; }
 
 /* a narrow screen with one live game (a regular iPhone, or one side of two pages): the down and distance does not fit
@@ -55,5 +43,4 @@ html.fd-cmp .fdc-btn .fdc-in, html:not(.fd-cmp) .fdc-btn .fdc-out { display: non
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug { overflow: visible; z-index: 4; }
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sit { position: absolute; left: 10px; top: calc(100% + 6px); z-index: 5; margin: 0; white-space: nowrap; }
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug:has(> .fd-sit) ~ .fd-field:not(.hp-top) { padding-top: 32px; }
-  html.fd-cmp[data-view="feed"] #feed-body:has(> .fd-strip:not(.fd-filt) > .fd-chip:not(.on)) > .fd-bug > .fd-sit { top: calc(100% + 12px); }
 }

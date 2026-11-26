@@ -1,0 +1,15 @@
+/* Header buttons match (DJ, Nov 26, 2026: "Match up the collapse button with the back button... Same for settings and
+   search button on header"). Settings was a filled glass circle with a green icon; Search beside it had no fill, no
+   edge and a white icon, because an older rule for the slate's header (#btn-find: background none) still won.
+   Both are now the same glass circle from 100-glass.css with the same neutral icon color and icon size, on every page.
+   (Green is kept for things that are selected, docs/DESIGN.md.) */
+html:root header.top .pillgroup > #btn-find:not([hidden]),
+html:root header.top .toprow.lineup-top > .pillgroup > #btn-find:not([hidden]) { background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; }
+html:root header.top .pillgroup > #btn-find:not([hidden]),
+html:root header.top .pillgroup > #btn-settings:not([hidden]),
+html:root header.top .pillgroup > #l-btn-settings:not([hidden]),
+html:root header.top .toprow.lineup-top > .pillgroup > #btn-find:not([hidden]),
+html:root header.top .toprow.lineup-top > .pillgroup > #btn-settings:not([hidden]),
+html:root header.top .toprow.lineup-top > .pillgroup > #l-btn-settings:not([hidden]) { color: var(--head) !important; }
+html:root header.top .pillgroup > :is(#btn-find, #btn-settings, #l-btn-settings) > svg { width: 20px !important; height: 20px !important; }
+html:root header.top .pillgroup > :is(#btn-find, #btn-settings, #l-btn-settings) > svg { stroke-width: 2.2; }
