@@ -12,8 +12,8 @@
   // TV_TABS lives in 070-navigation.js (swipe order); it's put in the same order as the tab row here.
   TV_TABS.splice(0, TV_TABS.length, "setups", "all", "national", "streaming");
   if (state.tvFilter === "all") state.tvFilter = "setups";
-  var TVS = { list: [], cur: "", loaded: false, asked: false, slot: "", edit: null, sel: 0, once: null, swap: "", pins: {}, saveT: null };
-  try { var tvc = JSON.parse(localStorage.getItem("slate-tv-setups") || "null"); if (tvc && Array.isArray(tvc.list)) { TVS.list = tvc.list; TVS.cur = tvc.cur || ""; } } catch (e) {}
+  var TVS = { rules: { pins: [], lg: [] }, list: [], cur: "", loaded: false, asked: false, slot: "", edit: null, sel: 0, once: null, swap: "", pins: {}, saveT: null };
+  try { var tvc = JSON.parse(localStorage.getItem("slate-tv-setups") || "null"); if (tvc && Array.isArray(tvc.list)) { TVS.list = tvc.list; TVS.cur = tvc.cur || ""; if (tvc.rules) TVS.rules = tvsRulesNorm(tvc.rules); } } catch (e) {}
   try { var tvp = JSON.parse(localStorage.getItem("slate-tv-pins") || "null"); if (tvp && tvp.d === todayInHome()) TVS.pins = tvp.p || {}; } catch (e) {}
   // 3.135.1 (DJ): pick how many TVs first, then a layout for that many. The main TV is always the first box.
   var TV_PRESETS = {
@@ -105,7 +105,6 @@
     ".tvs-row .chwatch { flex: none; display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 12px !important; border-radius: 8px !important; font: inherit; font-size: 13px; font-weight: 800; color: var(--ink); white-space: nowrap; }" +
     ".tvs-row .chwatch::before { content: \"\"; border-left: 7px solid var(--accent); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }" +
     ".tvs-row .tvs-noch { min-width: 44px; font-size: 11px; color: var(--dim); text-align: center; }" +
-    ".tvs-x { display: none; }" +
     ".tvs-sw { padding: 0 10px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--lg-fill); border: 1px solid var(--lg-edge); }" +
     ".tvs-alt { padding: 0 0 8px 54px; display: flex; flex-direction: column; }" +
     ".tvs-alt button { min-height: 44px; text-align: left; background: none; border: 0; border-top: 1px solid var(--hair); font: inherit; font-size: 15px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; padding: 0; }" +
@@ -136,6 +135,20 @@
     ".tvs-prow > span small { display: block; font-size: 12px; color: var(--dim); font-weight: 700; }" +
     ".tvs-prow .seg { width: 170px; flex: none; }" +
     ".tvs-prow .tvs-in { flex: 1; }" +
+    ".tvs-ru h3 { margin: 22px 0 2px; font-size: 15px; font-weight: 800; color: var(--head); }" +
+    ".tvs-ru .tvs-hint { margin: 0 0 8px; }" +
+    ".tvs-rrow { display: flex; align-items: center; gap: 10px; min-height: 56px; border-top: 1px solid var(--hair); }" +
+    ".tvs-rrow .tx { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; }" +
+    ".tvs-rrow .tx small { display: block; font-size: 12px; color: var(--dim); }" +
+    ".tvs-rrow .num { width: 20px; flex: none; font-size: 13px; font-weight: 800; color: var(--dim); }" +
+    ".tvs-sel { min-height: 40px; max-width: 46%; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--accent); font: inherit; font-size: 14px; font-weight: 800; padding: 0 8px; }" +
+    ".tvs-x { flex: none; width: 44px; height: 44px; border: 0; background: none; color: var(--dim); font: inherit; font-size: 20px; }" +
+    ".tvs-grip { flex: none; width: 44px; height: 44px; display: grid; place-items: center; color: var(--dim); font-size: 18px; letter-spacing: -3px; touch-action: none; cursor: grab; }" +
+    ".tvs-rrow.drag { background: var(--card); box-shadow: 0 4px 16px var(--shadow, rgba(0,0,0,.4)); position: relative; z-index: 2; }" +
+    ".tvs-pt { margin-top: 4px; min-height: 32px; padding: 0 10px; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 700; color: var(--muted); background: var(--lg-fill); border: 1px solid var(--lg-edge); }" +
+    ".tvs-pt[aria-pressed=\"true\"] { background: var(--accent-fill); color: var(--on-accent); border-color: var(--accent-fill); }" +
+    ".tvs-addl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }" +
+    ".tvs-addl button { min-height: 40px; padding: 0 12px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--lg-fill); border: 1px solid var(--lg-edge); }" +
     ".tvs-del { background: none; border: 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--live); min-height: 44px; padding: 0; }" +
     ".tvs-acts { display: flex; gap: 8px; margin-top: 16px; align-items: stretch; }" +
     ".tvs-acts .full-mu { flex: 1; margin: 0; }" +
@@ -146,13 +159,14 @@
     document.head.appendChild(st); })();
 
   // ---------- saving ----------
-  function tvsKeep() { try { localStorage.setItem("slate-tv-setups", JSON.stringify({ list: TVS.list, cur: TVS.cur })); } catch (e) {} }
+  function tvsRulesNorm(r) { r = r || {}; return { pins: Array.isArray(r.pins) ? r.pins : [], lg: Array.isArray(r.lg) ? r.lg : [] }; }
+  function tvsKeep() { try { localStorage.setItem("slate-tv-setups", JSON.stringify({ list: TVS.list, cur: TVS.cur, rules: TVS.rules })); } catch (e) {} }
   function tvsLoad() {
     if (TVS.asked || !db || !uid) return;
     TVS.asked = true;
     db.collection("data/users/" + uid).doc("tv-setups").get().then(function (sn) {
       var d = sn.exists ? sn.data() : null;
-      if (d && Array.isArray(d.list)) { TVS.list = d.list; TVS.cur = d.cur || ""; tvsKeep(); }
+      if (d && Array.isArray(d.list)) { TVS.list = d.list; TVS.cur = d.cur || ""; TVS.rules = tvsRulesNorm(d.rules); tvsKeep(); }
       TVS.loaded = true;
       if (!TVS.edit && $("view-tv") && !$("view-tv").hidden) keepScroll(renderTV);
     }, function () { TVS.loaded = true; });
@@ -162,7 +176,7 @@
     clearTimeout(TVS.saveT);
     TVS.saveT = setTimeout(function () {
       if (!db || !uid) return;
-      db.collection("data/users/" + uid).doc("tv-setups").set({ v: 1, list: TVS.list, cur: TVS.cur }).then(null, function () { toast("Couldn't save your TV setup."); });
+      db.collection("data/users/" + uid).doc("tv-setups").set({ v: 1, list: TVS.list, cur: TVS.cur, rules: TVS.rules }).then(null, function () { toast("Couldn't save your TV setup."); });
     }, 800);
   }
   function tvsPinsSave() { try { localStorage.setItem("slate-tv-pins", JSON.stringify({ d: todayInHome(), p: TVS.pins })); } catch (e) {} }
@@ -197,9 +211,26 @@
     var app = tv.filter(function (n) { return watchOptions(n).length; });
     return { main: nat[0] || app[0] || tv[0] || "", more: tv };
   }
+  // TV rules (3.142.0, DJ): your league order ranks above your slate and the matchup, below your own teams.
+  // A league marked "prime time only" counts only for games starting 7 PM Central or later (Slate's prime time).
+  function tvsLgRank(g) {
+    var L = TVS.rules.lg;
+    for (var i = 0; i < L.length; i++) if (L[i].k === g.league && (!L[i].prime || hourCT(g.start) >= 19)) return 700 + (L.length - i) * 10;
+    return 0;
+  }
   function tvsRank(g) {
     var h = ruleHits(g), on = !!state.slateSet[g.id];
-    return (h.fav ? 1000 : 0) + (on ? 500 : 0) + h.score + (natFor(g) ? 5 : 0) + ((g.tv || []).filter(Boolean).length ? 0 : -300);
+    return (h.fav ? 1000 : 0) + tvsLgRank(g) + (on ? 500 : 0) + h.score + (natFor(g) ? 5 : 0) + ((g.tv || []).filter(Boolean).length ? 0 : -300);
+  }
+  // a team pin's game, and the TV it asks for (its place in this setup; a setup without that TV uses its main TV)
+  function tvsPinOf(g) {
+    var P = TVS.rules.pins;
+    for (var i = 0; i < P.length; i++) if (teamMatch(g.away, P[i].team, g.league) || teamMatch(g.home, P[i].team, g.league)) return P[i];
+    return null;
+  }
+  function tvsPinName(tv, setup) {
+    if (tv === "main" || !tv) return "the Main TV";
+    var t = setup && setup.tvs[tv - 1]; return t && !t.main ? t.name : "TV " + tv;
   }
   // the setups to choose from today: Live now (when something is on), then each upcoming start time
   function tvsSlots(gs) {
@@ -244,6 +275,22 @@
       var t = setup.tvs[i], n = Math.max(1, t.split || 1);
       (pins[t.id] || []).forEach(function (id, j) { if (j < n && byId[id] && !used[id] && (n === 1 || tvsYT(byId[id]))) { out[i][j] = byId[id]; used[id] = 1; } });
     });
+    // your team rules: "Manchester United always goes on the Main TV", in the order you listed them
+    var mainI = order[0];
+    TVS.rules.pins.forEach(function (p) {
+      pool.forEach(function (g) {
+        if (used[g.id] || !(teamMatch(g.away, p.team, g.league) || teamMatch(g.home, p.team, g.league))) return;
+        var want = p.tv === "main" || !p.tv || !setup.tvs[p.tv - 1] ? mainI : p.tv - 1;
+        var tries = [want].concat(order.filter(function (k) { return k !== want; }));
+        for (var q = 0; q < tries.length; q++) {
+          var k = tries[q], tt = setup.tvs[k], nn = Math.max(1, tt.split || 1);
+          if (nn > 1 && !tvsYT(g)) continue;
+          var free = -1; for (var jj = 0; jj < nn; jj++) if (!out[k][jj]) { free = jj; break; }
+          if (free === -1) continue;
+          out[k][free] = g; used[g.id] = 1; return;
+        }
+      });
+    });
     order.forEach(function (i) {
       var t = setup.tvs[i], n = Math.max(1, t.split || 1);
       for (var j = 0; j < n; j++) {
@@ -255,12 +302,14 @@
         if (!g) break;
         out[i][j] = g; used[g.id] = 1;
       }
-      out[i] = out[i].filter(Boolean);
     });
+    out = out.map(function (l) { return l.filter(Boolean); });
     return out;
   }
   function tvsWhy(g) {
+    if (tvsPinOf(g)) return "Your rule";
     if (hasFav(g)) return "Your team";
+    if (tvsLgRank(g)) return "Your league order";
     var w = state.why && state.why[g.id];
     if (state.slateSet[g.id]) return w && w[0] && w[0] !== "Added" ? "On your slate · " + w[0] : "On your slate";
     return "Also on";
@@ -369,6 +418,8 @@
     });
     var nb = el("button", "tvs-pill", "+ New"); nb.type = "button"; nb.addEventListener("click", function () { tvsOpenEditor(null); }); pick.appendChild(nb);
     top.appendChild(pick);
+    var ru = el("button", "rlink", "Rules"); ru.type = "button"; ru.setAttribute("aria-label", "Which game goes where: your TV rules");
+    ru.addEventListener("click", function () { TVS.edit = { rules: true }; TVS.drawn = false; renderTV(); window.scrollTo(0, 0); }); top.appendChild(ru);
     var ed = el("button", "rlink", "Edit"); ed.type = "button"; ed.setAttribute("aria-label", "Edit this TV setup");
     ed.addEventListener("click", function () { tvsOpenEditor(setup); }); top.appendChild(ed);
     wrap.appendChild(top);
@@ -466,7 +517,8 @@
   }
   function tvsCloseEditor() { TVS.edit = null; TVS.drawn = false; renderTV(); window.scrollTo(0, 0); }
   function tvsEditor(body) {
-    var E = TVS.edit, s = E.s, wrap = el("div", "tvs-ed");
+    if (TVS.edit.rules) { tvsRulesPage(body); return; }
+    var E = TVS.edit, s = E.s, wrap = el("div", "tvs-ed"); wrap.id = "tvs-ed-root";
     var hd = el("div", "tvs-ed-h"); hd.appendChild(el("h2", null, E.orig ? "Edit setup" : "New setup")); wrap.appendChild(hd);
     var nm = el("input", "tvs-in"); nm.type = "text"; nm.maxLength = 24; nm.placeholder = "Name, like Living room or Basement"; nm.value = s.name || ""; nm.setAttribute("aria-label", "Setup name");
     nm.addEventListener("input", function () { s.name = nm.value; });
@@ -510,6 +562,103 @@
     ["touchstart", "touchmove", "touchend"].forEach(function (k) { wrap.addEventListener(k, function (e) { e.stopPropagation(); }, { passive: true }); });
     body.appendChild(wrap);
     tvsEdRedraw();
+  }
+  // ---------- TV rules: which game goes where (3.142.0, DJ) ----------
+  // Same for every setup. Team rules first ("always goes on" a TV you pick), then a league order you drag.
+  function tvsRulesSave() { tvsSave(); }
+  function tvsRulesPage(body) {
+    var R = TVS.rules, setup = tvsCur(), wrap = el("div", "tvs-ed tvs-ru"); wrap.id = "tvs-ed-root";
+    var hd = el("div", "tvs-ed-h"); hd.appendChild(el("h2", null, "Which game goes where")); wrap.appendChild(hd);
+    wrap.appendChild(el("p", "tvs-hint", "Your rules come first, top to bottom, in every setup. After them: your teams, then games on your slate, then the strongest matchups, then national TV."));
+    // team rules
+    wrap.appendChild(el("h3", null, "Always on a TV"));
+    if (!R.pins.length) wrap.appendChild(el("p", "tvs-hint", "None yet. Add a team to keep it on the same TV every time it plays."));
+    R.pins.forEach(function (p, i) {
+      var row = el("div", "tvs-rrow"), pt = parseTeam(p.team);
+      var b = badgeFor((pt.name.replace(/[^A-Za-z ]/g, "").split(" ").pop() || "?").slice(0, 3).toUpperCase(), pt.name); row.appendChild(b);
+      var tx = el("div", "tx"); tx.appendChild(document.createTextNode(pt.name + " always goes on")); row.appendChild(tx);
+      var sel = el("select", "tvs-sel"); sel.setAttribute("aria-label", "Which TV for " + pt.name);
+      var opts = [["main", "Main TV"]]; for (var k = 2; k <= TV_MAXN; k++) { var tk = setup && setup.tvs[k - 1]; opts.push([String(k), tk && !tk.main ? tk.name : "TV " + k]); }
+      opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; if (String(p.tv || "main") === o[0]) op.selected = true; sel.appendChild(op); });
+      sel.addEventListener("change", function () { p.tv = sel.value === "main" ? "main" : Number(sel.value); tvsRulesSave(); });
+      row.appendChild(sel);
+      var x = el("button", "tvs-x", "✕"); x.type = "button"; x.setAttribute("aria-label", "Remove the rule for " + pt.name);
+      x.addEventListener("click", function () { var old = R.pins.slice(); R.pins.splice(i, 1); tvsRulesSave(); tvsRedrawRules(); topUndo("Rule removed", function () { R.pins = old; tvsRulesSave(); tvsRedrawRules(); }); });
+      row.appendChild(x);
+      wrap.appendChild(row);
+    });
+    var have = {}; R.pins.forEach(function (p) { have[p.team] = 1; });
+    var mine = (state.teams || []).filter(function (t) { return !have[t]; });
+    if (mine.length) {
+      var addT = el("div", "tvs-addl");
+      mine.forEach(function (t) {
+        var b = el("button", null, "+ " + parseTeam(t).name); b.type = "button";
+        b.addEventListener("click", function () { R.pins.push({ team: t, tv: "main" }); tvsRulesSave(); tvsRedrawRules(); });
+        addT.appendChild(b);
+      });
+      wrap.appendChild(addT);
+    }
+    wrap.appendChild(el("p", "tvs-hint", "Pick from your teams. To add another team, star it first."));
+    // league order
+    wrap.appendChild(el("h3", null, "When games clash, put these first"));
+    wrap.appendChild(el("p", "tvs-hint", R.lg.length ? "Drag to reorder. A higher league gets the bigger TV. Leagues not listed follow your slate." : "None yet. Add leagues below, then drag them into order."));
+    var list = el("div"); list.id = "tvs-lg-list";
+    R.lg.forEach(function (x, i) {
+      var row = el("div", "tvs-rrow"); row.setAttribute("data-k", x.k);
+      row.appendChild(el("span", "num", String(i + 1)));
+      var tx = el("div", "tx"); tx.appendChild(document.createTextNode((LEAGUES[x.k] || {}).name || x.k));
+      var pt = el("button", "tvs-pt", "Prime time only"); pt.type = "button"; pt.setAttribute("aria-pressed", x.prime ? "true" : "false");
+      pt.addEventListener("click", function () { x.prime = !x.prime; pt.setAttribute("aria-pressed", x.prime ? "true" : "false"); tvsRulesSave(); });
+      var tw = el("div"); tw.appendChild(pt); tx.appendChild(tw);
+      row.appendChild(tx);
+      var rm = el("button", "tvs-x", "✕"); rm.type = "button"; rm.setAttribute("aria-label", "Remove " + ((LEAGUES[x.k] || {}).name || x.k));
+      rm.addEventListener("click", function () { R.lg = R.lg.filter(function (y) { return y !== x; }); tvsRulesSave(); tvsRedrawRules(); });
+      row.appendChild(rm);
+      var grip = el("span", "tvs-grip", "⋮⋮"); grip.setAttribute("aria-hidden", "true"); row.appendChild(grip);
+      tvsLgDrag(grip, row, list);
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    var inL = {}; R.lg.forEach(function (x) { inL[x.k] = 1; });
+    var addL = el("div", "tvs-addl");
+    Object.keys(LEAGUES).filter(function (k) { return !inL[k]; }).forEach(function (k) {
+      var b = el("button", null, "+ " + LEAGUES[k].name); b.type = "button";
+      b.addEventListener("click", function () { R.lg.push({ k: k, prime: false }); tvsRulesSave(); tvsRedrawRules(); });
+      addL.appendChild(b);
+    });
+    wrap.appendChild(addL);
+    var done = el("button", "full-mu tvs-ed-done"); done.type = "button"; done.style.marginTop = "20px"; done.appendChild(el("b", null, "Done"));
+    done.addEventListener("click", tvsCloseEditor);
+    wrap.appendChild(done);
+    ["touchstart", "touchmove", "touchend"].forEach(function (k) { wrap.addEventListener(k, function (e) { e.stopPropagation(); }, { passive: true }); });
+    body.appendChild(wrap);
+  }
+  function tvsRedrawRules() { var body = $("tv-body"); if (!body || !TVS.edit || !TVS.edit.rules) return; keepScroll(function () { body.textContent = ""; tvsRulesPage(body); }); }
+  // drag a league by its handle: only that row moves while the finger is down; the order is saved when it lifts
+  function tvsLgDrag(grip, row, list) {
+    grip.addEventListener("pointerdown", function (e) {
+      if (e.button) return;
+      e.preventDefault(); try { grip.setPointerCapture(e.pointerId); } catch (er) {}
+      row.classList.add("drag");
+      function mv(ev) {
+        var rows = [].slice.call(list.children), y = ev.clientY;
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i]; if (r === row) continue;
+          var b = r.getBoundingClientRect(), mid = b.top + b.height / 2;
+          if (y < mid && rows.indexOf(row) > i) { list.insertBefore(row, r); break; }
+          if (y > mid && rows.indexOf(row) < i && (i === rows.length - 1 || y < rows[i + 1].getBoundingClientRect().top + rows[i + 1].getBoundingClientRect().height / 2 || rows[i + 1] === row)) { list.insertBefore(row, r.nextSibling); break; }
+        }
+      }
+      function up() {
+        grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up);
+        row.classList.remove("drag");
+        var byK = {}; TVS.rules.lg.forEach(function (x) { byK[x.k] = x; });
+        TVS.rules.lg = [].map.call(list.children, function (r) { return byK[r.getAttribute("data-k")]; }).filter(Boolean);
+        [].forEach.call(list.children, function (r, i) { var n = r.querySelector(".num"); if (n) n.textContent = String(i + 1); });
+        tvsRulesSave();
+      }
+      grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
+    });
   }
   // redraws only the wall and the panel (never during a drag: a drag moves the one TV's box)
   function tvsEdRedraw() {

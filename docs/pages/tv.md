@@ -21,8 +21,10 @@ Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css
 
 - 3.140.5 (DJ): split-screen TVs are YouTube TV Multiview, so they only take games on a YouTube TV channel (`tvsYT`: `NATIONAL_TV` minus `TV_NOT_YT`), in fill, pins and Swap; their screens show that channel (`tvsChan(g, true)`). A hint says when fewer games qualify. Other multiview services (Fubo, DirecTV) aren't separate yet; DJ only named YouTube TV.
 
+- 3.142.0 (DJ): TV rules, "Rules" link on My TVs opens `tvsRulesPage` (inside the editor, `TVS.edit = {rules: true}`). Saved as `rules: {pins, lg}` in the same tv-setups doc and `slate-tv-setups`; global for every setup (DJ's pick). Team pins (`pins: [{n, lg, tv}]`, tv "main" or 2 to 5) go in `tvsFill` right after today's swap pins; a missing TV falls to Main TV, then the next free TV; split TVs still need a YouTube TV channel. League order (`lg: [{k, prime}]`, drag the grip, `tvsLgDrag`) adds `700 + 10 per place` in `tvsRank` (`tvsLgRank`), above slate (+500) and below your teams (+1000); "Prime time only" = start 7 PM CT or later (`hourCT`).
+
 ## Open
-- Second release (DJ's pick pending on the decision cards): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.
+- Second release (DJ picked it): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.
 - Hidden channels are per phone. Saving them with the profile needs `260-persistence.js` (shared file).
 - Hidden channels still appear on game cards and in the slate; only the On TV page leaves them out.
 

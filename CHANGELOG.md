@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.142.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV, My TVs: new Rules button sets which game goes where, the same for every setup.
+- "Always on a TV": pick a team and the TV it goes on (Main TV or TV 2 to 5). Manchester United on the Main TV means their game goes there no matter what else is on. If a setup doesn't have that TV, the game goes on its Main TV.
+- "When games clash, put these first": add leagues and drag them into order. A league higher up gets the bigger TV. Tap "Prime time only" on a league so it only jumps ahead for games at 7 PM CT or later (for example, prime-time NBA over any hockey game).
+- Your rules come first, then your teams, your slate and how big the matchup is. Each TV says why its game is there ("Your rule", "Your league order").
 ## 3.141.4 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: Claude now rewrites the page every 2 hours from 6 AM to midnight Central (9 times a day: 6 AM, 8 AM and so on through 10 PM), instead of every hour.
