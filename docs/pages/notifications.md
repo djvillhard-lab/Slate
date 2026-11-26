@@ -124,4 +124,8 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - It starts again every day 15 min before the first game while board.on; a token older than 8 h isn't reused.
 - Page side: boardRoll/boardIds in 040-live.js (sheet, Board button, the switch-on); picking games yourself needs the
   choice turned off. Open: no setting for how long a final stays (15 min, DJ's number).
+- 3.133.3: a final only gets its 15 minutes if the job saw it live (sent.blive); one already over when first seen
+  drops at once (DJ: old finals filled the Board right after switching it on). Sheet: X, Done, tap outside, swipe down
+  on its top; only #board-list scrolls; html:has(#sheet-board.open) locks the page. Lit Board button = accent outline
+  and text (the glass look's fill covers a solid accent fill).
 

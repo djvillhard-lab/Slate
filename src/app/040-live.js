@@ -509,7 +509,30 @@
     if (due && typeof state.boardShowing === "boolean" && state.liveShowing) return state.boardShowing;
     return !!b.on;
   }
-  function openBoard() { renderBoard(); $("sheet-board").classList.add("open"); }
+  function openBoard() { boardWire(); renderBoard(); $("board-list").scrollTop = 0; $("sheet-board").classList.add("open"); }
+  function closeBoard() { var s = $("sheet-board"), sh = s.querySelector(".sheet"); s.classList.remove("open"); sh.style.transform = ""; sh.style.transition = ""; }
+  // DJ (Nov 26): the sheet closes with its X, Done, a tap outside, or a swipe down on its top (the games list scrolls by itself)
+  var boardWired = false;
+  function boardWire() {
+    if (boardWired) return; boardWired = true;
+    var s = $("sheet-board"), sh = s.querySelector(".sheet"), x = $("btn-x-board"), y0 = null, dy = 0;
+    x.appendChild(icon("x")); x.addEventListener("click", closeBoard);
+    sh.addEventListener("touchstart", function (e) {
+      var lst = $("board-list"), inList = lst.contains(e.target);
+      y0 = e.touches.length === 1 && (!inList || lst.scrollTop <= 0) ? e.touches[0].clientY : null; dy = 0;
+    }, { passive: true });
+    sh.addEventListener("touchmove", function (e) {
+      if (y0 === null) return;
+      dy = e.touches[0].clientY - y0;
+      if (dy <= 0) { if (dy < -8) y0 = null; sh.style.transform = ""; return; }
+      if (dy > 8) { sh.style.transition = "none"; sh.style.transform = "translateY(" + dy + "px)"; }
+    }, { passive: true });
+    sh.addEventListener("touchend", function () {
+      if (y0 === null) return; y0 = null;
+      if (dy > 90) { closeBoard(); return; }
+      sh.style.transition = "transform .18s cubic-bezier(.2,.8,.2,1)"; sh.style.transform = "";
+    }, { passive: true });
+  }
   function renderBoard() {
     var b = boardPrefs(), list = $("board-list"), gs = boardGames();
     var picked = boardIds();

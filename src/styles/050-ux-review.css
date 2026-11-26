@@ -280,11 +280,24 @@ html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-sh
 /* the slate's Board button, beside Live; lit in the accent while the scoreboard is on */
 .lo-row .lo-board { margin-right: 8px; gap: 6px; }
 .lo-row .lo-board svg { width: 13px; height: 13px; }
-.lo-row .lo-board.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #0C0C0C); }
-.lo-row .lo-board.on b { background: rgba(0,0,0,.18); color: var(--on-accent, #0C0C0C); }
+/* lit: the accent's outline and text over the glass fill, like the 2 columns button (DJ, Nov 26: a solid accent fill
+   lost to the glass look and left white text on paper) */
+.lo-row .lo-board.on { border-color: var(--accent) !important; color: var(--accent); }
+.lo-row .lo-board.on b { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
 /* the scoreboard picker */
 .board-sub { margin: -4px 0 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
 .board-list { display: grid; gap: 6px; }
+/* the live scoreboard sheet (DJ, Nov 26): the title with a close button and the two buttons stay put; only the games
+   scroll, and the page behind can't scroll while it's open. Swipe the top down to close it too. */
+#sheet-board { touch-action: none; overscroll-behavior: contain; }
+#sheet-board .board-sheet { display: flex; flex-direction: column; gap: 12px; overflow: hidden; max-height: min(90%, 90dvh); }
+#sheet-board .board-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; touch-action: none; }
+#sheet-board .board-sub, #sheet-board .board-foot { flex: none; }
+#sheet-board .board-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; align-content: start; grid-auto-rows: max-content; }
+.board-foot { display: grid; gap: 8px; }
+.board-x { width: 44px; height: 44px; margin: -8px -10px -8px 0; padding: 0; border: 0; background: none; color: var(--muted); display: grid; place-items: center; flex: none; }
+.board-x svg { width: 20px; height: 20px; }
+html:has(#sheet-board.open), html:has(#sheet-board.open) body, html:has(#sheet-board.open) .pane { overflow: hidden !important; }
 .board-row { display: grid; grid-template-columns: 24px auto 1fr; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--ink); text-align: left; }
 .board-row.on { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .board-row:disabled { opacity: .45; }

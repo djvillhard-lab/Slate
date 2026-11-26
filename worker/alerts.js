@@ -412,12 +412,15 @@ function boardGame(id, g, s) {
 // the minute this job first saw it final, kept in sent.bfin), then the next game on the slate takes its place.
 const BOARD_FINAL = 15 * 60000;
 function boardRoll(slate, games, sc, sent, now) {
-  const fin = sent.bfin = sent.bfin || {}, start = (i) => Date.parse((sc[i] || {}).start || games[i].start) || 0;
+  const fin = sent.bfin = sent.bfin || {}, seen = sent.blive = sent.blive || {}, start = (i) => Date.parse((sc[i] || {}).start || games[i].start) || 0;
   const pool = [...new Set((slate || []).map(String))].filter((i) => games[i] && !games[i].custom).sort((x, y) => (start(x) - start(y)) || x.localeCompare(y));
   const out = [];
   for (const i of pool) {
     const st = (sc[i] || {}).state;
-    if (st === "post") { if (!fin[i]) fin[i] = now; if (now - fin[i] >= BOARD_FINAL) continue; }
+    if (st === "in") seen[i] = 1;
+    // a final counts its 15 minutes from when this job saw it end; one that was already over the first time it was
+    // seen (the Board switched on later in the day) ended long enough ago: it's gone at once (DJ, Nov 26)
+    if (st === "post") { if (!fin[i]) fin[i] = seen[i] ? now : 1; if (now - fin[i] >= BOARD_FINAL) continue; }
     // no score for it any more (ESPN's day moved on) and it started hours ago: it's over
     else if (!sc[i] && start(i) && now - start(i) > 3 * 3600000) continue;
     out.push(i);
@@ -918,7 +921,7 @@ export async function runAlerts(env) {
     if ((p.follow || {}).final) for (const [i, xs] of Object.entries(fol)) if ((sc[i] || {}).state === "post" && xs.some((x) => !(s0.plfinal || []).includes(`${i}:${x.id}`))) box[i] = await boxFor(i);
     const sent = { date: D, brief: !!s0.brief, plstart: [...(s0.plstart || [])], plfinal: [...(s0.plfinal || [])], reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
-      board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null, bfin: Object.assign({}, s0.bfin || {}) };
+      board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null, bfin: Object.assign({}, s0.bfin || {}), blive: Object.assign({}, s0.blive || {}) };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {
