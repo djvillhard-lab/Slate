@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.162.4 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Unfolded iPhone Duo, two pages: a swipe on the right page now moves between News, the slate and All games, the same as full screen and the folded phone. Before, it changed the slate's day. The left page stays put, and the day arrows still change the day.
+
 ## 3.162.3 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Basketball Live feed: the streak tags now say whose streak it is. "Ice cold: 5 straight misses" didn't say if it was the player or the team. It's always the shooter, so the tag now reads "Hidalgo: 5 straight misses" with the ice cube, and "Hidalgo: 3 straight makes" with the flame.
