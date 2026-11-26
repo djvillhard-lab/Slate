@@ -67,7 +67,7 @@
     // NBC and ESPN's channels ask which app). A channel with nowhere to watch opens the game instead.
     watch: function (n, id) {
       n = String(n || ""); var opts = watchOptions(n);
-      if (opts.length === 1) { if (NATIVE) nativePost({ t: "open", url: opts[0][1] }); else window.open(opts[0][1], "_blank"); }
+      if (opts.length === 1) { if (opts[0][2] && inApp()) openApp(opts[0]); else if (NATIVE) nativePost({ t: "open", url: opts[0][1] }); else window.open(opts[0][1], "_blank"); }
       else if (opts.length > 1) openWatch(n, opts);
       else if (id) window.SlateApp.openGame(id);
     },

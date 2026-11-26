@@ -6,5 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | shared: 010-core.js (Prime Video opens its app) | src/app/010-core.js | 2026-11-26 00:55 |
-| DJ | shared: 280-ios-bridge.js (Prime Video opens its app) | src/app/280-ios-bridge.js | 2026-11-26 00:55 |

@@ -1,7 +1,7 @@
   "use strict";
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
   // It must match the newest entry in CHANGELOG.md (build.py checks), and the iPhone app's builds read it from index.html.
-  var SLATE_VERSION = "3.130.9";
+  var SLATE_VERSION = "3.130.10";
 
   var HOME_TZ = "America/Chicago";
   var DEFAULT_TEAMS = ["St. Louis Blues", "St. Louis Cardinals", "Manchester United", "St. Louis City SC"];
@@ -49,7 +49,7 @@
     espn: ["ESPN", "https://www.espn.com/espn/apps/espn"], peacock: ["Peacock", "https://www.peacocktv.com/watch/sports"],
     paramount: ["Paramount+", "https://www.paramountplus.com/"], hbomax: ["HBO Max", "https://play.hbomax.com/"],
     foxone: ["FOX One", "https://www.fox.com/live"], nba: ["NBA", "https://www.nba.com/watch/featured"],
-    nbatv: ["NBA", "https://www.nba.com/watch/nba-tv"], prime: ["Prime Video", "https://www.primevideo.com/"],
+    nbatv: ["NBA", "https://www.nba.com/watch/nba-tv"], prime: ["Prime Video", "https://www.primevideo.com/", "aiv://aiv/home"],
     appletv: ["Apple TV", "https://tv.apple.com/"], netflix: ["Netflix", "https://www.netflix.com/browse"],
     hulu: ["Hulu", "https://www.hulu.com/hub/home"], disney: ["Disney+", "https://www.disneyplus.com/"],
     mlb: ["MLB", "https://www.mlb.com/tv"], youtube: ["YouTube", "https://www.youtube.com/"]
@@ -69,6 +69,24 @@
     return opts;
   }
   // A link the viewer opens outside the page; with two choices, a button that opens the chooser sheet.
+  // An app whose web address isn't claimed by its app (Prime Video's home page stays in Safari) gets its own app address
+  // as a third entry. Inside the iPhone app the link tries that first; if nothing opens within 1.5 s (app not installed)
+  // the web address opens instead. Safari on the web keeps the web address, since an unknown app address shows an error there.
+  function inApp() { var h = window.slateHostNative && window.slateHostNative(); return !!(h && h.platform !== "preview"); }
+  function openApp(o) {
+    var gone = false, mark = function () { if (document.visibilityState === "hidden") gone = true; };
+    document.addEventListener("visibilitychange", mark);
+    try { location.href = o[2]; } catch (e) {}
+    setTimeout(function () {
+      document.removeEventListener("visibilitychange", mark);
+      if (gone || document.visibilityState === "hidden") return;
+      if (inApp()) nativePost({ t: "open", url: o[1] }); else window.open(o[1], "_blank");
+    }, 1500);
+  }
+  function appFirst(a, o) {
+    if (!o[2]) return;
+    a.addEventListener("click", function (e) { if (!inApp()) return; e.preventDefault(); openApp(o); });
+  }
   // card labels short enough to stay on one line next to the play arrow
   var NET_SHORT = { "NBA League Pass": "League Pass", "NHL Network": "NHL Net", "MLB Network": "MLB Net", "NFL Network": "NFL Net", "SEC Network": "SECN", "ACC Network": "ACCN", "Prime Video": "Prime", "Golf Channel": "Golf", "ESPN Deportes": "ESPN Dep." };
   function watchLink(n, cls, label) {
@@ -78,6 +96,7 @@
     if (opts.length === 1) {
       a = el("a", cls); a.href = opts[0][1]; a.target = "_blank"; a.rel = "noopener";
       a.setAttribute("aria-label", "Watch " + n + " in " + opts[0][0]);
+      appFirst(a, opts[0]);
     } else {
       a = el("button", cls); a.type = "button";
       a.setAttribute("aria-label", "Watch " + n + ": choose " + opts.map(function (o) { return o[0]; }).join(" or "));
@@ -91,6 +110,7 @@
     var box = $("watch-opts"); box.textContent = "";
     opts.forEach(function (o) {
       var a = el("a", (o[0] === "YouTube TV" || opts.length === 1 ? "solid" : "outline") + " watchopt", "Open " + o[0]); a.href = o[1]; a.target = "_blank"; a.rel = "noopener";
+      appFirst(a, o);
       a.addEventListener("click", function () { setTimeout(function () { $("sheet-watch").classList.remove("open"); }, 300); });
       box.appendChild(a);
     });
