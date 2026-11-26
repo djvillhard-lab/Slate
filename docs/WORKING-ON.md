@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Live feed (football: end-zone logos, fun follow-up lines on play cards) | src/app/145-live-feed.js, src/app/144-live-feed-sayings.js (new), docs/pages/live-feed.md | 2026-11-26 18:58 |

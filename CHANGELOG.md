@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.172.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Football Live feed: big plays now get a fun line. The play shows up exactly as before, and about 3 seconds later a line fades in under it: "🚂 Knock, knock. Gibbs lets himself in." on a 1-yard touchdown run, "🧱 Nowhere to go for Allen." on a sack, "⛓️ Needed 8, got 13." on a 3rd-and-long, "🚪 Three plays and a punt.", "🦵 54 yards? No sweat for Bass."
+- There are 192 lines across 20 kinds of plays (touchdowns short, long, on the ground and through the air, field goals made, missed and blocked, sacks, interceptions, fumbles, 4th downs made and stopped, 3rd-and-long, three and outs, big gains, runs stuffed for a loss, safeties, long returns). A line is only used on the kind of play it is true for, the names and numbers come from the play itself, and a game doesn't repeat a line until its list runs out. Ordinary plays get no line. Built in and free: Claude isn't used.
+
 ## 3.171.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed: the focus button now matches the Back button beside it: the same size, the same clear glass and the same height on the screen, on every phone shape. It gets a light green tint while the focus view is on.

@@ -293,10 +293,59 @@
   // "Cuts it to 3", "Caps an 8-play, 75-yard drive in 4:12", "Allen's 2nd TD pass today", "Longest play of the game".
   var FD_FLAIR_FOOT = true;  // DJ chose basketball first (Nov 26), then "Every sport" the same day (3.165.0): football's banner, field tracer and story line are on
   function fdPoss(n) { n = String(n || ""); return n + (/s$/i.test(n) ? "'" : "'s"); }
+  // ---- the fun line (DJ, Nov 26: "spruce them up with fun sayings and some flare ... a few seconds after the current play comes through";
+  // "Built in sayings, but do a lot and make them fun but accurate") ----
+  // Football first. Free and built in: no Claude. Each kind of play has its own list, and a line is only used for the kind of play it is true of
+  // (a "punched in" line needs a rushing touchdown of 1 or 2 yards; "three and out" needs exactly three plays, no first down, then a punt).
+  // Numbers and names in a line come from the play itself. Ordinary plays get no line. A game works through each list in order from its own
+  // starting point, so lines don't repeat until a list runs out. {p} the player, {q} the quarterback, {t} the offense, {d} the defense,
+  // {y} the yards, {n} the distance to go.
+  var FD_SAY = {
+    tdShort: ["🚂 Punched in.", "🚂 Goal-line push, and {p} is in.", "🚂 Bully ball at the goal line.", "🚂 {p} would not be denied.", "🚂 Short, ugly and worth six.", "🚂 Shoved across the stripe.", "🚂 Trench warfare pays off for the {t}.", "🚂 The big fellas up front get an assist on that one.", "🚂 Knock, knock. {p} lets himself in.", "🚂 Nothing fancy, just six points.", "🚂 Heavy lifting at the goal line, and the {t} cash in.", "🚂 That's a grown-man touchdown for {p}."],
+    tdRun: ["🏠 {p} finds paydirt.", "🏠 Six on the ground for the {t}.", "🏠 {p} takes it to the house from {y} out.", "🏠 {p} cashes it in.", "🏠 The ground game delivers six.", "🏠 Into the paint goes {p}.", "🏠 Call the band, the {t} just scored.", "🏠 {y} yards and six points for {p}.", "🏠 {p} punches the {t}' ticket to the end zone.", "🏠 Feed {p}, get points.", "🏠 {p} runs it in and the {d} can only watch.", "🏠 That's six the hard way, on the ground."],
+    tdPass: ["🎯 Pitch and catch for six.", "🎯 {p} hauls in the score.", "🎯 Dialed up and delivered.", "🎯 {q} to {p}. Cash it.", "🎯 Six through the air.", "🎯 Money throw, money catch.", "🎯 {p} has a new souvenir.", "🎯 {q} drops it in the bucket for six.", "🎯 Paint the end zone, {p} is in.", "🎯 {q} found his man, and his man found the end zone.", "🎯 Throw, catch, celebrate.", "🎯 {p} with the grab and the six that goes with it.", "🎯 The {t} go upstairs for the score."],
+    tdLong: ["🚀 See ya! {y} yards to the house.", "🚀 Gone. {y} yards, and nobody stopped it.", "🚀 House call from {y} yards out.", "🚀 {p} just took the scenic route to six: {y} yards.", "🚀 Lights out from {y} yards.", "🚀 Fire up the scoreboard, that one went {y}.", "🚀 Home run ball. {y} yards.", "🚀 {y} yards of trouble for the {d}.", "🚀 One snap, {y} yards, six points.", "🚀 {p} goes the distance. {y} yards.", "🚀 Blink and you missed it. {y} yards for the score."],
+    tdDef: ["🔄 All the way back for six!", "🔄 Points without the offense on the field.", "🔄 That will swing a game.", "🔄 Going the other way, all the way.", "🔄 Six points, no offense required.", "🔄 The scoreboard changes and the offense never left the bench."],
+    fgLong: ["🦵 From downtown! Good from {y}.", "🦵 Big leg. {y} yards and good.", "🦵 {p} from another zip code: {y} yards.", "🦵 Bombs away. {y} yards and true.", "🦵 Leg day paid off. Good from {y}.", "🦵 {y} yards? No sweat for {p}.", "🦵 That's a long way to kick a football. {y} yards, good.", "🦵 {y} yards and it counted. Tip your kicker."],
+    fg: ["✅ Three on the board.", "✅ Split the uprights from {y}.", "✅ Right down the middle from {y}.", "✅ {p} tacks on three.", "✅ Good from {y}. Points are points.", "✅ Through the pipes from {y}.", "✅ {p} does his job. Three more.", "✅ The {t} settle for three.", "✅ Not a touchdown, but it counts. Good from {y}.", "✅ {p} is true from {y}.", "✅ Up, through, three.", "✅ The drive ends with points, and {p} gets the credit."],
+    fgMiss: ["😬 No good! Empty trip for the {t}.", "😬 Nothing to show for the drive.", "😬 That one got away from {p}.", "😬 Leaves three on the field.", "😬 The uprights say no.", "😬 Missed from {y}. The {d} dodge one.", "😬 {p} would like a do-over from {y}.", "😬 Points were right there. Not anymore.", "😬 All that work, zero points."],
+    fgBlock: ["✋ Blocked! The {d} got a hand on it.", "✋ Swatted at the line.", "✋ Denied. That kick never had a chance.", "✋ Return to sender."],
+    sack: ["🧱 Sacked! {q} goes down.", "🧱 Nowhere to go for {q}.", "🧱 Meeting at the quarterback.", "🧱 {p} gets home.", "🧱 Lunch is served in the backfield.", "🧱 Down goes {q}, loss of {y}.", "🧱 Pressure wins that snap.", "🧱 {p} introduces himself to {q}.", "🧱 {q} ends up on the turf, loss of {y}.", "🧱 The {d} pass rush cashes in, loss of {y}.", "🧱 {q} goes for a ride he didn't ask for.", "🧱 Somebody block {p}.", "🧱 That's {y} yards the wrong way for the {t}.", "🧱 {p} with the takedown."],
+    int: ["🎁 Picked!", "🎁 Wrong jersey, {q}.", "🎁 Thank you very much, says {p}.", "🎁 Gift wrapped for the {d}.", "🎁 {p} takes it away. {d} ball.", "🎁 That one will sting.", "🎁 {q} would like that one back.", "🎁 Ball hawk alert: {p}.", "🎁 {p} was the only one who caught that pass.", "🎁 Thrown by the {t}, caught by the {d}.", "🎁 {p} says that's mine.", "🎁 An early holiday present for the {d}."],
+    fum: ["😱 Ball's out! {d} ball.", "😱 Put it on the ground and lost it.", "😱 Loose ball, and the {d} have it.", "😱 Coughed up.", "😱 Fumble! The {d} take it away.", "😱 The {d} pounce on it.", "😱 Hang on to the football. The {d} say thanks.", "😱 That's a giveaway the {t} can't afford.", "😱 Butterfingers. {d} ball.", "😱 The ball had other plans."],
+    downs: ["🛑 Stopped! Turnover on downs.", "🛑 Gambled and lost on 4th down.", "🛑 The {d} hold on 4th down.", "🛑 Not today. {d} ball.", "🛑 Fourth-down stand by the {d}.", "🛑 Rolled the dice, came up empty.", "🛑 The {t} went for it. The {d} said no.", "🛑 Shut the door on 4th down."],
+    fourth: ["🎲 Rolled the dice on 4th down and it paid off.", "🎲 Gutsy call, and it works.", "🎲 4th down? Moving the chains anyway.", "🎲 Going for it, and got it.", "🎲 Kept the offense out there and kept the drive alive.", "🎲 Fortune favors the bold.", "🎲 No punt, no problem.", "🎲 The {t} bet on themselves and won."],
+    thirdLong: ["⛓️ 3rd and {n}? No problem.", "⛓️ Third and long, and they got all of it.", "⛓️ Moving the chains on 3rd and {n}.", "⛓️ That's a backbreaker on 3rd and {n}.", "⛓️ The drive stays alive on 3rd and {n}.", "⛓️ The {d} had them at 3rd and {n}. Had.", "⛓️ Needed {n}, got {y}.", "⛓️ Get off the field? Not on that one."],
+    threeOut: ["🚪 Three and out.", "🚪 Three plays and a punt.", "🚪 Quick trip for the {t} offense.", "🚪 Back to the sideline after three.", "🚪 The {d} defense gets off the field in three.", "🚪 Nothing doing. Three and out.", "🚪 One, two, three, punt.", "🚪 The {t} offense barely broke a sweat. Not in a good way.", "🚪 Short shift for the {t} offense."],
+    big: ["💨 Chunk play! {y} yards.", "💨 {p} breaks loose for {y}.", "💨 Big gainer. {y} yards.", "💨 Explosive. {y} yards on one snap.", "💨 That's how you flip the field: {y} yards.", "💨 {y} yards in a hurry.", "💨 Move the chains, and then some. {y} yards.", "💨 The {t} offense lands a haymaker, {y} yards.", "💨 {p} eats up {y} yards.", "💨 That's a big bite out of the field. {y} yards.", "💨 The {d} will want that one back. {y} yards.", "💨 {p} for {y}. The chain gang has to jog."],
+    bomb: ["💣 Bombs away! {y} yards.", "💣 {y} yards! That's a field flipper.", "💣 Huge. {y} yards on one play.", "💣 {p} for {y}. Wake up the stadium.", "💣 Fireworks. {y} yards.", "💣 Top shelf. {y} yards.", "💣 {y} yards. Somebody check on the {d} defense.", "💣 One play, {y} yards, whole new ballgame."],
+    tfl: ["🚧 Stuffed! Loss of {y}.", "🚧 Blown up in the backfield.", "🚧 Going backwards. Loss of {y}.", "🚧 Wrong direction, loss of {y}.", "🚧 Met in the backfield, loss of {y}.", "🚧 The {d} front wins that one.", "🚧 Road closed. Loss of {y}.", "🚧 {p} never got started. Loss of {y}."],
+    safety: ["✌️ Safety! Two points and the ball.", "✌️ Trapped in the end zone. Two for the {d}.", "✌️ The rarest two points in football."],
+    ret: ["⚡ {y}-yard return. Short field coming.", "⚡ Special teams with a spark: {y} yards.", "⚡ {p} brings it back {y}.", "⚡ Hidden yards. {y} of them.", "⚡ {p} gives the offense a head start, {y} yards."]
+  };
+  function fdSayPick(S, cat, v) {
+    var L = FD_SAY[cat]; if (!L) return "";
+    var n = S.n[cat] = (S.n[cat] || 0) + 1;
+    for (var k = 0; k < L.length; k++) { var t = L[(S.seed + n - 1 + k) % L.length], ok = true;
+      var o = t.replace(/\{(\w)\}/g, function (_, c) { if (v[c] == null || v[c] === "") ok = false; return v[c]; });
+      if (ok) return o; }
+    return "";
+  }
+  var FD_SAY_AT = {};
+  // the line comes in about 3 seconds after its play first shows, so the play itself is never held up. Its space is kept, so nothing jumps.
+  function fdSayEl(pid, txt, isNew) {
+    var p = el("p", "fd-say", txt); p.style.cssText = "margin:5px 0 2px;font-size:14px;font-weight:750;line-height:1.3;color:var(--ink);transition:opacity .5s ease, transform .5s ease";
+    if (isNew && !FD_SAY_AT[pid]) FD_SAY_AT[pid] = Date.now();
+    var left = FD_SAY_AT[pid] ? 3000 - (Date.now() - FD_SAY_AT[pid]) : 0;
+    if (left > 0) { p.style.opacity = "0"; p.style.transform = "translateY(4px)"; setTimeout(function () { p.style.opacity = "1"; p.style.transform = "none"; }, left); }
+    return p;
+  }
   function fdStory(drives, g, sideOf, ix) {
     var out = {}, pa = 0, ph = 0, cnt = {}, best = 0, bump = function (k) { cnt[k] = (cnt[k] || 0) + 1; return cnt[k]; };
     var ln = function (P) { return P ? String(P.name).split(" ").slice(1).join(" ").replace(/\s+(Jr|Sr|II|III|IV|V)\.?$/, "") || P.name : ""; };
     var other = function (sd) { return sd === "away" ? "home" : sd === "home" ? "away" : ""; };
+    var seed0 = 0; String(g.id || "").split("").forEach(function (c) { seed0 = (seed0 * 31 + c.charCodeAt(0)) >>> 0; }); var SAY = { seed: seed0 % 997, n: {} };
+    var snap = function (p) { return /^Rush|^Pass|Sack|Interception|Fumble/i.test(String((p.type || {}).text || "")) && !/no play/i.test(String(p.text || "")); };
     drives.forEach(function (d) {
       var dp = d.plays || [], lastSc = -1; dp.forEach(function (pl, k) { if (pl.scoringPlay) lastSc = k; });
       dp.forEach(function (pl, k) {
@@ -328,7 +377,28 @@
         var yte = Number(S.yardsToEndzone);
         if (/^Rush|Pass Reception|Sack|Passing Touchdown|Rushing Touchdown/i.test(ty) && !noPlay && offSd && S.yardsToEndzone != null && yte >= 0 && yte <= 100)
           st.tr = { x0: offSd === "away" ? 100 - yte : yte, dir: offSd === "away" ? 1 : -1, y: y, sd: offSd, from: String(S.possessionText || "") };
-        if (st.ban || st.tr || st.lines.length) out[pid] = st;
+        // the fun line: which kind of play this is, worked out from the play's own type, down, distance and yards
+        if (!noPlay) { var cat = "", P0s = (rd.ps[0] || {}).P, P1s = (rd.ps[1] || {}).P, dn = Number(S.down) || 0, togo = Number(S.distance) || 0, ay = Math.abs(y), dfSd = other(offSd);
+          var v = { y: ay, n: togo || null, t: offSd ? short(g, offSd) : "", d: dfSd ? short(g, dfSd) : "", p: "", q: "" }, m2;
+          if (/Passing Touchdown/i.test(ty)) { cat = ay >= 30 ? "tdLong" : "tdPass"; v.q = ln(P0s); v.p = ln(P1s); }
+          else if (/Rushing Touchdown/i.test(ty)) { cat = ay >= 30 ? "tdLong" : ay <= 2 ? "tdShort" : "tdRun"; v.p = ln(P0s); }
+          else if (/Touchdown/i.test(ty)) cat = "tdDef";
+          else if (/Safety/i.test(ty)) cat = "safety";
+          else if (/Field Goal Good/i.test(ty) && (m2 = /(\d+) yard field goal/i.exec(tx))) { v.y = +m2[1]; v.p = ln(P0s); cat = v.y >= 50 ? "fgLong" : "fg"; }
+          else if (/Field Goal|Blocked/i.test(ty) && /block/i.test(ty + tx) && !/punt/i.test(ty + tx)) cat = "fgBlock";
+          else if (/Field Goal/i.test(ty) && /miss|no good/i.test(ty + tx) && (m2 = /(\d+) yard field goal/i.exec(tx))) { v.y = +m2[1]; v.p = ln(P0s); cat = "fgMiss"; }
+          else if (/Interception/i.test(ty)) { cat = "int"; v.q = ln(P0s); v.p = ln(P1s); }
+          else if (/Fumble/i.test(ty) && rd.kind === "turn") cat = "fum";
+          else if (/Sack/i.test(ty) && y < 0) { cat = "sack"; v.q = ln(P0s); v.p = ln(P1s); }
+          else if (dn === 4 && togo > 0 && /^Rush|Pass Reception|Pass Incompletion|Sack/i.test(ty)) { cat = /^Rush|Pass Reception/i.test(ty) && y >= togo ? "fourth" : "downs"; }
+          else if (/^Rush|Pass Reception/i.test(ty) && ay >= 40 && y > 0) { cat = "bomb"; v.p = ln(/Pass/i.test(ty) ? P1s : P0s); }
+          else if (/^Rush|Pass Reception/i.test(ty) && y >= 20) { cat = "big"; v.p = ln(/Pass/i.test(ty) ? P1s : P0s); }
+          else if (dn === 3 && togo >= 8 && /^Rush|Pass Reception/i.test(ty) && y >= togo) cat = "thirdLong";
+          else if (/^Rush/i.test(ty) && y <= -3) { cat = "tfl"; v.p = ln(P0s); }
+          else if (/^Punt/i.test(ty)) { var sn = dp.slice(0, k).filter(snap); if (sn.length === 3 && sn.every(function (p3) { var s3 = p3.start || {}; return (Number(p3.statYardage) || 0) < (Number(s3.distance) || 99); }) && dp.slice(0, k).every(function (p3) { return !/penalty/i.test(String((p3.type || {}).text || "") + String(p3.text || "")); })) cat = "threeOut"; }
+          else if (/Kickoff Return|Punt Return/i.test(ty) && y >= 35) { cat = "ret"; }
+          if (cat) { var sy = fdSayPick(SAY, cat, v); if (sy) st.say = sy; } }
+        if (st.ban || st.tr || st.lines.length || st.say) out[pid] = st;
         pa = aS; ph = hS;
       });
     });
@@ -391,6 +461,7 @@
     if (sty && sty.tr) card.appendChild(fdTracer(g, sty.tr));
     var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); lines.forEach(function (l) { px.appendChild(el("p", null, l)); }); card.appendChild(px); }
     if (sty && sty.lines.length) card.appendChild(el("p", "fd-story", sty.lines.join(" · ")));
+    if (sty && sty.say) card.appendChild(fdSayEl(pid, sty.say, isNew));
     rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
     return card;
   }

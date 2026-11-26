@@ -130,4 +130,5 @@ Only on the News page, at DJ's request (Nov 16, 2026): one emoji in front of a s
 The Live feed's play tags too (DJ, Nov 16, 2026): one emoji in front of each tag (🔥 Big play or a run, 🔄 lead change,
 🤝 tie, ✅ converted, 🛑 stopped, ⛓️ 1st down, 📈 win-probability swing, 🚩 flag, 🚨 red zone or buzzer-beater,
 ⏱️ two-minute drill or clutch, 💪 and-one, 🔥 heating up or on fire, 🧊 ice cold), never in the play text. `fdTagText` in `146-live-feed-hoops.js`.
+The football Live feed's fun line (DJ, Nov 26, 2026) leads with one emoji per kind of play too (`FD_SAY` in `145-live-feed.js`).
 Hot tags on News are red (`--live`) with their 🔥, DJ's approved exception to "red = live" (Nov 16, 2026).

@@ -264,3 +264,13 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 ## 3.171.1: end-zone logos
 - DJ: "use team logos in end zones". `fdEzLogo` (145) puts the ESPN logo in the end zones of the top field (`.fd-ez`) and each play's thin field
   (`.fd-tr-ez`), on a darkened end zone with a team-color edge. Falls back to the old color and letters if the logo is unknown or fails to load.
+
+## 3.172.0: football fun lines ("sayings")
+- DJ: "spruce them up with fun sayings and some flare ... a few seconds after the current play comes through"; chose built-in sayings on a card,
+  then "do a lot and make them fun but accurate". `FD_SAY` (145) holds 192 lines in 20 categories; the category is worked out in `fdStory` from the
+  play's type, down, distance and yards (`st.say`), `fdSayPick` fills in names/numbers and walks each list from a per-game start so lines don't repeat.
+  `fdSayEl` shows the line 3 seconds after a play first appears as new (space reserved, fades in). No Claude, no cost.
+- Accuracy rules to keep when adding lines: a line may only claim what its category guarantees (no "untouched", "wide open", "held the ball").
+  No running counts in the line (4th-down and three-and-out counts were dropped because the classifier doesn't see every attempt).
+- Football only so far. DJ: "Start with football, then we'll move to other sports". Wait for his word before adding other sports.
+- Checked on screen on CHI@DET and by running a full finished game (39 of 187 plays got a line) through the pass and reading every line.
