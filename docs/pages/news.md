@@ -58,6 +58,8 @@ further filter the information shown."
 - Open: delete the retired News code; Settings may still list News options that no longer apply (check); related game
   on the story view; DJ's read of the first real passes (tune the prompt from his notes).
 
+- 3.140.7: the scheduled pass picks its games by the Central day (the Eastern date rolled an hour early and the 11:26 PM pass on Nov 25 had previews for the next day but no recaps). First automatic v2 pass confirmed saved 11:27 PM CT Nov 25 (74 seconds, 25 wire items, 4 previews, 6 leagues).
+
 ## Done
 - Injuries, trades and signings (3.115.0, DJ picked News over team pages): `src/app/205-wire.js`, styles injected as `#wire-css`.
   Data from the worker's `GET /api/wire?lg=` (`worker/wire.js`): ESPN's league-wide `injuries` and `transactions?limit=120`,

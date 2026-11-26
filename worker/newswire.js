@@ -76,8 +76,8 @@ export async function wireDue(env, getDoc, nowMs) {
   const gap = (now - (Number(st.lastAt) || 0)) / 60000;
   const first = !st.n || !(await written(env, getDoc, ct.day, now));   // nothing finished yet today
   if (!first && gap < WIRE_AUTO.GAP_BREAK) return null;   // too soon for anything: don't even fetch
-  // ESPN's dates are Eastern: today's, plus yesterday's until noon Central so last night's late games get their recap
-  const ymd = (t) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date(t)).replace(/-/g, ""), days = [ymd(now)].concat(ct.hour < 12 ? [ymd(now - 86400000)] : [], ct.hour >= 18 ? [ymd(now + 86400000)] : []);   // and tomorrow's from 6 PM, for the next games up
+  // 3.140.7: the Central day, not the Eastern one (after 11 PM Central, Eastern is already tomorrow and the night's finals were missed): today's, plus yesterday's until noon Central so last night's late games get their recap
+  const ymd = (off) => new Date(Date.parse(ct.day + "T12:00:00Z") + off * 86400000).toISOString().slice(0, 10).replace(/-/g, ""), days = [ymd(0)].concat(ct.hour < 12 ? [ymd(-1)] : [], ct.hour >= 18 ? [ymd(1)] : []);   // and tomorrow's from 6 PM, for the next games up
   const [lists, boards] = await Promise.all([
     Promise.all(LGS.map(([lg, path, slug]) => feed(lg, path, slug, now))),
     Promise.all([].concat(...LGS.map(([lg, path, , w]) => days.map((d) => board(lg, path, w, d))))),

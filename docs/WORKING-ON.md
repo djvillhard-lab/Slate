@@ -9,4 +9,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | Unfolded Duo layout (full-screen pages, a tapped game opens beside, layout button in the bar) | src/app/288-panes.js, src/styles/097-panes.css, src/app/283-three-pages.js, src/styles/101-three-pages.css, scripts/shots.py, docs/pages/panes.md, docs/pages/navigation.md | 2026-11-26 05:18 |
 | DJ | shared: 290-layout.js (one line: a full-width pane must not split itself) | src/app/290-layout.js | 2026-11-26 05:18 |
 | DJ | One-liners: soccer goal minutes, team rows | src/app/100-highlights.js, docs/pages/slate.md | 2026-11-26 06:34 |
-| DJ | News (late-night passes miss the night's finished games) | worker/newswire.js, docs/pages/news.md | 2026-11-26 06:36 |
