@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | On TV: My TVs rules (which game goes where) | src/app/215-tv-setups.js, docs/pages/tv.md | 2026-11-26 06:57 |
+| DJ | News (rewrite every 2 hours, 6 AM to midnight) | worker/newswire.js, worker/index.js (news wire lines only), docs/pages/news.md | 2026-11-26 07:04 |
