@@ -145,3 +145,7 @@ html.pn-full .n3-haslay .n3-row { left: calc(75% - 81px); }
 .n3.n3-away > :not(.n3-scrim), nav.dock.n3-away { translate: 0 150px; opacity: 0; pointer-events: none !important; }
 nav.dock.n3-away > * { pointer-events: none !important; }
 @media (prefers-reduced-motion: reduce) { .n3 > :not(.n3-scrim), nav.dock { transition: opacity .12s linear; } }
+
+/* 3.144.3 (DJ, Nov 26: "the menu changes size when switching between view modes"): on the unfolded Duo the day arrows
+   keep one width whether the page is full screen or one of two (they used to shrink with the page's width) */
+html.in-pane .n3-dr { width: 80px; }

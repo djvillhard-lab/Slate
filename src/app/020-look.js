@@ -69,6 +69,9 @@
     // the page's usable width: the screen less iOS's Duo column (app), halved when the open Duo shows two panes
     var sw = parseFloat(root.style.getPropertyValue("--strip-w")) || 0, availW = window.innerWidth - sw;
     if (isDuo) availW = availW / 2 - 20;
+    // 3.144.3: a page shown full screen on the unfolded Duo keeps the text size it has as one of two pages, so nothing
+    // changes size when the layout switches
+    if (typeof PANE !== "undefined" && PANE && root.classList.contains("pn-full")) availW = availW / 2;
     if (availW > 0) z = Math.max(0.8, Math.min(z, Math.floor(availW / SIZE_MIN_W * 100) / 100));
     root.classList.toggle("bigtext", z >= 1.08);
     root.style.setProperty("--z", String(z)); root.classList.toggle("zoomed", z > 1.1);

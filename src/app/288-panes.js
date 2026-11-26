@@ -365,7 +365,7 @@
       return out;
     };
     window.SlateApp.paneHeadSet = function (h, pad) { var rs = document.documentElement.style; rs.setProperty("--pn-head", (h || 0) + "px"); rs.setProperty("--pn-tpad", (pad || 0) + "px"); };
-    window.SlateApp.paneMark = function () { render(); if (typeof n3Draw === "function") n3Draw(); renderBack(); };  // the width changed: cards re-fit their names
+    window.SlateApp.paneMark = function () { applyLook(); render(); if (typeof n3Draw === "function") n3Draw(); renderBack(); };  // the width changed: cards re-fit their names
     window.SlateApp.paneMenu = function (on) { if (!!state.menuOpen === !!on) return; state.menuOpen = !!on; renderTop(); };
     window.SlateApp.paneSettings = function (json) {
       var d; try { d = JSON.parse(json); } catch (e) { return; }

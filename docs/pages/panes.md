@@ -27,6 +27,7 @@ files under `duo-layout/`). DJ picked B (pages open full, a tap opens things bes
   columns, All games "2 columns" three across. The bar sits on the right half (`101-three-pages.css`), never on the fold.
 - `scripts/shots.py --sizes open` now shows the full page; `--two` for two pages; `window.slatePaneInfo()` on the host
   says which frame is where.
+- 3.144.3 (DJ: "the menu changes size when switching between view modes"): a full page caps its text zoom by HALF its width (`020-look.js`, `pn-full`), and `paneMark` re-runs `applyLook`, so `--z` is the same in both layouts; the day arrows are a fixed 80px in panes. Measured: bar 250x56 and arrows 80 in both. If DJ still sees a size jump, ask for a screenshot of each mode.
 ### Open
 - News has no wide layout of its own yet (the News thread holds its files). Next: lead story left, Five things right.
 - Upright (portrait) unfolded is still one stretched page: full page works, "opens below the fold" is not built.
