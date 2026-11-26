@@ -362,10 +362,21 @@
         var F = P.feature, fc = el("section", "nf-ft"), fh = el("div", "nf-fth");
         fh.appendChild(el("span", null, fmtDate(todayInHome(), { weekday: "long", month: "long", day: "numeric" }))); // 3.166.0 (DJ: "Photo behind for thanksgiving, but not for others. Usually should be full images with no text over it, other
         // than for bigger events"): a big day (F.big, Claude's call) wears its photo behind the title; any other day's photo sits clear above it
-        var fp = F.stories.filter(function (z) { return z.img; })[0] || null, fi = fp ? nwImg(nwPic(fp.img, 800), "nf-ftp") : null; if (fi) { fh.classList.add(F.big === false ? "cl" : "ph"); fh.insertBefore(fi, fh.firstChild); }
+        // 3.172.3 (DJ: "Don't understand the image chosen behind thanksgiving day"): it was the picture of the card's first
+        // story, whatever that story was (a player's injury portrait). Now the photo has to be about the day itself: a
+        // picture ESPN names for one of the featured games ("Bears vs. Lions"), or a story about the day by name
+        // ("Thanksgiving"), or a story about both teams of a featured game. With none of those the card has no photo.
+        var fkey = (String(F.title).toLowerCase().match(/[a-z]{6,}/) || [""])[0], fwd = function (t) { return String(t || "").toLowerCase().split(" ").pop(); }, fbest = null, fsc = 1;
+        F.games.map(function (g) { return g.lg; }).filter(function (k, ki, ka) { return k && ka.indexOf(k) === ki; }).forEach(function (lg) { (M.per[lg] || []).forEach(function (a) {
+          if (!a.img || a.kind === "Media") return; var nm = String(a.inm || "").toLowerCase(), tl = (a.title + " " + (a.events || []).join(" ")).toLowerCase(), sc = 0;
+          F.games.forEach(function (g) { var x = fwd(g.away), y = fwd(g.home); if (!x || !y) return; if (nm.indexOf(x) !== -1 && nm.indexOf(y) !== -1) sc = Math.max(sc, 4); else if (tl.indexOf(x) !== -1 && tl.indexOf(y) !== -1) sc = Math.max(sc, 2); });
+          if (fkey && tl.indexOf(fkey) !== -1) sc += 3;
+          if (sc > fsc) { fsc = sc; fbest = a; }
+        }); });
+        var fp = fbest, fi = fp ? nwImg(nwPic(fp.img, 800), "nf-ftp") : null; if (fi) { fh.classList.add(F.big === false ? "cl" : "ph"); fh.insertBefore(fi, fh.firstChild); }
         fh.appendChild(el("h2", null, (F.emoji ? F.emoji + " " : "") + F.title)); if (F.text) fh.appendChild(el("p", null, F.text)); fc.appendChild(fh);
         if (F.games.length) { fc.appendChild(el("h5", null, F.games.length === 1 ? "The matchup" : "The " + (["", "", "two", "three", "four", "five"][F.games.length] || "") + " matchups")); F.games.forEach(function (o) { fc.appendChild(nlGameCard(o, o.as != null && o.as !== "" ? "recap" : "preview")); }); }
-        if (F.stories.length) { fc.appendChild(el("h5", null, "The stories")); var fl = el("div", "nf-fsl"); F.stories.forEach(function (x) { var a = nlLink(x, "nf-fs"); var si = x.img && x !== fp ? nwImg(nwPic(x.img, 400), "nf-fsp") : null; if (si) a.appendChild(si); else if (x.t) a.appendChild(teamBadge(x.t)); var d = el("div"); d.appendChild(el("h4", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); var sr = nlSrc(x); if (sr) d.appendChild(sr); a.appendChild(d); fl.appendChild(a); }); fc.appendChild(fl); }
+        if (F.stories.length) { fc.appendChild(el("h5", null, "The stories")); var fl = el("div", "nf-fsl"); F.stories.forEach(function (x) { var a = nlLink(x, "nf-fs"); var si = x.img && !(fp && x.img === fp.img) ? nwImg(nwPic(x.img, 400), "nf-fsp") : null; if (si) a.appendChild(si); else if (x.t) a.appendChild(teamBadge(x.t)); var d = el("div"); d.appendChild(el("h4", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); var sr = nlSrc(x); if (sr) d.appendChild(sr); a.appendChild(d); fl.appendChild(a); }); fc.appendChild(fl); }
         wrap.insertBefore(fc, wrap.querySelector(".nl-h"));
       } else if (P.theme && P.theme.title) { var th = el("div", "nf-th"); th.appendChild(el("span", null, fmtDate(todayInHome(), { weekday: "long", month: "long", day: "numeric" }))); th.appendChild(el("h2", null, P.theme.title)); if (P.theme.text) th.appendChild(el("p", null, P.theme.text)); wrap.insertBefore(th, wrap.querySelector(".nl-h")); }
       var special = function (sp) {

@@ -5,6 +5,7 @@ server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
 ## Emojis and photos (3.166.0)
+3.172.3 (DJ: "Don't understand the image chosen behind thanksgiving day"): the feature photo is no longer the first story's picture. It is picked from the featured leagues' feeds: a picture ESPN names for a featured game (both team names in the image name), or a story with the day's name in its title, or one about both teams of a featured game; none of those = no photo.
 DJ, Nov 26: "News needs emojis, images, etc. to help it stand out." Shown three looks; DJ: "Photo behind for thanksgiving, but not for others. Usually should be full images with no text over it, other than for bigger events like thanksgiving." So: words over a photo ONLY on a big day's feature card (`page.feature.big`, Claude's call; a doc without the field counts as big). Everything else shows the photo whole with words beneath (`.nl-lead.clr`, `.nl-t.ph`). Section emojis: `NL_E` defaults, Claude may set `page.emoji[section]`, `feature.emoji`, `special.emoji`. League emojis `NL_LE`. League Check card photo = that league's top feed story with a picture. Recap headshot: `recap.head`, matched in the worker from ESPN's game leaders (`g.heads` in newswire.js) to the name in Claude's star line. This replaces the earlier "no emoji in titles".
 
 ## Featured day card (3.164.0)
