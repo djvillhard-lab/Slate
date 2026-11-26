@@ -157,8 +157,9 @@
         var three = /three point/i.test(tx) || Number(pl.scoreValue) === 3, k = 0; for (var i = S.sh.length - 1; i >= 0 && S.sh[i] === S.sh[S.sh.length - 1]; i--) k++;
         if (pl.scoringPlay && three) { S.t3++; if (S.t3 >= 3 && A) st.lines.push(fdPoss(last(A)) + " " + ordN(S.t3) + " three of the game"); }
         // 3.161.1 (DJ: "the dots are confusing"): the shooter's streak is said in a tag instead of drawn as dots
-        if (pl.scoringPlay && k >= 3) st.tag = { t: k >= 5 ? "On fire: " + k + " straight makes" : k === 4 ? "On fire" : "Heating up", c: "hot" };
-        else if (!pl.scoringPlay && k >= 4) st.tag = { t: "Ice cold: " + k + " straight misses", c: "" };
+        // 3.162.3 (DJ: "Ice cold 5 straight misses, idk if that's team or player"): the tag names the player and counts the shots; the flame or ice says the rest
+        if (A && pl.scoringPlay && k >= 3) st.tag = { t: last(A) + ": " + k + " straight makes", c: "hot" };
+        else if (A && !pl.scoringPlay && k >= 4) st.tag = { t: last(A) + ": " + k + " straight misses", c: "" };
         if (pl.scoringPlay && sc) { st.plus = pts;
           if (EV && EV.k === "oreb" && EV.sd === sc && t - EV.t <= 12) st.lines.push("Second-chance points");
           else if (EV && EV.k === "to" && EV.sd !== sc && t - EV.t <= 8) st.lines.push("Points off the turnover");
@@ -414,6 +415,6 @@
     t = String(t || "");
     var e = /takes the lead|lead change/i.test(t) ? "🔄" : /ties it|tie game/i.test(t) ? "🤝" : /big play/i.test(t) ? "🔥" : /-0 run$/i.test(t) ? "🔥"
       : /^converted/i.test(t) ? "✅" : /^stopped/i.test(t) ? "🛑" : /^1st down/i.test(t) ? "⛓️" : /^\+\d+%/.test(t) ? "📈" : /^flag/i.test(t) ? "🚩"
-      : /red zone/i.test(t) ? "🚨" : /two-minute|clutch/i.test(t) ? "⏱️" : /and-one/i.test(t) ? "💪" : /buzzer/i.test(t) ? "🚨" : /^(on fire|heating up)/i.test(t) ? "🔥" : /^ice cold/i.test(t) ? "🧊" : /^fouled out/i.test(t) ? "🚪" : /^foul trouble/i.test(t) ? "⚠️" : "";
+      : /red zone/i.test(t) ? "🚨" : /two-minute|clutch/i.test(t) ? "⏱️" : /and-one/i.test(t) ? "💪" : /buzzer/i.test(t) ? "🚨" : /^(on fire|heating up)|straight makes$/i.test(t) ? "🔥" : /^ice cold|straight misses$/i.test(t) ? "🧊" : /^fouled out/i.test(t) ? "🚪" : /^foul trouble/i.test(t) ? "⚠️" : "";
     return e ? e + " " + t : t;
   }

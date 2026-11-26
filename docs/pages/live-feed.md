@@ -221,3 +221,7 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - DJ: "I can't scroll on box score, it wants to swipe between games". The Nov 17 rule (a swipe anywhere on the feed changes games, a wide table scrolls first)
   didn't hold on the phone: the swipe locked before the table had moved. Now a touch that starts inside `.fd-box` never starts a game swipe
   (280-ios-bridge.js, touchstart). Swipes on the plays, score bug and bar are unchanged. Checked with synthetic touches, not on a real phone.
+
+## 3.162.3: streak tags name the player
+- DJ: "Ice cold 5 straight misses, idk if that's team or player". Streaks are always the shooter's own shots (free throws not counted), so the tag is now
+  "<Last name>: N straight makes" (3+, flame) or "<Last name>: N straight misses" (4+, ice). The words "Heating up", "On fire" and "Ice cold" are gone.
