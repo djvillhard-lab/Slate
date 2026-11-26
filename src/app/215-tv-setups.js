@@ -583,7 +583,8 @@
     wrap.appendChild(el("p", "tvs-hint", slot.live ? "Tap a TV to put the game on it now. It stays there until the game ends or you pick another." : "Tap a TV to save the game to it for " + slot.label + ". It'll be on that TV when " + slot.label + " comes."));
     // the filters: All, Live now, then each league on at this time
     var lgs = [], seenL = {}; list.forEach(function (g) { if (!seenL[g.league]) { seenL[g.league] = 1; lgs.push(g.league); } });
-    var anyLive = list.some(function (g) { return status(g).kind === "live"; });
+    // 3.163.4 (DJ): Live now only shows when it would list fewer games than All (on Live now, All is mostly live already)
+    var nLive = list.filter(function (g) { return status(g).kind === "live"; }).length, anyLive = nLive > 0 && nLive < list.length;
     var opts = [["all", "All"]].concat(anyLive ? [["live", "Live now"]] : []).concat(lgs.map(function (k) { return [k, info({ league: k }).tag]; }));
     if (!opts.some(function (o) { return o[0] === TVS.af; })) TVS.af = "all";
     var fr = tvsNoSwipe(el("div", "tvs-slots tvs-af")); fr.setAttribute("role", "group"); fr.setAttribute("aria-label", "Show games");

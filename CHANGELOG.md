@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.163.4 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV, My TVs: in "Put a game on a TV", the Live now filter only shows when it lists fewer games than All. On Live now it used to match All almost exactly. The Channels tab is unchanged: there All is every game today and Live now is only the games on right now.
+
 ## 3.163.3 (Nov 26, 2026)
 TestFlight: 3.163.3, new build
 - Live scoreboard in the Dynamic Island on the iPhone Duo: the narrow Island on the side screen now shows the team logos next to the scores, like the single-game live notification, instead of the old team-color chips.
