@@ -1,8 +1,15 @@
 # All games
-Last updated: Nov 16, 2026, 3.65.7
+Last updated: Nov 25, 2026, 3.132.0
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
+- Two columns of small cards (3.132.0, DJ: "option to show multiple game matchups at once (two columns, condensed matchup
+  cards)"). The "2 columns" button (`.ag2-btn`) sits on the left of the Live row, which is now drawn on every day (Live itself
+  still only today). `agTwo()` / `agSetTwo()` keep the choice in `localStorage["slate-ag-two"]`; `renderGames` puts `.ag2` on
+  `#games-body`. Everything else is CSS in `src/styles/103-all-games-compact.css`: `.glist` becomes two columns, and a card
+  without an open quick look hides its league line, record, one-liner, Feed button, corner tag and plus, with time and channel
+  in a row under the teams. A card with its quick look open (`:has(> .tray)`) spans both columns and is the full card. The
+  same cards are drawn, so the 16 / 10 page limit, `agBusy` and `agFitNames` (abbreviations when a name doesn't fit) are unchanged.
 - The second filter row (conferences, Top-10 team; also On TV's channel filters and Box Office's Ranked teams, all `.cf-tab` in a
   `.substrip`) looks like the league tabs, only smaller (3.65.7, DJ asked): 13px wide bold type (`font-stretch: 112%`), muted until
   picked, ink when picked, a 3px accent bar as wide as the word on the hairline. Styles in `src/styles/090-filter-rows.css`

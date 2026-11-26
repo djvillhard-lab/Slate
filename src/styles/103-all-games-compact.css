@@ -1,0 +1,28 @@
+/* All games: two columns of small cards (3.132.0, DJ: "show multiple game matchups at once (two columns, condensed
+   matchup cards)"). #games-body gets .ag2 from the "2 columns" button on the Live row. A card with its quick look
+   open goes back to full width and the full card. */
+#games-body .lo-row { justify-content: space-between; gap: 8px; }
+#games-body .lo-row .ag2-btn { margin-right: auto; }
+.lo-btn.ag2-btn svg { flex: none; fill: currentColor; }
+.lo-btn.ag2-btn.on { border-color: var(--accent); color: var(--accent); background: none; }
+
+#games-body.ag2 .glist { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: start; }
+#games-body.ag2 .glist > .g.panel:has(> .tray) { grid-column: 1 / -1; }
+#games-body.ag2 .glist > :not(.g) { grid-column: 1 / -1; }
+
+#games-body.ag2 .g.panel:not(:has(> .tray)) { grid-template-columns: minmax(0, 1fr); row-gap: 4px; padding: 8px 8px 6px; height: 100%; align-content: start; }
+#games-body.ag2 .g.panel:not(:has(> .tray)).tagged { padding-top: 8px; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .hl,
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-feed,
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ctag,
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .add,
+#games-body.ag2 .g.panel:not(:has(> .tray)) .g-lg,
+#games-body.ag2 .g.panel:not(:has(> .tray)) .tm .rec { display: none !important; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) .g-main { gap: 2px; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) .tm { grid-template-columns: 28px minmax(0, 1fr) auto; column-gap: 6px; min-height: 26px; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) .tm .badge { width: 28px; min-width: 0; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) .tm .badge .badge-logo { height: 24px; margin-top: -12px; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) .tm .nm { font-size: 15px; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) .tm .sc { font-size: 18px; min-width: 0; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side { width: auto !important; min-width: 0; margin: 0 !important; display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 6px; text-align: left; padding-top: 4px; border-top: 1px solid var(--line); }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side > * { min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -160,6 +160,10 @@
   }
   // a new line arrived: redraw All games once, a moment later (several lines landing together make one redraw)
   function agRedraw() { if (state.view !== "games" && !isDuo) return; clearTimeout(agT); agT = setTimeout(function () { if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); }, 400); }
+  // two columns of small cards (3.132.0), remembered on this phone
+  var AG_TWO = null;
+  function agTwo() { if (AG_TWO == null) { try { AG_TWO = localStorage.getItem("slate-ag-two") === "1"; } catch (e) { AG_TWO = false; } } return AG_TWO; }
+  function agSetTwo(v) { AG_TWO = !!v; try { localStorage.setItem("slate-ag-two", v ? "1" : "0"); } catch (e) {} }
   function renderGames() {
     var body = $("games-body"); body.textContent = "";
     if (agIO) agIO.disconnect();
@@ -169,15 +173,25 @@
     if (!games().length && state.league === "all" && evList(state.date).length) { evGamesSections(body); return; }
     if (!games().length) { if (isDuo) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
     var list = gamesFiltered();
+    // 3.132.0 (DJ: "option to show multiple game matchups at once (two columns, condensed matchup cards)"): a button
+    // on the left of the Live row turns the page into two columns of small cards; remembered on this phone
+    var two = agTwo(); body.classList.toggle("ag2", two);
+    var lo = el("div", "lo-row gm-live"), tb = el("button", "lo-btn ag2-btn" + (two ? " on" : "")); tb.type = "button";
+    tb.setAttribute("aria-pressed", two ? "true" : "false"); tb.setAttribute("aria-label", "Show games in two columns");
+    tb.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.5" y="2" width="5.5" height="5" rx="1"/><rect x="9" y="2" width="5.5" height="5" rx="1"/><rect x="1.5" y="9" width="5.5" height="5" rx="1"/><rect x="9" y="9" width="5.5" height="5" rx="1"/></svg>';
+    tb.appendChild(el("span", null, "2 columns"));
+    tb.addEventListener("click", function () { agSetTwo(!agTwo()); keepScroll(renderGames); });
+    if (list.length) lo.appendChild(tb);  // nothing to lay out on a day with no games here
+    if (list.length || state.date === todayInHome()) body.appendChild(lo);
     if (state.date === todayInHome()) {
       var gl = !!state.gamesLive;  // starts off every time All games opens; tap Live to narrow for now
       state.gamesLive = gl;
       var nLv = list.filter(function (g) { return status(g).kind === "live"; }).length;
-      var lo = el("div", "lo-row gm-live"), lb = el("button", "lo-btn" + (gl ? " on" : "")); lb.type = "button";
+      var lb = el("button", "lo-btn" + (gl ? " on" : "")); lb.type = "button";
       lb.setAttribute("aria-pressed", gl ? "true" : "false"); lb.setAttribute("aria-label", "Show only live games");
       lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live")); lb.appendChild(el("b", null, String(nLv)));
       lb.addEventListener("click", function () { state.gamesLive = !state.gamesLive; keepScroll(renderGames); });
-      lo.appendChild(lb); body.appendChild(lo);
+      lo.appendChild(lb);
       if (gl) {
         var before = list.length; list = list.filter(function (g) { return status(g).kind === "live"; });
         if (!list.length && before) {
