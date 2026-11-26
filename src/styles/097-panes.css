@@ -100,3 +100,10 @@ html.in-pane.pn-full #feed-body:has(> .fd-box) > .fd-box { grid-column: 2; grid-
 html.in-pane.pn-full #team-body { columns: 2; column-gap: 12px; }
 html.in-pane.pn-full #team-body > .tm-head { column-span: all; }
 html.in-pane.pn-full #team-body > .gv-card { break-inside: avoid; }
+/* On TV > My TVs, full screen: the whole wall on the left, "Turn each TV to" beside it (the editor and Rules are unchanged) */
+html.in-pane.pn-full #tv-body .tvs > .tvs-wall { float: left; width: 57%; margin: 0 16px 12px 0; }
+html.in-pane.pn-full #tv-body .tvs > .tvs-wall + .tvs-h { margin-top: 0; }
+html.in-pane.pn-full #tv-body .tvs::after { content: ""; display: block; clear: both; }
+/* On TV > All, National TV, Streaming: each channel's games two across */
+html.in-pane.pn-full #tv-body .glist { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; align-items: start; }
+html.in-pane.pn-full #tv-body .glist > .g.panel:has(> .tray), html.in-pane.pn-full #tv-body .glist > :not(.g) { grid-column: 1 / -1; }

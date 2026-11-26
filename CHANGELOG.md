@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.151.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Unfolded iPhone Duo, one page full screen: On TV now uses the whole width. My TVs shows your whole wall on the left with "Turn each TV to" beside it, so the wall and the list are on screen together. All, National TV and Streaming show each channel's games two across.
+
 ## 3.150.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Unfolded iPhone Duo, one page full screen: the Live feed and team pages now use the whole width. A Live feed made full screen shows the plays on the left and the box score beside them on the right, so you can read both without scrolling past one to reach the other. A team page keeps the team's name across the top and puts Claude's take, the schedule and stories on the left with player stats on the right.
