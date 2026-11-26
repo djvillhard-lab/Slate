@@ -128,7 +128,8 @@ html[data-nav3] .toprow.lineup-top > .pillgroup #l-btn-settings { color: var(--h
 .n3-lay { width: 46px; height: 46px; }
 .n3-lay::before { content: ""; position: absolute; left: -5px; top: 9px; bottom: 9px; width: 1px; background: var(--n3-line); }
 .n3-lay svg, .n3-lay2 svg { width: 27px; height: 21px; }
-.n3-lay[data-lay="full"] .n3-l2, .n3-lay[data-lay="two"] .n3-l1, .n3-lay2[data-lay="full"] .n3-l2, .n3-lay2[data-lay="two"] .n3-l1 { display: none; }
+/* 3.160.0 (DJ: "shows the wrong option"): the button shows what a tap gives you, not the layout you are in */
+.n3-lay[data-lay="full"] .n3-l1, .n3-lay[data-lay="two"] .n3-l2, .n3-lay2[data-lay="full"] .n3-l1, .n3-lay2[data-lay="two"] .n3-l2 { display: none; }
 /* the row of other pages stays over the hammer, which is no longer the middle of the bar */
 .n3-haslay .n3-row { left: calc(50% - 54px); }
 /* a full-screen page: the bar stays on the right half, under the thumb, and never on the fold */

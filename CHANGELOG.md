@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.160.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Unfolded iPhone Duo, the slate full screen: the wide cards are filled. Logos, team names, scores, the clock or countdown, the channel and the one-liners are all drawn bigger on them, and the empty band above and below the one-liners is gone.
+- A swipe on a full-screen page now moves between News, the slate and All games, the same as everywhere else. Before, it changed the day. The day arrows still change the day.
+- The layout button now shows what a tap gives you: two boxes when you are full screen, one box when you are on two pages. Before, it showed the layout you were already in.
+- Two pages works the way it did before full screen arrived, and it stays that way: the menu works the right side, a tap on the fold swaps the sides, a hold locks, and it stays two pages on every page and after you fold and unfold. Before, moving to another page could jump back to full screen. Tap the layout button to go back to full screen.
+
 ## 3.159.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed, basketball: plays have more flair. The big moments (a late go-ahead basket or tie, a 10-0 run, a buzzer-beater, a big win-probability swing, a player reaching 30, 40 or 50 points) get a banner across the top in that team's color, with its chip, what happened and the number. It sweeps in when the play arrives.

@@ -33,8 +33,11 @@
   function pnKind(r) { return String(r || "lineup").split(":")[0]; }
   function pnDetail(r) { return /^(feed|game|team):/.test(r || ""); }
   function pnPrefs() { try { return JSON.parse(localStorage.getItem(PN_LAY_KEY) || "{}") || {}; } catch (e) { return {}; } }
-  function pnWant(r) { return pnPrefs()[pnKind(r)] === "two" ? "two" : "full"; }
-  function pnRemember(r, lay) { if (pnDetail(r)) return; try { var p = pnPrefs(), k = pnKind(r); if (lay === "two") p[k] = "two"; else delete p[k]; localStorage.setItem(PN_LAY_KEY, JSON.stringify(p)); } catch (e) {} }
+  // 3.160.0 (DJ: two pages should work "similar to the old controls of two pages"): ONE choice for the whole app, not one
+  // per page. Two pages stays two pages on every page and after folding and unfolding, exactly as before 3.141.0 (the
+  // menu works the right side, the grip swaps, a hold locks), until the layout button is tapped again. Kept under "all".
+  function pnWant(r) { return pnPrefs().all === "two" ? "two" : "full"; }
+  function pnRemember(r, lay) { if (pnDetail(r)) return; try { localStorage.setItem(PN_LAY_KEY, JSON.stringify(lay === "two" ? { all: "two" } : {})); } catch (e) {} }
   function pnAfter() { pnPlace(); pnSave(); pnAlign(); setTimeout(pnAlign, 300); if (typeof nativeSync === "function") nativeSync(); }
   // full screen: the frame `id` takes both halves
   function pnFull(id) { PN.full = true; PN.beside = false; PN.story = false; PN.left = pnOther(id); pnAfter(); }

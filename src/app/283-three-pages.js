@@ -34,7 +34,9 @@
   // page swipes: only on the three pages, and not on the unfolded Duo (both sides are in view there; the bar picks pages)
   // the day arrows (3.129.1, DJ: one tap, never two): the slate gets a glass pair of arrows bottom right, always showing
   function n3DayOn() { return n3BarOn() && n3Dated(); }  // 3.129.2: All games too; 3.129.3: News, On TV and Box Office too
-  function n3SwipeOk() { return n3BarOn() && !PANE && N3_PAGES.indexOf(state.view) !== -1 && !N3.row && !N3.filt; }
+  // 3.160.0 (DJ: "swiping on this page changes day, not controlling the menu"): a page shown full screen on the unfolded Duo
+  // is one page in view, so a swipe changes page there too; with two pages side by side the bar still picks pages
+  function n3SwipeOk() { return n3BarOn() && (!PANE || document.documentElement.classList.contains("pn-full")) && N3_PAGES.indexOf(state.view) !== -1 && !N3.row && !N3.filt; }
   function n3Next(step) { var i = N3_PAGES.indexOf(state.view); return i === -1 ? null : N3_PAGES[i + step] || null; }
   function n3Go(v) {
     N3.row = false; N3.filt = false;

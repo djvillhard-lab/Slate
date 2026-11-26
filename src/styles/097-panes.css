@@ -61,8 +61,12 @@ html.in-pane.pn-full #lineup-body .tg-games > :last-child:nth-child(odd), html.i
 /* the game left over (a 1st, 3rd, 5th at one time) is a feature card: the game on the left half as on every other card,
    its one-liners on the right half in bigger type behind a divider (DJ: "do something creative with the unused space") */
 html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):has(> .hl):not(:has(> .tray)) { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 14px; }
-html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):not(:has(> .tray)) > .hl { grid-column: 3; grid-row: 1 / span 2; align-self: stretch; margin: 0; padding: 26px 0 30px 16px; border-left: 1px solid var(--line); -webkit-line-clamp: 6; }
+html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):not(:has(> .tray)) > .hl { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin: 0; padding: 6px 0 6px 14px; border-left: 1px solid var(--line); -webkit-line-clamp: 6; }
 html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):not(:has(> .tray)) > .hl .hl-row + .hl-row { margin-top: 6px; }
+/* ...and everything on it is drawn bigger so the card is filled (DJ: "larger font text ... fill more"): logos, names,
+   scores, the clock or countdown, the channel and the one-liners all scale together */
+html.in-pane.pn-full #lineup-body .tg-games > .g:last-child:nth-child(odd):has(> .hl):not(:has(> .tray)) > :is(.g-main, .g-side, .hl) { zoom: 1.2; }
+html.in-pane.pn-full #lineup-body .tg-games > .g.has-feed:last-child:nth-child(odd):not(:has(> .tray)) > .hl { padding-bottom: 26px; }
 /* All games in "2 columns": three across */
 html.in-pane.pn-full #games-body.ag2 .glist { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 
