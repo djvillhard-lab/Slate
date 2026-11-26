@@ -60,3 +60,21 @@ html.in-pane.pn-full #lineup-body .tg-time b { font-size: 22px; }
 html.in-pane.pn-full #lineup-body .tg-time i { margin: 0; font-size: 13px; }
 html.in-pane.pn-full #lineup-body .tg-chev { margin: 0 0 0 6px; align-self: center; }
 html.in-pane.pn-full #lineup-body button.tg-time { min-height: 32px; }
+
+/* ---------- full-screen pages use the width (DJ, Nov 26: "review each page ... utilize the screen size and space
+   well ... same detail and features"). Rules for every page live here, scoped to html.in-pane.pn-full, so the pages'
+   own files stay as they are for the folded phone, the iPhone and the two-page layout. ---------- */
+/* Settings: the main list in two columns */
+html.in-pane.pn-full .set-acts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+/* the slate: Worth a look two across */
+html.in-pane.pn-full #lineup-body .wal-list { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+/* All games: full cards two across (a card with its quick look open takes the whole row) */
+html.in-pane.pn-full #games-body:not(.ag2) .glist { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; align-items: start; }
+html.in-pane.pn-full #games-body:not(.ag2) .glist > .g.panel:has(> .tray), html.in-pane.pn-full #games-body:not(.ag2) .glist > :not(.g) { grid-column: 1 / -1; }
+/* All games, ALL tab with every league closed: the league rows in two columns */
+html.in-pane.pn-full #games-body:has(> .sec-tg):not(:has(> .sec-tg:not(.shut))) { columns: 2; column-gap: 28px; }
+html.in-pane.pn-full #games-body:has(> .sec-tg):not(:has(> .sec-tg:not(.shut))) > .lo-row { column-span: all; }
+html.in-pane.pn-full #games-body:has(> .sec-tg):not(:has(> .sec-tg:not(.shut))) > * { break-inside: avoid; }
+/* in columns the first row keeps its top margin and the row after a column break loses it: use padding so both columns start level */
+html.in-pane.pn-full #games-body:has(> .sec-tg):not(:has(> .sec-tg:not(.shut))) > .sec-tg { margin-top: 0; margin-bottom: 0; padding-top: 16px; padding-bottom: 16px; }
+html.in-pane.pn-full #lineup-body .wal-list > .wal-item:only-child { grid-column: 1 / -1; }

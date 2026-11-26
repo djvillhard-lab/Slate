@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.147.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Unfolded iPhone Duo, one page full screen: the first pages now use the whole width. Settings shows its list two across. On the slate, Worth a look is two across. All games shows a league's games two across, and on the ALL tab the league rows sit in two columns until you open one. Nothing was removed, and tapping a game still opens its quick look across the full width.
+- More pages follow one at a time: Teams, Box Office, the matchup page, team pages, Live feed, On TV and News.
+
 ## 3.146.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed: every sport now has a Leaders button, like football's. It opens each team's leaders so far, from ESPN: points, rebounds and assists in basketball; goals, assists and points in hockey; shots, passes, defensive actions and saves in soccer. Baseball shows each team's pitcher in the game (the starter once it's over) and its best batter so far.
