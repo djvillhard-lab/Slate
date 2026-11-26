@@ -60,7 +60,6 @@
       var b = el("button", "n3-b"); b.type = "button"; b.setAttribute("data-p", p[0]); b.setAttribute("aria-label", p[1]);
       var ic = el("span", "n3-ic"); ic.appendChild(n3Icon(p[2])); b.appendChild(ic);
       if (p[0] === "lineup") { var x = el("span", "n3-x"); x.appendChild(n3Svg("M6 6l12 12M18 6L6 18")); b.appendChild(x); }
-      if (p[0] === "games") b.appendChild(el("i", "n3-live"));
       b.addEventListener("click", function () {
         if (p[0] === "lineup" && state.view === "lineup") { N3.row = !N3.row; N3.filt = false; n3Draw(); return; }
         n3Go(p[0]);
@@ -167,7 +166,6 @@
         var p = b.getAttribute("data-p"), cur = p === state.view;
         if (cur) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
         if (p === "lineup") { b.setAttribute("aria-expanded", N3.row ? "true" : "false"); b.setAttribute("aria-label", cur ? (N3.row ? "Close more pages" : "Slate. Tap for more pages") : "Slate"); }
-        if (p === "games") b.classList.toggle("has-live", liveAny && !cur);
       });
       $("n3-row").hidden = !N3.row;
       $("n3-fb").hidden = !filt; $("n3-fb").setAttribute("aria-expanded", N3.filt ? "true" : "false");

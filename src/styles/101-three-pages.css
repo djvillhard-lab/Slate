@@ -37,7 +37,7 @@ html.wl-on .n3, html.panes:not(.in-pane) .n3 { display: none !important; }
 .n3-b[data-p="lineup"][aria-current="page"][aria-expanded="false"] .n3-ic { transform: translateY(2px); }
 @keyframes n3Nudge { 0%, 100% { transform: translateY(0) rotate(45deg); } 40% { transform: translateY(-3px) rotate(45deg); } }
 .n3-live { display: none; position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--live); }
-.n3-b.has-live .n3-live { display: block; }
+/* 3.140.4 (DJ, Nov 25): no red dot on the All games button in the bar; leagues in the filter keep theirs */
 
 /* the other pages: a row that grows out of the hammer */
 .n3-row { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); z-index: 2; width: min(222px, calc(100vw - 24px)); height: 70px; padding: 0 6px; border-radius: 26px; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center;

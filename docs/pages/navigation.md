@@ -29,3 +29,6 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 
 ## Short messages (toast), 3.130.9 (Nov 24, 2026)
 - With Three pages on, the toast sits 142px from the bottom, above the glass bar (`101-three-pages.css`). It must also set `top: auto !important`: `050-ux-review.css` pins toasts to the top with `!important`, and with both set the toast stretched into a tall capsule covering the page (3.128.0 to 3.130.8). Checked folded, open (both panes) and iPhone.
+
+## No live dot on the bar (3.140.4, DJ Nov 25, 2026)
+- DJ: "Remove red dot on all games menu." The All games button in the bar no longer gets a red dot when a game is live. The league rail's dots (`.n3-lg .n3-live`) stay.
