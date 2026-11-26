@@ -100,11 +100,14 @@ html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > .gv-oddsbar { gri
 html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > .gv-cl { grid-column: 2; grid-row: 2; align-self: start; }
 html.in-pane.pn-full #game-body .gv-sec.open > .gv-sec-in { display: block; columns: 2; column-gap: 12px; }
 html.in-pane.pn-full #game-body .gv-sec.open > .gv-sec-in > * { break-inside: avoid; margin-top: 0; margin-bottom: 12px; }
-/* Live feed, full screen: the plays on the left, the box score beside them on the right */
-html.in-pane.pn-full #feed-body:has(> .fd-box) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-flow: row dense; column-gap: 12px; align-items: start; }
-html.in-pane.pn-full #feed-body:has(> .fd-box) > * { grid-column: 1 / -1; min-width: 0; }
-html.in-pane.pn-full #feed-body:has(> .fd-box) > .fd-field, html.in-pane.pn-full #feed-body:has(> .fd-box) > .fd-list { grid-column: 1; }
-html.in-pane.pn-full #feed-body:has(> .fd-box) > .fd-box { grid-column: 2; grid-row: span 2; margin-top: 6px; }
+/* Live feed, full screen. Since 3.162.0 the box score opens from the "Box score" button and is a .fd-box inside
+   .fd-list, right after the .fd-bar row. Open, it sits on the right half and the plays keep the left half all the way
+   down; closed, the plays use the full width as before. */
+html.in-pane.pn-full #feed-body .fd-list:has(> .fd-box) { display: block; }
+html.in-pane.pn-full #feed-body .fd-list:has(> .fd-box) > * { margin-bottom: 8px; }
+html.in-pane.pn-full #feed-body .fd-list:has(> .fd-box) > .fd-box { float: right; width: calc(50% - 6px); margin: 0 0 8px 12px; }
+html.in-pane.pn-full #feed-body .fd-list:has(> .fd-box) > :not(.fd-bar):not(.fd-box) { max-width: calc(50% - 6px); }
+html.in-pane.pn-full #feed-body .fd-list:has(> .fd-box)::after { content: ""; display: block; clear: both; }
 /* Team page, full screen: the name across the top, the cards in two columns */
 html.in-pane.pn-full #team-body { columns: 2; column-gap: 12px; }
 html.in-pane.pn-full #team-body > .tm-head { column-span: all; }
