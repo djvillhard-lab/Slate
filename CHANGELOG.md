@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.169.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Today's Slate: The Athletic Newsletters card is back to a simple card with the newsletter, its time and the headline. Since the News redesign it showed an empty gray bar above the headline and a big empty space under it, because it picked up the look of a News tile.
+- Unfolded iPhone Duo held upright: the slate's times no longer sit under the small side-bar tab iOS keeps on the top left edge, which hid the first digit ("_:00 pm"). Pages there get a little more room on the left. Folded, sideways and iPhone are unchanged.
+
 ## 3.169.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Football Live feed: a new Drives button, between Scoring and Box score. Tap it and every drive of the game is listed newest first, one line each: the team, when and where it started, how long it went ("7 plays, 53 yards, 3:45") and how it ended (Touchdown, Field Goal, Punt, Fumble and so on). The drive going on now leads the list. It stays open until you close it, and opening it closes the box score so the page stays short.

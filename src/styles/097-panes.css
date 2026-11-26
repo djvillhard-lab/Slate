@@ -133,3 +133,10 @@ html.in-pane.pn-full .nl.nf > .nl-nums.nl-2c { grid-template-columns: repeat(4, 
 html.in-pane.pn-full .nl.nf > .nf-s:nth-child(odd of .nf-s):not(:has(+ .nf-s)),
 html.in-pane.pn-full .nl.nf > .nf-preview:nth-child(odd of .nf-preview):not(:has(+ .nf-preview)),
 html.in-pane.pn-full .nl.nf > .nf-recap:nth-child(odd of .nf-recap):not(:has(+ .nf-recap)) { grid-column: 1 / -1; }
+
+/* 3.167.1 (DJ, Nov 26): the unfolded Duo held upright. iOS keeps a small tab for its side bar over the top left edge
+   (about 20 points wide), which covered the first digit of the slate's times ("_:00 pm"). Pages get a wider left
+   margin here so nothing sits under it. Folded (side-col), sideways (panes) and iPhone are unchanged. */
+@media (orientation: portrait) {
+  html.corner:not(.iphone):not(.side-col):not(.duo):not(.in-pane) #main-wrap { padding-left: calc(30px / var(--z, 1)); }
+}

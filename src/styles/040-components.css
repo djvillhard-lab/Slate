@@ -1254,7 +1254,7 @@ nav.dock.menu-open .dock-back { display: none; }
 .nl-row { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); color: var(--ink); text-decoration: none; }
 .nl-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .nl-top b { font-size: 13px; font-weight: 800; color: var(--accent); } .nl-top span { font-size: 12px; font-weight: 700; color: var(--muted); }
-.nl-t { font-size: 15px; font-weight: 700; line-height: 1.35; }
+.nlr-t { font-size: 15px; font-weight: 700; line-height: 1.35; }
 .nl-row.read { opacity: .5; }
 /* game suggestions: the reason on top, the game, then Not now / Add to slate (Add on the right, under the thumb) */
 .sugg-g { padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 6%, var(--card)); border: 1px solid var(--line); }

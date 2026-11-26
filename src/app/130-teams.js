@@ -447,7 +447,7 @@
       a.addEventListener("click", function () { var m = nlRead(); m[r.it.url] = todayInHome(); try { localStorage.setItem("slate-nl-read", JSON.stringify(m)); } catch (e) {} a.classList.add("read"); });
       var top = el("div", "nl-top"); top.appendChild(el("b", null, r.n[1]));
       top.appendChild(el("span", null, new Date(r.t).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: HOME_TZ })));
-      a.appendChild(top); a.appendChild(el("span", "nl-t", r.it.title)); w.appendChild(a);
+      a.appendChild(top); a.appendChild(el("span", "nlr-t", r.it.title)); w.appendChild(a);
     });
     return w;
   }

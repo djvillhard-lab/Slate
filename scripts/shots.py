@@ -10,7 +10,7 @@
     python3 scripts/shots.py lineup --gate                                  (the log-in page; --gate invite = the sign-up page)
     SLATE_PASS=... python3 scripts/shots.py settings --readonly --name welcome-2 --eval "document.querySelector('#acct button').click(); document.querySelector('.wl-next').click()"
 
-Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --font archivo|mona|flex|saira|noto|serif (the Font setting, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --tap "sel" (a real finger tap on the first visible match, after --click), --yesterday (the day before: finished games), --tomorrow (the slate's next day:
+Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --font archivo|mona|flex|saira|noto|serif (the Font setting, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --newsletters "pulse,bounce" (The Athletic newsletters under the slate, for this run), --tap "sel" (a real finger tap on the first visible match, after --click), --yesterday (the day before: finished games), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
 --espn-swap "a=>b,c=>d" (change ESPN request URLs, e.g. "dates=202611=>dates=202511" to show last season's games),
 --eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
@@ -24,9 +24,11 @@ upcoming games), --full (the whole page, not just the first screen), --wait seco
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
 plus game:<team> (that game's matchup page), look:<team> (its quick look on All games) and feed:<team> (its Live feed), found on All games by team name.
 
-Sizes (--sizes, default all three):
+Sizes (--sizes, default all of them):
     folded  iPhone Duo folded: 466 x 678, the app's side column on the right (strip mode, 84-point inset)
     open    iPhone Duo unfolded and sideways: 765 x 538, one page full screen (3.141.0); --two for two pages, each its own page
+    upright iPhone Duo unfolded and upright, Picture in Picture on the top half: 538 x 454
+    tall    iPhone Duo unfolded and upright, whole screen: 538 x 765 (iOS keeps a small side-bar tab over the top left edge)
     iphone  a regular iPhone: 390 x 844
 The page is told which phone it's on, so the test profile's own Phone setting doesn't matter (nothing is saved).
 
@@ -45,6 +47,7 @@ SIZES = {
     "open": {"w": 765, "h": 538, "device": "duo", "strip": False, "inset": 0},
     # unfolded and UPRIGHT with Picture in Picture on the top half: the app gets the bottom half (measured from DJ's screenshot)
     "upright": {"w": 538, "h": 454, "device": "duo", "strip": False, "inset": 0},
+    "tall": {"w": 538, "h": 765, "device": "duo", "strip": False, "inset": 0},   # unfolded and upright, the whole screen (DJ, Nov 26)
     "iphone": {"w": 390, "h": 844, "device": "iphone", "strip": False, "inset": 0},
 }
 OUT = "/tmp/slate-shots"
@@ -62,6 +65,7 @@ def main():
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
     prof = 0  # --profile SECONDS: record the page's CPU use for that long (after --tap) and print where the time went
     tap = None  # --tap "sel": a real touch tap, after --click
+    nls = None  # --newsletters "pulse,bounce": The Athletic newsletters shown under the slate, for this run only
     teams = None  # --teams "Notre Dame,Duke": favorite teams for this run only (read-only, never saved)
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
     oldapp = False
@@ -84,6 +88,7 @@ def main():
         if a == "--look": look = args[i + 1]; i += 2; continue
         if a == "--profile": prof = float(args[i + 1]); i += 2; continue
         if a == "--tap": tap = args[i + 1]; i += 2; continue
+        if a == "--newsletters": nls = [t.strip() for t in args[i + 1].split(",") if t.strip()]; i += 2; continue
         if a == "--teams": teams = [t.strip() for t in args[i + 1].split(",") if t.strip()]; i += 2; continue
         if a == "--league": league = args[i + 1]; i += 2; continue
         if a == "--filter": filt = args[i + 1]; i += 2; continue
@@ -136,6 +141,7 @@ def main():
                         row["data"]["device"] = device
                         if text: row["data"]["textSize"] = text; row["data"]["textSizeWide"] = text
                         if teams: row["data"]["teams"] = teams
+                        if nls: row["data"]["newsletters"] = nls
                         if font: row["data"]["font"] = font
                         if look: row["data"]["look"] = look; row["data"]["accent"] = {"paper": "navy"}.get(look, "green")
                 route.fulfill(response=r, body=json.dumps(d))
