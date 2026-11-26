@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.135.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV: My TVs is now the first tab, and On TV opens on it. The channel list (All) is the second tab, then National TV and Streaming.
+- Fixed: dragging or resizing a TV while editing a setup switched tabs or pages instead. Now a drag anywhere in the editor only moves the TV, and the page doesn't pull down either.
+- Setting up TVs now starts with how many you have (1 to 5), then a few layouts for that many, drawn small so you can see them. With 2 TVs the first layout is a big TV with a smaller one up and to its right. After picking one you can still drag and resize every TV.
+- More room to arrange them: the space is bigger, with room above and beside the main TV. TVs no longer show their size in numbers; the corner drag is the only way to size them. The My TVs view shows only the part of the wall your TVs use, so they draw as big as they can.
+
 ## 3.135.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - On TV: a new My TVs tab (after Streaming) for TV watch setups. Tap "Set up my TVs", pick a layout (One TV, 1 big + 2, Big + 3, 2 × 2 wall, Big + 4), then drag each TV where it sits in your room and drag its corner to make it bigger or smaller. Up to 5 TVs. Each TV can be the main TV (your teams go there first) or a split screen for 2 or 4 games, like YouTube TV Multiview.

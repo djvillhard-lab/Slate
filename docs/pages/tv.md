@@ -1,5 +1,5 @@
 # On TV
-Last updated: Nov 26, 2026, 3.135.0
+Last updated: Nov 26, 2026, 3.135.1
 Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css`); TV watch setups in `src/app/215-tv-setups.js` (`#tvs-css`). Filter tabs (All, National TV, Streaming, My TVs) are in `070-navigation.js` and `240-chrome.js`.
 
 ## Done
@@ -14,6 +14,8 @@ Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css
   - Times (`tvsSlots`): "Live now" when anything is live, then each upcoming start time (15-minute buckets). Live pool = live games plus ones starting within 20 min; a later time = games on at that time. Ranking `tvsRank`: your team, then on your slate, then the rule score, national TV a little, no listed channel last. `tvsFill`: main TV takes your team's game first, then TVs by size.
   - DJ (Nov 25): no app or service per TV. It's about the matchup, with the channel big (`tvsChan`: a national channel first, then one with an app). Watch opens the Watch popup (`watchLink`).
   - Swap pins a game to a TV spot for today (`TVS.pins`, `localStorage` `slate-tv-pins`, cleared next day).
+
+- 3.135.1 (DJ): My TVs is the first tab and On TV opens on it (`215-tv-setups.js` reorders `TV_TABS` at load and turns the starting "all" into "setups"; the tab row order is in `240-chrome.js`). The editor stops touchstart/move/end from bubbling to the document, so the swipe handler (`280-ios-bridge.js`) and pull-down (`285-pull-down.js`) never see a drag there. Leaving the My TVs tab closes the editor. Also 3.135.1 (DJ): the wall is 32 x 22 (was 24 x 14; old setups scale once in `tvsGrid`, new ones carry `g: 2`). Setup starts with How many TVs (1 to 5, `.tvs-cnt`) then that count's layouts (`TV_PRESETS[n]`, drawn as minis); with 2 TVs the first is a big TV with a small one up to the right, like DJ's room. No size numbers on TVs (DJ): only the corner drag. The My TVs view crops the wall to the TVs (`tvsBox`). The Add a TV button is gone (the count does it).
 
 ## Open
 - Second release (DJ's pick pending on the decision cards): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.

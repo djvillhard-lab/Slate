@@ -4,19 +4,35 @@
   // first. It's about the matchup; each TV shows its channel big, since you turn every TV to it yourself.
   // Live games make a "Live now" setup; with nothing live it opens on the next start time. A game that ends drops out
   // and the next one takes its TV. Saved with the profile in data/users/<uid>/tv-setups (a copy on this phone for speed).
-  // Positions are grid units on a 24 x 14 wall (TVW x TVH), so a setup looks the same on every screen size.
-  var TVW = 24, TVH = 14, TV_MAXN = 5;
+  // Positions are grid units on a 32 x 22 wall (TVW x TVH), so a setup looks the same on every screen size.
+  // 3.135.1 (DJ): a bigger wall, with room above and beside the main TV. Setups saved on the first 24 x 14 wall are
+  // scaled up once (tvsGrid); new ones carry g: 2.
+  var TVW = 32, TVH = 22, TV_MAXN = 5;
+  // 3.135.1 (DJ): My TVs is On TV's first tab and the one it opens on; the channel list (All) is second.
+  // TV_TABS lives in 070-navigation.js (swipe order); it's put in the same order as the tab row here.
+  TV_TABS.splice(0, TV_TABS.length, "setups", "all", "national", "streaming");
+  if (state.tvFilter === "all") state.tvFilter = "setups";
   var TVS = { list: [], cur: "", loaded: false, asked: false, slot: "", edit: null, sel: 0, once: null, swap: "", pins: {}, saveT: null };
   try { var tvc = JSON.parse(localStorage.getItem("slate-tv-setups") || "null"); if (tvc && Array.isArray(tvc.list)) { TVS.list = tvc.list; TVS.cur = tvc.cur || ""; } } catch (e) {}
   try { var tvp = JSON.parse(localStorage.getItem("slate-tv-pins") || "null"); if (tvp && tvp.d === todayInHome()) TVS.pins = tvp.p || {}; } catch (e) {}
-  var TV_PRESETS = [
-    { k: "one", n: "One TV", t: [[3, 1, 18, 12]] },
-    { k: "big2", n: "1 big + 2", t: [[5, 0, 14, 8], [0, 9, 9, 5], [15, 9, 9, 5]] },
-    { k: "big3", n: "Big + 3", t: [[5, 0, 14, 8], [0, 9, 7, 5], [8, 9, 8, 5], [17, 9, 7, 5]] },
-    { k: "wall", n: "2 × 2 wall", t: [[0, 0, 11, 6], [13, 0, 11, 6], [0, 8, 11, 6], [13, 8, 11, 6]] },
-    { k: "row5", n: "Big + 4", t: [[6, 0, 12, 8], [0, 10, 5, 4], [6, 10, 5, 4], [13, 10, 5, 4], [19, 10, 5, 4]] }
-  ];
-  var TV_NAMES = ["Main TV", "Left TV", "Middle TV", "Right TV", "Fifth TV"];
+  // 3.135.1 (DJ): pick how many TVs first, then a layout for that many. The main TV is always the first box.
+  var TV_PRESETS = {
+    1: [{ n: "One TV", t: [[6, 5, 20, 12]] }],
+    2: [{ n: "Small one up to the right", t: [[3, 7, 20, 12], [24, 2, 8, 5]] },
+        { n: "Small one to the right", t: [[3, 5, 20, 12], [24, 10, 8, 5]] },
+        { n: "Small one up to the left", t: [[9, 7, 20, 12], [0, 2, 8, 5]] },
+        { n: "Side by side", t: [[0, 6, 15, 9], [17, 6, 15, 9]] }],
+    3: [{ n: "Big + 2 below", t: [[7, 1, 18, 11], [2, 14, 12, 7], [18, 14, 12, 7]] },
+        { n: "Big + 2 on the right", t: [[0, 5, 21, 13], [22, 3, 10, 6], [22, 12, 10, 6]] },
+        { n: "Big + one each side", t: [[8, 5, 16, 10], [0, 7, 7, 5], [25, 7, 7, 5]] }],
+    4: [{ n: "Big + 3 below", t: [[7, 1, 18, 11], [0, 14, 10, 6], [11, 14, 10, 6], [22, 14, 10, 6]] },
+        { n: "Big + 3 on the right", t: [[0, 5, 21, 13], [22, 1, 10, 6], [22, 8, 10, 6], [22, 15, 10, 6]] },
+        { n: "2 × 2 wall", t: [[1, 1, 14, 9], [17, 1, 14, 9], [1, 12, 14, 9], [17, 12, 14, 9]] }],
+    5: [{ n: "Big + 4 below", t: [[8, 1, 16, 10], [0, 14, 7, 5], [8, 14, 7, 5], [16, 14, 7, 5], [24, 14, 7, 5]] },
+        { n: "Big + 2 each side", t: [[8, 5, 16, 10], [0, 3, 7, 5], [0, 11, 7, 5], [25, 3, 7, 5], [25, 11, 7, 5]] },
+        { n: "2 big + 3 below", t: [[0, 1, 15, 9], [17, 1, 15, 9], [0, 13, 10, 6], [11, 13, 10, 6], [22, 13, 10, 6]] }]
+  };
+  var TV_NAMES = ["Main TV", "TV 2", "TV 3", "TV 4", "TV 5"];  // names you can change; a layout doesn't know which side is left
   (function () { var st = document.createElement("style"); st.id = "tvs-css"; st.textContent =
     ".tvs { margin: 4px 0 20px; padding-bottom: 88px; }" +
     ".tvs-top { display: flex; align-items: center; gap: 8px; min-height: 44px; }" +
@@ -30,7 +46,16 @@
     ".tvs-slots button { flex: 1 0 auto; min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 6px; }" +
     ".tvs-slots button[aria-pressed=\"true\"] { background: var(--lg-lit); color: var(--ink); }" +
     ".tvs-slots i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }" +
-    ".tvs-wall { position: relative; margin-top: 10px; border-radius: 8px; background: var(--card); aspect-ratio: 24 / 14; }" +
+    ".tvs-wall { position: relative; margin-top: 10px; border-radius: 8px; background: var(--card); aspect-ratio: 32 / 22; }" +
+    ".tvs-cnt { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }" +
+    ".tvs-cnt button { min-height: 44px; border-radius: 8px; font: inherit; font-size: 17px; font-weight: 800; font-stretch: 88%; color: var(--ink); background: var(--lg-fill); border: 1px solid var(--lg-edge); }" +
+    ".tvs-cnt button[aria-pressed=\"true\"] { background: var(--accent-fill); color: var(--on-accent); border-color: var(--accent-fill); }" +
+    ".tvs-lays { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }" +
+    ".tvs-lay { display: flex; flex-direction: column; gap: 6px; padding: 8px; min-height: 44px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); text-align: left; background: var(--card); border: 1px solid var(--line); }" +
+    ".tvs-lay[aria-pressed=\"true\"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }" +
+    ".tvs-mini { position: relative; display: block; width: 100%; aspect-ratio: 32 / 22; }" +
+    ".tvs-mini i { position: absolute; box-sizing: border-box; border-radius: 2px; border: 1px solid var(--muted); }" +
+    ".tvs-mini i:first-child { border: 2px solid var(--accent); }" +
     ".tvs-tv { position: absolute; box-sizing: border-box; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); padding: 6px; overflow: hidden; display: flex; flex-direction: column; gap: 4px; min-width: 0; text-align: left; font: inherit; color: var(--ink); }" +
     ".tvs-tv.main { border: 2px solid var(--accent); }" +
     ".tvs-tv .tn { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 11px; font-weight: 700; color: var(--muted); min-width: 0; }" +
@@ -80,7 +105,6 @@
     ".tvs-ed .tvs-tv .rz { position: absolute; right: 0; bottom: 0; width: 28px; height: 28px; touch-action: none; }" +
     ".tvs-ed .tvs-tv .rz::after { content: \"\"; position: absolute; right: 3px; bottom: 3px; width: 12px; height: 12px; border-right: 3px solid var(--accent); border-bottom: 3px solid var(--accent); border-radius: 0 0 3px 0; }" +
     ".tvs-ed .tvs-tv:not(.sel) .rz::after { border-color: var(--dim); }" +
-    ".tvs-ed .tvs-tv .sz { font-size: 11px; color: var(--dim); }" +
     ".tvs-ed-h { display: flex; align-items: center; gap: 10px; margin: 8px 0; }" +
     ".tvs-ed-h h2 { margin: 0; font-size: 22px; font-weight: 800; font-stretch: 112%; flex: 1; }" +
     ".tvs-in { min-height: 44px; box-sizing: border-box; width: 100%; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; padding: 0 12px; }" +
@@ -128,8 +152,16 @@
   function tvsPinsSave() { try { localStorage.setItem("slate-tv-pins", JSON.stringify({ d: todayInHome(), p: TVS.pins })); } catch (e) {} }
   function tvsCur() {
     if (TVS.once) return TVS.once;
+    TVS.list.forEach(tvsGrid);
     var s = TVS.list.filter(function (x) { return x.id === TVS.cur; })[0];
     return s || TVS.list[0] || null;
+  }
+  // setups saved on the first, smaller wall (3.135.0) are scaled to the 32 x 22 one, once
+  function tvsGrid(st) {
+    if (!st || st.g === 2) return st;
+    var kx = 32 / 24, ky = 22 / 14;
+    (st.tvs || []).forEach(function (t) { t.x = Math.round(t.x * kx); t.y = Math.round(t.y * ky); t.w = Math.round(t.w * kx); t.h = Math.round(t.h * ky); });
+    st.g = 2; return st;
   }
   function tvsFromPreset(p) {
     return p.t.map(function (r, i) { return { id: "t" + i + Math.random().toString(36).slice(2, 6), name: TV_NAMES[i] || "TV " + (i + 1), x: r[0], y: r[1], w: r[2], h: r[3], main: i === 0, split: 1 }; });
@@ -219,9 +251,18 @@
   }
 
   // ---------- drawing a TV on the wall ----------
-  function tvsPlace(node, t) {
-    node.style.left = (t.x / TVW * 100) + "%"; node.style.top = (t.y / TVH * 100) + "%";
-    node.style.width = (t.w / TVW * 100) + "%"; node.style.height = (t.h / TVH * 100) + "%";
+  function tvsPlace(node, t, bx) {
+    bx = bx || { x: 0, y: 0, w: TVW, h: TVH };
+    node.style.left = ((t.x - bx.x) / bx.w * 100) + "%"; node.style.top = ((t.y - bx.y) / bx.h * 100) + "%";
+    node.style.width = (t.w / bx.w * 100) + "%"; node.style.height = (t.h / bx.h * 100) + "%";
+  }
+  // the part of the wall the TVs use, plus a grid unit around them, so the view doesn't show empty wall
+  function tvsBox(tvs) {
+    var x0 = TVW, y0 = TVH, x1 = 0, y1 = 0;
+    tvs.forEach(function (t) { x0 = Math.min(x0, t.x); y0 = Math.min(y0, t.y); x1 = Math.max(x1, t.x + t.w); y1 = Math.max(y1, t.y + t.h); });
+    if (x1 <= x0) return { x: 0, y: 0, w: TVW, h: TVH };
+    x0 = Math.max(0, x0 - 1); y0 = Math.max(0, y0 - 1); x1 = Math.min(TVW, x1 + 1); y1 = Math.min(TVH, y1 + 1);
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   }
   function tvsMatch(g, small) {
     var mu = el("span", "tvs-mu"), sc = scoreOf(g), o = sideOrder(g);
@@ -234,10 +275,10 @@
     });
     return mu;
   }
-  function tvsTile(t, list, tag) {
-    var small = t.w < 9 || t.h < 6;
+  function tvsTile(t, list, tag, bx) {
+    var small = t.w < 12 || t.h < 8;
     var node = el(tag || "div", "tvs-tv" + (t.main ? " main" : "") + (small ? " sm" : ""));
-    tvsPlace(node, t);
+    tvsPlace(node, t, bx);
     var n = Math.max(1, t.split || 1);
     if (n > 1) {
       var hd = el("span", "tn"); hd.appendChild(el("span", null, t.name + " · split " + n)); node.appendChild(hd);
@@ -305,8 +346,9 @@
       wrap.appendChild(sr);
     }
     var pool = tvsPool(gs, slot), fill = tvsFill(setup, pool, slot);
-    var wall = el("div", "tvs-wall"); wall.setAttribute("aria-hidden", "true");
-    setup.tvs.forEach(function (t, i) { wall.appendChild(tvsTile(t, fill[i])); });
+    var wall = el("div", "tvs-wall"), bx = tvsBox(setup.tvs); wall.setAttribute("aria-hidden", "true");
+    wall.style.aspectRatio = bx.w + " / " + bx.h;
+    setup.tvs.forEach(function (t, i) { wall.appendChild(tvsTile(t, fill[i], null, bx)); });
     wrap.appendChild(wall);
     // the list: what to turn each TV to
     var h = el("div", "tvs-h"); h.appendChild(el("h2", null, slot.live ? "Turn each TV to" : "At " + slot.label + ", turn each TV to"));
@@ -372,7 +414,7 @@
 
   // ---------- the editor ----------
   function tvsOpenEditor(setup) {
-    var base = setup || { id: "s" + Date.now().toString(36), name: TVS.list.length ? "" : "Living room", tvs: tvsFromPreset(TV_PRESETS[2]) };
+    var base = setup || { id: "s" + Date.now().toString(36), g: 2, lay: TV_PRESETS[2][0].n, name: TVS.list.length ? "" : "Living room", tvs: tvsFromPreset(TV_PRESETS[2][0]) };
     TVS.edit = { orig: setup && setup !== TVS.once ? setup.id : "", once: setup === TVS.once && !!setup, s: JSON.parse(JSON.stringify(base)) };
     TVS.sel = 0; TVS.drawn = false;
     renderTV(); window.scrollTo(0, 0);
@@ -384,26 +426,16 @@
     var nm = el("input", "tvs-in"); nm.type = "text"; nm.maxLength = 24; nm.placeholder = "Name, like Living room or Basement"; nm.value = s.name || ""; nm.setAttribute("aria-label", "Setup name");
     nm.addEventListener("input", function () { s.name = nm.value; });
     wrap.appendChild(nm);
-    wrap.appendChild(el("span", "tvs-lbl", "Start from a layout"));
-    var chips = el("div", "tvs-chips");
-    TV_PRESETS.forEach(function (p) {
-      var b = el("button", null, p.n); b.type = "button";
-      b.addEventListener("click", function () { s.tvs = tvsFromPreset(p); TVS.sel = 0; tvsEdRedraw(); });
-      chips.appendChild(b);
-    });
-    wrap.appendChild(chips);
+    wrap.appendChild(el("span", "tvs-lbl", "How many TVs"));
+    var cnt = el("div", "tvs-cnt"); cnt.id = "tvs-ed-cnt"; cnt.setAttribute("role", "group"); cnt.setAttribute("aria-label", "How many TVs");
+    wrap.appendChild(cnt);
+    wrap.appendChild(el("span", "tvs-lbl", "Pick a layout, then move and size them below"));
+    var lays = el("div", "tvs-lays"); lays.id = "tvs-ed-lays"; wrap.appendChild(lays);
     var wall = el("div", "tvs-wall"); wall.id = "tvs-ed-wall"; wrap.appendChild(wall);
     wrap.appendChild(el("p", "tvs-hint", "Drag a TV to move it. Drag its corner to make it bigger or smaller."));
-    var add = el("button", "tvs-add"); add.type = "button"; add.id = "tvs-ed-add";
-    add.addEventListener("click", function () {
-      if (s.tvs.length >= TV_MAXN) return;
-      var i = s.tvs.length; s.tvs.push({ id: "t" + i + Math.random().toString(36).slice(2, 6), name: TV_NAMES[i] || "TV " + (i + 1), x: 8, y: 4, w: 8, h: 5, main: !s.tvs.some(function (t) { return t.main; }), split: 1 });
-      TVS.sel = i; tvsEdRedraw();
-    });
-    wrap.appendChild(add);
     var panel = el("div", "tvs-panel"); panel.id = "tvs-ed-panel"; wrap.appendChild(panel);
     var acts = el("div", "tvs-acts");
-    var save = el("button", "full-mu"); save.type = "button"; save.appendChild(el("b", null, "Save setup")); save.appendChild(el("span", null, "Keep it for next time"));
+    var save = el("button", "full-mu"); save.type = "button"; save.appendChild(el("b", null, "Save setup"));
     save.addEventListener("click", function () {
       s.name = (s.name || "").trim() || "My TVs";
       var at = -1; TVS.list.forEach(function (x, i) { if (x.id === s.id) at = i; });
@@ -428,12 +460,15 @@
       foot.appendChild(del);
     }
     wrap.appendChild(foot);
+    // 3.135.1 (DJ): a drag in the editor never swipes tabs or pages. The swipe handler listens on the document,
+    // so the editor's touches stop here (the tap guard's window listeners still see them first).
+    ["touchstart", "touchmove", "touchend"].forEach(function (k) { wrap.addEventListener(k, function (e) { e.stopPropagation(); }, { passive: true }); });
     body.appendChild(wrap);
     tvsEdRedraw();
   }
   // redraws only the wall and the panel (never during a drag: a drag moves the one TV's box)
   function tvsEdRedraw() {
-    var E = TVS.edit, s = E && E.s, wall = $("tvs-ed-wall"), panel = $("tvs-ed-panel"), add = $("tvs-ed-add");
+    var E = TVS.edit, s = E && E.s, wall = $("tvs-ed-wall"), panel = $("tvs-ed-panel");
     if (!s || !wall) return;
     if (TVS.sel >= s.tvs.length) TVS.sel = Math.max(0, s.tvs.length - 1);
     wall.textContent = "";
@@ -441,14 +476,36 @@
       var node = tvsTile(t, null, "div");
       node.classList.toggle("sel", i === TVS.sel);
       node.setAttribute("role", "button"); node.tabIndex = 0; node.setAttribute("aria-label", t.name + ", tap to change, drag to move");
-      node.appendChild(el("span", "sz", t.w + " × " + t.h));
       var rz = el("span", "rz"); rz.setAttribute("aria-hidden", "true"); node.appendChild(rz);
       tvsDrag(node, rz, t, i, wall);
       wall.appendChild(node);
     });
-    add.textContent = s.tvs.length >= TV_MAXN ? "5 TVs is the most" : "+ Add a TV (" + s.tvs.length + " of " + TV_MAXN + ")";
-    add.disabled = s.tvs.length >= TV_MAXN;
+    tvsEdCount(s);
     tvsEdPanel(panel, s);
+  }
+  // how many TVs (1 to 5) and that count's layouts, each drawn small; s.lay remembers which one was picked
+  function tvsEdCount(s) {
+    var cnt = $("tvs-ed-cnt"), lays = $("tvs-ed-lays"); if (!cnt || !lays) return;
+    var n = s.tvs.length; cnt.textContent = ""; lays.textContent = "";
+    for (var k = 1; k <= TV_MAXN; k++) (function (k) {
+      var b = el("button", null, String(k)); b.type = "button"; b.setAttribute("aria-pressed", k === n ? "true" : "false");
+      b.setAttribute("aria-label", k + (k === 1 ? " TV" : " TVs"));
+      b.addEventListener("click", function () { if (k === s.tvs.length) return; s.tvs = tvsFromPreset(TV_PRESETS[k][0]); s.lay = TV_PRESETS[k][0].n; TVS.sel = 0; tvsEdRedraw(); });
+      cnt.appendChild(b);
+    })(k);
+    (TV_PRESETS[n] || []).forEach(function (p) {
+      var b = el("button", "tvs-lay"); b.type = "button"; b.setAttribute("aria-pressed", s.lay === p.n ? "true" : "false");
+      var mini = el("span", "tvs-mini"); mini.setAttribute("aria-hidden", "true");
+      p.t.forEach(function (r) { var i = el("i"); tvsPlace(i, { x: r[0], y: r[1], w: r[2], h: r[3] }); mini.appendChild(i); });
+      b.appendChild(mini); b.appendChild(el("span", null, p.n));
+      b.addEventListener("click", function () {
+        // the TVs keep their names, main TV and split screens; only where they sit and their size change
+        var old = s.tvs; s.tvs = tvsFromPreset(p).map(function (t, i) { var o = old[i]; if (o) { t.id = o.id; t.name = o.name; t.main = o.main; t.split = o.split; } return t; });
+        if (!s.tvs.some(function (t) { return t.main; })) s.tvs[0].main = true;
+        s.lay = p.n; TVS.sel = 0; tvsEdRedraw();
+      });
+      lays.appendChild(b);
+    });
   }
   function tvsEdPanel(panel, s) {
     panel.textContent = "";
@@ -463,10 +520,10 @@
     var sw = el("button", "switch"); sw.type = "button"; sw.setAttribute("role", "switch"); sw.setAttribute("aria-label", "Main TV"); sw.setAttribute("aria-checked", t.main ? "true" : "false"); sw.appendChild(el("span", "knob"));
     sw.addEventListener("click", function () { var on = !t.main; s.tvs.forEach(function (x) { x.main = false; }); t.main = on; tvsEdRedraw(); });
     r1.appendChild(sw); panel.appendChild(r1);
-    var r2 = el("div", "tvs-prow"), l2 = el("span", null, "Split screen"); l2.appendChild(el("small", null, "YouTube TV Multiview and the like"));
+    var r2 = el("div", "tvs-prow"), l2 = el("span", null, "Split screen"); l2.appendChild(el("small", null, "Games on one TV, like YouTube TV Multiview"));
     r2.appendChild(l2);
     var seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Games on this TV");
-    [[1, "1 game"], [2, "2"], [4, "4"]].forEach(function (o) {
+    [[1, "1"], [2, "2"], [4, "4"]].forEach(function (o) {
       var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", (t.split || 1) === o[0] ? "true" : "false");
       b.addEventListener("click", function () { t.split = o[0]; tvsEdRedraw(); });
       seg.appendChild(b);
@@ -492,7 +549,6 @@
         if (resize) { t.w = Math.max(4, Math.min(TVW - o.x, o.w + dx)); t.h = Math.max(3, Math.min(TVH - o.y, o.h + dy)); }
         else { t.x = Math.max(0, Math.min(TVW - o.w, o.x + dx)); t.y = Math.max(0, Math.min(TVH - o.h, o.y + dy)); }
         tvsPlace(node, t);
-        var sz = node.querySelector(".sz"); if (sz) sz.textContent = t.w + " × " + t.h;
       }
       function up() {
         node.removeEventListener("pointermove", mv); node.removeEventListener("pointerup", up); node.removeEventListener("pointercancel", up);

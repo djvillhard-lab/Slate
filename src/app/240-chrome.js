@@ -154,7 +154,7 @@
       });
     }
     if (v === "tv") {
-      [["all", "All"], ["national", "National TV"], ["streaming", "Streaming"], ["setups", "My TVs"]].forEach(function (o) {
+      [["setups", "My TVs"], ["all", "All"], ["national", "National TV"], ["streaming", "Streaming"]].forEach(function (o) {
         var b = el("button", "cf-tab", o[1]); b.type = "button";
         b.setAttribute("aria-pressed", state.tvFilter === o[0] ? "true" : "false");
         b.addEventListener("click", function () { tvPick(o[0]); });
