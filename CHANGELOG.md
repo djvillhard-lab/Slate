@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.161.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: every section on the News home is now a wheel you swipe sideways. The Breakdown, On Deck, In the Books, Stat Sheet, League Check and Just In each hold all of their cards side by side, with "2 of 5" beside the title, so nothing opens a new page to show the rest. The "All 4 previews" style buttons are gone.
+- News: swiping a wheel only turns that wheel, never the page, and each wheel stays where you left it when the page updates.
+
 ## 3.160.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Unfolded iPhone Duo, the slate full screen: the wide cards are filled. Logos, team names, scores, the clock or countdown, the channel and the one-liners are all drawn bigger on them, and the empty band above and below the one-liners is gone.

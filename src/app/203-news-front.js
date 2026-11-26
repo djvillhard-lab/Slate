@@ -9,7 +9,7 @@
   // Recaps, Numbers, and one per league. Nothing here calls Claude. ESPN's and The Athletic's own headlines (free) fill
   // in what has been published since the last write, and the whole page before the day's first one.
   // History: 3.136.0-3.138.0 tried eight layouts as tabs (203-news-lab.js); DJ picked the combined one. docs/pages/news.md.
-    var nl = { f: "home", prev: null, last: 0, story: null, back: null, all: false, open: false };
+    var nl = { wx: {}, f: "home", prev: null, last: 0, story: null, back: null, all: false, open: false };
   function nlPath(day) { return "newsdeep/" + (day || todayInHome()) + "-w-wire"; }
   function nlDayBefore(iso) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); }
   function nlHex(v) { v = String(v || ""); return hexOk(v) ? v : hexOk("#" + v) ? "#" + v : ""; }
@@ -288,6 +288,19 @@
     if (M.nNew && !M.past) r.appendChild(el("span", "nl-new", M.nNew + " new since you last looked"));
     if (t) body.appendChild(r);
   }
+  // one section as a wheel: a title with "2 of 5", then the cards side by side. A finger on it turns only the wheel
+  // (the page swipe in 280-ios-bridge.js never hears it, like the pills), and where the wheel was turned to is kept
+  // across redraws (nl.wx), since the page redraws itself when scores and stories arrive.
+  function nlWheelSec(wrap, key, title, sub, cards, cls) {
+    if (!cards.length) return; var n = cards.length, h = nlH(title, n > 1 ? "1 of " + n : sub || ""); wrap.appendChild(h);
+    if (n === 1) { wrap.appendChild(cards[0]); return; }
+    var w = el("div", "nf-wh" + (cls ? " " + cls : "")); w.setAttribute("role", "group"); w.setAttribute("aria-label", title + ", " + n + " cards, swipe sideways");
+    cards.forEach(function (c) { c.classList.add("nf-wc"); w.appendChild(c); }); wrap.appendChild(w);
+    var lab = h.lastChild, per = cls === "sm" ? 2 : 1, tell = function () { var c0 = w.firstChild, step = c0 ? c0.offsetWidth + 10 : 1, i = Math.round(w.scrollLeft / step), end = w.scrollLeft + w.clientWidth >= w.scrollWidth - 4; i = end ? n : Math.min(n, i + per); lab.textContent = (per > 1 ? Math.max(1, i - per + 1) + " to " + i : i) + " of " + n; };
+    if (nl.wx[key]) w.scrollLeft = nl.wx[key]; tell();
+    w.addEventListener("scroll", function () { nl.wx[key] = w.scrollLeft; tell(); }, { passive: true });
+    ["touchstart", "touchmove", "touchend"].forEach(function (k) { w.addEventListener(k, function (e) { e.stopPropagation(); }, { passive: true }); });
+  }
   // the page. Always draws (returns true), so the old News below it in renderNews is no longer reached.
   function nlRender(body) {
     var M = nlModel(), wrap = nlWrap(body, "nf"), f;
@@ -328,14 +341,17 @@
       if (!snap && !ls.length && !lp.length && !lr.length && !li.length) none("Nothing here right now.");
       nlReads(wrap, { lgs: [lg], per: M.per });
     } else {
-      var jin = M.brk.slice(0, 5);
-      if (jin.length) { wrap.appendChild(nlH(NL_T.brk, "as it happens")); wrap.appendChild(nlJustIn(jin)); if (M.brk.length > 5) wrap.appendChild(nlMore("All " + M.brk.length + " breaking headlines", "breaking")); }
+      // 3.161.0 (DJ: "Swiping along news cards shows them all in a horizontal wheel rather than opening a new page to
+      // show them all"): every section on Home holds all of its cards side by side; a sideways swipe turns the wheel
+      var pages = [], bi; for (bi = 0; bi < M.brk.length; bi += 3) pages.push(nlJustIn(M.brk.slice(bi, bi + 3)));
+      nlWheelSec(wrap, "brk", NL_T.brk, "as it happens", pages, "");
       if (M.lead) { if (M.has) wrap.appendChild(nlH(NL_T.lead, "Claude's top story")); wrap.appendChild(nlLead(M.lead, "bleed")); var ld = nlDeep(M.lead); if (ld) { var lc = el("div", "nx-card nf-ld"), lm = nlTeamMark(M.lead, "ln"); if (M.lead.c) lc.style.setProperty("--c", M.lead.c); if (lm) lc.appendChild(lm); lc.appendChild(ld); wrap.appendChild(lc); } }
-      if (M.stories.length) { wrap.appendChild(nlH(NL_T.stories, "Claude's breakdowns")); M.stories.forEach(function (x) { wrap.appendChild(nlStory(x)); }); }
-      gamesSec(M.previews, "preview", 2, "next"); gamesSec(M.recaps, "recap", 2, "recaps");
-      if (M.nums.length) { wrap.appendChild(nlH(NL_T.nums)); var hg = el("div", "nl-nums nl-2c"); M.nums.slice(0, 4).forEach(function (x) { hg.appendChild(nlNumTile(x)); }); wrap.appendChild(hg); if (M.nums.length > 4) wrap.appendChild(nlMore("All " + M.nums.length + " numbers", "numbers")); }
-      if (M.leagues.length) { wrap.appendChild(nlH(NL_T.leagues, "Claude's snapshots")); M.leagues.forEach(function (x) { wrap.appendChild(nlLeagueCard(x, true)); }); }
-      headlines(M.items.filter(function (x) { return jin.indexOf(x) === -1 && !isNumX(x); }), !M.has);
+      nlWheelSec(wrap, "stories", NL_T.stories, "Claude's breakdowns", M.stories.map(nlStory), "");
+      nlWheelSec(wrap, "next", NL_T.next, "Claude's previews", M.previews.map(function (o) { return nlGameCard(o, "preview"); }), "");
+      nlWheelSec(wrap, "recaps", NL_T.recaps, "Claude's recaps", M.recaps.map(function (o) { return nlGameCard(o, "recap"); }), "");
+      nlWheelSec(wrap, "nums", NL_T.nums, "", M.nums.map(nlNumTile), "sm");
+      nlWheelSec(wrap, "leagues", NL_T.leagues, "Claude's snapshots", M.leagues.map(function (x) { return nlLeagueCard(x, true); }), "");
+      headlines(M.items.filter(function (x) { return M.brk.indexOf(x) === -1 && !isNumX(x); }), !M.has);
     }
     nlChrome(); if (nlBarTabs() && typeof n3Draw === "function") n3Draw();   // the section button follows the page
     return true;

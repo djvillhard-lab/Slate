@@ -6,5 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | News (each section swipes sideways as a wheel of cards) | src/app/203-news-front.js, src/styles/103-news-front.css, docs/pages/news.md | 2026-11-26 16:55 |
 | DJ | Live feed: basketball banner cards drop the repeated score | src/app/146-live-feed-hoops.js, docs/pages/live-feed.md | 2026-11-26 16:53 |

@@ -325,3 +325,11 @@
 .nf-fab:active { transform: scale(.92); }
 .nl-sv { padding-bottom: 84px; }
 .nl-svbar { justify-content: flex-start; }
+
+/* ---------- 3.161.0 (DJ: each News section is a sideways wheel of all its cards) ---------- */
+.nf-wh { display: flex; align-items: stretch; gap: 10px; margin: 0 calc(-1 * var(--pad)); padding: 2px var(--pad) 6px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-padding-left: var(--pad); overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.nf-wh::-webkit-scrollbar { display: none; }
+.nf-wh > .nf-wc { flex: 0 0 min(86%, 420px); min-width: 0; margin: 0; scroll-snap-align: start; }
+.nf-wh.sm > .nf-wc { flex-basis: min(44%, 200px); }
+.nf-wh > .nf-g, .nf-wh > .nf-s, .nf-wh > .nf-lg, .nf-wh > .nf-ji { align-self: stretch; }
+.nf-wh > .nf-ji { align-content: start; }
