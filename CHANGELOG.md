@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.139.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- One-liners: the team label before the colon is now the team's abbreviation, for example "ARIZ: Motiejus Krivas had 31 pts and 17 reb (11-13 FG)", on the slate, All games and Worth a look.
+- Basketball, football and baseball: a live or finished game's line now shows each team's best player, one row per team. Basketball: points, plus rebounds and assists when 5 or more, and shooting. Football: the biggest passing, rushing or receiving day. Baseball: the best hitter or starting pitcher. A bigger story still takes the line instead: a game won at the end or in overtime, a big comeback, a triple-double, a 40-point game, or a 15-0 run.
+- Soccer and hockey: finished games now name every scorer too, not just live ones (Sporting vs Man United showed only Fernandes; now "SPO: Suárez scored twice" and "MUN: Fernandes scored twice").
+- Every one-liner saved on your phone is cleared once more so you see the new lines.
+
 ## 3.139.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News is now one page, the same for everyone, and Claude writes it on a schedule. The tabs to try are gone, and so are Press Box, the custom news page, the league tabs and every Generate button on News. Nothing to pick, nothing to tap to make it.

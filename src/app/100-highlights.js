@@ -81,7 +81,13 @@
     // tm: the one team a line is about (a player's team, or the team it names), shown in front of it on the slate
     var curTm = "", tmOf = function (f) { if (curTm) return curTm; var n = f && f.team; if (!n) return ""; for (var i in teams) if (teams[i].name === n || teams[i].abbr === n || teams[i].short === n || i === String(n)) return teams[i].abbr; return ""; };
     function add(key, score, tone, text, facts) { c.push({ key: key, score: score, tone: tone, text: text, facts: facts, tm: tmOf(facts) }); }
-    var box = sum.boxscore || {}, hkP = {}, liveSc = null;
+    var box = sum.boxscore || {}, hkP = {}, liveSc = null, bestP = {};
+    // 3.139.1: "Suárez (2)" -> "Suárez has scored twice"; "Barkov and Reinhart" -> "Barkov and Reinhart have scored" (past tense once it's over)
+    var scoredTx = function (names) { if (/,| and /.test(names)) return names + (done ? " scored" : " have scored");
+      var m0 = /^(.*) \((\d)\)$/.exec(names), n0 = m0 ? +m0[2] : 1, nm0 = m0 ? m0[1] : names;
+      return nm0 + (n0 >= 3 ? (done ? " had a hat trick" : " has a hat trick") : n0 === 2 ? (done ? " scored twice" : " has scored twice") : (done ? " scored" : " has scored")); };
+    // 3.139.1 (DJ: "Basketball games should show best player and stats from each team"): each team's best player so far, by sport
+    var best = function (k, sc, tx) { if (!bestP[k] || sc > bestP[k].sc) bestP[k] = { sc: sc, tx: tx }; };
     // team shooting (basketball)
     (box.teams || []).forEach(function (bt) {
       var t = teams[String((bt.team || {}).id)]; if (!t || sport !== "bball") return;
@@ -95,7 +101,7 @@
     });
     // players
     (box.players || []).forEach(function (tp) {
-      var t = teams[String((tp.team || {}).id)] || { abbr: "" };
+      var tkey = String((tp.team || {}).id), t = teams[tkey] || { abbr: "" }, tFor = teams[tkey] ? " for " + (lg === "nfl" || lg === "mlb" ? "the " + (teams[tkey].nick || teams[tkey].name) : teams[tkey].name) : "";
       curTm = t.abbr || "";
       (tp.statistics || []).forEach(function (grp) {
         var lab = grp.labels || [], gname = String(grp.name || "").toLowerCase();
@@ -104,6 +110,8 @@
           var nm = (a.athlete || {}).displayName || "", sh = (a.athlete || {}).shortName || nm, id = (a.athlete || {}).id || nm;
           if (sport === "bball") {
             var pts = hlNum(s2.PTS), min = hlNum(String(s2.MIN || "0").split(":")[0]), reb = hlNum(s2.REB), ast = hlNum(s2.AST), fg = hlMA(s2.FG), th = hlMA(s2["3PT"]);
+            if (pts > 0 && tFor) { var xs = [pts + " pts"]; if (reb >= 5) xs.push(reb + " reb"); if (ast >= 5) xs.push(ast + " ast");
+              best(tkey, pts + (reb + ast) / 100, nm + (done ? " had " : " has ") + (xs.length > 1 ? xs.slice(0, -1).join(", ") + " and " + xs[xs.length - 1] : xs[0]) + " (" + fg.join("-") + " FG)" + tFor); }
             if (false) add("fav|" + id + "|" + Math.floor(pts / 5), 38 + pts * 1.2, 1, "Your player " + nm + ": " + pts + " pts, " + reb + " reb, " + ast + " ast (" + fg.join("-") + " FG)", { player: nm, team: t.abbr, starred: true, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + fg.join("-") + " FG" });
             (ctxP[t.abbr] = ctxP[t.abbr] || []).push({ n: sh, pts: pts, l: pts + "p " + reb + "r " + ast + "a " + fg.join("-") + " FG " + th.join("-") + " 3PT " + min + "m" });
             if (pts >= 8 && (!lead1 || pts > lead1.pts)) lead1 = { pts: pts, nm: nm, id: id, abbr: t.abbr, line: pts + " pts, " + reb + " reb, " + ast + " ast, " + fg.join("-") + " FG" };
@@ -120,9 +128,16 @@
             if (fg[1] >= 9 && fg[0] / fg[1] <= 0.2) add("cold|" + id + "|" + Math.floor(fg[1] / 3), 24 + fg[1], -1, nm + " is " + fg.join("-") + " from the field", { player: nm, team: t.abbr, line: pts + " pts, " + fg.join("-") + " FG" });
           } else if (sport === "football") {
             var yds = hlNum(s2.YDS), td = hlNum(s2.TD);
+            if (tFor && yds > 0 && /^(passing|rushing|receiving)$/.test(gname)) { var tdT = td ? " and " + (td === 1 ? "a TD" : td + " TD") : "";
+              best(tkey, gname === "passing" ? yds * 0.5 + td * 20 - hlNum(s2.INT) * 10 : yds + td * 20, nm + (done ? " had " : " has ") + yds + " " + gname + " yds" + tdT + tFor); }
             if (gname === "passing" && (yds >= 275 || td >= 3)) add("pass|" + id + "|" + Math.floor(yds / 50) + td, yds / 8 + td * 8, 1, nm + " " + yds + " passing yds, " + td + " TD", { player: nm, line: (s2["C/ATT"] || "") + ", " + yds + " yds, " + td + " TD, " + (s2.INT || 0) + " INT" });
             if (gname === "passing" && hlNum(s2.INT) >= 3) add("int|" + id + "|" + s2.INT, 40, -1, nm + " has thrown " + s2.INT + " interceptions", { player: nm, line: s2.INT + " INT" });
             if ((gname === "rushing" || gname === "receiving") && (yds >= 125 || td >= 2)) add(gname + "|" + id + "|" + Math.floor(yds / 25) + td, yds / 5 + td * 8, 1, nm + " " + yds + " " + (gname === "rushing" ? "rushing" : "receiving") + " yds" + (td ? ", " + td + " TD" : ""), { player: nm, line: yds + " yds, " + td + " TD" });
+          } else if (sport === "baseball") {
+            if (tFor && (gname || String(grp.type || "").toLowerCase()) === "batting") { var hh = hlNum(s2.H), ab = hlNum(s2.AB), hr = hlNum(s2.HR), rbi = hlNum(s2.RBI);
+              if (hh >= 1) best(tkey, hh * 10 + hr * 25 + rbi * 8, nm + (done ? " went " : " is ") + hh + "-for-" + ab + (hr ? ", " + (hr === 1 ? "a HR" : hr + " HR") : "") + (rbi ? ", " + rbi + " RBI" : "") + tFor); }
+            if (tFor && (gname || String(grp.type || "").toLowerCase()) === "pitching") { var ip = parseFloat(s2.IP) || 0, kk = hlNum(s2.K), er = hlNum(s2.ER);
+              if (ip >= 5) best(tkey, ip * 8 + kk * 4 - er * 10, nm + (done ? " had " : " has ") + kk + " K in " + s2.IP + " IP (" + er + " ER)" + tFor); }
           } else if (sport === "hockey") {
             var g2 = hlNum(s2.G), sv = hlNum(s2.SV), a2 = hlNum(s2.A), ln = (a.athlete || {}).lastName || String(nm).split(" ").slice(-1)[0];
             if (g2 || a2) (hkP[t.abbr] = hkP[t.abbr] || []).push({ n: ln, g: g2, a: a2, id: id });
@@ -151,7 +166,7 @@
         if (!i) return; var s1 = (hkP[teams[i].abbr] || []).filter(function (x) { return x.g; }).sort(function (x, y) { return y.g - x.g; });
         if (s1.length) hkL.push({ i: i, ng: s1.reduce(function (n, x) { return n + x.g; }, 0), names: andL(s1.map(function (x) { return x.n + (x.g >= 2 ? " (" + x.g + ")" : ""); })), one: s1.length === 1 ? s1[0] : null }); });
       if (hkL.length) liveSc = { n: hkL.reduce(function (n, x) { return n + x.ng; }, 0), tm: hkL.length === 1 ? teams[hkL[0].i].abbr : "",
-        text: hkL.length === 2 ? hkL.map(function (x) { return x.names + (/,| and /.test(x.names) ? " have" : " has") + " scored for the " + (teams[x.i].nick || teams[x.i].name); }).join("; ") : (hkL[0].one ? hkL[0].one.n + (hkL[0].one.g >= 3 ? " has a hat trick for the " : hkL[0].one.g === 2 ? " has scored twice for the " : " has scored for the ") : hkL[0].names + " have scored for the ") + (teams[hkL[0].i].nick || teams[hkL[0].i].name) };
+        text: hkL.map(function (x) { return scoredTx(x.names) + " for the " + (teams[x.i].nick || teams[x.i].name); }).join("; ") };
       var hm = {}; (box.teams || []).forEach(function (bt) { var i = String((bt.team || {}).id); if (!teams[i]) return; var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = x.displayValue; }); hm[i] = m; });
       if (hm[tid[0]] && hm[tid[1]]) {
         var sh = function (i) { return hlNum(hm[i].shotsTotal || hm[i].shots); }, hi = sh(tid[0]) >= sh(tid[1]) ? tid[0] : tid[1], lo = hi === tid[0] ? tid[1] : tid[0], s1 = sh(hi), s0 = sh(lo);
@@ -204,14 +219,12 @@
       });
       var plFirst = function (i) { var l = scorerList(i); return listAnd(l.filter(function (x) { return !/^an own goal/.test(x); }).concat(l.filter(function (x) { return /^an own goal/.test(x); }))); }, allT = plFirst(HID) + " for " + nameOf(HID) + "; " + plFirst(AID) + " for " + nameOf(AID);
       if (scorers[HID].length && scorers[AID].length && total >= 3) add("allsc|" + total, 46 + total * 3, 0, allT.charAt(0).toUpperCase() + allT.slice(1), {});
-      // 3.134.6 (DJ): the live line always names every scorer, home team first (soccer order, 3.130.5)
+      // 3.134.6 (DJ): the line always names every scorer (live and, since 3.139.1, finished), home team first (soccer order, 3.130.5)
       var scP = function (i) { var l = scorerList(i), pl = l.filter(function (x) { return !/^an own goal/.test(x); }), ogs = l.filter(function (x) { return /^an own goal/.test(x); }); return { pl: pl, ogs: ogs }; };
       var scT = [HID, AID].filter(function (i) { return teams[i].score && scorerList(i).length; });
-      if (scT.length === 2) liveSc = { n: total, tm: "", text: scT.map(function (i) { var l0 = plFirst(i); return /^an own goal/.test(l0) ? nameOf(i) + (teams[i].score === 1 ? "'s goal came from " : "'s goals have come from ") + l0 : l0 + (/,| and /.test(l0) ? " have" : " has") + " scored for " + nameOf(i); }).join("; ") };
-      else if (scT.length === 1) { var si = scT[0], sp0 = scP(si);
-        var p1 = sp0.pl.length === 1 ? sp0.pl[0].replace(/ \(\d\)$/, "") : "", n1 = p1 ? gl[p1] || 1 : 0;
-        liveSc = { n: total, tm: teams[si].abbr, text: sp0.pl.length ? (p1 ? p1 + (n1 >= 3 ? " has a hat trick for " : n1 === 2 ? " has scored twice for " : " has scored for ") : listAnd(sp0.pl) + " have scored for ") + nameOf(si) + (sp0.ogs.length ? ", plus " + listAnd(sp0.ogs) : "")
-          : nameOf(si) + (teams[si].score === 1 ? "'s goal came from " : "'s goals have come from ") + listAnd(sp0.ogs) }; }
+      if (scT.length) liveSc = { n: total, tm: scT.length === 1 ? teams[scT[0]].abbr : "", text: scT.map(function (i) { var sp0 = scP(i);
+        return sp0.pl.length ? scoredTx(listAnd(sp0.pl)) + " for " + nameOf(i) + (sp0.ogs.length ? ", plus " + listAnd(sp0.ogs) : "")
+          : nameOf(i) + (teams[i].score === 1 ? (done ? "'s goal came from " : "'s goal came from ") : (done ? "'s goals came from " : "'s goals have come from ")) + listAnd(sp0.ogs); }).join("; ") };
       // braces, hat tricks, playmakers
       Object.keys(gl).forEach(function (n) { var x = gl[n]; if (x < 2) return; var g0 = goals.filter(function (q) { return q.nm === n; })[0];
         add("brace|" + n + "|" + x, 50 + x * 14, 1, x >= 3 ? n + (done ? " scored a hat trick for " : " has a hat trick for ") + nameOf(g0.by) : n + (done ? " scored twice for " : " has scored twice for ") + nameOf(g0.by), { player: n, team: nameOf(g0.by) }); });
@@ -289,16 +302,25 @@
     if (tid.length === 2) { var d = teams[tid[0]].score - teams[tid[1]].score, up = d > 0 ? teams[tid[0]] : teams[tid[1]], m = Math.abs(d);
       if (false) add("lead|" + up.abbr + "|" + Math.floor(m / 5), 20 + m / 2, 0, up.name + " lead by " + m, { team: up.name, lead: m }); }
     if (lead1) add("top|" + lead1.id + "|" + Math.floor(lead1.pts / 5), 10 + lead1.pts / 2, 0, lead1.nm + " leads all scorers with " + lead1.pts, { player: lead1.nm, team: lead1.abbr, line: lead1.line });
-    // 3.134.6 (DJ: "always show the teams' goal scorers. If there's only been one, can provide a second featured line in addition to the
-    // goalscorer"): a live soccer or hockey game with a named scorer leads with every scorer; after a single goal the best other fact
-    // (not another take on that goal) follows it
-    if (!done && liveSc && liveSc.text) {
-      var SCK = /^(scorers|solo|allsc|brace|goal|late|lateq|quick|cb|cbd|fest|hksc|g|hkpts|hka|top)$/, more = "";
-      var nx = null; if (liveSc.n === 1) { nx = c.filter(function (x) { return !SCK.test(x.key.split("|")[0]); }).sort(function (a, b) { return b.score - a.score; })[0];
+    if (done) c = hlFinal(c, teams);
+    // 3.134.6 / 3.139.1 (DJ: "always show the teams' goal scorers. If there's only been one, can provide a second featured line in addition
+    // to the goalscorer"): a soccer or hockey game with a named scorer leads with every scorer, live or finished; after a single goal the
+    // best other fact (not another take on that goal) follows it
+    var SCK = /^(scorers|solo|allsc|brace|goal|late|lateq|quick|cb|cbd|fest|hksc|g|hkpts|hka|top)$/;
+    if (liveSc && liveSc.text) {
+      var more = "", nx = null; if (liveSc.n === 1) { nx = c.filter(function (x) { return !SCK.test(x.key.split("|")[0]); }).sort(function (a, b) { return b.score - a.score; })[0];
         if (nx && nx.text) more = "; " + (/^(The|A|An) /.test(nx.text) ? nx.text.charAt(0).toLowerCase() + nx.text.slice(1) : nx.text); }
       c.push({ key: "livesc|" + liveSc.n + (more ? "|" + nx.key : ""), score: 999, tone: 1, text: liveSc.text + more, facts: {}, tm: more ? "" : liveSc.tm });
     }
-    if (done) c = hlFinal(c, teams);
+    // 3.139.1 (DJ: "Basketball games should show best player and stats from each team, unless there is some other one liner that should
+    // show that trumps showing best player from each team. Apply our new one liner rules to all sports"): basketball, football and
+    // baseball lead with each team's best player (away team first, as on the card). What still beats it: how it was won late or in
+    // overtime, a big comeback, a finished triple-double, a 40-point game, a 15-0 run
+    if (/^(bball|football|baseball)$/.test(sport) && tid.length === 2) {
+      var ord = tid.slice().sort(function (a, b) { return (teams[a].side === "home") - (teams[b].side === "home"); }), bl = ord.filter(function (i) { return bestP[i]; });
+      var trump = c.filter(function (x) { var k = x.key.split("|"); return k[0] === "win" || k[0] === "cb" || k[0] === "td" && /triple-double(:|$)/.test(x.text) && !/watch/.test(x.text) || k[0] === "pts" && +k[2] >= 8 || k[0] === "run" && /\b(1[5-9]|[2-9]\d)-0 run/.test(x.text); })[0];
+      if (bl.length && !trump) c.push({ key: "best|" + bl.map(function (i) { return bestP[i].tx.split(" ")[0] + Math.floor(bestP[i].sc / 5); }).join("|"), score: 998, tone: 0, text: bl.map(function (i) { return bestP[i].tx; }).join("; "), facts: {}, tm: bl.length === 1 ? teams[bl[0]].abbr : "" });
+    }
     if (!c.length) return null;
     c.sort(function (a, b) { return b.score - a.score; });
     var top = c[0]; top.when = ((head.status || {}).type || {}).shortDetail || ""; top.period = period;
@@ -322,7 +344,7 @@
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
   // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
   // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
-  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.134.9") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.134.9"); } } catch (e) {} })();
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.139.1") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.139.1"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
@@ -341,7 +363,7 @@
     rows.forEach(function (r, i) {
       var box = rows.length > 1 ? el("span", "hl-row") : p;
       if (rows.length > 1 && r.side) box.dataset.side = r.side;
-      if (r.side) box.appendChild(el("b", "hl-tm", short(g, r.side) + ": "));
+      if (r.side) box.appendChild(el("b", "hl-tm", String(abbr(g, r.side) || short(g, r.side)).toUpperCase() + ": "));   // 3.139.1 (DJ: "One liners should show team names as abbreviations")
       box.appendChild(document.createTextNode(r.text));
       if (box !== p) p.appendChild(box);
     });
