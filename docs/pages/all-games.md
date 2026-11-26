@@ -3,6 +3,13 @@ Last updated: Nov 25, 2026, 3.132.0
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
+- Two columns: a finished game's small card has a very short best-player line (3.134.5, DJ), e.g. "Tatum 41 pts, 8 ast",
+  "Connelly 2 G, 1 A", "Mahomes 312 pass yds, 3 TD". Upcoming and live small cards have no line (DJ: not for upcoming; live
+  is open, see below). `agShort` in `160-all-games.js`: from the box score when the phone has it (`agShortBox`: best line of
+  every player), else the scoreboard's leaders (`agShortLd`), saved per game in `localStorage["slate-ags"]`. A final with
+  neither reads its box score once per game after 300 ms on screen (`agsTried`, so never a redraw loop), two columns only.
+  The line is on every finished card as `p.ag2s` and only shown by `103-all-games-compact.css`. Soccer only gets a line when
+  the scoreboard names a goal scorer. A finished small card hides its start time.
 - Tapping Live no longer moves the scores (3.134.3, DJ). The slate's score column (`--tmw`, `fitScores`) and both pages' right
   column (`--side-w`, `alignSides`) were sized from the cards showing, so fewer cards meant a different column. `colKeep` in
   `240-chrome.js` keeps the widest value for the same day, tab, filter and page width. In two columns there is no right

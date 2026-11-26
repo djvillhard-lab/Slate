@@ -26,3 +26,11 @@
 #games-body.ag2 .g.panel:not(:has(> .tray)) .tm .sc { font-size: 18px; min-width: 0; }
 #games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side { width: auto !important; min-width: 0; margin: 0 !important; display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 6px; text-align: left; padding-top: 4px; border-top: 1px solid var(--line); }
 #games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side > * { min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 3.134.5: a finished game's very short best-player line, only on the small cards */
+.ag2s { display: none; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s { display: block; order: 1; margin: 0; min-width: 0; font-size: 13px; line-height: 1.2; font-weight: 600; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s b { font-weight: 800; color: var(--head); }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side { order: 2; }
+/* a finished small card: no start time (Final, the line above and the channel are enough; the three clipped each other) */
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .s-ftime { display: none; }

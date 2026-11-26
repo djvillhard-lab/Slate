@@ -160,6 +160,64 @@
   }
   // a new line arrived: redraw All games once, a moment later (several lines landing together make one redraw)
   function agRedraw() { if (state.view !== "games" && !isDuo) return; clearTimeout(agT); agT = setTimeout(function () { if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); }, 400); }
+  // 3.134.5 (DJ: "provide very short one-liners for completed games ... a shortened stat line of the best player"): the line
+  // under a finished game's small card in two columns. Only numbers ESPN's scoreboard gives for the game's leaders
+  // (scoreRaw().ld, the same list the live lines use); a game without them gets no line.
+  function agShortName(L) { return String(L.n || L.full || "").trim().replace(/^[A-Z][a-z]?\.\s*/, "").replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/i, "") || String(L.full || "").split(" ").slice(-1)[0]; }
+  var AGS = (function () { try { return JSON.parse(localStorage.getItem("slate-ags") || "{}") || {}; } catch (e) { return {}; } })(), agsT = null, agsTried = {};
+  function agsPut(id, n, t) {
+    if (AGS[id] && AGS[id].n === n && AGS[id].t === t) return;
+    AGS[id] = { n: n, t: t, at: Date.now() };
+    var ks = Object.keys(AGS); if (ks.length > 400) ks.sort(function (a, b) { return AGS[a].at - AGS[b].at; }).slice(0, ks.length - 300).forEach(function (k) { delete AGS[k]; });
+    try { localStorage.setItem("slate-ags", JSON.stringify(AGS)); } catch (e) {}
+  }
+  // the box score, when the phone has it: every player's line, so the best one is the game's, not just a category leader
+  function agShortBox(g, sp) {
+    var b = boxFor(g); if (!b || b.state !== "post" || !Array.isArray(b.teams)) return null;
+    var best = null, take = function (w, n, bits) { if (n && (!best || w > best.w)) best = { w: w, n: n, bits: bits }; };
+    b.teams.forEach(function (t) { (t.groups || []).forEach(function (gr) {
+      var ix = function (c) { return (gr.cols || []).indexOf(c); }, k = String(gr.k || "").toLowerCase();
+      (gr.rows || []).forEach(function (r) {
+        if (r.dnp != null || !r.s) return;
+        var val = function (c) { var i = ix(c); return i < 0 ? 0 : Number(r.s[i]) || 0; };
+        if (sp === "bball") { var pts = val("PTS"), rb = val("REB"), as = val("AST"); if (pts) take(pts + 0.4 * (rb + as), r.n, [pts + " pts"].concat(rb || as ? [rb >= as ? rb + " reb" : as + " ast"] : [])); }
+        else if (sp === "football" && /^(passing|rushing|receiving)$/.test(k)) { var y = val("YDS"), td = val("TD"); if (y > 0) take(y * (k === "passing" ? 0.5 : 1) + td * 25, r.n, [y + (k === "passing" ? " pass" : k === "rushing" ? " rush" : " rec") + " yds"].concat(td ? [td + " TD"] : [])); }
+        else if (sp === "hockey" && !/goal/.test(k)) { var gl = val("G"), a = val("A"); if (gl + a) take(gl * 2 + a, r.n, (gl ? [gl + " G"] : []).concat(a ? [a + " A"] : [])); }
+      });
+    }); });
+    return best;
+  }
+  function agShortLd(g, sp) {
+    var v = scoreRaw(g.id), ld = ((v && v.ld) || []).filter(function (L) { return (L.full || L.n) && !/own goal/i.test(L.full || L.n); }); if (!ld.length) return null;
+    var by = function (rx) { return ld.filter(function (L) { return rx.test(L.c); }).sort(function (a, b) { return (b.v || 0) - (a.v || 0); })[0]; };
+    var num = function (d, rx) { var m = rx.exec(String(d || "")); return m ? Number(m[1]) : 0; };
+    if (sp === "bball") {
+      var pt = by(/^points$/), n = pt ? pt.v || Number(pt.d) || 0 : 0; if (!n) return null;
+      var bits = [n + " pts"], rt = ld.filter(function (L) { return L.c === "rating" && (L.full || L.n) === (pt.full || pt.n); })[0];  // ESPN's "rating" leader carries a line ("34 PTS, 8 AST, 5 REB")
+      if (rt) { var rb = num(rt.d, /(\d+)\s*REB/i), as = num(rt.d, /(\d+)\s*AST/i); if (rb || as) bits.push(rb >= as ? rb + " reb" : as + " ast"); }
+      return { n: agShortName(pt), bits: bits };
+    }
+    if (sp === "football") {
+      var c = ld.filter(function (L) { return /^(passing|rushing|receiving)Yards$/.test(L.c); }).map(function (L) { var y = num(L.d, /(\d+) YDS/) || L.v || 0, td = num(L.d, /(\d+) TD/); return { L: L, y: y, td: td, w: y * (L.c === "passingYards" ? 0.5 : 1) + td * 25 }; }).sort(function (a, b) { return b.w - a.w; })[0];
+      return c && c.y ? { n: agShortName(c.L), bits: [c.y + (c.L.c === "passingYards" ? " pass" : c.L.c === "rushingYards" ? " rush" : " rec") + " yds"].concat(c.td ? [c.td + " TD"] : []) } : null;
+    }
+    if (sp === "hockey" || sp === "soccer") { var gl = by(/^goals$/), k = gl ? Number(gl.v || gl.d) || 0 : 0; return k ? { n: agShortName(gl), bits: [k > 1 ? k + " goals" : "1 goal"] } : null; }
+    return null;
+  }
+  function agShort(g, row) {
+    if (!state.showScores || g.custom) return null;
+    var sp = BX_SPORT[g.league], x = null; if (!sp) return null;
+    try { x = agShortBox(g, sp) || agShortLd(g, sp); } catch (e) {}
+    if (x && x.n && x.bits.length) agsPut(g.id, String(x.n).trim().replace(/\s+(Jr\.?|Sr\.?|II|III|IV|V)$/i, "").split(/\s+/).slice(-1)[0], x.bits.join(", "));  // last name only
+    var c = AGS[g.id];
+    // nothing to go on yet: in two columns, read this game's box score once its card has been on screen a moment
+    // (the same free ESPN read the full card's closing line uses), then draw the line
+    if (!c && agTwo() && row && sp !== "soccer" && !boxFor(g) && !agsTried[g.id]) agSeen(row, function () { agsTried[g.id] = 1; bxNeed(g);  // once per game: never a loop of redraws
+      clearTimeout(agsT); agsT = setTimeout(function () { agRedraw(); }, 2500); });
+    if (!c) return null;
+    var p = el("p", "ag2s"); p.appendChild(el("b", null, c.n)); p.appendChild(document.createTextNode(" " + c.t));
+    return p;
+  }
   // two columns of small cards (3.132.0), remembered on this phone
   var AG_TWO = null;
   var agTwoWas = false;
@@ -312,7 +370,9 @@
   function agDraw(n) {
     var made = [];
     while (agQ.length && n-- > 0) {
-      var j = agQ.shift(), row = gameRow(j.g, "games", { league: j.mine }), id = j.g.id + (j.mine ? ":mine" : ""), html = row.outerHTML;
+      var j = agQ.shift(), row = gameRow(j.g, "games", { league: j.mine }), id = j.g.id + (j.mine ? ":mine" : "");
+      if (status(j.g).kind === "over" && !row.querySelector(".tray")) { try { var sl = agShort(j.g, row); if (sl) row.appendChild(sl); } catch (e) {} }  // shown only in two columns (CSS)
+      var html = row.outerHTML;
       var old = agOld[id];
       if (old && old._agHtml === html && !row.querySelector(".tray") && !old.querySelector(".tray")) {
         if (agFn.has(row)) { agFn.set(old, agFn.get(row)); agFn.delete(row); if (agIO) agIO.observe(old); }
