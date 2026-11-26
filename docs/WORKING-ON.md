@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | One-liners: soccer goal minutes, team rows | src/app/100-highlights.js, docs/pages/slate.md | 2026-11-26 06:34 |

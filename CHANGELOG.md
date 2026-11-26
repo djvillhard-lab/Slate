@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.141.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Soccer one-liners list each scorer with the minutes they scored, one row per team, home team first: "SCP: Suárez 33' (pen), 80'" and "MAN: Fernandes 48' (pen), 50'". Own goals read "Pavlovic 12' (OG)".
+- Fixed: Sporting vs Man United showed both teams' scorers in Sporting's row. The second team wasn't found when the line called it by a different name ("Man Utd"). Lines now name the team by its abbreviation behind the scenes, so every sport's rows land on the right team.
+- Every one-liner saved on your phone is cleared once more so you see the new lines.
+
 ## 3.141.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - New on the unfolded iPhone Duo (held sideways): a page now opens across the whole screen instead of always sharing it with a second page.

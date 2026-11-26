@@ -101,7 +101,7 @@
     });
     // players
     (box.players || []).forEach(function (tp) {
-      var tkey = String((tp.team || {}).id), t = teams[tkey] || { abbr: "" }, tFor = teams[tkey] ? " for " + (lg === "nfl" || lg === "mlb" ? "the " + (teams[tkey].nick || teams[tkey].name) : teams[tkey].name) : "";
+      var tkey = String((tp.team || {}).id), t = teams[tkey] || { abbr: "" }, tFor = teams[tkey] ? " for " + teams[tkey].abbr : "";   // 3.141.1: by abbreviation, so the slate always finds the team (hlRows)
       curTm = t.abbr || "";
       (tp.statistics || []).forEach(function (grp) {
         var lab = grp.labels || [], gname = String(grp.name || "").toLowerCase();
@@ -166,7 +166,7 @@
         if (!i) return; var s1 = (hkP[teams[i].abbr] || []).filter(function (x) { return x.g; }).sort(function (x, y) { return y.g - x.g; });
         if (s1.length) hkL.push({ i: i, ng: s1.reduce(function (n, x) { return n + x.g; }, 0), names: andL(s1.map(function (x) { return x.n + (x.g >= 2 ? " (" + x.g + ")" : ""); })), one: s1.length === 1 ? s1[0] : null }); });
       if (hkL.length) liveSc = { n: hkL.reduce(function (n, x) { return n + x.ng; }, 0), tm: hkL.length === 1 ? teams[hkL[0].i].abbr : "",
-        text: hkL.map(function (x) { return scoredTx(x.names) + " for the " + (teams[x.i].nick || teams[x.i].name); }).join("; ") };
+        text: hkL.map(function (x) { return scoredTx(x.names) + " for " + teams[x.i].abbr; }).join("; ") };
       var hm = {}; (box.teams || []).forEach(function (bt) { var i = String((bt.team || {}).id); if (!teams[i]) return; var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = x.displayValue; }); hm[i] = m; });
       if (hm[tid[0]] && hm[tid[1]]) {
         var sh = function (i) { return hlNum(hm[i].shotsTotal || hm[i].shots); }, hi = sh(tid[0]) >= sh(tid[1]) ? tid[0] : tid[1], lo = hi === tid[0] ? tid[1] : tid[0], s1 = sh(hi), s0 = sh(lo);
@@ -196,7 +196,7 @@
           if (m && h > sh0) by = HID; else if (m && aw > sa0) by = AID; else { by = String((k.team || {}).id || ""); if (!m) { if (by === HID) h++; else aw++; } }
           if (by !== HID && by !== AID) return;
           var before = by === HID ? sh0 - sa0 : sa0 - sh0, nm = og ? "" : shortN(ps[0]), an = og ? "" : shortN(ps[1]), ogBy = og ? shortN(ps[0]) : "";
-          goals.push({ by: by, mn: mn, nm: nm, as: an, og: og, ogBy: ogBy, before: before, pen: /penalty/i.test(tt), how: /header/i.test(String(k.text)) ? "header" : /free kick|free-kick/i.test(String(k.text) + tt) ? "free kick" : "" });
+          goals.push({ by: by, mn: mn, mt: String((k.clock || {}).displayValue || "").trim(), nm: nm, as: an, og: og, ogBy: ogBy, before: before, pen: /penalty/i.test(tt), how: /header/i.test(String(k.text)) ? "header" : /free kick|free-kick/i.test(String(k.text) + tt) ? "free kick" : "" });
           sh0 = h; sa0 = aw;
           worst[HID] = Math.min(worst[HID], sh0 - sa0); worst[AID] = Math.min(worst[AID], sa0 - sh0);
           // 3.62.2: an own goal reads "an own goal by Chelsea's Smith" and is never the subject of "has scored"; a goal with no name from ESPN is left out of the lists
@@ -221,10 +221,14 @@
       if (scorers[HID].length && scorers[AID].length && total >= 3) add("allsc|" + total, 46 + total * 3, 0, allT.charAt(0).toUpperCase() + allT.slice(1), {});
       // 3.134.6 (DJ): the line always names every scorer (live and, since 3.139.1, finished), home team first (soccer order, 3.130.5)
       var scP = function (i) { var l = scorerList(i), pl = l.filter(function (x) { return !/^an own goal/.test(x); }), ogs = l.filter(function (x) { return /^an own goal/.test(x); }); return { pl: pl, ogs: ogs }; };
-      var scT = [HID, AID].filter(function (i) { return teams[i].score && scorerList(i).length; });
-      if (scT.length) liveSc = { n: total, tm: scT.length === 1 ? teams[scT[0]].abbr : "", text: scT.map(function (i) { var sp0 = scP(i);
-        return sp0.pl.length ? scoredTx(listAnd(sp0.pl)) + " for " + nameOf(i) + (sp0.ogs.length ? ", plus " + listAnd(sp0.ogs) : "")
-          : nameOf(i) + (teams[i].score === 1 ? (done ? "'s goal came from " : "'s goal came from ") : (done ? "'s goals came from " : "'s goals have come from ")) + listAnd(sp0.ogs); }).join("; ") };
+      // 3.141.1 (DJ: "Include minute that the goal was scored as well. Like how they normally would for soccer"): one entry per scorer
+      // with every minute, in the order they scored: "Suárez 33' (pen), 80'", an own goal as "Pavlovic 12' (OG)". Each scorer's
+      // clause ends "for <abbreviation>" so the slate puts it in that team's row (hlRows), home team first
+      var scT = [HID, AID].filter(function (i) { return goals.some(function (q) { return q.by === i && (q.nm || q.ogBy); }); });
+      if (scT.length) liveSc = { n: total, tm: scT.length === 1 ? teams[scT[0]].abbr : "", text: scT.map(function (i) {
+        var who = [], mins = {}; goals.forEach(function (q) { if (q.by !== i) return; var n = q.og ? q.ogBy : q.nm; if (!n) return; var key = (q.og ? "og|" : "") + n;
+          if (!mins[key]) { mins[key] = []; who.push(key); } mins[key].push((q.mt || (q.mn ? q.mn + "'" : "")) + (q.og ? " (OG)" : q.pen ? " (pen)" : "")); });
+        return who.map(function (key) { return key.replace(/^og\|/, "") + " " + mins[key].filter(Boolean).join(", ") + " for " + teams[i].abbr; }).join("; "); }).join("; ") };
       // braces, hat tricks, playmakers
       Object.keys(gl).forEach(function (n) { var x = gl[n]; if (x < 2) return; var g0 = goals.filter(function (q) { return q.nm === n; })[0];
         add("brace|" + n + "|" + x, 50 + x * 14, 1, x >= 3 ? n + (done ? " scored a hat trick for " : " has a hat trick for ") + nameOf(g0.by) : n + (done ? " scored twice for " : " has scored twice for ") + nameOf(g0.by), { player: n, team: nameOf(g0.by) }); });
@@ -344,7 +348,7 @@
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
   // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
   // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
-  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.139.1") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.139.1"); } } catch (e) {} })();
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.141.1") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.141.1"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
@@ -373,7 +377,7 @@
   // the names a line can call a team by ("No. 13 Notre Dame", "the Blues", "Man City"), longest first
   var HL_GENERIC = /^(State|City|United|FC|Club|University|College|Town|County|Athletic|Real|Sporting|The)$/i;
   function hlNames(g, sd) {
-    var full = String(g[sd] || "").trim(), w = full.split(" "), out = [full, short(g, sd), String(g[sd + "Short"] || ""), w.slice(0, -1).join(" "), w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", abbr(g, sd)];
+    var full = String(g[sd] || "").trim(), w = full.split(" "), out = [full, short(g, sd), String(g[sd + "Short"] || ""), String(g[sd + "Abbr"] || ""), w.slice(0, -1).join(" "), w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", abbr(g, sd)];
     out = out.map(function (x) { return String(x || "").trim(); }).filter(function (x, i, a) { return x.length >= 2 && !HL_GENERIC.test(x) && a.indexOf(x) === i; });
     return out.sort(function (a, b) { return b.length - a.length; });
   }
