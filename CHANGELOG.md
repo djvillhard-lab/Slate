@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.154.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Simple mode: every game now says what it is. The sport's icon and the league sit at the top of each card ("NFL", "College Hoops · Maui Invitational"), and on the game's own page.
+- Simple mode: games use the regular slate's card design. One card per game: the league, the two teams with logo, record and score, then the start time or the game clock with the channel beside it. Live, later and finished games all look the same.
+- Simple mode, Larger and Largest: long team names are no longer cut off or broken mid-word. The channel moved off the team rows, so names have the full width; a name with spaces wraps between words, and one very long word shrinks to fit. Only the things you read first grow all the way (team names, scores, times). The league line, records, the channel and the four buttons at the bottom grow a little, so more games fit on the screen.
 ## 3.153.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Slate, before games: a betting line that has moved a lot now says where it stands, where it opened, and why. "Cowboys are now 8.5-point favorites, up from 1.5 when the line opened, with Eagles QB Hurts out." The "opened" line is DraftKings' first line for the game, often posted a week or more ahead.

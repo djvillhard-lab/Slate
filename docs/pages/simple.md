@@ -1,5 +1,5 @@
 # Simple mode
-Last updated: Nov 26, 2026, 3.152.1
+Last updated: Nov 26, 2026, 3.154.0
 Code: `src/app/287-simple.js` only (its styles are injected from the file as `#sm-css`, and it adds its own switch to
 Settings > Look and text size). Check it with `python3 scripts/shots.py lineup --simple [l|xl|xxl]` and tap its buttons with `--eval`.
 Concept page with DJ's picks: https://claude.ai/artifact/8LvyNL4aK2bvAYSpuzR6os
@@ -36,6 +36,15 @@ regular News page in bigger type, team logos, player stats, a simple way to make
 - Class names inside the layer all start with `sm-` (3.140.3): the app styles bare `.tm`, `.nm` and the like for its own game cards.
 
 - 3.152.1 (DJ: the switch was under the Dynamic Island): `#sm-set-row .switch` gets a right margin of the island's width less the card's 28 points of padding: `--strip-w` on the folded Duo, `--sm-isl` (the host's `--strip-w`, set by `smIsland` on each render) in the unfolded right pane (`html.pn-right`).
+- 3.154.0 (DJ: can't tell the league, use the slate's card design, long names cut off at Larger and Largest):
+  every section of the home page draws the same `card` (the old plain `row` is gone). A card is the league line
+  (`smLeague`: sport icon, league name, event note, "Your team"), the two teams with logo, name, small record and
+  score, then a foot line with the time, live text or Final and the channel tag. The game page's card starts with the
+  same league line.
+- Text sizes on purpose: only team names, scores, times, headings and the big green buttons grow with the size choice
+  (em). Secondary text (league line, records, channel tag, "Your team") and the bottom bar buttons are in px times
+  `--sm-s` (1, 1.06, 1.12), so they barely grow. Names wrap at spaces; `smFit` (run in `smDraw`) shrinks a single
+  long word that still doesn't fit, down to 62%. Never clip a name with ellipsis.
 
 ## Open
 - Not tried on a real phone yet: the top and bottom safe areas, the Dynamic Island on the folded Duo and the right

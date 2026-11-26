@@ -19,7 +19,7 @@
   var SM_CSS = "html.sm-on, html.sm-on body { overflow: hidden; }" +
     "html.sm-on .sheet-backdrop, html.sm-peek .sheet-backdrop { z-index: 45 !important; }" +
     "#sm { position: fixed; top: 0; bottom: 0; left: 0; right: 0; padding-right: var(--strip-w, 0px); z-index: 39; background: var(--bg); color: var(--ink); font-family: var(--font); font-weight: 700; line-height: 1.2; display: flex; font-size: 16px; -webkit-text-size-adjust: none; font-variant-numeric: tabular-nums; }" +
-    "#sm.sz-xl { font-size: 18px; } #sm.sz-xxl { font-size: 20px; } #sm[hidden] { display: none; }" +
+    "#sm { --sm-s: 1; } #sm.sz-xl { font-size: 18px; --sm-s: 1.06; } #sm.sz-xxl { font-size: 20px; --sm-s: 1.12; } #sm[hidden] { display: none; }" +
     "#sm * { box-sizing: border-box; }" +
     ".sm-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; padding-top: max(env(safe-area-inset-top, 0px), 10px); }" +
     "#sm.two .sm-col + .sm-col { border-left: 2px solid var(--line); }" +
@@ -29,22 +29,26 @@
     ".sm-body > * { flex: none; }" +
     ".sm-h { font-size: 1.25em; font-weight: 800; color: var(--muted); display: flex; align-items: center; gap: .4em; margin: .3em 0 0; }" +
     ".sm-h.live { color: var(--live); } .sm-h.live::before { content: ''; width: .6em; height: .6em; border-radius: 50%; background: var(--live); }" +
-    ".sm-card { display: flex; flex-direction: column; gap: .55em; width: 100%; text-align: left; background: var(--card); color: inherit; border: 2px solid var(--line); border-radius: 8px; padding: .8em; font: inherit; margin: 0; }" +
-    ".sm-team { display: flex; align-items: center; gap: .7em; } .sm-team .sm-nm { flex: 1; min-width: 0; font-size: 1.65em; font-weight: 800; overflow-wrap: anywhere; }" +
-    ".sm-team .sm-sc { font-size: 3em; font-weight: 800; font-stretch: 66%; line-height: 1; } .sm-team .sm-sc.sm-rec { font-size: 1.7em; color: var(--muted); } .sm-team.behind .sm-sc { color: var(--muted); }" +
-    ".sm-lg { width: 2.8em; height: 2.8em; flex: none; display: flex; align-items: center; justify-content: center; } .sm-lg img { width: 100%; height: 100%; object-fit: contain; }" +
+    ".sm-card { display: flex; flex-direction: column; gap: .45em; width: 100%; text-align: left; background: var(--card); color: inherit; border: 2px solid var(--line); border-radius: 8px; padding: .65em .75em; font: inherit; margin: 0; }" +
+    ".sm-team { display: flex; align-items: center; gap: .7em; } .sm-team .sm-nm { flex: 1; min-width: 0; font-size: 1.5em; font-weight: 800; line-height: 1.1; overflow: hidden; }" +
+    ".sm-team .sm-sc { font-size: 2.6em; font-weight: 800; font-stretch: 66%; line-height: 1; } .sm-team .sm-sc.sm-rec { font-size: 1.7em; color: var(--muted); } .sm-team.behind .sm-sc { color: var(--muted); }" +
+    ".sm-lg { width: 2.3em; height: 2.3em; flex: none; display: flex; align-items: center; justify-content: center; } .sm-lg img { width: 100%; height: 100%; object-fit: contain; }" +
     ".sm-stat { font-size: 1.3em; font-weight: 800; } .sm-stat.live { color: var(--live); } .sm-stat b { color: var(--ink); font-weight: 800; } .sm-say { font-size: 1.3em; }" +
-    ".sm-when { font-size: 2.1em; font-weight: 800; text-align: center; padding: .1em 0; }" +
+    ".sm-when { font-size: 1.6em; font-weight: 800; text-align: center; padding: .1em 0; }" +
     ".sm-row { display: grid; grid-template-columns: 4.6em 1fr auto; gap: .7em; align-items: center; width: 100%; min-height: 4.4em; text-align: left; background: none; color: inherit; border: 0; border-top: 2px solid var(--hair); padding: .4em 0; margin: 0; font: inherit; }" +
     ".sm-rows { display: flex; flex-direction: column; }" +
     ".sm-row .sm-tm { font-size: 1.55em; font-weight: 800; font-stretch: 70%; line-height: 1.05; } .sm-row .sm-tm small { display: block; font-size: .7em; color: var(--muted); margin: 0; }" +
     ".sm-row .sm-gm { display: flex; flex-direction: column; gap: .2em; font-size: 1.375em; font-weight: 800; min-width: 0; } .sm-row .sm-gm .sm-t { display: flex; align-items: center; gap: .4em; min-width: 0; }" +
     ".sm-row .sm-gm .sm-lg { width: 1.4em; height: 1.4em; } .sm-row .sm-gm .sm-lg .badge { zoom: .7; }" +
-    ".sm-mine { font-size: 16px; color: var(--accent); font-weight: 800; }" +
-    ".sm-ch { border: 2px solid var(--ink); border-radius: 4px; padding: .3em .5em; font-size: 1.3em; font-weight: 800; text-align: center; max-width: 6.5em; }" +
+    ".sm-lgl { display: flex; align-items: center; gap: 6px; font-size: calc(14px * var(--sm-s)); font-weight: 800; color: var(--muted); line-height: 1.2; } .sm-lgl svg { width: 1.25em; height: 1.25em; flex: none; } .sm-lgl .sm-lgt { flex: 1; min-width: 0; }" +
+    ".sm-rc { font-size: calc(14px * var(--sm-s)); font-weight: 700; font-stretch: 88%; color: var(--muted); margin-left: .5em; white-space: nowrap; }" +
+    ".sm-ft { display: flex; align-items: center; justify-content: space-between; gap: .6em; min-height: 2em; } .sm-stat.sm-time { font-size: 1.5em; font-stretch: 80%; }" +
+    ".sm-mine { flex: none; font-size: calc(14px * var(--sm-s)); color: var(--accent); font-weight: 800; }" +
+    ".sm-ch { flex: none; border: 2px solid var(--ink); border-radius: 4px; padding: .25em .5em; font-size: calc(17px * var(--sm-s)); font-weight: 800; text-align: center; white-space: nowrap; }" +
     ".sm-bar { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 16px max(env(safe-area-inset-bottom, 0px), 12px); border-top: 2px solid var(--hair); background: var(--bg); }" +
     ".sm-btn { flex: 1 1 40%; min-height: 2.7em; border-radius: 8px; border: 2px solid var(--line); background: var(--card); color: var(--ink); font-family: inherit; font-size: 1.3em; font-weight: 800; line-height: 1.15; display: flex; align-items: center; justify-content: center; text-align: center; padding: .3em .5em; margin: 0; text-decoration: none; }" +
     ".sm-btn.main { background: var(--accent-fill, var(--accent)); color: var(--on-accent, #0C0C0C); border-color: transparent; } .sm-btn.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }" +
+    ".sm-bar .sm-btn { font-size: calc(21px * var(--sm-s)); min-height: 56px; }" +
     ".sm-btn.wide { flex: none; width: 100%; min-height: 3em; } .sm-seg { display: flex; gap: 8px; } .sm-seg .sm-btn { flex: 1 1 0; }" +
     ".sm-q { width: 100%; border-collapse: collapse; } .sm-q th, .sm-q td { border-top: 2px solid var(--hair); padding: .45em .2em; font-size: 1.3em; font-weight: 800; text-align: center; } .sm-q th { border-top: 0; color: var(--muted); font-size: 1.05em; } .sm-q th:first-child, .sm-q td:first-child { text-align: left; }" +
     ".sm-plh { display: flex; align-items: center; gap: .5em; font-size: 1.25em; font-weight: 800; color: var(--muted); border-top: 2px solid var(--line); padding-top: .5em; margin-top: .2em; } .sm-plh .sm-lg { width: 1.5em; height: 1.5em; } .sm-plh .sm-lg .badge { zoom: .7; }" +
@@ -75,9 +79,26 @@
   }
   function smName(g, sd) { return (g[sd + "Rank"] ? "#" + g[sd + "Rank"] + " " : "") + short(g, sd); }
   function smTeam(g, sd, right, behind, rec) {
-    var r = el("div", "sm-team" + (behind ? " behind" : "")); r.appendChild(smLogo(g, sd)); r.appendChild(el("span", "sm-nm", smName(g, sd)));
+    var r = el("div", "sm-team" + (behind ? " behind" : "")), nm = el("span", "sm-nm", smName(g, sd)); r.appendChild(smLogo(g, sd)); r.appendChild(nm);
+    if (!rec && g[sd + "Record"]) nm.appendChild(el("small", "sm-rc", String(g[sd + "Record"])));
     if (right != null && right !== "") r.appendChild(el("span", "sm-sc" + (rec ? " sm-rec" : ""), String(right)));
     return r;
+  }
+  // the sport's icon and the league (with the event's name), as on the regular slate's cards; "Your team" at the end
+  function smLeague(g, mine) {
+    var r = el("div", "sm-lgl"), ic = g.custom ? null : sportIcon(g.league), nt = g.note ? noteShort(g.note) : "";
+    if (ic) r.appendChild(ic);
+    r.appendChild(el("span", "sm-lgt", g.custom ? "Added by you" : info(g).name + (nt ? " · " + nt : "")));
+    if (mine && !g.custom && hasFav(g)) r.appendChild(el("span", "sm-mine", "Your team"));
+    return r;
+  }
+  // a name that is one long word shrinks until it fits; names with spaces wrap between words, never inside one
+  function smFit(box) {
+    Array.prototype.forEach.call(box.querySelectorAll(".sm-nm"), function (n) {
+      n.style.fontSize = ""; if (n.scrollWidth <= n.clientWidth + 1) return;
+      var f = parseFloat(getComputedStyle(n).fontSize) || 24, min = f * 0.62;
+      while (n.scrollWidth > n.clientWidth + 1 && f > min) { f -= 1; n.style.fontSize = f + "px"; }
+    });
   }
   function smOrd(n) { return n + (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"); }
   function smLiveText(g, sc) {
@@ -157,27 +178,23 @@
       if (!loading) body.appendChild(smBtn("Choose what's on my slate", function () { smGo("rules"); }, "wide"));
     }
     var open = function (g) { return function () { SM.gid = g.id; if (two) smDraw(true); else smGo("game"); }; };
+    // 3.154.0 (DJ): one card for every game, laid out like the regular slate's card: the league on top, the two teams
+    // with logo, record and score, then the time or the clock and the channel
     var card = function (g) {
-      var sc = scoreOf(g), b = el("button", "sm-card"); b.type = "button"; b.addEventListener("click", open(g));
-      if (hasFav(g)) b.appendChild(el("span", "sm-mine", "Your team"));
-      sideOrder(g).forEach(function (sd) { var mine = sc ? Number(sd === "away" ? sc.a : sc.h) : "", other = sc ? Number(sd === "away" ? sc.h : sc.a) : 0; b.appendChild(smTeam(g, sd, mine, sc && mine < other)); });
-      var over = status(g).kind === "over", st = el("div", "sm-stat" + (over ? "" : " live"), over ? (sc && /OT|SO|pen/i.test(sc.detail || "") ? String(sc.detail) : "Final") : sc ? smLiveText(g, sc) : "On now");
-      var ch = smChan(g); if (!over && ch) { st.appendChild(document.createTextNode(" ")); st.appendChild(el("b", null, "· On " + ch)); }
-      b.appendChild(st); return b;
+      var sc = g.custom ? null : scoreOf(g), k = status(g).kind, b = el(g.custom ? "div" : "button", "sm-card"); if (!g.custom) { b.type = "button"; b.addEventListener("click", open(g)); }
+      b.appendChild(smLeague(g, true));
+      if (g.custom) { var cr = el("div", "sm-team"); cr.appendChild(el("span", "sm-nm", g.home)); b.appendChild(cr); }
+      else sideOrder(g).forEach(function (sd) { var mine = sc ? Number(sd === "away" ? sc.a : sc.h) : "", other = sc ? Number(sd === "away" ? sc.h : sc.a) : 0; b.appendChild(smTeam(g, sd, mine, sc && mine < other)); });
+      var ft = el("div", "sm-ft");
+      if (k === "live") ft.appendChild(el("span", "sm-stat live", sc ? smLiveText(g, sc) : "On now"));
+      else if (k === "over") ft.appendChild(el("span", "sm-stat", sc && /OT|SO|pen/i.test(sc.detail || "") ? String(sc.detail) : "Final"));
+      else ft.appendChild(el("span", "sm-stat sm-time", timeText(g.start)));
+      var ch = smChan(g); if (ch && k !== "over") ft.appendChild(el("span", "sm-ch", NET_SHORT[ch] || ch));
+      b.appendChild(ft); return b;
     };
-    var row = function (g) {
-      var b = el("button", "sm-row"); b.type = "button"; b.addEventListener("click", open(g));
-      var tt = timeText(g.start), m = /^(.*?)\s*([AP]M)$/i.exec(tt), tm = el("div", "sm-tm", m ? m[1] : tt); if (m) tm.appendChild(el("small", null, m[2])); b.appendChild(tm);
-      var gm = el("div", "sm-gm"); if (hasFav(g)) gm.appendChild(el("span", "sm-mine", "Your team"));
-      if (g.custom) gm.appendChild(el("span", "sm-t", g.home));
-      else sideOrder(g).forEach(function (sd) { var l = el("span", "sm-t"); l.appendChild(smLogo(g, sd)); l.appendChild(el("span", null, smName(g, sd))); gm.appendChild(l); });
-      b.appendChild(gm);
-      var ch = smChan(g); if (ch) b.appendChild(el("div", "sm-ch", NET_SHORT[ch] || ch)); else b.appendChild(el("span"));
-      return b;
-    };
-    if (live.length) { body.appendChild(el("div", "sm-h live", "On now")); live.forEach(function (g) { body.appendChild(g.custom ? row(g) : card(g)); }); }
-    if (next.length) { body.appendChild(el("div", "sm-h", state.date === t ? (live.length || done.length ? "Later today" : "Today") : "Games")); var rs = el("div", "sm-rows"); next.forEach(function (g) { rs.appendChild(row(g)); }); body.appendChild(rs); }
-    if (done.length) { body.appendChild(el("div", "sm-h", "Finished")); done.forEach(function (g) { body.appendChild(g.custom || !scoreOf(g) ? row(g) : card(g)); }); }
+    if (live.length) { body.appendChild(el("div", "sm-h live", "On now")); live.forEach(function (g) { body.appendChild(card(g)); }); }
+    if (next.length) { body.appendChild(el("div", "sm-h", state.date === t ? (live.length || done.length ? "Later today" : "Today") : "Games")); next.forEach(function (g) { body.appendChild(card(g)); }); }
+    if (done.length) { body.appendChild(el("div", "sm-h", "Finished")); done.forEach(function (g) { body.appendChild(card(g)); }); }
     var bar = el("div", "sm-bar");
     bar.appendChild(smBtn(smDayName(shiftDate(state.date, -1)), function () { smSetDate(shiftDate(state.date, -1)); }));
     bar.appendChild(smBtn(smDayName(shiftDate(state.date, 1)), function () { smSetDate(shiftDate(state.date, 1)); }));
@@ -202,9 +219,9 @@
     if (!g) { top.appendChild(el("h1", null, two ? "Pick a game" : "Game")); body.appendChild(el("p", "sm-note", two ? "Tap a game on the left to see it here." : "That game is not on this day's slate.")); smBackBar(col, two); return col; }
     var st = status(g), sc = scoreOf(g), o = sideOrder(g);
     top.appendChild(el("h1", null, pairText(g, function (sd) { return short(g, sd); }, g.neutral ? " vs " : " at ")));
-    var sub = st.kind === "over" ? fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + " · Final" : hasFav(g) ? "Your team" + (st.kind === "live" ? " is playing now" : " plays " + (state.date === todayInHome() ? "today" : smDayName(state.date))) : info(g).name;
+    var sub = st.kind === "over" ? fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + " · Final" : st.kind === "live" ? "On now" : (state.date === todayInHome() ? "Today" : smDayName(state.date));
     top.appendChild(el("p", null, sub));
-    var card = el("div", "sm-card");
+    var card = el("div", "sm-card"); card.appendChild(smLeague(g, true));
     if (!sc) card.appendChild(el("div", "sm-when", st.kind === "live" ? "On now" : (state.date === todayInHome() ? "Today" : smDayName(state.date)) + " at " + timeText(g.start)));
     o.forEach(function (sd) {
       if (sc) { var mine = Number(sd === "away" ? sc.a : sc.h), other = Number(sd === "away" ? sc.h : sc.a); card.appendChild(smTeam(g, sd, mine, mine < other)); }
@@ -368,6 +385,7 @@
     var same = SM.lastPages === pages.join("|");
     SM.last = sig; SM.lastPages = pages.join("|");
     o.textContent = ""; cols.forEach(function (c) { o.appendChild(c); });
+    smFit(o);
     cols.forEach(function (c, i) { var p = c.getAttribute("data-pg"), b = c.querySelector(".sm-body"); if (b && keep[p] && (same || (SM.two && i === 0))) b.scrollTop = keep[p]; });
   }
   // 3.152.1 (DJ: "Simple mode setting is covered by Dynamic Island"): the island's width for the unfolded Duo's right half,
