@@ -10,12 +10,11 @@
 #games-body.ag2 .glist > .g.panel:has(> .tray) { grid-column: 1 / -1; }
 #games-body.ag2 .glist > :not(.g) { grid-column: 1 / -1; }
 
-#games-body.ag2 .g.panel:not(:has(> .tray)) { grid-template-columns: minmax(0, 1fr); row-gap: 4px; padding: 8px 8px 6px; height: 100%; align-content: start; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) { grid-template-columns: minmax(0, 1fr); row-gap: 3px; padding: 8px 8px 8px; height: 100%; align-content: start; }
 #games-body.ag2 .g.panel:not(:has(> .tray)).tagged { padding-top: 8px; }
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .hl,
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-feed,
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .ctag,
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .add,
+/* 3.151.1: everything on the card except the teams, the status and the short line is hidden, whatever it is (a new
+   kind of line added to the full card, like 3.148.0's "how it went" row, must not show up on the small one) */
+#games-body.ag2 .g.panel:not(:has(> .tray)) > :not(.g-main):not(.g-side):not(.ag2s),
 #games-body.ag2 .g.panel:not(:has(> .tray)) .g-lg,
 #games-body.ag2 .g.panel:not(:has(> .tray)) .tm .rec { display: none !important; }
 #games-body.ag2 .g.panel:not(:has(> .tray)) .g-main { gap: 2px; }
@@ -24,13 +23,23 @@
 #games-body.ag2 .g.panel:not(:has(> .tray)) .tm .badge .badge-logo { height: 24px; margin-top: -12px; }
 #games-body.ag2 .g.panel:not(:has(> .tray)) .tm .nm { font-size: 15px; }
 #games-body.ag2 .g.panel:not(:has(> .tray)) .tm .sc { font-size: 18px; min-width: 0; }
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side { width: auto !important; min-width: 0; margin: 0 !important; display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 6px; text-align: left; padding-top: 4px; border-top: 1px solid var(--line); }
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side > * { min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 3.151.1 (DJ: "trying to fit too much"): a small card is the two teams with their scores and ONE bottom line, nothing else.
+   Live: the clock in red. Upcoming: the start time. Finished: the best-player line with an F at its end (or just "Final").
+   No channel, no divider, no start time on a final; all of that is on the full card one tap away. */
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side { width: auto !important; min-width: 0; margin: 0 !important; display: block; text-align: left; order: 2; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side > * { display: block; min-width: 0; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .net,
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .s-ftime,
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .s-moved,
+#games-body.ag2 .g.panel:not(:has(> .tray)):has(> .ag2s) > .g-side { display: none !important; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .s-time, #games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .s-final { color: var(--muted); font-weight: 700; }
 
-/* 3.134.5: a finished game's very short best-player line, only on the small cards */
 .ag2s { display: none; }
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s { display: block; order: 1; margin: 0; min-width: 0; font-size: 13px; line-height: 1.2; font-weight: 600; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s { display: flex; align-items: baseline; gap: 6px; order: 1; margin: 0; min-width: 0; font-size: 13px; line-height: 1.2; font-weight: 600; color: var(--sub); }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s .ag2t { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; height: 1.2em; overflow: hidden; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s .ag2a { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s .ag2b { white-space: nowrap; }
 #games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s b { font-weight: 800; color: var(--head); }
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side { order: 2; }
-/* a finished small card: no start time (Final, the line above and the channel are enough; the three clipped each other) */
-#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .s-ftime { display: none; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .ag2s .ag2f { flex: none; font-style: normal; font-size: 12px; font-weight: 800; color: var(--muted); }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side, #games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side > * { text-align: left !important; justify-content: flex-start !important; justify-items: start !important; }
+#games-body.ag2 .g.panel:not(:has(> .tray)) > .g-side .s-live { display: flex; align-items: center; }

@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.151.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- All games, 2 columns: the small cards are simpler. Each one is now just the two teams with their scores and one line under them: the game clock in red for a live game, the start time for an upcoming one, and the best player's short line for a finished one, with a small "F" at the end in place of the separate Final row. The channel, the divider line and the start time on finished games are gone from the small card; tap the card for the full one.
+- The short line is tighter: football drops "yds" ("126 rush, 2 TD"), and the second number only shows when the card has room for it, so a long name is never cut off mid-word.
+- Fixed: the new "how the game went" row was showing up on some finished small cards and making them much taller than the rest.
+
 ## 3.151.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Unfolded iPhone Duo, one page full screen: On TV now uses the whole width. My TVs shows your whole wall on the left with "Turn each TV to" beside it, so the wall and the list are on screen together. All, National TV and Streaming show each channel's games two across.

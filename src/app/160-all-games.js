@@ -215,7 +215,15 @@
     if (!c && agTwo() && row && sp !== "soccer" && !boxFor(g) && !agsTried[g.id]) agSeen(row, function () { agsTried[g.id] = 1; bxNeed(g);  // once per game: never a loop of redraws
       clearTimeout(agsT); agsT = setTimeout(function () { agRedraw(); }, 2500); });
     if (!c) return null;
-    var p = el("p", "ag2s"); p.appendChild(el("b", null, c.n)); p.appendChild(document.createTextNode(" " + c.t));
+    // 3.151.1 (DJ: "trying to fit too much ... one liner ... optimized for the small matchup card"): the line is the small
+    // card's whole bottom row. No "yds" ("126 rush, 2 TD"), and the second number only shows when the card has room for it.
+    // The F at its end stands in for the Final row, which the small card no longer has ("F/OT" after overtime)
+    var bits = String(c.t).replace(/ yds/g, "").split(", ");
+    var p = el("p", "ag2s"), tx = el("span", "ag2t"), a = el("span", "ag2a"); a.appendChild(el("b", null, c.n)); a.appendChild(document.createTextNode(" " + bits[0])); tx.appendChild(a);
+    if (bits[1]) tx.appendChild(el("span", "ag2b", ", " + bits[1]));  // the second number shows only when the card has room for it (CSS: it wraps out of sight)
+    p.appendChild(tx);
+    var v = scoreRaw(g.id), d = v && v.detail && /OT|SO|\//.test(v.detail) ? String(v.detail).replace(/^Final/i, "F") : "F";
+    p.appendChild(el("i", "ag2f", d));
     return p;
   }
   // two columns of small cards (3.132.0), remembered on this phone

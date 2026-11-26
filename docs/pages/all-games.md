@@ -3,6 +3,12 @@ Last updated: Nov 25, 2026, 3.132.0
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
+- Two columns, simpler small cards (3.151.1, DJ: "Trying to fit too much ... removing things on the card outside of the one
+  liner"). A small card is the two teams with scores and ONE bottom line: live = the clock in red, upcoming = the start
+  time, finished = the best-player line with an "F" at its end ("F/OT" after overtime; plain "Final" when there is no line).
+  No channel, divider or start time. The CSS hides every direct child of the card except `.g-main`, `.g-side` and `.ag2s`,
+  so a new row added to the full card (3.148.0's `p.wwb` had leaked in) never shows on the small one. The line drops "yds"
+  and its second number (`.ag2b`) only shows when it fits (it wraps out of sight). Open: a line for live small cards.
 - Two columns: a finished game's small card has a very short best-player line (3.134.5, DJ), e.g. "Tatum 41 pts, 8 ast",
   "Connelly 2 G, 1 A", "Mahomes 312 pass yds, 3 TD". Upcoming and live small cards have no line (DJ: not for upcoming; live
   is open, see below). `agShort` in `160-all-games.js`: from the box score when the phone has it (`agShortBox`: best line of
