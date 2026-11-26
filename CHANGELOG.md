@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.140.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- New: Simple mode, for anyone who wants just the games, the scores and the channel. Turn it on in Settings, Look and text size. It is off unless you switch it on.
+- It opens on Your slate: what's on now with the score and channel, then the rest of the day in time order, with both teams' logos. Four buttons with words sit at the bottom: the day before, the day after, News and Help. No menu and no swiping.
+- Tap a game for its page: the score, who leads in a sentence, a Watch button, the score by quarter, and each team's top players written out ("324 passing yards, 3 touchdowns").
+- My slate (from Help) shows your slate rules as plain sentences, each with Remove. Add games is two steps: pick a sport, then which games. They are the same rules as the full app's Slate rules page.
+- News opens the regular News page in bigger type with a "Back to my slate" button. Help has three text sizes, dark or light, Change my teams, a way to tell DJ something looks wrong, and Use the full app.
+- Unfolded Duo: your slate stays on the left and the game you tap shows on the right.
 ## 3.139.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: the scheduled pass was not starting, so the page stayed on the last hand-made write-up. The check for new stories now runs on its own in the background instead of inside the every-minute alerts job, which had no room left for it.

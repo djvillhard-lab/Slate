@@ -21,6 +21,7 @@ README.md has the full architecture. Several chats work on Slate at once, often 
 | Settings (and team search) | `230-settings.js` |
 | Live scores, Lock Screen scoreboard | `040-live.js` |
 | Claude on demand (summaries) | `080-claude.js` |
+| Simple mode (big type, one page, for older users) | `287-simple.js` (one layer over the app; `docs/pages/simple.md`) |
 
 **Shared files:** check with DJ before big changes, because every page uses them: `010-core.js` (config, leagues, `state`, `SLATE_VERSION`), `020-look.js` (themes), `030-helpers.js`, `060-cards.js` (team block, game strip), `070-navigation.js` (Back, swipe, dock), `240-chrome.js` (top bar, menu, `render()`), `250-actions.js`, `260-persistence.js`, `270-wiring.js`, `280-ios-bridge.js` (window.SlateApp ↔ `ios/Slate/WebModel.swift`), `290-layout.js` (iPhone Duo panes), `300-startup.js`.
 
