@@ -493,12 +493,10 @@
   // 3.113.10: a home or road record that is the whole record ("Florida State is 5-0 at home" on a 5-0 team) adds nothing
   function pvAllHome(t, W, L) { var r = String((t.rec || {}).total || "").split("-").map(Number); return r.length >= 2 && r[0] === W && r.slice(1).reduce(function (a, b) { return a + (b || 0); }, 0) === L; }
   function pvCompute(lg, sum, qbx, g) {
-    // 3.156.1 (DJ: "The player positions in one-liners are sometimes confusing. And not obvious that they are player positions"):
-    // the position in words plus the full name ("safety Chuck Clark", not "S Clark"); only QB stays short, since everyone reads it
-    var PV_POS = { QB: "QB", RB: "running back", FB: "fullback", WR: "receiver", TE: "tight end", OT: "tackle", T: "tackle", G: "guard", OG: "guard", C: "center", OL: "lineman",
-      DE: "defensive end", DT: "defensive tackle", NT: "nose tackle", DL: "defensive lineman", LB: "linebacker", OLB: "linebacker", ILB: "linebacker", MLB: "linebacker",
-      CB: "cornerback", S: "safety", FS: "safety", SS: "safety", DB: "defensive back", K: "kicker", PK: "kicker", P: "punter", LS: "long snapper" };
-    function pvPosWord(pos, name) { var w = PV_POS[String(pos || "").toUpperCase()]; return w ? w + " " + name : name; }
+    // 3.156.1 (DJ: "The player positions in one-liners are sometimes confusing. And not obvious that they are player positions"),
+    // 3.157.1 (DJ didn't like them spelled out: "I liked the abbreviations just need a new format"; picked on a card): the full name
+    // with the position after it in brackets, as box scores and injury reports write it: "Chuck Clark (S)", "Jalen Hurts (QB)"
+    function pvPosWord(pos, name) { pos = String(pos || "").toUpperCase(); return pos ? name + " (" + pos + ")" : name; }
     pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = ""; pvCompute.recs = null;
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
@@ -592,10 +590,11 @@
       // 3.153.2 (DJ: "Become the favorite" read badly; "more valuable to say WHY the line moved"): the line now, then where it opened
       // (DraftKings' first line, often posted a week or more ahead). Shown only with a reason: a QB or one of the team's leaders
       // out for the side the line moved against, or that side's QB making his first start. A move with no reason is left out
-      var why = function (fv0) { var o0 = oth(fv0), k1 = keyOut[o0] || [], k0 = k1.filter(function (n) { return /^QB /.test(n); }).concat(k1.filter(function (n) { return !/^QB /.test(n); })).slice(0, 1);
+      var thT = /^(nfl|nba|wnba|nhl|mlb)$/.test(lg) ? "the " : "";
+      var why = function (fv0) { var o0 = oth(fv0), k1 = keyOut[o0] || [], k0 = k1.filter(function (n) { return /\(QB\)$/.test(n); }).concat(k1.filter(function (n) { return !/\(QB\)$/.test(n); })).slice(0, 1);
         if (k0.length) c = c.filter(function (x) { return x.k !== "out|" + o0; });  // the injury is in the line-move sentence instead
         var q0 = (qbx || []).filter(function (q) { return q.team === o0 && q.name; })[0];
-        return k0.length ? ", with " + T[o0].name + " " + k0.join(" and ") + " out" : q0 ? ", with " + T[o0].name + " QB " + q0.name + " making his first start" : ""; };
+        return k0.length ? ", with " + k0.join(" and ") + " out for " + thT + T[o0].name : q0 ? ", with " + q0.name + " (QB) making his first start for " + thT + T[o0].name : ""; };
       if (oH * cH < 0 && Math.abs(oH - cH) <= 6) { var nf = cH < 0 ? H : A, wy = why(nf); if (wy) add("flip|" + nf, 54, T[nf].name + " are now " + Math.abs(cH) + "-point favorites after opening as " + Math.abs(oH) + "-point underdogs" + wy); }
       else if (oH * cH > 0 && Math.abs(cH - oH) >= 2) { var fv = cH < 0 ? H : A, o1 = Math.abs(oH), c1 = Math.abs(cH), wy2 = why(c1 > o1 ? fv : oth(fv));
         if (wy2) add("move|" + fv, 46, T[fv].name + " are now " + c1 + "-point favorites, " + (c1 > o1 ? "up" : "down") + " from " + o1 + " when the line opened" + wy2); } }
