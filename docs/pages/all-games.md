@@ -3,6 +3,10 @@ Last updated: Nov 25, 2026, 3.132.0
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
+- Tapping Live no longer moves the scores (3.134.3, DJ). The slate's score column (`--tmw`, `fitScores`) and both pages' right
+  column (`--side-w`, `alignSides`) were sized from the cards showing, so fewer cards meant a different column. `colKeep` in
+  `240-chrome.js` keeps the widest value for the same day, tab, filter and page width. In two columns there is no right
+  column: `--side-w` is cleared and `agWiden` does nothing, and switching back to one column measures again.
 - Live button on = solid live red, white words, every theme (3.134.1, DJ). The glass fill in `100-glass.css` had painted over
   `.lo-btn.on`; the fix sits right under that rule and leaves the 2 columns and Board buttons alone.
 - Two columns of small cards (3.132.0, DJ: "option to show multiple game matchups at once (two columns, condensed matchup

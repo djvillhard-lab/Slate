@@ -162,6 +162,7 @@
   function agRedraw() { if (state.view !== "games" && !isDuo) return; clearTimeout(agT); agT = setTimeout(function () { if ($("games-body") && $("games-body").offsetParent) keepScroll(renderGames); }, 400); }
   // two columns of small cards (3.132.0), remembered on this phone
   var AG_TWO = null;
+  var agTwoWas = false;
   function agTwo() { if (AG_TWO == null) { try { AG_TWO = localStorage.getItem("slate-ag-two") === "1"; } catch (e) { AG_TWO = false; } } return AG_TWO; }
   function agSetTwo(v) { AG_TWO = !!v; try { localStorage.setItem("slate-ag-two", v ? "1" : "0"); } catch (e) {} }
   function renderGames() {
@@ -352,6 +353,7 @@
     }
   }
   function agWiden(rows) {  // measure only these cards' right column; widen the page's column if one needs more
+    if (agTwo()) return false;
     var box = $("games-body"), sides = rows.map(function (r) { return r.querySelector(".g-side"); }).filter(function (x) { return x && x.parentNode.classList.contains("g"); });
     if (!sides.length || !box.offsetParent) return false;
     var cur = parseFloat(box.style.getPropertyValue("--side-w")) || 0;
@@ -393,7 +395,11 @@
     var y = window.scrollY || 0, made = agDraw(Math.max(16, Math.ceil((y + 2 * (window.innerHeight || 800)) / 90)));
     var kept = body ? body.querySelectorAll(".g.panel").length - made.length : 0;
     try {
-      if (!had || !kept) { alignSides(body); agFitNames(); }  // a fresh page: size the column from what's drawn
+      // 3.134.3: in two columns the time and channel sit in their own row, so there is no right column to size (measuring
+      // it there left the one-column cards with a column that was too wide after switching back)
+      var two = agTwo(), flip = two !== agTwoWas; agTwoWas = two;
+      if (two) { body.style.removeProperty("--side-w"); agFitNames(); }
+      else if (!had || !kept || flip) { alignSides(body); agFitNames(); }  // a fresh page: size the column from what's drawn
       else if (agWiden(made)) agFitNames(); else agFitNames(made);
     } catch (e) {}
     var more = function () {

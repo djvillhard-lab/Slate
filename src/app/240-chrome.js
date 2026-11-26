@@ -238,6 +238,16 @@
   // a longer channel name wraps to a second line),
   // so the scores, which sit just left of it, line up from card to card
   // slate cards: scores sit mid-card, or just right of the longest team name when that would reach them
+  // the widest a column has needed for this page, day, tab and width; a filter that shows fewer cards keeps it
+  var COL_KEEP = {};
+  function colKeep(box, what, v) {
+    var k = what + "|" + box.id;
+    var key = [state.date, box.id === "games-body" ? [state.league, state.conf || "", typeof state.gamesFilter === "string" ? state.gamesFilter : "", state.q || ""].join("~") : "", box.clientWidth, getComputedStyle(box).fontSize].join("|");
+    var m = COL_KEEP[k];
+    if (!m || m.key !== key) m = COL_KEEP[k] = { key: key, v: 0 };
+    m.v = Math.max(m.v, v);
+    return m.v;
+  }
   function fitScores(box) {
     if (!box) return;
     // one score column for the whole slate (3.31.0): just past the longest team name (with its rank and record) on the
@@ -263,6 +273,10 @@
         var nd = lead + nw + rg + 16 + Math.max(sc.offsetWidth || 0, 30); if (isFinite(nd)) need = Math.max(need, nd);
       });
     });
+    // 3.134.3 (DJ: "Hitting the live button shifts the scores on the matchup cards"): the column was sized from the cards
+    // showing, so Live (fewer cards, shorter names) moved every score. It now never gets narrower for the same day and
+    // page width (colKeep), so the cards look the same with Live on or off
+    if (need) need = colKeep(box, "tmw", need);
     if (need && col < 1e9) box.style.setProperty("--tmw", Math.ceil(Math.min(col, need)) + "px");
     if (need) walP.forEach(function (x) { x[0].style.setProperty("--tmw", Math.ceil(Math.min(x[1], need)) + "px"); });
     if (box.id === "lineup-body") slateFitNames(box);  // 3.68.8: names that still don't fit lose records, then shorten (170-slate-page.js)
@@ -276,6 +290,7 @@
     // measure what each column needs (a clipped channel name reports its full width in scrollWidth)
     var max = 0; Array.prototype.forEach.call(sides, function (x) { var w = x.getBoundingClientRect().width; Array.prototype.forEach.call(x.querySelectorAll(".net, .s-cd, .s-live, .s-final"), function (n) { w = Math.max(w, n.scrollWidth + (n.offsetLeft - x.offsetLeft > 0 ? 0 : 0) + 18); }); max = Math.max(max, w); });
     if (!max) return;
+    max = colKeep(box, "side", max);  // 3.134.3: the right column doesn't get narrower when Live shows fewer cards
     box.style.setProperty("--side-w", Math.ceil(Math.min(max, Math.max(108, box.clientWidth * 0.32))) + "px");
   }
   // 3.97.2: an iPhone drops a tap when the page changes under the finger (DJ's phone log). A redraw that isn't the tap's
