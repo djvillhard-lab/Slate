@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.149.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Unfolded iPhone Duo, one page full screen: Teams and the matchup page now use the whole width. Teams shows the team list two across, and standings put the two conferences (or divisions) side by side. A matchup page made full screen has the game on the left with the betting line and Claude's button beside it, and the cards in an open section (top performers, box score, where to watch) run in two columns.
+- Box Office already used the width, so it stays as it is.
+
 ## 3.148.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Finished game cards: the "Rewatch" tag is gone. The short facts about how the game went (overtime, lead changes, a late winner) still show on their own line.
@@ -817,7 +822,6 @@ TestFlight: 3.101.0, new build
 - Live notification card (one game): redone in the Dynamic Island's style, which you liked best. Each team sits in a slanted pill of its color holding its logo and its big score, with the team's name under the pill. Between them are the clock, then the league (or the down and spot in football) and the slate's tag. The scorers, the standout and the one-liner stay underneath, two lines at most.
 - A team whose main color is gray or nearly black (the Golden Knights' steel gray) uses its second color, so its color doesn't disappear into the dark card.
 - Dynamic Island for a single game, held open: each team's color fills its whole side, behind both its logo and its score, with the slant toward the camera.
-
 
 ## 3.100.10 (Nov 17, 2026)
 TestFlight: 3.100.5, no new build (web only)

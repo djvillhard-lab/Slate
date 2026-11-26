@@ -78,3 +78,16 @@ html.in-pane.pn-full #games-body:has(> .sec-tg):not(:has(> .sec-tg:not(.shut))) 
 /* in columns the first row keeps its top margin and the row after a column break loses it: use padding so both columns start level */
 html.in-pane.pn-full #games-body:has(> .sec-tg):not(:has(> .sec-tg:not(.shut))) > .sec-tg { margin-top: 0; margin-bottom: 0; padding-top: 16px; padding-bottom: 16px; }
 html.in-pane.pn-full #lineup-body .wal-list > .wal-item:only-child { grid-column: 1 / -1; }
+/* Teams, full screen: the team list two across, standings groups (conferences, divisions) side by side */
+html.in-pane.pn-full #teams-body .rows.tb-res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; }
+html.in-pane.pn-full #teams-body .rows.tb-res > :not(.trow) { grid-column: 1 / -1; }
+html.in-pane.pn-full #teams-body:has(> .sdg-grp ~ .sdg-grp) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; align-items: start; }
+html.in-pane.pn-full #teams-body:has(> .sdg-grp ~ .sdg-grp) > :not(.sdg-grp) { grid-column: 1 / -1; }
+/* Matchup, full screen: the game on the left with the line and Claude's button beside it; an open section's cards flow in two columns */
+html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 12px; }
+html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > * { grid-column: 1 / -1; }
+html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > .gv-head { grid-column: 1; grid-row: 1 / span 2; }
+html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > .gv-oddsbar { grid-column: 2; grid-row: 1; align-self: start; }
+html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > .gv-cl { grid-column: 2; grid-row: 2; align-self: start; }
+html.in-pane.pn-full #game-body .gv-sec.open > .gv-sec-in { display: block; columns: 2; column-gap: 12px; }
+html.in-pane.pn-full #game-body .gv-sec.open > .gv-sec-in > * { break-inside: avoid; margin-top: 0; margin-bottom: 12px; }
