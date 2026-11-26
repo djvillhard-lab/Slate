@@ -6,3 +6,5 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Live feed: Box score button replaces Leaders, highlights inside it | src/app/145-149 live feed files, docs/pages/live-feed.md | 2026-11-26 17:04 |
+| DJ | shared: styles/040-components.css (Live feed box score highlights, new rules at the end) | src/styles/040-components.css | 2026-11-26 17:04 |
