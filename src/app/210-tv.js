@@ -31,6 +31,7 @@
     var body = $("tv-body");
     // TV watch setups (3.135.0): the editor isn't redrawn by live score updates, so a drag or the name you're typing stays put
     if (TVS.edit && state.tvFilter !== "setups") { TVS.edit = null; TVS.drawn = false; }   // the editor belongs to My TVs
+    if (state.tvFilter !== "setups") TVS.slot = "";   // back on My TVs it opens on Live now again
     if (TVS.edit) { if (TVS.drawn && $("tvs-ed-wall")) return; body.textContent = ""; TVS.drawn = true; tvsEditor(body); return; }
     body.textContent = "";
     var gs = visibleGames();

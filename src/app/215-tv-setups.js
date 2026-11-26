@@ -56,26 +56,42 @@
     ".tvs-mini { position: relative; display: block; width: 100%; aspect-ratio: 32 / 22; }" +
     ".tvs-mini i { position: absolute; box-sizing: border-box; border-radius: 2px; border: 1px solid var(--muted); }" +
     ".tvs-mini i:first-child { border: 2px solid var(--accent); }" +
-    ".tvs-tv { position: absolute; box-sizing: border-box; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); padding: 6px; overflow: hidden; display: flex; flex-direction: column; gap: 4px; min-width: 0; text-align: left; font: inherit; color: var(--ink); }" +
+    ".tvs-tv { position: absolute; box-sizing: border-box; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); overflow: hidden; container-type: size; font: inherit; color: var(--ink); text-align: left; }" +
     ".tvs-tv.main { border: 2px solid var(--accent); }" +
-    ".tvs-tv .tn { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 11px; font-weight: 700; color: var(--muted); min-width: 0; }" +
-    ".tvs-tv.main .tn > span:first-child { color: var(--accent); }" +
-    ".tvs-tv .tn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }" +
-    ".tvs-ch { flex: none; display: inline-block; padding: 2px 6px; border-radius: 4px; background: var(--ink); color: var(--bg); font-size: 13px; font-weight: 800; font-stretch: 88%; line-height: 1.25; white-space: nowrap; }" +
-    ".tvs-tv.sm .tvs-ch, .tvs-cell .tvs-ch { font-size: 10px; padding: 1px 4px; }" +
-    ".tvs-mu { display: flex; align-items: center; gap: 6px; min-width: 0; }" +
-    ".tvs-mu .sc { font-size: 22px; font-weight: 800; font-stretch: 66%; }" +
-    ".tvs-mu .sc.lose { color: var(--muted); }" +
-    ".tvs-mu .gap { flex: 1; }" +
-        ".tvs-tv.sm .tvs-mu .sc { font-size: 16px; }" +
-    ".tvs-st { font-size: 11px; font-weight: 800; font-stretch: 88%; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }" +
-    ".tvs-st.live { color: var(--live); }" +
-    ".tvs-nm { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }" +
-    ".tvs-tv.sm .tvs-nm { display: none; }" +
-    ".tvs-split { flex: 1; display: grid; gap: 3px; min-height: 0; }" +
-    ".tvs-cell { background: var(--card); border-radius: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10px; font-weight: 800; font-stretch: 88%; min-width: 0; overflow: hidden; padding: 2px; }" +
-    ".tvs-cell .live { color: var(--live); }" +
-    ".tvs-empty { font-size: 11px; color: var(--dim); }" +
+    ".tvs-pl { position: absolute; top: 0; bottom: 0; width: 34%; pointer-events: none; }" +
+    ".tvs-pl.l { left: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--tc) 62%, transparent), color-mix(in srgb, var(--tc) 30%, transparent)); clip-path: polygon(0 0, 100% 0, 80% 100%, 0 100%); }" +
+    ".tvs-pl.r { right: 0; background: linear-gradient(270deg, color-mix(in srgb, var(--tc) 62%, transparent), color-mix(in srgb, var(--tc) 30%, transparent)); clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%); }" +
+    ".tvs-top2 { position: absolute; left: 0; right: 0; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; padding: clamp(3px, 3cqh, 8px) clamp(4px, 3cqw, 10px); }" +
+    ".tvs-tn { min-width: 0; font-size: clamp(9px, 8cqh, 14px); font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,.6); }" +
+    ".tvs-ch { flex: none; padding: .12em .4em; border-radius: 4px; background: var(--ink); color: var(--bg); font-size: clamp(11px, min(14cqh, 10cqw), 28px); font-weight: 800; font-stretch: 88%; line-height: 1.2; white-space: nowrap; }" +
+    ".tvs-ch.none { background: var(--raise); color: var(--muted); font-size: clamp(9px, 7cqh, 12px); }" +
+    ".tvs-fo { position: absolute; left: 0; right: 0; top: max(18px, 22cqh); bottom: 0; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; padding: 0 2cqw 4cqh; }" +
+    ".tvs-sd { display: flex; flex-direction: column; align-items: center; gap: 2cqh; min-width: 0; }" +
+    ".tvs-sd .badge { width: clamp(22px, min(40cqh, 24cqw), 104px); height: clamp(22px, min(40cqh, 24cqw), 104px); border-radius: 6px; font-size: clamp(10px, 10cqh, 22px); }" +
+    ".tvs-sd .badge .badge-logo { top: 0; height: 100%; margin-top: 0; }" +
+    ".tvs-sd .ab { font-size: clamp(9px, 9cqh, 18px); font-weight: 800; font-stretch: 88%; text-shadow: 0 1px 2px rgba(0,0,0,.6); }" +
+    ".tvs-mid { display: flex; flex-direction: column; align-items: center; gap: 3cqh; }" +
+    ".tvs-sc { display: flex; align-items: baseline; gap: 1.5cqw; font-size: clamp(16px, min(32cqh, 15cqw), 80px); font-stretch: 66%; line-height: 1; }" +
+    ".tvs-sc b { font-weight: 800; } .tvs-sc b.lose { color: var(--muted); } .tvs-sc i { font-style: normal; color: var(--dim); font-size: .55em; }" +
+    ".tvs-clk { padding: .15em .45em; border-radius: 2px; background: var(--raise); color: var(--ink); font-size: clamp(9px, min(10cqh, 7cqw), 20px); font-weight: 800; font-stretch: 88%; white-space: nowrap; }" +
+    ".tvs-clk.live { background: var(--live); color: #fff; }" +
+    ".tvs-clk.big { font-size: clamp(11px, min(15cqh, 9cqw), 30px); }" +
+    "@container (max-height: 74px) { .tvs-sd .ab { display: none; } }" +
+    "@container (max-width: 120px) { .tvs-tn { display: none; } }" +
+    ".tvs-split { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; background: var(--line); }" +
+    ".tvs-split.four { grid-template-rows: repeat(2, minmax(0, 1fr)); }" +
+    ".tvs-cell { position: relative; overflow: hidden; background: var(--bg); container-type: size; }" +
+    ".tvs-empty { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; color: var(--dim); }" +
+    ".tvs-tv.ed { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; }" +
+    ".tvs-ename { font-size: clamp(11px, min(16cqh, 11cqw), 24px); font-weight: 800; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }" +
+    ".tvs-esub { font-size: clamp(9px, 9cqh, 13px); color: var(--muted); }" +
+    ".tvs-which { display: flex; gap: 6px; flex-wrap: wrap; }" +
+    ".tvs-which button { min-height: 44px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); background: var(--lg-fill); border: 1px solid var(--lg-edge); }" +
+    ".tvs-which button[aria-pressed=\"true\"] { background: var(--accent-fill); color: var(--on-accent); border-color: var(--accent-fill); }" +
+    ".tvs-lbl.first { margin-top: 0; }" +
+    ".tvs-panel > .tvs-del { margin-top: 4px; }" +
+    ".tvs-prow.col { flex-direction: column; align-items: stretch; padding: 8px 0; }" +
+    ".tvs-prow.col .seg { width: auto; }" +
     ".tvs-h { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 4px; }" +
     ".tvs-h h2 { margin: 0; font-size: 15px; }" +
     ".tvs-h .count { font-size: 12px; color: var(--dim); }" +
@@ -89,7 +105,7 @@
     ".tvs-row .chwatch { flex: none; display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 12px !important; border-radius: 8px !important; font: inherit; font-size: 13px; font-weight: 800; color: var(--ink); white-space: nowrap; }" +
     ".tvs-row .chwatch::before { content: \"\"; border-left: 7px solid var(--accent); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }" +
     ".tvs-row .tvs-noch { min-width: 44px; font-size: 11px; color: var(--dim); text-align: center; }" +
-    ".tvs-mu .ab { font-size: 12px; font-weight: 800; font-stretch: 88%; }" +
+    ".tvs-x { display: none; }" +
     ".tvs-sw { padding: 0 10px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--lg-fill); border: 1px solid var(--lg-edge); }" +
     ".tvs-alt { padding: 0 0 8px 54px; display: flex; flex-direction: column; }" +
     ".tvs-alt button { min-height: 44px; text-align: left; background: none; border: 0; border-top: 1px solid var(--hair); font: inherit; font-size: 15px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; padding: 0; }" +
@@ -115,7 +131,7 @@
     ".tvs-add { margin-top: 8px; min-height: 44px; width: 100%; border-radius: 8px; border: 1px dashed var(--line); background: none; font: inherit; font-size: 14px; font-weight: 700; color: var(--muted); }" +
     ".tvs-panel { margin-top: 12px; padding: 12px; border-radius: 8px; background: var(--card); }" +
     ".tvs-prow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; }" +
-    ".tvs-prow + .tvs-prow { border-top: 1px solid var(--hair); }" +
+    ".tvs-prow { border-top: 1px solid var(--hair); margin-top: 12px; }" +
     ".tvs-prow > span { font-size: 15px; font-weight: 700; }" +
     ".tvs-prow > span small { display: block; font-size: 12px; color: var(--dim); font-weight: 700; }" +
     ".tvs-prow .seg { width: 170px; flex: none; }" +
@@ -264,47 +280,65 @@
     x0 = Math.max(0, x0 - 1); y0 = Math.max(0, y0 - 1); x1 = Math.min(TVW, x1 + 1); y1 = Math.min(TVH, y1 + 1);
     return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   }
-  function tvsMatch(g, small) {
-    var mu = el("span", "tvs-mu"), sc = scoreOf(g), o = sideOrder(g);
-    o.forEach(function (s, i) {
-      var b = small ? el("span", "ab", abbr(g, s)) : badgeFor(abbr(g, s), g[s], g[s + "Color"], g[s + "Alt"]);
-      var n = sc ? el("span", "sc", String(s === "away" ? sc.a : sc.h)) : null;
-      if (n && sc.state === "post" && Number(s === "away" ? sc.a : sc.h) < Number(s === "away" ? sc.h : sc.a)) n.className += " lose";
-      if (i === 0) { mu.appendChild(b); if (n) mu.appendChild(n); mu.appendChild(el("span", "gap")); }
-      else { if (n) mu.appendChild(n); mu.appendChild(b); }
-    });
-    return mu;
+  // 3.137.2 (DJ): each TV is drawn like the Live notification's face-off card: slanted team-color panels at each edge,
+  // the logos big with the abbreviation under them, the score big in the middle and the clock in a square tag.
+  // Sizes follow the TV's own box (container units), so a small TV is a smaller copy, and the channel is always big.
+  function tvsColor(g, s) {
+    var c = g[s + "Color"]; if (hexOk(c)) return c;
+    var tl = teamLook(g[s]); if (tl && hexOk(tl[1])) return tl[1];
+    var kt = typeof teamByName === "function" ? teamByName(g[s]) : null; if (kt && hexOk(kt.c1)) return kt.c1;
+    return colors(g[s])[0];
+  }
+  function tvsFace(box, g, name) {
+    var o = sideOrder(g), sc = scoreOf(g), st = tvsStatus(g);
+    o.forEach(function (s, i) { var pl = el("span", "tvs-pl " + (i ? "r" : "l")); pl.style.setProperty("--tc", tvsColor(g, s)); box.appendChild(pl); });
+    var top = el("span", "tvs-top2");
+    top.appendChild(el("span", "tvs-tn", name || ""));
+    var ch = tvsChan(g).main;
+    top.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-ch none", "No channel"));
+    box.appendChild(top);
+    var fo = el("span", "tvs-fo");
+    var side = function (s) { var w = el("span", "tvs-sd"); w.appendChild(badgeFor(abbr(g, s), g[s], g[s + "Color"], g[s + "Alt"])); w.appendChild(el("span", "ab", abbr(g, s))); return w; };
+    fo.appendChild(side(o[0]));
+    var mid = el("span", "tvs-mid");
+    if (sc) {
+      var a = Number(o[0] === "away" ? sc.a : sc.h), h = Number(o[1] === "away" ? sc.a : sc.h), row = el("span", "tvs-sc");
+      row.appendChild(el("b", sc.state === "post" && a < h ? "lose" : null, String(a)));
+      row.appendChild(el("i", null, "–"));
+      row.appendChild(el("b", sc.state === "post" && h < a ? "lose" : null, String(h)));
+      mid.appendChild(row);
+    }
+    mid.appendChild(el("span", "tvs-clk" + (st.live ? " live" : "") + (sc ? "" : " big"), st.text));
+    fo.appendChild(mid);
+    fo.appendChild(side(o[1]));
+    box.appendChild(fo);
   }
   function tvsTile(t, list, tag, bx) {
-    var small = t.w < 12 || t.h < 8;
-    var node = el(tag || "div", "tvs-tv" + (t.main ? " main" : "") + (small ? " sm" : ""));
+    var node = el(tag || "div", "tvs-tv" + (t.main ? " main" : ""));
     tvsPlace(node, t, bx);
     var n = Math.max(1, t.split || 1);
+    if (!list) {   // the editor: the TV's name and what it's set to, big enough to read
+      node.classList.add("ed");
+      node.appendChild(el("span", "tvs-ename", t.name));
+      var bits = []; if (t.main) bits.push("My teams"); if (n > 1) bits.push(n + " games");
+      if (bits.length) node.appendChild(el("span", "tvs-esub", bits.join(" · ")));
+      return node;
+    }
     if (n > 1) {
-      var hd = el("span", "tn"); hd.appendChild(el("span", null, t.name + " · split " + n)); node.appendChild(hd);
-      var grid = el("span", "tvs-split"); grid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))"; if (n === 4) grid.style.gridTemplateRows = "repeat(2, minmax(0, 1fr))";
+      node.classList.add("split");
+      var grid = el("span", "tvs-split" + (n === 4 ? " four" : ""));
       for (var j = 0; j < n; j++) {
-        var g = list && list[j], c = el("span", "tvs-cell");
-        if (g) { c.appendChild(el("span", null, abbr(g, sideOrder(g)[0]) + "–" + abbr(g, sideOrder(g)[1]))); var ch = tvsChan(g).main; if (ch) c.appendChild(el("span", "tvs-ch", NET_SHORT[ch] || ch)); var ts = tvsStatus(g); if (ts.live) c.appendChild(el("span", "live", ts.text)); }
-        else if (list) c.appendChild(el("span", "tvs-empty", "Open"));
+        var c = el("span", "tvs-cell"), g = list[j];
+        if (g) tvsFace(c, g, j === 0 ? t.name : ""); else { c.appendChild(el("span", "tvs-tn", j === 0 ? t.name : "")); c.appendChild(el("span", "tvs-empty", "Nothing else on")); }
         grid.appendChild(c);
       }
       node.appendChild(grid);
       return node;
     }
-    var g1 = list && list[0];
-    var top = el("span", "tn"); top.appendChild(el("span", null, t.name));
-    if (g1) { var c1 = tvsChan(g1).main; if (c1) top.appendChild(el("span", "tvs-ch", NET_SHORT[c1] || c1)); }
-    node.appendChild(top);
-    if (g1) {
-      node.appendChild(tvsMatch(g1, small));
-      var st = tvsStatus(g1);
-      node.appendChild(el("span", "tvs-st" + (st.live ? " live" : ""), st.text));
-      node.appendChild(el("span", "tvs-nm", pairText(g1, function (s) { return short(g1, s); }, homeFirst(g1) || g1.neutral ? " vs " : " at ")));
-    } else if (list) node.appendChild(el("span", "tvs-empty", "Nothing else on"));
+    if (list[0]) tvsFace(node, list[0], t.name);
+    else { node.appendChild(el("span", "tvs-tn", t.name)); node.appendChild(el("span", "tvs-empty", "Nothing else on")); }
     return node;
   }
-
   // ---------- the On TV page's top part ----------
   function tvsBlock(body, gs) {
     tvsLoad();
@@ -334,13 +368,16 @@
     // which time: Live now, or the next start times
     var slots = tvsSlots(gs);
     if (!slots.length) { wrap.appendChild(el("div", "notice", "No games left to put on your TVs this day.")); body.appendChild(wrap); return; }
+    // 3.137.2 (DJ): opens on Live now; a time you pick holds while you're here, then it's back to Live now
+    if (TVS.slot && Date.now() - (TVS.slotAt || 0) > 15 * 60000) TVS.slot = "";
     var slot = slots.filter(function (s) { return s.k === TVS.slot; })[0] || slots[0];
     if (slots.length > 1) {
-      var sr = el("div", "tvs-slots"); sr.setAttribute("role", "group"); sr.setAttribute("aria-label", "When");
+      wrap.appendChild(el("span", "tvs-lbl", "What's on at"));
+      var sr = el("div", "tvs-slots"); sr.setAttribute("role", "group"); sr.setAttribute("aria-label", "What's on at");
       slots.forEach(function (s) {
         var b = el("button"); b.type = "button"; b.setAttribute("aria-pressed", s === slot ? "true" : "false");
         if (s.live) b.appendChild(el("i")); b.appendChild(document.createTextNode(s.label));
-        b.addEventListener("click", function () { TVS.slot = s.k; TVS.swap = ""; keepScroll(renderTV); });
+        b.addEventListener("click", function () { TVS.slot = s.k; TVS.slotAt = Date.now(); TVS.swap = ""; keepScroll(renderTV); });
         sr.appendChild(b);
       });
       wrap.appendChild(sr);
@@ -507,32 +544,48 @@
       lays.appendChild(b);
     });
   }
+  // 3.137.2 (DJ found it confusing): the panel says which TV it's changing, with a button for each TV to switch
   function tvsEdPanel(panel, s) {
     panel.textContent = "";
     var t = s.tvs[TVS.sel];
-    if (!t) { panel.appendChild(el("p", "tvs-hint", "Add a TV to start.")); return; }
-    var r0 = el("div", "tvs-prow"); var nmIn = el("input", "tvs-in"); nmIn.type = "text"; nmIn.maxLength = 18; nmIn.value = t.name; nmIn.setAttribute("aria-label", "TV name");
-    nmIn.addEventListener("input", function () { t.name = nmIn.value || "TV"; });
-    nmIn.addEventListener("change", function () { tvsEdRedraw(); });
-    r0.appendChild(nmIn); panel.appendChild(r0);
-    var r1 = el("div", "tvs-prow"), l1 = el("span", null, "Main TV"); l1.appendChild(el("small", null, "Your teams go here first"));
+    if (!t) return;
+    panel.appendChild(el("span", "tvs-lbl first", "Change a TV: tap one here or on the drawing"));
+    var pick = el("div", "tvs-which"); pick.setAttribute("role", "group"); pick.setAttribute("aria-label", "Which TV");
+    s.tvs.forEach(function (x, i) {
+      var b = el("button", null, x.name || "TV " + (i + 1)); b.type = "button"; b.setAttribute("aria-pressed", i === TVS.sel ? "true" : "false");
+      b.addEventListener("click", function () { TVS.sel = i; tvsEdRedraw(); });
+      pick.appendChild(b);
+    });
+    panel.appendChild(pick);
+    panel.appendChild(el("span", "tvs-lbl", "Name"));
+    var nmIn = el("input", "tvs-in"); nmIn.type = "text"; nmIn.maxLength = 18; nmIn.value = t.name; nmIn.setAttribute("aria-label", "Name of this TV");
+    nmIn.addEventListener("input", function () {
+      t.name = nmIn.value || "TV";
+      var w = $("tvs-ed-wall"), tile = w && w.children[TVS.sel], nm = tile && tile.querySelector(".tvs-ename"); if (nm) nm.textContent = t.name;
+      var pb = pick.children[TVS.sel]; if (pb) pb.textContent = t.name;
+    });
+    panel.appendChild(nmIn);
+    var r1 = el("div", "tvs-prow"), l1 = el("span", null, "My teams go on this TV");
+    l1.appendChild(el("small", null, "When one of your teams plays, that game goes on this TV first. One TV can have this, usually your biggest."));
     r1.appendChild(l1);
-    var sw = el("button", "switch"); sw.type = "button"; sw.setAttribute("role", "switch"); sw.setAttribute("aria-label", "Main TV"); sw.setAttribute("aria-checked", t.main ? "true" : "false"); sw.appendChild(el("span", "knob"));
+    var sw = el("button", "switch"); sw.type = "button"; sw.setAttribute("role", "switch"); sw.setAttribute("aria-label", "My teams go on this TV"); sw.setAttribute("aria-checked", t.main ? "true" : "false"); sw.appendChild(el("span", "knob"));
     sw.addEventListener("click", function () { var on = !t.main; s.tvs.forEach(function (x) { x.main = false; }); t.main = on; tvsEdRedraw(); });
     r1.appendChild(sw); panel.appendChild(r1);
-    var r2 = el("div", "tvs-prow"), l2 = el("span", null, "Split screen"); l2.appendChild(el("small", null, "Games on one TV, like YouTube TV Multiview"));
+    var r2 = el("div", "tvs-prow col"), l2 = el("span", null, "Games at once on this TV");
+    l2.appendChild(el("small", null, "Most TVs show 1. Pick 2 or 4 if this TV shows several games on one screen, like YouTube TV Multiview."));
     r2.appendChild(l2);
-    var seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Games on this TV");
-    [[1, "1"], [2, "2"], [4, "4"]].forEach(function (o) {
+    var seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Games at once on this TV");
+    [[1, "1 game"], [2, "2 games"], [4, "4 games"]].forEach(function (o) {
       var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", (t.split || 1) === o[0] ? "true" : "false");
       b.addEventListener("click", function () { t.split = o[0]; tvsEdRedraw(); });
       seg.appendChild(b);
     });
     r2.appendChild(seg); panel.appendChild(r2);
-    var r3 = el("div", "tvs-prow");
-    var rm = el("button", "tvs-del", "Remove this TV"); rm.type = "button";
-    rm.addEventListener("click", function () { var was = t.main; s.tvs.splice(TVS.sel, 1); if (was && s.tvs[0]) s.tvs[0].main = true; TVS.sel = 0; tvsEdRedraw(); });
-    r3.appendChild(rm); panel.appendChild(r3);
+    if (s.tvs.length > 1) {
+      var rm = el("button", "tvs-del", "Remove " + (t.name || "this TV")); rm.type = "button";
+      rm.addEventListener("click", function () { var was = t.main; s.tvs.splice(TVS.sel, 1); if (was && s.tvs[0]) s.tvs[0].main = true; TVS.sel = 0; tvsEdRedraw(); });
+      panel.appendChild(rm);
+    }
   }
   // drag a TV, or its corner, in grid steps. Only the TV's own box moves while the finger is down; the panel redraws after.
   function tvsDrag(node, rz, t, i, wall) {

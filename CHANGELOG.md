@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.137.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- My TVs: each TV now looks like a Live notification. The team colors slant in from each side, the logos and score are big, the clock sits in a small tag under the score, and the channel is in large type at the top right of every TV. Everything grows with the TV, so a small TV is a smaller copy of the big one and still shows the channel clearly. Split-screen TVs draw each game the same way.
+- Editing a setup is clearer. A row of buttons, one per TV, shows which TV you're changing (tapping a TV in the drawing picks it too), and the name you type updates on the drawing as you go. "Main TV" is now "My teams go on this TV", explained in a line. "Split screen 1, 2, 4" is now "Games at once on this TV: 1 game, 2 games, 4 games", for TVs that show several games on one screen, like YouTube TV Multiview.
+- The time row is labeled "What's on at". It always opens on Live now; tap a later time and every TV refills with the games on at that time. It goes back to Live now when you leave My TVs.
+
 ## 3.137.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News (the layouts to try): numbers Claude writes into the wire now show as big numbers on every tab, including Number of the day on Rundown and Numbers today on Wire 3. Before, most were filed as plain stories and the number was hidden.
