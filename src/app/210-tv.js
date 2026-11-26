@@ -1,5 +1,8 @@
   // On TV. 3.102.1: a channel lists five games until "Show all"; My channels hides the ones you don't get.
-  var TV = { edit: false, all: {} }, TV_MAX = 5, TV_HIDE = {};
+  var TV = { edit: false, all: {}, f: "all" }, TV_MAX = 5, TV_HIDE = {};
+  try { TV.f = localStorage.getItem("slate-tv-chf") || "all"; } catch (e) {}
+  // 3.153.0 (DJ): the Channels tab's own filters (one at a time)
+  var TV_CHF = [["all", "All"], ["live", "Live now"], ["mine", "My teams"], ["slate", "My slate"], ["national", "National TV"], ["streaming", "Streaming"]];
   try { TV_HIDE = JSON.parse(localStorage.getItem("slate-tv-hide") || "{}") || {}; } catch (e) { TV_HIDE = {}; }
   (function () { var st = document.createElement("style"); st.id = "tv-css"; st.textContent =
     ".tv-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; }" +
@@ -29,6 +32,8 @@
   }
   function renderTV() {
     var body = $("tv-body");
+    // 3.153.0: All, National TV and Streaming were tabs; now they're filters inside Channels
+    if (state.tvFilter !== "setups" && state.tvFilter !== "channels") { if (state.tvFilter === "national" || state.tvFilter === "streaming") TV.f = state.tvFilter; state.tvFilter = "channels"; }
     // TV watch setups (3.135.0): the editor isn't redrawn by live score updates, so a drag or the name you're typing stays put
     if (TVS.edit && state.tvFilter !== "setups") { TVS.edit = null; TVS.drawn = false; }   // the editor belongs to My TVs
     if (state.tvFilter !== "setups") TVS.slot = "";   // back on My TVs it opens on Live now again
@@ -37,12 +42,25 @@
     var gs = visibleGames();
     if (state.tvFilter === "setups") { tvsBlock(body, gs); return; }   // My TVs tab (3.135.0)
     if (!gs.length) { if (isDuo || games().length) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
-    var groups = {};
+    var groups = {}, f = TV.f;
+    if (!TV.edit) {
+      var fr = tvsNoSwipe(el("div", "tvs-slots tv-chf")); fr.setAttribute("role", "group"); fr.setAttribute("aria-label", "Show channels");
+      TV_CHF.forEach(function (o) {
+        var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", f === o[0] ? "true" : "false");
+        if (o[0] === "live") b.insertBefore(el("i"), b.firstChild);
+        b.addEventListener("click", function () { TV.f = o[0]; try { localStorage.setItem("slate-tv-chf", o[0]); } catch (e) {} keepScroll(renderTV); });
+        fr.appendChild(b);
+      });
+      body.appendChild(fr);
+    }
     gs.forEach(function (g) {
+      if (f === "live" && status(g).kind !== "live") return;
+      if (f === "mine" && !hasFav(g)) return;
+      if (f === "slate" && !state.slateSet[g.id]) return;
       (g.tv || []).filter(Boolean).forEach(function (n) {
         var k = chanKind(n);
-        if (state.tvFilter === "national" && k !== "national") return;
-        if (state.tvFilter === "streaming" && k !== "streaming") return;
+        if (f === "national" && k !== "national") return;
+        if (f === "streaming" && k !== "streaming") return;
         (groups[n] = groups[n] || []).push(g);
       });
     });
@@ -58,7 +76,7 @@
     var ed = el("button", "rlink", nHid ? "My channels (" + nHid + " hidden)" : "My channels"); ed.type = "button"; ed.addEventListener("click", function () { TV.edit = true; renderTV(); window.scrollTo(0, 0); }); bar.appendChild(ed);
     body.appendChild(bar);
     if (!names.length) {
-      body.appendChild(el("div", "notice", state.tvFilter === "national" ? "No national TV games on this day." : state.tvFilter === "streaming" ? "No streaming-only games on this day." : "No channel listings for this day."));
+      body.appendChild(el("div", "notice", ({ national: "No national TV games on this day.", streaming: "No streaming-only games on this day.", live: "No games on TV right now.", mine: "None of your teams are on TV this day.", slate: "No games from your slate are on TV this day." })[f] || "No channel listings for this day."));
       return;
     }
     // each channel opens and closes; the choice is remembered

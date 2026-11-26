@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.153.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV has two tabs now: My TVs and Channels. Channels has its own filters across the top: All, Live now, My teams, My slate, National TV and Streaming.
+- My TVs: the "What's on at" time row scrolls sideways again. Sliding it used to switch tabs instead.
+- My TVs knows how long each sport runs (football 3.5 hours, NBA 2.5, hockey 2.75, soccer 2 and so on). When a game your rules put first starts while another is still on, that TV shows "Switch at 8:00 PM to LAL vs BOS", and the list under the TVs says the same, so you know you'll change it before the first game ends.
 ## 3.152.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Settings, Look and text size: the Simple mode switch no longer sits under the Dynamic Island. On the folded Duo and on the right half of the unfolded Duo it stops to the left of it.

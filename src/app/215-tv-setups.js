@@ -10,8 +10,10 @@
   var TVW = 32, TVH = 22, TV_MAXN = 5;
   // 3.135.1 (DJ): My TVs is On TV's first tab and the one it opens on; the channel list (All) is second.
   // TV_TABS lives in 070-navigation.js (swipe order); it's put in the same order as the tab row here.
-  TV_TABS.splice(0, TV_TABS.length, "setups", "all", "national", "streaming");
+  // 3.153.0 (DJ): two tabs, My TVs and Channels; the channel list has its own filters (TV.f in 210-tv.js)
+  TV_TABS.splice(0, TV_TABS.length, "setups", "channels");
   if (state.tvFilter === "all") state.tvFilter = "setups";
+  else if (state.tvFilter === "national" || state.tvFilter === "streaming") { TV.f = state.tvFilter; state.tvFilter = "channels"; }
   var TVS = { rules: { pins: [], lg: [] }, list: [], cur: "", loaded: false, asked: false, slot: "", edit: null, sel: 0, once: null, swap: "", pins: {}, saveT: null };
   try { var tvc = JSON.parse(localStorage.getItem("slate-tv-setups") || "null"); if (tvc && Array.isArray(tvc.list)) { TVS.list = tvc.list; TVS.cur = tvc.cur || ""; if (tvc.rules) TVS.rules = tvsRulesNorm(tvc.rules); } } catch (e) {}
   try { var tvp = JSON.parse(localStorage.getItem("slate-tv-pins") || "null"); if (tvp && tvp.d === todayInHome()) TVS.pins = tvp.p || {}; } catch (e) {}
@@ -37,12 +39,17 @@
     ".tvs { margin: 4px 0 20px; padding-bottom: 88px; }" +
     ".tvs-top { display: flex; align-items: center; gap: 8px; min-height: 44px; }" +
     ".tvs-top .rlink { margin: 0 0 0 auto; min-height: 44px; }" +
+    ".tvs-acts { display: flex; flex: none; gap: 12px; margin-left: auto; } .tvs-acts .rlink { margin: 0; } .tvs-acts .rlink:first-child { margin-right: 0 !important; }" +
     ".tvs-pick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }" +
     ".tvs-pick::-webkit-scrollbar { display: none; }" +
     ".tvs-pill { flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; color: var(--muted); background: var(--lg-fill); border: 1px solid var(--lg-edge); box-shadow: var(--lg-hi); }" +
     ".tvs-pill[aria-pressed=\"true\"] { background: var(--lg-lit); color: var(--ink); }" +
     ".tvs-slots { display: flex; gap: 2px; padding: 4px; margin: 8px 0 0; border-radius: 999px; background: var(--lg-fill); border: 1px solid var(--lg-edge); box-shadow: var(--lg-hi); overflow-x: auto; scrollbar-width: none; }" +
     ".tvs-slots::-webkit-scrollbar { display: none; }" +
+    "@container (max-width: 240px) { .tvs-swn .pre { display: none; } }" +
+    ".tvs-slots { touch-action: pan-x; overscroll-behavior-x: contain; }" +
+    ".tvs-swn { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 2cqh 4cqw; background: rgba(0,0,0,.72); color: #fff; font-size: clamp(8px, 7.5cqh, 14px); font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }" +
+    ".tvs-row .tx > span.tvs-swl { display: block; color: var(--ink); font-weight: 700; }" +
     ".tvs-slots button { flex: 1 0 auto; min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 6px; }" +
     ".tvs-slots button[aria-pressed=\"true\"] { background: var(--lg-lit); color: var(--ink); }" +
     ".tvs-slots i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }" +
@@ -232,6 +239,34 @@
     if (tv === "main" || !tv) return "the Main TV";
     var t = setup && setup.tvs[tv - 1]; return t && !t.main ? t.name : "TV " + tv;
   }
+  // a row that scrolls sideways: its touches never reach the page swipe or pull-down (3.153.0, DJ couldn't scroll the times)
+  function tvsNoSwipe(node) {
+    ["touchstart", "touchmove", "touchend"].forEach(function (k) { node.addEventListener(k, function (e) { e.stopPropagation(); }, { passive: true }); });
+    return node;
+  }
+  // 3.153.0 (DJ): a game still on when a game your rules rank higher starts gets a note on its TV:
+  // "Switch at 8:00 PM to LAL vs BOS". Game length per sport is LEAGUES[k].hrs (info(g).hrs).
+  function tvsSwitches(setup, gs, slot, slots, fill) {
+    var notes = fill.map(function () { return []; }), from = slot.live ? Date.now() : slot.t;
+    var later = slots.filter(function (s) { return !s.live && s.t > from; });
+    fill.forEach(function (l, i) {
+      l.forEach(function (g, j) {
+        var end = new Date(g.start).getTime() + info(g).hrs * 3600000;
+        for (var q = 0; q < later.length; q++) {
+          var s = later[q]; if (s.t >= end - 10 * 60000) break;   // over by then: the TV just moves on
+          var pool = tvsPool(gs, s); if (!pool.some(function (x) { return x.id === g.id; })) break;
+          var f2 = tvsFill(setup, pool, s);
+          if (f2[i].some(function (x) { return x.id === g.id; })) continue;
+          var mine = fill[i].map(function (x) { return x.id; });
+          var nx = f2[i].filter(function (x) { return mine.indexOf(x.id) === -1; })[0] || f2[i][j];
+          if (nx) notes[i][j] = { at: s, g: nx };
+          break;
+        }
+      });
+    });
+    return notes;
+  }
+  function tvsNoteText(nt) { return "Switch at " + nt.at.label + " to " + abbr(nt.g, sideOrder(nt.g)[0]) + " vs " + abbr(nt.g, sideOrder(nt.g)[1]); }
   // the setups to choose from today: Live now (when something is on), then each upcoming start time
   function tvsSlots(gs) {
     var out = [], seen = {}, live = gs.filter(function (g) { return status(g).kind === "live"; });
@@ -241,7 +276,7 @@
       var b = Math.floor(t / 900000) * 900000;   // start times within the same quarter hour share a setup
       if (seen[b]) return; seen[b] = 1; out.push({ k: String(b), label: timeText(new Date(b).toISOString()), t: b });
     });
-    return out.slice(0, 8);
+    return out.slice(0, 24);   // the row scrolls (3.153.0), so the evening's start times fit too
   }
   function tvsPool(gs, slot) {
     var pool;
@@ -345,7 +380,7 @@
     var kt = typeof teamByName === "function" ? teamByName(g[s]) : null; if (kt && hexOk(kt.c1)) return kt.c1;
     return colors(g[s])[0];
   }
-  function tvsFace(box, g, name, yt) {
+  function tvsFace(box, g, name, yt, note) {
     var o = sideOrder(g), sc = scoreOf(g), st = tvsStatus(g);
     o.forEach(function (s, i) { var pl = el("span", "tvs-pl " + (i ? "r" : "l")); pl.style.setProperty("--tc", tvsColor(g, s)); box.appendChild(pl); });
     var top = el("span", "tvs-top2");
@@ -368,8 +403,14 @@
     fo.appendChild(mid);
     fo.appendChild(side(o[1]));
     box.appendChild(fo);
+    if (note) {   // small TVs drop "Switch at" and keep the time and the game
+      var sn = el("span", "tvs-swn"); sn.appendChild(el("span", "pre", "Switch at "));
+      sn.appendChild(document.createTextNode(note.at.label + ": " + abbr(note.g, sideOrder(note.g)[0]) + " vs " + abbr(note.g, sideOrder(note.g)[1])));
+      box.appendChild(sn);
+    }
   }
-  function tvsTile(t, list, tag, bx) {
+  function tvsTile(t, list, tag, bx, notes) {
+    notes = notes || [];
     var node = el(tag || "div", "tvs-tv" + (t.main ? " main" : ""));
     tvsPlace(node, t, bx);
     var n = Math.max(1, t.split || 1);
@@ -385,13 +426,13 @@
       var grid = el("span", "tvs-split" + (n === 4 ? " four" : ""));
       for (var j = 0; j < n; j++) {
         var c = el("span", "tvs-cell"), g = list[j];
-        if (g) tvsFace(c, g, j === 0 ? t.name : "", true); else { c.appendChild(el("span", "tvs-tn", j === 0 ? t.name : "")); c.appendChild(el("span", "tvs-empty", "No YouTube TV game")); }
+        if (g) tvsFace(c, g, j === 0 ? t.name : "", true, notes[j]); else { c.appendChild(el("span", "tvs-tn", j === 0 ? t.name : "")); c.appendChild(el("span", "tvs-empty", "No YouTube TV game")); }
         grid.appendChild(c);
       }
       node.appendChild(grid);
       return node;
     }
-    if (list[0]) tvsFace(node, list[0], t.name);
+    if (list[0]) tvsFace(node, list[0], t.name, false, notes[0]);
     else { node.appendChild(el("span", "tvs-tn", t.name)); node.appendChild(el("span", "tvs-empty", "Nothing else on")); }
     return node;
   }
@@ -419,9 +460,10 @@
     var nb = el("button", "tvs-pill", "+ New"); nb.type = "button"; nb.addEventListener("click", function () { tvsOpenEditor(null); }); pick.appendChild(nb);
     top.appendChild(pick);
     var ru = el("button", "rlink", "Rules"); ru.type = "button"; ru.setAttribute("aria-label", "Which game goes where: your TV rules");
-    ru.addEventListener("click", function () { TVS.edit = { rules: true }; TVS.drawn = false; renderTV(); window.scrollTo(0, 0); }); top.appendChild(ru);
+    ru.addEventListener("click", function () { TVS.edit = { rules: true }; TVS.drawn = false; renderTV(); window.scrollTo(0, 0); });
+    var acts = el("span", "tvs-acts"); acts.appendChild(ru); top.appendChild(acts);
     var ed = el("button", "rlink", "Edit"); ed.type = "button"; ed.setAttribute("aria-label", "Edit this TV setup");
-    ed.addEventListener("click", function () { tvsOpenEditor(setup); }); top.appendChild(ed);
+    ed.addEventListener("click", function () { tvsOpenEditor(setup); }); acts.appendChild(ed);
     wrap.appendChild(top);
     // which time: Live now, or the next start times
     var slots = tvsSlots(gs);
@@ -431,7 +473,7 @@
     var slot = slots.filter(function (s) { return s.k === TVS.slot; })[0] || slots[0];
     if (slots.length > 1) {
       wrap.appendChild(el("span", "tvs-lbl", "What's on at"));
-      var sr = el("div", "tvs-slots"); sr.setAttribute("role", "group"); sr.setAttribute("aria-label", "What's on at");
+      var sr = tvsNoSwipe(el("div", "tvs-slots")); sr.setAttribute("role", "group"); sr.setAttribute("aria-label", "What's on at");
       slots.forEach(function (s) {
         var b = el("button"); b.type = "button"; b.setAttribute("aria-pressed", s === slot ? "true" : "false");
         if (s.live) b.appendChild(el("i")); b.appendChild(document.createTextNode(s.label));
@@ -439,11 +481,13 @@
         sr.appendChild(b);
       });
       wrap.appendChild(sr);
+      // the picked time stays in view after a redraw
+      requestAnimationFrame(function () { var on = sr.querySelector('[aria-pressed="true"]'); if (on && on.offsetLeft + on.offsetWidth > sr.clientWidth) sr.scrollLeft = on.offsetLeft - 8; });
     }
-    var pool = tvsPool(gs, slot), fill = tvsFill(setup, pool, slot);
+    var pool = tvsPool(gs, slot), fill = tvsFill(setup, pool, slot), notes = tvsSwitches(setup, gs, slot, slots, fill);
     var wall = el("div", "tvs-wall"), bx = tvsBox(setup.tvs); wall.setAttribute("aria-hidden", "true");
     wall.style.aspectRatio = bx.w + " / " + bx.h;
-    setup.tvs.forEach(function (t, i) { wall.appendChild(tvsTile(t, fill[i], null, bx)); });
+    setup.tvs.forEach(function (t, i) { wall.appendChild(tvsTile(t, fill[i], null, bx, notes[i])); });
     wrap.appendChild(wall);
     // the list: what to turn each TV to
     var h = el("div", "tvs-h"); h.appendChild(el("h2", null, slot.live ? "Turn each TV to" : "At " + slot.label + ", turn each TV to"));
@@ -456,13 +500,13 @@
       for (var j = 0; j < n; j++) {
         var g = fill[i][j];
         if (!g && j > 0) continue;
-        wrap.appendChild(tvsRow(setup, slot, t, j, n, g, pool, shown));
+        wrap.appendChild(tvsRow(setup, slot, t, j, n, g, pool, shown, notes[i][j]));
       }
       if (n > 1 && fill[i].length < n) wrap.appendChild(el("p", "tvs-hint", t.name + " can only split YouTube TV channels, and " + (fill[i].length ? "only " + fill[i].length + " of its " + n + " screens have a game on one" : "no game left is on one") + " at this time."));
     });
     body.appendChild(wrap);
   }
-  function tvsRow(setup, slot, t, j, n, g, pool, shown) {
+  function tvsRow(setup, slot, t, j, n, g, pool, shown, note) {
     var box = el("div"), row = el("div", "tvs-row");
     var ch = g ? tvsChan(g, n > 1).main : "";
     row.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-noch", g ? "No channel listed" : ""));
@@ -476,6 +520,7 @@
       var more = tvsChan(g).more.filter(function (m) { return m !== ch; });
       if (more.length) sub.appendChild(document.createTextNode(" · also " + more.slice(0, 2).join(", ")));
       tx.appendChild(sub);
+      if (note) tx.appendChild(el("span", "tvs-swl", tvsNoteText(note) + ", before this one ends"));
     } else { tx.appendChild(el("b", null, lbl)); tx.appendChild(el("span", null, "Nothing else on at this time")); }
     row.appendChild(tx);
     var key = t.id + ":" + j, alts = pool.filter(function (x) { return (!g || x.id !== g.id) && (n === 1 || tvsYT(x)); });
