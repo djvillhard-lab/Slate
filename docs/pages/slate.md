@@ -142,3 +142,9 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 ## 3.131.1 (Nov 25, 2026): the same one-liner on every phone
 - DJ: "one liners on regular iPhone are shorter than duo. Make sure all are the same, lean towards the longer current versions and make them two lines if needed." The shortening was in drawing, not in writing the line: `.hl-one` forced one line and `pvFit` swapped in the longest shorter version (`pvStatAlts`) that fit, so the 390pt iPhone got shorter lines than the wider folded Duo.
 - Now `.hl-one` wraps (no clamp) and pvNode / All games no longer call pvFit, so every phone shows the full line, two lines when needed. `pvFit`, `pvStatAlts` and `pvCuts` stay in 105-pv-notes.js (unused by the stats line now); lines_check.js no longer flags shorter versions.
+
+## 3.134.6 (Nov 26, 2026): live soccer and hockey lines name every scorer
+- DJ: "In games like soccer and hockey, I want the live one-liners to always show the teams' goal scorers. If there's only been one, can provide a second featured line in addition to the goalscorer."
+- hlCompute builds `liveSc` (soccer from keyEvents via scorerList, home first; hockey from the box score's G column, away first, team nicknames) and, while the game is live, pushes it as the top candidate (`livesc`, score 999). After exactly one goal it appends "; " + the best candidate that isn't another take on a goal (SCK list). Finals are unchanged (hlFinal and the "won it" lines).
+- The Worth a look card still shows its own reason line ("Big night": "X has two goals, hat trick watch"), not the scorers line, by design since 3.39.2.
+- DJ also asked to reset every one-liner to test: a one-time stamp (`slate-lines-reset` = "3.134.6") drops each phone's saved finals lines (slate-hlc) and preview lines (slate-pv) on first load. Change the stamp to reset again.

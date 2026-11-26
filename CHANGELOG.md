@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.134.6 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- The slate: a live soccer or hockey game's line now always names every goal scorer for each team, for example "Saka (2) and Havertz for Arsenal; Palmer for Chelsea". Soccer lists the home team first, hockey the away team first, the same order as the card. After only one goal, the line also adds the game's next best fact, for example "Buchanan has scored for Villarreal; Slavia Prague have managed one shot on target to Villarreal's 5".
+- Every one-liner saved on your phone is cleared once when this version opens, so all of them are worked out again with the current rules.
+
 ## 3.134.5 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - All games, 2 columns: a finished game's small card now has a very short line for the game's best player, like "Tatum 41 pts, 8 ast", "Connelly 2 G, 1 A" or a football player's yards and touchdowns. It comes from the game's real box score. Upcoming games have no line in 2 columns. A finished small card also drops its start time, so "Final" and the channel are no longer cut off.

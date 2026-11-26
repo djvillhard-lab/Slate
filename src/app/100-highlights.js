@@ -76,12 +76,12 @@
     var done = st.state === "post";
     if (st.state !== "in" && !done) return null;
     var period = (head.status || {}).period || 0, teams = {}, c = [], lead1 = null, ctxP = {}, ctxT = {};
-    (head.competitors || []).forEach(function (k) { var tm = k.team || {}; teams[String(tm.id)] = { abbr: tm.abbreviation || "", name: tm.shortDisplayName || tm.displayName || "", short: tm.location || tm.shortDisplayName || "", side: k.homeAway, score: hlNum(k.score) }; });
+    (head.competitors || []).forEach(function (k) { var tm = k.team || {}; teams[String(tm.id)] = { abbr: tm.abbreviation || "", name: tm.shortDisplayName || tm.displayName || "", short: tm.location || tm.shortDisplayName || "", nick: tm.nickname || tm.name || "", side: k.homeAway, score: hlNum(k.score) }; });
     var tid = Object.keys(teams);
     // tm: the one team a line is about (a player's team, or the team it names), shown in front of it on the slate
     var curTm = "", tmOf = function (f) { if (curTm) return curTm; var n = f && f.team; if (!n) return ""; for (var i in teams) if (teams[i].name === n || teams[i].abbr === n || teams[i].short === n || i === String(n)) return teams[i].abbr; return ""; };
     function add(key, score, tone, text, facts) { c.push({ key: key, score: score, tone: tone, text: text, facts: facts, tm: tmOf(facts) }); }
-    var box = sum.boxscore || {}, hkP = {};
+    var box = sum.boxscore || {}, hkP = {}, liveSc = null;
     // team shooting (basketball)
     (box.teams || []).forEach(function (bt) {
       var t = teams[String((bt.team || {}).id)]; if (!t || sport !== "bball") return;
@@ -145,6 +145,13 @@
         ps.forEach(function (x) { var pts = x.g + x.a; if (pts >= 3) add("hkpts|" + x.id + "|" + pts, 40 + pts * 8, 1, x.n + (done ? " had " : " has ") + pts + " points (" + x.g + " G, " + x.a + " A)", { player: x.n, team: teams[i].name });
           else if (x.a >= 2 && !x.g) add("hka|" + x.id + "|" + x.a, 34, 1, x.n + (done ? " set up two goals" : " has two assists"), { player: x.n }); });
       });
+      // 3.134.6 (DJ: "In games like soccer and hockey, I want the live one-liners to always show the teams' goal scorers"):
+      // every scorer for each team (away first, as on the card), used below as the live line
+      var hkL = []; [tid.filter(function (i) { return teams[i].side !== "home"; })[0], tid.filter(function (i) { return teams[i].side === "home"; })[0]].forEach(function (i) {
+        if (!i) return; var s1 = (hkP[teams[i].abbr] || []).filter(function (x) { return x.g; }).sort(function (x, y) { return y.g - x.g; });
+        if (s1.length) hkL.push({ i: i, ng: s1.reduce(function (n, x) { return n + x.g; }, 0), names: andL(s1.map(function (x) { return x.n + (x.g >= 2 ? " (" + x.g + ")" : ""); })), one: s1.length === 1 ? s1[0] : null }); });
+      if (hkL.length) liveSc = { n: hkL.reduce(function (n, x) { return n + x.ng; }, 0), tm: hkL.length === 1 ? teams[hkL[0].i].abbr : "",
+        text: hkL.length === 2 ? hkL.map(function (x) { return x.names + " for the " + (teams[x.i].nick || teams[x.i].name); }).join("; ") : (hkL[0].one ? hkL[0].one.n + (hkL[0].one.g >= 3 ? " has a hat trick for the " : hkL[0].one.g === 2 ? " has scored twice for the " : " has scored for the ") : hkL[0].names + " have scored for the ") + (teams[hkL[0].i].nick || teams[hkL[0].i].name) };
       var hm = {}; (box.teams || []).forEach(function (bt) { var i = String((bt.team || {}).id); if (!teams[i]) return; var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = x.displayValue; }); hm[i] = m; });
       if (hm[tid[0]] && hm[tid[1]]) {
         var sh = function (i) { return hlNum(hm[i].shotsTotal || hm[i].shots); }, hi = sh(tid[0]) >= sh(tid[1]) ? tid[0] : tid[1], lo = hi === tid[0] ? tid[1] : tid[0], s1 = sh(hi), s0 = sh(lo);
@@ -197,6 +204,14 @@
       });
       var plFirst = function (i) { var l = scorerList(i); return listAnd(l.filter(function (x) { return !/^an own goal/.test(x); }).concat(l.filter(function (x) { return /^an own goal/.test(x); }))); }, allT = plFirst(HID) + " for " + nameOf(HID) + "; " + plFirst(AID) + " for " + nameOf(AID);
       if (scorers[HID].length && scorers[AID].length && total >= 3) add("allsc|" + total, 46 + total * 3, 0, allT.charAt(0).toUpperCase() + allT.slice(1), {});
+      // 3.134.6 (DJ): the live line always names every scorer, home team first (soccer order, 3.130.5)
+      var scP = function (i) { var l = scorerList(i), pl = l.filter(function (x) { return !/^an own goal/.test(x); }), ogs = l.filter(function (x) { return /^an own goal/.test(x); }); return { pl: pl, ogs: ogs }; };
+      var scT = [HID, AID].filter(function (i) { return teams[i].score && scorerList(i).length; });
+      if (scT.length === 2) liveSc = { n: total, tm: "", text: scT.map(function (i) { return plFirst(i) + " for " + nameOf(i); }).join("; ") };
+      else if (scT.length === 1) { var si = scT[0], sp0 = scP(si);
+        var p1 = sp0.pl.length === 1 ? sp0.pl[0].replace(/ \(\d\)$/, "") : "", n1 = p1 ? gl[p1] || 1 : 0;
+        liveSc = { n: total, tm: teams[si].abbr, text: sp0.pl.length ? (p1 ? p1 + (n1 >= 3 ? " has a hat trick for " : n1 === 2 ? " has scored twice for " : " has scored for ") : listAnd(sp0.pl) + " have scored for ") + nameOf(si) + (sp0.ogs.length ? ", plus " + listAnd(sp0.ogs) : "")
+          : nameOf(si) + (teams[si].score === 1 ? "'s goal came from " : "'s goals have come from ") + listAnd(sp0.ogs) }; }
       // braces, hat tricks, playmakers
       Object.keys(gl).forEach(function (n) { var x = gl[n]; if (x < 2) return; var g0 = goals.filter(function (q) { return q.nm === n; })[0];
         add("brace|" + n + "|" + x, 50 + x * 14, 1, x >= 3 ? n + (done ? " scored a hat trick for " : " has a hat trick for ") + nameOf(g0.by) : n + (done ? " scored twice for " : " has scored twice for ") + nameOf(g0.by), { player: n, team: nameOf(g0.by) }); });
@@ -270,6 +285,15 @@
     if (tid.length === 2) { var d = teams[tid[0]].score - teams[tid[1]].score, up = d > 0 ? teams[tid[0]] : teams[tid[1]], m = Math.abs(d);
       if (false) add("lead|" + up.abbr + "|" + Math.floor(m / 5), 20 + m / 2, 0, up.name + " lead by " + m, { team: up.name, lead: m }); }
     if (lead1) add("top|" + lead1.id + "|" + Math.floor(lead1.pts / 5), 10 + lead1.pts / 2, 0, lead1.nm + " leads all scorers with " + lead1.pts, { player: lead1.nm, team: lead1.abbr, line: lead1.line });
+    // 3.134.6 (DJ: "always show the teams' goal scorers. If there's only been one, can provide a second featured line in addition to the
+    // goalscorer"): a live soccer or hockey game with a named scorer leads with every scorer; after a single goal the best other fact
+    // (not another take on that goal) follows it
+    if (!done && liveSc && liveSc.text) {
+      var SCK = /^(scorers|solo|allsc|brace|goal|late|lateq|quick|cb|cbd|fest|hksc|g|hkpts|hka|top)$/, more = "";
+      var nx = null; if (liveSc.n === 1) { nx = c.filter(function (x) { return !SCK.test(x.key.split("|")[0]); }).sort(function (a, b) { return b.score - a.score; })[0];
+        if (nx && nx.text) more = "; " + (/^(The|A|An) /.test(nx.text) ? nx.text.charAt(0).toLowerCase() + nx.text.slice(1) : nx.text); }
+      c.push({ key: "livesc|" + liveSc.n + (more ? "|" + nx.key : ""), score: 999, tone: 1, text: liveSc.text + more, facts: {}, tm: more ? "" : liveSc.tm });
+    }
     if (done) c = hlFinal(c, teams);
     if (!c.length) return null;
     c.sort(function (a, b) { return b.score - a.score; });
@@ -292,6 +316,9 @@
   // highlights never carry the score or the clock
   function hlScorey(t) { return /\b\d{1,2}:\d{2}\b/.test(t) || /\b\d{2,3}\s*[-–]\s*\d{2,3}\b(?!\s*(FG|3PT|from|shooting))/.test(t) && !/\b(FG|3PT|three|shooting|of)\b/i.test(t) || /\b(lead(s|ing)? by|trail(s|ing)? by|at the half|halftime|quarter|left in)\b/i.test(t); }
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
+  // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
+  // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.134.6") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.134.6"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
