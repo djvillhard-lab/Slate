@@ -306,6 +306,9 @@
     var big = 10.5, widths = {};
     idx.forEach(function (i) { var m = String(cols[i] || "").length * 7.5; played.forEach(function (r) { var pc = bxPct(sport, cols[i], r.s[i]); m = Math.max(m, String(r.s[i] == null ? "–" : r.s[i]).length * big + (pc ? pc.length * 6.5 + 3 : 0)); }); widths[i] = Math.ceil(Math.max(26, m)); });
     var wrap = el("div", "bxp-list"), sc = el("div", "bxp-sc");  // one sideways scroller for the whole group
+    // 3.170.2 (DJ: "Too much unused space here"): a group with only a few columns (football's, most compact ones) puts the name and the stats on
+    // one line, and fills two columns of players where the box score is wide. The CSS does the rest (040-components.css, "bxp-few").
+    var tot = 0; idx.forEach(function (i) { tot += (widths[i] || 26) + 12; }); if (idx.length && tot <= 215) wrap.classList.add("bxp-few");
     var split = sport === "bball" && gr.k !== "game" && played.some(function (r) { return r.st; }) && played.some(function (r) { return !r.st; });
     var parts = split ? [["Starters", played.filter(function (r) { return r.st; })], ["Bench", played.filter(function (r) { return !r.st; })]] : [[null, played]];
     parts.forEach(function (pt) {

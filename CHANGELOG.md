@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.170.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Box scores, less empty space: in groups with only a few stats (football's passing, rushing and receiving, and other short ones) a player no longer takes a tall row with the right half empty. On a phone the name and the stats now share one line, with a smaller photo, so about twice as many players fit on screen. On the unfolded Duo held upright, players sit two to a row. This is the same in the Live feed, the quick look and the matchup page. Wide groups like basketball's already fill the width and are unchanged.
+
 ## 3.170.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Football Live feed, wrong names fixed: "Incomplete, intended for Goff" named the passer as the target. It happened whenever the play opened with a note like "Borom reported in as eligible", and it now reads "Incomplete, intended for Borom". The note itself is no longer shown as a line.

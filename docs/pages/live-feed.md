@@ -253,3 +253,10 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   an interception's second player is the one after "INTERCEPTED by" (it used to be the intended receiver: wrong name on every pick);
   run directions are worded as runs; "1 yd" singular; kneel, spike and onside kick get their own titles; "St. Brown" survives the sentence split.
 - Checked by running `fdRead`/`fdLines` over every play of four real games (515 plays) and reading the odd ones.
+
+## 3.170.2: tighter box score rows
+- DJ: "Too much unused space here" (football box score, upright unfolded Duo). `bxRows` (110) marks a group whose columns total 215px or less as
+  `.bxp-few`; `.bx-pl` is a size container and the CSS at the end of 040-components.css lays those groups out by the box score's own width:
+  one line per player under 440px, two players per row from 440px, two per row on one line from 640px (640px+ not seen on screen).
+  The standout chip is hidden in few-column groups under 640px (the tinted row and lit numbers stay). Basketball-width groups unchanged.
+- Not done: both teams side by side. The team tabs stay.

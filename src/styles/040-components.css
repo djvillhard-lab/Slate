@@ -1957,3 +1957,30 @@ html .gv-head .gv-act { position: relative; min-height: 0 !important; height: 30
    them: on the folded Duo, and in the right pane of the unfolded Duo (DJ's rule: island fixes go to both). */
 html[data-native].side-col:not(.duo) #feed-body .fd-strip.fd-filt { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)) !important; }
 html.pn-right #view-feed.fd-isl #feed-body .fd-strip.fd-filt { margin-right: calc(var(--fd-isl, 0px) / var(--z, 1)) !important; }
+
+/* 3.170.2 (DJ: "Too much unused space here", the football box score on the upright unfolded Duo): tighter player rows in every box score.
+   .bx-pl is a size container, so the layout follows the box score's own width, not the screen's (it can be half a pane).
+   A group with few columns (.bxp-few, set in bxRows: football's groups, most compact ones) never needs sideways scrolling, so:
+   - narrow (a phone): name and stats share one line, stats on the right, smaller headshot;
+   - 440px and up (the upright unfolded Duo): two players per row, stats under the name;
+   - 640px and up: two players per row, each on one line.
+   Wider groups (basketball's) already fill the width and keep their sideways scroll. */
+.bx-pl { container-type: inline-size; container-name: bxpl; }
+.bxp-few .bxp-sc { overflow: visible; }
+.bxp-few .bxp-sc .bxp { width: auto; min-width: 0; grid-template-columns: auto minmax(0, 1fr); padding-top: 4px; padding-bottom: 4px; }
+.bxp-few .bxp-face { width: 30px; height: 30px; } .bxp-few .bxp-face img { width: 42px; } .bxp-few .bxp-face i { font-size: 11px; }
+.bxp-few .bxp-r { display: flex; align-items: center; gap: 10px; }
+.bxp-few .bxp-sc .bxp-nm { position: static; flex: 1 1 0; width: auto; max-width: none; min-width: 0; }
+.bxp-few .bxp-cells, .bxp-few .bxp-sc .bxp-cells { flex: none; padding: 0; -webkit-mask-image: none; mask-image: none; overflow: visible; }
+.bxp-few .bx-chip { display: none; }
+@container bxpl (min-width: 440px) {
+  .bxp-few .bxp-sc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; }
+  .bxp-few .bxp-sc > .bxp-sec { grid-column: 1 / -1; }
+  .bxp-few .bxp-sc > .bxp { border-top: 0; }
+  .bxp-few .bxp-r { display: block; }
+}
+@container bxpl (min-width: 640px) {
+  .bxp-few .bxp-r { display: flex; }
+  .bxp-few .bx-chip { display: inline-block; }
+}
+}
