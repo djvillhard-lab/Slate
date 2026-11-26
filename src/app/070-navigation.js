@@ -9,7 +9,7 @@
   }
   // day picker for Player rankings and All games: a vertical pill above Back, by the right thumb (later day on top)
   // On TV: All / National TV / Streaming, by tap or swipe
-  var TV_TABS = ["all", "national", "streaming"];
+  var TV_TABS = ["all", "national", "streaming", "setups"];  // My TVs: TV watch setups (3.135.0)
   function tvPick(k, dir) { if (state.tvFilter === k) return; var i0 = TV_TABS.indexOf(state.tvFilter); state.tvFilter = k; render(); slideIn($("tv-body"), dir || (TV_TABS.indexOf(k) > i0 ? "l" : "r")); }
   function tvSwipe(step) { var i = TV_TABS.indexOf(state.tvFilter), n = TV_TABS[i + step]; if (n) tvPick(n, step > 0 ? "l" : "r"); }
   function renderDockDay() {

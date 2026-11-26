@@ -28,8 +28,12 @@
     body.appendChild(done);
   }
   function renderTV() {
-    var body = $("tv-body"); body.textContent = "";
+    var body = $("tv-body");
+    // TV watch setups (3.135.0): the editor isn't redrawn by live score updates, so a drag or the name you're typing stays put
+    if (TVS.edit) { if (TVS.drawn && $("tvs-ed-wall")) return; body.textContent = ""; TVS.drawn = true; tvsEditor(body); return; }
+    body.textContent = "";
     var gs = visibleGames();
+    if (state.tvFilter === "setups") { tvsBlock(body, gs); return; }   // My TVs tab (3.135.0)
     if (!gs.length) { if (isDuo || games().length) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
     var groups = {};
     gs.forEach(function (g) {

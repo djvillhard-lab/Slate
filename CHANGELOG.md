@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.135.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV: a new My TVs tab (after Streaming) for TV watch setups. Tap "Set up my TVs", pick a layout (One TV, 1 big + 2, Big + 3, 2 × 2 wall, Big + 4), then drag each TV where it sits in your room and drag its corner to make it bigger or smaller. Up to 5 TVs. Each TV can be the main TV (your teams go there first) or a split screen for 2 or 4 games, like YouTube TV Multiview.
+- Slate fills the TVs from your slate: your team on the main TV, then the other slate games on at the same time, best first, on the biggest TVs. Each TV shows the matchup, the score or start time, and the channel in large type, and the list under it says which channel to turn each TV to, with a Watch button that opens the Watch popup.
+- With live games it opens on "Live now". With nothing live it opens on the next start time, and the row of times at the top shows the setup for each start time later on. A game that ends leaves its TV and the next game takes it.
+- Swap on any TV picks a different game for it for the rest of the day. Save as many setups as you like (Living room, Basement), switch between them at the top, or use "Just tonight" for a one-off that isn't saved. Saved setups go with your profile, so they're the same on your phone and the website.
+
 ## 3.134.9 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Every one-liner now starts with the team it's about, then a colon: "Oregon: Won four straight; ESPN gives them a 99% chance", "Blues: Holloway and McTavish have scored". The team's name moves into the label instead of being repeated in the sentence. This covers the slate, All games and Worth a look, before, during and after games.
