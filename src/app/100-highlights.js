@@ -76,12 +76,12 @@
     var done = st.state === "post";
     if (st.state !== "in" && !done) return null;
     var period = (head.status || {}).period || 0, teams = {}, c = [], lead1 = null, ctxP = {}, ctxT = {};
-    (head.competitors || []).forEach(function (k) { var tm = k.team || {}; teams[String(tm.id)] = { abbr: tm.abbreviation || "", name: tm.shortDisplayName || tm.displayName || "", short: tm.location || tm.shortDisplayName || "", nick: tm.nickname || tm.name || "", side: k.homeAway, score: hlNum(k.score) }; });
+    (head.competitors || []).forEach(function (k) { var tm = k.team || {}; teams[String(tm.id)] = { abbr: tm.abbreviation || "", full: tm.displayName || "", name: tm.shortDisplayName || tm.displayName || "", short: tm.location || tm.shortDisplayName || "", nick: tm.nickname || tm.name || "", side: k.homeAway, score: hlNum(k.score) }; });
     var tid = Object.keys(teams);
     // tm: the one team a line is about (a player's team, or the team it names), shown in front of it on the slate
     var curTm = "", tmOf = function (f) { if (curTm) return curTm; var n = f && f.team; if (!n) return ""; for (var i in teams) if (teams[i].name === n || teams[i].abbr === n || teams[i].short === n || i === String(n)) return teams[i].abbr; return ""; };
     function add(key, score, tone, text, facts) { c.push({ key: key, score: score, tone: tone, text: text, facts: facts, tm: tmOf(facts) }); }
-    var box = sum.boxscore || {}, hkP = {}, liveSc = null, bestP = {};
+    var box = sum.boxscore || {}, hkP = {}, liveSc = null, bestP = {}, plStory = null;
     // 3.139.1: "Suárez (2)" -> "Suárez has scored twice"; "Barkov and Reinhart" -> "Barkov and Reinhart have scored" (past tense once it's over)
     var scoredTx = function (names) { if (/,| and /.test(names)) return names + (done ? " scored" : " have scored");
       var m0 = /^(.*) \((\d)\)$/.exec(names), n0 = m0 ? +m0[2] : 1, nm0 = m0 ? m0[1] : names;
@@ -89,8 +89,10 @@
     // 3.139.1 (DJ: "Basketball games should show best player and stats from each team"): each team's best player so far, by sport
     var best = function (k, sc, tx) { if (!bestP[k] || sc > bestP[k].sc) bestP[k] = { sc: sc, tx: tx }; };
     // team shooting (basketball)
+    var tsAll = {};   // each team's box-score totals by team id (3.144.2, for how a finished game went)
     (box.teams || []).forEach(function (bt) {
-      var t = teams[String((bt.team || {}).id)]; if (!t || sport !== "bball") return;
+      var t = teams[String((bt.team || {}).id)]; if (t) { var m0 = {}; (bt.statistics || []).forEach(function (x) { m0[x.name] = x.displayValue; }); tsAll[String((bt.team || {}).id)] = m0; }
+      if (!t || sport !== "bball") return;
       var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = x.displayValue; });
       var three = hlMA(m["threePointFieldGoalsMade-threePointFieldGoalsAttempted"]), fg = hlMA(m["fieldGoalsMade-fieldGoalsAttempted"]);
       ctxT[t.abbr] = "FG " + fg.join("-") + ", 3PT " + three.join("-") + (m.turnovers ? ", TO " + m.turnovers : "") + (m.totalRebounds ? ", REB " + m.totalRebounds : "");
@@ -281,7 +283,7 @@
     var plays = (sum.plays || sum.scoringPlays || []).filter(function (x) { return x.scoringPlay !== false && x.awayScore != null; });
     if (plays.length && tid.length === 2) {
       var A = tid.filter(function (i) { return teams[i].side === "away"; })[0], H = tid.filter(function (i) { return teams[i].side === "home"; })[0];
-      var worstA = 0, worstH = 0, run = 0, runTeam = null, pa = 0, ph = 0;
+      var worstA = 0, worstH = 0, run = 0, runTeam = null, pa = 0, ph = 0, lchg = 0, lsg = 0;
       // 3.134.9: ESPN sometimes lists a neutral-site game's plays with home and away the other way round from the header
       // (Michigan "came back from 50 down" in a 102-56 win over Toledo). When the last play's score is the header's score
       // swapped, the plays are read swapped
@@ -289,11 +291,13 @@
       plays.forEach(function (x) {
         var a = hlNum(swp ? x.homeScore : x.awayScore), h = hlNum(swp ? x.awayScore : x.homeScore);
         worstA = Math.min(worstA, a - h); worstH = Math.min(worstH, h - a);
+        var sg0 = a > h ? 1 : a < h ? -1 : 0; if (sg0 && lsg && sg0 !== lsg) lchg++; if (sg0) lsg = sg0;
         var who = a > pa ? A : h > ph ? H : null, pts = (a - pa) + (h - ph);
         if (who) { if (who === runTeam && !(a > pa && h > ph)) run += pts; else { runTeam = who; run = pts; } }
         pa = a; ph = h;
       });
       var lead = teams[A].score - teams[H].score;
+      plStory = { lc: lchg, maxA: -worstH, maxH: -worstA, A: A, H: H };   // the most each side led by: away led by -worstH, home by -worstA
       if (sport === "bball" && run >= 10) add("run|" + teams[runTeam].abbr + "|" + Math.floor(run / 4), 26 + run * 1.5, 0, teams[runTeam].name + " are on a " + run + "-0 run", { team: teams[runTeam].name, run: run });
       var big = sport === "bball" ? 15 : sport === "football" ? 14 : 3;
       if (lead > 0 && -worstA >= big) add("cb|" + A + "|" + Math.floor(-worstA / 5), 45 + (-worstA), 1, teams[A].name + " erased a " + (-worstA) + "-point deficit", { team: teams[A].name, deficit: -worstA });
@@ -310,11 +314,55 @@
     // 3.134.6 / 3.139.1 (DJ: "always show the teams' goal scorers. If there's only been one, can provide a second featured line in addition
     // to the goalscorer"): a soccer or hockey game with a named scorer leads with every scorer, live or finished; after a single goal the
     // best other fact (not another take on that goal) follows it
+    // 3.144.2 (DJ: "The post game one liners don't have to only include the top performers… Something more to give the user an idea of
+    // how the game went… only if valuable"; DJ picked every idea on the cards): after a game, up to two facts about how it went join the
+    // line, each only when the number stands out. Basketball: lead changes, wire to wire, a big or awful night from three, the paint,
+    // comebacks. Football: turnovers, yardage, comebacks. Soccer: late winners and equalizers, penalties and red cards, who ran the game.
+    // Hockey: the power play, a lopsided shots gap, a big night in goal. Each is written "ABBR: …" so it lands in that team's row
+    var story = [];
+    if (done && tid.length === 2) {
+      var ab = function (i) { return teams[i].abbr; }, oth2 = function (i) { return i === tid[0] ? tid[1] : tid[0]; }, W2 = teams[tid[0]].score > teams[tid[1]].score ? tid[0] : teams[tid[1]].score > teams[tid[0]].score ? tid[1] : null;
+      var st2 = function (i, k) { return (tsAll[i] || {})[k]; };
+      if (sport === "bball") {
+        if (plStory && plStory.lc >= 10) story.push({ tm: "", sc: 40 + plStory.lc, text: plStory.lc + " lead changes" });
+        if (plStory && W2) { var wl2 = W2 === plStory.A ? plStory.maxH : plStory.maxA, wmax = W2 === plStory.A ? plStory.maxA : plStory.maxH;
+          if (wl2 <= 0 && wmax >= 15) story.push({ tm: ab(W2), sc: 42 + wmax / 2, text: "Never trailed and led by as many as " + wmax }); }
+        tid.forEach(function (i) { var t3 = hlMA(st2(i, "threePointFieldGoalsMade-threePointFieldGoalsAttempted")); if (t3[1] < 25) return;
+          if (t3[0] / t3[1] >= 0.45 && t3[0] >= 14) story.push({ tm: ab(i), sc: 36 + t3[0], text: "Made " + t3[0] + " of " + t3[1] + " threes" });
+          else if (t3[0] / t3[1] <= 0.2) story.push({ tm: ab(i), sc: 50 - t3[0] * 2, text: "Went " + t3[0] + "-of-" + t3[1] + " from three" }); });
+        var pp = tid.map(function (i) { return hlNum(st2(i, "pointsInPaint")); }); if (pp[0] && pp[1] && Math.abs(pp[0] - pp[1]) >= 16) { var pw2 = pp[0] > pp[1] ? 0 : 1;
+          story.push({ tm: ab(tid[pw2]), sc: 34 + Math.abs(pp[0] - pp[1]) / 2, text: "Outscored " + ab(tid[1 - pw2]) + " " + pp[pw2] + "-" + pp[1 - pw2] + " in the paint" }); }
+      }
+      if (sport === "football") {
+        var to2 = tid.map(function (i) { return st2(i, "turnovers"); }); if (to2[0] != null && to2[1] != null) { var t0 = hlNum(to2[0]), t1 = hlNum(to2[1]); if (Math.abs(t0 - t1) >= 2) { var tw = t0 < t1 ? 0 : 1;
+          // DJ (Nov 26): not "won the turnover battle", just each team's turnovers, on its own row
+          var toTx = function (n) { return n ? n + " turnover" + (n === 1 ? "" : "s") : "No turnovers"; }, tc = [t0, t1];
+          story.push({ tm: ab(tid[tw]), sc: 38 + Math.abs(t0 - t1) * 3, text: toTx(tc[tw]), pair: { tm: ab(tid[1 - tw]), text: toTx(tc[1 - tw]) } }); } }
+        var yd = tid.map(function (i) { return hlNum(st2(i, "totalYards")); }); if (yd[0] && yd[1] && Math.abs(yd[0] - yd[1]) >= 120) { var yw = yd[0] > yd[1] ? 0 : 1;
+          story.push({ tm: ab(tid[yw]), sc: 34 + Math.abs(yd[0] - yd[1]) / 15, text: "Outgained " + ab(tid[1 - yw]) + " " + yd[yw] + "-" + yd[1 - yw] + " in total yards" }); }
+      }
+      if (sport === "bball" || sport === "football") c.forEach(function (x) { if (x.key.split("|")[0] === "cb") story.push({ tm: x.tm || "", sc: x.score, text: x.text }); });
+      if (sport === "soccer") c.forEach(function (x) { var k = x.key.split("|")[0];
+        if (/^(late|lateq|pm|red|cb|cbd|smash)$/.test(k) || /^(dom|ot|shots)$/.test(k) && x.score >= 40) story.push({ tm: x.tm || "", sc: x.score, text: x.text }); });
+      if (sport === "hockey") c.forEach(function (x) { var k = x.key.split("|")[0], n0 = +(/(\d+) saves/.exec(x.text) || [])[1] || 0, sh2 = /(\d+) to (\d+)/.exec(x.text);
+        if (/^(hkpp|hkpp0)$/.test(k) || k === "sv" && n0 >= 35 || k === "hksh" && sh2 && sh2[1] - sh2[2] >= 12) story.push({ tm: x.tm || "", sc: x.score + (k === "sv" ? 10 : 0), text: x.text }); });
+      story.sort(function (a, b) { return b.sc - a.sc; });
+      // the row already starts "LILL:", so "Lille came from behind" reads "Came from behind"
+      story.forEach(function (x) { var t0 = tid.filter(function (i) { return teams[i].abbr === x.tm; })[0]; if (!t0) return;
+        [teams[t0].full, teams[t0].name, teams[t0].short, teams[t0].nick].filter(Boolean).sort(function (a, b) { return b.length - a.length; }).some(function (nm) {
+          var m1 = new RegExp("^(The )?" + nm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "('s?)? ").exec(x.text); if (!m1 || m1[2]) return false;
+          x.text = x.text.slice(m1[0].length); x.text = x.text.charAt(0).toUpperCase() + x.text.slice(1); return true; }); });
+      story = story.filter(function (x) { return x.sc >= 36; }); if (story.length > 1 && story[1].tm && story[1].tm === story[0].tm && story.length > 2) story.splice(1, 1); story = story.slice(0, 2);
+    }
+    // a fact about both teams (lead changes) goes first as its own row; a team's fact joins that team's row
+    var storyTx = function (skip) { return story.filter(function (x) { return x.tm && (!skip || x.text !== skip); }).map(function (x) { return "; " + x.tm + ": " + x.text + (x.pair ? "; " + x.pair.tm + ": " + x.pair.text : ""); }).join(""); };
+    var storyLead = function () { return story.filter(function (x) { return !x.tm; }).map(function (x) { return x.text + "; "; }).join(""); };
     var SCK = /^(scorers|solo|allsc|brace|goal|late|lateq|quick|cb|cbd|fest|hksc|g|hkpts|hka|top)$/;
     if (liveSc && liveSc.text) {
       var more = "", nx = null; if (liveSc.n === 1) { nx = c.filter(function (x) { return !SCK.test(x.key.split("|")[0]); }).sort(function (a, b) { return b.score - a.score; })[0];
         if (nx && nx.text) more = "; " + (/^(The|A|An) /.test(nx.text) ? nx.text.charAt(0).toLowerCase() + nx.text.slice(1) : nx.text); }
-      c.push({ key: "livesc|" + liveSc.n + (more ? "|" + nx.key : ""), score: 999, tone: 1, text: liveSc.text + more, facts: {}, tm: more ? "" : liveSc.tm });
+      var add2 = done ? storyTx(nx && nx.text) : "";
+      c.push({ key: "livesc|" + liveSc.n + (more ? "|" + nx.key : ""), score: 999, tone: 1, text: (done ? storyLead() : "") + liveSc.text + more + add2, facts: {}, tm: more || add2 ? "" : liveSc.tm });
     }
     // 3.139.1 (DJ: "Basketball games should show best player and stats from each team, unless there is some other one liner that should
     // show that trumps showing best player from each team. Apply our new one liner rules to all sports"): basketball, football and
@@ -322,8 +370,8 @@
     // overtime, a big comeback, a finished triple-double, a 40-point game, a 15-0 run
     if (/^(bball|football|baseball)$/.test(sport) && tid.length === 2) {
       var ord = tid.slice().sort(function (a, b) { return (teams[a].side === "home") - (teams[b].side === "home"); }), bl = ord.filter(function (i) { return bestP[i]; });
-      var trump = c.filter(function (x) { var k = x.key.split("|"); return k[0] === "win" || k[0] === "cb" || k[0] === "td" && /triple-double(:|$)/.test(x.text) && !/watch/.test(x.text) || k[0] === "pts" && +k[2] >= 8 || k[0] === "run" && /\b(1[5-9]|[2-9]\d)-0 run/.test(x.text); })[0];
-      if (bl.length && !trump) c.push({ key: "best|" + bl.map(function (i) { return bestP[i].tx.split(" ")[0] + Math.floor(bestP[i].sc / 5); }).join("|"), score: 998, tone: 0, text: bl.map(function (i) { return bestP[i].tx; }).join("; "), facts: {}, tm: bl.length === 1 ? teams[bl[0]].abbr : "" });
+      var trump = c.filter(function (x) { var k = x.key.split("|"); return k[0] === "win" || k[0] === "td" && /triple-double(:|$)/.test(x.text) && !/watch/.test(x.text) || k[0] === "pts" && +k[2] >= 8 || k[0] === "run" && /\b(1[5-9]|[2-9]\d)-0 run/.test(x.text); })[0];
+      if (bl.length && !trump) c.push({ key: "best|" + bl.map(function (i) { return bestP[i].tx.split(" ")[0] + Math.floor(bestP[i].sc / 5); }).join("|"), score: 998, tone: 0, text: (done ? storyLead() : "") + bl.map(function (i) { return bestP[i].tx; }).join("; ") + (done ? storyTx() : ""), facts: {}, tm: bl.length === 1 && !(done && story.length) ? teams[bl[0]].abbr : "" });
     }
     if (!c.length) return null;
     c.sort(function (a, b) { return b.score - a.score; });
@@ -348,7 +396,7 @@
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
   // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
   // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
-  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.144.1") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.144.1"); } } catch (e) {} })();
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.148.0") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.148.0"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
@@ -390,7 +438,10 @@
     var find = function (cl, sd) { if (!rx[sd]) return -1; var m = new RegExp("(^|[^A-Za-z])" + rx[sd] + "(?![A-Za-z])").exec(cl); return m ? m.index + m[1].length : -1; };
     var parts = String(text || "").split(/; /), rows = [];
     parts.forEach(function (cl, ci) {
-      var a = find(cl, "away"), h = find(cl, "home"), sd = a < 0 && h < 0 ? null : a < 0 ? "home" : h < 0 ? "away" : a <= h ? "away" : "home";
+      // 3.144.2: a clause written "ABBR: …" (how a finished game went) names its team outright
+      var pre = /^([A-Z0-9&]{2,6}): (.+)$/.exec(cl), ps = pre && ["away", "home"].filter(function (sd0) { return String(abbr(g, sd0) || "").toUpperCase() === pre[1] || String(g[sd0 + "Abbr"] || "").toUpperCase() === pre[1]; })[0];
+      if (ps) cl = pre[2];
+      var a = find(cl, "away"), h = find(cl, "home"), sd = ps || (a < 0 && h < 0 ? null : a < 0 ? "home" : h < 0 ? "away" : a <= h ? "away" : "home");
       if (!sd && parts.length === 1) sd = tmSide || null;
       if (!sd && rows.length) { rows[rows.length - 1].text += "; " + cl; return; }
       var t = cl;

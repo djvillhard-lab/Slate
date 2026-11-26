@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.148.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Slate: finished games' one-liners now also say how the game went, when something stands out, under each team's best player or goal scorers. Basketball: 10 or more lead changes (its own top row), never trailed and led by 15 or more, a big night from three (14+ made at 45% or better) or a bad one (20% or worse on 25+ tries), and a 16-point edge in the paint. Football: each team's turnovers when they differ by 2 or more, and a 120-yard gap in total yards. Soccer: comebacks, late winners, red cards, lopsided possession or shots. Hockey: power plays (2 or more goals, or 0-for-4 and worse), 35+ saves, and a 12-shot gap. At most two of these per game.
+- A big basketball or football comeback now sits on the winner's row with its best player, instead of replacing both best-player rows.
+- Saved one-liners reset once on each phone so the new ones show right away.
+
 ## 3.147.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed, basketball: Big plays shows far fewer plays. It keeps only a lead change or tie in the last 5 minutes or overtime, the basket that makes a run 10-0, buzzer-beaters, and win-probability swings of 15% or more. Ordinary threes, dunks and and-ones are left out.
