@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 26, 2026, 3.140.2
+Last updated: Nov 26, 2026, 3.140.6
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -45,6 +45,13 @@ further filter the information shown."
   `--nf-isl` (the island's width: own `--strip-w` on the folded Duo, the host's on the right pane) keeps the pills, the
   stamp line and the lead's tag row clear of the Dynamic Island. The right pane can't be checked in shots.py (the host
   has no island there); it follows the Live feed's `fdIsland`.
+- 3.140.6 (DJ: "The wire in news should go back all through the day"): `nlModel` adds every story from the free feeds
+  since local midnight (marked `free`) under Claude's entries; Home shows 20 then "Show the rest of the day" (`nl.all`).
+  Five things, the lead and numbers use only Claude's entries (`M.top`). Same release: the first real scheduled pass
+  cost 76,776 tokens in and ran past 12,000 out, so it was not saved. Now 2 searches (not 4), 16,000 max tokens, a
+  2,200-word ceiling in the prompt, slightly fewer items; measured cost was about $0.31 a pass with 4 searches, so
+  expect roughly $0.20 with 2. A failed pass is retried soon (`written()` in newswire.js; the workflow also pulls
+  `lastAt` back), still inside the 6-a-day limit.
 - Gotchas: generic class names collide with app-wide rules (`.n3`, `.card`, `.two`, `.why`), keep everything prefixed.
   Any written entry with a `value` is drawn as a number. Live scores are never written by Claude (prompt rule).
 - History: 3.136.0 to 3.138.0 tried eight layouts as tabs for DJ only (203-news-lab.js); DJ picked the combination.

@@ -13,7 +13,7 @@ import { usageRoute } from "./usage.js";
 import { photosRoute } from "./photos.js";
 import { googleRoutes } from "./google.js";
 import { wireRoute } from "./wire.js";
-import { wireDue, wireSoon } from "./newswire.js";  // the News wire, written without a tap when there is news (3.138.0)
+import { wireDue, wireSoon, WIRE_AUTO } from "./newswire.js";  // the News wire, written without a tap when there is news (3.138.0)
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -423,7 +423,7 @@ Keep to the lengths given: with many games and teams this page is long, and an a
   if (p.kind === "deep" && p.key[0] === "w") return `You're writing the News front page of Slate, a sports fan's app: one page that is the same for every person, checked a few times a day. People do not come here for a list of links; ESPN and The Athletic already do that. They come for what you do best: tell them, in your own words, what happened, what it means and what to watch next. Preview the games coming up, recap the ones that just ended, sum up each league, and surface the numbers and odd facts worth repeating. Sharp, specific and fun, like the best-informed friend they have.
 Today is ${etToday()} (US Eastern).
 Facts (JSON): "headlines" are real stories from ESPN and The Athletic, each with a number "n", its league "lg", when it was published "at" and its "type" (ESPN's HeadlineNews are its short breaking items). "games" are real games from ESPN's scoreboard, each with a number "g", its "status" (not started, live or final), teams, records ("ar" away, "hr" home), AP ranks ("ak", "hk", 0 = unranked), TV, and for live and finished games the score ("as" away, "hs" home), ESPN's own headline and each team's statistical leader. "prev" are the titles already on the page from earlier today. Facts: ${facts}
-Do up to four web searches for what the facts don't tell you: how the biggest finished games were won, the latest on the biggest stories (injuries, trades, firings, quotes), and what is at stake in the biggest games still to come. Search for the newest information; do not rely on memory for anything recent.
+Do up to two web searches for what the facts don't tell you: the latest on the biggest story, and how the biggest finished game was won or what is at stake in the biggest game still to come. Search for the newest information; do not rely on memory for anything recent. Keep to the word counts below: the whole answer must stay under about 2,200 words.
 ${RULES}
 Every number, score, record, date and statement must come from the facts or your searches. Never invent or estimate a statistic. A live game's score will be out of date by the time this is read: never state a live score, and never write a recap for a game that is not final.
 Answer with only this JSON inside <json></json> tags:
@@ -432,7 +432,7 @@ Answer with only this JSON inside <json></json> tags:
  "previews": [{"g": 4, "title": "a headline for this game, 4-9 words", "text": "two or three sentences, 35-60 words: what is at stake, how each side comes in, and the matchup that decides it", "watch": "one thing to watch for, 8-18 words"}],
  "recaps": [{"g": 9, "title": "a headline for how it ended, 4-9 words, without the score", "text": "two or three sentences, 35-60 words: how it was won, who decided it, and what it means for both teams", "star": "the player of the game and his line, such as John Blackwell, 25 points, or empty"}],
  "leagues": [{"key": "league key", "title": "the state of this league today in 3-7 words", "text": "two or three sentences, 30-55 words: what happened, what is next, what everyone is talking about"}]}
-lead: never null; "n" is the number of the headline it is based on. items: 10 to 14, the newest first, each a different story and not the lead; "n" is the headline it is based on (leave it out only when it comes from a game in the facts or from a search). Use "breaking" only for real news from the last few hours. Include 3 or 4 "number" items (a striking figure from a story or game, with the title saying what it is) and 1 or 2 "fun" items (a did-you-know from the facts or a search). For number and fun items "text" finishes the thought the value starts. previews: the 3 to 5 biggest games with status "not started", soonest and biggest first ("g" is the game's number); [] when none are left. recaps: the 4 to 6 biggest games with status "final" ("g" is the game's number); the score is shown beside your words, so do not repeat it; [] when none are final. leagues: one entry for each of up to 6 leagues with news or games today, biggest first. Spread everything across leagues. Inside the JSON strings, never use double quotation marks.`;
+lead: never null; "n" is the number of the headline it is based on. items: 10 to 12, the newest first, each a different story and not the lead; "n" is the headline it is based on (leave it out only when it comes from a game in the facts or from a search). Use "breaking" only for real news from the last few hours. Include 3 or 4 "number" items (a striking figure from a story or game, with the title saying what it is) and 1 or 2 "fun" items (a did-you-know from the facts or a search). For number and fun items "text" finishes the thought the value starts. previews: the 3 or 4 biggest games with status "not started", soonest and biggest first ("g" is the game's number); [] when none are left. recaps: the 3 to 5 biggest games with status "final" ("g" is the game's number); the score is shown beside your words, so do not repeat it; [] when none are final. leagues: one entry for each of up to 6 leagues with news or games today, biggest first. Spread everything across leagues. Inside the JSON strings, never use double quotation marks.`;
   if (p.kind === "deep") {
     const type = p.key[0], shape = type === "g" ? `{"verdict": "your watchability call in two to five words, such as Must watch, Worth the first half, Background game",
  "take": ["two paragraphs, 90-140 words in all: your honest read on this game: form, stakes, what makes it interesting or not"],
@@ -628,7 +628,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
     }
     const t = target(p);
     try {
-      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 32000 : p.kind === "deep" ? (p.key[0] === "w" ? 12000 : 6000) : false, p.kind === "deep" && p.key[0] === "l" ? 3 : p.kind === "deep" && p.key[0] === "w" ? 4 : SEARCHES[p.kind], LEAN[p.kind]));
+      const res = await step.do("ask Claude", { retries: { limit: 1, delay: "10 seconds" }, timeout: "9 minutes" }, async () => askClaude(this.env, prompt(p), p.kind === "moments" ? true : p.kind === "news" && p.key === "page" ? 32000 : p.kind === "deep" ? (p.key[0] === "w" ? 16000 : 6000) : false, p.kind === "deep" && p.key[0] === "l" ? 3 : SEARCHES[p.kind], LEAN[p.kind]));
       // 3.113.3 (DJ: "I do want the server check"): sentences that contradict ESPN's records and dated results are left out (factcheck.js)
       const fcKind = p.kind === "recap" ? "recap" : p.kind === "preview" || !p.kind || p.kind === "deep" && p.key[0] === "g" || p.kind === "news" && p.key === "page" || p.kind === "team" ? "preview" : "";
       const chk = fcKind ? factCheck(fcKind, tidy(stripCites(res.ans || res)), p.kind === "team" ? teamFacts(p.facts, p.key) : p.facts, p.kind === "team" ? "{}" : p.game) : { ans: tidy(stripCites(res.ans || res)), dropped: [] }, ans = chk.ans, fc = chk.dropped.slice(0, 20);
@@ -714,6 +714,8 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
       });
     } catch (e) {
       await step.do("note the failure", async () => { await mergeDoc(this.env, t.path, t.patch({ writing: { at: p.at, kind: p.kind, error: String(e && e.message || e).slice(0, 200) } })); return true; });
+      // the scheduled News pass (3.140.5): a failed one still counts toward the day's limit, but the next try comes in about 20 minutes, not 90
+      if (p.user === "wire") await step.do("news wire: try again sooner", async () => { const st = await getDoc(this.env, "newsdeep/wire-auto"); if (st && st.lastAt) await putDoc(this.env, "newsdeep/wire-auto", Object.assign({}, st, { lastAt: Date.now() - (WIRE_AUTO.GAP_BREAK - 20) * 60000, seen: (st.seen || []).slice(40) })); return true; });
     }
   }
 }

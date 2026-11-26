@@ -9,7 +9,7 @@
   // Recaps, Numbers, and one per league. Nothing here calls Claude. ESPN's and The Athletic's own headlines (free) fill
   // in what has been published since the last write, and the whole page before the day's first one.
   // History: 3.136.0-3.138.0 tried eight layouts as tabs (203-news-lab.js); DJ picked the combined one. docs/pages/news.md.
-    var nl = { f: "home", prev: null, story: null, back: null };
+    var nl = { f: "home", prev: null, story: null, back: null, all: false };
   function nlPath(day) { return "newsdeep/" + (day || todayInHome()) + "-w-wire"; }
   function nlDayBefore(iso) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); }
   function nlHex(v) { v = String(v || ""); return hexOk(v) ? v : hexOk("#" + v) ? "#" + v : ""; }
@@ -34,13 +34,15 @@
     };
     var free = function (a) { return fill({ kind: a.kind === "HeadlineNews" && now - (Date.parse(a.at) || 0) < 6 * 3600000 ? "breaking" : "news", tag: "", lg: a.lg, team: "", title: a.title, text: a.desc && a.desc.length > 20 ? String(a.desc).replace(/^\s*[—-]\s*/, "") : "", value: "", url: a.url, src: a.src, at: a.at, free: true }); };
     var items = [], seen = {}, add = function (x) { var key = x.url || x.title; if (seen[key] || seen[String(x.title).toLowerCase()]) return; seen[key] = 1; seen[String(x.title).toLowerCase()] = 1; items.push(x); };
-    var lead = null;
+    var lead = null, wrote = function (x) { return !x.free; };
     if (has) {
       if (doc.lead) { lead = fill(Object.assign({}, doc.lead)); seen[lead.url || lead.title] = 1; }
       (doc.items || []).forEach(function (x) { add(fill(Object.assign({}, x))); });
-      // between taps: ESPN's own news items published after the last write still show up, as they are
-      var cut = Date.parse(doc.at) || now;
-      lgs.forEach(function (lg) { (per[lg] || []).forEach(function (a) { if (a.kind === "HeadlineNews" && (Date.parse(a.at) || 0) > cut) add(free(a)); }); });
+      // 3.140.5 (DJ: "The wire in news should go back all through the day"): Claude's entries only reach back as far as
+      // its passes chose to, so the rest of today's stories from ESPN and The Athletic (since midnight, and anything
+      // newer than the last pass) fill the wire in as they are. They are marked free: the top of the page stays Claude's.
+      var mid = new Date(); mid.setHours(0, 0, 0, 0); var from = mid.getTime();
+      lgs.forEach(function (lg) { (per[lg] || []).forEach(function (a) { var ts = Date.parse(a.at) || 0; if (ts >= from && ts <= now + 60000 && a.kind !== "Media" && !/highlights$/i.test(a.title)) add(free(a)); }); });
     } else {
       var pool = [];
       lgs.forEach(function (lg) { var n = 0; (per[lg] || []).forEach(function (a) { if (a.kind === "Media" || /highlights$/i.test(a.title) || now - (Date.parse(a.at) || 0) > 30 * 3600000) return; if (a.kind === "HeadlineNews" || n++ < 4) pool.push(a); }); });
@@ -59,7 +61,7 @@
     var isNew = function (x) { return nl.prev > 0 && Math.max(x.ms, Date.parse(x.w) || 0) > nl.prev; };
     items.forEach(function (x) { x.nw = isNew(x); });
     return { doc: doc, has: has, busy: busy, past: past, lead: lead, items: items, previews: previews, recaps: recaps, nums: items.filter(function (x) { return (x.kind === "number" || x.kind === "fun") && x.value; }),
-      news: items.filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), leagues: has ? (doc.leagues || []).filter(function (x) { return LEAGUES[x.key] && (x.text || x.line); }) : [], nNew: items.filter(function (x) { return x.nw; }).length, loading: loading, per: per, lgs: lgs };
+      news: items.filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), top: (has ? items.filter(wrote) : items).filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), leagues: has ? (doc.leagues || []).filter(function (x) { return LEAGUES[x.key] && (x.text || x.line); }) : [], nNew: items.filter(function (x) { return x.nw; }).length, loading: loading, per: per, lgs: lgs };
   }
   // ----- shared pieces -----
   var NL_KIND = { breaking: ["Breaking", "🚨"], number: ["Number", "🔢"], fun: ["Did you know", "🎲"] };
@@ -251,14 +253,17 @@
       nlReads(wrap, { lgs: [lg], per: M.per }, "📖 Worth reading");
     } else {
       if (M.lead) wrap.appendChild(nlLead(M.lead, "bleed"));
-      var five = M.news.slice(0, 5), num = M.nums[0];
+      var five = M.top.slice(0, 5), num = M.nums[0];
       if (five.length) { wrap.appendChild(nlH((five.length === 5 ? "Five" : five.length === 4 ? "Four" : five.length === 3 ? "Three" : "The") + " things to know " + part, "2 min read")); wrap.appendChild(nlFive(five)); }
       if (M.previews.length) { wrap.appendChild(nlH("🔭 Up next", "Claude's previews")); M.previews.slice(0, 2).forEach(function (o) { wrap.appendChild(nlGameCard(o, "preview")); }); if (M.previews.length > 2) wrap.appendChild(nlMore("All " + M.previews.length + " previews", "next")); }
       if (M.recaps.length) { wrap.appendChild(nlH("🏁 How it ended", "Claude's recaps")); M.recaps.slice(0, 2).forEach(function (o) { wrap.appendChild(nlGameCard(o, "recap")); }); if (M.recaps.length > 2) wrap.appendChild(nlMore("All " + M.recaps.length + " recaps", "recaps")); }
       if (num) { wrap.appendChild(nlH("🔢 Number of the day")); var nc0 = nlLink(num, "nx-card nl-num"); nc0.appendChild(el("b", null, num.value)); var nd = el("div"); nd.appendChild(el("h4", null, num.title)); if (num.text) nd.appendChild(el("p", null, num.text)); var ns0 = nlSrc(num); if (ns0) nd.appendChild(ns0); nc0.appendChild(nd); wrap.appendChild(nc0); if (M.nums.length > 1) wrap.appendChild(nlMore("All " + M.nums.length + " numbers", "numbers")); }
       if (M.leagues.length) { wrap.appendChild(nlH("Around the leagues", "Claude's snapshots")); M.leagues.forEach(function (x) { wrap.appendChild(nlLeagueCard(x, true)); }); }
       var list = M.items.filter(function (x) { return five.indexOf(x) === -1 && x !== num; });
-      if (list.length) { wrap.appendChild(nlH("🚨 The wire", list.length + (list.length === 1 ? " more update" : " more updates"))); wrap.appendChild(nlWireList(list)); }
+      if (list.length) {
+        wrap.appendChild(nlH("🚨 The wire", M.past ? list.length + " updates" : "all day · " + list.length + (list.length === 1 ? " update" : " updates"))); wrap.appendChild(nlWireList(nl.all ? list : list.slice(0, 20)));
+        if (!nl.all && list.length > 20) { var mb = el("button", "nf-more"); mb.type = "button"; mb.appendChild(el("span", null, "Show the rest of the day (" + (list.length - 20) + " more)")); mb.appendChild(icon("more")); mb.addEventListener("click", function () { nl.all = true; keepScroll(renderNews); }); wrap.appendChild(mb); }
+      }
       nlReads(wrap, M);
     }
     return true;

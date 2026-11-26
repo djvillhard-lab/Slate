@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.140.6 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: the wire now runs back through the whole day. Claude's entries only reached back as far as its passes chose to, so the rest of today's stories from ESPN and The Athletic, from midnight on, now fill it in as they are. The first 20 show, then "Show the rest of the day". The top of the page (the lead, the things to know, previews, recaps, numbers) is still only Claude's.
+- News: the first automatic pass tonight started but came back longer than allowed and was not saved. Passes are a little tighter now with more room to finish, and a pass that fails is tried again in about 10 to 20 minutes instead of 90. Each pass now does up to two web searches instead of four, which keeps the monthly cost near what was quoted.
+
 ## 3.140.5 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - My TVs: a split-screen TV (YouTube TV Multiview) now only gets games on channels YouTube TV carries, like ESPN, FOX, TNT or CBSSN, and each of its screens shows that channel. Games only on Prime Video, Netflix, Peacock or ESPN+ never go on it, and Swap for that TV only offers YouTube TV games. When fewer games qualify than the TV has screens, a line under it says so.

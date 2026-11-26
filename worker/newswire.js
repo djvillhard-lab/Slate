@@ -56,12 +56,16 @@ async function board(lg, path, weight, ymd) {
   }).filter(Boolean);
 }
 
+// has today's page been written in the current format (or is it being written right now)?
+async function written(env, getDoc, day, now) { const d = (await getDoc(env, "newsdeep/" + day + "-w-wire")) || {}, w = d.writing; return d.v === 2 || !!(w && w.at && !w.error && now - Date.parse(w.at) < 10 * 60000); }
 // The cheap first look, from the every-minute job (one read): inside the hours, under the day's count, and long enough
 // since the last pass for anything to be due.
 export async function wireSoon(env, getDoc, nowMs) {
   const now = nowMs || Date.now(), ct = ctParts(now); if (ct.hour < WIRE_AUTO.FROM_HOUR) return false;
   const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}; if (saved.day !== ct.day) return true;
-  return (saved.n || 0) < WIRE_AUTO.DAY_MAX && (now - (Number(saved.lastAt) || 0)) / 60000 >= WIRE_AUTO.GAP_BREAK;
+  if ((saved.n || 0) >= WIRE_AUTO.DAY_MAX) return false;
+  if ((now - (Number(saved.lastAt) || 0)) / 60000 >= WIRE_AUTO.GAP_BREAK) return true;
+  return !(await written(env, getDoc, ct.day, now));   // today's page has no finished pass yet (the first one failed): don't wait 90 minutes
 }
 // Should Claude write now? Returns null (no), or { facts, day, state } for the caller to start the write-up with.
 export async function wireDue(env, getDoc, nowMs) {
@@ -70,7 +74,8 @@ export async function wireDue(env, getDoc, nowMs) {
   const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}, st = saved.day === ct.day ? saved : { day: ct.day, n: 0, lastAt: 0, seen: [] };
   if ((st.n || 0) >= WIRE_AUTO.DAY_MAX) return null;
   const gap = (now - (Number(st.lastAt) || 0)) / 60000;
-  if (st.n && gap < WIRE_AUTO.GAP_BREAK) return null;   // too soon for anything: don't even fetch
+  const first = !st.n || !(await written(env, getDoc, ct.day, now));   // nothing finished yet today
+  if (!first && gap < WIRE_AUTO.GAP_BREAK) return null;   // too soon for anything: don't even fetch
   // ESPN's dates are Eastern: today's, plus yesterday's until noon Central so last night's late games get their recap
   const ymd = (t) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date(t)).replace(/-/g, ""), days = [ymd(now)].concat(ct.hour < 12 ? [ymd(now - 86400000)] : [], ct.hour >= 18 ? [ymd(now + 86400000)] : []);   // and tomorrow's from 6 PM, for the next games up
   const [lists, boards] = await Promise.all([
@@ -86,7 +91,7 @@ export async function wireDue(env, getDoc, nowMs) {
   const live = all.filter((g) => g.status === "live").sort(byW).slice(0, 5);
   const next = all.filter((g) => g.status === "not started" && Date.parse(g.start) - now < 20 * 3600000 && Date.parse(g.start) > now - 3600000).sort(byW).slice(0, 10);
   const seen = new Set(st.seen || []), fresh = hs.filter((a) => !seen.has(a.url)), freshF = finals.filter((g) => !seen.has("f:" + g.ev));
-  const due = !st.n || ((fresh.some((a) => a.kind === "HeadlineNews") || freshF.length >= WIRE_AUTO.NEW_FINALS) && gap >= WIRE_AUTO.GAP_BREAK) || (fresh.length + freshF.length >= WIRE_AUTO.NEW_MIN && gap >= WIRE_AUTO.GAP_QUIET);
+  const due = first || ((fresh.some((a) => a.kind === "HeadlineNews") || freshF.length >= WIRE_AUTO.NEW_FINALS) && gap >= WIRE_AUTO.GAP_BREAK) || (fresh.length + freshF.length >= WIRE_AUTO.NEW_MIN && gap >= WIRE_AUTO.GAP_QUIET);
   if (!due) return null;
   // new stories first, so they're the ones kept if the facts have to be trimmed
   const ordered = fresh.concat(hs.filter((a) => seen.has(a.url)));
