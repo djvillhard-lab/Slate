@@ -4,12 +4,12 @@
   // that included the pills at the top to filter the information shown below. I think there should be a news homepage,
   // but those pill type selections to further filter the information shown."
   // So News is one page for everyone, drawn from the shared doc newsdeep/<day>-w-wire that Claude writes on a schedule
-  // (worker/newswire.js: only when there is news): a lead, the wire, previews of the games coming up, recaps of the ones
+  // (worker/newswire.js, every 3 hours 6 AM to midnight Central): a lead, story breakdowns, previews of the games coming up, recaps of the ones
   // that ended, a snapshot of each league, numbers and fun facts. The pills on top filter it: Home, Breaking, Up next,
   // Recaps, Numbers, and one per league. Nothing here calls Claude. ESPN's and The Athletic's own headlines (free) fill
   // in what has been published since the last write, and the whole page before the day's first one.
   // History: 3.136.0-3.138.0 tried eight layouts as tabs (203-news-lab.js); DJ picked the combined one. docs/pages/news.md.
-    var nl = { f: "home", prev: null, story: null, back: null, all: false };
+    var nl = { f: "home", prev: null, story: null, back: null, all: false, open: false };
   function nlPath(day) { return "newsdeep/" + (day || todayInHome()) + "-w-wire"; }
   function nlDayBefore(iso) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); }
   function nlHex(v) { v = String(v || ""); return hexOk(v) ? v : hexOk("#" + v) ? "#" + v : ""; }
@@ -34,9 +34,10 @@
     };
     var free = function (a) { return fill({ kind: a.kind === "HeadlineNews" && now - (Date.parse(a.at) || 0) < 6 * 3600000 ? "breaking" : "news", tag: "", lg: a.lg, team: "", title: a.title, text: a.desc && a.desc.length > 20 ? String(a.desc).replace(/^\s*[—-]\s*/, "") : "", value: "", url: a.url, src: a.src, at: a.at, free: true }); };
     var items = [], seen = {}, add = function (x) { var key = x.url || x.title; if (seen[key] || seen[String(x.title).toLowerCase()]) return; seen[key] = 1; seen[String(x.title).toLowerCase()] = 1; items.push(x); };
-    var lead = null, wrote = function (x) { return !x.free; };
+    var lead = null, stories = [], wrote = function (x) { return !x.free; }, isNum = function (x) { return (x.kind === "number" || x.kind === "fun") && !!x.value; };
     if (has) {
       if (doc.lead) { lead = fill(Object.assign({}, doc.lead)); seen[lead.url || lead.title] = 1; }
+      stories = (doc.stories || []).map(function (x) { var y = fill(Object.assign({}, x)); seen[y.url || y.title] = 1; seen[String(y.title).toLowerCase()] = 1; return y; });
       (doc.items || []).forEach(function (x) { add(fill(Object.assign({}, x))); });
       // 3.140.5 (DJ: "The wire in news should go back all through the day"): Claude's entries only reach back as far as
       // its passes chose to, so the rest of today's stories from ESPN and The Athletic (since midnight, and anything
@@ -52,6 +53,8 @@
     if (!has) items = items.slice(0, 26);
     if (!lead) { lead = items.filter(function (x) { return x.img && x.kind !== "number" && x.kind !== "fun"; })[0] || items[0] || null; }
     if (lead) items = items.filter(function (x) { return x !== lead; });
+    // a page written before 3.143.0 has no breakdowns of its own: Claude's five newest entries stand in until the next write
+    if (has && !stories.length) { stories = items.filter(function (x) { return wrote(x) && !isNum(x); }).slice(0, 5); items = items.filter(function (x) { return stories.indexOf(x) === -1; }); }
     // Claude's previews (games still to come) and recaps (finished), each with the app's own game when it has one
     var gs = games(), own = function (x) { x.game = x.id ? gs.filter(function (y) { return String(y.id) === String(x.id); })[0] || null : null; x.ms = Date.parse(x.start) || 0; return x; };
     var recaps = has ? (doc.recaps || []).map(function (x) { return own(Object.assign({}, x)); }) : [], done = {}; recaps.forEach(function (x) { done[x.ev] = 1; });
@@ -59,11 +62,15 @@
     // what's new since you last looked (kept per day on this phone)
     if (nl.prev == null) { var sv = null; try { sv = JSON.parse(localStorage.getItem("slate-newsseen") || "null"); } catch (e) {} nl.prev = sv && sv.d === todayInHome() ? sv.t : 0; try { localStorage.setItem("slate-newsseen", JSON.stringify({ d: todayInHome(), t: now })); } catch (e) {} }
     var isNew = function (x) { return nl.prev > 0 && Math.max(x.ms, Date.parse(x.w) || 0) > nl.prev; };
-    items.forEach(function (x) { x.nw = isNew(x); });
-    return { doc: doc, has: has, busy: busy, past: past, lead: lead, items: items, previews: previews, recaps: recaps, nums: items.filter(function (x) { return (x.kind === "number" || x.kind === "fun") && x.value; }),
+    items.concat(stories).forEach(function (x) { x.nw = isNew(x); });
+    // Just In: breaking headlines exactly as ESPN and The Athletic publish them, the moment they are in the feed (no wait for Claude)
+    var brk = items.filter(function (x) { return x.kind === "breaking" && (past || now - x.ms < 8 * 3600000); });
+    return { doc: doc, has: has, busy: busy, past: past, lead: lead, stories: stories, brk: brk, items: items, previews: previews, recaps: recaps, nums: items.filter(function (x) { return (x.kind === "number" || x.kind === "fun") && x.value; }),
       news: items.filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), top: (has ? items.filter(wrote) : items).filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), leagues: has ? (doc.leagues || []).filter(function (x) { return LEAGUES[x.key] && (x.text || x.line); }) : [], nNew: items.filter(function (x) { return x.nw; }).length, loading: loading, per: per, lgs: lgs };
   }
   // ----- shared pieces -----
+  // 3.143.0 (DJ: "I don't like the section titles"): every section title in one place
+  var NL_T = { brk: "Just In", lead: "The Lead", stories: "The Breakdown", next: "On Deck", recaps: "In the Books", nums: "Stat Sheet", leagues: "League Check", all: "All Headlines", reads: "Long Reads" };
   var NL_KIND = { breaking: ["Breaking", "🚨"], number: ["Number", "🔢"], fun: ["Did you know", "🎲"] };
   function nlPill(text, cls, em) { var p = el("span", "nl-pill" + (cls ? " " + cls : "")); if (em) p.appendChild(nwEm(em)); p.appendChild(document.createTextNode(text)); return p; }
   function nlTags(x, dark) {
@@ -80,7 +87,7 @@
   function nlReads(body, M, title) {
     var seen = {}, rows = []; M.lgs.forEach(function (lg) { var n = 0; (M.per[lg] || []).forEach(function (a) { if (a.kind === "HeadlineNews" || a.kind === "Media" || a.kind === "Recap" || a.kind === "Preview" || !a.img || seen[a.title] || n >= 1 || /highlights$/i.test(a.title)) return; seen[a.title] = 1; n++; rows.push(a); }); });
     if (!rows.length) return;
-    body.appendChild(nlH(title || "📖 Worth reading", "ESPN and The Athletic"));
+    body.appendChild(nlH(title || NL_T.reads, "ESPN and The Athletic"));
     var rc = el("div", "nx-card nx-reads"); rows.slice(0, 5).forEach(function (a) { rc.appendChild(nwRead({ title: a.title, url: a.url, source: a.src + " · " + ((LEAGUES[a.lg] || {}).tag || "") })); }); body.appendChild(rc);
   }
   function nlCaught() { return el("div", "nl-caught", "Caught up to here" + (nl.prev ? " at " + nlTime(nl.prev) : "")); }
@@ -114,7 +121,7 @@
   function nlOther() { if (!PANE) return null; try { var f = window.parent.document.getElementById(PANE === "a" ? "pn-b" : "pn-a"), w = f && f.contentWindow; return w && w.SlateApp && w.SlateApp.newsStory ? w : null; } catch (e) { return null; } }
   function nlOpenStory(x, e) {
     var w = nlOther(); if (!w) return false; if (e) { e.preventDefault(); e.stopPropagation(); }
-    w.SlateApp.newsStory(JSON.stringify({ kind: x.kind, tag: x.tag, lg: x.lg, team: x.team, title: x.title, text: x.text, value: x.value, url: x.url, src: x.src, img: x.img, at: x.at, ms: x.ms, c: x.c, free: x.free })); return true;
+    w.SlateApp.newsStory(JSON.stringify({ kind: x.kind, tag: x.tag, lg: x.lg, team: x.team, title: x.title, text: x.text, value: x.value, url: x.url, src: x.src, img: x.img, at: x.at, ms: x.ms, c: x.c, free: x.free, why: x.why, next: x.next })); return true;
   }
   function nlStoryShow(x) { if (!nl.story) nl.back = state.view === "news" ? "news" : pnRouteOf(); nl.story = x; if (state.view !== "news") setView("news"); else renderNews(true); window.scrollTo(0, 0); }
   function nlStoryClose() { var r = nl.back || "news"; nl.story = null; nl.back = null; if (r !== "news" && window.SlateApp && window.SlateApp.paneGo) window.SlateApp.paneGo(r); else renderNews(true); }
@@ -128,16 +135,40 @@
     var top = nlTags(x); top.appendChild(el("span", "nl-tm", nlTime(x.ms || Date.now()))); art.appendChild(top);
     if (num) art.appendChild(el("b", "nl-svn", x.value));
     art.appendChild(el("h3", null, x.title)); if (x.text) art.appendChild(el("p", null, x.text));
+    var sdp = nlDeep(x); if (sdp) art.appendChild(sdp);
     if (!x.free) art.appendChild(el("span", "nl-svg", "Summary generated by Claude"));
     if (x.url) { var a = el("a", "nl-svb", "Read the full story on " + (x.src || "ESPN") + " ›"); a.href = safeUrl(x.url); a.target = "_blank"; a.rel = "noopener"; art.appendChild(a); }
     wrap.appendChild(art);
-    var M = nlModel(), more = [M.lead].concat(M.items).filter(function (y) { return y && y.lg === x.lg && y.title !== x.title; }).slice(0, 5);
+    var M = nlModel(), more = [M.lead].concat(M.stories, M.items).filter(function (y) { return y && y.lg === x.lg && y.title !== x.title; }).slice(0, 5);
     if (more.length) {
       wrap.appendChild(nlH("More from " + ((LEAGUES[x.lg] || {}).tag || "the wire"))); var mw = el("div", "nl-w1");
       more.forEach(function (y) { var e = nlEntry(y, "bleed"); e.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopImmediatePropagation(); nl.story = y; renderNews(true); window.scrollTo(0, 0); }, true); mw.appendChild(e); });
       wrap.appendChild(mw);
     }
     return true;
+  }
+  // ----- 3.143.0 (DJ: "too many direct headlines and not enough Claude summary and breakdown") -----
+  // why it matters / what's next, under a breakdown
+  function isNumX(x) { return (x.kind === "number" || x.kind === "fun") && !!x.value; }
+  function nlDeep(x) {
+    if (!x.why && !x.next) return null; var d = el("div", "nf-dp");
+    [["Why it matters", x.why], ["What's next", x.next]].forEach(function (r) { if (!r[1]) return; var p = el("p"); p.appendChild(el("b", null, r[0])); p.appendChild(document.createTextNode(r[1])); d.appendChild(p); });
+    return d;
+  }
+  // one of Claude's breakdowns: the story in its own words, then why it matters and what's next
+  function nlStory(x) {
+    var a = nlLink(x, "nx-card nf-s"), top = nlTags(x); top.appendChild(el("span", "nl-tm", nlTime(x.ms))); a.appendChild(top);
+    var hd = el("div", "nf-sh"); hd.appendChild(el("h4", null, x.title)); var im = nlImg(x, "th", 240); if (im) hd.appendChild(im); a.appendChild(hd);
+    if (x.text) a.appendChild(el("p", null, x.text));
+    var dp = nlDeep(x); if (dp) a.appendChild(dp);
+    var s = nlSrc(x); if (s) a.appendChild(s);
+    return a;
+  }
+  // Just In: the breaking headlines themselves, newest first, one line each
+  function nlJustIn(list) {
+    var c = el("div", "nx-card nf-ji");
+    list.forEach(function (x) { var a = nlLink(x, "nf-j" + (x.nw ? " nw" : "")); a.appendChild(el("span", "tm", nlTime(x.ms))); var d = el("span", "tt"); var lt = (LEAGUES[x.lg] || {}).tag; if (lt) d.appendChild(el("i", null, lt)); d.appendChild(document.createTextNode(x.title)); a.appendChild(d); a.appendChild(icon("more")); c.appendChild(a); });
+    return c;
   }
   // ----- a game Claude previewed or recapped: the two teams in their colors (ESPN's names, time and score), then Claude's words -----
   function nlGameCard(o, kind) {
@@ -191,13 +222,13 @@
   }
   // the pills: what's on the page. Each says how much is behind it; Breaking wears a red dot when something is new.
   function nlPills(body, M) {
-    var brk = [M.lead].concat(M.items).filter(function (x) { return x && x.kind === "breaking"; }), opts = [["home", "Home", "🏠", 0]];
-    if (brk.length) opts.push(["breaking", "Breaking", "🚨", brk.length, brk.some(function (x) { return x.nw; })]);
-    if (M.previews.length) opts.push(["next", "Up next", "🔭", M.previews.length]);
-    if (M.recaps.length) opts.push(["recaps", "Recaps", "🏁", M.recaps.length]);
-    if (M.nums.length) opts.push(["numbers", "Numbers", "🔢", M.nums.length]);
+    var brk = [M.lead].concat(M.stories, M.items).filter(function (x) { return x && x.kind === "breaking"; }), opts = [["home", "Home", "🏠", 0]];
+    if (brk.length) opts.push(["breaking", NL_T.brk, "🚨", brk.length, brk.some(function (x) { return x.nw; })]);
+    if (M.previews.length) opts.push(["next", NL_T.next, "🔭", M.previews.length]);
+    if (M.recaps.length) opts.push(["recaps", NL_T.recaps, "🏁", M.recaps.length]);
+    if (M.nums.length) opts.push(["numbers", NL_T.nums, "🔢", M.nums.length]);
     var cnt = {}, bump = function (x) { if (x && LEAGUES[x.lg]) cnt[x.lg] = (cnt[x.lg] || 0) + 1; };
-    [M.lead].concat(M.items, M.previews, M.recaps).forEach(bump); M.leagues.forEach(function (x) { cnt[x.key] = (cnt[x.key] || 0) + 1; });
+    [M.lead].concat(M.stories, M.items.filter(function (x) { return !x.free; }), M.previews, M.recaps).forEach(bump); M.leagues.forEach(function (x) { cnt[x.key] = (cnt[x.key] || 0) + 1; });
     Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).forEach(function (k) { opts.push(["lg:" + k, LEAGUES[k].tag, "", cnt[k]]); });
     if (!opts.some(function (o) { return o[0] === nl.f; })) nl.f = "home";
     if (opts.length < 2) return;
@@ -215,7 +246,7 @@
   }
   function nlStamp(body, M) {
     var r = el("div", "nf-st"), t;
-    if (M.has) t = "Generated by Claude " + clWhen(M.doc.at) + (M.past ? "" : M.busy ? " · writing a fresh pass now" : " · updates through the day when news breaks");
+    if (M.has) t = "Generated by Claude " + clWhen(M.doc.at) + (M.past ? "" : M.busy ? " · writing a fresh pass now" : " · rewritten through the day, breaking news shows right away");
     else t = M.past ? "" : "Claude writes this page through the day, starting at 6 AM. Until then, these are ESPN's headlines.";
     if (M.busy) r.appendChild(el("i", "cl-dot")); r.appendChild(el("span", null, t));
     if (M.nNew && !M.past) r.appendChild(el("span", "nl-new", "↑ " + M.nNew + " new"));
@@ -231,40 +262,44 @@
     wrap.style.setProperty("--nf-isl", isl + "px");
     nlPills(wrap, M); f = nl.f; nlStamp(wrap, M);
     if (!M.lead && !M.items.length) { wrap.appendChild(el("p", "pv-none", M.loading ? "Loading the news…" : M.past ? "No News page was saved for " + fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + "." : "No news right now.")); return true; }
-    var hour = new Date().getHours(), part = M.past ? "that day" : hour < 11 ? "this morning" : hour < 17 ? "today" : "tonight", all = [M.lead].concat(M.items).filter(Boolean);
+    var all = [M.lead].concat(M.stories, M.items).filter(Boolean);
     var none = function (t) { wrap.appendChild(el("p", "pv-none", t)); };
+    var gamesSec = function (list, kind, cap, f2) { if (!list.length) return; wrap.appendChild(nlH(kind === "preview" ? NL_T.next : NL_T.recaps, kind === "preview" ? "Claude's previews" : "Claude's recaps")); (cap ? list.slice(0, cap) : list).forEach(function (o) { wrap.appendChild(nlGameCard(o, kind)); }); if (cap && list.length > cap) wrap.appendChild(nlMore("All " + list.length + (kind === "preview" ? " previews" : " recaps"), f2)); };
+    // every other headline of the day: closed on Home until asked for (the page is Claude's), open before the day's first write
+    var headlines = function (list, open) {
+      if (!list.length) return; var n = list.length + (list.length === 1 ? " headline" : " headlines");
+      wrap.appendChild(nlH(NL_T.all, M.past ? n : n + " today"));
+      if (!open && !nl.open) { var ob = el("button", "nf-more"); ob.type = "button"; ob.appendChild(el("span", null, "Show " + (list.length === 1 ? "it" : "all " + list.length))); ob.appendChild(icon("more")); ob.addEventListener("click", function () { nl.open = true; keepScroll(renderNews); }); wrap.appendChild(ob); return; }
+      wrap.appendChild(nlWireList(nl.all ? list : list.slice(0, 20)));
+      if (!nl.all && list.length > 20) { var mb = el("button", "nf-more"); mb.type = "button"; mb.appendChild(el("span", null, "Show the rest of the day (" + (list.length - 20) + " more)")); mb.appendChild(icon("more")); mb.addEventListener("click", function () { nl.all = true; keepScroll(renderNews); }); wrap.appendChild(mb); }
+    };
     if (f === "breaking") {
       var bk = all.filter(function (x) { return x.kind === "breaking"; }).sort(function (a, b) { return b.ms - a.ms; });
       if (bk[0] && bk[0].img) wrap.appendChild(nlLead(bk.shift(), "bleed")); if (bk.length) wrap.appendChild(nlWireList(bk));
     } else if (f === "next") {
-      wrap.appendChild(nlH("🔭 Up next", "Claude's previews")); M.previews.forEach(function (o) { wrap.appendChild(nlGameCard(o, "preview")); });
+      gamesSec(M.previews, "preview");
     } else if (f === "recaps") {
-      wrap.appendChild(nlH("🏁 How it ended", "Claude's recaps")); M.recaps.forEach(function (o) { wrap.appendChild(nlGameCard(o, "recap")); });
+      gamesSec(M.recaps, "recap");
     } else if (f === "numbers") {
-      wrap.appendChild(nlH("🔢 The numbers " + part)); var ng = el("div", "nl-nums nl-2c"); M.nums.forEach(function (x) { ng.appendChild(nlNumTile(x)); }); wrap.appendChild(ng);
+      wrap.appendChild(nlH(NL_T.nums)); var ng = el("div", "nl-nums nl-2c"); M.nums.forEach(function (x) { ng.appendChild(nlNumTile(x)); }); wrap.appendChild(ng);
     } else if (f.indexOf("lg:") === 0) {
       var lg = f.slice(3), snap = M.leagues.filter(function (x) { return x.key === lg; })[0], mine = function (x) { return x.lg === lg; };
       if (snap) wrap.appendChild(nlLeagueCard(snap));
-      var lp = M.previews.filter(mine), lr = M.recaps.filter(mine), li = all.filter(mine).sort(function (a, b) { return b.ms - a.ms; });
-      if (lp.length) { wrap.appendChild(nlH("🔭 Up next")); lp.forEach(function (o) { wrap.appendChild(nlGameCard(o, "preview")); }); }
-      if (lr.length) { wrap.appendChild(nlH("🏁 How it ended")); lr.forEach(function (o) { wrap.appendChild(nlGameCard(o, "recap")); }); }
-      if (li.length) { wrap.appendChild(nlH("🚨 The wire", li.length + (li.length === 1 ? " update" : " updates"))); wrap.appendChild(nlWireList(li)); }
-      if (!snap && !lp.length && !lr.length && !li.length) none("Nothing here right now.");
-      nlReads(wrap, { lgs: [lg], per: M.per }, "📖 Worth reading");
+      var ls = [M.lead].concat(M.stories).filter(function (x) { return x && mine(x) && !x.free; }), lp = M.previews.filter(mine), lr = M.recaps.filter(mine), li = M.items.filter(mine).sort(function (a, b) { return b.ms - a.ms; });
+      if (ls.length) { wrap.appendChild(nlH(NL_T.stories, "Claude's breakdowns")); ls.forEach(function (x) { wrap.appendChild(nlStory(x)); }); }
+      gamesSec(lp, "preview"); gamesSec(lr, "recap");
+      headlines(li, true);
+      if (!snap && !ls.length && !lp.length && !lr.length && !li.length) none("Nothing here right now.");
+      nlReads(wrap, { lgs: [lg], per: M.per });
     } else {
-      if (M.lead) wrap.appendChild(nlLead(M.lead, "bleed"));
-      var five = M.top.slice(0, 5), num = M.nums[0];
-      if (five.length) { wrap.appendChild(nlH((five.length === 5 ? "Five" : five.length === 4 ? "Four" : five.length === 3 ? "Three" : "The") + " things to know " + part, "2 min read")); wrap.appendChild(nlFive(five)); }
-      if (M.previews.length) { wrap.appendChild(nlH("🔭 Up next", "Claude's previews")); M.previews.slice(0, 2).forEach(function (o) { wrap.appendChild(nlGameCard(o, "preview")); }); if (M.previews.length > 2) wrap.appendChild(nlMore("All " + M.previews.length + " previews", "next")); }
-      if (M.recaps.length) { wrap.appendChild(nlH("🏁 How it ended", "Claude's recaps")); M.recaps.slice(0, 2).forEach(function (o) { wrap.appendChild(nlGameCard(o, "recap")); }); if (M.recaps.length > 2) wrap.appendChild(nlMore("All " + M.recaps.length + " recaps", "recaps")); }
-      if (num) { wrap.appendChild(nlH("🔢 Number of the day")); var nc0 = nlLink(num, "nx-card nl-num"); nc0.appendChild(el("b", null, num.value)); var nd = el("div"); nd.appendChild(el("h4", null, num.title)); if (num.text) nd.appendChild(el("p", null, num.text)); var ns0 = nlSrc(num); if (ns0) nd.appendChild(ns0); nc0.appendChild(nd); wrap.appendChild(nc0); if (M.nums.length > 1) wrap.appendChild(nlMore("All " + M.nums.length + " numbers", "numbers")); }
-      if (M.leagues.length) { wrap.appendChild(nlH("Around the leagues", "Claude's snapshots")); M.leagues.forEach(function (x) { wrap.appendChild(nlLeagueCard(x, true)); }); }
-      var list = M.items.filter(function (x) { return five.indexOf(x) === -1 && x !== num; });
-      if (list.length) {
-        wrap.appendChild(nlH("🚨 The wire", M.past ? list.length + " updates" : "all day · " + list.length + (list.length === 1 ? " update" : " updates"))); wrap.appendChild(nlWireList(nl.all ? list : list.slice(0, 20)));
-        if (!nl.all && list.length > 20) { var mb = el("button", "nf-more"); mb.type = "button"; mb.appendChild(el("span", null, "Show the rest of the day (" + (list.length - 20) + " more)")); mb.appendChild(icon("more")); mb.addEventListener("click", function () { nl.all = true; keepScroll(renderNews); }); wrap.appendChild(mb); }
-      }
-      nlReads(wrap, M);
+      var jin = M.brk.slice(0, 5);
+      if (jin.length) { wrap.appendChild(nlH(NL_T.brk, "as it happens")); wrap.appendChild(nlJustIn(jin)); if (M.brk.length > 5) wrap.appendChild(nlMore("All " + M.brk.length + " breaking headlines", "breaking")); }
+      if (M.lead) { if (M.has) wrap.appendChild(nlH(NL_T.lead, "Claude's top story")); wrap.appendChild(nlLead(M.lead, "bleed")); var ld = nlDeep(M.lead); if (ld) { var lc = el("div", "nx-card nf-ld"); lc.appendChild(ld); wrap.appendChild(lc); } }
+      if (M.stories.length) { wrap.appendChild(nlH(NL_T.stories, "Claude's breakdowns")); M.stories.forEach(function (x) { wrap.appendChild(nlStory(x)); }); }
+      gamesSec(M.previews, "preview", 2, "next"); gamesSec(M.recaps, "recap", 2, "recaps");
+      if (M.nums.length) { wrap.appendChild(nlH(NL_T.nums)); var hg = el("div", "nl-nums nl-2c"); M.nums.slice(0, 4).forEach(function (x) { hg.appendChild(nlNumTile(x)); }); wrap.appendChild(hg); if (M.nums.length > 4) wrap.appendChild(nlMore("All " + M.nums.length + " numbers", "numbers")); }
+      if (M.leagues.length) { wrap.appendChild(nlH(NL_T.leagues, "Claude's snapshots")); M.leagues.forEach(function (x) { wrap.appendChild(nlLeagueCard(x, true)); }); }
+      headlines(M.items.filter(function (x) { return jin.indexOf(x) === -1 && !isNumX(x); }), !M.has);
     }
     return true;
   }

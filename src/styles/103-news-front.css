@@ -270,3 +270,27 @@
 .nf-pills { margin-right: calc(var(--nf-isl, 0px) / var(--z, 1) - var(--pad)); overscroll-behavior-x: contain; touch-action: pan-x; }
 .nf-st { margin-right: calc(var(--nf-isl, 0px) / var(--z, 1)); }
 .nf > .nl-lead.bleed .nl-kr { padding-right: calc(var(--nf-isl, 0px) / var(--z, 1)); }
+
+/* ---------- 3.143.0 (DJ: new section titles, Claude's breakdowns first, breaking headlines as they are) ---------- */
+.nf .nl-h b { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 900; font-stretch: 125%; letter-spacing: .06em; text-transform: uppercase; }
+.nf .nl-h b::before { content: ""; flex: none; width: 4px; height: 16px; border-radius: 1px; background: var(--ink); }
+.nf .nl-h > span { font-size: 11.5px; }
+.nf-ji { display: grid; padding: 0 12px; }
+.nf-j { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 0; color: inherit; text-decoration: none; }
+.nf-j + .nf-j { border-top: 1px solid var(--line); }
+.nf-j .tm { flex: none; width: 66px; white-space: nowrap; font-size: 12px; font-weight: 800; font-stretch: 80%; color: var(--live, var(--red)); font-variant-numeric: tabular-nums; }
+.nf-j .tt { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 700; line-height: 1.3; color: var(--ink); }
+.nf-j .tt i { margin-right: 6px; font-style: normal; font-size: 11px; font-weight: 800; font-stretch: 80%; letter-spacing: .04em; color: var(--dim); }
+.nf-j.nw .tt { font-weight: 800; }
+.nf-j svg { flex: none; width: 12px; height: 12px; color: var(--dim); }
+.nf-s { display: grid; gap: 8px; padding: 12px 12px 12px 14px; color: inherit; text-decoration: none; border-left: 4px solid var(--c, var(--line)); }
+.nf-sh { display: flex; align-items: flex-start; gap: 10px; }
+.nf-sh h4 { flex: 1; min-width: 0; font-size: 18px; font-weight: 800; line-height: 1.2; color: var(--ink); }
+.nf-sh img.th { flex: none; width: 64px; height: 64px; border-radius: 6px; object-fit: cover; }
+.nl .nf-s > p { font-size: 15px; line-height: 1.5; color: var(--ink); }
+.nf-dp { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.nl .nf-dp p { font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+.nf-dp p b { display: block; font-size: 11px; font-weight: 900; font-stretch: 110%; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+.nf-ld { margin-top: -6px; padding: 4px 12px 12px; }
+.nf-ld .nf-dp { border-top: 0; }
+.nl-sva .nf-dp { margin-top: 10px; }

@@ -21,10 +21,12 @@ const LGS = [  // key (the app's league key), ESPN path, The Athletic's feed, ho
 // 3.141.2 (DJ, Nov 26: "rewrite one an hour from 6am to midnight"): one write-up in every Central hour from 6 AM through 11 PM, 18 a day,
 // news or not. DAY_MAX leaves room for a few retries of failed passes. The GAP_ and NEW_ numbers are no longer used.
 // 3.141.4 (DJ picked "Every 2 hours" the same night): one write-up in every 2-hour block from 6 AM (6, 8, ... 10 PM), 9 a day.
-export const WIRE_AUTO = { DAY_MAX: 12, EVERY: 2, GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
+// 3.143.0 (DJ: "Utilize full web searches", then picked "Full searches, every 3 hours"): up to 6 searches a pass, one pass in every
+// 3-hour block from 6 AM (6, 9, noon, 3, 6, 9 PM Central), 6 a day. About $65 to $85 a month.
+export const WIRE_AUTO = { DAY_MAX: 9, EVERY: 3, SEARCHES: 6, GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
 const FRESH_MS = 30 * 3600000;
 const NATIONAL = /^(ABC|CBS|NBC|FOX|ESPN|ESPN2|TNT|TBS|FS1|Prime Video|Peacock|NFL Network|NBA TV|truTV|USA Net|USA)$/i;
-const slot = (h) => Math.floor((h - 6) / 2);   // which 2-hour block of the day an hour falls in (6 AM is block 0)
+const slot = (h) => Math.floor((h - WIRE_AUTO.FROM_HOUR) / WIRE_AUTO.EVERY);   // which 2-hour block of the day an hour falls in (6 AM is block 0)
 const ctParts = (t) => { const p = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date(t)).forEach((x) => { p[x.type] = x.value; }); return { day: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) }; };
 const et = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -68,7 +70,7 @@ export async function wireSoon(env, getDoc, nowMs) {
   const now = nowMs || Date.now(), ct = ctParts(now); if (ct.hour < WIRE_AUTO.FROM_HOUR) return false;
   const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}; if (saved.day !== ct.day) return true;
   if ((saved.n || 0) >= WIRE_AUTO.DAY_MAX) return false;
-  if (slot(ctParts(Number(saved.lastAt) || 0).hour) !== slot(ct.hour) || now - (Number(saved.lastAt) || 0) > 2 * 3600000) return true;   // nothing written this hour yet
+  if (slot(ctParts(Number(saved.lastAt) || 0).hour) !== slot(ct.hour) || now - (Number(saved.lastAt) || 0) > WIRE_AUTO.EVERY * 3600000) return true;   // nothing written this hour yet
   return !(await written(env, getDoc, ct.day, now));   // today's page has no finished pass yet (the first one failed): don't wait 90 minutes
 }
 // Should Claude write now? Returns null (no), or { facts, day, state } for the caller to start the write-up with.
@@ -79,7 +81,7 @@ export async function wireDue(env, getDoc, nowMs) {
   if ((st.n || 0) >= WIRE_AUTO.DAY_MAX) return null;
   const gap = (now - (Number(st.lastAt) || 0)) / 60000;
   const first = !st.n || !(await written(env, getDoc, ct.day, now));   // nothing finished yet today
-  const hourly = slot(ctParts(Number(st.lastAt) || 0).hour) !== slot(ct.hour) || gap > 120;   // nothing written this hour yet
+  const hourly = slot(ctParts(Number(st.lastAt) || 0).hour) !== slot(ct.hour) || gap > WIRE_AUTO.EVERY * 60;   // nothing written this hour yet
   if (!first && !hourly) return null;   // too soon for anything: don't even fetch
   // 3.140.7: the Central day, not the Eastern one (after 11 PM Central, Eastern is already tomorrow and the night's finals were missed): today's, plus yesterday's until noon Central so last night's late games get their recap
   const ymd = (off) => new Date(Date.parse(ct.day + "T12:00:00Z") + off * 86400000).toISOString().slice(0, 10).replace(/-/g, ""), days = [ymd(0)].concat(ct.hour < 12 ? [ymd(-1)] : [], ct.hour >= 18 ? [ymd(1)] : []);   // and tomorrow's from 6 PM, for the next games up

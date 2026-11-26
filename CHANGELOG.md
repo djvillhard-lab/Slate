@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.143.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News is reworked around Claude's writing. The page now runs: Just In (breaking headlines exactly as ESPN and The Athletic publish them, the moment they come in), The Lead (Claude's top story, now with Why it matters and What's next), The Breakdown (4 or 5 more stories, each broken down in Claude's words with the background a headline leaves out), On Deck (previews), In the Books (recaps), Stat Sheet (numbers) and League Check (each league).
+- News: the section titles are new, in a press box voice with no emoji, and the pills on top use the same names.
+- News: the rest of the day's headlines moved into All Headlines at the bottom, closed until tapped, so the page is no longer a long list of links.
+- News: Claude now does up to 6 web searches for each write-up instead of 2, and writes every 3 hours from 6 AM to midnight Central (6 AM, 9 AM, noon, 3 PM, 6 PM, 9 PM). The page keeps the old shape of story until the first new write-up at 6 AM.
+
 ## 3.142.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - On TV, My TVs: new Rules button sets which game goes where, the same for every setup.
