@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.134.1 (Nov 25, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live button (the slate and All games): it is solid red with white words again when it's switched on, in every theme. Since the glass buttons arrived, a switched-on Live button kept the gray glass color with dark words on it, so it looked washed out and was hard to read.
+
 ## 3.134.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Worth a look settings: each league you pick now has its own "Which games" choices. College football and basketball (men's and women's): a ranked team, ranked vs ranked, a top-10 team, a power conference team (SEC, Big Ten, Big 12, ACC, plus Notre Dame in football and the Big East in basketball), power vs power, and rivalries. NBA, NHL and WNBA: top teams, both winning records, rivalries. NFL: both winning records, division games, rivalries. MLB: both winning records, rivalries. Soccer: top of the table, the Big Six or Europe's giants, knockout rounds and derbies.

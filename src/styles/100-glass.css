@@ -37,6 +37,11 @@ html body .substrip > button[aria-pressed="true"] { color: var(--accent) !import
 /* 3. small toggles (Time/League, Board, Live): glass pills. They scroll with the page, so painted, not blurred */
 .sl-seg, .lo-btn { background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; border-radius: 999px !important; }
 .sl-seg button[aria-pressed="true"] { background: var(--lg-lit) !important; box-shadow: var(--lg-hi) !important; }
+/* 3.134.1 (DJ: "Live button should be red. It seems to be discolored"): the glass fill above painted over the red of a
+   switched-on Live button, leaving dark words on dark glass. On = solid live red with white words, in every theme. */
+.lo-btn.on:not(.ag2-btn):not(.lo-board) { background: var(--live) !important; border-color: var(--live) !important; color: #fff !important; }
+.lo-btn.on:not(.ag2-btn):not(.lo-board) .lo-dot { background: #fff !important; }
+.lo-btn.on:not(.ag2-btn):not(.lo-board) b { background: rgba(255,255,255,.24) !important; color: #fff !important; }
 
 /* ---- Part 2 (3.126.0): buttons, the main action, fields, switches, segmented choices, the Live feed switcher.
    Everything here scrolls with the page, so it is painted glass (no blur). ---- */

@@ -3,6 +3,8 @@ Last updated: Nov 25, 2026, 3.132.0
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
+- Live button on = solid live red, white words, every theme (3.134.1, DJ). The glass fill in `100-glass.css` had painted over
+  `.lo-btn.on`; the fix sits right under that rule and leaves the 2 columns and Board buttons alone.
 - Two columns of small cards (3.132.0, DJ: "option to show multiple game matchups at once (two columns, condensed matchup
   cards)"). The "2 columns" button (`.ag2-btn`) sits on the left of the Live row, which is now drawn on every day (Live itself
   still only today). `agTwo()` / `agSetTwo()` keep the choice in `localStorage["slate-ag-two"]`; `renderGames` puts `.ag2` on
