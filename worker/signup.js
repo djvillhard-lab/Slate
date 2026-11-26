@@ -4,6 +4,11 @@
 //                           every answer carries the invites ("list") and the people with accounts ("people")
 //   POST /api/invite-check  {code}                → {ok, note, app} or {error}
 //   POST /api/signup        {code, name, pass}    → {ok, id, name, app} or {error}
+//   POST /api/handoff       {action: "new", pass} → {ok, t}   Safari, right after setting up: a one-time ticket, 20 minutes
+//                           {action: "redeem", t} → {ok, key, id, name}   the iPhone app, opened by slatedj://open#h=<t>
+// The handoff (3.156.0) logs the app in as the person who just set up in Safari, without typing the passcode again.
+// The app gets its own device key ("g1-…", users/devices, HMAC only), the same kind Sign in with Google makes, so
+// whoIs needs no change and People > Remove takes it away too. Only tickets' HMACs are stored (users/handoff).
 // "app" is the iPhone app's public TestFlight link (3.155.0), which the admin pastes in once on the invite sheet
 // (action "applink", {url}); kept in config/app. The invite page and the end of the walkthrough point new people to it.
 // The docs table can be read by anyone with the page's public key, so nothing stored here can be used by itself:
@@ -92,6 +97,34 @@ export async function signupRoutes(req, env, url, h) {
     const list = Object.keys(d.list).map((k) => ({ k: k.slice(0, 10), at: d.list[k].at, note: d.list[k].note || "", state: state(d.list[k]), name: d.list[k].name || "" }))
       .sort((a, b) => (a.at < b.at ? 1 : -1));
     return json({ ok: true, code, days: DAYS, list, people, app: await appLink(getDoc, env) });
+  }
+
+  if (url.pathname === "/api/handoff") {
+    const hk = (t) => hmac(env, "handoff:" + String(t || ""));
+    const hd = (await getDoc(env, "users/handoff")) || {}, list = hd.list || {};
+    Object.keys(list).forEach((k) => { if (Date.now() - Date.parse(list[k].at || 0) > 20 * 60000) delete list[k]; });
+    if (p.action === "new") {
+      const me = await whoIs(env, p.pass);
+      if (!me || me.id === "dj") return json({ error: "Log in first." }, 403);  // DJ's own passcode is checked by the database, not a device key
+      if (Object.keys(list).length >= 50) return json({ error: "Try again in a few minutes." }, 429);
+      const t = [...crypto.getRandomValues(new Uint8Array(18))].map((x) => x.toString(16).padStart(2, "0")).join("");
+      list[await hk(t)] = { id: me.id, at: new Date().toISOString() };
+      hd.list = list; const w = await putDoc(env, "users/handoff", hd);
+      return w.ok ? json({ ok: true, t }) : json({ error: "Couldn't save. Try again." }, 502);
+    }
+    if (p.action === "redeem") {
+      const k = await hk(p.t), h = list[k];
+      if (!/^[0-9a-f]{36}$/.test(String(p.t || "")) || !h) return json({ error: "That link ran out. Open Slate and log in with your passcode." }, 403);
+      delete list[k]; hd.list = list; await putDoc(env, "users/handoff", hd);  // one use, even if the rest fails
+      const reg = (await getDoc(env, "users/registry")) || {}, u = Object.values(reg.users || {}).find((x) => x && x.id === h.id);
+      if (!u) return json({ error: "That account isn't there any more." }, 403);
+      const key = "g1-" + [...crypto.getRandomValues(new Uint8Array(24))].map((x) => x.toString(16).padStart(2, "0")).join("");
+      const dv = (await getDoc(env, "users/devices")) || {}; dv.keys = dv.keys || {};
+      dv.keys[await passKey(env, key)] = { id: h.id, via: "handoff", at: new Date().toISOString(), ua: String(req.headers.get("user-agent") || "").slice(0, 80) };
+      const w = await putDoc(env, "users/devices", dv);
+      return w.ok ? json({ ok: true, key, id: h.id, name: u.name || h.id, admin: u.admin === true }) : json({ error: "Couldn't log in. Try again." }, 502);
+    }
+    return json({ error: "bad request" }, 400);
   }
 
   const d = await load(), ck = await codeKey(env, p.code), inv = d.list[ck];

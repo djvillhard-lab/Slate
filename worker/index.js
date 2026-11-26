@@ -394,7 +394,7 @@ export default {
     // Sign in with Google, tied to an existing profile (worker/google.js)
     if (url.pathname.startsWith("/api/google/")) return googleRoutes(req, env, url, { json, whoIs, getDoc, putDoc, passKey });
     // invite-only sign-up (signup.js)
-    if (url.pathname === "/api/invite" || url.pathname === "/api/invite-check" || url.pathname === "/api/signup") return signupRoutes(req, env, url, { json, whoIs, getDoc, putDoc });
+    if (url.pathname === "/api/invite" || url.pathname === "/api/invite-check" || url.pathname === "/api/signup" || url.pathname === "/api/handoff") return signupRoutes(req, env, url, { json, whoIs, getDoc, putDoc });
     return env.ASSETS.fetch(req);
   }
 };

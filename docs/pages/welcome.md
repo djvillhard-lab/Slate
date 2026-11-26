@@ -68,9 +68,7 @@ answers, a favorite's event, Settings > Account, DJ's invite sheet), `src/styles
 - "Skip late games" doesn't exist as a rule (the engine only has "starts after"), so the walkthrough asks for an
   earliest start instead. A latest-start rule would be a change to `050-slate-engine.js` and the Slate rules page.
 - The thumbs up/down learning could feed the walkthrough's starting rules later.
-- The app still needs one passcode typed in after the Safari setup. Skipping that (the invite opening the app itself
-  and logging it in) needs a new iPhone build: universal links (Associated Domains + an apple-app-site-association
-  file) or a slate:// URL scheme in `onOpenURL`. Not built; ask DJ first.
+- (3.156.0, needs iPhone build 59+) no passcode typed in the app after a Safari setup: see "Open Slate" below.
 
 ## One-link invites (3.155.0, DJ Nov 26)
 DJ texts one link; on an iPhone it goes: sign-up page (shows the 3 steps) > walkthrough > "Last step: get the iPhone
@@ -90,3 +88,15 @@ app" > TestFlight public link > log in to the app with the new passcode (their s
   e.g. `shots.py lineup --gate invite --safari`.
 - DJ's side (App Store Connect): TestFlight > the external group (Friends) > Public Link > Enable; the newest build
   must be in that group and through Apple's beta review. External testers wait for review on new versions.
+
+## Open Slate from Safari (3.156.0, iPhone build needed; DJ chose it Nov 26)
+- "Get the app" (end of the walkthrough) now leads to an "Open Slate when it's installed" screen in Safari (`appWait`,
+  232-welcome.js; comes back on reload while `slate-app-wait` is set). Open Slate asks `/api/handoff` {action:"new",
+  pass} for a one-time ticket (20 minutes, HMAC in `users/handoff`) and goes to `slatedj://open#h=<ticket>`.
+- The app: `slatedj` URL scheme in `ios/Slate-Info.plist`; `WebModel.openLink` turns `#h=` into
+  `slateHandoff(ticket)` (db-shim.js), which redeems it for a new device key (`g1-…` in `users/devices`, like Google
+  sign-in, so `whoIs` is unchanged and People > Remove clears it) and logs in.
+- A custom scheme, not universal links: universal links need the Associated Domains capability turned on for the App
+  ID at developer.apple.com first (or Xcode Cloud's export fails), and this needs nothing from DJ.
+- If the app is too old to know `slatedj://`, Safari can't open it; after 2.5 seconds the page says to install or
+  update from TestFlight, or log in with the passcode.

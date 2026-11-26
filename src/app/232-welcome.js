@@ -321,19 +321,68 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
         ap.appendChild(el("h2", null, "Last step: get the iPhone app"));
         var ol = el("ol", "wl-app-steps");
         ["Tap Get the app. Apple opens TestFlight, its app for trying new apps. Install TestFlight if you don't have it.",
-         "In TestFlight, tap Accept, then Install, then Open.",
-         "In Slate, log in with the passcode you just made. Your teams and slate are already there."].forEach(function (t, i) {
+         "In TestFlight, tap Accept, then Install.",
+         "Come back to this page and tap Open Slate. You'll be logged in, with your teams and slate."].forEach(function (t, i) {
           var li = el("li"); li.appendChild(el("i", null, String(i + 1))); li.appendChild(el("span", null, t)); ol.appendChild(li);
         });
         ap.appendChild(ol); body.appendChild(ap);
         next.textContent = wl.preview ? "Finish preview" : "Get the app";
         // a new tab, so the saves still in flight from this page aren't cut off
-        nextFn = function () { if (wl.preview) { wlFinish(); return; } var w = null; try { w = window.open(app, "_blank"); } catch (e) {} wlFinish(); if (!w) setTimeout(function () { location.href = app; }, 1500); };
+        nextFn = function () {
+          if (wl.preview) { wlFinish(); return; }
+          var w = null; try { w = window.open(app, "_blank"); } catch (e) {}
+          wlFinish(); try { localStorage.setItem("slate-app-wait", "1"); } catch (e) {} appWait(app);
+          if (!w) setTimeout(function () { location.href = app; }, 1500);
+        };
         var stay = el("button", "outline quiet wl-back", "Use it here"); stay.type = "button"; stay.addEventListener("click", wlFinish);
         foot.appendChild(stay); foot.appendChild(next);
       } else { foot.appendChild(back); foot.appendChild(next); }
     }
   }
+
+  // ---------- after "Get the app" (3.156.0): Safari waits for the app to be installed, then opens it logged in ----------
+  // "Open Slate" asks the worker for a one-time ticket (/api/handoff) and opens slatedj://open#h=<ticket>; the app
+  // trades it for its own key (db-shim.js slateHandoff). The screen comes back if Safari reloads, until they leave it.
+  function appWait(app) {
+    var o = $("app-wait");
+    if (!o) { o = el("div", "wl"); o.id = "app-wait"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-label", "Open the Slate app"); document.body.appendChild(o); }
+    o.textContent = ""; document.documentElement.classList.add("wl-on");
+    var top = el("div", "wl-top"); top.appendChild(el("span", "wl-mark", "Slate")); top.appendChild(el("span", "wl-n", "Last step")); o.appendChild(top);
+    var body = el("div", "wl-body"); o.appendChild(body);
+    body.appendChild(el("h1", null, "Open Slate when it's installed"));
+    body.appendChild(el("p", "wl-p", "When TestFlight shows Slate as installed, come back to this page and tap Open Slate. The app opens logged in, with your teams and your slate."));
+    var go = el("button", "solid wl-app-go", "Open Slate"); go.type = "button"; body.appendChild(go);
+    var hint = el("p", "wl-p dim"); hint.hidden = true; body.appendChild(hint);
+    var get = el("button", "outline wl-phone-b", "Get the app from TestFlight"); get.type = "button";
+    get.addEventListener("click", function () { var w = null; try { w = window.open(app, "_blank"); } catch (e) {} if (!w) location.href = app; });
+    body.appendChild(get);
+    go.addEventListener("click", function () {
+      go.disabled = true; go.textContent = "Opening…"; hint.hidden = true;
+      fetch("/api/handoff", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "new", pass: slatePass() }) })
+        .then(function (r) { return r.json(); }).catch(function () { return { error: "No connection. Try again." }; })
+        .then(function (j) {
+          go.disabled = false; go.textContent = "Open Slate";
+          if (!j || !j.t) { hint.textContent = (j && j.error) || "Couldn't open Slate. Try again."; hint.hidden = false; return; }
+          var left = false, gone = function () { if (document.visibilityState === "hidden") { left = true; try { localStorage.removeItem("slate-app-wait"); } catch (e) {} } };
+          document.addEventListener("visibilitychange", gone);
+          location.href = "slatedj://open#h=" + j.t;
+          setTimeout(function () {
+            document.removeEventListener("visibilitychange", gone);
+            if (!left) { hint.textContent = "Slate didn't open. Install it from TestFlight first, or update it there. You can also open Slate and log in with your passcode."; hint.hidden = false; }
+          }, 2500);
+        });
+    });
+    var foot = el("div", "wl-foot"); o.appendChild(foot);
+    var stay = el("button", "outline quiet wl-back", "Use Slate here instead"); stay.type = "button";
+    stay.addEventListener("click", function () { try { localStorage.removeItem("slate-app-wait"); } catch (e) {} o.remove(); document.documentElement.classList.remove("wl-on"); render(); });
+    foot.appendChild(stay);
+  }
+  // Safari reloaded while waiting for the app: show the screen again
+  (function () {
+    var w = ""; try { w = localStorage.getItem("slate-app-wait") || ""; } catch (e) {}
+    var app = w && slatePass() && window.slateWantsApp ? window.slateWantsApp() : "";
+    if (app) setTimeout(function () { if (!$("app-wait") && !wl.open) appWait(app); }, 300);
+  })();
 
   // ---------- a favorite team in an event: that whole event goes on the slate by default (DJ, Nov 16, 2026) ----------
   // If one of your teams plays in an event that your rules wouldn't show (events picked by hand, or that group
@@ -372,6 +421,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       var me = "dj", flag = ""; try { me = localStorage.getItem("slate-user") || "dj"; flag = localStorage.getItem("slate-welcome") || ""; } catch (e) {}
       if (me === "dj") return;
       if (flag) { wlStart(true); return; }
+      try { if (localStorage.getItem("slate-handed")) { localStorage.removeItem("slate-handed"); toast("You're logged in. Your teams and slate came over from Safari.", null, 5000); } } catch (e) {}
       // logging in for the first time on this phone: new if nothing of theirs has been saved yet
       var c = db.collection("data/users/" + uid);
       Promise.all([c.doc("settings").get(), c.doc("welcome").get()]).then(function (r) {
