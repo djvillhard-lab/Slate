@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Simple mode (league on every card, slate-style cards, text sizes) | src/app/287-simple.js, docs/pages/simple.md | 2026-11-26 15:02 |
