@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.131.0 (Nov 25, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- News: Press Box now opens on a Custom news page card. Tap the matchups from your slate (like "DET @ GB") and the leagues playing today that you want to dig into, then Generate, and Claude writes a page about just those. It opens on its own screen, with Back to return. Once it's written, the card says when, with Open your page and Regenerate. Claude still only runs when you tap.
+- Under the card, News fills itself in with no tap and no Claude: Breaking (ESPN's short news items from the last 6 hours, newest first, with your team's color), Top headlines (ESPN's top stories league by league in ESPN's order, your teams' first, plus The Athletic; 8 shown, Show more for the rest), then Injuries and moves as before.
+- The long Customize screen (games, teams and leagues groups) is gone. Picks are matchups and leagues only; your team picks are no longer used.
+
 ## 3.130.10 (Nov 25, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Prime Video: tapping a Prime Video "Watch" link in the Slate app (game cards, the matchup, On TV, the Live feed's score bar, the Lock Screen's Watch button) now opens the Prime Video app instead of the Prime Video website. If the app isn't on the phone, the website opens as before.

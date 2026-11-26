@@ -1,0 +1,26 @@
+/* News: Custom news page card + automatic headlines (3.131.0, DJ Nov 25, 2026). Code: src/app/201-news-custom.js */
+.nc { display: grid; gap: 8px; padding: 12px; margin-top: 2px; }
+.nc-hd { display: flex; align-items: center; gap: 8px; min-height: 24px; }
+.nc-hd svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
+.nc-hd b { font-size: 16px; font-weight: 800; color: var(--head); }
+.nc-sub { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.35; color: var(--muted); }
+.nc-sub.cl-err { color: var(--live); }
+.nc-lab { margin-top: 4px; font-size: 12px; font-weight: 800; font-stretch: 92%; color: var(--dim); }
+.nc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.nc-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--raise); color: var(--ink); font: inherit; }
+.nc-chip b { font-size: 14px; font-weight: 800; font-stretch: 92%; white-space: nowrap; }
+.nc-chip span { font-size: 11px; font-weight: 800; font-stretch: 85%; color: var(--dim); }
+.nc-chip[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, var(--card)); border-color: var(--accent); }
+.nc-chip[aria-pressed="true"] span { color: var(--muted); }
+.nc-plus { background: transparent; border-style: dashed; }
+.nc-plus b { color: var(--muted); }
+.nc-act { display: flex; gap: 8px; margin-top: 6px; }
+.nc-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 15px; font-weight: 800; }
+.nc-btn.main { background: var(--accent-fill); border-color: transparent; color: var(--on-accent, #fff); }
+.nc-btn svg { width: 15px; height: 15px; }
+.nc-btn:disabled { opacity: .45; }
+.nc-busy { flex: 1; justify-content: flex-start; min-height: 46px; font-size: 14px; }
+.nc-sec b { display: inline-flex; align-items: center; gap: 6px; }
+.nc-link { display: block; color: inherit; text-decoration: none; }
+.nc-ht { display: block; font-size: 15px; font-weight: 800; line-height: 1.3; color: var(--ink); }
+.nc-hs { display: block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--dim); }

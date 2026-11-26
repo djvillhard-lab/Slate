@@ -16,24 +16,6 @@
     myTeamList().forEach(function (t) { add(t.lg); }); nwGames().forEach(function (g) { add(g.league); }); ["nfl", "nba", "ncaaf"].forEach(add);
     return out.slice(0, 4);
   }
-  // Headlines right now: the newest stories from those leagues, the person's teams first. Shown until today's page exists.
-  function nwxHeads(body) {
-    var lgs = nwxLgs(), items = [], mine = myTeamList();
-    lgs.forEach(function (lg) {
-      var c = nw.feeds[lg];
-      if (!c) nwFeed(lg).then(nwRedraw, function () {});
-      else if (c.items) c.items.slice(0, 12).forEach(function (a) { items.push(a); });
-    });
-    if (!items.length) return;
-    var isMine = function (a) { return mine.some(function (t) { return t.lg === a.lg && nwAbout(a, t.name); }) ? 0 : 1; };
-    var seen = {}; items = items.filter(function (a) { if (seen[a.title]) return false; seen[a.title] = 1; return true; });
-    items.sort(function (a, b) { return isMine(a) - isMine(b) || (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0); });
-    body.appendChild(nwSec("Headlines right now", lgs.map(function (k) { return LEAGUES[k].tag; }).join(" · ")));
-    var rc = el("div", "nx-card nx-reads");
-    items.slice(0, 6).forEach(function (a) { rc.appendChild(nwRead({ title: a.title, url: a.url, source: a.src + " · " + LEAGUES[a.lg].tag })); });
-    body.appendChild(rc);
-    body.appendChild(el("p", "nwx-note", "Straight from ESPN and The Athletic. For a page written around your games and teams, pick them below."));
-  }
   // Earlier days (3.113.14, DJ): the day picker by the thumb (070-navigation.js) moves News between days, up to today
   function nwxBackRow(body) {
     var b = el("button", "rlink nwx-back", "‹ Back to today's news"); b.type = "button";

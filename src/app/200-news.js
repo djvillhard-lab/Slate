@@ -1,8 +1,8 @@
   // ---------- by channel ----------
   function chanKind(n) { return NATIONAL_TV.indexOf(n) !== -1 ? "national" : isStreaming(n) ? "streaming" : "regional"; }
   // ---------- News (3.45.0): a quick-look dashboard written by Claude, only when Generate is tapped ----------
-  // 1. Options: what to cover (today's slate, my teams, leagues), then Generate news (one Claude request).
-  // 2. The page: when it was generated + Regenerate (reopens the options), Top news (Claude's five picks), then
+  // 1. Press Box: the Custom news page card (pick matchups and leagues, then Generate: one Claude request), then free
+  //    headlines (201-news-custom.js, 3.131.0). 2. The page, on its own screen: when it was generated + Regenerate, Top news, then
   //    Games | Teams | Leagues tabs. 3. Tap a game, team or league for a deeper breakdown, written on first tap and
   //    saved (shared by everyone). Free ESPN and Athletic headlines are handed to Claude as facts and link out.
   var ATH_SLUG = { nfl: "nfl", ncaaf: "college-football", nba: "nba", mlb: "mlb", nhl: "nhl", ncaam: "college-basketball", ncaaw: "womens-college-basketball", wnba: "wnba", mls: "mls", epl: "premier-league", ucl: "champions-league" };
@@ -14,18 +14,18 @@
     var c = nw.feeds[lg]; if (c && (c.busy || Date.now() - c.at < (fresh ? 60000 : 10 * 60000))) return c.p;
     c = nw.feeds[lg] = { busy: true, at: Date.now(), items: c && c.items };
     var espn = rkFetch(bxApi(lg, "news?limit=40")).then(function (d) {
-      return ((d || {}).articles || []).map(function (a) {
+      return ((d || {}).articles || []).map(function (a, i) {
         var teams = (a.categories || []).filter(function (x) { return x.type === "team" && x.description; }).map(function (x) { return x.description; });
         var evs = (a.categories || []).filter(function (x) { return x.type === "event" && x.description; }).map(function (x) { return x.description.toLowerCase(); });
         (a.categories || []).forEach(function (x) { var id = x.athleteId || (x.athlete || {}).id; if (x.type === "athlete" && id && x.description) nwAthPut(lg, x.description, id); });
         var im0 = (a.images || []).filter(function (m) { return m && /^https:\/\//.test(m.url || "") && !/stitcher/.test(m.url); })[0] || {}, img = im0.url || "";
         // who the photo shows, as ESPN names it ("Sir Jim Ratcliffe [1296x729]"), so the big story only uses a photo of its subject (3.94.2)
         var inm = String(im0.name || "").replace(/\[[^\]]*\]/g, " ") + " " + String(im0.caption || "") + " " + String(im0.alt || "");
-        return { title: a.headline, desc: a.description || "", url: ((a.links || {}).web || {}).href || "", at: a.published || a.lastModified || "", src: "ESPN", lg: lg, teams: teams, events: evs, img: img, inm: inm };
+        return { title: a.headline, desc: a.description || "", url: ((a.links || {}).web || {}).href || "", at: a.published || a.lastModified || "", src: "ESPN", lg: lg, teams: teams, events: evs, img: img, inm: inm, kind: a.type || "", rk: i };
       });
     }, function () { return []; });
     var ath = ATH_SLUG[lg] ? fetch("/api/athletic?slug=" + ATH_SLUG[lg]).then(function (r) { return r.ok ? r.json() : { items: [] }; }).then(function (j) {
-      return (j.items || []).map(function (a) { return { title: a.title, desc: a.desc || "", url: a.url, at: a.at, src: "The Athletic", lg: lg, teams: [] }; });
+      return (j.items || []).map(function (a, i) { return { title: a.title, desc: a.desc || "", url: a.url, at: a.at, src: "The Athletic", lg: lg, teams: [], rk: i }; });
     }, function () { return []; }) : Promise.resolve([]);
     c.p = Promise.all([espn, ath]).then(function (r) {
       var seen = {}, all = r[0].concat(r[1]).filter(function (a) { if (!a.title || !/^https:\/\//.test(a.url) || seen[a.title]) return false; seen[a.title] = 1; return true; });
@@ -73,7 +73,7 @@
     try { localStorage.setItem("slate-newspicks", JSON.stringify(o)); } catch (e) {} }
   // what a Generate would actually cover right now
   function nwCover() {
-    var o = nwOpts(), gs = nwGames().filter(function (g) { return o.gs.ids.indexOf(g.id) !== -1; }), tms = myTeamList().filter(function (t) { return bxBase(t.lg) && o.ts.indexOf(nwTKey(t)) !== -1; });
+    var o = nwOpts(), gs = nwGames().filter(function (g) { return o.gs.ids.indexOf(g.id) !== -1; }), tms = [];  // 3.131.0 (DJ): the custom page covers matchups and leagues only, so no team picks
     return { slate: gs.length > 0, teams: tms.length > 0, lgs: o.lgs, games: gs, myTeams: tms };
   }
   function nwPagePath() { return "mine/news-" + state.date; }
@@ -99,7 +99,7 @@
     var pass = slatePass(); if (!pass) { toast("Enter your passcode first (bottom of the page)"); return; }
     var cv = nwCover(); if (!cv.slate && !cv.teams && !cv.lgs.length) { toast("Pick something to cover first"); return; }
     var path = nwPagePath(), k = "n:" + path, date = state.date, prevDoc = nw.docs[path];
-    CL_ASK[k] = Date.now(); nw.opts = false; keepScroll(renderNews); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0);
+    CL_ASK[k] = Date.now(); nw.opts = false; if (nw.deep && nw.deep.type === "c") keepScroll(renderNews); else ncOpen();  // the page opens on its own screen with the clock (3.131.0)
     var want = {}; if (cv.slate) cv.games.forEach(function (g) { want[g.league] = 1; }); if (cv.teams) cv.myTeams.forEach(function (t) { want[t.lg] = 1; }); cv.lgs.forEach(function (l) { want[l] = 1; });
     // Top news also covers big stories outside my teams and leagues (3.83.6, DJ): the newest headlines from the major leagues
     var around = ["nfl", "nba", "ncaaf", "ncaam", "mlb", "nhl", "epl"].filter(function (l) { return LEAGUES[l]; }); around.forEach(function (l) { want[l] = 1; });
@@ -151,6 +151,7 @@
   function nwTeamDoc(page, name, lg) { var n = String(name || "").toLowerCase(); return ((page || {}).teams || []).filter(function (x) { return String(x.name || "").toLowerCase() === n && (!x.lg || !lg || x.lg === lg); })[0] || null; }
   function nwOpenDeep(d) {
     d.key = nwDeepKey(d); d.path = "newsdeep/" + state.date + "-" + d.key; d.y = paneY();
+    d.from = nw.deep && nw.deep.type === "c" ? nw.deep : null;  // opened from the custom page: Back returns there (3.131.0)
     nw.deep = d;
     // opening never asks Claude (3.51.1): a saved breakdown shows right away, otherwise the page has a Generate button
     nwSub(d.path);
@@ -159,7 +160,7 @@
   }
   // Back (the dock's, a swipe, or the row at the top) returns from a breakdown to the page, where you were
   function nwCloseDeep() {
-    var d = nw.deep; if (!d) return false; nw.deep = null; renderNews(true); renderBack();
+    var d = nw.deep; if (!d) return false; nw.deep = d.from || null; renderNews(true); renderBack();
     var y = d.y || 0; setTimeout(function () { if (isDuo) $("pane-r").scrollTop = y; else window.scrollTo(0, y); }, 0);
     return true;
   }
@@ -394,79 +395,6 @@
     if (/ran too long/i.test(String(e || ""))) return (when ? "The try at " + timeText(at) + " was" : "That was") + " too much for one page, so it didn't finish. Leave out a few games or teams and try again.";
     return /credit balance|limit of/i.test(String(e || "")) || !when ? clErr(e) : "The try at " + timeText(at) + " didn't finish. Try again.";
   }
-  // ----- the options: what to cover, then Generate -----
-  function nwRenderOpts(body, doc, busy, doc0) {
-    if (busy) { nwWriting(body, "Claude is writing your news", nwTookText() + " You can leave this page and come back.", doc0, "n:" + nwPagePath()); return; }
-    var o = nwOpts(), gs = nwGames(), tms = myTeamList().filter(function (t) { return bxBase(t.lg); }), has = !!(doc && doc.at);
-    var put = function () { nwOptsPut(o); var d0 = nw.docs[nwPagePath()]; if (d0 && d0.writing && d0.writing.error) nw.errSeen = d0.writing.at; keepScroll(renderNews); };
-    var ttl = el("div", "nx-ptitle"); ttl.appendChild(el("b", null, state.date === todayInHome() ? "Customize today's news" : "Customize this day's news")); ttl.appendChild(el("span", null, "Pick the games, teams and leagues to cover.")); body.appendChild(ttl);
-    var wrap = el("div", "nx-picks" + (busy ? " busy" : ""));
-    // one group: its name, how many are picked, All / Clear, then a chip for each thing (nothing picked to start)
-    var group = function (title, list, cls, key, picked, setPicked, fill, empty) {
-      var keys = list.map(key), n = keys.filter(function (k) { return picked.indexOf(k) !== -1; }).length;
-      // each group folds: tap its name to collapse or expand it; remembered on this phone (3.52.12, slate-newsfold)
-      var fold = {}; try { fold = JSON.parse(localStorage.getItem("slate-newsfold") || "{}") || {}; } catch (e) {}
-      var shut = !!fold[cls] && list.length > 0;
-      var hd = el("div", "nx-ph" + (shut ? " shut" : "")), hl = el("button", "nx-pt"); hl.type = "button"; hl.setAttribute("aria-expanded", shut ? "false" : "true");
-      var ht = el("span", "nx-ptx"); ht.appendChild(el("b", null, title)); ht.appendChild(el("span", null, list.length ? n + " of " + list.length + " picked" : empty)); hl.appendChild(ht);
-      if (list.length) { hl.appendChild(icon("more")); hl.addEventListener("click", function () { fold[cls] = shut ? 0 : 1; try { localStorage.setItem("slate-newsfold", JSON.stringify(fold)); } catch (e) {} keepScroll(renderNews); }); }
-      hd.appendChild(hl);
-      if (list.length > 1 && !shut) { var all = el("button", "nx-all", n === list.length ? "Clear" : "All"); all.type = "button"; all.addEventListener("click", function () { setPicked(n === list.length ? [] : keys); put(); }); hd.appendChild(all); }
-      wrap.appendChild(hd); if (!list.length || shut) return;
-      var ch = el("div", "nx-chips " + cls);
-      list.forEach(function (x) {
-        var k = key(x), on = picked.indexOf(k) !== -1, c = el("button", "nx-chip"); c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false"); fill(c, x);
-        c.addEventListener("click", function () { setPicked(on ? picked.filter(function (y) { return y !== k; }) : picked.concat([k])); put(); }); ch.appendChild(c);
-      });
-      wrap.appendChild(ch);
-    };
-    group(state.date === todayInHome() ? "Today's slate" : "This day's slate", gs, "g", function (g) { return g.id; }, o.gs.ids, function (v) { o.gs.ids = v; }, function (c, g) {
-      c.setAttribute("aria-label", pairText(g, function (sd) { return g[sd]; }, " at ") + ", " + info(g).name + ", " + timeText(g.start));
-      c.appendChild(el("span", "nx-cm", info(g).tag + " · " + timeText(g.start)));
-      var r = el("span", "nx-cr"); r.appendChild(nwTeamBadge(g.away, g, "away")); r.appendChild(el("i", null, "@")); r.appendChild(nwTeamBadge(g.home, g, "home")); c.appendChild(r);
-    }, "Nothing on the slate yet");
-    group("My teams", tms, "t", nwTKey, o.ts, function (v) { o.ts = v; }, function (c, t) {
-      c.setAttribute("aria-label", t.name + ", " + ((LEAGUES[t.lg] || {}).name || t.lg));
-      c.appendChild(nwTeamBadge(t.name)); c.appendChild(el("span", "nx-cm", (LEAGUES[t.lg] || {}).tag || t.lg));
-    }, "Pick your teams on the Teams page");
-    var mine = {}; gs.forEach(function (g) { mine[g.league] = 1; }); tms.forEach(function (t) { mine[t.lg] = 1; });
-    var lks = nwLeagueKeys().sort(function (a, b) { return (mine[b] ? 1 : 0) - (mine[a] ? 1 : 0) || NW_LGS.indexOf(a) - NW_LGS.indexOf(b); });
-    group("Leagues", lks, "l", function (k) { return k; }, o.lgs, function (v) { o.lgs = v; }, function (c, k) { c.appendChild(el("span", "nx-cn", (LEAGUES[k] || {}).name || k)); }, "");
-    body.appendChild(wrap);
-    var cv = nwCover(), any = cv.slate || cv.teams || cv.lgs.length > 0, act = el("div", "nx-act");
-    if (busy) { var sp = el("div", "nx-busy"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Claude is writing your news…")); sp.appendChild(nwElapsed(doc0, "n:" + nwPagePath())); act.appendChild(sp); }
-    else {
-      var go = el("button", "nx-go"); go.type = "button"; go.appendChild(icon("sparkle")); go.appendChild(el("span", null, has ? "Regenerate news" : "Generate news")); go.disabled = !any;
-      go.addEventListener("click", nwGenerate); act.appendChild(go);
-      if (has) { var cn = el("button", "nx-cancel", "Keep the page from " + timeText(doc.at)); cn.type = "button"; cn.addEventListener("click", function () { nw.opts = false; renderNews(); }); act.appendChild(cn); }
-    }
-    act.appendChild(el("p", "nx-note", any ? (busy ? nwTookText() + " You can leave this page and come back." : "Claude researches your picks and writes the page. " + nwTookText() + " It only runs when you tap.") : "Nothing is picked yet. Pick at least one game, team or league."));
-    body.appendChild(act);
-  }
-  // Press Box before today's page is written (3.128.2, DJ): Generate at the top with when the last page was written,
-  // instead of only at the bottom under the headlines. Generate uses the saved picks; with none, it opens the picks.
-  function nwLastGen() {
-    var today = todayInHome(); if (!db || nw.lastFor === today) return nw.last;
-    nw.lastFor = today; nw.last = null;
-    var ds = []; for (var i = 1; i <= 7; i++) ds.push(shiftDate(today, -i));
-    Promise.all(ds.map(function (d) { return db.doc("mine/news-" + d).get().then(function (sn) { var x = sn.exists ? sn.data() : null; return x && x.at && ((x.top || []).length || (x.games || []).length) ? x.at : null; }, function () { return null; }); }))
-      .then(function (r) { nw.last = r.filter(Boolean)[0] || ""; nwRedraw(); });
-    return null;
-  }
-  function nwGenTop(body) {
-    var last = nwLastGen(), cv = nwCover(), any = cv.slate || cv.teams || cv.lgs.length;
-    var gen = el("div", "nx-card nx-gen"), gl = el("div", "nx-genl");
-    gl.appendChild(el("b", null, "No page yet today"));
-    gl.appendChild(el("span", null, last ? "Last generated by Claude " + clWhen(last) : last === "" ? "Not generated this week" : "Checking the last page…"));
-    gen.appendChild(gl);
-    var g = el("button", "nx-regen"); g.type = "button"; g.appendChild(el("span", null, "Generate"));
-    g.setAttribute("aria-label", any ? "Generate today's news page with Claude" : "Pick what to cover, then generate");
-    g.addEventListener("click", function () {
-      if (any) { nwGenerate(); return; }
-      var o = document.querySelector("#nw-body .nx-ptitle"); if (o) o.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
-    });
-    gen.appendChild(g); body.appendChild(gen);
-  }
   // ----- the generated page -----
   function nwRenderPage(body, doc, busy, err, errAt) {
     if (busy) { nwWriting(body, "Claude is writing a new page", nwTookText() + " The page from " + timeText(doc.at) + " comes back if this one doesn't finish.", doc, "n:" + nwPagePath()); return; }
@@ -475,7 +403,7 @@
     gl.appendChild(el("b", null, "Generated by Claude " + clWhen(doc.at)));
     gl.appendChild(el("span", null, [nwAgo(doc.at), parts.join(", ")].filter(Boolean).join(" · "))); gen.appendChild(gl);
     if (busy) { var sp = el("span", "nx-busy sm"); sp.appendChild(el("i", "cl-dot")); sp.appendChild(el("span", null, "Writing a new one…")); sp.appendChild(nwElapsed(doc, "n:" + nwPagePath())); gen.appendChild(sp); }
-    else if (today) { var rg = el("button", "nx-regen"); rg.type = "button"; rg.appendChild(el("span", null, "Regenerate")); rg.addEventListener("click", function () { nw.opts = true; renderNews(); if (isDuo) $("pane-r").scrollTop = 0; else window.scrollTo(0, 0); }); gen.appendChild(rg); }
+    else if (today) { var rg = el("button", "nx-regen"); rg.type = "button"; rg.appendChild(el("span", null, "Regenerate")); rg.addEventListener("click", nwGenerate); gen.appendChild(rg); }  // 3.131.0: same picks, one tap; change them on Press Box
     body.appendChild(gen);
     if (err) body.appendChild(el("p", "pv-none cl-err", nwErr(err, errAt)));
     // Top news: open until collapsed, then stays collapsed until opened again
@@ -522,7 +450,6 @@
       }
       body.appendChild(tw); }
     }
-    if (today) wirePress(body);  // your teams' injuries, trades and signings, from ESPN (3.114.0)
     // Games | Teams | Leagues: only the ones this page has; the leftmost opens first. Teams is only the favorite teams
     // picked in the options (3.50.1; cover.picked), not every team in the picked games; older pages have no list of
     // picks, so they show the favorites they wrote about.
@@ -772,28 +699,19 @@
     var body = $("nw-body"); body.textContent = ""; body.className = "nx";
     if (!db) { body.appendChild(el("p", "pv-none", "News needs the app's saved data, which isn't available here.")); return; }
     if (nw.deep && nw.deep.date !== undefined && nw.deep.date !== state.date) nw.deep = null;
-    if (nw.deep) { nw.deep.date = state.date; nwRenderDeep(body); return; }
+    if (nw.deep) { nw.deep.date = state.date; if (nw.deep.type === "c") ncRenderCustom(body); else nwRenderDeep(body); return; }
     if (nw.lg && nwBriefLgs().indexOf(nw.lg) === -1) nw.lg = null;
     nwStrip(body);
     if (nw.lg) { var bd = nwBriefOf(nw.lg); nwSub(bd.path); nwRenderDeep(body, bd); wireLeague(body, nw.lg); return; }
     var path = nwPagePath(); nwSub(path);
     var doc = nw.docs[path]; if (doc === undefined) { body.appendChild(el("p", "pv-none", "Loading…")); return; }
-    var has = !!(doc && doc.at && ((doc.top || []).length || (doc.games || []).length || (doc.teams || []).length || (doc.leagues || []).length)), w = clWriting(doc, "n:" + path), busy = !!(w && w.busy), err = w && w.error;
-    if (has && doc.took) try { localStorage.setItem("slate-newstook", String(doc.took)); } catch (e) {}
-    if (has) doc.regen = !!(doc.top || []).some(function (x) { return x.new === false; });
-    if (state.date !== todayInHome()) nwxBackRow(body);
-    if (!has && state.date !== todayInHome() && !busy) { body.appendChild(el("p", "pv-none", "No news was generated for " + fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + ". Go back to today to generate a page.")); return; }
-    // a failed try is shown with its time, only for half an hour, and goes away once the picks change (3.47.2: an old
-    // failure used to sit above the options for the rest of the day and read like a new one)
-    var wat = doc && doc.writing && doc.writing.at, errAt = wat ? Date.parse(wat) : 0;
-    if (err && !CL_ASK["n:" + path] && (!errAt || Date.now() - errAt > 30 * 60000 || nw.errSeen === wat)) err = null;
-    var isToday = state.date === todayInHome();
-    if (!has || nw.opts) {
-      if (!has && !busy && isToday) { nwGenTop(body); nwxHeads(body); wirePress(body); }  // something to read before any page is written (3.104.0); injuries and moves (3.114.0)
-      if (err && !busy) body.appendChild(el("p", "pv-none cl-err", nwErr(err, wat))); nwRenderOpts(body, has ? doc : null, busy, doc);
-      
-      return;
+    var st = ncState(doc, path);
+    if (state.date !== todayInHome()) {  // an earlier day: its saved page, read only
+      nwxBackRow(body);
+      if (!st.has) { body.appendChild(el("p", "pv-none", "No news was generated for " + fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + ". Go back to today to generate a page.")); return; }
+      doc.regen = !!(doc.top || []).some(function (x) { return x.new === false; }); nwRenderPage(body, doc, false, null, null); return;
     }
-    nwRenderPage(body, doc, busy, err, wat);
-    
+    // today (3.131.0, DJ): the Custom news page card on top, then what's free and automatic: Breaking, Top headlines,
+    // Injuries and moves. The written page opens from the card on its own screen.
+    ncCard(body, doc, st); ncAuto(body); wirePress(body);
   }
