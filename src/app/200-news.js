@@ -160,6 +160,9 @@
   }
   // Back (the dock's, a swipe, or the row at the top) returns from a breakdown to the page, where you were
   function nwCloseDeep() {
+    // 3.148.1 (DJ: "I was stuck in news because back button was not obvious"): Back and the back swipe leave an opened
+    // story first, then a section (back to News Home)
+    if (typeof nl !== "undefined" && nl && !nw.deep) { if (nl.story) { nlStoryClose(); return true; } if (nl.f !== "home" && state.view === "news") { nlPick("home"); return true; } }
     var d = nw.deep; if (!d) return false; nw.deep = d.from || null; renderNews(true); renderBack();
     var y = d.y || 0; setTimeout(function () { if (isDuo) $("pane-r").scrollTop = y; else window.scrollTo(0, y); }, 0);
     return true;

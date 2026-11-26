@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.148.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: you can no longer get stuck in an opened story. Close was a small button at the top right, under the Dynamic Island. It is now a green Back button at the top left, clear of the island, and a second Back button stays at the bottom right under your thumb.
+- News: inside a section (Just In, On Deck and the rest) a green Home button is at the top left and "Back to News Home" is at the bottom. The app's Back and the back swipe also leave a story or a section.
+- News: a write-up made after midnight did not show until 4 AM, because the app was still on the day before. The page now shows the newest write-up, so the 1:38 AM test write-up is on the page.
+
 ## 3.148.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Slate: finished games' one-liners now also say how the game went, when something stands out, under each team's best player or goal scorers. Basketball: 10 or more lead changes (its own top row), never trailed and led by 15 or more, a big night from three (14+ made at 45% or better) or a bad one (20% or worse on 25+ tries), and a 16-point edge in the paint. Football: each team's turnovers when they differ by 2 or more, and a 120-yard gap in total yards. Soccer: comebacks, late winners, red cards, lopsided possession or shots. Hockey: power plays (2 or more goals, or 0-for-4 and worse), 35+ saves, and a 12-shot gap. At most two of these per game.

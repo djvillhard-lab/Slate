@@ -21,6 +21,10 @@
     // 3.144.2 (DJ: "News doesn't need the day picker. Should only show the updated news for the current time"): always today
     var today = todayInHome(), past = false, path = nlPath(today); nwSub(path);
     var ok = function (d) { return !!(d && d.at && ((d.items || []).length || d.lead)); };
+    // 3.148.1: the app's day turns over at 4 AM, the server's pages at midnight Central. Between the two the page for the
+    // new calendar day may already exist (a write-up after midnight), so the newer of the two is the one shown.
+    var cal = todayInHome(); try { cal = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); } catch (e) {}
+    if (cal > today) { var cp = nlPath(cal); nwSub(cp); if (ok(nw.docs[cp]) && (!ok(nw.docs[path]) || nw.docs[cp].at > nw.docs[path].at)) path = cp; }
     var doc = nw.docs[path], has = ok(doc), wr = doc && doc.writing, busy = !!(wr && wr.at && !wr.error && Date.now() - Date.parse(wr.at) < 10 * 60000);
     // after midnight, before the day's first write: last night's page stays up
     if (!past && !has && doc !== undefined) { var yp = nlPath(nlDayBefore(today)); nwSub(yp); if (ok(nw.docs[yp])) { doc = nw.docs[yp]; has = true; } }
@@ -131,9 +135,14 @@
   function nlStoryClose() { var r = nl.back || "news"; nl.story = null; nl.back = null; if (r !== "news" && window.SlateApp && window.SlateApp.paneGo) window.SlateApp.paneGo(r); else renderNews(true); }
   setTimeout(function () { if (window.SlateApp) window.SlateApp.newsStory = function (json) { try { nlStoryShow(JSON.parse(json)); } catch (e) {} }; }, 0);
   // the story on its own half. Returns true when it drew.
+  function nlBackBtn(label, fn) { var b = el("button", "nf-bk"); b.type = "button"; b.appendChild(icon("back")); b.appendChild(el("span", null, label)); b.addEventListener("click", fn); return b; }
+  function nlFab(label, fn) { var b = nlBackBtn(label, fn); b.classList.add("nf-fab"); return b; }
   function nlStoryRender(body) {
     var x = nl.story; if (!x) return false;
-    var wrap = nlWrap(body, "nl-sv"), bar = el("div", "nl-svbar"), cb = el("button", "nl-svx"); cb.type = "button"; cb.appendChild(el("span", null, "✕ Close")); cb.addEventListener("click", nlStoryClose); bar.appendChild(el("b", null, "From the wire")); bar.appendChild(cb); wrap.appendChild(bar);
+    // 3.148.1 (DJ got stuck here: Close sat top right, under the Dynamic Island): Back is on the left, away from the island,
+    // and again as a button under the thumb that stays on screen
+    var wrap = nlWrap(body, "nl-sv"), bar = el("div", "nl-svbar"), cb = nlBackBtn("Back", nlStoryClose); bar.appendChild(cb); bar.appendChild(el("b", null, "News story")); wrap.appendChild(bar);
+    wrap.appendChild(nlFab("Back", nlStoryClose));
     var num = (x.kind === "number" || x.kind === "fun") && x.value, im = !num && x.img ? nwImg(nwPic(x.img, 800), "nl-svp") : null; if (im) wrap.appendChild(im);
     var art = el("div", "nl-sva"); if (x.c) art.style.setProperty("--c", x.c);
     var top = nlTags(x); top.appendChild(el("span", "nl-tm", nlTime(x.ms || Date.now()))); art.appendChild(top);
@@ -247,13 +256,13 @@
   }
   // 3.145.0 (DJ picked "Section button"): with the three-page bar on screen the sections live in its bottom-right button
   // (283-three-pages.js draws the button and its list from nlTabs); the pills on top stay only where that bar isn't shown
-  function nlTabs() { return (nl.opts || []).map(function (o) { return [o[0], o[1], o[3], !!o[4], nl.f === o[0]]; }); }
+  function nlTabs() { return nl.story ? [] : (nl.opts || []).map(function (o) { return [o[0], o[1], o[3], !!o[4], nl.f === o[0]]; }); }
   function nlTabNow() { var t = ""; (nl.opts || []).forEach(function (o) { if (o[0] === nl.f && o[0] !== "home") t = o[1]; }); return t; }
   function nlBarTabs() { return typeof n3BarOn === "function" && n3BarOn(); }
   function nlPills(body, M) {
     var opts = nl.opts = nlOpts(M);
     if (opts.length < 2) return;
-    if (nlBarTabs()) { if (nl.f !== "home") { var cur = opts.filter(function (o) { return o[0] === nl.f; })[0], hb = el("button", "nf-cur"); hb.type = "button"; hb.appendChild(el("b", null, cur ? cur[1] : "")); hb.appendChild(el("span", null, "Back to Home")); hb.addEventListener("click", function () { nlPick("home"); }); body.appendChild(hb); } return; }
+    if (nlBarTabs()) { if (nl.f !== "home") { var cur = opts.filter(function (o) { return o[0] === nl.f; })[0], hb = el("div", "nf-cur"); hb.appendChild(nlBackBtn("Home", function () { nlPick("home"); })); hb.appendChild(el("b", null, cur ? cur[1] : "")); body.appendChild(hb); } return; }
     var row = el("div", "nf-pills"); row.setAttribute("role", "tablist"); row.setAttribute("aria-label", "Filter the news");
     opts.forEach(function (o) {
       var b = el("button", "nf-pill" + (o[0].indexOf("lg:") === 0 ? " lg" : "")); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", nl.f === o[0] ? "true" : "false");
@@ -323,6 +332,7 @@
       if (M.leagues.length) { wrap.appendChild(nlH(NL_T.leagues, "Claude's snapshots")); M.leagues.forEach(function (x) { wrap.appendChild(nlLeagueCard(x, true)); }); }
       headlines(M.items.filter(function (x) { return jin.indexOf(x) === -1 && !isNumX(x); }), !M.has);
     }
+    if (f !== "home") { var eb = nlBackBtn("Back to News Home", function () { nlPick("home"); }); eb.classList.add("wide"); wrap.appendChild(eb); }
     if (nlBarTabs() && typeof n3Draw === "function") n3Draw();   // the section button follows the page
     return true;
   }
