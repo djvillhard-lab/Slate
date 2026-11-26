@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | shared: ios/ (Live Activity football by the score) | ios/SlateLive/SlateLiveActivity.swift | 2026-11-26 01:22 |
+| DJ | News (custom news page generator) | src/app/200-news.js, src/app/202-news-extras.js, new src/styles news file, docs/pages/news.md | 2026-11-26 01:25 |
