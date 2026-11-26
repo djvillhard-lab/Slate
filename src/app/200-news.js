@@ -697,6 +697,7 @@
     if (state.date < today0 && !nw.toToday && nwx.past !== state.date) { nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
     var tb = $("nw-tabs"); tb.textContent = ""; tb.hidden = true;
     var body = $("nw-body"); body.textContent = ""; body.className = "nx";
+    if (nlStoryRender(body)) return;   // 3.138.0, unfolded Duo: a story tapped on the other half (203-news-lab.js)
     if (!db) { body.appendChild(el("p", "pv-none", "News needs the app's saved data, which isn't available here.")); return; }
     if (nw.deep && nw.deep.date !== undefined && nw.deep.date !== state.date) nw.deep = null;
     if (nw.deep) { nw.deep.date = state.date; if (nw.deep.type === "c") ncRenderCustom(body); else nwRenderDeep(body); return; }

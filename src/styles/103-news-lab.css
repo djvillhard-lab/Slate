@@ -204,3 +204,21 @@
 .nl-dc .dots { position: absolute; left: 0; right: 0; bottom: 12px; display: flex; justify-content: center; gap: 5px; }
 .nl-dc .dots i { width: 16px; height: 3px; border-radius: 2px; background: rgba(140,140,140,.4); }
 .nl-dc .dots i.on { background: var(--accent); }
+
+/* Front Page (3.138.0): Wire 1 + Wire 2 + Rundown + Daily */
+.nl-bp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 calc(8px - var(--pad)); }
+.nl-bp.one { grid-template-columns: 1fr; }
+.nl-bp .nl-po { min-height: 148px; }
+.nl-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 8px; margin: 0 calc(-1 * var(--pad)); border-top: 1px solid var(--line); }
+
+/* a story on the other half of the unfolded Duo */
+.nl-svbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.nl-svbar b { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+.nl-svx { min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 14px; font-weight: 800; }
+.nl-svp { width: calc(100% + 2 * var(--pad)); max-width: none; height: auto; aspect-ratio: 16 / 9; margin: 0 calc(-1 * var(--pad)); }
+.nl-sva { display: grid; gap: 10px; padding-left: 12px; border-left: 4px solid var(--c, var(--accent)); }
+.nl-sva h3 { font-size: 24px; font-weight: 800; font-stretch: 96%; line-height: 1.15; color: var(--ink); }
+.nl-sva p { font-size: 16.5px; line-height: 1.5; color: var(--ink); font-weight: 500; }
+.nl-svn { font-size: 64px; font-weight: 800; font-stretch: 70%; line-height: 1; color: var(--accent); overflow-wrap: anywhere; }
+.nl-svg { font-size: 12px; font-weight: 700; color: var(--dim); }
+.nl-svb { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 14px; border-radius: 8px; background: var(--accent-fill); color: var(--on-accent, #fff) !important; font-size: 15px; font-weight: 800; }

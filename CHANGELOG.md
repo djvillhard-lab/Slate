@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.138.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: a new tab to try, Front Page, that combines Wire 1, Wire 2, Rundown and Daily (DJ's account only for now, next to the other tabs). Top to bottom: a full-width photo lead, five things to know, tonight's prime-time games as team-color posters with why each matters, the number of the day, then the wire by the hour, edge to edge, with pairs of photo tiles breaking it up, then a line on each league and what's worth reading.
+- The News wire now writes itself. From 6 AM to midnight Central, Slate checks ESPN and The Athletic every 10 minutes and has Claude write a fresh pass only when there is something new: a breaking item at least 90 minutes after the last write, or five new stories after 3 hours. Never more than 8 times a day, and it stops at Slate's daily Claude budget. It is one write-up shared by everyone. The Update button still works when you want a fresh pass right now.
+- Unfolded Duo: tap a story on any of the News tabs and it opens on the other half, with the photo, Claude's summary, a button to the full story, and more from that league. Close puts that half back the way it was. A tapped game opens its matchup on the other half too.
+
 ## 3.137.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - My TVs: each TV now looks like a Live notification. The team colors slant in from each side, the logos and score are big, the clock sits in a small tag under the score, and the channel is in large type at the top right of every TV. Everything grows with the TV, so a small TV is a smaller copy of the big one and still shows the channel clearly. Split-screen TVs draw each game the same way.

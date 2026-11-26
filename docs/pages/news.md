@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 26, 2026, 3.137.1
+Last updated: Nov 26, 2026, 3.138.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -19,10 +19,23 @@ one hook in `renderNews` (`if (nlRender(body)) return;`).
   items (worker keeps 40, newest first). Claude's entries name a headline by number so the worker attaches the real link,
   source and time itself.
 - 3.137.1: any written entry with a `value` (not breaking, not fun) is drawn as a number; Claude often files numbers as "news".
-- Claude writes ONLY on the Generate / Update tap. DJ's answer on scheduled writing is still open (his "tap only" tap
-  on Nov 25 was accidental; re-asked Nov 26). A schedule would need a worker cron and DJ's explicit yes (cost rule).
-- Prototype limits: on the unfolded Duo each half behaves like the folded phone (no "tap an entry, it opens on the other
-  half", no mosaic across both halves); the Deck is a stack of tall cards, no snap scrolling.
+- 3.138.0, DJ's three answers on Nov 25 (late):
+  - **Front Page** tab (`nlMix`): DJ: "Combine the following tabs and redesign, wire 1, wire 2, rundown, and daily."
+    Photo lead (bleed), five things, prime-time posters with the why, number of the day, the wire by the hour with pairs
+    of photo tiles (`nlTile`, `.nl-pair`), league lines, reads. The other tabs stay until DJ says to drop them.
+  - **The wire writes itself** (DJ tapped "Yes, only when there is news"; this is the one exception to "Claude only on
+    a tap"). `worker/newswire.js` `wireDue` + `runNewsWire` in `worker/index.js`, from the every-minute cron at minutes
+    ending in 6. Rules in `WIRE_AUTO`: 6 AM to midnight Central; first write of the day, or a new ESPN HeadlineNews
+    90+ min after the last write, or 5 new stories 180+ min after; 8 a day at most; skipped if someone tapped Update in
+    the last hour or Slate's daily Claude budget is spent. State in doc `newsdeep/wire-auto` ({day, n, lastAt, seen}).
+    Games come from `slates/<day>` (no scores, so the prompt is told not to state one). Cost is logged as user "wire".
+    Rough cost guess given to DJ: $10 to $25 a month. Leagues are fixed in `LGS` (not per user).
+  - **Unfolded Duo** (DJ tapped "Yes, tap opens on the other half"): in a pane, a tapped story calls the other pane's
+    `SlateApp.newsStory(json)` (`nlOpenStory` → `nlStoryShow`), which draws `nlStoryRender` (hooked at the top of
+    `renderNews`): photo, summary, link button, more from that league, and Close, which puts that half back
+    (`nl.back`, via `SlateApp.paneGo`). Games go to the other half with `paneGo("game:<id>")`. No change to 288-panes.js.
+    Folded phone and iPhone: a story tap still opens the article.
+- Prototype limits: the Deck has no snap scrolling; the story view has no related game yet.
 - Generic class names collide with app-wide rules (`.n3`, `.card`, `.two`, `.why`): keep everything `nl-` prefixed.
 - NEXT: when DJ picks a layout, delete the other layouts and their CSS, drop the tab row, and show it to everyone.
 

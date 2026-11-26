@@ -13,6 +13,7 @@ import { usageRoute } from "./usage.js";
 import { photosRoute } from "./photos.js";
 import { googleRoutes } from "./google.js";
 import { wireRoute } from "./wire.js";
+import { wireDue } from "./newswire.js";  // the News wire, written without a tap when there is news (3.138.0)
 
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const PUB = "sb_publishable_G7sLoJ7ihWxKivYsmkxRJw_CgomPngZ";
@@ -151,6 +152,24 @@ async function startTick(env) {
   if (r.status !== 204) console.log("tick dispatch", r.status, (await r.text()).slice(0, 200));
 }
 
+// The News wire writes itself when there is news (3.138.0; DJ said yes on Nov 25, 2026). worker/newswire.js decides
+// (new headlines, time since the last write, at most 8 a day); this starts the same write-up the Update button does.
+// It stops at Slate's daily Claude budget like everyone else, and its cost is logged under the name "wire".
+async function runNewsWire(env) {
+  const due = await wireDue(env, getDoc); if (!due) return;
+  const p = { kind: "deep", key: "w-wire", date: due.day, user: "wire" }, t = target(p), at = new Date().toISOString();
+  const cur = (await getDoc(env, t.path)) || {}, w = cur.writing, now = Date.now();
+  if (w && w.at && !w.error && now - Date.parse(w.at) < 10 * 60000) return;   // someone's tap is being written right now
+  if (cur.at && now - Date.parse(cur.at) < 60 * 60000) return;                // someone tapped Update within the hour
+  const day = (((await getDoc(env, "stats/usage")) || {}).days || {})[ctDay()] || {};
+  if ((Number(day.usd) || 0) >= (Number(env.CLAUDE_DAY_USD) || 15)) return;
+  await putDoc(env, "newsdeep/wire-auto", due.state);
+  await mergeDoc(env, t.path, t.patch({ writing: { at, kind: "deep" } }));
+  const params = { user: "wire", kind: "deep", date: due.day, id: null, key: "w-wire", at, size: null, game: JSON.stringify({ page: "News wire" }), facts: JSON.stringify(due.facts).slice(0, 24000) };
+  try { await env.SUMMARY.create({ params }); console.log("news wire: writing", due.fresh, "new"); }
+  catch (e) { await mergeDoc(env, t.path, t.patch({ writing: { at, kind: "deep", error: "Couldn't start: " + String(e).slice(0, 120) } })); }
+}
+
 export default {
   // every minute: phone alerts from live ESPN scores
   async scheduled(event, env, ctx) {
@@ -159,6 +178,7 @@ export default {
     ctx.waitUntil(runMorningEmail(env).catch((e) => console.log("morning email error", String(e))));  // the morning email (worker/morning-email.js)
     // the number job (scripts/tick.py on GitHub) every 10 minutes, started from here: GitHub's own schedule only
     // ran it every few hours at night. Needs a GitHub token (Actions: read and write on this repo) saved in Cloudflare as GH_TOKEN.
+    if (new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 6) ctx.waitUntil(runNewsWire(env).catch((e) => console.log("news wire error", String(e))));
     if (env.GH_TOKEN && new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 3) ctx.waitUntil(startTick(env).catch((e) => console.log("tick error", String(e))));
   },
   async fetch(req, env, ctx) {
