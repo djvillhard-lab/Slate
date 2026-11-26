@@ -713,5 +713,6 @@
     }
     // today (3.131.0, DJ): the Custom news page card on top, then what's free and automatic: Breaking, Top headlines,
     // Injuries and moves. The written page opens from the card on its own screen.
+    if (nlRender(body)) return;   // 3.136.0: the redesign concepts as tabs to try (203-news-lab.js)
     ncCard(body, doc, st); ncAuto(body); wirePress(body);
   }

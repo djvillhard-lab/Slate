@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.136.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: the redesign ideas are now real tabs to try, in a row at the top of News (DJ's account only for now): Current, Combo, Wire 1, Wire 2, Wire 3, Rundown, Wire, Daily and Deck. Current is News as it was. Every other tab shows the same stories laid out a different way, with real photos, links to ESPN and The Athletic, and tonight's games.
+- Each tab starts with ESPN's own headlines, which are free. Tap Generate and Claude writes the wire: short summaries, the numbers of the day, a fun fact, and why tonight's games matter. Tap Update later for a fresh pass. Claude only writes on a tap. One write-up is shared by everyone and by every tab.
+- "New" marks what has come in since you last opened News. "Build your own page" at the bottom goes to the custom news page.
+- This is for picking a direction. Once a layout is chosen, the other tabs go away.
+
 ## 3.135.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - On TV: My TVs is now the first tab, and On TV opens on it. The channel list (All) is the second tab, then National TV and Streaming.

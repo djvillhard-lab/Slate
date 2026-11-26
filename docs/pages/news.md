@@ -1,8 +1,29 @@
 # News
-Last updated: Nov 25, 2026, 3.131.3
+Last updated: Nov 26, 2026, 3.136.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
+
+## The redesign: concepts as tabs to try (3.136.0, IN PROGRESS, waiting on DJ's pick)
+DJ (Nov 25) asked for a News redesign: a default page that is the same for everyone, focused on Claude-written snapshots,
+quick reads, numbers, fun facts and tonight's big games, with real ESPN / Athletic links and photos, to check a few
+times a day. The pick-your-own page (3.131.0 below) stays as its own optional thing. DJ liked concept B "The Wire" but
+couldn't picture mockups, so every concept is built as a real tab: `src/app/203-news-lab.js`, `src/styles/103-news-lab.css`,
+one hook in `renderNews` (`if (nlRender(body)) return;`).
+- Who sees the tab row: admin (DJ), the test account, or localStorage `slate-newslab` = "1" (`nlOn`). Nobody else.
+- Tabs (`NL_TABS`): Current (News as it was), Combo (Wire 1 + Wire 3's games on top, the recommendation), Wire 1 Edge to
+  edge, Wire 2 Mosaic, Wire 3 Board, Rundown (A), Wire (B, the first timeline), Daily (C), Deck (D).
+- One model for all (`nlModel`): the shared doc `newsdeep/<today>-w-wire` (worker kind `deep`, key `w-wire`: lead, items
+  with kind breaking/news/number/fun, games with a "why", league lines). Until someone taps Generate the tabs fill from the
+  free ESPN / Athletic feeds, with no numbers (only a source's own numbers are shown). Each Update merges into the day's
+  items (worker keeps 40, newest first). Claude's entries name a headline by number so the worker attaches the real link,
+  source and time itself.
+- Claude writes ONLY on the Generate / Update tap. DJ's answer on scheduled writing is still open (his "tap only" tap
+  on Nov 25 was accidental; re-asked Nov 26). A schedule would need a worker cron and DJ's explicit yes (cost rule).
+- Prototype limits: on the unfolded Duo each half behaves like the folded phone (no "tap an entry, it opens on the other
+  half", no mosaic across both halves); the Deck is a stack of tall cards, no snap scrolling.
+- Generic class names collide with app-wide rules (`.n3`, `.card`, `.two`, `.why`): keep everything `nl-` prefixed.
+- NEXT: when DJ picks a layout, delete the other layouts and their CSS, drop the tab row, and show it to everyone.
 
 ## Done
 - Injuries, trades and signings (3.115.0, DJ picked News over team pages): `src/app/205-wire.js`, styles injected as `#wire-css`.
