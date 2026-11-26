@@ -694,7 +694,8 @@
     // Regenerate's game picker) still had last night's slate. Opening News on an earlier day moves the app to today.
     // an earlier day picked under "Earlier" stays put (3.104.0)
     var today0 = todayInHome(); if (state.date === today0 || state.view !== "news") nwx.past = null;
-    if (state.date < today0 && !nw.toToday && nwx.past !== state.date) { nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
+    if (false && state.date < today0 && !nw.toToday && nwx.past !== state.date) {   // 3.144.2: News has no day of its own any more, so it leaves the app's day alone
+       nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
     var tb = $("nw-tabs"); tb.textContent = ""; tb.hidden = true;
     var body = $("nw-body"); body.textContent = ""; body.className = "nx";
     // 3.139.0 (DJ): News is the Front Page for everyone (203-news-front.js). It always draws, so nothing below this line

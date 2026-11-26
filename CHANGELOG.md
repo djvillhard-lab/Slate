@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.144.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: the day picker is gone, from the top of the page and from the bottom right. News always shows the latest as of now.
+- News: bigger pictures. Each story in The Breakdown now opens with a full-width photo, and the photos beside headlines are larger.
+- News: more team colors and logos. Stories, Just In headlines, numbers and the lead's "Why it matters" box carry the team's logo and color.
+- News: anything written or published since you last had News open is marked New, with a count at the top and a dot on the pill it is under. The marks clear the next time you come back.
+- News: one extra write-up runs right after this release, in the new format with full web searches, so the page can be tested before 6 AM.
+
 ## 3.144.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - The slate: pre-game one-liners say more. Each team gets its own row with its best fact, and a second one when it's strong, plus a storyline row on top when there is one. For example, Eagles at Cowboys: "Cowboys really need back-to-back wins this time with rival Eagles visiting on Thanksgiving", "PHI: Without LB Baun and QB Hurts", "DAL: Grown from 1.5- to 8.5-point favorites since the line opened".

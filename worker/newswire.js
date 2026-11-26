@@ -23,7 +23,9 @@ const LGS = [  // key (the app's league key), ESPN path, The Athletic's feed, ho
 // 3.141.4 (DJ picked "Every 2 hours" the same night): one write-up in every 2-hour block from 6 AM (6, 8, ... 10 PM), 9 a day.
 // 3.143.0 (DJ: "Utilize full web searches", then picked "Full searches, every 3 hours"): up to 6 searches a pass, one pass in every
 // 3-hour block from 6 AM (6, 9, noon, 3, 6, 9 PM Central), 6 a day. About $65 to $85 a month.
-export const WIRE_AUTO = { DAY_MAX: 9, EVERY: 3, SEARCHES: 6, GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
+// ONCE (3.144.2, DJ: "generate one for testing"): change this label and the next check writes one extra pass right away, at any hour,
+// then never again for that label. Leave it as it is otherwise.
+export const WIRE_AUTO = { DAY_MAX: 9, EVERY: 3, SEARCHES: 6, ONCE: "2026-11-26a", GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
 const FRESH_MS = 30 * 3600000;
 const NATIONAL = /^(ABC|CBS|NBC|FOX|ESPN|ESPN2|TNT|TBS|FS1|Prime Video|Peacock|NFL Network|NBA TV|truTV|USA Net|USA)$/i;
 const slot = (h) => Math.floor((h - WIRE_AUTO.FROM_HOUR) / WIRE_AUTO.EVERY);   // which 2-hour block of the day an hour falls in (6 AM is block 0)
@@ -67,8 +69,10 @@ async function written(env, getDoc, day, now) { const d = (await getDoc(env, "ne
 // The cheap first look, from the every-minute job (one read): inside the hours, under the day's count, and long enough
 // since the last pass for anything to be due.
 export async function wireSoon(env, getDoc, nowMs) {
-  const now = nowMs || Date.now(), ct = ctParts(now); if (ct.hour < WIRE_AUTO.FROM_HOUR) return false;
-  const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}; if (saved.day !== ct.day) return true;
+  const now = nowMs || Date.now(), ct = ctParts(now);
+  const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}; if (WIRE_AUTO.ONCE && saved.once !== WIRE_AUTO.ONCE) return true;
+  if (ct.hour < WIRE_AUTO.FROM_HOUR) return false;
+  if (saved.day !== ct.day) return true;
   if ((saved.n || 0) >= WIRE_AUTO.DAY_MAX) return false;
   if (slot(ctParts(Number(saved.lastAt) || 0).hour) !== slot(ct.hour) || now - (Number(saved.lastAt) || 0) > WIRE_AUTO.EVERY * 3600000) return true;   // nothing written this hour yet
   return !(await written(env, getDoc, ct.day, now));   // today's page has no finished pass yet (the first one failed): don't wait 90 minutes
@@ -76,13 +80,12 @@ export async function wireSoon(env, getDoc, nowMs) {
 // Should Claude write now? Returns null (no), or { facts, day, state } for the caller to start the write-up with.
 export async function wireDue(env, getDoc, nowMs) {
   const now = nowMs || Date.now(), ct = ctParts(now);
-  if (ct.hour < WIRE_AUTO.FROM_HOUR) return null;
-  const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}, st = saved.day === ct.day ? saved : { day: ct.day, n: 0, lastAt: 0, seen: [] };
-  if ((st.n || 0) >= WIRE_AUTO.DAY_MAX) return null;
+  const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}, test = !!WIRE_AUTO.ONCE && saved.once !== WIRE_AUTO.ONCE, st = saved.day === ct.day ? saved : { day: ct.day, n: 0, lastAt: 0, seen: [] };
+  if (!test && (ct.hour < WIRE_AUTO.FROM_HOUR || (st.n || 0) >= WIRE_AUTO.DAY_MAX)) return null;
   const gap = (now - (Number(st.lastAt) || 0)) / 60000;
   const first = !st.n || !(await written(env, getDoc, ct.day, now));   // nothing finished yet today
   const hourly = slot(ctParts(Number(st.lastAt) || 0).hour) !== slot(ct.hour) || gap > WIRE_AUTO.EVERY * 60;   // nothing written this hour yet
-  if (!first && !hourly) return null;   // too soon for anything: don't even fetch
+  if (!first && !hourly && !test) return null;   // too soon for anything: don't even fetch
   // 3.140.7: the Central day, not the Eastern one (after 11 PM Central, Eastern is already tomorrow and the night's finals were missed): today's, plus yesterday's until noon Central so last night's late games get their recap
   const ymd = (off) => new Date(Date.parse(ct.day + "T12:00:00Z") + off * 86400000).toISOString().slice(0, 10).replace(/-/g, ""), days = [ymd(0)].concat(ct.hour < 12 ? [ymd(-1)] : [], ct.hour >= 18 ? [ymd(1)] : []);   // and tomorrow's from 6 PM, for the next games up
   const [lists, boards] = await Promise.all([
@@ -98,7 +101,7 @@ export async function wireDue(env, getDoc, nowMs) {
   const live = all.filter((g) => g.status === "live").sort(byW).slice(0, 5);
   const next = all.filter((g) => g.status === "not started" && Date.parse(g.start) - now < 20 * 3600000 && Date.parse(g.start) > now - 3600000).sort(byW).slice(0, 10);
   const seen = new Set(st.seen || []), fresh = hs.filter((a) => !seen.has(a.url)), freshF = finals.filter((g) => !seen.has("f:" + g.ev));
-  const due = first || hourly;
+  const due = first || hourly || test;
   if (!due) return null;
   // new stories first, so they're the ones kept if the facts have to be trimmed
   const ordered = fresh.concat(hs.filter((a) => seen.has(a.url)));
@@ -111,5 +114,5 @@ export async function wireDue(env, getDoc, nowMs) {
   const facts = { headlines, games, prev: (doc.items || []).slice(0, 20).map((x) => x.title) };
   while (JSON.stringify(facts).length > 38000 && facts.headlines.length > 14) facts.headlines.pop();   // the workflow cuts these facts at 40,000 characters
   const keep = hs.map((a) => a.url).concat(finals.map((g) => "f:" + g.ev), st.seen || []).filter((u, i, a) => a.indexOf(u) === i).slice(0, 500);
-  return { day: ct.day, facts, fresh: fresh.length + freshF.length, state: { day: ct.day, n: (st.n || 0) + 1, lastAt: now, seen: keep } };
+  return { day: ct.day, facts, fresh: fresh.length + freshF.length, state: { day: ct.day, n: (st.n || 0) + 1, lastAt: now, seen: keep, once: WIRE_AUTO.ONCE || saved.once || "" } };
 }

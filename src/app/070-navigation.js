@@ -14,7 +14,7 @@
   function tvSwipe(step) { var i = TV_TABS.indexOf(state.tvFilter), n = TV_TABS[i + step]; if (n) tvPick(n, step > 0 ? "l" : "r"); }
   function renderDockDay() {
     var dn = $("dock-day"); if (!dn) return;
-    var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments" || (v === "lineup" && !isDuo) || (v === "news" && !nw.deep)) && !state.menuOpen;  // News too (3.113.14, DJ): back to earlier days' pages, up to today  // the slate too (3.49.0): the same picker under the thumb on every dated page
+    var v = state.view, on = (v === "best" || v === "games" || v === "tv" || v === "moments" || (v === "lineup" && !isDuo)) && !state.menuOpen;  // 3.144.2 (DJ): not News any more, it always shows now  // News too (3.113.14, DJ): back to earlier days' pages, up to today  // the slate too (3.49.0): the same picker under the thumb on every dated page
     var wasOn = !dn.hidden; dn.hidden = !on; if (!on) return;
     // grow in only when it appears (not every refresh, or when the page re-pins the dock while it bounces)
     if (!wasOn && !REDUCED) { dn.classList.remove("dd-in"); void dn.offsetWidth; dn.classList.add("dd-in"); clearTimeout(dn._t); dn._t = setTimeout(function () { dn.classList.remove("dd-in"); }, 300); }

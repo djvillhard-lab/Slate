@@ -9,7 +9,7 @@
   // Recaps, Numbers, and one per league. Nothing here calls Claude. ESPN's and The Athletic's own headlines (free) fill
   // in what has been published since the last write, and the whole page before the day's first one.
   // History: 3.136.0-3.138.0 tried eight layouts as tabs (203-news-lab.js); DJ picked the combined one. docs/pages/news.md.
-    var nl = { f: "home", prev: null, story: null, back: null, all: false, open: false };
+    var nl = { f: "home", prev: null, last: 0, story: null, back: null, all: false, open: false };
   function nlPath(day) { return "newsdeep/" + (day || todayInHome()) + "-w-wire"; }
   function nlDayBefore(iso) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); }
   function nlHex(v) { v = String(v || ""); return hexOk(v) ? v : hexOk("#" + v) ? "#" + v : ""; }
@@ -18,7 +18,8 @@
   function nlFeedItem(url) { var it = null; if (url) Object.keys(nw.feeds).some(function (k) { it = nwItem(k, url); return !!it; }); return it; }
   var NL_LGS = ["nfl", "nba", "ncaaf", "ncaam", "nhl", "mlb", "epl", "ncaaw"];   // the same leagues the server writes about
   function nlModel() {
-    var today = todayInHome(), past = state.date < today, path = nlPath(past ? state.date : today); nwSub(path);
+    // 3.144.2 (DJ: "News doesn't need the day picker. Should only show the updated news for the current time"): always today
+    var today = todayInHome(), past = false, path = nlPath(today); nwSub(path);
     var ok = function (d) { return !!(d && d.at && ((d.items || []).length || d.lead)); };
     var doc = nw.docs[path], has = ok(doc), wr = doc && doc.writing, busy = !!(wr && wr.at && !wr.error && Date.now() - Date.parse(wr.at) < 10 * 60000);
     // after midnight, before the day's first write: last night's page stays up
@@ -59,14 +60,17 @@
     var gs = games(), own = function (x) { x.game = x.id ? gs.filter(function (y) { return String(y.id) === String(x.id); })[0] || null : null; x.ms = Date.parse(x.start) || 0; return x; };
     var recaps = has ? (doc.recaps || []).map(function (x) { return own(Object.assign({}, x)); }) : [], done = {}; recaps.forEach(function (x) { done[x.ev] = 1; });
     var previews = has ? (doc.previews || []).map(function (x) { return own(Object.assign({}, x)); }).filter(function (x) { return !done[x.ev] && (past || x.ms > now - 4 * 3600000) && !(x.game && status(x.game).kind === "over"); }) : [];
-    // what's new since you last looked (kept per day on this phone)
-    if (nl.prev == null) { var sv = null; try { sv = JSON.parse(localStorage.getItem("slate-newsseen") || "null"); } catch (e) {} nl.prev = sv && sv.d === todayInHome() ? sv.t : 0; try { localStorage.setItem("slate-newsseen", JSON.stringify({ d: todayInHome(), t: now })); } catch (e) {} }
-    var isNew = function (x) { return nl.prev > 0 && Math.max(x.ms, Date.parse(x.w) || 0) > nl.prev; };
-    items.concat(stories).forEach(function (x) { x.nw = isNew(x); });
+    // 3.144.2 (DJ: "anything new since last generation, or since last time I viewed the page, should show some sort of
+    // indicator"): what was written or published after this person last had News open, kept on this phone. The marks stay
+    // for the visit and are gone on the next one (a visit ends once News has been off screen for two minutes).
+    if (nl.prev == null || now - nl.last > 120000) { var sv = null; try { sv = JSON.parse(localStorage.getItem("slate-newsseen") || "null"); } catch (e) {} nl.prev = nl.prev == null ? (sv && Number(sv.t)) || 0 : nl.last; }
+    nl.last = now; try { localStorage.setItem("slate-newsseen", JSON.stringify({ d: todayInHome(), t: now })); } catch (e) {}
+    var isNew = function (x) { return nl.prev > 0 && Math.max(x.free ? x.ms : 0, Date.parse(x.w) || (x.free ? 0 : x.ms)) > nl.prev; };
+    items.concat(stories, lead ? [lead] : [], previews, recaps).forEach(function (x) { x.nw = isNew(x); });
     // Just In: breaking headlines exactly as ESPN and The Athletic publish them, the moment they are in the feed (no wait for Claude)
     var brk = items.filter(function (x) { return x.kind === "breaking" && (past || now - x.ms < 8 * 3600000); });
     return { doc: doc, has: has, busy: busy, past: past, lead: lead, stories: stories, brk: brk, items: items, previews: previews, recaps: recaps, nums: items.filter(function (x) { return (x.kind === "number" || x.kind === "fun") && x.value; }),
-      news: items.filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), top: (has ? items.filter(wrote) : items).filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), leagues: has ? (doc.leagues || []).filter(function (x) { return LEAGUES[x.key] && (x.text || x.line); }) : [], nNew: items.filter(function (x) { return x.nw; }).length, loading: loading, per: per, lgs: lgs };
+      news: items.filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), top: (has ? items.filter(wrote) : items).filter(function (x) { return !((x.kind === "number" || x.kind === "fun") && x.value); }), leagues: has ? (doc.leagues || []).filter(function (x) { return LEAGUES[x.key] && (x.text || x.line); }) : [], nNew: items.concat(stories, lead ? [lead] : [], previews, recaps).filter(function (x) { return x.nw; }).length, loading: loading, per: per, lgs: lgs };
   }
   // ----- shared pieces -----
   // 3.143.0 (DJ: "I don't like the section titles"): every section title in one place
@@ -93,7 +97,7 @@
   function nlCaught() { return el("div", "nl-caught", "Caught up to here" + (nl.prev ? " at " + nlTime(nl.prev) : "")); }
   // a text entry: tags, headline, summary, link, and a thumbnail on the right
   function nlEntry(x, cls) {
-    var a = nlLink(x, "nl-e" + (cls ? " " + cls : "")), top = nlTags(x); top.appendChild(el("span", "nl-tm", nlTime(x.ms))); a.appendChild(top);
+    var a = nlLink(x, "nl-e" + (cls ? " " + cls : "")), top = nlTags(x); if (x.t) top.insertBefore(teamBadge(x.t), top.firstChild); top.appendChild(el("span", "nl-tm", nlTime(x.ms))); a.appendChild(top);
     if ((x.kind === "number" || x.kind === "fun") && x.value) { a.classList.add("num"); a.appendChild(el("b", "n", x.value)); var d = el("div"); d.appendChild(el("h4", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); a.appendChild(d); return a; }
     var d2 = el("div"); d2.appendChild(el("h4", null, x.title)); if (x.text) d2.appendChild(el("p", null, x.text)); var s = nlSrc(x); if (s) d2.appendChild(s); a.appendChild(d2);
     var im = nlImg(x, "th", 240); if (im) a.appendChild(im);
@@ -155,19 +159,27 @@
     [["Why it matters", x.why], ["What's next", x.next]].forEach(function (r) { if (!r[1]) return; var p = el("p"); p.appendChild(el("b", null, r[0])); p.appendChild(document.createTextNode(r[1])); d.appendChild(p); });
     return d;
   }
-  // one of Claude's breakdowns: the story in its own words, then why it matters and what's next
+  // 3.144.2 (DJ: "Some pictures in news are too small. Use more team colors and logos"): the team an entry is about, as
+  // its logo badge and name
+  function nlTeamMark(x, cls) { if (!x.t) return null; var m = el("span", "nf-tm" + (cls ? " " + cls : "")); m.appendChild(teamBadge(x.t)); m.appendChild(el("b", null, x.t.name)); return m; }
+  // one of Claude's breakdowns: a full-width picture (or a band in the team's color), the team's logo, the story in
+  // Claude's words, then why it matters and what's next
   function nlStory(x) {
-    var a = nlLink(x, "nx-card nf-s"), top = nlTags(x); top.appendChild(el("span", "nl-tm", nlTime(x.ms))); a.appendChild(top);
-    var hd = el("div", "nf-sh"); hd.appendChild(el("h4", null, x.title)); var im = nlImg(x, "th", 240); if (im) hd.appendChild(im); a.appendChild(hd);
-    if (x.text) a.appendChild(el("p", null, x.text));
-    var dp = nlDeep(x); if (dp) a.appendChild(dp);
-    var s = nlSrc(x); if (s) a.appendChild(s);
+    var a = nlLink(x, "nx-card nf-s"), ph = el("div", "nf-sp"), im = nlImg(x, "bg", 800), tm = nlTeamMark(x);
+    if (im) ph.appendChild(im); else ph.classList.add("noimg"); if (tm) ph.appendChild(tm); if (im || tm) a.appendChild(ph);
+    var bd = el("div", "nf-sb"), top = nlTags(x); top.appendChild(el("span", "nl-tm", nlTime(x.ms))); bd.appendChild(top);
+    bd.appendChild(el("h4", null, x.title)); if (x.text) bd.appendChild(el("p", null, x.text));
+    var dp = nlDeep(x); if (dp) bd.appendChild(dp);
+    var s = nlSrc(x); if (s) bd.appendChild(s); a.appendChild(bd);
     return a;
   }
-  // Just In: the breaking headlines themselves, newest first, one line each
+  // Just In: the breaking headlines themselves, newest first, each with its team's logo
   function nlJustIn(list) {
     var c = el("div", "nx-card nf-ji");
-    list.forEach(function (x) { var a = nlLink(x, "nf-j" + (x.nw ? " nw" : "")); a.appendChild(el("span", "tm", nlTime(x.ms))); var d = el("span", "tt"); var lt = (LEAGUES[x.lg] || {}).tag; if (lt) d.appendChild(el("i", null, lt)); d.appendChild(document.createTextNode(x.title)); a.appendChild(d); a.appendChild(icon("more")); c.appendChild(a); });
+    list.forEach(function (x) {
+      var a = nlLink(x, "nf-j" + (x.nw ? " nw" : "")); if (x.t) a.appendChild(teamBadge(x.t)); else a.appendChild(el("span", "nf-jl", (LEAGUES[x.lg] || {}).tag || ""));
+      var d = el("span", "tt"), m = el("i"); if (x.nw) m.appendChild(el("u")); m.appendChild(document.createTextNode([nlTime(x.ms), x.t ? (LEAGUES[x.lg] || {}).tag : ""].filter(Boolean).join(" · "))); d.appendChild(m); d.appendChild(el("b", null, x.title)); a.appendChild(d); a.appendChild(icon("more")); c.appendChild(a);
+    });
     return c;
   }
   // ----- a game Claude previewed or recapped: the two teams in their colors (ESPN's names, time and score), then Claude's words -----
@@ -186,7 +198,7 @@
     else { var st = new Date(o.ms), same = st.toDateString() === new Date().toDateString(); mid.appendChild(el("b", "tm", nlTime(o.ms))); mid.appendChild(el("span", null, [same ? "" : st.toLocaleDateString("en-US", { weekday: "short" }), (o.tv || [])[0]].filter(Boolean).join(" · "))); }
     hd.appendChild(side("away")); hd.appendChild(mid); hd.appendChild(side("home")); c.appendChild(hd);
     var bd = el("div", "nf-gb"), tg = el("div", "nl-kr");
-    tg.appendChild(nlPill(kind === "recap" ? "Recap" : "Preview", kind === "recap" ? "" : "acc", kind === "recap" ? "🏁" : "🔭")); var lt = (LEAGUES[o.lg] || {}).tag; if (lt) tg.appendChild(nlPill(lt, "", "")); if (o.note) tg.appendChild(el("span", "nf-note", o.note));
+    tg.appendChild(nlPill(kind === "recap" ? "Recap" : "Preview", kind === "recap" ? "" : "acc", kind === "recap" ? "🏁" : "🔭")); var lt = (LEAGUES[o.lg] || {}).tag; if (lt) tg.appendChild(nlPill(lt, "", "")); if (o.nw) tg.appendChild(nlPill("New", "acc", "")); if (o.note) tg.appendChild(el("span", "nf-note", o.note));
     bd.appendChild(tg); bd.appendChild(el("h4", null, o.title)); bd.appendChild(el("p", null, o.text));
     if (kind === "preview" && o.watch) { var w = el("p", "nf-x"); w.appendChild(el("b", null, "👀 Watch for ")); w.appendChild(document.createTextNode(o.watch)); bd.appendChild(w); }
     if (kind === "recap" && o.star) { var s2 = el("p", "nf-x"); s2.appendChild(el("b", null, "⭐ ")); s2.appendChild(document.createTextNode(o.star)); bd.appendChild(s2); }
@@ -194,7 +206,7 @@
     if (g) { c.classList.add("tap"); c.setAttribute("role", "button"); c.tabIndex = 0; c.addEventListener("click", function () { var ow = nlOther(); if (ow && !document.documentElement.classList.contains("pn-fwd")) { ow.SlateApp.paneGo("game:" + g.id); return; } openMatchup(g); }); }
     return c;
   }
-  function nlNumTile(x) { var c = nlLink(x, "nl-n"); c.appendChild(el("b", null, x.value)); c.appendChild(el("span", "t", x.title)); if (x.text) c.appendChild(el("span", null, x.text)); return c; }
+  function nlNumTile(x) { var c = nlLink(x, "nl-n"); if (x.t) { c.classList.add("tmd"); c.appendChild(teamBadge(x.t)); } c.appendChild(el("b", null, x.value)); c.appendChild(el("span", "t", x.title)); if (x.text) c.appendChild(el("span", null, x.text)); return c; }
   function nlFive(list) {
     var fc = el("div", "nx-card nl-five");
     list.forEach(function (x, i) { var a = nlLink(x, "nl-it"); a.appendChild(el("span", "nl-rk", String(i + 1))); var d = el("div"); d.appendChild(el("h4", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); var m = nlTags(x); var s = nlSrc(x); if (s) m.appendChild(s); d.appendChild(m); a.appendChild(d); fc.appendChild(a); });
@@ -224,8 +236,8 @@
   function nlPills(body, M) {
     var brk = [M.lead].concat(M.stories, M.items).filter(function (x) { return x && x.kind === "breaking"; }), opts = [["home", "Home", "🏠", 0]];
     if (brk.length) opts.push(["breaking", NL_T.brk, "🚨", brk.length, brk.some(function (x) { return x.nw; })]);
-    if (M.previews.length) opts.push(["next", NL_T.next, "🔭", M.previews.length]);
-    if (M.recaps.length) opts.push(["recaps", NL_T.recaps, "🏁", M.recaps.length]);
+    if (M.previews.length) opts.push(["next", NL_T.next, "🔭", M.previews.length, M.previews.some(function (x) { return x.nw; })]);
+    if (M.recaps.length) opts.push(["recaps", NL_T.recaps, "🏁", M.recaps.length, M.recaps.some(function (x) { return x.nw; })]);
     if (M.nums.length) opts.push(["numbers", NL_T.nums, "🔢", M.nums.length]);
     var cnt = {}, bump = function (x) { if (x && LEAGUES[x.lg]) cnt[x.lg] = (cnt[x.lg] || 0) + 1; };
     [M.lead].concat(M.stories, M.items.filter(function (x) { return !x.free; }), M.previews, M.recaps).forEach(bump); M.leagues.forEach(function (x) { cnt[x.key] = (cnt[x.key] || 0) + 1; });
@@ -249,7 +261,7 @@
     if (M.has) t = "Generated by Claude " + clWhen(M.doc.at) + (M.past ? "" : M.busy ? " · writing a fresh pass now" : " · rewritten through the day, breaking news shows right away");
     else t = M.past ? "" : "Claude writes this page through the day, starting at 6 AM. Until then, these are ESPN's headlines.";
     if (M.busy) r.appendChild(el("i", "cl-dot")); r.appendChild(el("span", null, t));
-    if (M.nNew && !M.past) r.appendChild(el("span", "nl-new", "↑ " + M.nNew + " new"));
+    if (M.nNew && !M.past) r.appendChild(el("span", "nl-new", M.nNew + " new since you last looked"));
     if (t) body.appendChild(r);
   }
   // the page. Always draws (returns true), so the old News below it in renderNews is no longer reached.
@@ -294,7 +306,7 @@
     } else {
       var jin = M.brk.slice(0, 5);
       if (jin.length) { wrap.appendChild(nlH(NL_T.brk, "as it happens")); wrap.appendChild(nlJustIn(jin)); if (M.brk.length > 5) wrap.appendChild(nlMore("All " + M.brk.length + " breaking headlines", "breaking")); }
-      if (M.lead) { if (M.has) wrap.appendChild(nlH(NL_T.lead, "Claude's top story")); wrap.appendChild(nlLead(M.lead, "bleed")); var ld = nlDeep(M.lead); if (ld) { var lc = el("div", "nx-card nf-ld"); lc.appendChild(ld); wrap.appendChild(lc); } }
+      if (M.lead) { if (M.has) wrap.appendChild(nlH(NL_T.lead, "Claude's top story")); wrap.appendChild(nlLead(M.lead, "bleed")); var ld = nlDeep(M.lead); if (ld) { var lc = el("div", "nx-card nf-ld"), lm = nlTeamMark(M.lead, "ln"); if (M.lead.c) lc.style.setProperty("--c", M.lead.c); if (lm) lc.appendChild(lm); lc.appendChild(ld); wrap.appendChild(lc); } }
       if (M.stories.length) { wrap.appendChild(nlH(NL_T.stories, "Claude's breakdowns")); M.stories.forEach(function (x) { wrap.appendChild(nlStory(x)); }); }
       gamesSec(M.previews, "preview", 2, "next"); gamesSec(M.recaps, "recap", 2, "recaps");
       if (M.nums.length) { wrap.appendChild(nlH(NL_T.nums)); var hg = el("div", "nl-nums nl-2c"); M.nums.slice(0, 4).forEach(function (x) { hg.appendChild(nlNumTile(x)); }); wrap.appendChild(hg); if (M.nums.length > 4) wrap.appendChild(nlMore("All " + M.nums.length + " numbers", "numbers")); }

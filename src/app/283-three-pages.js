@@ -230,7 +230,7 @@
   }, { passive: true });
   if (window.visualViewport) { window.visualViewport.addEventListener("scroll", n3Pin); window.visualViewport.addEventListener("resize", n3Pin); }
   // ---- the day in every dated page's header (the bottom date picker is gone in this layout) ----
-  function n3Dated() { var v = state.view; return v === "lineup" || v === "games" || v === "tv" || v === "moments" || (v === "news" && !(typeof nw !== "undefined" && nw.deep)); }
+  function n3Dated() { var v = state.view; return v === "lineup" || v === "games" || v === "tv" || v === "moments"; }   // 3.144.2 (DJ): News has no day picker, it always shows now
   function n3DayOf() { return state.view === "moments" ? (mm.date || todayInHome()) : state.date; }
   function n3SetDay(iso) {
     var v = state.view, today = todayInHome(), cur = n3DayOf();
