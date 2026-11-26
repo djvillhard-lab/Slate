@@ -705,11 +705,22 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           const order = (Array.isArray(pg.order) ? pg.order : typeof pg.order === "string" ? pg.order.split(/[\s,]+/) : []).map((k) => String(k).toLowerCase().trim()).filter((k, i, a) => SEC.includes(k) && a.indexOf(k) === i);
           // 3.164.0 (DJ: "thanksgiving day should be like its own section card, and include a Claude paragraph, and the three matchups
           // listed, and stories related to those matchups within the section"): the day's feature card
+          // 3.164.1: the noon pass listed the three NFL games but only one came through with a number that matched. A featured
+          // game is found by its number first, then by both teams being named in what Claude wrote for it; each game once.
+          const fused = {}, fword = (t) => String(t || "").toLowerCase().split(" ").pop();
+          const fgame = (y) => {
+            let k = gm[String(y.g)] && !fused[String(y.g)] ? String(y.g) : "";
+            if (!k) { const txt = " " + Object.keys(y).map((q) => (typeof y[q] === "string" ? y[q] : "")).join(" ").toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+              const has = (g, side) => [g[side === "a" ? "away" : "home"], fword(g[side === "a" ? "away" : "home"]), g[side === "a" ? "aa" : "ha"]].some((w) => w && txt.includes(" " + String(w).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() + " "));
+              k = Object.keys(gm).find((q) => !fused[q] && has(gm[q], "a") && has(gm[q], "h")) || ""; }
+            if (k) fused[k] = 1; return k;
+          };
           const ft = pg.feature && typeof pg.feature === "object" && pg.feature.title ? pg.feature : pg.theme && pg.theme.title ? pg.theme : null;
           const feature = ft ? { title: S(ft.title, 48), text: S(ft.text, 760),
-            games: (Array.isArray(ft.games) ? ft.games : []).filter((y) => y && gm[String(y.g)]).slice(0, 5).map((y) => { const g = gm[String(y.g)]; return Object.assign(gbase(g), g.status === "final" ? { as: H(g.as, 4), hs: H(g.hs, 4) } : {}, { label: S(y.label, 28), text: S(y.text, 340), w: now }); }),
+            games: (Array.isArray(ft.games) ? ft.games : []).map((y) => (y && typeof y === "object" ? y : { g: y })).map((y) => Object.assign({}, y, { g: fgame(y) })).filter((y) => y.g).slice(0, 5).map((y) => { const g = gm[String(y.g)]; return Object.assign(gbase(g), g.status === "final" ? { as: H(g.as, 4), hs: H(g.hs, 4) } : {}, { label: S(y.label, 28), text: S(y.text, 340), w: now }); }),
             stories: (Array.isArray(ft.stories) ? ft.stories : []).filter((y) => y && y.title && y.text).slice(0, 4).map((y) => item(Object.assign({}, y, { kind: "news", value: "" }))) } : null;
           const fev = {}; if (feature) feature.games.forEach((g) => { fev[g.ev] = 1; });
+          if (feature) feature.sent = JSON.stringify((ft && ft.games) || null).slice(0, 700);   // what Claude sent, for checking a pass
           const page = { feature, theme: feature ? { title: feature.title, text: "" } : null, specials, titles, order };
           await putDoc(this.env, t.path, { key: p.key, date: p.date, type: "w", v: 2, page, lead, stories, items: all, previews: previews.filter((x) => !fev[x.ev]), recaps, leagues, n: ((prev && prev.n) || 0) + 1, took: Math.max(0, Math.round((Date.parse(now) - Date.parse(p.at)) / 1000)) || 0, at: now, by: p.user || "dj", writing: null });
         } else if (p.kind === "deep") {
