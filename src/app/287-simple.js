@@ -56,6 +56,8 @@
     ".sm-note { font-size: 1.25em; color: var(--muted); margin: 0; } .sm-undo { display: flex; align-items: center; gap: .6em; background: var(--raise); border-radius: 8px; padding: .6em .7em; font-size: 1.2em; } .sm-undo span { flex: 1; } .sm-undo button { border: 2px solid var(--line); border-radius: 8px; background: none; color: var(--ink); font: inherit; padding: .5em .7em; min-height: 44px; }" +
     "#sm-peekbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 39; display: flex; gap: 10px; padding: 10px calc(16px + var(--strip-w, 0px)) max(env(safe-area-inset-bottom, 0px), 12px) 16px; background: var(--bg); border-top: 2px solid var(--hair); font-family: var(--font); font-size: 16px; } #sm-peekbar[hidden] { display: none; }" +
     "html.sm-peek #n3, html.sm-peek #menu-fab, html.sm-peek #dock-day, html.sm-peek #dock-sort, html.sm-peek #dock-back, html.sm-peek .menu-pop { display: none !important; }" +
+    "html.side-col:not(.duo) #sm-set-row .switch { margin-right: max(0px, calc(var(--strip-w, 0px) / var(--z, 1) - 28px)); }" +
+    "html.pn-right #sm-set-row .switch { margin-right: max(0px, calc(var(--sm-isl, 0px) / var(--z, 1) - 28px)); }" +
     "html.sm-peek main.wrap, html.sm-peek .pbody { padding-bottom: 130px !important; }";
   (function () { var st = document.createElement("style"); st.id = "sm-css"; st.textContent = SM_CSS; document.head.appendChild(st); })();
 
@@ -368,15 +370,22 @@
     o.textContent = ""; cols.forEach(function (c) { o.appendChild(c); });
     cols.forEach(function (c, i) { var p = c.getAttribute("data-pg"), b = c.querySelector(".sm-body"); if (b && keep[p] && (same || (SM.two && i === 0))) b.scrollTop = keep[p]; });
   }
+  // 3.152.1 (DJ: "Simple mode setting is covered by Dynamic Island"): the island's width for the unfolded Duo's right half,
+  // read from the host page (a pane has no --strip-w of its own); the folded Duo uses its own --strip-w in the CSS.
+  function smIsland() {
+    if (!PANE) return; var root = document.documentElement, w = 0;
+    try { if (root.classList.contains("pn-right")) w = parseFloat(window.parent.document.documentElement.style.getPropertyValue("--strip-w")) || 0; } catch (e) { w = 0; }
+    root.style.setProperty("--sm-isl", w + "px");
+  }
   var smRender0 = render;
-  render = function () { smRender0.apply(this, arguments); if (smOn() || $("sm")) smDraw(); };
+  render = function () { smRender0.apply(this, arguments); smIsland(); if (smOn() || $("sm")) smDraw(); };
   window.addEventListener("resize", function () { if (smOn()) smDraw(); });
 
   // ---- the switch: Settings > Look and text size ----
   (function () {
     var lk = document.querySelector('#view-settings .setpg[data-pg="look"]'); if (!lk) return;
     var h = el("div", "sec"); h.appendChild(el("h2", null, "Simple mode"));
-    var card = el("div", "setcard"), row = el("div", "optrow"), tx = el("div");
+    var card = el("div", "setcard"), row = el("div", "optrow"), tx = el("div"); row.id = "sm-set-row";
     tx.appendChild(el("b", null, "Simple mode")); tx.appendChild(el("span", null, "Big text, one page, buttons with words, no swiping."));
     row.appendChild(tx);
     row.appendChild(switchEl(false, "Simple mode", function () { SM.on = true; SM.page = "home"; smSave(); smReload(); }));
