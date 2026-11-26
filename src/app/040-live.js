@@ -449,7 +449,7 @@
   }
   function laBoardNow() {
     if (!NATIVE) return;
-    var b = boardPrefs(), ids = (b.ids || []).slice(0, 4);
+    var b = boardPrefs(), ids = boardIds();
     if (!b.on || !ids.length) { nativePost({ t: "live", op: "end", kind: "board" }); return; }
     var list = laBoardOf(ids), go = list.some(function (x) { return x.s !== "pre"; }) || ids.some(function (id) { var g = games().filter(function (q) { return q.id === id; })[0]; return g && new Date(g.start).getTime() - Date.now() < 15 * 60000; });
     if (go) nativePost({ t: "live", op: "start", kind: "board", games: list, lead: Math.max(0, list.findIndex(function (x) { return x.s === "in"; })) });
@@ -471,7 +471,23 @@
     var la = state.notify.liveAct = state.notify.liveAct || {}, b = la.board;
     if (!b || typeof b !== "object") b = la.board = { on: false, ids: [], at: 0 };
     if (!Array.isArray(b.ids)) b.ids = [];
+    // all day is the way it works unless you've picked games yourself (it's saved with the next change)
+    if (typeof b.auto !== "boolean") b.auto = true;
     return b;
+  }
+  // DJ (Nov 26): "Your slate, all day" (auto): the first four games on your slate still to come or on, in start order; a
+  // final stays 15 minutes, then the next game takes its place. The server does the same every minute (boardRoll in
+  // worker/alerts.js); this is for the sheet, the Board button and the moment it's switched on.
+  function boardRoll() {
+    var now = Math.floor(Date.now() / 1000), slate = (state.slateIds || []).map(String);
+    return boardGames().filter(function (g) { return slate.indexOf(String(g.id)) !== -1; }).sort(byStart).filter(function (g) {
+      if (status(g).kind !== "over") return true;
+      var end = laEndOf(g, "post", now); return end > 0 && now - end < 900;
+    }).slice(0, 4).map(function (g) { return g.id; });
+  }
+  function boardIds() {
+    var b = boardPrefs(); if (b.auto) return boardRoll();
+    var gs = boardGames(); return b.ids.filter(function (id) { return gs.some(function (g) { return g.id === id; }); }).slice(0, 4);
   }
   function boardCtl() { return !!NATIVE && state.isOwner && state.notifyLoaded && state.date === todayInHome(); }
   function boardGames() {
@@ -487,7 +503,7 @@
   // is the scoreboard on? In the iPhone app, once any pick is on (or within 15 minutes of starting) it's whether the
   // scoreboard is actually on the Lock Screen (the app reports it, 3.28.2); before that, the setting (it's scheduled)
   function boardIsOn() {
-    var b = boardPrefs(), gs = boardGames(), picks = gs.filter(function (g) { return b.ids.indexOf(g.id) !== -1; });
+    var b = boardPrefs(), gs = boardGames(), ids = boardIds(), picks = gs.filter(function (g) { return ids.indexOf(g.id) !== -1; });
     if (!picks.length) return false;
     var due = picks.some(function (g) { var k = status(g).kind; return k === "live" || k === "over" || new Date(g.start).getTime() - Date.now() < 15 * 60000; });
     if (due && typeof state.boardShowing === "boolean" && state.liveShowing) return state.boardShowing;
@@ -496,12 +512,26 @@
   function openBoard() { renderBoard(); $("sheet-board").classList.add("open"); }
   function renderBoard() {
     var b = boardPrefs(), list = $("board-list"), gs = boardGames();
-    var picked = b.ids.filter(function (id) { return gs.some(function (g) { return g.id === id; }); });
+    var picked = boardIds();
     list.textContent = "";
     if (!gs.length) list.appendChild(el("p", "board-none", "Nothing on today's slate yet."));
+    // the all-day choice on top; switching it off goes back to picking up to 4 yourself
+    if (gs.length) {
+      var au = el("button", "board-row board-auto" + (b.auto ? " on" : "")); au.type = "button";
+      au.setAttribute("aria-pressed", b.auto ? "true" : "false");
+      var ack = el("span", "board-ck"); if (b.auto) ack.appendChild(icon("check")); au.appendChild(ack);
+      var an = el("span", "board-nm", "Your slate, all day"); an.appendChild(el("small", null, "The next 4 games. A final stays 15 minutes, then the next game takes its place."));
+      au.appendChild(an);
+      au.addEventListener("click", function () {
+        b.auto = !b.auto; b.at = Date.now(); if (!b.auto && !b.ids.length) b.on = false;
+        saveNotify(); renderBoard(); keepScroll(renderLineup);
+        if (b.on) laBoardNow();
+      });
+      list.appendChild(au);
+    }
     gs.forEach(function (g) {
       var on = picked.indexOf(g.id) !== -1, full = !on && picked.length >= 4, st = status(g).kind;
-      var r = el("button", "board-row" + (on ? " on" : "")); r.type = "button"; r.disabled = full;
+      var r = el("button", "board-row" + (on ? " on" : "")); r.type = "button"; r.disabled = full && !b.auto;
       r.setAttribute("aria-pressed", on ? "true" : "false");
       var ck = el("span", "board-ck"); if (on) ck.appendChild(icon("check")); r.appendChild(ck);
       var tm = el("span", "board-tm");
@@ -511,8 +541,9 @@
       tm.appendChild(badgeFor(abbr(g, bo[1]), g[bo[1]], g[bo[1] + "Color"], g[bo[1] + "Alt"]));
       r.appendChild(tm);
       r.appendChild(el("span", "board-st" + (st === "live" ? " live" : ""), boardStatus(g)));
-      r.setAttribute("aria-label", short(g, bo[0]) + sep(g) + short(g, bo[1]) + ", " + boardStatus(g) + (on ? ", picked" : full ? ", 4 already picked" : ""));
+      r.setAttribute("aria-label", short(g, bo[0]) + sep(g) + short(g, bo[1]) + ", " + boardStatus(g) + (on ? (b.auto ? ", on the scoreboard now" : ", picked") : full ? ", 4 already picked" : ""));
       r.addEventListener("click", function () {
+        if (b.auto) { toast("Turn off Your slate, all day to pick games yourself"); return; }
         var ids = picked.slice(), i = ids.indexOf(g.id);
         if (i >= 0) ids.splice(i, 1); else if (ids.length < 4) ids.push(g.id); else return;
         // in start order, so the live notification reads top to bottom like your slate
@@ -523,7 +554,8 @@
       });
       list.appendChild(r);
     });
-    $("board-sub").textContent = "Pick up to 4 games from your slate (" + picked.length + " of 4). They show together in one live notification on your Lock Screen and in the Dynamic Island.";
+    $("board-sub").textContent = b.auto ? "Your slate's games, 4 at a time, roll through one live notification on your Lock Screen and in the Dynamic Island all day. It comes back every day until you turn it off."
+      : "Pick up to 4 games from your slate (" + picked.length + " of 4). They show together in one live notification on your Lock Screen and in the Dynamic Island.";
     var ob = $("btn-board-on");
     var bon = boardIsOn();
     ob.textContent = bon ? "Turn off" : "Show on Lock Screen";

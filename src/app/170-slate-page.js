@@ -108,7 +108,7 @@
         lb.addEventListener("click", function () { setLiveOnly(!liveOnly()); keepScroll(renderLineup); });
         // the live scoreboard (3.23.0): up to 4 of these games in one live notification; lit while it's on
         if (boardCtl()) {
-          var bdp = boardPrefs(), bdn = bdp.ids.filter(function (id) { return lg.some(function (g) { return g.id === id; }); }).length;
+          var bdn = boardIds().filter(function (id) { return lg.some(function (g) { return g.id === id; }); }).length;
           var bdOn = bdn && boardIsOn(), bb = el("button", "lo-btn lo-board" + (bdOn ? " on" : "")); bb.type = "button";
           bb.appendChild(icon("grid")); bb.appendChild(el("span", null, "Board"));
           if (bdOn) bb.appendChild(el("b", null, String(bdn)));

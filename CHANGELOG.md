@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.133.0 (Nov 26, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Live scoreboard (the Board button on the slate): a new choice on top, "Your slate, all day", on unless you turn it off. The live notification shows the first 4 games on your slate that are still to come or on, in start order. When a game ends, its final score stays 15 minutes, then the next game on your slate takes its place. It keeps rolling until the last game is over, starts again each day 15 minutes before your first game, and stays on day to day until you turn it off. Turn the choice off to pick 4 games yourself like before.
+
 ## 3.132.0 (Nov 25, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - All games: a new "2 columns" button on the left of the Live row shows the games as two columns of small cards, so about twice as many games fit on the screen. A small card shows both teams, the score, the time or game clock, and where to watch. Tap a small card and it opens to the full-width card with its quick look, the same as before; tap it again and it goes back to small. The button is there on every day (not just today), the phone remembers your choice, and it works on the folded Duo, the unfolded Duo and the regular iPhone. Each page still stops at 16 games and 10 live ones.

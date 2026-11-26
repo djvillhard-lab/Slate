@@ -407,11 +407,33 @@ function boardGame(id, g, s) {
   // no one-liner (ln) on the Board: DJ wants those only on single-game live notifications (3.65.8; the app still
   // reads ln if it's ever sent again)
 }
-async function runBoard(env, p, sent, la, games, sc) {
+// 3.13x (DJ, Nov 26): "Your slate, all day" (board.auto): the Board rolls through the whole slate instead of four picked
+// games. It shows the first four games that are still to come or on, in start order; a final stays 15 minutes (from
+// the minute this job first saw it final, kept in sent.bfin), then the next game on the slate takes its place.
+const BOARD_FINAL = 15 * 60000;
+function boardRoll(slate, games, sc, sent, now) {
+  const fin = sent.bfin = sent.bfin || {}, start = (i) => Date.parse((sc[i] || {}).start || games[i].start) || 0;
+  const pool = [...new Set((slate || []).map(String))].filter((i) => games[i] && !games[i].custom).sort((x, y) => (start(x) - start(y)) || x.localeCompare(y));
+  const out = [];
+  for (const i of pool) {
+    const st = (sc[i] || {}).state;
+    if (st === "post") { if (!fin[i]) fin[i] = now; if (now - fin[i] >= BOARD_FINAL) continue; }
+    // no score for it any more (ESPN's day moved on) and it started hours ago: it's over
+    else if (!sc[i] && start(i) && now - start(i) > 3 * 3600000) continue;
+    out.push(i);
+  }
+  // more: a game after these four that isn't over yet, so four finals at once don't end the Board early
+  return { ids: out.slice(0, 4), more: out.slice(4).some((i) => (sc[i] || {}).state !== "post") };
+}
+async function runBoard(env, p, sent, la, games, sc, slate) {
   const b = (p.liveAct || {}).board || {}; let gone = false;
-  const ids = (Array.isArray(b.ids) ? b.ids : []).map(String).filter((i) => games[i]).slice(0, 4);
-  const now = Date.now(), at = Number(b.at) || 0, list = ids.map((i) => boardGame(i, games[i], sc[i]));
+  const now = Date.now(), auto = !!b.auto;
+  const roll = auto ? boardRoll(slate, games, sc, sent, now) : null;
+  const ids = roll ? roll.ids : (Array.isArray(b.ids) ? b.ids : []).map(String).filter((i) => games[i]).slice(0, 4);
+  const at = Number(b.at) || 0, list = ids.map((i) => boardGame(i, games[i], sc[i]));
   let cur = sent.board, tok = la.board && la.board.token ? la.board : null;
+  // a token left from an earlier day's Board (all day runs every day): not this one
+  if (auto && !cur && tok && now - (Date.parse(tok.at) || 0) > 8 * 3600000) { delete la.board; gone = true; tok = null; }
   // switched off, or nothing picked for today: take it down now
   if (!b.on || !list.length) {
     if (cur && !cur.off) {
@@ -431,13 +453,14 @@ async function runBoard(env, p, sent, la, games, sc) {
   let lead = cur && cur.lead ? list.findIndex((x) => x.id === cur.lead) : -1;
   if (cur && cur.sc) list.forEach((x, i) => { if (cur.sc[x.id] && cur.sc[x.id] !== scores[x.id]) lead = i; });
   if (lead < 0) lead = Math.max(0, list.findIndex((x) => x.s === "in"));
-  const state = { games: list, lead }, live = list.some((x) => x.s === "in"), done = list.every((x) => x.s === "post");
+  const state = { games: list, lead }, live = list.some((x) => x.s === "in"), done = list.every((x) => x.s === "post") && !(roll && roll.more);
   const soon = list.some((x) => x.s === "pre" && Date.parse((sc[x.id] || {}).start || games[x.id].start) - now <= 15 * 60000);
   // started by the app the moment you tapped Show on Lock Screen (3.23.2): take it over and keep it current
   if (!cur && fresh) cur = sent.board = { k: "", t: now, lead: list[lead].id, sc: scores, app: 1 };
   if (!cur) {
     // it starts 15 minutes before the first pick (a live notification only lasts 8 hours), or right away once one is on
-    if (!(live || soon || done) || !(la.startBoard || []).length) return gone;
+    // (all day: not for finals alone, so a day that's over doesn't bring it back)
+    if (!(live || soon || (done && !auto)) || !(la.startBoard || []).length) return gone;
     const body = { "attributes-type": "SlateBoardAttributes", attributes: { title: "Your slate" }, "content-state": state,
       alert: { title: "Your slate", body: list.map((x) => x.s === "pre" ? `${x.aa} ${laHomeFirst(games[x.id]) ? "vs" : "@"} ${x.ha} ${x.d}` : `${x.aa} ${x.a}, ${x.ha} ${x.h}`).join(" · ") } };
     for (const t of la.startBoard) { const r = await sendLive(env, t, "start", body, 10); if (r === 410) { t.gone = true; gone = true; } }
@@ -451,6 +474,12 @@ async function runBoard(env, p, sent, la, games, sc) {
     if (!tok && (cur.w || 0) < 5) { cur.w = (cur.w || 0) + 1; return gone; }
     cur.end = 1;
     if (tok) await sendLive(env, tok, "end", { "content-state": state, "dismissal-date": Math.floor(now / 1000) + LA_LINGER }, 10);
+    return gone;
+  }
+  // all day, past 7.5 hours (iOS ends a live notification at 8): end this one now; the next minute starts a fresh one
+  if (auto && tok && now - (cur.t || now) > 7.5 * 3600000) {
+    await sendLive(env, tok, "end", { "content-state": state, "dismissal-date": Math.floor(now / 1000) }, 10);
+    delete la.board; gone = true; sent.board = null;
     return gone;
   }
   if (!tok || cur.k === key) return gone;
@@ -864,7 +893,8 @@ export async function runAlerts(env) {
     for (const [i, v] of Object.entries(((pw.liveAct || {}).games) || {})) if (v === 1 && games[i]) want.add(i);  // games switched on by name get live scores too
     for (const [i, v] of Object.entries(((pw.alerts || {}).games) || {})) if (v === 1 && games[i]) want.add(i);
     for (const i of Object.keys(followedIn(pw, games))) want.add(i);  // games of players you follow (3.117.0)
-    if (bd.on && Array.isArray(bd.ids)) for (const i of bd.ids) if (games[String(i)]) { want.add(String(i)); early.add(String(i)); } }
+    if (bd.on && bd.auto) for (const i of w.slate || []) if (games[String(i)] && !games[String(i)].custom) { want.add(String(i)); early.add(String(i)); }
+    if (bd.on && !bd.auto && Array.isArray(bd.ids)) for (const i of bd.ids) if (games[String(i)]) { want.add(String(i)); early.add(String(i)); } }
   const sc = await liveScores(games, want, now, early);
   // ESPN's box score for finished games with a followed player whose final line hasn't gone out yet, once per game this minute
   const BOX = {}, boxFor = async (i) => {
@@ -888,7 +918,7 @@ export async function runAlerts(env) {
     if ((p.follow || {}).final) for (const [i, xs] of Object.entries(fol)) if ((sc[i] || {}).state === "post" && xs.some((x) => !(s0.plfinal || []).includes(`${i}:${x.id}`))) box[i] = await boxFor(i);
     const sent = { date: D, brief: !!s0.brief, plstart: [...(s0.plstart || [])], plfinal: [...(s0.plfinal || [])], reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
-      board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null };
+      board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null, bfin: Object.assign({}, s0.bfin || {}) };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {
@@ -915,7 +945,7 @@ export async function runAlerts(env) {
       const held = p.enabled === false || !(p.days || DEFAULTS.days).includes(lt.wd) || inQuiet(p, lt.hour);
       try {
         let changed = await runLive(env, p, sent, la, { slate: w.slate || [], mine: w.mine || [] }, games, sc, held);
-        if (await runBoard(env, p, sent, la, games, sc)) changed = true;
+        if (await runBoard(env, p, sent, la, games, sc, w.slate || [])) changed = true;
         if (changed) await putDoc(env, pre + "prefs/liveacts", la);
         if ((p.__off || []).length) {  // live notifications swiped away: switch them off on the slate too (3.27.0)
           const nd = docs[pre + "prefs/notify"] || {}, lv = nd.liveAct = nd.liveAct && typeof nd.liveAct === "object" ? nd.liveAct : {};

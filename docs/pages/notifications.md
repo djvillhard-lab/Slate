@@ -114,3 +114,14 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   (it only shows once, at the bottom) or the slate tag ("National TV"); the tag still shows while the game is on.
 - 3.121.9 (DJ): large Tonight's slate widget shows LeagueTag (lg, 5 chars max, else none) before each game's time;
   TonightTile(league: true) only there. Medium/small unchanged (DJ didn't ask).
+
+## Live scoreboard: Your slate, all day (3.133.0, DJ Nov 26)
+- board.auto (default on in the sheet; saved on the next change): the server's boardRoll (worker/alerts.js) takes the
+  person's slate (alertsets w.slate) in start order, drops finals 15 min after it first saw them final (sent.bfin) and
+  games with no score that started 3+ hours ago, and shows the first 4. "done" only when nothing after them is left.
+- Games are in the Board's content-state, so swapping games is a plain update: no iPhone build needed.
+- iOS ends a live notification at 8 hours: all day ends it at 7.5 h and starts a fresh one (needs a push-to-start token).
+- It starts again every day 15 min before the first game while board.on; a token older than 8 h isn't reused.
+- Page side: boardRoll/boardIds in 040-live.js (sheet, Board button, the switch-on); picking games yourself needs the
+  choice turned off. Open: no setting for how long a final stays (15 min, DJ's number).
+

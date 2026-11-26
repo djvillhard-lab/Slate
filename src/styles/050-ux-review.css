@@ -295,6 +295,9 @@ html .dock-day, html nav.dock .fab, html nav.dock .dock-back, #menu-pop { box-sh
 .board-at { color: var(--muted); font-size: 13px; font-weight: 700; }
 .board-st { justify-self: end; color: var(--muted); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .board-st.live { color: var(--live, #FF5B4E); }
+.board-auto { grid-template-columns: 24px 1fr; padding: 10px 12px; margin-bottom: 6px; }
+.board-nm { font-size: 15px; font-weight: 700; }
+.board-nm small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1.35; }
 .board-none { margin: 0; color: var(--muted); }
 /* the slate card's bell: small and gray, just left of the time; a bigger tap area than it looks */
 .g-side .s-row { display: inline-flex; align-items: center; gap: 6px; }

@@ -282,11 +282,11 @@
   $("sheet-board").addEventListener("click", function (e) { if (e.target === this) this.classList.remove("open"); });
   $("btn-board-on").addEventListener("click", function () {
     if (!state.notifyLoaded) { toast("Loading your notifications…"); return; }
-    var b = boardPrefs(), gs = boardGames(), n = b.ids.filter(function (id) { return gs.some(function (g) { return g.id === id; }); }).length;
+    var b = boardPrefs(), gs = boardGames(), ids = boardIds(), n = ids.length;
     if (!n) return;
     var on = !boardIsOn();
     b.on = on; b.at = Date.now(); saveNotify(); renderBoard(); keepScroll(renderLineup);
-    var live = gs.some(function (g) { return b.ids.indexOf(g.id) !== -1 && status(g).kind !== "upcoming"; });
+    var live = gs.some(function (g) { return ids.indexOf(g.id) !== -1 && status(g).kind !== "upcoming"; });
     laBoardNow();
     toast(on ? (live ? (NATIVE.liveNow ? "Your scoreboard is on your Lock Screen" : "Your scoreboard shows on your Lock Screen within a minute") : "Your scoreboard shows on your Lock Screen 15 minutes before the first game") : "Scoreboard off" + (NATIVE.liveNow ? "" : ": it leaves your Lock Screen within a minute"));
     if (on) $("sheet-board").classList.remove("open");
