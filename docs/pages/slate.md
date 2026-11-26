@@ -148,3 +148,11 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 - hlCompute builds `liveSc` (soccer from keyEvents via scorerList, home first; hockey from the box score's G column, away first, team nicknames) and, while the game is live, pushes it as the top candidate (`livesc`, score 999). After exactly one goal it appends "; " + the best candidate that isn't another take on a goal (SCK list). Finals are unchanged (hlFinal and the "won it" lines).
 - The Worth a look card still shows its own reason line ("Big night": "X has two goals, hat trick watch"), not the scorers line, by design since 3.39.2.
 - DJ also asked to reset every one-liner to test: a one-time stamp (`slate-lines-reset` = "3.134.6") drops each phone's saved finals lines (slate-hlc) and preview lines (slate-pv) on first load. Change the stamp to reset again.
+
+## 3.134.9 (Nov 26, 2026): every one-liner reads "Team: line"
+- DJ: "I want all one liners to follow the same format of team name, colon, then one liner." DJ picked "one line per team" for lines about both teams (decision card).
+- Display only, in `hlLine` (100-highlights.js), so the slate, All games and Worth a look all follow it; the text the lines are built from (notifications, lines_check) is unchanged. `hlRows` splits a line at "; ", gives each clause to the team it names first (`hlNames`: card names, nickname, abbr, "No. N", "the"), merges clauses per team (one row per team), and takes the name out of the sentence: a leading "Team (has|have|is|are)" or "Team's", a trailing "for (the) Team", and "gives Team a" -> "gives them a". Label = `short(g, side)` in bold (`.hl-tm`). Two rows: `p.hl-rows` with `span.hl-row[data-side]`, each in its team color when live (hlTeamInk in 150-game-row.js). A clause naming neither team joins the row before it; a single line naming no team uses the line's team (tm) or no label; a matchup line ("X and Y play…", "X vs Y") keeps its sentence with no label.
+- pvNode and All games no longer remove the label (reverses 3.89.6's "never MSU: in front").
+- The 📰 News line keeps its own "📰 News" tag.
+- Fix: plays whose home/away are flipped from the header (neutral-site games; Michigan "came back from 50 down") are read swapped in the comeback/run check.
+- The one-time reset stamp is now "3.134.9".

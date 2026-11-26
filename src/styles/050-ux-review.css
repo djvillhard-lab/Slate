@@ -492,3 +492,7 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 
 /* 3.121.4: the day's game count above the slate's sort row (Drew) */
 .sl-count { margin: 14px 2px -6px; font-size: 13px; font-weight: 600; color: var(--dim); }
+/* 3.134.9: a one-liner about both teams, one "Team: line" row per team */
+.hl.hl-rows { display: block; -webkit-line-clamp: none; overflow: visible; }
+.hl.hl-rows .hl-row { display: block; }
+.hl.hl-rows .hl-row + .hl-row { margin-top: 2px; }

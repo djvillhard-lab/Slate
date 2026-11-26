@@ -151,7 +151,7 @@
         if (!i) return; var s1 = (hkP[teams[i].abbr] || []).filter(function (x) { return x.g; }).sort(function (x, y) { return y.g - x.g; });
         if (s1.length) hkL.push({ i: i, ng: s1.reduce(function (n, x) { return n + x.g; }, 0), names: andL(s1.map(function (x) { return x.n + (x.g >= 2 ? " (" + x.g + ")" : ""); })), one: s1.length === 1 ? s1[0] : null }); });
       if (hkL.length) liveSc = { n: hkL.reduce(function (n, x) { return n + x.ng; }, 0), tm: hkL.length === 1 ? teams[hkL[0].i].abbr : "",
-        text: hkL.length === 2 ? hkL.map(function (x) { return x.names + " for the " + (teams[x.i].nick || teams[x.i].name); }).join("; ") : (hkL[0].one ? hkL[0].one.n + (hkL[0].one.g >= 3 ? " has a hat trick for the " : hkL[0].one.g === 2 ? " has scored twice for the " : " has scored for the ") : hkL[0].names + " have scored for the ") + (teams[hkL[0].i].nick || teams[hkL[0].i].name) };
+        text: hkL.length === 2 ? hkL.map(function (x) { return x.names + (/,| and /.test(x.names) ? " have" : " has") + " scored for the " + (teams[x.i].nick || teams[x.i].name); }).join("; ") : (hkL[0].one ? hkL[0].one.n + (hkL[0].one.g >= 3 ? " has a hat trick for the " : hkL[0].one.g === 2 ? " has scored twice for the " : " has scored for the ") : hkL[0].names + " have scored for the ") + (teams[hkL[0].i].nick || teams[hkL[0].i].name) };
       var hm = {}; (box.teams || []).forEach(function (bt) { var i = String((bt.team || {}).id); if (!teams[i]) return; var m = {}; (bt.statistics || []).forEach(function (x) { m[x.name] = x.displayValue; }); hm[i] = m; });
       if (hm[tid[0]] && hm[tid[1]]) {
         var sh = function (i) { return hlNum(hm[i].shotsTotal || hm[i].shots); }, hi = sh(tid[0]) >= sh(tid[1]) ? tid[0] : tid[1], lo = hi === tid[0] ? tid[1] : tid[0], s1 = sh(hi), s0 = sh(lo);
@@ -207,7 +207,7 @@
       // 3.134.6 (DJ): the live line always names every scorer, home team first (soccer order, 3.130.5)
       var scP = function (i) { var l = scorerList(i), pl = l.filter(function (x) { return !/^an own goal/.test(x); }), ogs = l.filter(function (x) { return /^an own goal/.test(x); }); return { pl: pl, ogs: ogs }; };
       var scT = [HID, AID].filter(function (i) { return teams[i].score && scorerList(i).length; });
-      if (scT.length === 2) liveSc = { n: total, tm: "", text: scT.map(function (i) { return plFirst(i) + " for " + nameOf(i); }).join("; ") };
+      if (scT.length === 2) liveSc = { n: total, tm: "", text: scT.map(function (i) { var l0 = plFirst(i); return /^an own goal/.test(l0) ? nameOf(i) + (teams[i].score === 1 ? "'s goal came from " : "'s goals have come from ") + l0 : l0 + (/,| and /.test(l0) ? " have" : " has") + " scored for " + nameOf(i); }).join("; ") };
       else if (scT.length === 1) { var si = scT[0], sp0 = scP(si);
         var p1 = sp0.pl.length === 1 ? sp0.pl[0].replace(/ \(\d\)$/, "") : "", n1 = p1 ? gl[p1] || 1 : 0;
         liveSc = { n: total, tm: teams[si].abbr, text: sp0.pl.length ? (p1 ? p1 + (n1 >= 3 ? " has a hat trick for " : n1 === 2 ? " has scored twice for " : " has scored for ") : listAnd(sp0.pl) + " have scored for ") + nameOf(si) + (sp0.ogs.length ? ", plus " + listAnd(sp0.ogs) : "")
@@ -265,8 +265,12 @@
     if (plays.length && tid.length === 2) {
       var A = tid.filter(function (i) { return teams[i].side === "away"; })[0], H = tid.filter(function (i) { return teams[i].side === "home"; })[0];
       var worstA = 0, worstH = 0, run = 0, runTeam = null, pa = 0, ph = 0;
+      // 3.134.9: ESPN sometimes lists a neutral-site game's plays with home and away the other way round from the header
+      // (Michigan "came back from 50 down" in a 102-56 win over Toledo). When the last play's score is the header's score
+      // swapped, the plays are read swapped
+      var lp = plays[plays.length - 1], swp = lp && teams[A].score !== teams[H].score && hlNum(lp.awayScore) === teams[H].score && hlNum(lp.homeScore) === teams[A].score;
       plays.forEach(function (x) {
-        var a = hlNum(x.awayScore), h = hlNum(x.homeScore);
+        var a = hlNum(swp ? x.homeScore : x.awayScore), h = hlNum(swp ? x.awayScore : x.homeScore);
         worstA = Math.min(worstA, a - h); worstH = Math.min(worstH, h - a);
         var who = a > pa ? A : h > ph ? H : null, pts = (a - pa) + (h - ph);
         if (who) { if (who === runTeam && !(a > pa && h > ph)) run += pts; else { runTeam = who; run = pts; } }
@@ -318,7 +322,7 @@
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
   // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
   // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
-  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.134.6") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.134.6"); } } catch (e) {} })();
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.134.9") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.134.9"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
@@ -330,15 +334,52 @@
     tm = String(tm || "").toUpperCase();
     var side = ["away", "home"].filter(function (sd) { return String(abbr(g, sd) || "").toUpperCase() === tm; })[0];
     if (tm && !side) { var raw = ["away", "home"].filter(function (sd) { return String(g[sd + "Abbr"] || "").toUpperCase() === tm; })[0]; side = raw; }
-    var named = false;
-    if (side) {
-      var full = String(g[side] || ""), words = [full, short(g, side), full.split(" ").slice(0, -1).join(" "), abbr(g, side)].filter(function (w) { return w && w.length >= 2; });
-      named = words.some(function (w) { return new RegExp("(^|[^A-Za-z])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^A-Za-z]|$)").test(text); });
-    }
-    if (side) p.dataset.side = side;  // 3.71.0: which team the line is about, for its team color on the slate
-    if (side && !named) p.appendChild(el("b", "hl-tm", String(abbr(g, side) || tm) + ": "));
-    p.appendChild(document.createTextNode(text));
+    // 3.134.9 (DJ: "I want all one liners to follow the same format of team name, colon, then one liner"): every line reads
+    // "Blues: Holloway and McTavish have scored". A line about both teams becomes one row per team
+    var rows = hlRows(g, text, side);
+    if (rows.length === 1 && rows[0].side) p.dataset.side = rows[0].side;  // 3.71.0: which team the line is about, for its team color
+    rows.forEach(function (r, i) {
+      var box = rows.length > 1 ? el("span", "hl-row") : p;
+      if (rows.length > 1 && r.side) box.dataset.side = r.side;
+      if (r.side) box.appendChild(el("b", "hl-tm", short(g, r.side) + ": "));
+      box.appendChild(document.createTextNode(r.text));
+      if (box !== p) p.appendChild(box);
+    });
+    if (rows.length > 1) p.classList.add("hl-rows");
     return p;
+  }
+  // the names a line can call a team by ("No. 13 Notre Dame", "the Blues", "Man City"), longest first
+  var HL_GENERIC = /^(State|City|United|FC|Club|University|College|Town|County|Athletic|Real|Sporting|The)$/i;
+  function hlNames(g, sd) {
+    var full = String(g[sd] || "").trim(), w = full.split(" "), out = [full, short(g, sd), String(g[sd + "Short"] || ""), w.slice(0, -1).join(" "), w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", abbr(g, sd)];
+    out = out.map(function (x) { return String(x || "").trim(); }).filter(function (x, i, a) { return x.length >= 2 && !HL_GENERIC.test(x) && a.indexOf(x) === i; });
+    return out.sort(function (a, b) { return b.length - a.length; });
+  }
+  function hlEsc(x) { return x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  // a line split into rows by team: each clause ("; ") goes to the team it names first, with that team's name taken out of the
+  // sentence ("Oregon has won four straight" -> Oregon: "Won four straight"; "Buchanan has scored for Villarreal" -> "Buchanan has scored")
+  function hlRows(g, text, tmSide) {
+    var nm = { away: hlNames(g, "away"), home: hlNames(g, "home") }, rx = {};
+    ["away", "home"].forEach(function (sd) { rx[sd] = nm[sd].length ? "(?:No\\. \\d+ )?(?:the |The )?(?:" + nm[sd].map(hlEsc).join("|") + ")" : null; });
+    var find = function (cl, sd) { if (!rx[sd]) return -1; var m = new RegExp("(^|[^A-Za-z])" + rx[sd] + "(?![A-Za-z])").exec(cl); return m ? m.index + m[1].length : -1; };
+    var parts = String(text || "").split(/; /), rows = [];
+    parts.forEach(function (cl, ci) {
+      var a = find(cl, "away"), h = find(cl, "home"), sd = a < 0 && h < 0 ? null : a < 0 ? "home" : h < 0 ? "away" : a <= h ? "away" : "home";
+      if (!sd && parts.length === 1) sd = tmSide || null;
+      if (!sd && rows.length) { rows[rows.length - 1].text += "; " + cl; return; }
+      var t = cl;
+      // a matchup line ("Jacksonville State and Pacific play in Las Vegas", "Iowa vs Ohio State") keeps its sentence and gets no label
+      if (sd && a >= 0 && h >= 0 && new RegExp("^" + rx[sd] + " (?:and|vs\\.?|at|v) ").test(cl)) sd = null;
+      if (sd && rx[sd]) { var R = rx[sd];
+        t = t.replace(new RegExp("^" + R + "(?:'s?|’s?)? (?:(?:has|have|is|are) )?"), "");
+        t = t.replace(new RegExp(" (?:for|to keep) " + R + "(?=$|[,.])"), "");
+        t = t.replace(new RegExp("\\bgives " + R + " a "), "gives them a ");
+        t = t.replace(/^\s+/, "");
+        t = t.charAt(0).toUpperCase() + t.slice(1); }
+      var same = rows.filter(function (r) { return r.side === sd; })[0];   // one row per team, in the order the line names them
+      if (same) same.text += "; " + t; else rows.push({ side: sd, text: t });
+    });
+    return rows.length ? rows : [{ side: tmSide || null, text: String(text || "") }];
   }
   // which team a free-text line is about: the players it names, matched to the game's leaders and box score (one team only)
   function teamOfText(g, text) {
@@ -651,7 +692,6 @@
     // wrapping to a second line when it has to. It used to be cut to the longest version that fit one line (pvFit), so narrower
     // screens got shorter lines
     var ln = hlLine(g, p.text, p.tm, "hl hl-pre hl-one");
-    var pre = ln.querySelector(".hl-tm"); if (pre) pre.remove();   // and never an "MSU:" in front of the stats line (DJ)
     return ln;
   }
   function pvNeed(g) {

@@ -160,7 +160,7 @@
     else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); var nn = pvNewsNode(g); if (nn) row.appendChild(nn); }   // 3.89.1: Claude's news note on its own line
     else if (mode === "games" && !g.custom) { var agl = agLine(g, st.kind, row); if (agl) row.appendChild(agl); if (st.kind === "upcoming") {
         // 3.90.5: the stats line on one line here too, the longest version that fits, without an "MSU:" in front (as on the slate)
-        if (agl && agl.classList.contains("hl-pre") && PV[g.id] && PV[g.id].text) { var agp = agl.querySelector(".hl-tm"); if (agp) agp.remove(); agl.classList.add("hl-one"); } var agn = pvNewsNode(g); if (agn) row.appendChild(agn); } }   // 3.90.0: 📰 News lines on All games too  // All games: the same one-liners (3.39.0)
+        if (agl && agl.classList.contains("hl-pre") && PV[g.id] && PV[g.id].text) { agl.classList.add("hl-one"); } var agn = pvNewsNode(g); if (agn) row.appendChild(agn); } }   // 3.90.0: 📰 News lines on All games too  // All games: the same one-liners (3.39.0)
     if ((mode === "lineup" || mode === "games") && !g.custom && st.kind === "over") { var wb = wwbNode(g, row, mode === "games"); if (wb) row.appendChild(wb); }  // 3.103.0
     if ((mode === "lineup" || mode === "games") && !g.custom) mybBars(g).forEach(function (x) { row.appendChild(x); });  // your own bets on this game (3.86.0)
     if (openTray) row.appendChild(openTray);
@@ -214,10 +214,13 @@
     return (hlInkCache[k] = out);
   }
   function hlTeamInk(g, p) {
+    if (p && p.classList && p.classList.contains("hl-rows")) { hlTeamInkRows(g, p); return; }
     var sd = p && p.dataset && p.dataset.side; if (sd !== "away" && sd !== "home") return;
     var c = pairColors(g)[sd]; if (!hexOk(c)) return;
     p.style.color = hlInk(c); p.classList.add("hl-team");
   }
+  // 3.134.9: a line with one row per team colors each row by its own team
+  function hlTeamInkRows(g, p) { if (!p || !p.querySelectorAll) return; [].slice.call(p.querySelectorAll(".hl-row")).forEach(function (r) { hlTeamInk(g, r); }); }
   // 3.89.2 (DJ: "the fact that USA is up 6-0 on aggregate gets cut off here"): ESPN's long event notes, made to fit the league line.
   // "Concacaf Nations League · 2nd Leg - United States lead 6-0 on aggregate" -> "Nations League · 2nd leg" (the 6-0 leads the one-liner)
   function noteShort(n) {

@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.134.9 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Every one-liner now starts with the team it's about, then a colon: "Oregon: Won four straight; ESPN gives them a 99% chance", "Blues: Holloway and McTavish have scored". The team's name moves into the label instead of being repeated in the sentence. This covers the slate, All games and Worth a look, before, during and after games.
+- A line about both teams gets one row per team, for example "Villarreal: Buchanan has scored" with "Slavia Prague: Managed one shot on target to Villarreal's 5" under it. A line that names neither team ("Both teams have won four in a row") has no label.
+- Fixed: a few finished games said a team "came back from 50 down to win" when it never trailed (Michigan's 102-56 win over Toledo). ESPN had listed that game's plays with home and away the other way round.
+- Every one-liner saved on your phone is cleared again once, so all of them are worked out with the new format.
+
 ## 3.134.8 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live notifications and the Dynamic Island: team logos show more reliably. The app can save only so many logos at once, and on a big day (every college game) some of your games' logos were left out, so they showed the old team-color chips instead. Now your slate's games' logos go first, the rest follow in smaller batches, and any that didn't download get another try every 30 minutes while Slate is open.
