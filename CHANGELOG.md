@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.140.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Simple mode: on Your slate, a later game's "PM" sits under its time again instead of running into it (10:30 PM and later were cramped).
+
 ## 3.140.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - New: Simple mode, for anyone who wants just the games, the scores and the channel. Turn it on in Settings, Look and text size. It is off unless you switch it on.

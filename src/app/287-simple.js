@@ -37,7 +37,7 @@
     ".sm-when { font-size: 2.1em; font-weight: 800; text-align: center; padding: .1em 0; }" +
     ".sm-row { display: grid; grid-template-columns: 4.6em 1fr auto; gap: .7em; align-items: center; width: 100%; min-height: 4.4em; text-align: left; background: none; color: inherit; border: 0; border-top: 2px solid var(--hair); padding: .4em 0; margin: 0; font: inherit; }" +
     ".sm-rows { display: flex; flex-direction: column; }" +
-    ".sm-row .tm { font-size: 1.55em; font-weight: 800; font-stretch: 70%; line-height: 1.05; } .sm-row .tm small { display: block; font-size: .7em; color: var(--muted); }" +
+    ".sm-row .tm { font-size: 1.55em; font-weight: 800; font-stretch: 70%; line-height: 1.05; } .sm-row .tm small { display: block !important; font-size: .7em; color: var(--muted); margin: 0; }" +
     ".sm-row .gm { display: flex; flex-direction: column; gap: .2em; font-size: 1.375em; font-weight: 800; min-width: 0; } .sm-row .gm .t { display: flex; align-items: center; gap: .4em; min-width: 0; }" +
     ".sm-row .gm .sm-lg { width: 1.4em; height: 1.4em; } .sm-row .gm .sm-lg .badge { zoom: .7; }" +
     ".sm-mine { font-size: 16px; color: var(--accent); font-weight: 800; }" +
