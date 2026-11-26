@@ -265,3 +265,8 @@
 .nf-lh svg { flex: none; width: 14px; height: 14px; color: var(--dim); align-self: center; }
 .nf-lg p { font-size: 14.5px; line-height: 1.45; color: var(--muted); }
 .nl-n .t { font-size: 13.5px; font-weight: 800; color: var(--ink); }
+
+/* 3.140.2 (DJ): clear of the Dynamic Island, folded Duo and the unfolded right half (--nf-isl set in nlRender) */
+.nf-pills { margin-right: calc(var(--nf-isl, 0px) / var(--z, 1) - var(--pad)); overscroll-behavior-x: contain; touch-action: pan-x; }
+.nf-st { margin-right: calc(var(--nf-isl, 0px) / var(--z, 1)); }
+.nf > .nl-lead.bleed .nl-kr { padding-right: calc(var(--nf-isl, 0px) / var(--z, 1)); }

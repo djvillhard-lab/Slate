@@ -1,5 +1,5 @@
 # News
-Last updated: Nov 26, 2026, 3.139.2
+Last updated: Nov 26, 2026, 3.140.2
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
@@ -41,6 +41,10 @@ further filter the information shown."
 - Unfolded Duo (DJ: "Yes, tap opens on the other half"): a tapped story calls the other pane's `SlateApp.newsStory`
   (`nlOpenStory` → `nlStoryShow` → `nlStoryRender`), with Close putting that half back; a tapped preview/recap opens
   its matchup on the other half (`paneGo("game:<id>")`). No change to 288-panes.js. Elsewhere a story tap opens the article.
+- 3.140.2 (DJ): the pill row stops touch events from reaching the page swipe (same as the My TVs editor), and
+  `--nf-isl` (the island's width: own `--strip-w` on the folded Duo, the host's on the right pane) keeps the pills, the
+  stamp line and the lead's tag row clear of the Dynamic Island. The right pane can't be checked in shots.py (the host
+  has no island there); it follows the Live feed's `fdIsland`.
 - Gotchas: generic class names collide with app-wide rules (`.n3`, `.card`, `.two`, `.why`), keep everything prefixed.
   Any written entry with a `value` is drawn as a number. Live scores are never written by Claude (prompt rule).
 - History: 3.136.0 to 3.138.0 tried eight layouts as tabs for DJ only (203-news-lab.js); DJ picked the combination.
