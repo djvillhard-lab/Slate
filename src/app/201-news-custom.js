@@ -45,9 +45,9 @@
     var o = nwOpts(), path = nwPagePath(), k = "n:" + path;
     var put = function () { nwOptsPut(o); if (st.wat) nw.errSeen = st.wat; keepScroll(renderNews); };
     var card = el("div", "nx-card nc");
-    // folds from its header (3.131.1, DJ): open to start, and each phone remembers the choice (slate-newscustom "0" = folded).
-    // The chevron sits right after the title, never top right, where the folded Duo's clock is.
-    var shut = false; try { shut = localStorage.getItem("slate-newscustom") === "0"; } catch (e) {}
+    // folds from its header (3.131.2, DJ); closed to start (3.131.3, DJ), and each phone remembers the choice
+    // (slate-newscustom "1" = open, "0" = folded). The chevron sits right after the title, never top right, where the folded Duo's clock is.
+    var shut = true; try { shut = localStorage.getItem("slate-newscustom") !== "1"; } catch (e) {}
     var hd = el("button", "nc-hd"); hd.type = "button"; hd.setAttribute("aria-expanded", shut ? "false" : "true");
     hd.appendChild(icon("sparkle")); hd.appendChild(el("b", null, "Custom news page")); hd.appendChild(icon("more"));
     hd.addEventListener("click", function () { try { localStorage.setItem("slate-newscustom", shut ? "1" : "0"); } catch (e) {} keepScroll(renderNews); });
