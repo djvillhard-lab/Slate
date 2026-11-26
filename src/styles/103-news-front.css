@@ -1,5 +1,5 @@
-/* News: the redesign concepts as tabs to try (3.136.0, DJ Nov 25, 2026). Code: src/app/203-news-lab.js.
-   A prototype: once DJ picks a layout, the others (and their rules here) come out. */
+/* News: the Front Page (3.139.0, DJ Nov 25, 2026). Code: src/app/203-news-front.js. nl- = pieces kept from the layouts
+   tried in 3.136.0-3.138.0 (some of those rules are no longer used and can be pruned); nf- = the page as shipped. */
 .nl-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
 .nl-tabs button { min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--muted); font: inherit; font-size: 14px; font-weight: 800; font-stretch: 88%; white-space: nowrap; }
 .nl-tabs button[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 16%, var(--card)); border-color: var(--accent); color: var(--ink); }
@@ -132,7 +132,7 @@
 /* A: the Rundown */
 .nl-it { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; padding: 12px; border-top: 1px solid var(--line); }
 .nl-it:first-child { border-top: 0; }
-.nl-rk { font-size: 30px; font-weight: 800; font-stretch: 70%; line-height: 1; color: var(--c, var(--accent)); text-align: center; }
+.nl-rk { font-size: 30px; font-weight: 800; font-stretch: 70%; line-height: 1; color: color-mix(in srgb, var(--c, var(--accent)) 62%, var(--ink)); text-align: center; }
 .nl-it h4 { margin-bottom: 4px; }
 .nl-it .nl-kr { margin-top: 8px; }
 .nl-it .nl-src { margin: 0 0 0 auto; }
@@ -222,3 +222,46 @@
 .nl-svn { font-size: 64px; font-weight: 800; font-stretch: 70%; line-height: 1; color: var(--accent); overflow-wrap: anywhere; }
 .nl-svg { font-size: 12px; font-weight: 700; color: var(--dim); }
 .nl-svb { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 14px; border-radius: 8px; background: var(--accent-fill); color: var(--on-accent, #fff) !important; font-size: 15px; font-weight: 800; }
+
+/* ----- the Front Page as shipped (3.139.0) ----- */
+.nf { gap: 12px; }
+.nf-pills { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 2px calc(-1 * var(--pad)) 0; padding: 2px var(--pad) 4px; -webkit-overflow-scrolling: touch; }
+.nf-pills::-webkit-scrollbar { display: none; }
+.nf-pill { position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid var(--line); background: var(--card); color: var(--muted); font: inherit; white-space: nowrap; }
+.nf-pill b { font-size: 14.5px; font-weight: 800; font-stretch: 92%; }
+.nf-pill.lg b { font-stretch: 80%; letter-spacing: .03em; }
+.nf-pill i { font-style: normal; min-width: 20px; padding: 2px 6px; border-radius: 10px; background: var(--raise); color: var(--muted); font-size: 11px; font-weight: 800; text-align: center; }
+.nf-pill u { position: absolute; top: 7px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 2px var(--card); }
+.nf-pill[aria-selected="true"] { background: var(--accent-fill); border-color: transparent; color: var(--on-accent, #fff); }
+.nf-pill[aria-selected="true"] i { background: rgba(0,0,0,.22); color: inherit; }
+.nf-st { display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: 12px; font-weight: 700; line-height: 1.3; color: var(--dim); }
+.nf-st > span:first-of-type { flex: 1; min-width: 0; }
+.nf-g { display: block; }
+.nf-g.tap { cursor: pointer; }
+.nf-gh { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 12px; color: #fff; background: linear-gradient(105deg, color-mix(in srgb, var(--a) 68%, #000) 0 49.6%, color-mix(in srgb, var(--h) 68%, #000) 50.4% 100%); }
+.nf-gs { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.nf-gs.home { flex-direction: row-reverse; text-align: right; }
+.nf-gs > :first-child { flex: none; }
+.nf-gt { display: grid; min-width: 0; }
+.nf-gt b { font-size: 19px; font-weight: 800; font-stretch: 78%; line-height: 1.05; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.55); white-space: nowrap; }
+.nf-gt em { font-style: normal; font-size: 11px; font-weight: 800; color: rgba(255,255,255,.85); text-shadow: 0 1px 3px rgba(0,0,0,.55); }
+.nf-gm { display: grid; justify-items: center; gap: 1px; padding: 5px 10px; border-radius: 8px; background: rgba(0,0,0,.5); }
+.nf-gm b { font-size: 20px; font-weight: 800; font-stretch: 76%; line-height: 1.05; color: #fff; white-space: nowrap; }
+.nf-gm b.tm { font-size: 16px; }
+.nf-gm span { font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: rgba(255,255,255,.85); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.nf-gm .live { color: #ff6b60; }
+.nf-gb { display: grid; gap: 7px; padding: 12px; }
+.nf-gb h4 { font-size: 17px; }
+.nf-gb p { font-size: 14.5px; line-height: 1.45; color: var(--ink); font-weight: 500; }
+.nl .nf-gb p.nf-x { font-size: 13.5px; color: var(--muted); font-weight: 600; padding-top: 8px; border-top: 1px solid var(--line); }
+.nf-x b { color: var(--ink); font-weight: 800; }
+.nf-note { font-size: 11px; font-weight: 700; color: var(--dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nf-more { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; margin-top: -4px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--accent); font: inherit; font-size: 14px; font-weight: 800; }
+.nf-more svg { width: 14px; height: 14px; }
+.nf-lg { display: grid; gap: 6px; width: 100%; padding: 12px; border: 0; color: inherit; font: inherit; text-align: left; }
+.nf-lh { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.nf-lh b { flex: none; font-size: 15px; font-weight: 800; font-stretch: 80%; letter-spacing: .03em; color: var(--accent); }
+.nf-lh span { flex: 1; min-width: 0; font-size: 15.5px; font-weight: 800; line-height: 1.25; color: var(--ink); }
+.nf-lh svg { flex: none; width: 14px; height: 14px; color: var(--dim); align-self: center; }
+.nf-lg p { font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+.nl-n .t { font-size: 13.5px; font-weight: 800; color: var(--ink); }

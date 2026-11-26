@@ -697,7 +697,9 @@
     if (state.date < today0 && !nw.toToday && nwx.past !== state.date) { nw.toToday = 1; setTimeout(function () { nw.toToday = 0; if (state.view === "news" && state.date < todayInHome()) setDate(todayInHome()); }, 0); }
     var tb = $("nw-tabs"); tb.textContent = ""; tb.hidden = true;
     var body = $("nw-body"); body.textContent = ""; body.className = "nx";
-    if (nlStoryRender(body)) return;   // 3.138.0, unfolded Duo: a story tapped on the other half (203-news-lab.js)
+    // 3.139.0 (DJ): News is the Front Page for everyone (203-news-front.js). It always draws, so nothing below this line
+    // runs any more: Press Box, the league tabs, the custom page and their Generate buttons are retired, code kept for now.
+    if (nlStoryRender(body) || nlRender(body)) return;
     if (!db) { body.appendChild(el("p", "pv-none", "News needs the app's saved data, which isn't available here.")); return; }
     if (nw.deep && nw.deep.date !== undefined && nw.deep.date !== state.date) nw.deep = null;
     if (nw.deep) { nw.deep.date = state.date; if (nw.deep.type === "c") ncRenderCustom(body); else nwRenderDeep(body); return; }
@@ -714,6 +716,5 @@
     }
     // today (3.131.0, DJ): the Custom news page card on top, then what's free and automatic: Breaking, Top headlines,
     // Injuries and moves. The written page opens from the card on its own screen.
-    if (nlRender(body)) return;   // 3.136.0: the redesign concepts as tabs to try (203-news-lab.js)
     ncCard(body, doc, st); ncAuto(body); wirePress(body);
   }

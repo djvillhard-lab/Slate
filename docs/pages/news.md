@@ -1,43 +1,47 @@
 # News
-Last updated: Nov 26, 2026, 3.138.0
+Last updated: Nov 26, 2026, 3.139.0
 Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/styles/040-components.css` (`nx-` classes),
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
-## The redesign: concepts as tabs to try (3.136.0, IN PROGRESS, waiting on DJ's pick)
-DJ (Nov 25) asked for a News redesign: a default page that is the same for everyone, focused on Claude-written snapshots,
-quick reads, numbers, fun facts and tonight's big games, with real ESPN / Athletic links and photos, to check a few
-times a day. The pick-your-own page (3.131.0 below) stays as its own optional thing. DJ liked concept B "The Wire" but
-couldn't picture mockups, so every concept is built as a real tab: `src/app/203-news-lab.js`, `src/styles/103-news-lab.css`,
-one hook in `renderNews` (`if (nlRender(body)) return;`).
-- Who sees the tab row: admin (DJ), the test account, or localStorage `slate-newslab` = "1" (`nlOn`). Nobody else.
-- Tabs (`NL_TABS`): Current (News as it was), Combo (Wire 1 + Wire 3's games on top, the recommendation), Wire 1 Edge to
-  edge, Wire 2 Mosaic, Wire 3 Board, Rundown (A), Wire (B, the first timeline), Daily (C), Deck (D).
-- One model for all (`nlModel`): the shared doc `newsdeep/<today>-w-wire` (worker kind `deep`, key `w-wire`: lead, items
-  with kind breaking/news/number/fun, games with a "why", league lines). Until someone taps Generate the tabs fill from the
-  free ESPN / Athletic feeds, with no numbers (only a source's own numbers are shown). Each Update merges into the day's
-  items (worker keeps 40, newest first). Claude's entries name a headline by number so the worker attaches the real link,
-  source and time itself.
-- 3.137.1: any written entry with a `value` (not breaking, not fun) is drawn as a number; Claude often files numbers as "news".
-- 3.138.0, DJ's three answers on Nov 25 (late):
-  - **Front Page** tab (`nlMix`): DJ: "Combine the following tabs and redesign, wire 1, wire 2, rundown, and daily."
-    Photo lead (bleed), five things, prime-time posters with the why, number of the day, the wire by the hour with pairs
-    of photo tiles (`nlTile`, `.nl-pair`), league lines, reads. The other tabs stay until DJ says to drop them.
-  - **The wire writes itself** (DJ tapped "Yes, only when there is news"; this is the one exception to "Claude only on
-    a tap"). `worker/newswire.js` `wireDue` + `runNewsWire` in `worker/index.js`, from the every-minute cron at minutes
-    ending in 6. Rules in `WIRE_AUTO`: 6 AM to midnight Central; first write of the day, or a new ESPN HeadlineNews
-    90+ min after the last write, or 5 new stories 180+ min after; 8 a day at most; skipped if someone tapped Update in
-    the last hour or Slate's daily Claude budget is spent. State in doc `newsdeep/wire-auto` ({day, n, lastAt, seen}).
-    Games come from `slates/<day>` (no scores, so the prompt is told not to state one). Cost is logged as user "wire".
-    Rough cost guess given to DJ: $10 to $25 a month. Leagues are fixed in `LGS` (not per user).
-  - **Unfolded Duo** (DJ tapped "Yes, tap opens on the other half"): in a pane, a tapped story calls the other pane's
-    `SlateApp.newsStory(json)` (`nlOpenStory` → `nlStoryShow`), which draws `nlStoryRender` (hooked at the top of
-    `renderNews`): photo, summary, link button, more from that league, and Close, which puts that half back
-    (`nl.back`, via `SlateApp.paneGo`). Games go to the other half with `paneGo("game:<id>")`. No change to 288-panes.js.
-    Folded phone and iPhone: a story tap still opens the article.
-- Prototype limits: the Deck has no snap scrolling; the story view has no related game yet.
-- Generic class names collide with app-wide rules (`.n3`, `.card`, `.two`, `.why`): keep everything `nl-` prefixed.
-- NEXT: when DJ picks a layout, delete the other layouts and their CSS, drop the tab row, and show it to everyone.
+## News today: the Front Page (3.139.0). READ THIS FIRST; most of "Done" below is retired
+DJ, Nov 25, 2026 (late): "Remove the tabs. Keep just front page. Make this page the same for every user and update on a
+schedule. No generation or customization. What Claude does well is the ability to preview, summarize, and recap games
+teams leagues and matchups, and can access the entire web ... It's too many just headlines that take you to another app
+... I want this to be more about Claude and slate than anything ... I liked the design that included the pills at the
+top to filter the information shown below. I think there should be a news homepage, but those pill type selections to
+further filter the information shown."
+- Code: `src/app/203-news-front.js` (`nl*` functions), `src/styles/103-news-front.css` (`nl-` pieces, `nf-` page).
+  `renderNews` in 200-news.js calls `nlStoryRender(body) || nlRender(body)` right after it clears the body and returns,
+  so Press Box, league tabs, the custom page (201), extras (202), wirePress/wireLeague (205) and every Generate button
+  are no longer reached. Their code and CSS are still in the repo: delete them once DJ is happy (a cleanup, no behavior).
+- The doc: `newsdeep/<Central day>-w-wire`, one for everyone, `v: 2`: `lead`, `items` (kind breaking/news/number/fun,
+  merged through the day, 40 kept), `previews` and `recaps` (Claude's title/text/watch/star on top of ESPN's own game
+  facts: teams, colors, records, ranks, start, TV, final score; recaps merge through the day by ESPN event id),
+  `leagues` ({key, title, text}). Prompt and save: `worker/index.js` (kind `deep`, key starting `w`), 4 web searches,
+  12,000 max tokens. Claude names a headline by `n` and a game by `g`; the worker attaches links, times and scores, so
+  those are never Claude's.
+- The schedule (the ONE exception to "Claude only on a tap"; DJ approved Nov 25): `worker/newswire.js` `wireDue`, run by
+  `runNewsWire` (index.js) from the every-minute cron at minutes ending in 6. `WIRE_AUTO`: 6 AM to midnight Central;
+  the first pass of the day, or a new ESPN HeadlineNews or 3 newly finished games 90+ min after the last pass, or 5 new
+  things 180+ min after; 6 passes a day at most; stops at the daily Claude budget. State: doc `newsdeep/wire-auto`.
+  Facts: ESPN news + Athletic RSS for the 8 leagues in `LGS`, and ESPN scoreboards (today; yesterday too before noon;
+  tomorrow too from 6 PM). The app's game id is matched from `slates/<day>` so a card can open its matchup.
+  Cost is logged as user "wire". Rough guess given to DJ: about $0.20 a pass, so up to about $35 a month.
+- The page: pills (`nlPills`: Home, Breaking with a red dot when new, Up next, Recaps, Numbers, then a pill per league
+  by how much it has; counts on each), a "Generated by Claude <time>" line, then by pill. Home = photo lead, five
+  things, 2 previews, 2 recaps, number of the day, league snapshots (tap = that league's pill), the wire by the hour
+  with pairs of photo tiles, Worth reading. Free ESPN HeadlineNews published after the last pass are added as they
+  are; before a day's first pass the page shows last night's doc, or ESPN's headlines if there is none.
+  The day arrows show an earlier day's saved doc.
+- Unfolded Duo (DJ: "Yes, tap opens on the other half"): a tapped story calls the other pane's `SlateApp.newsStory`
+  (`nlOpenStory` → `nlStoryShow` → `nlStoryRender`), with Close putting that half back; a tapped preview/recap opens
+  its matchup on the other half (`paneGo("game:<id>")`). No change to 288-panes.js. Elsewhere a story tap opens the article.
+- Gotchas: generic class names collide with app-wide rules (`.n3`, `.card`, `.two`, `.why`), keep everything prefixed.
+  Any written entry with a `value` is drawn as a number. Live scores are never written by Claude (prompt rule).
+- History: 3.136.0 to 3.138.0 tried eight layouts as tabs for DJ only (203-news-lab.js); DJ picked the combination.
+- Open: delete the retired News code; Settings may still list News options that no longer apply (check); related game
+  on the story view; DJ's read of the first real passes (tune the prompt from his notes).
 
 ## Done
 - Injuries, trades and signings (3.115.0, DJ picked News over team pages): `src/app/205-wire.js`, styles injected as `#wire-css`.

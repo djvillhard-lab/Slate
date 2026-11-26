@@ -5,6 +5,14 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.139.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News is now one page, the same for everyone, and Claude writes it on a schedule. The tabs to try are gone, and so are Press Box, the custom news page, the league tabs and every Generate button on News. Nothing to pick, nothing to tap to make it.
+- More Claude, fewer bare links. Each pass Claude searches the web and writes: the lead story, the things to know, previews of the biggest games still to come (what's at stake and one thing to watch for), recaps of the biggest games that ended (how it was won and the player of the game, next to ESPN's real final score), a short snapshot of each league, and the numbers and did-you-knows of the day. Real ESPN and Athletic stories, photos and links are still there under Claude's words.
+- Pills across the top filter the page: Home, Breaking (with a red dot when something is new), Up next, Recaps, Numbers, and one for each league with news. Each pill shows how much is behind it. A league pill shows that league's snapshot, previews, recaps and wire together.
+- When it updates: from 6 AM to midnight Central, only when there is something new (a breaking story or newly finished games 90 minutes or more after the last pass, or five new stories after 3 hours), at most 6 passes a day. ESPN's own breaking headlines show up between passes. After midnight, last night's page stays until the morning's first pass. The day arrows show an earlier day's page.
+- Tap a preview or recap to open that game's matchup. On the unfolded Duo, stories and games still open on the other half.
+
 ## 3.138.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Game cards: tournament names show in full now instead of ending in "…". A long name wraps to a second line under itself. Names are also tidier: "Southwest Maui Invitational - Fifth Place Game" reads "Maui Invitational · 5th place", sponsor tags like "pres. by Belk" are dropped, and "Championship Game" is just "Championship". The league name stays first so men's and women's hoops are still easy to tell apart.
