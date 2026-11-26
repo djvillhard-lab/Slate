@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | News (emojis, photos, logos, headshots so it stands out) | src/app/203-news-front.js, src/styles/103-news-front.css, worker/index.js (news wire lines only), worker/newswire.js, docs/pages/news.md | 2026-11-26 18:20 |
+| DJ | Live feed (new play cards for hockey, soccer and baseball) | src/app/145-live-feed.js, 147-live-feed-soccer.js, 148-live-feed-hockey.js, 149-live-feed-baseball.js, docs/pages/live-feed.md | 2026-11-26 18:35 |
