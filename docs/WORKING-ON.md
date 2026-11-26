@@ -8,3 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | On TV: My TVs rules (which game goes where) | src/app/215-tv-setups.js, docs/pages/tv.md | 2026-11-26 06:57 |
 | DJ | Live feed fix: games after midnight ET | src/app/110-box-score.js, docs/pages/live-feed.md | 2026-11-26T06:58Z |
+| DJ | News (rewrite every hour, 6 AM to midnight) | worker/newswire.js, worker/index.js (news wire lines only), docs/pages/news.md | 2026-11-26 07:02 |
