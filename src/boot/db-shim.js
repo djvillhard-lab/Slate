@@ -90,6 +90,14 @@
     var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     return u && ios && !window.SLATE_NATIVE && !nativeHost() && !/[?&]native=/.test(location.search) ? u : "";
   };
+  // the iPhone app, opened from Safari right after an invite's setup (slatedj://open#h=<ticket>, 3.156.0): the ticket
+  // is traded for this phone's own key, and the app opens logged in as that person (worker/signup.js /api/handoff)
+  window.slateHandoff = function (t) {
+    post("/api/handoff", { action: "redeem", t: String(t || "") }).then(function (j) {
+      if (j.ok && j.key) { try { localStorage.setItem("slate-handed", "1"); } catch (e) {} signedIn(j.key, j.id, j.name, false, j.admin === true); return; }
+      if (!pass()) gate("login", j.error || "Couldn't log in from Safari. Log in with your passcode.");
+    });
+  };
   function mk(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function signedIn(passcode, id, name, fresh, admin) {
     try {
@@ -231,7 +239,7 @@
   window.slateAskPass = function () { asked = false; gate("login"); };
   // Settings > Log out: this phone forgets the passcode and its saved copies, then shows the log-in page
   window.slateLogOut = function () {
-    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf("slate-doc:") === 0) localStorage.removeItem(k); }); ["slate-pass", "slate-user", "slate-user-name", "slate-view-only", "slate-welcome", "slate-admin"].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf("slate-doc:") === 0) localStorage.removeItem(k); }); ["slate-pass", "slate-user", "slate-user-name", "slate-view-only", "slate-welcome", "slate-admin", "slate-handed"].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
     location.reload();
   };
   // who this phone belongs to: "dj" (the main passcode) or another person's id from users/registry, found by the worker

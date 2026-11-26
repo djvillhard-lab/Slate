@@ -6,5 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Invites: open the app straight from the invite (waits for DJ's yes on the iPhone build) | src/boot/db-shim.js, src/app/232-welcome.js, worker/signup.js | 2026-11-26 15:20 |
-| DJ | shared: ios/ | ios/Slate-Info.plist, ios/Slate/WebModel.swift | 2026-11-26 15:20 |

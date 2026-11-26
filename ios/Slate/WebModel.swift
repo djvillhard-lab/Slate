@@ -99,6 +99,9 @@ final class WebModel: ObservableObject {
             pendingCall = "SlateApp.watch && SlateApp.watch(\(Self.quote(ch)), \(Self.quote(q["gid"] ?? "")))"
         } else if let id = q["game"], !id.isEmpty {
             pendingCall = "SlateApp.openGame && SlateApp.openGame(\(Self.quote(id)))"
+        } else if let h = q["h"], !h.isEmpty {
+            // slatedj://open#h=<ticket> (3.156.0): Safari, right after an invite's setup, logs the app in as that person
+            pendingCall = "window.slateHandoff && slateHandoff(\(Self.quote(h)))"
         } else {
             return
         }
