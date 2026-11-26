@@ -133,4 +133,4 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   laLogos now sends the slate's first, in batches of 200, and resends every 30 min. Still open: a push-started live
   notification for a team the app never saved (Slate not opened that day) shows the chip; fixing that needs the app
   to save logos in the background (iPhone build).
-
+- 3.163.3 (DJ): the Board's narrow island (the Duo's side screen, MiniSide) now gets g.al/g.hl; MiniSide gives a logo 18 pt.

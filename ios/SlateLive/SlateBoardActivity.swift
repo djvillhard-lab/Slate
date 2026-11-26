@@ -283,9 +283,9 @@ private struct BoardNarrowAwareSide: View {
             // leading side only; iOS hides the empty trailing side
             if leading { BoardKickoffRing(g: g) }
         } else if leading {
-            MiniSide(abbr: g.aa, color: g.ac, alt: g.ax, score: g.a, leading: true)
+            MiniSide(abbr: g.aa, color: g.ac, alt: g.ax, score: g.a, leading: true, logo: g.al)   // DJ (Nov 26): the logos on the Duo too
         } else {
-            MiniSide(abbr: g.ha, color: g.hc, alt: g.hx, score: g.h, leading: false)
+            MiniSide(abbr: g.ha, color: g.hc, alt: g.hx, score: g.h, leading: false, logo: g.hl)
         }
     }
 }

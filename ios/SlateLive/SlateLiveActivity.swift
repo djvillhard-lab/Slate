@@ -888,11 +888,11 @@ struct MiniSide: View {
     var body: some View {
         VStack(spacing: 2) {
             if leading {
-                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2, logo: logo)
+                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: SlateLogos.image(logo) != nil ? 18 : 13, size: 8, stripe: 1.5, radius: 2, logo: logo)
                 if showScore { num }
             } else {
                 if showScore { num }
-                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: 13, size: 8, stripe: 1.5, radius: 2, logo: logo)
+                Chip(abbr: abbr, color: color, alt: alt, width: 20, height: SlateLogos.image(logo) != nil ? 18 : 13, size: 8, stripe: 1.5, radius: 2, logo: logo)
             }
         }
         .frame(maxWidth: 22)
