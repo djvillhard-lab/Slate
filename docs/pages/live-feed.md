@@ -225,3 +225,9 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 ## 3.162.3: streak tags name the player
 - DJ: "Ice cold 5 straight misses, idk if that's team or player". Streaks are always the shooter's own shots (free throws not counted), so the tag is now
   "<Last name>: N straight makes" (3+, flame) or "<Last name>: N straight misses" (4+, ice). The words "Heating up", "On fire" and "Ice cold" are gone.
+
+## 3.165.0: box score highlights app-wide, football play cards on
+- DJ: "Implement the new box score design and such app wide. Everything we've edited today should be app wide". `fdBoxShine` now runs at the end of
+  `bxPlayers` (110) for every game box score (quick look, matchup, finished games, feed), not season stats. Styles are scoped to `.bx-pl`, not `.fd-box`.
+- DJ picked "Every sport" for the play cards: `FD_FLAIR_FOOT = true` (banner, field tracer, drive and player lines). Seen on screen on CHI@DET, folded
+  Duo and iPhone: banner and tracer showed, no story line had come up yet. OPEN: hockey, soccer and baseball play cards are not built yet (next release).

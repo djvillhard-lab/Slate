@@ -329,7 +329,6 @@
     var w = el("div", "fd-box"); w.setAttribute("data-id", "box"); w.appendChild(el("h3", "fd-boxh", "Box score"));
     var pl = null; try { pl = bxPlayers(g, b, true, false); } catch (e) { pl = null; } if (!pl) return null;
     w.appendChild(pl);
-    try { fdBoxShine(w, BX_SPORT[g.league] || ""); } catch (e) {}
     w.addEventListener("click", function () { setTimeout(function () { if (state.view !== "feed") return;
       // 3.66.9: redrawing keeps your place (on the unfolded Duo the page jumped back to the top)
       var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); renderFeed(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); }, 0); }, true);  // "Show all players" and the team switch redraw this page

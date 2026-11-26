@@ -378,6 +378,9 @@
       wrap.appendChild(mo);
     }
     if (!season) { var injL = bxInjuries(t); if (injL) wrap.appendChild(injL); }
+    // 3.165.0 (DJ: "Implement the new box score design and such app wide"): the Live feed's highlights (each column's team best lit, the standout
+    // player's row tinted with a word on why) on every game box score: the quick look, the matchup page and finished games. Not on season stats.
+    if (!season) { try { fdBoxShine(wrap, sport); } catch (e) {} }
     return wrap;
   }
   function bxStamp(b) {

@@ -271,7 +271,7 @@
   // Football, worked out from ESPN's own plays and drives, nothing estimated. Per play: a banner for the big moments (a score, a turnover, a gain of
   // 20+ yards) in the team's color, the play traced on a thin field (where it started and how far it went), and one line of what it means:
   // "Cuts it to 3", "Caps an 8-play, 75-yard drive in 4:12", "Allen's 2nd TD pass today", "Longest play of the game".
-  var FD_FLAIR_FOOT = false;  // DJ chose basketball first (Nov 26): football's banner, field tracer and story line are built and wait here until he likes basketball's
+  var FD_FLAIR_FOOT = true;  // DJ chose basketball first (Nov 26), then "Every sport" the same day (3.165.0): football's banner, field tracer and story line are on
   function fdPoss(n) { n = String(n || ""); return n + (/s$/i.test(n) ? "'" : "'s"); }
   function fdStory(drives, g, sideOf, ix) {
     var out = {}, pa = 0, ph = 0, cnt = {}, best = 0, bump = function (k) { cnt[k] = (cnt[k] || 0) + 1; return cnt[k]; };

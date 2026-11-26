@@ -1947,10 +1947,10 @@ html .gv-head .gv-act { position: relative; min-height: 0 !important; height: 30
 /* 3.162.0 Live feed: the box score opens from the Box score button, with each column's team best lit and the standout player's row tinted (DJ, Nov 26) */
 .fd-list > .fd-box { margin-top: 0; padding: 10px 10px 4px; border-radius: 8px; background: var(--card); border: 1px solid var(--hair); }
 .fd-list > .fd-box .fd-boxh { display: none; }
-.fd-box .bxp-c.bx-hi b { color: var(--accent); }
-.fd-box .bxp-c.bx-hi i { color: var(--accent); opacity: .85; }
-.fd-box .bxp.bx-star { margin: 0 -6px; padding-left: 6px; padding-right: 6px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
-.fd-box .bxp.bx-star + .bxp, .fd-box .bxp.bx-star { border-top-color: transparent; }
+.bx-pl .bxp-c.bx-hi b { color: var(--accent); }
+.bx-pl .bxp-c.bx-hi i { color: var(--accent); opacity: .85; }
+.bx-pl .bxp.bx-star { margin: 0 -6px; padding-left: 6px; padding-right: 6px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
+.bx-pl .bxp.bx-star + .bxp, .bx-pl .bxp.bx-star { border-top-color: transparent; }
 .bx-chip { margin-left: 6px; padding: 1px 7px 2px; border-radius: 6px; font-size: 11px; font-weight: 800; white-space: nowrap; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
 /* 3.162.2 (DJ: "Make the gray pill filter bar fit without going behind the Dynamic Island"): the feed's filter bar is a glass pill (100-glass.css sets its
    padding and margin with !important), so the older padding-right never held and the pill ran under the clock and Wi-Fi. The pill itself now ends left of
