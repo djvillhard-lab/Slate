@@ -260,3 +260,7 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   one line per player under 440px, two players per row from 440px, two per row on one line from 640px (640px+ not seen on screen).
   The standout chip is hidden in few-column groups under 640px (the tinted row and lit numbers stay). Basketball-width groups unchanged.
 - Not done: both teams side by side. The team tabs stay.
+
+## 3.171.1: end-zone logos
+- DJ: "use team logos in end zones". `fdEzLogo` (145) puts the ESPN logo in the end zones of the top field (`.fd-ez`) and each play's thin field
+  (`.fd-tr-ez`), on a darkened end zone with a team-color edge. Falls back to the old color and letters if the logo is unknown or fails to load.

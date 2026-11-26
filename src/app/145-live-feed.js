@@ -351,11 +351,24 @@
     if (st.lines && st.lines.length) { var aft = card.querySelector(".bb-pit") || card.querySelector(".fd-px") || card.querySelector(".fd-pt"); if (aft) aft.parentNode.insertBefore(el("p", "fd-story", st.lines[0]), aft.nextSibling); }
   }
   function fdLeadWord(d0, d1, tie) { return d1 === 0 ? tie : (d0 === 0 || (d0 > 0) !== (d1 > 0)) ? "Takes the lead" : ""; }
+  // 3.171.1 (DJ: "On the live yardage line graphic, use team logos in end zones"): the team's logo sits in its end zone, on the field at the top
+  // and on each play's thin field. The end zone goes dark with an edge in the team's color so any logo reads; if the logo isn't known or doesn't
+  // load, the end zone stays as it was (team color, and the letters on the big field).
+  function fdEzLogo(ez, g, sd, size) {
+    var hit = null; try { hit = teamLook(g[sd]); } catch (e) { hit = null; } if (!hit || !hit[0]) return;
+    var tc = badgeColor(g, sd) || "#555", keepTx = ez.textContent, keepCss = ez.style.cssText, im = document.createElement("img");
+    im.alt = ""; im.decoding = "async"; im.draggable = false; im.style.cssText = "width:" + size + "px;height:" + size + "px;object-fit:contain;display:block;margin:auto";
+    im.onerror = function () { ez.textContent = keepTx; ez.style.cssText = keepCss; };
+    im.src = logoUrl(hit[0], themeIsDark());
+    ez.textContent = ""; ez.setAttribute("aria-label", abbr(g, sd));
+    ez.style.cssText = keepCss + ";writing-mode:horizontal-tb;transform:none;opacity:1;display:grid;place-items:center;background:color-mix(in srgb, " + tc + " 30%, #0c1117);" + (sd === "away" ? "border-right" : "border-left") + ":2px solid " + tc + ";box-sizing:border-box";
+    ez.appendChild(im);
+  }
   // the play on a thin field: the away team's end zone on the left, like the field at the top. A gain in the team's color, a loss in red.
   function fdTracer(g, tr) {
     var at = function (v) { return (6 + Math.max(0, Math.min(100, v)) * 0.88) + "%"; }, x1 = Math.max(0, Math.min(100, tr.x0 + tr.dir * tr.y)), lo = Math.min(tr.x0, x1), hi = Math.max(tr.x0, x1);
     var w = el("div", "fd-tr"); w.setAttribute("role", "img"); w.setAttribute("aria-label", (tr.y >= 0 ? "Gain of " : "Loss of ") + Math.abs(tr.y) + " yards" + (tr.from ? " from the " + tr.from : ""));
-    ["away", "home"].forEach(function (sd) { var ez = el("i", "fd-tr-ez fd-tr-" + sd); ez.style.background = badgeColor(g, sd) || "var(--raise)"; w.appendChild(ez); });
+    ["away", "home"].forEach(function (sd) { var ez = el("i", "fd-tr-ez fd-tr-" + sd); ez.style.background = badgeColor(g, sd) || "var(--raise)"; fdEzLogo(ez, g, sd, 11); w.appendChild(ez); });
     for (var k = 1; k < 10; k++) { var yl = el("i", "fd-tr-yl"); yl.style.left = at(k * 10); w.appendChild(yl); }
     var run = el("i", "fd-tr-run" + (tr.y < 0 ? " loss" : "")); run.style.left = at(lo); run.style.width = (hi - lo) * 0.88 + "%"; run.style.transformOrigin = x1 >= tr.x0 ? "left" : "right"; if (tr.y >= 0) run.style.background = fdTint(g, tr.sd); w.appendChild(run);
     var a = el("i", "fd-tr-dot fd-tr-from"); a.style.left = at(tr.x0); w.appendChild(a);
@@ -799,7 +812,7 @@ function renderFeed(fromPoll) {
       var y2e = Number(E.yardsToEndzone); if (down && y2e > 0 && y2e <= 20) dd.appendChild(el("em", "fd-rz", "Red zone"));
       if (!down) fld.appendChild(dd);  /* 3.73.1 (DJ: too much above the plays on the folded Duo): the down and distance is in the score bar now, and the field shows the spot */
       var pitch = el("div", "fd-pitch"); pitch.setAttribute("aria-hidden", "true");
-      ["away", "home"].forEach(function (sd) { var ez = el("span", "fd-ez fd-ez-" + sd, abbr(g, sd)); ez.style.background = badgeColor(g, sd) || "var(--raise)"; if (lum(badgeColor(g, sd) || "#333333") > 0.62) ez.style.color = "#111"; pitch.appendChild(ez); });
+      ["away", "home"].forEach(function (sd) { var ez = el("span", "fd-ez fd-ez-" + sd, abbr(g, sd)); ez.style.background = badgeColor(g, sd) || "var(--raise)"; if (lum(badgeColor(g, sd) || "#333333") > 0.62) ez.style.color = "#111"; fdEzLogo(ez, g, sd, 18); pitch.appendChild(ez); });
       var at = function (v) { return (8 + Math.max(0, Math.min(100, v)) * 0.84) + "%"; };
       if (x != null) {
         var dir = posSide === "away" ? 1 : -1, dist = Number(E.distance) || 0;
