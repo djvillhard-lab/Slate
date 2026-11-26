@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.156.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Slate, before football games: players in one-liners now have their position in words and their full name, like "Safety Chuck Clark is a question mark" or "Without running back Kenneth Walker III", instead of "S Clark" or "RB Walker III". Only QB stays short.
+
 ## 3.156.0 (Nov 26, 2026)
 TestFlight: 3.156.0 (59), new build
 - Invites: after setting up in Safari, there's no passcode to type into the app. Once TestFlight has installed Slate, they come back to the Safari page and tap Open Slate: the app opens already logged in, with their teams and slate. If Slate isn't installed yet, the page says so and offers TestFlight again.

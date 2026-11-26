@@ -180,3 +180,4 @@ tick.py slates_work: after the morning check, any slates/D-ncaa* document 2-7 da
 - Box Office / top performers `.tp-top` wraps at bigtext so the name isn't ellipsized by pos/team/Slate tags.
 - Checked with an overlap/offscreen/ellipsis audit (`--eval`) on lineup, games, news, teams, moments, tv, settings, notify, rules, matchup and quick look at folded, open (full and --two) and iPhone.
 
+- 3.156.1 (DJ: "The player positions in one-liners are sometimes confusing. And not obvious that they are player positions"): pre-game injury and line-move names use `pvPosWord` (inside pvCompute, so lines_check can run it): the position in words + full name ("safety Chuck Clark", "running back Kenneth Walker III"); QB stays "QB Jalen Hurts". Football only, as before.

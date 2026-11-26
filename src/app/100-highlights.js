@@ -493,6 +493,12 @@
   // 3.113.10: a home or road record that is the whole record ("Florida State is 5-0 at home" on a 5-0 team) adds nothing
   function pvAllHome(t, W, L) { var r = String((t.rec || {}).total || "").split("-").map(Number); return r.length >= 2 && r[0] === W && r.slice(1).reduce(function (a, b) { return a + (b || 0); }, 0) === L; }
   function pvCompute(lg, sum, qbx, g) {
+    // 3.156.1 (DJ: "The player positions in one-liners are sometimes confusing. And not obvious that they are player positions"):
+    // the position in words plus the full name ("safety Chuck Clark", not "S Clark"); only QB stays short, since everyone reads it
+    var PV_POS = { QB: "QB", RB: "running back", FB: "fullback", WR: "receiver", TE: "tight end", OT: "tackle", T: "tackle", G: "guard", OG: "guard", C: "center", OL: "lineman",
+      DE: "defensive end", DT: "defensive tackle", NT: "nose tackle", DL: "defensive lineman", LB: "linebacker", OLB: "linebacker", ILB: "linebacker", MLB: "linebacker",
+      CB: "cornerback", S: "safety", FS: "safety", SS: "safety", DB: "defensive back", K: "kicker", PK: "kicker", P: "punter", LS: "long snapper" };
+    function pvPosWord(pos, name) { var w = PV_POS[String(pos || "").toUpperCase()]; return w ? w + " " + name : name; }
     pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = ""; pvCompute.recs = null;
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
@@ -561,12 +567,12 @@
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
       (t.injuries || []).forEach(function (x) { var n = ((x.athlete || {}).displayName) || "", stt = String(x.status || ""); if (!(lead[i] || {})[n]) return; var ln = (x.athlete || {}).lastName || n.split(" ").slice(1).join(" ") || n;
         // with the position in front ("QB Wilson"), from the injury report or the team's leaders (3.29.2)
-        var pos = ((x.athlete || {}).position || {}).abbreviation || ((lead[i] || {})[n] || {}).pos || ""; if (pos && sport === "football") ln = pos + " " + ln;  // football only (3.46.1): "QB Wilson" reads; "G Curry" in the NBA doesn't
+        var pos = ((x.athlete || {}).position || {}).abbreviation || ((lead[i] || {})[n] || {}).pos || ""; if (pos && sport === "football") ln = pvPosWord(pos, n);  // football only (3.46.1): "QB Wilson" reads; "G Curry" in the NBA doesn't
         if (/out|reserve|suspen/i.test(stt)) outs.push(ln); else if (/question|doubt|day-to-day/i.test(stt)) q.push(ln); });
       // 3.153.2: who might explain a big line move: a quarterback or one of the team's leaders who is out
       (t.injuries || []).forEach(function (x) { var a0 = x.athlete || {}, n = a0.displayName || "", ps0 = (a0.position || {}).abbreviation || "";
         if (!/out|reserve|suspen/i.test(String(x.status || "")) || !(ps0 === "QB" && sport === "football" || (lead[i] || {})[n])) return;
-        (keyOut[i] = keyOut[i] || []).push((sport === "football" && ps0 ? ps0 + " " : "") + (a0.lastName || n.split(" ").slice(1).join(" ") || n)); });
+        (keyOut[i] = keyOut[i] || []).push(sport === "football" && ps0 ? pvPosWord(ps0, n) : (a0.lastName || n.split(" ").slice(1).join(" ") || n)); });
       if (outs.length) add("out|" + i, 58 + outs.length * 4, T[i].name + " are without " + outs.slice(0, 2).join(" and "));
       else if (q.length) add("q|" + i, 40, q[0] + " is " + (/doubt/i.test(JSON.stringify(t.injuries)) ? "doubtful" : "a question mark") + " for " + T[i].name); });
     // a quarterback's first start of the season (3.31.0): the depth chart's QB1 isn't the team's passing leader and hasn't had a starter's game yet (see pvQB)
