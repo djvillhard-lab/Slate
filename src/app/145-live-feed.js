@@ -267,9 +267,76 @@
     else if (/Extra Point|Two-Point|2pt/i.test(ty)) { out.title = ty; }
     return out;
   }
+  // ---- the story of each play (DJ, Nov 26: "more creativity and flair to live plays ... more than the basic sentence") ----
+  // Football, worked out from ESPN's own plays and drives, nothing estimated. Per play: a banner for the big moments (a score, a turnover, a gain of
+  // 20+ yards) in the team's color, the play traced on a thin field (where it started and how far it went), and one line of what it means:
+  // "Cuts it to 3", "Caps an 8-play, 75-yard drive in 4:12", "Allen's 2nd TD pass today", "Longest play of the game".
+  var FD_FLAIR_FOOT = false;  // DJ chose basketball first (Nov 26): football's banner, field tracer and story line are built and wait here until he likes basketball's
+  function fdPoss(n) { n = String(n || ""); return n + (/s$/i.test(n) ? "'" : "'s"); }
+  function fdStory(drives, g, sideOf, ix) {
+    var out = {}, pa = 0, ph = 0, cnt = {}, best = 0, bump = function (k) { cnt[k] = (cnt[k] || 0) + 1; return cnt[k]; };
+    var ln = function (P) { return P ? String(P.name).split(" ").slice(1).join(" ").replace(/\s+(Jr|Sr|II|III|IV|V)\.?$/, "") || P.name : ""; };
+    var other = function (sd) { return sd === "away" ? "home" : sd === "home" ? "away" : ""; };
+    drives.forEach(function (d) {
+      var dp = d.plays || [], lastSc = -1; dp.forEach(function (pl, k) { if (pl.scoringPlay) lastSc = k; });
+      dp.forEach(function (pl, k) {
+        var pid = String(pl.id || pl.sequenceNumber || ""), ty = String((pl.type || {}).text || ""), tx = String(pl.text || ""), y = Number(pl.statYardage) || 0;
+        var aS = pl.awayScore != null ? Number(pl.awayScore) : pa, hS = pl.homeScore != null ? Number(pl.homeScore) : ph, dA = aS - pa, dH = hS - ph;
+        var rd = fdRead(pl, ix), S = pl.start || {}, offSd = sideOf[rd.offTid] || "", noPlay = /no play/i.test(tx), st = { lines: [] };
+        if (rd.note) { pa = aS; ph = hS; return; }
+        var scSd = dA > 0 && dH <= 0 ? "away" : dH > 0 && dA <= 0 ? "home" : "", pts = dA + dH;
+        if (scSd && pts > 0) {
+          var word = /Field Goal/i.test(ty) ? "Field goal" : /Safety/i.test(ty) ? "Safety" : pts >= 6 ? "Touchdown" : "Points";
+          st.ban = { sd: scSd, word: word, big: "+" + pts };
+          var l0 = pa > ph ? "away" : ph > pa ? "home" : "", l1 = aS > hS ? "away" : hS > aS ? "home" : "", mg = Math.abs(aS - hS);
+          if (!pa && !ph) st.lines.push("First points of the game");
+          else if (l0 && l0 === l1) st.lines.push(l1 === scSd ? "Lead grows to " + mg : "Cuts it to " + mg);  // a lead change or a tie is already a tag
+          var dm = /(\d+) plays?, (-?\d+) yards?, (\d+:\d\d)/.exec(String(d.description || ""));
+          if (dm && k === lastSc && d.team && sideOf[String(d.team.id || "")] === scSd && +dm[1] > 1 && +dm[2] > 0) st.lines.push("Caps " + (/^(8|11|18)\b/.test(dm[1]) ? "an " : "a ") + dm[1] + "-play, " + dm[2] + "-yard drive in " + dm[3]);
+          var P0 = (rd.ps[0] || {}).P, P1 = (rd.ps[1] || {}).P, n;
+          if (/Passing Touchdown/i.test(ty) && P0) { n = bump("ptd" + P0.id); if (n >= 2) st.lines.push(fdPoss(ln(P0)) + " " + ordN(n) + " TD pass today"); }
+          if (/Passing Touchdown/i.test(ty) && P1) { n = bump("rtd" + P1.id); if (n >= 2) st.lines.push(fdPoss(ln(P1)) + " " + ordN(n) + " TD catch today"); }
+          if (/Rushing Touchdown/i.test(ty) && P0) { n = bump("utd" + P0.id); if (n >= 2) st.lines.push(fdPoss(ln(P0)) + " " + ordN(n) + " rushing TD today"); }
+          if (/Field Goal Good/i.test(ty) && P0) { n = bump("fg" + P0.id); if (n >= 2) st.lines.push(fdPoss(ln(P0)) + " " + ordN(n) + " field goal today"); }
+        } else if (rd.kind === "turn" && offSd && !noPlay) {
+          var ds = other(offSd); st.ban = { sd: ds, word: "Turnover", sub: short(g, ds) + " ball" };
+          var nt = bump("tk" + ds); if (nt >= 2) st.lines.push(fdPoss(short(g, ds)) + " " + ordN(nt) + " takeaway today");
+          var QB = /Interception/i.test(ty) ? (rd.ps[0] || {}).P : null; if (QB) { var ni = bump("int" + QB.id); if (ni >= 2) st.lines.push(fdPoss(ln(QB)) + " " + ordN(ni) + " interception today"); }
+        } else if (y >= 20 && /^Rush|Pass Reception/i.test(ty) && !noPlay && offSd) st.ban = { sd: offSd, word: "Big play", big: y + " yds" };
+        if (/Sack/i.test(ty) && !noPlay) { var SK = (rd.ps[1] || {}).P; if (SK) { var ns = bump("sk" + SK.id); if (ns >= 2) st.lines.push(fdPoss(ln(SK)) + " " + ordN(ns) + " sack today"); } }
+        if (/^Rush|Pass Reception|Passing Touchdown|Rushing Touchdown/i.test(ty) && !noPlay && y > 0) { if (y >= 20 && y > best) st.lines.push("Longest play of the game so far"); if (y > best) best = y; }
+        var yte = Number(S.yardsToEndzone);
+        if (/^Rush|Pass Reception|Sack|Passing Touchdown|Rushing Touchdown/i.test(ty) && !noPlay && offSd && S.yardsToEndzone != null && yte >= 0 && yte <= 100)
+          st.tr = { x0: offSd === "away" ? 100 - yte : yte, dir: offSd === "away" ? 1 : -1, y: y, sd: offSd, from: String(S.possessionText || "") };
+        if (st.ban || st.tr || st.lines.length) out[pid] = st;
+        pa = aS; ph = hS;
+      });
+    });
+    return out;
+  }
+  // the moment banner across the top of a big play's box: the team's chip, what happened, and the number (points, or yards on a big play)
+  function fdBanner(g, b) {
+    var c = badgeColor(g, b.sd) || "#2a3442", w = el("div", "fd-ban"); w.style.setProperty("--ban", c); w.style.setProperty("--ban-ink", fdNumInk(c));
+    w.appendChild(badgeFor(abbr(g, b.sd), g[b.sd], g[b.sd + "Color"], g[b.sd + "Alt"]));
+    var t = el("span", "fd-ban-t"); t.appendChild(el("b", null, b.word)); t.appendChild(el("span", null, b.sub || short(g, b.sd))); w.appendChild(t);
+    if (b.big) w.appendChild(el("strong", "fd-ban-n", b.big));
+    return w;
+  }
+  // the play on a thin field: the away team's end zone on the left, like the field at the top. A gain in the team's color, a loss in red.
+  function fdTracer(g, tr) {
+    var at = function (v) { return (6 + Math.max(0, Math.min(100, v)) * 0.88) + "%"; }, x1 = Math.max(0, Math.min(100, tr.x0 + tr.dir * tr.y)), lo = Math.min(tr.x0, x1), hi = Math.max(tr.x0, x1);
+    var w = el("div", "fd-tr"); w.setAttribute("role", "img"); w.setAttribute("aria-label", (tr.y >= 0 ? "Gain of " : "Loss of ") + Math.abs(tr.y) + " yards" + (tr.from ? " from the " + tr.from : ""));
+    ["away", "home"].forEach(function (sd) { var ez = el("i", "fd-tr-ez fd-tr-" + sd); ez.style.background = badgeColor(g, sd) || "var(--raise)"; w.appendChild(ez); });
+    for (var k = 1; k < 10; k++) { var yl = el("i", "fd-tr-yl"); yl.style.left = at(k * 10); w.appendChild(yl); }
+    var run = el("i", "fd-tr-run" + (tr.y < 0 ? " loss" : "")); run.style.left = at(lo); run.style.width = (hi - lo) * 0.88 + "%"; run.style.transformOrigin = x1 >= tr.x0 ? "left" : "right"; if (tr.y >= 0) run.style.background = fdTint(g, tr.sd); w.appendChild(run);
+    var a = el("i", "fd-tr-dot fd-tr-from"); a.style.left = at(tr.x0); w.appendChild(a);
+    var b = el("i", "fd-tr-dot fd-tr-to" + (tr.y < 0 ? " loss" : "")); b.style.left = at(x1); if (tr.y >= 0) b.style.background = fdTint(g, tr.sd); w.appendChild(b);
+    return w;
+  }
   // one football play's box (3.72.0: its own function so the quick look's Scoring can show the same boxes)
-  function fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew) {
-    var card = el("div", "fd-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "")); card.setAttribute("data-id", pid);
+  function fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew, sty) {
+    var card = el("div", "fd-play" + (rd.kind ? " fd-k-" + rd.kind : "") + (isNew ? " fd-new" : "") + (sty && sty.ban ? " fd-moment" : "")); card.setAttribute("data-id", pid);
+    if (sty && sty.ban) card.appendChild(fdBanner(g, sty.ban));
     // 3.70.1 (DJ: make it obvious which team made the play, like basketball): the card's left edge is that team's color. The offense by default;
     // the defense for a sack, interception, fumble it recovered or safety; the scorer's team on a return touchdown. Penalties and kickoffs get none.
     if (!rd.noTeam) { var osd = sideOf[rd.offTid] || "", tsd = rd.teamP ? sideOf[rd.teamP.tid] || "" : rd.def && osd ? (osd === "away" ? "home" : "away") : osd; if (tsd) card.style.setProperty("--fd-team", fdTint(g, tsd)); }
@@ -277,9 +344,11 @@
     ph.appendChild(el("span", null, (q ? (q > 4 ? "OT" : "Q" + q) + " " : "") + ((pl.clock || {}).displayValue || "") + (ss.down ? " · " + (ss.downDistanceText || ss.shortDownDistanceText || "") : "")));
     var scs = el("span", "fd-psc"); scs.textContent = abbr(g, "away") + " " + (pl.awayScore != null ? pl.awayScore : "") + "  " + abbr(g, "home") + " " + (pl.homeScore != null ? pl.homeScore : ""); ph.appendChild(scs);
     card.appendChild(ph);
-    var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); card.appendChild(tw); }
+    var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg && sty && sty.ban) tg = tg.filter(function (x) { return x.t !== "Big play"; }); if (tg && tg.length) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); card.appendChild(tw); }
     card.appendChild(fdTitle(rd.title));
+    if (sty && sty.tr) card.appendChild(fdTracer(g, sty.tr));
     var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); lines.forEach(function (l) { px.appendChild(el("p", null, l)); }); card.appendChild(px); }
+    if (sty && sty.lines.length) card.appendChild(el("p", "fd-story", sty.lines.join(" · ")));
     rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
     return card;
   }
@@ -609,7 +678,7 @@ function renderFeed(fromPoll) {
     var ix = fdIndex(sum), drives = [], byId = {};
     var dr = sum.drives || {}; (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { if (!d || !d.id) return; if (byId[d.id] != null) drives[byId[d.id]] = d; else { byId[d.id] = drives.length; drives.push(d); } });
     var allPlays = []; drives.forEach(function (d) { (d.plays || []).forEach(function (p2) { allPlays.push(p2); }); });
-    var tags = fdTags(allPlays, sum, g, sideOf);
+    var tags = fdTags(allPlays, sum, g, sideOf), story = {}; if (FD_FLAIR_FOOT) { try { story = fdStory(drives, g, sideOf, ix); } catch (e) { story = {}; } }
     var last = allPlays[allPlays.length - 1] || null, over = st.state === "post";
     // possession and the spot: the latest play's end (a score or kickoff leaves no down to show)
     var spot = null; for (var j = allPlays.length - 1; j >= 0 && !spot; j--) { var e = allPlays[j].end || {}; if (e.possessionText || e.yardLine != null) spot = { e: e, p: allPlays[j] }; }
@@ -696,7 +765,7 @@ function renderFeed(fromPoll) {
           tc.appendChild(th); tc.appendChild(fdTitle(tsd0 ? "Timeout, " + short(g, tsd0) : tab ? "Timeout, " + fdAb(tab) : rd.title)); list.appendChild(tc); continue; }
         if (rd.note) { var nq = ((pl.period || {}).number) || 0; list.appendChild(fdNoteCard(rd.title, isNew, pid, (nq ? (nq > 4 ? "OT" : "Q" + nq) + " " : "") + ((pl.clock || {}).displayValue || ""), pl.awayScore != null && pl.homeScore != null ? abbr(g, "away") + " " + pl.awayScore + "  " + abbr(g, "home") + " " + pl.homeScore : "")); continue; }
         shown++;
-        var card = fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew);
+        var card = fdPlayCard(g, pl, rd, pid, sideOf, tags, isNew, story[pid]);
         list.appendChild(card);
       }
     }

@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.159.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed, basketball: plays have more flair. The big moments (a late go-ahead basket or tie, a 10-0 run, a buzzer-beater, a big win-probability swing, a player reaching 30, 40 or 50 points) get a banner across the top in that team's color, with its chip, what happened and the number. It sweeps in when the play arrives.
+- Every shot shows the shooter's last five shots as dots beside the name: filled for a make, empty for a miss.
+- A line under the play says what it meant, all counted from ESPN's own plays: "First CLEM points in 4:12", "Thompson has scored CLEM's last 8", "That's 20 for Thompson", "Thompson's 4th three of the game", "Fuchs has made 4 shots in a row", "First double-digit lead of the game", "One-possession game".
+- Football's version (banner, the play traced on a thin field, drive and player lines) is built and waits until basketball's is right.
+
 ## 3.158.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - On TV, My TVs: every TV now says why its game is there, right on the TV: "Your team", "Your rule", "Your pick", your league order ("NBA #1"), the slate reason ("Top 25 matchup") or "Best one on". The list under the TVs spells it out: "Your rule: Manchester United on Main TV", "On your slate: Ranked matchup".

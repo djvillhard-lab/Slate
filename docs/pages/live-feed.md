@@ -188,3 +188,14 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - Big plays = `hpTags(...).big` only: a lead change, tie, or go-ahead basket in the last 5 minutes of regulation or in OT; the basket that first makes a run 10-0;
   buzzer-beaters; ESPN win-probability swings of 15%+. Routine threes, dunks, and-ones and early lead changes are out (a close game had 8, a blowout 1).
 - Basketball Leaders rows show pts, reb, ast from the box score for every leader (`hix` in `fdLeaders`).
+
+## 3.159.0: play cards with more flair (DJ: "more creativity and flair to live plays ... more than the basic sentence"; he picked basketball first)
+- Basketball (`hpStory` in 146, all counted from ESPN's plays): a banner (`fdBanner` in 145, `.fd-ban`) in the team's color on the Big plays moments
+  (late go-ahead or tie, 10-0 run, buzzer-beater, 15%+ swing) and when a player reaches 30/40/50 points; the shooter's last five shots as dots
+  (`hpDots`, at the end of the shooter's row); one story line (`.fd-story`): scoring drought ended (3+ minutes), a player scoring the team's last 8+,
+  20 points, 3rd+ three, 4+ makes or misses in a row, 3rd+ block or steal, every 5th team turnover from 10, first double-digit lead, lead hits 20,
+  back within single digits, one-possession game (last 5 minutes only). Tags the banner already says are dropped from that card.
+- Football is built and switched off: `FD_FLAIR_FOOT = false` in 145 (`fdStory`, `fdTracer`: banner on scores, turnovers and 20+ yard gains; the play
+  traced on a thin field; drive, score and player lines). Turn it on once DJ likes basketball's; it was checked on data only, never on screen.
+- Not seen on the unfolded Duo: shots.py couldn't reach a finished game there (16-game cap). The feed pane there is phone width, same cards.
+- Motion: the banner wipes in and the newest dot pops, only on `.fd-new`, off with Reduce Motion.

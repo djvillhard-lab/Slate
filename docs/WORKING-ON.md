@@ -6,6 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Live feed: play cards with more flair (football first) | src/app/145-live-feed.js, docs/pages/live-feed.md | 2026-11-26 16:39 |
-| DJ | shared: styles/040-components.css (Live feed play cards, new rules at the end) | src/styles/040-components.css | 2026-11-26 16:39 |
 | DJ | Unfolded Duo: full-screen slate cards filled, swipe changes page | src/styles/097-panes.css, src/app/283-three-pages.js, docs/pages/panes.md | 2026-11-26 16:46 |
