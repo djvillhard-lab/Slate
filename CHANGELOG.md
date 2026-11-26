@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.167.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed, hockey, soccer and baseball: the new play cards are here too, so every sport has them now. A goal gets a team-color banner saying what it did ("Opens the scoring", "Ties it" or "Equalizer", "Takes the lead", "Doubles the lead", "Hat trick", "Overtime winner") with the scorer and the score. A red card gets a banner. In baseball a home run gets one ("Solo home run", "3-run home run", "Grand slam"), and so does any play that ties the game or takes the lead.
+- Each card can also carry one short line on what the play meant: a player's 2nd goal or 2nd hit of the game, two goals a few seconds apart, a three-goal lead, a pitcher's 5th strikeout and up, a big inning, or a team's 3rd penalty or yellow card. All of it is counted from ESPN's own plays.
+
 ## 3.166.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: more to look at. Every section title has an emoji, and each league in League Check has its ball. The featured day has its own emoji (a turkey today) and, on a big day like Thanksgiving, a photo behind its title. The stories inside it show photo thumbnails. League Check cards carry a photo across the top. Each recap shows the star player's headshot beside his line.

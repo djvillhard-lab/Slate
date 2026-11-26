@@ -89,6 +89,25 @@
     if (v || pt) o.push((live ? "last: " : "last pitch ") + (v ? v + " mph" : "") + (v && pt ? " " : "") + (pt || "") + (live ? ", " + bbPitchWord(lp) : ""));
     return o.join(" · ");
   }
+  // 3.167.0: what each at-bat meant, counted from ESPN's plays in order. A home run gets a banner (Solo home run, 3-run home run, Grand slam) and so
+  // does a play that ties the game or takes the lead, with the batter and the score; one line adds a big inning, a pitcher's strikeout count (5 and up)
+  // or a batter's second, third or fourth hit.
+  function bbStory(items, g, ix) {
+    var out = {}, pa = 0, ph = 0, ks = {}, hits = {}, inn = "", innR = 0, last = function (P) { return P ? String(P.name || "").split(" ").slice(1).join(" ") || P.name : ""; };
+    items.forEach(function (it) { if (it.note || it.cur) return; var p = it.pl, st = { lines: [] }, rd = it.ab ? bbResult(p) : bbEvent(p);
+      var a = p.awayScore != null ? Number(p.awayScore) : pa, h = p.homeScore != null ? Number(p.homeScore) : ph, half = String((p.period || {}).type || ""), sd = /^top/i.test(half) ? "away" : /^bot/i.test(half) ? "home" : "";
+      var key = half + "|" + ((p.period || {}).number || ""); if (key !== inn) { inn = key; innR = 0; }
+      var runs = (a - pa) + (h - ph), B = ix[bbWho(p, "batter")] || null, pid0 = bbWho(p, "pitcher"), P = ix[pid0] || null, hr = it.ab && /^(Home run|Grand slam)/.test(rd.title);
+      if (runs > 0 && sd) { innR += runs; var d0 = pa - ph, d1 = a - h, lw = fdLeadWord(d0, d1, "Ties it");
+        var word = hr ? (/^Grand/.test(rd.title) ? "Grand slam" : runs === 1 ? "Solo home run" : runs + "-run home run") : lw;
+        if (word) st.ban = { sd: sd, word: word, sub: it.ab && B ? B.name : "", big: a + "-" + h };
+        if (hr && lw) st.lines.push(lw === "Ties it" ? "Ties the game" : "Puts " + abbr(g, sd) + " in front");
+        if (innR >= 3) st.lines.push(innR + " runs in the inning for " + abbr(g, sd)); }
+      if (it.ab && /^Strikeout/.test(rd.title) && pid0) { var nk = ks[pid0] = (ks[pid0] || 0) + 1; if (nk >= 5 && P) st.lines.push(ordN(nk) + " strikeout for " + last(P)); }
+      if (it.ab && /^(Single|Double|Triple|Home run|Grand slam)/.test(rd.title) && B) { var nh = hits[B.id] = (hits[B.id] || 0) + 1; if (nh >= 2) st.lines.push(ordN(nh) + " hit of the game for " + last(B)); }
+      pa = a; ph = h; if (st.ban || st.lines.length) out[it.pid] = st; });
+    return out;
+  }
   function bbFeed(body, g, sum, anchor, aTop, sc) {
     var comp = ((sum.header || {}).competitions || [])[0] || {}, cst = comp.status || {}, st = cst.type || {}, sideOf = {}, scoreOf = {}, recOf = {}, lineOf = {}, heOf = {};
     (comp.competitors || []).forEach(function (k) { var sd = k.homeAway === "home" ? "home" : "away"; sideOf[String((k.team || {}).id || "")] = sd; scoreOf[sd] = k.score; recOf[sd] = ((k.record || [])[0] || {}).summary || "";
@@ -160,6 +179,7 @@
     var scoreTx = function (pl) { return pl.awayScore != null && pl.homeScore != null ? abbr(g, "away") + " " + pl.awayScore + "  " + abbr(g, "home") + " " + pl.homeScore : ""; };
     var plRow = function (card, id, role, asP, sd) { var P = ix[id]; if (!P) return; var psd = sideOf[P.tid] || sd || "away", row = el("div", "fd-pl"); row.appendChild(fdFace(g, psd, P, fdJerseyOnly(g, psd, P)));
       var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort(P))); w.appendChild(el("em", "fd-pos", role)); var ln = bbLine(P, asP); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); card.appendChild(row); };
+    var story = {}; try { story = bbStory(items, g, ix); } catch (e) { story = {}; }
     for (var k = items.length - 1; k >= 0; k--) {
       var it = items[k], p = it.pl; seenNow[it.pid] = 1;
       var isNew = !!(fresh && !fresh[it.pid]);
@@ -182,6 +202,7 @@
       if (it.pitches && it.pitches.length) { var pln = bbPitchLine(it.pitches, !!it.cur); if (pln) card.appendChild(el("p", "bb-pit", pln)); }
       if (it.ab || it.cur) { plRow(card, bbWho(p, "batter"), "batter", false, sd); plRow(card, bbWho(p, "pitcher"), "pitcher", true, sd === "away" ? "home" : "away"); }
       else if (/^Pitching change/.test(rd.title)) plRow(card, bbWho(p, "pitcher"), "pitcher", true, csd);
+      fdFlair(card, g, story[it.pid]);
       list.appendChild(card);
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", pre ? "Every at-bat shows up here once the first pitch is thrown." : "No plays yet."));

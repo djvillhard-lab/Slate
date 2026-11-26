@@ -83,6 +83,20 @@
     return out;
   }
   function scStatsOpen() { try { return localStorage.getItem("slate-feed-stats") === "1"; } catch (e) { return false; } }
+  // 3.167.0: what each event meant, counted from the events in order. Goals get a banner (Opens the scoring, Equalizer, Takes the lead, Hat trick) with
+  // the scorer and the score, a red card gets one too; one line adds a second goal of the match, a three-goal lead, or a team's yellow card count.
+  function scStory(rows, g) {
+    var out = {}, pa = 0, ph = 0, goals = {}, yc = { away: 0, home: 0 };
+    rows.forEach(function (R) { var rd = R.rd, st = { lines: [] }, nm = (rd.names && rd.names[0]) || "";
+      if (rd.goal && R.a + R.h > pa + ph) { var sc = R.a > pa ? "away" : "home", own = /own goal/i.test(rd.ty), k = scNorm(nm), n = own || !k ? 0 : (goals[k] = (goals[k] || 0) + 1), d0 = pa - ph, d1 = R.a - R.h, m = Math.abs(d1);
+        st.ban = { sd: sc, word: n === 3 ? "Hat trick" : pa + ph === 0 ? "Opens the scoring" : fdLeadWord(d0, d1, "Equalizer") || (Math.abs(d0) === 1 && m === 2 ? "Doubles the lead" : "Goal"), sub: own ? "Own goal" + (nm ? ", " + scLast(nm) : "") : nm, big: R.h + "-" + R.a };
+        if (n === 2 || n > 3) st.lines.push(ordN(n) + " goal of the match for " + scLast(nm));
+        if (m >= 3 && m > Math.abs(d0)) st.lines.push("A " + m + "-goal lead"); }
+      else if (rd.kind === "to" && R.sd) st.ban = { sd: R.sd, word: "Red card", sub: nm, big: "" };
+      else if (rd.kind === "yc" && R.sd) { yc[R.sd]++; if (yc[R.sd] >= 3) st.lines.push(fdPoss(abbr(g, R.sd)) + " " + ordN(yc[R.sd]) + " yellow card of the match"); }
+      pa = R.a; ph = R.h; if (st.ban || st.lines.length) out[R.pid] = st; });
+    return out;
+  }
   function scFeed(body, g, sum, anchor, aTop, sc) {
     var comp = ((sum.header || {}).competitions || [])[0] || {}, cst = comp.status || {}, st = cst.type || {}, sideOf = {}, nameOf = {}, scoreOf = {}, recOf = {}, penOf = {};
     (comp.competitors || []).forEach(function (k) { var t = k.team || {}, sd = k.homeAway === "home" ? "home" : "away"; sideOf[String(t.id || "")] = sd;
@@ -151,6 +165,7 @@
     var keyOnly = !!FD.scOnly && !fromKey, list = el("div", "fd-list"), cap = keyOnly ? 1e9 : 14 * (1 + (+FD.more || 0)), shown = 0, total = 0, fresh = FD.seen || null, seenNow = {};
     var plRow = function (nm, sd, role) { var P = ix[scNorm(nm)] || { name: nm, jer: "", st: {} }, psd = sideOf[P.tid] || sd || "away", row = el("div", "fd-pl"); row.appendChild(fdJerseyOnly(g, psd, P));
       var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort({ name: nm }))); if (role) w.appendChild(el("em", "fd-pos", role)); var ln = role === "on" || role === "off" ? "" : scLine(P); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); return row; };
+    var story = {}; try { story = scStory(rows, g); } catch (e) { story = {}; }
     for (var i = rows.length - 1; i >= 0; i--) {
       var R = rows[i], rd = R.rd; seenNow[R.pid] = 1;
       if (keyOnly && !rd.key) continue;
@@ -165,6 +180,7 @@
       var tx = rd.tx.replace(/^Goal!\s+.+? \d+, .+? \d+\.\s*/, "").replace(/^Attempt (saved|missed|blocked)\.\s*/i, "").replace(/^Substitution, [^.]+\.\s*/i, "");
       if (tx && tx !== rd.title && !fromKey && !(rd.sub && rd.names.length > 1))  /* a key-events-only match has no sentence, just "X Goal at 72'" */ card.appendChild(el("p", "fd-px", tx));
       rd.names.slice(0, 2).forEach(function (nm, j) { if (j && !rd.roles[j]) return; card.appendChild(plRow(nm, rd.roles[j] === "own goal" ? "" : R.sd, rd.roles[j] || "")); });
+      fdFlair(card, g, story[R.pid]);
       list.appendChild(card);
     }
     if (!rows.length) list.appendChild(el("p", "pv-none", pre ? "Goals, cards, subs and shots show up here after kickoff." : "ESPN has no play-by-play for this match."));

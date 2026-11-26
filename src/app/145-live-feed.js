@@ -322,6 +322,15 @@
     if (b.big) w.appendChild(el("strong", "fd-ban-n", b.big));
     return w;
   }
+  // 3.167.0 (DJ picked "Every sport" for the new play cards): hockey, soccer and baseball draw their own cards, so this adds the flair to a finished
+  // card: the team-color banner on top (the header's score goes when the banner already shows it, DJ: "repetitive") and one story line under the play.
+  function fdFlair(card, g, st) {
+    if (!st) return;
+    if (st.ban) { card.classList.add("fd-moment"); card.insertBefore(fdBanner(g, st.ban), card.firstChild);
+      if (/^\d+-\d+$/.test(st.ban.big || "")) { var ps0 = card.querySelector(".fd-psc"); if (ps0) ps0.parentNode.removeChild(ps0); } }
+    if (st.lines && st.lines.length) { var aft = card.querySelector(".bb-pit") || card.querySelector(".fd-px") || card.querySelector(".fd-pt"); if (aft) aft.parentNode.insertBefore(el("p", "fd-story", st.lines[0]), aft.nextSibling); }
+  }
+  function fdLeadWord(d0, d1, tie) { return d1 === 0 ? tie : (d0 === 0 || (d0 > 0) !== (d1 > 0)) ? "Takes the lead" : ""; }
   // the play on a thin field: the away team's end zone on the left, like the field at the top. A gain in the team's color, a loss in red.
   function fdTracer(g, tr) {
     var at = function (v) { return (6 + Math.max(0, Math.min(100, v)) * 0.88) + "%"; }, x1 = Math.max(0, Math.min(100, tr.x0 + tr.dir * tr.y)), lo = Math.min(tr.x0, x1), hi = Math.max(tr.x0, x1);

@@ -231,3 +231,12 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   `bxPlayers` (110) for every game box score (quick look, matchup, finished games, feed), not season stats. Styles are scoped to `.bx-pl`, not `.fd-box`.
 - DJ picked "Every sport" for the play cards: `FD_FLAIR_FOOT = true` (banner, field tracer, drive and player lines). Seen on screen on CHI@DET, folded
   Duo and iPhone: banner and tracer showed, no story line had come up yet. OPEN: hockey, soccer and baseball play cards are not built yet (next release).
+
+## 3.167.0: play cards for hockey, soccer and baseball
+- DJ picked "Every sport". Each sport has a story pass over its plays in order (`hkStory` 148, `scStory` 147, `bbStory` 149) returning
+  `{ ban, lines }` per play id, and `fdFlair(card, g, st)` (145) adds the banner and the first line to the sport's own card. The header score is
+  dropped when the banner shows it. Banner score order follows each sport's header (soccer home first, the others away first).
+- Kept out on purpose (DJ's earlier rejections): no dots, no points stamps, no repeated score, streak or count lines always name whose it is.
+  No "down to 10 men" line: a red card can go to someone not on the pitch, so it would be a guess.
+- Checked: soccer on screen on a live Europa League match (folded Duo). Hockey and baseball on data only (node run of the story pass on
+  finished NHL games and a World Series game): no games were on. OPEN: look at both on screen at the next live game.

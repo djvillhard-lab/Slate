@@ -51,6 +51,27 @@
     if (/^takeaway$/i.test(ty)) { o.kind = "foul"; o.emoji = "🖐️"; o.title = "Takeaway" + (last(0) ? ", " + last(0) : ""); o.tx = ""; return o; }
     o.kind = "foul"; return o;
   }
+  // 3.167.0: what each play meant, counted from ESPN's plays in order. Goals get a banner (Ties it, Takes the lead, Hat trick, Overtime winner) with
+  // the scorer and the score; one line adds a second goal of the night, two goals close together, a three-goal lead, or a team's penalty count.
+  function hkStory(plays, g, sideOf, playoffs) {
+    var out = {}, pa = 0, ph = 0, goals = {}, pens = { away: 0, home: 0 }, lastG = null, max = 0;
+    plays.forEach(function (pl) {
+      var rd = hkRead(pl), sd = sideOf[String((pl.team || {}).id || "")] || "", st = { lines: [] }, per = Number((pl.period || {}).number) || 0;
+      var a = pl.awayScore != null ? Number(pl.awayScore) : pa, h = pl.homeScore != null ? Number(pl.homeScore) : ph;
+      if (rd.goal && (playoffs || per < 5) && a + h > pa + ph) {  /* shootout attempts aren't goals */
+        var sc = a > pa ? "away" : "home", at = ((pl.participants || [])[0] || {}).athlete || {}, id = String(at.id || ""), nm = at.displayName || "", ln = nm.split(" ").slice(1).join(" ") || nm;
+        var n = id ? (goals[id] = (goals[id] || 0) + 1) : 0, d0 = pa - ph, d1 = a - h, m = Math.abs(d1);
+        st.ban = { sd: sc, word: per >= 4 ? "Overtime winner" : n === 3 ? "Hat trick" : pa + ph === 0 ? "Opens the scoring" : fdLeadWord(d0, d1, "Ties it") || (Math.abs(d0) === 1 && m === 2 ? "Doubles the lead" : "Goal"), sub: nm, big: a + "-" + h };
+        var t = hpSecs((pl.clock || {}).displayValue), gap = lastG && lastG.per === per ? Math.abs(t - lastG.t) : 1e9;
+        if (n === 2 || n > 3) st.lines.push(ordN(n) + " goal of the night for " + ln);
+        if (gap <= 120) st.lines.push("Two goals in " + Math.floor(gap / 60) + ":" + ("0" + (gap % 60)).slice(-2));
+        if (m >= 3 && m > max) st.lines.push("A " + m + "-goal lead");
+        max = Math.max(max, m); lastG = { per: per, t: t };
+      } else if (rd.pen && sd) { pens[sd]++; if (pens[sd] >= 3) st.lines.push(fdPoss(abbr(g, sd)) + " " + ordN(pens[sd]) + " penalty of the game"); }
+      pa = a; ph = h; if (st.ban || st.lines.length) out[hpPid(pl)] = st;
+    });
+    return out;
+  }
   function hkFeed(body, g, sum, anchor, aTop, sc) {
     var comp = ((sum.header || {}).competitions || [])[0] || {}, cst = comp.status || {}, st = cst.type || {}, sideOf = {}, scoreOf = {}, recOf = {};
     (comp.competitors || []).forEach(function (k) { var sd = k.homeAway === "home" ? "home" : "away"; sideOf[String((k.team || {}).id || "")] = sd; scoreOf[sd] = k.score; recOf[sd] = ((k.record || [])[0] || {}).summary || ""; });
@@ -89,6 +110,7 @@
     if (top.firstChild) body.appendChild(top);
     // the plays, newest first
     var keyOnly = !!FD.scOnly, list = el("div", "fd-list"), cap = keyOnly ? 1e9 : 14 * (1 + (+FD.more || 0)), shown = 0, total = 0, fresh = FD.seen || null, seenNow = {};
+    var story = {}; try { story = hkStory(plays, g, sideOf, playoffs); } catch (e) { story = {}; }
     for (var i = plays.length - 1; i >= 0; i--) {
       var pl = plays[i], rd = hkRead(pl), pid = hpPid(pl); seenNow[pid] = 1;
       if (rd.skip || (keyOnly && !rd.key)) continue;
@@ -104,6 +126,7 @@
       if (rd.tx && rd.tx !== rd.title) card.appendChild(el("p", "fd-px", rd.tx));
       rd.rows.forEach(function (r) { var P = ix[r.id] || { id: r.id, name: r.name, jer: "", st: {} }, psd = sideOf[P.tid] || sd || "away", row = el("div", "fd-pl"); row.appendChild(fdFace(g, psd, P, fdJerseyOnly(g, psd, P)));
         var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort({ name: r.name }))); w.appendChild(el("em", "fd-pos", r.role)); var ln = hkLine(P); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); card.appendChild(row); });
+      fdFlair(card, g, story[pid]);
       list.appendChild(card);
     }
     if (!plays.length) list.appendChild(el("p", "pv-none", pre ? "Goals, penalties and shots show up here once the puck drops." : "No plays yet."));
