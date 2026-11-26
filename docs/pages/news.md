@@ -18,7 +18,7 @@ one hook in `renderNews` (`if (nlRender(body)) return;`).
   free ESPN / Athletic feeds, with no numbers (only a source's own numbers are shown). Each Update merges into the day's
   items (worker keeps 40, newest first). Claude's entries name a headline by number so the worker attaches the real link,
   source and time itself.
-- 3.136.1: any written entry with a `value` (not breaking, not fun) is drawn as a number; Claude often files numbers as "news".
+- 3.137.1: any written entry with a `value` (not breaking, not fun) is drawn as a number; Claude often files numbers as "news".
 - Claude writes ONLY on the Generate / Update tap. DJ's answer on scheduled writing is still open (his "tap only" tap
   on Nov 25 was accidental; re-asked Nov 26). A schedule would need a worker cron and DJ's explicit yes (cost rule).
 - Prototype limits: on the unfolded Duo each half behaves like the folded phone (no "tap an entry, it opens on the other
