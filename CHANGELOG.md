@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.170.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Football Live feed, wrong names fixed: "Incomplete, intended for Goff" named the passer as the target. It happened whenever the play opened with a note like "Borom reported in as eligible", and it now reads "Incomplete, intended for Borom". The note itself is no longer shown as a line.
+- An interception said "Intercepted by" the receiver the pass was meant for. It now names the defender who caught it.
+- Run wording: "Gibbs left tackle, 1 yds, touchdown" now reads "Gibbs runs off left tackle, 1 yd, touchdown". Runs say "runs up the middle", "runs around right end", "runs behind left guard", and one yard is "1 yd" everywhere.
+- Also cleaned up: a play reversed on replay shows only the play as it ended up, a kneel-down says "Allen kneels" (not "loses 1 yd"), a spike says "Spike to stop the clock", an onside kick says so, "ran ob" reads "ran out of bounds", and "St. Brown" is no longer cut in two.
+
 ## 3.170.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Today's Slate: a two columns option, like All games has. A new square-grid button sits right after Time | League. Tap it and the slate turns into small cards two across (four across on the unfolded iPhone Duo full screen): the two teams, their scores, and one bottom line with the clock in red, the start time and countdown, or Final. Tap it again for the full cards. Your choice is remembered on this phone.

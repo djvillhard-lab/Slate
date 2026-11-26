@@ -207,12 +207,19 @@
   // the NFL's own team codes in ESPN's play text, turned into the ones on the scoreboard (3.73.1, DJ: "Timeout BLT" should read BAL)
   var FD_NFL_AB = { BLT: "BAL", HST: "HOU", CLV: "CLE", ARZ: "ARI" };
   function fdAb(t) { return String(t || "").replace(/\b(BLT|HST|CLV|ARZ)\b/g, function (m) { return FD_NFL_AB[m]; }); }
-  function fdClean(t) { return fdAb(t).replace(/^\s*\(\d{1,2}:\d\d\)\s*/, "").replace(/^\s*\((?:No Huddle|Shotgun|No Huddle, Shotgun|Run formation)[^)]*\)\s*/i, "").trim(); }
+  // 3.170.1 (DJ: "intended for Goff ... don't seem right"): the NFL opens some plays with a note that isn't the play, "L.Borom reported in as eligible."
+  // or "J.Fields in at QB.". Read as part of the play, its name was taken for the passer and the passer for the target. The note comes off first.
+  // A replay review: when the call was reversed, the NFL writes the first ruling, then the review, then the play as it now stands. Only that last
+  // part is the play. When the call was upheld the review sentence is dropped.
+  function fdRev(t) { t = String(t || ""); var k = t.search(/and the play was REVERSED\.?/i); if (k >= 0) { var rest = t.slice(k).replace(/^and the play was REVERSED\.?\s*/i, ""); if (/[A-Za-z]{3}/.test(rest)) t = rest; }
+    return t.replace(/(^|\.)\s*(?:The Replay Official reviewed|[A-Z][A-Za-z ]*? challenged)[^.]*?(?:[Uu]pheld|UPHELD|[Cc]onfirmed|CONFIRMED|stands|STANDS)\.\s*(?:The ruling on the field (?:stands|is confirmed)\.?\s*)?/g, "$1 ").replace(/\((?:Timeout #\d[^)]*)\)\s*/gi, " ").replace(/\s*\.?\s*\*\* Injury Update:[^*]*$/i, "").replace(/\b(ran|pushed|out of bounds|goes) ob\b/g, function (_, w) { return w === "ran" ? "ran out of bounds" : w === "pushed" ? "pushed out of bounds" : w + " out of bounds"; }); }
+  function fdPre(t) { return fdRev(t).replace(/(?:[A-Z][a-z]{0,2}\.(?:St\. ?)?[A-Za-z'\-]+|#?\d+(?:-[A-Z][a-z]{0,2}\.[A-Za-z'\-]+)?)(?:,? (?:and )?(?:[A-Z][a-z]{0,2}\.(?:St\. ?)?[A-Za-z'\-]+|#?\d+))* (?:reported in as eligible|reports? as eligible|in at (?:QB|quarterback))\.\s*/gi, " ").replace(/Direct snap to [A-Z][a-z]{0,2}\.[A-Za-z'\-]+\.\s*/gi, " "); }
+  function fdClean(t) { return fdAb(fdPre(t)).replace(/^\s+/, "").replace(/^\s*\(\d{1,2}:\d\d\)\s*/, "").replace(/^\s*\((?:No Huddle|Shotgun|No Huddle, Shotgun|[A-Za-z ]*formation)[^)]*\)\s*/i, "").trim(); }
   // ESPN's play text, cleaned up (3.36.8): one short line per part, in plain sentence case. "B.Purdy pass short right to
   // C.McCaffrey for 66 yards, TOUCHDOWN. TWO-POINT CONVERSION ATTEMPT. ... ATTEMPT SUCCEEDS.PENALTY on DAL-J.Porter, ..."
   // becomes "Purdy pass short right to McCaffrey, 66 yds" and "2-pt good: Purdy to McCaffrey". Penalties are left to the Flag tag.
   function fdLines(raw, title) {
-    var t = String(raw || "").replace(/\s+/g, " ").trim(); if (!t) return [];
+    var t = fdPre(raw).replace(/\s+/g, " ").replace(/\bSt\. (?=[A-Z])/g, "St\u0001").trim(); if (!t) return [];  /* "A.St. Brown" is one name, not the end of a sentence */
     var nm = function (x) { return String(x || "").replace(/\b[A-Z][a-z]{0,2}\.(?=[A-Z])/g, ""); };  // "B.Purdy" -> "Purdy"
     var low = function (x) { return String(x).replace(/\b[A-Z][A-Z'\-]{3,}\b/g, function (w) { return w.toLowerCase(); }); };  // TOUCHDOWN -> touchdown (team abbreviations stay)
     var cap = function (x) { x = x.trim(); return x.charAt(0).toUpperCase() + x.slice(1); };
@@ -231,7 +238,11 @@
       seg = seg.replace(/\s+,/g, ",").replace(/\s{2,}/g, " ").replace(/[\s.,]+$/, "").trim(); if (!seg || /^-?\s*No Play$/i.test(seg)) return;
       seg = seg.replace(/ for (-?\d+) yards?,? TOUCHDOWN/i, ", $1 yds, touchdown").replace(/ for (-?\d+) yards?/i, ", $1 yds").replace(/ (\d+) yards?/g, " $1 yds");
       seg = seg.replace(/\s*FUMBLES,?\s*(?:\([^)]*\))?,?\s*/i, ", fumble, ").replace(/^, /, "").replace(/recovered by ([A-Z]{2,4})-([A-Z][a-z]{0,2}\.[A-Za-z'\-]+)/i, function (_, tm, p) { return "recovered by " + tm + " (" + nm(p) + ")"; });
+      seg = seg.replace(/\b([A-Z]{2,4})-([A-Z][a-z]{0,2}\.[A-Za-z'\-]+)/g, "$2 ($1)");  // "DET-T.Ratledge was injured" -> "Ratledge (DET) was injured"
       seg = cap(low(nm(seg)));
+      // "Gibbs left tackle, 1 yds" read like a position (DJ): the direction of a run is said as one, and one yard is "1 yd"
+      seg = seg.replace(/^(\S+(?: \S+)?) (left|right) (tackle|guard|end)\b/, function (_, who, sd2, gap) { return who + (/scrambles$/.test(who) ? " " : " runs ") + (gap === "end" ? "around " : gap === "guard" ? "behind " : "off ") + sd2 + " " + gap; }).replace(/^(\S+(?: \S+)?) up the middle\b/, function (_, who) { return who + (/scrambles$/.test(who) ? "" : " runs") + " up the middle"; }).replace(/(^|[^\d])(-?1) yds\b/g, "$1$2 yd");
+      seg = seg.replace(/\u0001/g, ". ").replace(/,? Center-[A-Za-z.'\-]+/g, "");
       if (seg && seg !== title) out.push(seg);
     });
     if (out.length && /No Play/i.test(String(raw))) out[0] = "No play: " + out[0];  // wiped out by a penalty
@@ -247,12 +258,20 @@
     src.replace(/\b([A-Z][a-z]{0,2})\.((?:St\. ?)?[A-Z][A-Za-z'\-]+)/g, function (m, i, l) { var P = fdFind(ix, i, l, offTid); if (P && !seen[P.id]) { seen[P.id] = 1; names.push(P); } return m; });
     var ln = function (P) { return P ? String(P.name).split(" ").slice(1).join(" ").replace(/\s+(Jr|Sr|II|III|IV|V)\.?$/, "") || P.name : ""; };
     var a = names[0], b = names[1], m, out = { title: ty || "Play", ps: [], kind: "", offTid: offTid };
+    // a pass: the passer and the target come from "X pass ... to Y" itself, not from the order the names turn up in
+    if (/pass/i.test(ty) && !/interception/i.test(ty)) { var NM2 = "([A-Z][a-z]{0,2})\\.((?:St\\. ?)?[A-Z][A-Za-z'\\-]+)", pm = new RegExp(NM2 + " pass (?:incomplete )?[^.]*? (?:to|intended for) " + NM2).exec(src);
+      if (pm) { var pa2 = fdFind(ix, pm[1], pm[2], offTid), pb2 = fdFind(ix, pm[3], pm[4], offTid); if (pa2 && pb2 && pa2.id !== pb2.id) { a = pa2; b = pb2; } } }
+    // an interception: the second name in the text is the receiver the pass was meant for. The man who caught it is the one after "INTERCEPTED by"
+    // (before 3.170.1 the card said "Intercepted by" the intended receiver).
+    if (/interception/i.test(ty)) { var im = /INTERCEPTED by ([A-Z][a-z]{0,2})\.((?:St\. ?)?[A-Z][A-Za-z'\-]+)/i.exec(src), IP = im ? fdFind(ix, im[1], im[2], "") || fdFind(ix, im[1], im[2], offTid) : null; b = IP && (!a || IP.id !== a.id) ? IP : null; }
     var lead = function (P, k) { if (P) out.ps.push({ P: P, k: k }); };
     if (/^(End Period|End of Half|End of Game|Two-minute warning|Official Timeout|Timeout|End of Regulation)/i.test(ty)) { out.note = true; out.title = /two-minute/i.test(ty) ? "Two-minute warning" : /timeout/i.test(ty) ? (/official/i.test(ty) ? "TV timeout" : "Timeout" + ((m = /Timeout #\d+ by ([A-Z]{2,4})/i.exec(tx)) ? " " + m[1] : "")) : tx.replace(/^END /, "End of ").replace(/QUARTER/i, "quarter").replace(/HALF/i, "half").replace(/GAME/i, "game"); return out; }
-    if (/Passing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a && b ? ln(a) + " to " + ln(b) + ", " : "pass, ") + Math.abs(y) + " yds"; lead(a, "passing"); lead(b, "receiving"); }
-    else if (/Rushing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a ? ln(a) + " run, " : "run, ") + Math.abs(y) + " yds"; lead(a, "rushing"); }
+    if (/Passing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a && b ? ln(a) + " to " + ln(b) + ", " : "pass, ") + ya(y); lead(a, "passing"); lead(b, "receiving"); }
+    else if (/Rushing Touchdown/i.test(ty)) { out.kind = "score"; out.title = "TD: " + (a ? ln(a) + " run, " : "run, ") + ya(y); lead(a, "rushing"); }
     else if (/Touchdown/i.test(ty)) { out.kind = "score"; out.title = /interception/i.test(ty) ? "Pick six!" : /fumble/i.test(ty) ? "Fumble return touchdown!" : /punt|kick/i.test(ty) ? "Return touchdown!" : "Touchdown!"; lead(b || a, /interception/i.test(ty) ? "interceptions" : "defensive"); out.teamP = b || a || null; if (!out.teamP && /interception|fumble/i.test(ty)) out.def = true; }
     else if (/Pass Reception/i.test(ty)) { out.title = (a && b ? ln(a) + " to " + ln(b) : "Pass complete") + (y > 0 ? " for " + ya(y) : y < 0 ? ", loss of " + ya(y) : ", no gain"); lead(a, "passing"); lead(b, "receiving"); }
+    else if (/spiked the ball/i.test(tx)) { out.title = "Spike to stop the clock"; lead(a, "passing"); }
+    else if (/\bkneels\b/i.test(tx)) { out.title = (a ? ln(a) + " kneels" : "Kneel-down"); }
     else if (/Pass Incompletion/i.test(ty)) { out.title = "Incomplete" + (b ? ", intended for " + ln(b) : ""); lead(a, "passing"); lead(b, "receiving"); }
     else if (/^Rush/i.test(ty)) { out.title = a ? ln(a) + (y > 0 ? " runs for " + ya(y) : y < 0 ? " loses " + ya(y) : ", no gain") : (y > 0 ? "Run for " + ya(y) : y < 0 ? "Run, loss of " + ya(y) : "Run, no gain"); lead(a, "rushing"); }
     else if (/Sack/i.test(ty)) { out.title = (a ? ln(a) + " sacked" : "Sack") + (y < 0 ? " for a loss of " + ya(y) : "") + (/fumble/i.test(ty) ? ", fumble" : ""); if (/fumble/i.test(ty)) out.kind = "turn"; lead(a, "passing"); lead(b, "defensive"); out.def = true; }
@@ -262,6 +281,7 @@
     else if (/Field Goal|Blocked/i.test(ty) && /miss|block|no good/i.test(ty + tx)) { out.title = (/block/i.test(ty + tx) ? "Field goal blocked" : "Field goal missed") + ((m = /(\d+) yard field goal/i.exec(tx)) ? " from " + m[1] + " yards" : ""); lead(a, "kicking"); }
     else if (/Safety/i.test(ty)) { out.kind = "score"; out.title = "Safety!"; out.def = true; }
     else if (/Punt/i.test(ty)) { out.title = "Punt" + ((m = /punts (\d+) yards?/i.exec(tx)) ? ", " + m[1] + " yards" : "") + (/touchback/i.test(tx) ? ", touchback" : /fair catch/i.test(tx) ? ", fair catch" : /MUFFS/.test(tx) ? ", muffed" : ""); }
+    else if (/Kickoff/i.test(ty) && /kicks onside/i.test(tx)) { out.title = "Onside kick"; out.noTeam = true; }
     else if (/Kickoff/i.test(ty)) { out.title = "Kickoff" + (/touchback/i.test(tx) ? ", touchback" : y > 0 && b ? ", " + ln(b) + " returns it " + ya(y) : ""); out.noTeam = true; }
     else if (/Penalty/i.test(ty) || /PENALTY on/.test(tx)) { out.title = (m = /PENALTY on ([A-Z]{2,4})-[^,]*, ([^,]+), (\d+) yards?/.exec(tx)) ? "Penalty on " + m[1] + ": " + m[2] + ", " + m[3] + " yards" : "Penalty"; if (/NULLIFIED/.test(tx)) out.title += " (play wiped out)"; out.noTeam = true; }
     else if (/Extra Point|Two-Point|2pt/i.test(ty)) { out.title = ty; }

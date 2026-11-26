@@ -246,3 +246,10 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   Drives button to the bar (Scoring, Drives, Box score, Delay) and, when open (`slate-feed-drives`), a card listing every drive from ESPN's `drives`,
   newest first: team, start quarter/clock/spot, `description`, `displayResult`. Drives and Box score close each other. Styled inline with existing
   classes because 040-components.css was claimed by another thread. Seen on screen on CHI@DET (folded Duo, iPhone).
+
+## 3.170.1: football play wording fixes (wrong names)
+- DJ: "intended for Goff" and "Gibbs left tackle" "don't seem right". Causes and fixes in 145: `fdPre` strips the NFL's pre-play notes ("X reported in
+  as eligible.", "X in at QB.") and `fdRev` keeps only the final play after a replay reversal; passer/target are read from "X pass ... to Y" itself;
+  an interception's second player is the one after "INTERCEPTED by" (it used to be the intended receiver: wrong name on every pick);
+  run directions are worded as runs; "1 yd" singular; kneel, spike and onside kick get their own titles; "St. Brown" survives the sentence split.
+- Checked by running `fdRead`/`fdLines` over every play of four real games (515 plays) and reading the odd ones.
