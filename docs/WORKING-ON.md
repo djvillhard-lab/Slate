@@ -11,3 +11,5 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | DJ | Live feed: Leaders and Big plays buttons for every sport | src/app/145-149 live feed files, docs/pages/live-feed.md | 2026-11-26 07:27 |
 | DJ | shared: styles/040-components.css (Live feed button row wraps) | src/styles/040-components.css | 2026-11-26 07:27 |
 | DJ | One-liners: how the game went on finals | src/app/100-highlights.js, docs/pages/slate.md | 2026-11-26 07:32 |
+| DJ | News (section button bottom right instead of the top pills) | src/app/203-news-front.js, src/styles/103-news-front.css, docs/pages/news.md | 2026-11-26 07:34 |
+| DJ | shared: 283-three-pages.js (News-only: the filter button and its list show the News sections) | src/app/283-three-pages.js | 2026-11-26 07:34 |
