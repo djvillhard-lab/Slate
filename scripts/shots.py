@@ -43,6 +43,8 @@ SITE = "https://slate.djvillhard.workers.dev/"
 SIZES = {
     "folded": {"w": 466, "h": 678, "device": "duo", "strip": True, "inset": 84},
     "open": {"w": 765, "h": 538, "device": "duo", "strip": False, "inset": 0},
+    # unfolded and UPRIGHT with Picture in Picture on the top half: the app gets the bottom half (measured from DJ's screenshot)
+    "upright": {"w": 538, "h": 454, "device": "duo", "strip": False, "inset": 0},
     "iphone": {"w": 390, "h": 844, "device": "iphone", "strip": False, "inset": 0},
 }
 OUT = "/tmp/slate-shots"

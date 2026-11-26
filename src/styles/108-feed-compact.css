@@ -1,0 +1,28 @@
+/* Compact Live feed (DJ, Nov 26, 2026): the unfolded Duo held upright with Picture in Picture on the top half leaves the
+   app a short, wide window. DJ wants the field and the newest plays on screen together, with less header.
+   html.fd-cmp is set by 289-feed-compact.js: by itself in a short wide window, or by the round button beside Back.
+   Only the Live feed changes, and only its top: the page header, the league pills and the game chips are hidden, the
+   score becomes one line with the down and distance, the field stays pinned under it, and the plays scroll beneath.
+   Tap the button again for the full feed (the pills, chips, records, channel and win probability are all still there). */
+html.fd-cmp[data-view="feed"] header.top { display: none !important; }
+html.fd-cmp[data-view="feed"] main.wrap { padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important; }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-strip { display: none !important; }
+html.fd-cmp[data-view="feed"] #feed-body { --fd-top: calc(env(safe-area-inset-top, 0px) + 4px); }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-bug { display: flex; align-items: center; gap: 8px; height: 42px; box-sizing: border-box; padding: 0 12px; margin: 0; overflow: hidden; border-radius: 8px 8px 0 0 !important; border-bottom: 0; background: var(--card); box-shadow: 0 -14px 0 var(--bg); }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > * { margin: 0; flex: none; }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-tm > b, html.fd-cmp[data-view="feed"] #feed-body > .fd-bug .fd-mw { display: none; }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sc { font-size: 24px; line-height: 1; min-width: 0; }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-mid { padding: 0 6px; }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sit { margin-left: auto; min-width: 0; flex: 0 1 auto; }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-field { position: -webkit-sticky; position: sticky; top: calc(var(--fd-top) + 41px); z-index: 3; margin-top: 0; padding: 4px 10px 5px; border-radius: 0 0 8px 8px !important; border-top: 0; box-shadow: 0 10px 14px -8px var(--bg); }
+html.fd-cmp[data-view="feed"] #feed-body > .fd-field > .fd-wp { display: none; }
+/* the button: beside Back, bottom right, on the Live feed only (not inside the two sides of the unfolded Duo sideways) */
+.fdc-btn { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 84px); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 60; width: 52px; height: 52px; border-radius: 50%; display: none; place-items: center; padding: 0; color: var(--ink); background: color-mix(in srgb, var(--raise) 82%, transparent); border: 1px solid var(--hair); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); cursor: pointer; }
+html[data-view="feed"] .fdc-btn { display: grid; }
+.fdc-btn svg { width: 24px; height: 24px; }
+.fdc-btn:active { transform: scale(.92); }
+/* like every other floating button, it slides away while you read down and comes back on any scroll up */
+.fdc-btn { transition: translate .25s ease, opacity .25s ease; }
+.fdc-btn.fdc-away { translate: 0 150px; opacity: 0; pointer-events: none; }
+html.fd-cmp .fdc-btn { color: var(--accent); }
+html.fd-cmp .fdc-btn .fdc-in, html:not(.fd-cmp) .fdc-btn .fdc-out { display: none; }
