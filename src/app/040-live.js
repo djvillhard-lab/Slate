@@ -414,12 +414,21 @@
   function laLogo(g, sd) { try { var own = logoSeg(g[sd + "Logo"]); if (own) return own; var t = teamLook(g[sd]); return t && t[0] ? String(t[0]) : ""; } catch (e) { return ""; } }
   // 3.67.0: tell the iPhone app which logos today's games use, so it can save them for live notifications
   // (a live notification can't download a picture itself). Sent once per change; builds before 3.67.0 ignore it.
-  var laLogosSent = "";
+  // DJ (Nov 26): the Dynamic Island sometimes showed the old color chips instead of logos. The app saves at most 300
+  // logos per message, picked in no order, so on a big day (every college game) some of the games you follow never got
+  // theirs, and a logo that failed to download waited for the next change. Now: your slate's games first, then the rest
+  // of the day, in batches of 200; the whole list again every 30 minutes (the app skips logos it saved this week).
+  var laLogosSent = "", laLogosAt = 0;
   function laLogos() {
     if (!NATIVE || state.date !== todayInHome()) return;
-    var segs = {}; games().forEach(function (g) { ["away", "home"].forEach(function (sd) { var lg = laLogo(g, sd); if (lg) segs[lg] = 1; }); });
-    var list = Object.keys(segs).sort(), k = list.join(","); if (!list.length || k === laLogosSent) return;
-    laLogosSent = k; nativePost({ t: "logos", segs: list });
+    var mine = {}; (state.slateIds || []).forEach(function (id) { mine[String(id)] = 1; });
+    var gs = games().slice().sort(function (p, q) { return (mine[String(q.id)] ? 1 : 0) - (mine[String(p.id)] ? 1 : 0) || byStart(p, q); });
+    var segs = {}, list = [];
+    gs.forEach(function (g) { ["away", "home"].forEach(function (sd) { var lg = laLogo(g, sd); if (lg && !segs[lg]) { segs[lg] = 1; list.push(lg); } }); });
+    var k = list.slice().sort().join(","), now = Date.now();
+    if (!list.length || (k === laLogosSent && now - laLogosAt < 30 * 60000)) return;
+    laLogosSent = k; laLogosAt = now;
+    for (var i = 0; i < list.length; i += 200) (function (part, wait) { setTimeout(function () { nativePost({ t: "logos", segs: part }); }, wait); })(list.slice(i, i + 200), (i / 200) * 3000);
   }
   function laStateOf(g) { var st = laState0(g); return homeFirst(g) ? laFlip(st) : st; }
   function laState0(g) {

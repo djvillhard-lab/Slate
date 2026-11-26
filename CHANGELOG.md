@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.134.8 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live notifications and the Dynamic Island: team logos show more reliably. The app can save only so many logos at once, and on a big day (every college game) some of your games' logos were left out, so they showed the old team-color chips instead. Now your slate's games' logos go first, the rest follow in smaller batches, and any that didn't download get another try every 30 minutes while Slate is open.
+
 ## 3.134.7 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Channel buttons on live game cards are easier to hit. The Feed button's tap area reached up over the channel name, so a tap on its lower half opened the Live feed instead. Now the whole channel name opens the Watch popup, and the Feed button keeps its own button. Neither tap area got bigger. The other channel buttons (On TV's Watch, the Live feed's score bar) already had full-size tap areas, so they're unchanged.

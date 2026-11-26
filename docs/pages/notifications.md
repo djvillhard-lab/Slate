@@ -128,4 +128,9 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   drops at once (DJ: old finals filled the Board right after switching it on). Sheet: X, Done, tap outside, swipe down
   on its top; only #board-list scrolls; html:has(#sheet-board.open) locks the page. Lit Board button = accent outline
   and text (the glass look's fill covers a solid accent fill).
+- 3.134.8 (DJ: the Island sometimes showed color chips, not logos): the chip is the fallback when the app has no saved
+  logo file (SlateLogos.image). The app's fetch takes Set(segs).prefix(300), unordered, so >300 logos dropped some;
+  laLogos now sends the slate's first, in batches of 200, and resends every 30 min. Still open: a push-started live
+  notification for a team the app never saved (Slate not opened that day) shows the chip; fixing that needs the app
+  to save logos in the background (iPhone build).
 
