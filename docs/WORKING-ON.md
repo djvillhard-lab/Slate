@@ -8,3 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | Unfolded Duo: wide layouts for each full-screen page | src/app/288-panes.js, src/styles/097-panes.css, docs/pages/panes.md | 2026-11-26 07:25 |
 | DJ | One-liners: how the game went on finals | src/app/100-highlights.js, docs/pages/slate.md | 2026-11-26 07:32 |
+| DJ | Live feed: basketball Big plays and Leaders tweaks | src/app/145-live-feed.js, src/app/146-live-feed-hoops.js, docs/pages/live-feed.md | 2026-11-26 07:40 |
