@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.144.4 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: the test write-up with six web searches came back longer than allowed and was not saved. Write-ups have more room now and Claude is told to write only the finished page, and the test runs once more.
+
 ## 3.144.3 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Unfolded iPhone Duo: the bottom buttons and the text stay the same size when you switch between one full-screen page and two pages. Before, a full-screen page could come up with bigger text than the same page as one of two, and the day arrows changed width.

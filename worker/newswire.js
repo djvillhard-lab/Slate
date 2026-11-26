@@ -25,7 +25,7 @@ const LGS = [  // key (the app's league key), ESPN path, The Athletic's feed, ho
 // 3-hour block from 6 AM (6, 9, noon, 3, 6, 9 PM Central), 6 a day. About $65 to $85 a month.
 // ONCE (3.144.2, DJ: "generate one for testing"): change this label and the next check writes one extra pass right away, at any hour,
 // then never again for that label. Leave it as it is otherwise.
-export const WIRE_AUTO = { DAY_MAX: 9, EVERY: 3, SEARCHES: 6, ONCE: "2026-11-26a", GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
+export const WIRE_AUTO = { DAY_MAX: 9, EVERY: 3, SEARCHES: 6, ONCE: "2026-11-26b", GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
 const FRESH_MS = 30 * 3600000;
 const NATIONAL = /^(ABC|CBS|NBC|FOX|ESPN|ESPN2|TNT|TBS|FS1|Prime Video|Peacock|NFL Network|NBA TV|truTV|USA Net|USA)$/i;
 const slot = (h) => Math.floor((h - WIRE_AUTO.FROM_HOUR) / WIRE_AUTO.EVERY);   // which 2-hour block of the day an hour falls in (6 AM is block 0)
