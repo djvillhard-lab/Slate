@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Slate: sort, Board and Live on one line at XL | styles/106-text-size.css | 2026-11-26 16:35 |
+| DJ | shared: 240-chrome.js (slate score column at XL) | src/app/240-chrome.js | 2026-11-26 16:45 |
