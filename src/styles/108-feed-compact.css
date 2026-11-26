@@ -37,10 +37,26 @@ html.panes .fdc-btn { display: none !important; }  /* the two-page screen itself
 html.fd-cmp .fdc-btn { background: color-mix(in srgb, var(--accent) 22%, var(--glass-clear)); }  /* on: a light accent tint, the icon stays the same green as Back's arrow */
 html.fd-cmp .fdc-btn .fdc-in, html:not(.fd-cmp) .fdc-btn .fdc-out { display: none; }
 
-/* a narrow screen with one live game (a regular iPhone, or one side of two pages): the down and distance does not fit
+/* a narrow screen (a regular iPhone, or one side of two pages; the folded Duo is wide enough since 3.172.1): the down and distance does not fit
    beside the score either, so it goes on top of the field the same way */
-@media (max-width: 500px) {
+@media (max-width: 430px) {
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug { overflow: visible; z-index: 4; }
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sit { position: absolute; left: 10px; top: calc(100% + 6px); z-index: 5; margin: 0; white-space: nowrap; }
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug:has(> .fd-sit) ~ .fd-field:not(.hp-top) { padding-top: 32px; }
 }
+
+/* 3.172.1 (DJ, folded Duo: "This view for collapsed live feed doesn't look good and gets covered by Dynamic Island").
+   With the page header gone, the top of the feed slides up beside the clock and Wi-Fi, which sit on the right from about
+   50 to 160 points down. The score line is above them, so it uses its whole width and holds the down and distance
+   again. The pinned field and the "Last play" line with its buttons are level with them, so both stop short of that
+   corner (the same --strip-w the full feed's score bar uses). */
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug { padding: 0 46px 0 12px !important; }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sit { margin-left: 12px !important; }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-field:not(.hp-top) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)); border-radius: 0 0 8px 8px !important; }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug:has(~ .fd-field:not(.hp-top)) { border-radius: 8px 8px 8px 0 !important; }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body .fd-list > .fd-bar { padding-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
+/* that line now has less room, so "Last play 1:01 ago" takes two short lines and the buttons sit closer: all four stay on one line */
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body .fd-list > .fd-bar { flex-wrap: nowrap; gap: 5px; justify-content: flex-start; }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body .fd-list > .fd-bar > .fd-ago { flex: 0 0 52px; margin: 0 !important; white-space: normal; overflow: visible; }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body .fd-list > .fd-bar > :not(.fd-ago) { flex: none; }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body .fd-list > .fd-bar :is(button, a) { padding-left: 8px !important; padding-right: 8px !important; }

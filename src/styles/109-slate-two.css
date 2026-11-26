@@ -18,6 +18,12 @@
 #lineup-body .lo-row:has(.sl2-btn) { gap: 6px; }
 #lineup-body .lo-row:has(.sl2-btn) .sl-seg button { padding: 0 9px; }
 #lineup-body .lo-row:has(.sl2-btn) .lo-btn { padding-left: 10px; padding-right: 10px; }
+/* 3.172.1 (DJ, folded Duo: "Button layout is messed up here"): with the Board on ("Board 4") the row was 14 points too
+   wide for the space left of the clock and Wi-Fi, so Board and Live dropped to a second line. Board loses its small
+   grid icon in this row (it also looked like the two columns button beside it) and the buttons sit a little closer. */
+#lineup-body .lo-row:has(.sl2-btn) .lo-board > svg { display: none; }
+#lineup-body .lo-row:has(.sl2-btn) .lo-btn:not(.sl2-btn) { padding-left: 9px; padding-right: 9px; }
+#lineup-body .lo-row:has(.sl2-btn) .lo-end { gap: 6px; }
 #lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm { max-width: none !important; }
 #lineup-body.sl2 .tg-games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: start; }
 #lineup-body.sl2 .tg-games > .g.panel:has(> .tray) { grid-column: 1 / -1; }
