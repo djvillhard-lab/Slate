@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.172.4 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: every game card now shows the current score. A game in progress shows the live score in red with the time left (such as 4:32 - 3rd), and a finished game shows the final. This covers the featured day's matchups, On Deck, In the Books and Claude's own one-day sections, including games that are not on the slate. Before, a card kept showing its start time until the next write-up. Scores refresh every 20 seconds while News is open.
+
 ## 3.172.3 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: the photo behind the Thanksgiving Day title was just the picture from the first story in the card, which was a portrait of an injured Bears player. The photo now has to be about the day: a picture from one of the featured games, or from a story about the day by name. If there is none, the card shows no photo.

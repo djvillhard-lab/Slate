@@ -63,7 +63,7 @@
     // Claude's previews (games still to come) and recaps (finished), each with the app's own game when it has one
     var gs = games(), own = function (x) { x.game = x.id ? gs.filter(function (y) { return String(y.id) === String(x.id); })[0] || null : null; x.ms = Date.parse(x.start) || 0; return x; };
     var recaps = has ? (doc.recaps || []).map(function (x) { return own(Object.assign({}, x)); }) : [], done = {}; recaps.forEach(function (x) { done[x.ev] = 1; });
-    var previews = has ? (doc.previews || []).map(function (x) { return own(Object.assign({}, x)); }).filter(function (x) { return !done[x.ev] && (past || x.ms > now - 4 * 3600000) && !(x.game && status(x.game).kind === "over"); }) : [];
+    var previews = has ? (doc.previews || []).map(function (x) { return own(Object.assign({}, x)); }).filter(function (x) { return !done[x.ev] && (past || x.ms > now - 4 * 3600000) && !(x.game && status(x.game).kind === "over") && !(nl.sb[x.ev] && nl.sb[x.ev].state === "post"); }) : [];
     // 3.163.0: the page Claude designed for this write-up (theme, its own sections, names, order); games in it get the app's game
     var page = has && doc.page && typeof doc.page === "object" ? { feature: doc.page.feature && doc.page.feature.title ? Object.assign({}, doc.page.feature, { games: (doc.page.feature.games || []).map(function (y) { return own(Object.assign({}, y)); }), stories: (doc.page.feature.stories || []).map(function (y) { var z = fill(Object.assign({}, y)); seen[z.url || z.title] = 1; return z; }) }) : null, theme: doc.page.theme || null, emoji: doc.page.emoji || {}, titles: doc.page.titles || {}, order: Array.isArray(doc.page.order) ? doc.page.order : [], specials: (Array.isArray(doc.page.specials) ? doc.page.specials : []).map(function (sp) { return Object.assign({}, sp, { items: (sp.items || []).map(function (y) { var o = Object.assign({}, y); return o.ev ? own(o) : o; }) }); }) } : null;
     // 3.144.2 (DJ: "anything new since last generation, or since last time I viewed the page, should show some sort of
@@ -201,6 +201,37 @@
     return c;
   }
   // ----- a game Claude previewed or recapped: the two teams in their colors (ESPN's names, time and score), then Claude's words -----
+  // 3.172.4 (DJ: "News anytime showing scores should be updated. Whether live or completed, should show accurate score and
+  // time left"): every game card on News reads ESPN's scoreboard for its own game (by ESPN's event number, so it works for
+  // games the slate doesn't carry too). While News is open, the scoreboards of games that have started and aren't final
+  // are read again every 20 seconds; the card shows the live score with the time left, then the final.
+  nl.sb = {}; nl.sbWant = {}; nl.sbAt = {};
+  function nlSbDay(ms, add) { var p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms + (add || 0) * 86400000)); return p.replace(/-/g, ""); }
+  function nlScore(o) {
+    if (!o.ev || !o.lg || !(ESPN_URLS[o.lg] || []).length) return null;
+    var ms = o.ms || Date.parse(o.start) || 0, s = nl.sb[o.ev];
+    if (ms && Date.now() > ms - 5 * 60000 && Date.now() < ms + 30 * 3600000 && !(s && s.state === "post")) { nl.sbWant[o.lg + "|" + nlSbDay(ms, 0)] = 1; if (nlSbDay(ms, 0) !== nlSbDay(ms - 6 * 3600000, 0)) nl.sbWant[o.lg + "|" + nlSbDay(ms, -1)] = 1; nlSbPoll(); }   // a game after midnight Eastern is on ESPN's list for the evening before
+    return s && (s.state === "in" || s.state === "post") ? s : null;
+  }
+  function nlSbPoll() {
+    if (!window.SLATE_SELF || state.view !== "news" || document.hidden) return;
+    Object.keys(nl.sbWant).forEach(function (k) {
+      if (Date.now() - (nl.sbAt[k] || 0) < 19000) return; nl.sbAt[k] = Date.now();
+      var lg = k.split("|")[0], days = k.split("|")[1];
+      ESPN_URLS[lg].forEach(function (u) {
+        var q = u.split("&"), url = "https://site.api.espn.com/apis/site/v2/sports/" + q[0] + "/scoreboard?dates=" + days + (q.length > 1 ? "&" + q.slice(1).join("&") : "");
+        rkFetch(url).then(function (d) {
+          var ch = false; ((d || {}).events || []).forEach(function (e) {
+            var c = (e.competitions || [])[0] || {}, cs = c.competitors || [], A = cs.filter(function (x) { return x.homeAway === "away"; })[0], H = cs.filter(function (x) { return x.homeAway === "home"; })[0], st = ((c.status || e.status || {}).type) || {};
+            if (!A || !H) return; var v = { a: String(A.score == null ? "" : A.score), h: String(H.score == null ? "" : H.score), state: st.state || "", detail: st.shortDetail || st.detail || "" }, old = nl.sb[e.id];
+            if (!old || old.a !== v.a || old.h !== v.h || old.state !== v.state || old.detail !== v.detail) { nl.sb[e.id] = v; if (v.state !== "pre" || (old && old.state !== "pre")) ch = true; }
+          });
+          if (ch) nwRedraw();
+        });
+      });
+    });
+  }
+  if (window.SLATE_SELF) { setInterval(nlSbPoll, 20000); document.addEventListener("visibilitychange", function () { if (!document.hidden) { nl.sbAt = {}; nlSbPoll(); } }); }
   function nlGameCard(o, kind) {
     var c = el("div", "nx-card nf-g nf-" + kind), hd = el("div", "nf-gh"), g = o.game;
     hd.style.setProperty("--a", nlHex(o.ac) || "var(--raise)"); hd.style.setProperty("--h", nlHex(o.hc) || "var(--raise)");
@@ -210,9 +241,10 @@
       t.appendChild(el("b", null, (rk ? rk + " " : "") + (a ? o.aa : o.ha))); if (a ? o.ar : o.hr) t.appendChild(el("em", null, a ? o.ar : o.hr)); d.appendChild(t);
       return d;
     };
-    var mid = el("div", "nf-gm"), live = g ? status(g).kind === "live" : false, sc = g ? scoreOf(g) : null;
-    if (kind === "recap") { mid.appendChild(el("b", null, o.as + " - " + o.hs)); mid.appendChild(el("span", null, "Final")); }
-    else if (live && sc) { mid.appendChild(el("b", "live", sc.a + " - " + sc.h)); mid.appendChild(el("span", "live", "Live")); }
+    var mid = el("div", "nf-gm"), sb = nlScore(o), live = sb ? sb.state === "in" : g ? status(g).kind === "live" : false, sc = sb || (g ? scoreOf(g) : null);
+    if (sb && sb.a !== "" && sb.h !== "") { mid.appendChild(el("b", live ? "live" : null, sb.a + " - " + sb.h)); mid.appendChild(el("span", live ? "live" : null, live ? (sb.detail || "Live") : (/^final/i.test(sb.detail) ? sb.detail : "Final"))); }
+    else if (kind === "recap") { mid.appendChild(el("b", null, o.as + " - " + o.hs)); mid.appendChild(el("span", null, "Final")); }
+    else if (live && sc) { mid.appendChild(el("b", "live", sc.a + " - " + sc.h)); mid.appendChild(el("span", "live", sc.detail || "Live")); }
     else { var st = new Date(o.ms), same = st.toDateString() === new Date().toDateString(); mid.appendChild(el("b", "tm", nlTime(o.ms))); mid.appendChild(el("span", null, [same ? "" : st.toLocaleDateString("en-US", { weekday: "short" }), (o.tv || [])[0]].filter(Boolean).join(" · "))); }
     hd.appendChild(side("away")); hd.appendChild(mid); hd.appendChild(side("home")); c.appendChild(hd);
     var bd = el("div", "nf-gb"), tg = el("div", "nl-kr");
@@ -308,7 +340,7 @@
   }
   // the page. Always draws (returns true), so the old News below it in renderNews is no longer reached.
   function nlRender(body) {
-    var M = nlModel(), wrap = nlWrap(body, "nf"), f;
+    nl.sbWant = {}; var M = nlModel(), wrap = nlWrap(body, "nf"), f;
     // 3.140.2 (DJ): the Dynamic Island covers the top right of the folded Duo and of the unfolded Duo's right half. The
     // pills, the "Generated by Claude" line and the lead's tag row stop short of it (--nf-isl, used in 103-news-front.css).
     var isl = 0, root = document.documentElement;
