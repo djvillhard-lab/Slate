@@ -240,3 +240,9 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   No "down to 10 men" line: a red card can go to someone not on the pitch, so it would be a guess.
 - Checked: soccer on screen on a live Europa League match (folded Duo). Hockey and baseball on data only (node run of the story pass on
   finished NHL games and a World Series game): no games were on. OPEN: look at both on screen at the next live game.
+
+## 3.169.0: football Drives button
+- DJ: "Football should have a 'drive result' during live game so I can see the result of all past team drives quickly". `fdDrvHook` (145) adds a
+  Drives button to the bar (Scoring, Drives, Box score, Delay) and, when open (`slate-feed-drives`), a card listing every drive from ESPN's `drives`,
+  newest first: team, start quarter/clock/spot, `description`, `displayResult`. Drives and Box score close each other. Styled inline with existing
+  classes because 040-components.css was claimed by another thread. Seen on screen on CHI@DET (folded Duo, iPhone).

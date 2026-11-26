@@ -468,11 +468,38 @@
   // button on the "Last play" line, for every sport. It took the Leaders button's place (fdLeaders above is no longer drawn) and opens the box
   // score right under the line; the box score no longer sits under the plays. Open or closed is remembered on this phone, for every sport.
   function fdBoxOpen() { try { return localStorage.getItem("slate-feed-box") === "1"; } catch (e) { return false; } }
+  // 3.169.0 (DJ: "Football should have a 'drive result' during live game so I can see the result of all past team drives quickly"): a Drives
+  // button on the bar. Open, it lists every drive, newest first, one line each: the team, when and where it started, ESPN's "7 plays, 53 yards, 3:45"
+  // and the result (Touchdown, Field Goal, Punt, Fumble...). The drive still going leads the list. Opening it closes the box score, and the other way round.
+  function fdDrvOpen() { try { return localStorage.getItem("slate-feed-drives") === "1"; } catch (e) { return false; } }
+  function fdDrvHook(list, g, drives, sideOf, curId) {
+    if (!drives || !drives.length) return;
+    var fb = list.querySelector(".fd-bar"); if (!fb) { fb = el("div", "fd-bar"); fb.appendChild(el("p", "fd-ago", "")); list.insertBefore(fb, list.firstChild); }
+    var on = fdDrvOpen(), db = el("button", "fd-scf fd-drb" + (on ? " on" : ""), "Drives"); db.type = "button"; db.setAttribute("aria-expanded", on ? "true" : "false");
+    db.addEventListener("click", function () { try { localStorage.setItem("slate-feed-drives", on ? "0" : "1"); if (!on) localStorage.setItem("slate-feed-box", "0"); } catch (e) {} fdKeepY(renderFeed); });
+    fb.insertBefore(db, fb.querySelector(".fd-dlw"));
+    if (!on) return;
+    var w = el("div", "fd-field fd-drv"); w.setAttribute("data-id", "drives"); w.style.cssText = "padding:10px 12px;margin-bottom:8px";
+    var h = el("h3", "fd-boxh", "Drives"); h.style.margin = "0 0 4px"; w.appendChild(h);
+    for (var i = drives.length - 1; i >= 0; i--) {
+      var d = drives[i], sd = sideOf[String((d.team || {}).id || "")] || "", res = d.displayResult || "", cur = !res && curId && d.id === curId, st = d.start || {}, q = Number((st.period || {}).number) || 0;
+      if (!res && !cur) continue;
+      var r = el("div", "fd-drive"); r.style.cssText = "margin:0;padding:7px 0;" + (w.children.length > 1 ? "border-top:1px solid var(--line, rgba(127,127,127,.18))" : "");
+      if (sd) r.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
+      var t = el("span", "fd-dt"), when = (q ? (q > 4 ? "OT" : "Q" + q) + " " : "") + ((st.clock || {}).displayValue || "");
+      t.appendChild(el("b", null, (sd ? abbr(g, sd) : "Drive") + (when.trim() ? " · " + when.trim() : "") + (st.text ? " · from " + st.text : "")));
+      if (d.description) t.appendChild(el("span", null, d.description)); r.appendChild(t);
+      r.appendChild(el("em", "fd-res" + (cur ? "" : d.isScore ? " sc" : /fumble|interception|downs|safety/i.test(res) ? " to" : ""), cur ? "Going now" : res));
+      w.appendChild(r);
+    }
+    if (w.children.length < 2) w.appendChild(el("p", "pv-none", "No drives yet."));
+    var aft = list.querySelector(".fd-dlrow") || fb; list.insertBefore(w, aft.nextSibling);
+  }
   function fdLdHook(list, g, sum) {
     var bx = null; try { bx = feedBox(g, sum); } catch (e) { bx = null; } if (!bx) return;
     var fb = list.querySelector(".fd-bar"); if (!fb) { fb = el("div", "fd-bar"); fb.appendChild(el("p", "fd-ago", "")); list.insertBefore(fb, list.firstChild); }
     var on = fdBoxOpen(), lb = el("button", "fd-scf fd-ldb fd-bxb" + (on ? " on" : ""), "Box score"); lb.type = "button"; lb.setAttribute("aria-expanded", on ? "true" : "false");
-    lb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-box", on ? "0" : "1"); } catch (e) {} fdKeepY(renderFeed); });
+    lb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-box", on ? "0" : "1"); if (!on) localStorage.setItem("slate-feed-drives", "0"); } catch (e) {} fdKeepY(renderFeed); });
     fb.insertBefore(lb, fb.querySelector(".fd-dlw"));
     if (on) { var aft = list.querySelector(".fd-dlrow") || fb, nx = aft.nextSibling; while (nx && nx.classList && nx.classList.contains("sc-stats")) nx = nx.nextSibling; list.insertBefore(bx, nx); }
   }
@@ -807,7 +834,7 @@ function renderFeed(fromPoll) {
     fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
     // 3.73.1 (DJ: the top of the page left no room for plays on the folded Duo): the leaders card is folded away behind a Leaders button on the
     // "Last play" line, and opens right under that line. Open or closed is remembered on this phone.
-    if (allPlays.length) fdLdHook(list, g, sum);
+    if (allPlays.length) { try { fdDrvHook(list, g, drives, sideOf, !over && dr.current ? dr.current.id : ""); } catch (e) {} fdLdHook(list, g, sum); }
     fdMoreRow(list, !scOnly && allPlays.length > shown && shown >= cap, scOnly);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
