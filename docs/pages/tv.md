@@ -25,6 +25,8 @@ Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css
 
 - 3.153.0 (DJ): On TV is two tabs, My TVs and Channels (`TV_TABS` set in 215; tab row in `240-chrome.js`). Channels has its own one-at-a-time filters (`TV.f`, `TV_CHF` in 210, kept in `slate-tv-chf`): All, Live now, My teams, My slate, National TV, Streaming; old tab values national/streaming turn into those filters. The time row (and the filter row) stop touches from reaching the page swipe (`tvsNoSwipe`), so they scroll; up to 24 start times, the picked one scrolls into view. Switch note (`tvsSwitches`): for each game on a TV, later start times before it ends (start + `LEAGUES[k].hrs`) are filled; the first one where that TV gets a different game while this one is still on adds "Switch at 8:00 PM: LAL vs BOS" on the tile (`.tvs-swn`, "Switch at" hidden on small TVs) and in the list.
 
+- 3.153.1 (DJ): swiping the TV wall steps through the times (left = next, right = before). The wall stops its touches from reaching the page swipe; `touch-action: pan-y` keeps up-and-down scrolling. The new wall slides in (`sl-l`/`sl-r`).
+
 ## Open
 - Second release (DJ picked it): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.
 - Hidden channels are per phone. Saving them with the profile needs `260-persistence.js` (shared file).

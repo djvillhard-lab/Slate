@@ -47,6 +47,7 @@
     ".tvs-slots { display: flex; gap: 2px; padding: 4px; margin: 8px 0 0; border-radius: 999px; background: var(--lg-fill); border: 1px solid var(--lg-edge); box-shadow: var(--lg-hi); overflow-x: auto; scrollbar-width: none; }" +
     ".tvs-slots::-webkit-scrollbar { display: none; }" +
     "@container (max-width: 240px) { .tvs-swn .pre { display: none; } }" +
+    ".tvs-wall { touch-action: pan-y; }" +
     ".tvs-slots { touch-action: pan-x; overscroll-behavior-x: contain; }" +
     ".tvs-swn { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 2cqh 4cqw; background: rgba(0,0,0,.72); color: #fff; font-size: clamp(8px, 7.5cqh, 14px); font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }" +
     ".tvs-row .tx > span.tvs-swl { display: block; color: var(--ink); font-weight: 700; }" +
@@ -489,6 +490,21 @@
     wall.style.aspectRatio = bx.w + " / " + bx.h;
     setup.tvs.forEach(function (t, i) { wall.appendChild(tvsTile(t, fill[i], null, bx, notes[i])); });
     wrap.appendChild(wall);
+    // 3.153.1 (DJ): swipe the TVs to step through the times: left for the next one, right for the one before
+    if (TVS.slideDir) { wall.classList.add(TVS.slideDir === "l" ? "sl-l" : "sl-r"); TVS.slideDir = ""; }
+    if (slots.length > 1) {
+      var sx = null, sy = 0;
+      wall.addEventListener("touchstart", function (e) { e.stopPropagation(); var t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+      wall.addEventListener("touchmove", function (e) { e.stopPropagation(); }, { passive: true });
+      wall.addEventListener("touchend", function (e) {
+        e.stopPropagation(); if (sx === null) return;
+        var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; sx = null;
+        if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        var k = slots.indexOf(slot) + (dx < 0 ? 1 : -1); if (k < 0 || k >= slots.length) return;
+        TVS.slot = slots[k].k; TVS.slotAt = Date.now(); TVS.swap = ""; TVS.slideDir = dx < 0 ? "l" : "r";
+        keepScroll(renderTV);
+      }, { passive: true });
+    }
     // the list: what to turn each TV to
     var h = el("div", "tvs-h"); h.appendChild(el("h2", null, slot.live ? "Turn each TV to" : "At " + slot.label + ", turn each TV to"));
     var nGames = fill.reduce(function (a, l) { return a + l.length; }, 0);
