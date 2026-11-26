@@ -65,7 +65,7 @@
     var recaps = has ? (doc.recaps || []).map(function (x) { return own(Object.assign({}, x)); }) : [], done = {}; recaps.forEach(function (x) { done[x.ev] = 1; });
     var previews = has ? (doc.previews || []).map(function (x) { return own(Object.assign({}, x)); }).filter(function (x) { return !done[x.ev] && (past || x.ms > now - 4 * 3600000) && !(x.game && status(x.game).kind === "over"); }) : [];
     // 3.163.0: the page Claude designed for this write-up (theme, its own sections, names, order); games in it get the app's game
-    var page = has && doc.page && typeof doc.page === "object" ? { feature: doc.page.feature && doc.page.feature.title ? Object.assign({}, doc.page.feature, { games: (doc.page.feature.games || []).map(function (y) { return own(Object.assign({}, y)); }), stories: (doc.page.feature.stories || []).map(function (y) { var z = fill(Object.assign({}, y)); seen[z.url || z.title] = 1; return z; }) }) : null, theme: doc.page.theme || null, titles: doc.page.titles || {}, order: Array.isArray(doc.page.order) ? doc.page.order : [], specials: (Array.isArray(doc.page.specials) ? doc.page.specials : []).map(function (sp) { return Object.assign({}, sp, { items: (sp.items || []).map(function (y) { var o = Object.assign({}, y); return o.ev ? own(o) : o; }) }); }) } : null;
+    var page = has && doc.page && typeof doc.page === "object" ? { feature: doc.page.feature && doc.page.feature.title ? Object.assign({}, doc.page.feature, { games: (doc.page.feature.games || []).map(function (y) { return own(Object.assign({}, y)); }), stories: (doc.page.feature.stories || []).map(function (y) { var z = fill(Object.assign({}, y)); seen[z.url || z.title] = 1; return z; }) }) : null, theme: doc.page.theme || null, emoji: doc.page.emoji || {}, titles: doc.page.titles || {}, order: Array.isArray(doc.page.order) ? doc.page.order : [], specials: (Array.isArray(doc.page.specials) ? doc.page.specials : []).map(function (sp) { return Object.assign({}, sp, { items: (sp.items || []).map(function (y) { var o = Object.assign({}, y); return o.ev ? own(o) : o; }) }); }) } : null;
     // 3.144.2 (DJ: "anything new since last generation, or since last time I viewed the page, should show some sort of
     // indicator"): what was written or published after this person last had News open, kept on this phone. The marks stay
     // for the visit and are gone on the next one (a visit ends once News has been off screen for two minutes).
@@ -93,7 +93,9 @@
   function nlLink(x, cls) { var a = el(x.url ? "a" : "div", cls); if (x.url) { a.href = safeUrl(x.url); a.target = "_blank"; a.rel = "noopener"; } if (x.c) a.style.setProperty("--c", x.c); a.addEventListener("click", function (e) { nlOpenStory(x, e); }); return a; }
   function nlSrc(x) { return x.url ? el("span", "nl-src", "Read it on " + (x.src || "ESPN") + " ›") : null; }
   function nlImg(x, cls, w) { return x.img ? nwImg(nwPic(x.img, w || 400), cls) : null; }
-  function nlH(title, right) { var h = el("div", "nl-h"); h.appendChild(el("b", null, title)); if (right) h.appendChild(typeof right === "string" ? el("span", null, right) : right); return h; }
+  var NL_E = { brk: "🚨", lead: "📰", stories: "🔎", next: "🔭", recaps: "🏁", nums: "🔢", leagues: "🏟️", all: "🗞️", reads: "📚" };
+  var NL_LE = { nfl: "🏈", ncaaf: "🏈", nba: "🏀", ncaam: "🏀", ncaaw: "🏀", nhl: "🏒", mlb: "⚾", epl: "⚽" };
+  function nlH(title, right, em) { var h = el("div", "nl-h"), tb = el("b", null, title); if (em) { tb.insertBefore(nwEm(em), tb.firstChild); h.classList.add("em"); } h.appendChild(tb); if (right) h.appendChild(typeof right === "string" ? el("span", null, right) : right); return h; }
   function nlReads(body, M, title) {
     var seen = {}, rows = []; M.lgs.forEach(function (lg) { var n = 0; (M.per[lg] || []).forEach(function (a) { if (a.kind === "HeadlineNews" || a.kind === "Media" || a.kind === "Recap" || a.kind === "Preview" || !a.img || seen[a.title] || n >= 1 || /highlights$/i.test(a.title)) return; seen[a.title] = 1; n++; rows.push(a); }); });
     if (!rows.length) return;
@@ -110,13 +112,13 @@
     return a;
   }
   function nlLead(x, cls) {
-    var a = nlLink(x, "nl-lead" + (cls ? " " + cls : "")), im = nlImg(x, "bg", 800); if (im) a.appendChild(im); else a.classList.add("noimg");
-    var d = el("div", "in"), top = nlTags(x, !!im); top.appendChild(el("span", "nl-tm", nlTime(x.ms))); d.appendChild(top);
+    var a = nlLink(x, "nl-lead clr" + (cls ? " " + cls : "")), im = nlImg(x, "bg", 800); if (im) a.appendChild(im); else a.classList.add("noimg");
+    var d = el("div", "in"), top = nlTags(x, false); top.appendChild(el("span", "nl-tm", nlTime(x.ms))); d.appendChild(top);
     d.appendChild(el("h3", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); var s = nlSrc(x); if (s) d.appendChild(s); a.appendChild(d); return a;
   }
   function nlTile(x, wide) {
       var num = (x.kind === "number" || x.kind === "fun") && x.value, im = !num && nlImg(x, "bg", wide ? 800 : 400), a = nlLink(x, "nl-t" + (im ? " ph" : num ? " nl-nm" : "") + (wide ? " wide" : ""));
-      var top = nlTags(x, !!im); top.appendChild(el("span", "nl-tm", nlTime(x.ms)));
+      var top = nlTags(x, false); top.appendChild(el("span", "nl-tm", nlTime(x.ms)));
       if (im) { a.appendChild(im); top.classList.add("top"); a.appendChild(top); var d = el("div", "in"); d.appendChild(el("h4", null, x.title)); if (wide && x.text) d.appendChild(el("p", null, x.text)); a.appendChild(d); }
       else if (num) { a.appendChild(top); a.appendChild(el("b", "n", x.value)); var dn = el("div"); dn.appendChild(el("h4", null, x.title)); if (x.text) dn.appendChild(el("p", null, x.text)); a.appendChild(dn); }
       else { a.appendChild(top); var dt = el("div"); dt.appendChild(el("h4", null, x.title)); if (x.text) dt.appendChild(el("p", null, x.text)); a.appendChild(dt); var s = nlSrc(x); if (s) a.appendChild(s); }
@@ -217,7 +219,7 @@
     tg.appendChild(nlPill(o.label || (kind === "recap" ? "Recap" : "Preview"), kind === "recap" ? "" : "acc", kind === "recap" ? "🏁" : "🔭")); var lt = (LEAGUES[o.lg] || {}).tag; if (lt) tg.appendChild(nlPill(lt, "", "")); if (o.nw) tg.appendChild(nlPill("New", "acc", "")); if (o.note) tg.appendChild(el("span", "nf-note", o.note));
     bd.appendChild(tg); if (o.title) bd.appendChild(el("h4", null, o.title)); bd.appendChild(el("p", null, o.text));
     if (kind === "preview" && o.watch) { var w = el("p", "nf-x"); w.appendChild(el("b", null, "👀 Watch for ")); w.appendChild(document.createTextNode(o.watch)); bd.appendChild(w); }
-    if (kind === "recap" && o.star) { var s2 = el("p", "nf-x"); s2.appendChild(el("b", null, "⭐ ")); s2.appendChild(document.createTextNode(o.star)); bd.appendChild(s2); }
+    if (kind === "recap" && o.star) { var s2 = el("p", "nf-x"), hi = o.head ? nwImg(o.head, "nf-hd") : null; if (hi) { s2.classList.add("hd"); s2.appendChild(hi); } s2.appendChild(el("b", null, "⭐ ")); s2.appendChild(document.createTextNode(o.star)); bd.appendChild(s2); }
     c.appendChild(bd);
     if (g) { c.classList.add("tap"); c.setAttribute("role", "button"); c.tabIndex = 0; c.addEventListener("click", function () { var ow = nlOther(); if (ow && !document.documentElement.classList.contains("pn-fwd")) { ow.SlateApp.paneGo("game:" + g.id); return; } openMatchup(g); }); }
     return c;
@@ -243,9 +245,10 @@
   }
   function nlMore(label, f) { var b = el("button", "nf-more"); b.type = "button"; b.appendChild(el("span", null, label)); b.appendChild(icon("more")); b.addEventListener("click", function () { nlPick(f); }); return b; }
   function nlPick(f) { nl.f = f; renderNews(true); var top = $("nw-body"); if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView(); }
-  function nlLeagueCard(x, tap) {
+  function nlLeagueCard(x, tap, M) {
     var c = el(tap ? "button" : "div", "nx-card nf-lg"); if (tap) { c.type = "button"; c.addEventListener("click", function () { nlPick("lg:" + x.key); }); }
-    var h = el("div", "nf-lh"); h.appendChild(el("b", null, LEAGUES[x.key].tag)); if (x.title) h.appendChild(el("span", null, x.title)); if (tap) h.appendChild(icon("more")); c.appendChild(h);
+    var lp = M ? ((M.per[x.key] || []).filter(function (a) { return a.img; })[0] || null) : null, li = lp ? nwImg(nwPic(lp.img, 800), "nf-lp") : null; if (li) { c.classList.add("ph"); c.appendChild(li); }
+    var h = el("div", "nf-lh"); if (NL_LE[x.key]) h.appendChild(nwEm(NL_LE[x.key])); h.appendChild(el("b", null, LEAGUES[x.key].tag)); if (x.title) h.appendChild(el("span", null, x.title)); if (tap) h.appendChild(icon("more")); c.appendChild(h);
     c.appendChild(el("p", null, x.text || x.line)); return c;
   }
   // the pills: what's on the page. Each says how much is behind it; Breaking wears a red dot when something is new.
@@ -293,8 +296,8 @@
   // one section as a wheel: a title with "2 of 5", then the cards side by side. A finger on it turns only the wheel
   // (the page swipe in 280-ios-bridge.js never hears it, like the pills), and where the wheel was turned to is kept
   // across redraws (nl.wx), since the page redraws itself when scores and stories arrive.
-  function nlWheelSec(wrap, key, title, sub, cards, cls, intro) {
-    if (!cards.length) return; var n = cards.length, h = nlH(title, n > 1 ? "1 of " + n : sub || ""); wrap.appendChild(h); if (intro) wrap.appendChild(el("p", "nf-in", intro));
+  function nlWheelSec(wrap, key, title, sub, cards, cls, intro, em) {
+    if (!cards.length) return; var n = cards.length, h = nlH(title, n > 1 ? "1 of " + n : sub || "", em); wrap.appendChild(h); if (intro) wrap.appendChild(el("p", "nf-in", intro));
     if (n === 1) { wrap.appendChild(cards[0]); return; }
     var w = el("div", "nf-wh" + (cls ? " " + cls : "")); w.setAttribute("role", "group"); w.setAttribute("aria-label", title + ", " + n + " cards, swipe sideways");
     cards.forEach(function (c) { c.classList.add("nf-wc"); w.appendChild(c); }); wrap.appendChild(w);
@@ -315,11 +318,11 @@
     if (!M.lead && !M.items.length) { wrap.appendChild(el("p", "pv-none", M.loading ? "Loading the news…" : M.past ? "No News page was saved for " + fmtDate(state.date, { weekday: "long", month: "short", day: "numeric" }) + "." : "No news right now.")); return true; }
     var all = [M.lead].concat(M.stories, M.items).filter(Boolean);
     var none = function (t) { wrap.appendChild(el("p", "pv-none", t)); };
-    var gamesSec = function (list, kind, cap, f2) { if (!list.length) return; wrap.appendChild(nlH(kind === "preview" ? NL_T.next : NL_T.recaps, kind === "preview" ? "Claude's previews" : "Claude's recaps")); (cap ? list.slice(0, cap) : list).forEach(function (o) { wrap.appendChild(nlGameCard(o, kind)); }); if (cap && list.length > cap) wrap.appendChild(nlMore("All " + list.length + (kind === "preview" ? " previews" : " recaps"), f2)); };
+    var gamesSec = function (list, kind, cap, f2) { if (!list.length) return; wrap.appendChild(nlH(kind === "preview" ? NL_T.next : NL_T.recaps, kind === "preview" ? "Claude's previews" : "Claude's recaps", kind === "preview" ? NL_E.next : NL_E.recaps)); (cap ? list.slice(0, cap) : list).forEach(function (o) { wrap.appendChild(nlGameCard(o, kind)); }); if (cap && list.length > cap) wrap.appendChild(nlMore("All " + list.length + (kind === "preview" ? " previews" : " recaps"), f2)); };
     // every other headline of the day: closed on Home until asked for (the page is Claude's), open before the day's first write
     var headlines = function (list, open) {
       if (!list.length) return; var n = list.length + (list.length === 1 ? " headline" : " headlines");
-      wrap.appendChild(nlH(NL_T.all, M.past ? n : n + " today"));
+      wrap.appendChild(nlH(NL_T.all, M.past ? n : n + " today", NL_E.all));
       if (!open && !nl.open) { var ob = el("button", "nf-more"); ob.type = "button"; ob.appendChild(el("span", null, "Show " + (list.length === 1 ? "it" : "all " + list.length))); ob.appendChild(icon("more")); ob.addEventListener("click", function () { nl.open = true; keepScroll(renderNews); }); wrap.appendChild(ob); return; }
       wrap.appendChild(nlWireList(nl.all ? list : list.slice(0, 20)));
       if (!nl.all && list.length > 20) { var mb = el("button", "nf-more"); mb.type = "button"; mb.appendChild(el("span", null, "Show the rest of the day (" + (list.length - 20) + " more)")); mb.appendChild(icon("more")); mb.addEventListener("click", function () { nl.all = true; keepScroll(renderNews); }); wrap.appendChild(mb); }
@@ -335,7 +338,7 @@
       wrap.appendChild(nlH(NL_T.nums)); var ng = el("div", "nl-nums nl-2c"); M.nums.forEach(function (x) { ng.appendChild(nlNumTile(x)); }); wrap.appendChild(ng);
     } else if (f.indexOf("lg:") === 0) {
       var lg = f.slice(3), snap = M.leagues.filter(function (x) { return x.key === lg; })[0], mine = function (x) { return x.lg === lg; };
-      if (snap) wrap.appendChild(nlLeagueCard(snap));
+      if (snap) wrap.appendChild(nlLeagueCard(snap, false, M));
       var ls = [M.lead].concat(M.stories).filter(function (x) { return x && mine(x) && !x.free; }), lp = M.previews.filter(mine), lr = M.recaps.filter(mine), li = M.items.filter(mine).sort(function (a, b) { return b.ms - a.ms; });
       if (ls.length) { wrap.appendChild(nlH(NL_T.stories, "Claude's breakdowns")); ls.forEach(function (x) { wrap.appendChild(nlStory(x)); }); }
       gamesSec(lp, "preview"); gamesSec(lr, "recap");
@@ -346,37 +349,40 @@
       // 3.161.0 (DJ: "Swiping along news cards shows them all in a horizontal wheel rather than opening a new page to
       // show them all"): every section on Home holds all of its cards side by side; a sideways swipe turns the wheel
       var pages = [], bi; for (bi = 0; bi < M.brk.length; bi += 3) pages.push(nlJustIn(M.brk.slice(bi, bi + 3)));
-      nlWheelSec(wrap, "brk", NL_T.brk, "as it happens", pages, "");
+      nlWheelSec(wrap, "brk", NL_T.brk, "as it happens", pages, "", "", NL_E.brk);
       // 3.163.0 (DJ: "I want news to be more creative... The format doesn't always need to be the same. It should redo it
       // each time it rewrites"): Claude designs the page each write-up (doc.page): the day's theme on top, one or two
       // sections that exist only today, its own names for the standard sections, and the order they run in. The page
       // draws whatever it chose; anything it left out of the order follows in the usual order, so nothing is lost.
-      var P = M.page || { titles: {}, order: [], specials: [] }, T = function (k) { return P.titles[k] || NL_T[k]; };
+      var P = M.page || { titles: {}, order: [], specials: [] }, T = function (k) { return P.titles[k] || NL_T[k]; }, E = function (k) { return (P.emoji || {})[k] || NL_E[k]; };
       // 3.164.0 (DJ: "thanksgiving day should be like its own section card, and include a Claude paragraph, and the three
       // matchups listed, and stories related to those matchups within the section, then continue with other news beneath
       // it"): the day's feature is one card on top: the day, Claude's paragraph, its matchups, then the stories about them
       if (P.feature) {
         var F = P.feature, fc = el("section", "nf-ft"), fh = el("div", "nf-fth");
-        fh.appendChild(el("span", null, fmtDate(todayInHome(), { weekday: "long", month: "long", day: "numeric" }))); fh.appendChild(el("h2", null, F.title)); if (F.text) fh.appendChild(el("p", null, F.text)); fc.appendChild(fh);
+        fh.appendChild(el("span", null, fmtDate(todayInHome(), { weekday: "long", month: "long", day: "numeric" }))); // 3.166.0 (DJ: "Photo behind for thanksgiving, but not for others. Usually should be full images with no text over it, other
+        // than for bigger events"): a big day (F.big, Claude's call) wears its photo behind the title; any other day's photo sits clear above it
+        var fp = F.stories.filter(function (z) { return z.img; })[0] || null, fi = fp ? nwImg(nwPic(fp.img, 800), "nf-ftp") : null; if (fi) { fh.classList.add(F.big === false ? "cl" : "ph"); fh.insertBefore(fi, fh.firstChild); }
+        fh.appendChild(el("h2", null, (F.emoji ? F.emoji + " " : "") + F.title)); if (F.text) fh.appendChild(el("p", null, F.text)); fc.appendChild(fh);
         if (F.games.length) { fc.appendChild(el("h5", null, F.games.length === 1 ? "The matchup" : "The " + (["", "", "two", "three", "four", "five"][F.games.length] || "") + " matchups")); F.games.forEach(function (o) { fc.appendChild(nlGameCard(o, o.as != null && o.as !== "" ? "recap" : "preview")); }); }
-        if (F.stories.length) { fc.appendChild(el("h5", null, "The stories")); var fl = el("div", "nf-fsl"); F.stories.forEach(function (x) { var a = nlLink(x, "nf-fs"); if (x.t) a.appendChild(teamBadge(x.t)); var d = el("div"); d.appendChild(el("h4", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); var sr = nlSrc(x); if (sr) d.appendChild(sr); a.appendChild(d); fl.appendChild(a); }); fc.appendChild(fl); }
+        if (F.stories.length) { fc.appendChild(el("h5", null, "The stories")); var fl = el("div", "nf-fsl"); F.stories.forEach(function (x) { var a = nlLink(x, "nf-fs"); var si = x.img && x !== fp ? nwImg(nwPic(x.img, 400), "nf-fsp") : null; if (si) a.appendChild(si); else if (x.t) a.appendChild(teamBadge(x.t)); var d = el("div"); d.appendChild(el("h4", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); var sr = nlSrc(x); if (sr) d.appendChild(sr); a.appendChild(d); fl.appendChild(a); }); fc.appendChild(fl); }
         wrap.insertBefore(fc, wrap.querySelector(".nl-h"));
       } else if (P.theme && P.theme.title) { var th = el("div", "nf-th"); th.appendChild(el("span", null, fmtDate(todayInHome(), { weekday: "long", month: "long", day: "numeric" }))); th.appendChild(el("h2", null, P.theme.title)); if (P.theme.text) th.appendChild(el("p", null, P.theme.text)); wrap.insertBefore(th, wrap.querySelector(".nl-h")); }
       var special = function (sp) {
         if (!sp || !sp.items || !sp.items.length) return;
-        if (sp.style === "games") { nlWheelSec(wrap, sp.id, sp.title, "", sp.items.map(function (o) { return nlGameCard(o, o.as != null && o.as !== "" ? "recap" : "preview"); }), "", sp.intro); return; }
-        if (sp.style === "numbers") { nlWheelSec(wrap, sp.id, sp.title, "", sp.items.filter(function (x) { return x.value; }).map(nlNumTile), "sm", sp.intro); return; }
-        wrap.appendChild(nlH(sp.title)); if (sp.intro) wrap.appendChild(el("p", "nf-in", sp.intro));
+        if (sp.style === "games") { nlWheelSec(wrap, sp.id, sp.title, "", sp.items.map(function (o) { return nlGameCard(o, o.as != null && o.as !== "" ? "recap" : "preview"); }), "", sp.intro, sp.emoji); return; }
+        if (sp.style === "numbers") { nlWheelSec(wrap, sp.id, sp.title, "", sp.items.filter(function (x) { return x.value; }).map(nlNumTile), "sm", sp.intro, sp.emoji); return; }
+        wrap.appendChild(nlH(sp.title, "", sp.emoji)); if (sp.intro) wrap.appendChild(el("p", "nf-in", sp.intro));
         if (sp.style === "qa") { var qc = el("div", "nx-card nf-qa"); sp.items.forEach(function (x) { var r = el("div"); r.appendChild(el("h4", null, x.title)); r.appendChild(el("p", null, x.text)); qc.appendChild(r); }); wrap.appendChild(qc); return; }
         wrap.appendChild(nlFive(sp.items));
       };
       var sec = {
-        lead: function () { if (M.lead) { if (M.has) wrap.appendChild(nlH(T("lead"), "Claude's top story")); wrap.appendChild(nlLead(M.lead, "bleed")); var ld = nlDeep(M.lead); if (ld) { var lc = el("div", "nx-card nf-ld"), lm = nlTeamMark(M.lead, "ln"); if (M.lead.c) lc.style.setProperty("--c", M.lead.c); if (lm) lc.appendChild(lm); lc.appendChild(ld); wrap.appendChild(lc); } } },
-        stories: function () { nlWheelSec(wrap, "stories", T("stories"), "Claude's breakdowns", M.stories.map(nlStory), ""); },
-        next: function () { nlWheelSec(wrap, "next", T("next"), "Claude's previews", M.previews.map(function (o) { return nlGameCard(o, "preview"); }), ""); },
-        recaps: function () { nlWheelSec(wrap, "recaps", T("recaps"), "Claude's recaps", M.recaps.map(function (o) { return nlGameCard(o, "recap"); }), ""); },
-        nums: function () { nlWheelSec(wrap, "nums", T("nums"), "", M.nums.map(nlNumTile), "sm"); },
-        leagues: function () { nlWheelSec(wrap, "leagues", T("leagues"), "Claude's snapshots", M.leagues.map(function (x) { return nlLeagueCard(x, true); }), ""); },
+        lead: function () { if (M.lead) { if (M.has) wrap.appendChild(nlH(T("lead"), "Claude's top story", E("lead"))); wrap.appendChild(nlLead(M.lead, "bleed")); var ld = nlDeep(M.lead); if (ld) { var lc = el("div", "nx-card nf-ld"), lm = nlTeamMark(M.lead, "ln"); if (M.lead.c) lc.style.setProperty("--c", M.lead.c); if (lm) lc.appendChild(lm); lc.appendChild(ld); wrap.appendChild(lc); } } },
+        stories: function () { nlWheelSec(wrap, "stories", T("stories"), "Claude's breakdowns", M.stories.map(nlStory), "", "", E("stories")); },
+        next: function () { nlWheelSec(wrap, "next", T("next"), "Claude's previews", M.previews.map(function (o) { return nlGameCard(o, "preview"); }), "", "", E("next")); },
+        recaps: function () { nlWheelSec(wrap, "recaps", T("recaps"), "Claude's recaps", M.recaps.map(function (o) { return nlGameCard(o, "recap"); }), "", "", E("recaps")); },
+        nums: function () { nlWheelSec(wrap, "nums", T("nums"), "", M.nums.map(nlNumTile), "sm", "", E("nums")); },
+        leagues: function () { nlWheelSec(wrap, "leagues", T("leagues"), "Claude's snapshots", M.leagues.map(function (x) { return nlLeagueCard(x, true, M); }), "", "", E("leagues")); },
         s1: function () { special(P.specials[0]); },
         s2: function () { special(P.specials[1]); }
       };

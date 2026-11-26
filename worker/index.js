@@ -433,10 +433,10 @@ Answer with only this JSON inside <json></json> tags:
  "previews": [{"g": 4, "title": "a headline for this game, 4-9 words", "text": "two or three sentences, 35-60 words: what is at stake, how each side comes in, and the matchup that decides it", "watch": "one thing to watch for, 8-18 words"}],
  "recaps": [{"g": 9, "title": "a headline for how it ended, 4-9 words, without the score", "text": "two or three sentences, 35-60 words: how it was won, who decided it, and what it means for both teams", "star": "the player of the game and his line, such as John Blackwell, 25 points, or empty"}],
  "leagues": [{"key": "league key", "title": "the state of this league today in 3-7 words", "text": "two or three sentences, 30-55 words: what happened, what is next, what everyone is talking about"}],
- "page": {"feature": {"title": "what today is about, 2-6 words, such as Thanksgiving Day, Rivalry Saturday, Trade Deadline Day, Monday Night in Buffalo", "text": "a paragraph, 55-90 words: what makes today what it is, what is at stake across it, and how to watch it",
+ "page": {"emoji": {"lead": "one emoji for each standard section (lead, stories, next, recaps, nums, leagues) that fits what is in it today"}, "feature": {"emoji": "one emoji for the day, such as 🦃 on Thanksgiving", "big": "true only on a holiday or a major event day (Thanksgiving, Christmas, a title game, a draft, opening day); false on an ordinary day", "title": "what today is about, 2-6 words, such as Thanksgiving Day, Rivalry Saturday, Trade Deadline Day, Monday Night in Buffalo", "text": "a paragraph, 55-90 words: what makes today what it is, what is at stake across it, and how to watch it",
    "games": [{"g": 4, "label": "one to three words on this game's place in the day, such as Early game, Main event, Nightcap", "text": "two sentences, 25-45 words: what is at stake and the matchup that decides it"}],
    "stories": [{"n": 7, "title": "a headline in your own words, 4-10 words", "text": "one or two sentences, 20-45 words"}]},
-  "specials": [{"title": "a section title of your own, 2-6 words", "intro": "one sentence, 10-25 words, or empty", "style": "exactly one of these words: games, list, qa, numbers", "items": [{"g": 4, "label": "games only: one to three words on this game's place in the day, such as Early game, Main event, Nightcap", "title": "a headline, question or what the number is, 4-12 words", "text": "two or three sentences, 30-60 words", "value": "numbers only: the figure alone, 9 characters at most"}]}],
+  "specials": [{"emoji": "one emoji for this section", "title": "a section title of your own, 2-6 words", "intro": "one sentence, 10-25 words, or empty", "style": "exactly one of these words: games, list, qa, numbers", "items": [{"g": 4, "label": "games only: one to three words on this game's place in the day, such as Early game, Main event, Nightcap", "title": "a headline, question or what the number is, 4-12 words", "text": "two or three sentences, 30-60 words", "value": "numbers only: the figure alone, 9 characters at most"}]}],
   "titles": {"stories": "optional: your own title for a standard section today, 2-5 words"},
   "order": ["s1", "lead", "next", "stories", "recaps", "s2", "nums", "leagues"]}}
 lead: never null; "n" is the number of the headline it is based on. stories: the 4 or 5 biggest stories after the lead, biggest first, each a different story, from different leagues where the news allows; these are the heart of the page, so give each a real breakdown and not a rewritten headline. items: 7 to 9 quick ones, the newest first, each a different story and not the lead or one of the stories; "n" is the headline it is based on (leave it out only when it comes from a game in the facts or from a search). Use "breaking" only for real news from the last few hours. Among the items include 3 or 4 "number" items (a striking figure from a story or game, with the title saying what it is) and 1 or 2 "fun" items (a did-you-know from the facts or a search). For number and fun items "text" finishes the thought the value starts. previews: the 3 or 4 biggest games with status "not started", soonest and biggest first ("g" is the game's number); [] when none are left. recaps: the 3 to 5 biggest games with status "final" ("g" is the game's number); the score is shown beside your words, so do not repeat it; [] when none are final. leagues: one entry for each of up to 6 leagues with news or games today, biggest first. Spread everything across leagues.
@@ -683,13 +683,14 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           const previews = (Array.isArray(ans.previews) ? ans.previews : []).filter((x) => x && x.title && x.text && gm[String(x.g)] && gm[String(x.g)].status === "not started").slice(0, 6)
             .map((x) => Object.assign(gbase(gm[String(x.g)]), { title: S(x.title, 110), text: S(x.text, 460), watch: S(x.watch, 170), w: now }));
           const recNew = (Array.isArray(ans.recaps) ? ans.recaps : []).filter((x) => x && x.title && x.text && gm[String(x.g)] && gm[String(x.g)].status === "final").slice(0, 8)
-            .map((x) => { const g = gm[String(x.g)]; return Object.assign(gbase(g), { as: H(g.as, 4), hs: H(g.hs, 4), title: S(x.title, 110), text: S(x.text, 460), star: S(x.star, 90), w: now }); });
+            .map((x) => { const g = gm[String(x.g)]; const st = S(x.star, 90), hd = (Array.isArray(g.heads) ? g.heads : []).find((y) => y && y[0] && st.includes(String(y[0]).split(" ").pop())); return Object.assign(gbase(g), { as: H(g.as, 4), hs: H(g.hs, 4), title: S(x.title, 110), text: S(x.text, 460), star: st, head: hd && /^[a-z0-9\/._-]+$/i.test(hd[1]) ? "https://a.espncdn.com/i/headshots/" + hd[1] : "", w: now }); });
           const got = {}; recNew.forEach((x) => { got[x.ev] = 1; });
           const recaps = recNew.concat(((prev && Array.isArray(prev.recaps)) ? prev.recaps : []).filter((x) => x && x.ev && !got[x.ev])).slice(0, 14);
           const leagues = (Array.isArray(ans.leagues) ? ans.leagues : []).filter((x) => x && x.key && (x.text || x.line)).slice(0, 7).map((x) => ({ key: H(x.key, 12), title: S(x.title, 80), text: S(x.text || x.line, 420) }));
           // 3.163.0 (DJ: "The format doesn't always need to be the same. It should redo it each time it rewrites"): the page Claude
           // designed for this write-up: the day's theme, its own special sections, section names and their order. Games in a
           // special are tied to ESPN's game by number, like previews and recaps.
+          const EMJ = (v) => { const t = String(v || "").trim(); return t && t.length <= 8 && !/[A-Za-z0-9<>&"'\s]/.test(t) ? t : ""; };   // 3.166.0: one emoji, nothing else
           const pg = ans.page && typeof ans.page === "object" ? ans.page : {}, SEC = ["lead", "stories", "next", "recaps", "nums", "leagues", "s1", "s2"], STY = ["games", "list", "qa", "numbers"];
           const specials = (Array.isArray(pg.specials) ? pg.specials : []).filter((x) => x && x.title && Array.isArray(x.items)).slice(0, 2).map((x, si) => {
             // the style word as Claude gave it, or, when it is missing or unclear, what the items themselves are
@@ -699,7 +700,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
               const g = style === "games" ? gm[String(y.g)] : null, o = { label: S(y.label, 28), title: S(y.title, 130), text: S(y.text, 460), value: style === "numbers" ? S(y.value, 12) : "" };
               return g ? Object.assign(gbase(g), g.status === "final" ? { as: H(g.as, 4), hs: H(g.hs, 4) } : {}, o) : o;
             });
-            return { id: "s" + (si + 1), title: S(x.title, 48), intro: S(x.intro, 200), style, items: its };
+            return { id: "s" + (si + 1), emoji: EMJ(x.emoji), title: S(x.title, 48), intro: S(x.intro, 200), style, items: its };
           }).filter((x) => x.items.length >= 2);
           const titles = {}; if (pg.titles && typeof pg.titles === "object") SEC.slice(0, 6).forEach((k) => { if (pg.titles[k]) titles[k] = S(pg.titles[k], 40); });
           const order = (Array.isArray(pg.order) ? pg.order : typeof pg.order === "string" ? pg.order.split(/[\s,]+/) : []).map((k) => String(k).toLowerCase().trim()).filter((k, i, a) => SEC.includes(k) && a.indexOf(k) === i);
@@ -716,12 +717,13 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
             if (k) fused[k] = 1; return k;
           };
           const ft = pg.feature && typeof pg.feature === "object" && pg.feature.title ? pg.feature : pg.theme && pg.theme.title ? pg.theme : null;
-          const feature = ft ? { title: S(ft.title, 48), text: S(ft.text, 760),
+          const emoji = {}; if (pg.emoji && typeof pg.emoji === "object") SEC.slice(0, 6).forEach((k) => { const e = EMJ(pg.emoji[k]); if (e) emoji[k] = e; });
+          const feature = ft ? { emoji: EMJ(ft.emoji), big: ft.big === true || /^true$/i.test(String(ft.big)), title: S(ft.title, 48), text: S(ft.text, 760),
             games: (Array.isArray(ft.games) ? ft.games : []).map((y) => (y && typeof y === "object" ? y : { g: y })).map((y) => Object.assign({}, y, { g: fgame(y) })).filter((y) => y.g).slice(0, 5).map((y) => { const g = gm[String(y.g)]; return Object.assign(gbase(g), g.status === "final" ? { as: H(g.as, 4), hs: H(g.hs, 4) } : {}, { label: S(y.label, 28), text: S(y.text, 340), w: now }); }),
             stories: (Array.isArray(ft.stories) ? ft.stories : []).filter((y) => y && y.title && y.text).slice(0, 4).map((y) => item(Object.assign({}, y, { kind: "news", value: "" }))) } : null;
           const fev = {}; if (feature) feature.games.forEach((g) => { fev[g.ev] = 1; });
           if (feature) feature.sent = JSON.stringify((ft && ft.games) || null).slice(0, 700);   // what Claude sent, for checking a pass
-          const page = { feature, theme: feature ? { title: feature.title, text: "" } : null, specials, titles, order };
+          const page = { feature, theme: feature ? { title: feature.title, text: "" } : null, specials, emoji, titles, order };
           await putDoc(this.env, t.path, { key: p.key, date: p.date, type: "w", v: 2, page, lead, stories, items: all, previews: previews.filter((x) => !fev[x.ev]), recaps, leagues, n: ((prev && prev.n) || 0) + 1, took: Math.max(0, Math.round((Date.parse(now) - Date.parse(p.at)) / 1000)) || 0, at: now, by: p.user || "dj", writing: null });
         } else if (p.kind === "deep") {
           const type = p.key[0], pairs = (a, n, k) => (Array.isArray(a) ? a : []).filter((x) => x && x[k] && x.text).slice(0, n).map((x) => ({ [k]: S(x[k], 60), text: S(x.text, 260) }));

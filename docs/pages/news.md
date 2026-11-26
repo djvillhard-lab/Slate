@@ -4,6 +4,9 @@ Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/sty
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
+## Emojis and photos (3.166.0)
+DJ, Nov 26: "News needs emojis, images, etc. to help it stand out." Shown three looks; DJ: "Photo behind for thanksgiving, but not for others. Usually should be full images with no text over it, other than for bigger events like thanksgiving." So: words over a photo ONLY on a big day's feature card (`page.feature.big`, Claude's call; a doc without the field counts as big). Everything else shows the photo whole with words beneath (`.nl-lead.clr`, `.nl-t.ph`). Section emojis: `NL_E` defaults, Claude may set `page.emoji[section]`, `feature.emoji`, `special.emoji`. League emojis `NL_LE`. League Check card photo = that league's top feed story with a picture. Recap headshot: `recap.head`, matched in the worker from ESPN's game leaders (`g.heads` in newswire.js) to the name in Claude's star line. This replaces the earlier "no emoji in titles".
+
 ## Featured day card (3.164.0)
 DJ, Nov 26: "thanksgiving day should be like its own section card, and include a Claude paragraph, and the three matchups listed, and stories related to those matchups within the section, then continue with other news beneath it." General pattern for any featured day. Worker writes `page.feature` {title, text, games [{g,label,text}], stories [{n,title,text}]} (replaces `page.theme`; an old doc's theme still shows as the plain banner). Featured games are taken out of On Deck so they are not listed twice. Client: `section.nf-ft` in nlRender, before everything else on Home.
 

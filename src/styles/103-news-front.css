@@ -361,3 +361,32 @@
 .nf-fs > div { flex: 1; min-width: 0; display: grid; gap: 4px; }
 .nf-fs h4 { font-size: 16px; font-weight: 800; line-height: 1.25; color: var(--ink); }
 .nl .nf-fs p { font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+
+/* ---------- 3.166.0 (DJ: "News needs emojis, images, etc. to help it stand out"; then "Photo behind for thanksgiving, but
+   not for others. Usually should be full images with no text over it") ---------- */
+.nf .nl-h.em b::before { display: none; }
+.nf .nl-h.em b .nx-em { font-size: 18px; line-height: 1; }
+/* the featured day: a big event wears its photo behind the words; any other day's photo sits clear above them */
+.nf-fth.ph { position: relative; overflow: hidden; padding-top: 120px; background: var(--card); }
+.nf-fth.ph > .nf-ftp { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.nf-fth.ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.72) 45%, rgba(0,0,0,.9)); }
+.nf-fth.ph > span, .nf-fth.ph > h2, .nf-fth.ph > p { position: relative; z-index: 1; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.nf-fth.ph > span { color: rgba(255,255,255,.8); }
+.nf-fth.cl { padding-top: 0; }
+.nf-fth.cl > .nf-ftp { display: block; width: calc(100% + 2 * var(--pad)); max-width: none; margin: 0 calc(-1 * var(--pad)) 6px; aspect-ratio: 16 / 9; object-fit: cover; object-position: center 25%; }
+.nf-fs > .nf-fsp { flex: none; width: 92px; height: 70px; border-radius: 6px; object-fit: cover; }
+.nf-lg.ph { padding-top: 0; overflow: hidden; }
+.nf-lg.ph > .nf-lp { display: block; width: calc(100% + 24px); max-width: none; height: 120px; margin: 0 -12px 4px; object-fit: cover; object-position: center 25%; }
+.nf-lh > .nx-em { flex: none; font-size: 16px; }
+.nl .nf-gb p.nf-x.hd { display: flex; align-items: center; gap: 8px; }
+.nf-x > .nf-hd { flex: none; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--raise); border: 2px solid var(--accent); }
+/* every other photo is shown whole, with its words beneath it: the lead and the photo tiles */
+.nl-lead.clr, .nl-lead.clr .in { min-height: 0; }
+.nl-lead.clr .bg { position: static; display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: center 25%; }
+.nl-lead.clr .in { padding: 12px var(--pad) 14px; background: none; }
+.nl-lead.clr h3 { color: var(--ink); } .nl-lead.clr p { color: var(--muted); } .nl-lead.clr .nl-src { color: var(--accent); } .nl-lead.clr .nl-tm { color: var(--dim); }
+.nl-t.ph { display: flex; flex-direction: column; min-height: 0; }
+.nl-t.ph .bg { position: static; display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: center 25%; order: -1; }
+.nl-t.ph .top { padding: 8px 10px 0; }
+.nl-t.ph .in { padding: 6px 10px 10px; background: none; }
+.nl-t.ph h4 { color: var(--ink); } .nl-t.ph p { color: var(--muted); }

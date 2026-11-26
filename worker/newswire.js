@@ -58,6 +58,8 @@ async function board(lg, path, weight, ymd) {
     const g = { ev: String(ev.id), lg, status: state, away: A.team.displayName, home: H.team.displayName, aa: A.team.abbreviation, ha: H.team.abbreviation, ac: hex(A.team.color), hc: hex(H.team.color),
       ar: rec(A), hr: rec(H), ak: rank(A), hk: rank(H), start: ev.date, tv, loc: [A.team.location, A.team.shortDisplayName, H.team.location, H.team.shortDisplayName] };
     if (state !== "not started") { g.as = String(A.score ?? ""); g.hs = String(H.score ?? ""); g.detail = st.shortDetail || ""; g.leaders = [lead(A), lead(H)].filter(Boolean); }
+    // 3.166.0: the headshots ESPN lists for a finished game's leaders, so a recap can show its player of the game
+    if (state === "final") { const hd = []; [A, H].forEach((x) => (x.leaders || []).forEach((l) => { const q = (l.leaders || [])[0], at = q && q.athlete; if (at && at.headshot && at.displayName && !hd.some((y) => y[0] === at.displayName)) hd.push([at.displayName, String(at.headshot.href || at.headshot).replace("https://a.espncdn.com/i/headshots/", "")]); })); if (hd.length) g.heads = hd.slice(0, 6); }
     const note = ((c.notes || [])[0] || {}).headline, hl = ((c.headlines || [])[0] || {}).shortLinkText; if (note) g.note = String(note).slice(0, 90); if (hl) g.headline = String(hl).slice(0, 140);
     g.w = weight + (g.ak && g.hk ? 4 : g.ak || g.hk ? 2 : 0) + (tv.some((n) => NATIONAL.test(n)) ? 2 : 0) + (note ? 1 : 0);
     return g;
