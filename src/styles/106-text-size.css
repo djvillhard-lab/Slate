@@ -1,17 +1,22 @@
 /* ---- Larger text sizes (3.155.1, DJ: "XL font size, some things are cut off" / "XL also removes team records") ----
    html.bigtext = text size L and up; html.zoomed = XL where it really grows (folded Duo, iPhone). */
 
-/* Team records stay at every text size. A name keeps its whole width first; when the name and its record don't fit
-   on one line, the record drops to a line of its own just under the name (only that team's row gets taller). */
+/* Team records stay at every text size. A name never gets cut for its record: the name takes the room it needs and
+   only shrinks when the row is full (then the page's fit step steps in). On the slate, a card whose names don't fit
+   puts both records on a line of their own under the names (.rec-under, set in 170-slate-page.js); a rank stays
+   beside its name. */
 .tm .nmw { flex-wrap: wrap; column-gap: 4px; row-gap: 0; }
-.tm .nmw > .nm { max-width: 100%; }
-.tm .nmw > .rec { line-height: 1.2; }
+.tm .nmw > .nm { flex: 1 1 0; min-width: 0; max-width: max-content; }
+.tm .nmw.rec-under > .rec { flex-basis: 100%; line-height: 1.2; }
 
-/* The slate's Time | League, Board and Live row: at large sizes the three no longer fit across a folded Duo, and the
-   row ran off the left edge (Time cut off). When they don't fit, Board and Live move to a second line together, still
-   on the right under the thumb. */
+/* The slate's Time | League, Board and Live row: at large sizes the three ran off the left edge (Time cut off).
+   3.157.3 (DJ: "Make the buttons above slate matchups fit on one line"): the row keeps its normal size at every text
+   size (it's controls, not reading text), so all three stay on one line. Board and Live stay grouped on the right;
+   the wrap is only a last resort for a screen narrower than any phone. */
 .lo-row .lo-end { display: flex; align-items: center; margin-left: auto; }
 .lo-row:has(.lo-end) { flex-wrap: wrap; row-gap: 8px; }
+html.bigtext #lineup-body .lo-row { zoom: calc(1 / var(--z, 1)); }
+html[data-native].bigtext #lineup-body .lo-row:not(#pane-l .lo-row) { padding-right: var(--strip-w, 0px); }
 
 /* Every other page's header (All games, News, On TV...): at XL on the folded Duo and an iPhone the next-day arrow ran under Settings. Settings and
    Search stack, the way the slate's header already does next to the Duo's column. */

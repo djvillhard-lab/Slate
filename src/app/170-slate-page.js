@@ -219,11 +219,11 @@
 
   // ---- team names never cut short on the slate (3.68.8) ----
   // A narrow card (Worth a look on the open Duo's left pane) cut "St. Thomas" to "St. Tho…". After the score column is
-  // fitted, a card whose name doesn't fit drops both teams' records first, and if a name still doesn't fit, both rows show
+  // fitted, a card whose name doesn't fit moves both teams' records under the names first (3.157.3; they used to hide), and if a name still doesn't fit, both rows show
   // the team's abbreviation instead (the same steps as All games, 3.68.7). Called at the end of fitScores (240-chrome.js).
   function slateUnfitNames(box) {  // full names and records back, so the score column is measured from them
     Array.prototype.forEach.call(box.querySelectorAll(".g.panel .tm"), function (r) {
-      var rc = r.querySelector(".rec"), n = r.querySelector(".nm"); if (rc) rc.style.display = "";
+      var rc = r.querySelector(".rec"), n = r.querySelector(".nm"), w = r.querySelector(".nmw"); if (rc) rc.style.display = ""; if (w) w.classList.remove("rec-under");
       if (n && n.dataset.full) { n.textContent = n.dataset.full; n.removeAttribute("title"); delete n.dataset.full; }
     });
   }
@@ -233,9 +233,13 @@
     Array.prototype.forEach.call(box.querySelectorAll(".g.panel"), function (p) {
       var rows = Array.prototype.slice.call(p.querySelectorAll(".tm")); if (!rows.length) return;
       var nms = rows.map(function (r) { return r.querySelector(".nm"); }).filter(Boolean);
-      var cut = function () { return nms.some(function (n) { return n.clientWidth && n.scrollWidth > n.clientWidth + 1; }); };
+      // 3.157.3: measured against the name's full width (its box, unsqueezed), to the fraction of a pixel: a name squeezed
+      // by half a pixel still shows "Cincinn…", and scrollWidth rounds that away
+      var cut = function () { return nms.some(function (n) { if (!n.clientWidth) return false; if (n.scrollWidth > n.clientWidth + 1) return true; var w0 = n.getBoundingClientRect().width; n.style.flex = "none"; n.style.maxWidth = "none"; var w1 = n.getBoundingClientRect().width; n.style.flex = ""; n.style.maxWidth = ""; return w1 > w0 + 0.05; }); };
       if (!cut()) return;
-      rows.forEach(function (r) { var rc = r.querySelector(".rec"); if (rc) rc.style.display = "none"; });
+      // 3.157.3 (DJ: "Xl font also removes team records. Find a way to fit them"): the records move under the names
+      // instead of hiding (106-text-size.css), and stay there if the names still need their abbreviations
+      rows.forEach(function (r) { var w = r.querySelector(".nmw"); if (w && w.querySelector(".rec")) w.classList.add("rec-under"); });
       if (!cut()) return;
       rows.forEach(function (r) {
         var n = r.querySelector(".nm"), b = r.querySelector(".badge"), t = b && Array.prototype.filter.call(b.childNodes, function (x) { return x.nodeType === 3 && x.nodeValue.trim(); })[0];

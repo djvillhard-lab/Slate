@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.157.3 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Today's Slate: Time | League, Board and Live always fit on one line now. They stay at their regular size at L and XL, so the row doesn't break onto a second line.
+- Today's Slate at XL on an iPhone: live games squeezed team names down to "U…" and "C…". The suggested games at the bottom of the slate were setting the width for every card. Names now get their full room again.
+- When a name and its record don't both fit, the record moves under the name instead of cutting the name ("Cincinn…"). A ranked team's number stays beside its name.
+
 ## 3.157.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Unfolded iPhone Duo, the slate full screen: the times now run down the left side in a narrow strip, with that time's games two across beside it. Before, the times sat above single cards in two columns that did not line up.

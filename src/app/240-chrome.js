@@ -262,7 +262,9 @@
       var cw = rows[0].parentElement.clientWidth; if (!cw) return;
       // 3.68.3: the Worth a look card is narrower (its box and the +), so it doesn't set the column for the slate's
       // own cards; its teams still fill the room it has
-      if (p.closest(".wal-item")) walP.push([p, cw]); else col = Math.min(col, cw);
+      // 3.157.3: the same for the suggested games under the slate (.sugg, narrower for their + button): at XL on an iPhone
+      // they squeezed every live card's names to "U…"
+      if (p.closest(".wal-item, .sugg")) walP.push([p, cw]); else col = Math.min(col, cw);
       Array.prototype.forEach.call(rows, function (r) {
         var w = r.querySelector(".nmw"), sc = r.querySelector(".sc"); if (!w || !sc) return;
         var gap = parseFloat(getComputedStyle(w).columnGap) || 4, rg = parseFloat(getComputedStyle(r).columnGap) || 8, nw = 0, n = 0;

@@ -6,8 +6,6 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Slate: sort, Board and Live on one line at XL | styles/106-text-size.css | 2026-11-26 16:35 |
-| DJ | shared: 240-chrome.js (slate score column at XL) | src/app/240-chrome.js | 2026-11-26 16:45 |
 | DJ | Live feed: play cards with more flair (football first) | src/app/145-live-feed.js, docs/pages/live-feed.md | 2026-11-26 16:39 |
 | DJ | shared: styles/040-components.css (Live feed play cards, new rules at the end) | src/styles/040-components.css | 2026-11-26 16:39 |
 | DJ | On TV: My TVs why each game + pick games for a time | src/app/215-tv-setups.js, docs/pages/tv.md | 2026-11-26 16:45 |
