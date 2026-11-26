@@ -11,15 +11,21 @@
   function bxSummaryUrl(lg, ev) { return BX_SPORT[lg] === "soccer" ? "https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary?event=" + ev : bxApi(lg, "summary?event=" + ev); }
   function bxApi(lg, rest) { return "https://site.api.espn.com/apis/site/v2/sports/" + bxBase(lg) + "/" + rest; }
   // self-hosted only: find the game's ESPN event on that day's scoreboard (cached ten minutes)
-  function bxFindEvent(g) {
-    var t = new Date(g.start).getTime(), d = etDate(t), key = g.league + "|" + d, c = bx.sb[key];
-    var norm = function (x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]/g, ""); };
+  // 3.141.3 (DJ: "Clemson live feed not loading"): a game that tips after midnight Eastern (Maui, Hawaii, the West Coast late game) is on
+  // ESPN's list for the evening before, not the Eastern date of its start. When it isn't on its own day's list, the day before is checked
+  // (the day after for a game starting after noon), so the Live feed, quick look box and matchup page find it.
+  function bxDayEvents(lg, d) {
+    var key = lg + "|" + d, c = bx.sb[key];
     // one scoreboard request per league and day, shared by every game asking at once (it used to be one per game)
     bx.sbP = bx.sbP || {};
-    var p = c && Date.now() - c.at < 600000 ? Promise.resolve(c.events) : bx.sbP[key] || (bx.sbP[key] = Promise.all((ESPN_URLS[g.league] || []).map(function (u) {
+    return c && Date.now() - c.at < 600000 ? Promise.resolve(c.events) : bx.sbP[key] || (bx.sbP[key] = Promise.all((ESPN_URLS[lg] || []).map(function (u) {
       var parts = u.split("&"); return rkFetch("https://site.api.espn.com/apis/site/v2/sports/" + parts[0] + "/scoreboard?dates=" + d + (parts.length > 1 ? "&" + parts.slice(1).join("&") : ""));
     })).then(function (rs) { var evs = []; rs.forEach(function (j) { evs = evs.concat((j && j.events) || []); }); bx.sb[key] = { at: Date.now(), events: evs }; delete bx.sbP[key]; return evs; }, function (e) { delete bx.sbP[key]; throw e; }));
-    return p.then(function (evs) {
+  }
+  function bxFindEvent(g) {
+    var t = new Date(g.start).getTime(), d = etDate(t);
+    var norm = function (x) { return String(x || "").toLowerCase().replace(/[^a-z0-9]/g, ""); };
+    var pick = function (evs) {
       for (var i = 0; i < evs.length; i++) {
         var e = evs[i], cp = e.competitions && e.competitions[0]; if (!cp) continue;
         if (Math.abs(new Date(e.date).getTime() - t) > 3 * 3600000) continue;
@@ -29,6 +35,10 @@
         if (A && H && ok(H, "away") && ok(A, "home")) { if (noteFlip(g, true)) setTimeout(render, 0); return e.id; }
       }
       return null;
+    };
+    var d2 = etDate(t + (etHour(t) < 12 ? -1 : 1) * 86400000);
+    return bxDayEvents(g.league, d).then(function (evs) {
+      var id = pick(evs); return id ? id : bxDayEvents(g.league, d2).then(pick);
     });
   }
   function bxFetch(g) {
@@ -391,6 +401,8 @@
   function sbOdds(g) {
     if (g.custom || !ESPN_URLS[g.league]) return null;
     var t = new Date(g.start).getTime(), key = g.league + "|" + etDate(t), c = bx.sb[key];
+    var c2 = bx.sb[g.league + "|" + etDate(t + (etHour(t) < 12 ? -1 : 1) * 86400000)];  // 3.141.3: a game after midnight Eastern is on the evening before's list
+    if (c && c2) c = { events: c.events.concat(c2.events) };
     if (!c) {
       if (window.SLATE_SELF && !(bx.sbP || {})[key] && !(bx.sbTried || (bx.sbTried = {}))[key]) {
         bx.sbTried[key] = 1;

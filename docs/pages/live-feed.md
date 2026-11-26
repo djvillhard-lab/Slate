@@ -167,3 +167,9 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - The "now batting" card reads only the newest play (count, outs, runners, batter, pitcher). No `situation` object is assumed, because a finished game has none to check against.
 - Built and checked against MIL at TB, Oct 28, 2026 (event 401908046), plus a copy cut off mid-inning with its status set to in progress to see the live card. NOT yet seen on a real live game: check on the first spring training game (late Feb 2027). Things to look at then: the count right after strike three or ball four, the "at bat" box while pitches come in, extra innings (the line score shows the last nine innings), a home run's wording, and the delay.
 - The box score under the plays is the app's normal baseball box score (`feedBox`); it could not be exercised in the test because Slate has no MLB games saved for 2026.
+
+## 3.141.3: games after midnight Eastern (DJ: "Clemson live feed not loading")
+- Clemson vs Colorado State (Maui, 11:30 PM CT = 12:30 AM ET) stayed on "Loading the play-by-play". ESPN files late games under the evening
+  before (it was on the Nov 25 scoreboard), but `bxFindEvent` (110-box-score.js) only looked at the Eastern date of the start (Nov 26).
+- Fix: `bxDayEvents` fetches one league-day list; `bxFindEvent` tries the start's Eastern date, then the day before (or the day after for a
+  start after noon ET). `sbOdds` reads both lists; the live score poller (040-live.js) also asks the day before for games before 6 AM ET (`etHour`).

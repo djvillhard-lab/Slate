@@ -30,6 +30,7 @@
     seriea: ["soccer/ita.1"], bundesliga: ["soccer/ger.1"], ligue1: ["soccer/fra.1"], facup: ["soccer/eng.fa"],
     intl: ["soccer/fifa.friendly", "soccer/uefa.nations", "soccer/concacaf.nations.league", "soccer/uefa.euroq", "soccer/fifa.worldq.uefa", "soccer/fifa.worldq.conmebol", "soccer/fifa.worldq.concacaf", "soccer/concacaf.gold", "soccer/conmebol.america", "soccer/fifa.world"]
   };
+  function etHour(ms) { return +new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hourCycle: "h23" }).format(new Date(ms)) || 0; }
   function etDate(ms) { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms)).replace(/-/g, ""); }
   var livePolling = false;
   var LIVE_AT = {};
@@ -177,6 +178,7 @@
         var gap = (slate[g.id] || hasFav(g)) && (live || t - now < 10 * 60000) ? 10000 : live ? 60000 : 300000;
         every[g.league] = Math.min(every[g.league] || 1e9, gap);
         need[g.league] = need[g.league] || {}; need[g.league][etDate(t)] = 1;
+        if (etHour(t) < 6) need[g.league][etDate(t - 86400000)] = 1;  // 3.141.3: a game after midnight Eastern sits on ESPN's list for the evening before
       }
     });
     Object.keys(need).forEach(function (lg) { if (now - (LIVE_AT[lg] || 0) < every[lg] - 2000) delete need[lg]; else LIVE_AT[lg] = now; });
