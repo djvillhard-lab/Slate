@@ -6,7 +6,6 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Game cards: Worth watching back tag | src/app/152-watch-back.js, docs/pages/slate.md | 2026-11-26 02:44 |
 | DJ | shared: 010-core.js (watch popup for every channel button) | src/app/010-core.js | 2026-11-26 02:50 |
 | DJ | All games (Live tap shifts scores; short lines in 2 columns) | src/app/160-all-games.js, src/styles/103-all-games-compact.css, docs/pages/all-games.md | 2026-11-26 02:50 |
 | DJ | shared: 240-chrome.js (score column stays put when Live is tapped) | src/app/240-chrome.js | 2026-11-26 02:50 |

@@ -58,7 +58,7 @@
     var c = WWB[g.id];
     if (!c) { var need = function () { if (!WWB[g.id] && !((bx.live[g.id] || {}).busy)) bxFetch(g); }; if (lazy && row) agSeen(row, need); else need(); return null; }
     if (!c.t.length) return null;
-    var p = el("p", "wwb"); p.appendChild(el("span", "wwb-k", "Worth watching back"));
+    var p = el("p", "wwb"); p.appendChild(el("span", "wwb-k", "\u25B6\uFE0E Rewatch"));
     p.appendChild(document.createTextNode(c.t.join(" · ")));
     return p;
   }

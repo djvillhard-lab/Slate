@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.134.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Finished game cards: the "Worth watching back" tag is now a short "▶ Rewatch". The facts beside it (overtime, lead changes, a late winner) are the same.
+
 ## 3.134.1 (Nov 25, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live button (the slate and All games): it is solid red with white words again when it's switched on, in every theme. Since the glass buttons arrived, a switched-on Live button kept the gray glass color with dark words on it, so it looked washed out and was hard to read.
