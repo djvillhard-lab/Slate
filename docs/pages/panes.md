@@ -101,3 +101,4 @@ right, so I can have two live feeds at once."
   bar crowds at that width for NBA (a record sits under the score); that page belongs to the Live feed thread.
 - Not tried on the real iPhone Duo yet: scrolling inside the frames and the grip on the crease need DJ's thumb.
 - Ideas if DJ wants them: a Settings switch back to the old layout; swap both sides in one move.
+- 3.170.0: compact Live feed (289-feed-compact.js) never auto-applies on the two-page host (`html.panes`), and its button is hidden there. Two-column slate on a full-screen page is four across (109-slate-two.css overrides the 097 slate rules when `#lineup-body.sl2`).

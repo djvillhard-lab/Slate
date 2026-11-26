@@ -8,7 +8,8 @@
   (function () {
     if (PANE) return;  // the two sides of the unfolded Duo sideways keep the full feed
     var KEY = "slate-feed-compact", root = document.documentElement, btn = null;
-    function shortWide() { return window.innerHeight <= 540 && window.innerWidth >= 430 && window.innerWidth > window.innerHeight; }
+    // (the unfolded Duo sideways is short and wide too, but there this page only holds the two sides: never compact)
+    function shortWide() { return !root.classList.contains("panes") && window.innerHeight <= 540 && window.innerWidth >= 430 && window.innerWidth > window.innerHeight; }
     function prefs() { try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { return {}; } }
     function want() { var s = shortWide(), p = prefs()[s ? "short" : "tall"]; return p === "on" || (p !== "off" && s); }
     function apply() {

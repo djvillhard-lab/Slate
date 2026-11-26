@@ -13,6 +13,7 @@
     groups.forEach(function (gr) {
       var sec = el("section", "tgroup" + (state.date >= todayInHome() && gr.list.every(function (g) { return status(g).kind === "over"; }) ? " done" : ""));
       var kinds = gr.list.map(function (g) { return status(g).kind; });
+      sec.style.setProperty("--tg-t", JSON.stringify(gr.t + " \u00b7 "));  // two columns (109-slate-two.css): the start time goes in front of each small card's countdown, because the time rail is hidden there
       if (kinds.indexOf("live") !== -1) sec.setAttribute("data-now", "live"); else if (kinds.indexOf("upcoming") !== -1) sec.setAttribute("data-now", "next");
       var tp = gr.t.split(" "), tt = el("button", "tg-time"), key = state.date + "|" + gr.t;
       tt.type = "button";
@@ -73,8 +74,14 @@
     if ((state.slateLgOrder || []).length) { var rs = el("button", "rlink", "Reset to the usual order"); rs.type = "button"; rs.addEventListener("click", function () { state.slateLgOrder = []; saveSettings(); keepScroll(renderLineup); }); box.appendChild(rs); }
     return box;
   }
+  var SL_TWO = null;
+  function slTwo() { if (SL_TWO == null) { try { SL_TWO = localStorage.getItem("slate-sl-two") === "1"; } catch (e) { SL_TWO = false; } } return SL_TWO; }
+  function slSetTwo(on) { SL_TWO = !!on; try { localStorage.setItem("slate-sl-two", on ? "1" : "0"); } catch (e) {} }
   function renderLineup() {
     var body = $("lineup-body"); body.textContent = "";
+    // 3.170.0 (DJ: "Want two columns option on my slate page too"): the same small cards as All games' "2 columns",
+    // from a square-grid button after Time | League; remembered on this phone (styles/109-slate-two.css)
+    body.classList.toggle("sl2", slTwo());
     // until your settings (rules, teams) arrive, show the loading note rather than a slate built from the defaults
     var waitMine = (!state.settingsLoaded || (uid && !state.lineupLoaded)) && state.slateStatus !== "nodb";
     var lg = waitMine ? [] : lineupGames(), lgAll = lg, loading = (state.slateStatus !== "ready" && state.slateStatus !== "empty") || waitMine;
@@ -97,6 +104,11 @@
       if (lo) {
         // 3.121.4 (Drew: "tell me how many games are on my slate for that day"): the day's count, above the sort row
         body.appendChild(el("div", "sl-count", lg.length + (lg.length === 1 ? " game" : " games") + " on your slate"));
+        var tb2 = el("button", "lo-btn ag2-btn sl2-btn" + (slTwo() ? " on" : "")); tb2.type = "button";
+        tb2.setAttribute("aria-pressed", slTwo() ? "true" : "false"); tb2.setAttribute("aria-label", "Show the slate in two columns of small cards");
+        tb2.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="1.5" y="2" width="5.5" height="5" rx="1"/><rect x="9" y="2" width="5.5" height="5" rx="1"/><rect x="1.5" y="9" width="5.5" height="5" rx="1"/><rect x="9" y="9" width="5.5" height="5" rx="1"/></svg>';
+        tb2.addEventListener("click", function () { slSetTwo(!slTwo()); keepScroll(renderLineup); });
+        lo.appendChild(tb2);
         body.appendChild(lo);
       }
       if (state.date === todayInHome() && lg.length) {

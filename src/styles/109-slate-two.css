@@ -1,0 +1,63 @@
+/* The slate in two columns of small cards (DJ, Nov 26, 2026: "Want two columns option on my slate page too").
+   #lineup-body gets .sl2 from the square-grid button after Time | League (170-slate-page.js, kept in slate-sl-two).
+   The card rules below are All games' small card (103-all-games-compact.css) pointed at the slate's time groups:
+   two teams with their scores and one bottom line (the clock in red, the start time or countdown, or Final).
+   One-liners, tags, the channel and the Feed button are on the full card: tap a small card for its quick look,
+   or tap the button again. Worth a look and Best bets keep their full cards. */
+.lo-row .lo-btn.sl2-btn { padding-left: 8px !important; padding-right: 8px !important; margin-right: auto; flex: none; }
+.lo-row .sl-seg:has(+ .sl2-btn) { margin-right: 0; }
+/* the cards of every start time run on in one grid so both columns fill (a time with one game would leave half the row
+   empty); the time rail is hidden because each small card's bottom line already says its time, clock or Final.
+   A time group that was folded shut on the full view shows its games here: its header, the only way to open it, is hidden. */
+#lineup-body.sl2 .tgroups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: stretch; }
+#lineup-body.sl2 .tgroup, #lineup-body.sl2 .tgroup .tg-games, #lineup-body.sl2 .tgroup.shut .tg-games { display: contents; }
+#lineup-body.sl2 .tgroup > :not(.tg-games) { display: none !important; }
+#lineup-body.sl2 .tgroup.done { opacity: 1; }
+#lineup-body.sl2 .tgroup .tg-games > .g.panel:not(:has(> .tray)) > .g-side .s-cd::before { content: var(--tg-t, ""); }
+/* the control row stays on one line on the folded Duo and a regular iPhone with the extra button in it */
+#lineup-body .lo-row:has(.sl2-btn) { gap: 6px; }
+#lineup-body .lo-row:has(.sl2-btn) .sl-seg button { padding: 0 9px; }
+#lineup-body .lo-row:has(.sl2-btn) .lo-btn { padding-left: 10px; padding-right: 10px; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm { max-width: none !important; }
+#lineup-body.sl2 .tg-games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: start; }
+#lineup-body.sl2 .tg-games > .g.panel:has(> .tray) { grid-column: 1 / -1; }
+#lineup-body.sl2 .tg-games > :not(.g) { grid-column: 1 / -1; }
+
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) { grid-template-columns: minmax(0, 1fr); row-gap: 3px; padding: 8px 8px 8px; height: 100%; align-content: start; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)).tagged { padding-top: 8px; }
+/* 3.151.1: everything on the card except the teams, the status and the short line is hidden, whatever it is (a new
+   kind of line added to the full card, like 3.148.0's "how it went" row, must not show up on the small one) */
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > :not(.g-main):not(.g-side):not(.ag2s),
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .g-lg,
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm .rec { display: none !important; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .g-main { gap: 2px; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm { grid-template-columns: 28px minmax(0, 1fr) auto; column-gap: 6px; min-height: 26px; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm .badge { width: 28px; min-width: 0; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm .badge .badge-logo { height: 24px; margin-top: -12px; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm .nm { font-size: 15px; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) .tm .sc { font-size: 18px; min-width: 0; }
+/* 3.151.1 (DJ: "trying to fit too much"): a small card is the two teams with their scores and ONE bottom line, nothing else.
+   Live: the clock in red. Upcoming: the start time. Finished: the best-player line with an F at its end (or just "Final").
+   No channel, no divider, no start time on a final; all of that is on the full card one tap away. */
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side { width: auto !important; min-width: 0; margin: 0 !important; display: block; text-align: left; order: 2; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side > * { display: block; min-width: 0; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side .net,
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side .s-ftime,
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side .s-moved,
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)):has(> .ag2s) > .g-side { display: none !important; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side .s-time, #lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side .s-final { color: var(--muted); font-weight: 700; }
+
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .ag2s { display: flex; align-items: baseline; gap: 6px; order: 1; margin: 0; min-width: 0; font-size: 13px; line-height: 1.2; font-weight: 600; color: var(--sub); }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .ag2s .ag2t { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; height: 1.2em; overflow: hidden; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .ag2s .ag2a { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .ag2s .ag2b { white-space: nowrap; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .ag2s b { font-weight: 800; color: var(--head); }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .ag2s .ag2f { flex: none; font-style: normal; font-size: 12px; font-weight: 800; color: var(--muted); }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side, #lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side > * { text-align: left !important; justify-content: flex-start !important; justify-items: start !important; }
+#lineup-body.sl2 .tg-games > .g.panel:not(:has(> .tray)) > .g-side .s-live { display: flex; align-items: center; }
+
+/* unfolded Duo, one page full screen (097-panes.css draws the slate two across with a wide "feature" card there):
+   in two columns mode the small cards run four across instead and no card is stretched or scaled */
+html.in-pane.pn-full #lineup-body.sl2 .tgroups { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+html.in-pane.pn-full #lineup-body.sl2 .tg-games > .g.panel:last-child:nth-child(odd):not(:has(> .tray)) { grid-column: auto; grid-template-columns: minmax(0, 1fr); column-gap: 0; }
+html.in-pane.pn-full #lineup-body.sl2 .tg-games > .g.panel:last-child:nth-child(odd):has(> .hl):not(:has(> .tray)) > :is(.g-main, .g-side, .hl) { zoom: 1; }
