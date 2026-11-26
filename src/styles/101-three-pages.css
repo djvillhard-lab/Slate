@@ -138,3 +138,10 @@ html.pn-full .n3-haslay .n3-row { left: calc(75% - 81px); }
 .n3-lay2 { position: absolute; right: 74px; bottom: 0; z-index: 2; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); padding: 0;
   background: var(--n3-glass); border: 1px solid var(--n3-line); -webkit-backdrop-filter: blur(6px) saturate(1.8); backdrop-filter: blur(6px) saturate(1.8); box-shadow: var(--n3-hi); transition: transform .12s ease-out; -webkit-tap-highlight-color: transparent; }
 .n3-lay2:active { transform: scale(.92); }
+
+/* 3.144.0 (DJ, Nov 26): the floating buttons slide away while you read down a page and come back on any scroll up
+   (283-three-pages.js n3Away). translate and opacity only, so nothing is laid out again during a scroll. */
+.n3 > :not(.n3-scrim), nav.dock { transition: translate .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease-out; }
+.n3.n3-away > :not(.n3-scrim), nav.dock.n3-away { translate: 0 150px; opacity: 0; pointer-events: none !important; }
+nav.dock.n3-away > * { pointer-events: none !important; }
+@media (prefers-reduced-motion: reduce) { .n3 > :not(.n3-scrim), nav.dock { transition: opacity .12s linear; } }

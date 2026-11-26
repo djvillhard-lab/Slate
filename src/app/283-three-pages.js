@@ -26,7 +26,8 @@
   }
   // the filter button: All games on the iPhone Duo (folded, or a side of the unfolded screen)
   // 3.129.x (DJ, Nov 23): News too, in place of its row of tabs (Press Box and the leagues), not inside a breakdown
-  function n3FiltOn() { return n3BarOn() && deviceMode() === "duo" && (state.view === "games" ? games().length > 0 : state.view === "news" && !(typeof nw !== "undefined" && nw.deep)); }
+  // 3.144.0 (DJ, Nov 26): not on News any more; the Front Page filters with its own pills
+  function n3FiltOn() { return n3BarOn() && deviceMode() === "duo" && state.view === "games" && games().length > 0; }
   function n3NewsOpts() { return [[null, NW_HOME]].concat(nwBriefLgs().map(function (k) { return [k, (LEAGUES[k] || {}).tag || k]; })); }
   // page swipes: only on the three pages, and not on the unfolded Duo (both sides are in view there; the bar picks pages)
   // the day arrows (3.129.1, DJ: one tap, never two): the slate gets a glass pair of arrows bottom right, always showing
@@ -156,6 +157,7 @@
     }
   }
   function n3Draw() {
+    if (N3S && N3S.view !== state.view) { N3S.view = state.view; N3S.down = 0; n3Away(false); }
     var h = document.documentElement, on = n3On(), bar = n3BarOn(), filt = n3FiltOn(), dayb = n3DayOn();
     if (!N3.el) { if (!on) { n3Tell(false); h.removeAttribute("data-nav3"); return; } n3Build(); }
     if (!bar) N3.row = false; if (state.view !== "lineup") N3.row = false; if (!filt) N3.filt = false;
@@ -207,6 +209,25 @@
   // stays at the bottom of the screen with the dock (iPhone's toolbar and zoom move fixed things)
   function n3Pin() { if (N3.el) { var t = dockShift(); if (N3.el.style.transform !== t) N3.el.style.transform = t; } }
   window.addEventListener("scroll", n3Pin, { passive: true });
+  // 3.144.0 (DJ, Nov 26): "scrolling up should hide all buttons. Scrolling down at all makes them appear again."
+  // Reading further down the page slides the bar, the day arrows, the filter and layout buttons and Back away; the
+  // slightest scroll back toward the top (or reaching the top, or changing page) brings them back. Only a class on the
+  // two holders changes, and the CSS moves them with translate: nothing is rebuilt while a finger is down.
+  var N3S = { y: 0, down: 0, away: false, view: "" };
+  function n3Away(on) {
+    if (N3S.away === on) return; N3S.away = on;
+    if (N3.el) N3.el.classList.toggle("n3-away", on);
+    var dk = document.querySelector("nav.dock"); if (dk) dk.classList.toggle("n3-away", on);
+  }
+  window.addEventListener("scroll", function () {
+    var y = Math.max(0, window.scrollY || 0), dy = y - N3S.y; N3S.y = y;
+    if (N3S.view !== state.view) { N3S.view = state.view; N3S.down = 0; n3Away(false); return; }
+    if (N3.row || N3.filt || y < 24) { N3S.down = 0; n3Away(false); return; }
+    // the rubber band at the bottom of a page moves the page back up by itself: that is not a scroll up
+    var bottom = y + window.innerHeight >= document.documentElement.scrollHeight - 2;
+    if (dy > 0) { N3S.down += dy; if (N3S.down > 16) n3Away(true); }
+    else if (dy < -1 && !bottom) { N3S.down = 0; n3Away(false); }
+  }, { passive: true });
   if (window.visualViewport) { window.visualViewport.addEventListener("scroll", n3Pin); window.visualViewport.addEventListener("resize", n3Pin); }
   // ---- the day in every dated page's header (the bottom date picker is gone in this layout) ----
   function n3Dated() { var v = state.view; return v === "lineup" || v === "games" || v === "tv" || v === "moments" || (v === "news" && !(typeof nw !== "undefined" && nw.deep)); }

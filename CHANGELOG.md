@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.144.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Everywhere: the buttons at the bottom (the bar, the day arrows, the filter and layout buttons, Back) slide out of the way while you scroll down a page, and come back the moment you scroll back up at all. They also come back at the top of a page and when you change page.
+- News: the filter button at the bottom right is gone. The pills at the top of News do the filtering.
+
 ## 3.143.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News is reworked around Claude's writing. The page now runs: Just In (breaking headlines exactly as ESPN and The Athletic publish them, the moment they come in), The Lead (Claude's top story, now with Why it matters and What's next), The Breakdown (4 or 5 more stories, each broken down in Claude's words with the background a headline leaves out), On Deck (previews), In the Books (recaps), Stat Sheet (numbers) and League Check (each league).

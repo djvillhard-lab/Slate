@@ -36,3 +36,9 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 ## Layout button on the unfolded Duo (3.141.0)
 - In a pane on the bar's side, the bar gets a fourth button (`#n3-lay`, `.n3-bar.has-lay`, 250px wide) and pages with Back get `#n3-lay2` beside Back. It switches one full-screen page <-> two pages. All the logic is in 288-panes.js; see docs/pages/panes.md.
 - With the button the hammer is no longer the bar's middle, so `.n3-haslay .n3-row` moves the row of other pages over it. On a full-screen page the bar is centered at 75% minus 54px so it stays on the right half and clear of the day arrows.
+
+## Buttons hide while scrolling (3.144.0, DJ Nov 26, 2026)
+- DJ: "everywhere in app, scrolling up should hide all buttons. Scrolling down at all makes them appear again." Read as: the finger pushing up (reading further down) hides them; any scroll back toward the top shows them.
+- `n3Away` in 283-three-pages.js: one passive scroll listener; hides after 16px of travel down, shows on any move up over 1px (not the bounce at the page's bottom), at the top (under 24px), on a page change, and never hides while the hammer row or the league filter is open. It only toggles `.n3-away` on `#n3` and `nav.dock`; the CSS uses `translate` + opacity (so it stacks with each button's own `transform`). Nothing is rebuilt during a scroll (performance rule).
+- Covers the bar, day arrows, Today, the All games filter, the layout button and Back (Classic menu's button too, since it is in `nav.dock`). Not covered: the iPhone app's own native buttons on old builds, and Simple mode's bar (its own file).
+- News no longer gets the bottom-right filter button (`n3FiltOn` is All games only): the Front Page has its own pills.
