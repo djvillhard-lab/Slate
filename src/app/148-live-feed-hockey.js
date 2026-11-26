@@ -121,10 +121,9 @@
           var aft = list.querySelector(".fd-dlrow") || fb; list.insertBefore(c2, aft.nextSibling); } }
       if (plays.length) { var kb = el("button", "fd-scf" + (keyOnly ? " on" : ""), "Goals & penalties"); kb.type = "button"; kb.setAttribute("aria-pressed", keyOnly ? "true" : "false");
         kb.addEventListener("click", function () { FD.scOnly = !FD.scOnly; fdKeepY(renderFeed); }); fb.insertBefore(kb, after.nextSibling); } }
-    if (fb) fdLdHook(list, g, sum, sideOf, over, null);  // 3.146.0: the Leaders button, as on football
+    if (fb) fdLdHook(list, g, sum);  // 3.162.0: the Box score button (it took the Leaders button's place)
     body.appendChild(list);
     fdMoreRow(list, !keyOnly && total > shown, keyOnly);
-    var bxw = null; try { bxw = feedBox(g, sum); } catch (e) { bxw = null; } if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);

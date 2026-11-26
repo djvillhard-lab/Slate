@@ -313,15 +313,14 @@
     if (plays.length) { var fb = list.querySelector(".fd-bar"); if (!fb) { fb = el("div", "fd-bar"); fb.appendChild(el("p", "fd-ago", "")); list.insertBefore(fb, list.firstChild); }
       var kb = el("button", "fd-scf" + (bigOnly ? " on" : ""), "Big plays"); kb.type = "button"; kb.setAttribute("aria-pressed", bigOnly ? "true" : "false");
       kb.addEventListener("click", function () { FD.scOnly = !FD.scOnly; fdKeepY(renderFeed); }); fb.insertBefore(kb, fb.querySelector(".fd-dlw"));
-      fdLdHook(list, g, sum, sideOf, over); }
+      fdLdHook(list, g, sum); }
     body.appendChild(list);
     fdMoreRow(list, !bigOnly && plays.length > total, bigOnly);
-    var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);
   }
-  // the box score under the plays (3.40.3, football and basketball), from the same ESPN summary the feed already has
+  // the feed's box score (3.40.3), from the same ESPN summary the feed already has. Since 3.162.0 it opens from the Box score button (fdLdHook in 145), not under the plays
   function feedBox(g, sum) {
     if (!boxShown(g)) return null;
     var b = null; try { b = bxNorm(g.league, sum, null); } catch (e) { b = null; }
@@ -329,6 +328,7 @@
     var w = el("div", "fd-box"); w.setAttribute("data-id", "box"); w.appendChild(el("h3", "fd-boxh", "Box score"));
     var pl = null; try { pl = bxPlayers(g, b, true, false); } catch (e) { pl = null; } if (!pl) return null;
     w.appendChild(pl);
+    try { fdBoxShine(w, BX_SPORT[g.league] || ""); } catch (e) {}
     w.addEventListener("click", function () { setTimeout(function () { if (state.view !== "feed") return;
       // 3.66.9: redrawing keeps your place (on the unfolded Duo the page jumped back to the top)
       var sc = isDuo ? $("pane-r") : null, y = sc ? sc.scrollTop : (window.scrollY || 0); renderFeed(); if (sc) sc.scrollTop = y; else window.scrollTo(0, y); }, 0); }, true);  // "Show all players" and the team switch redraw this page

@@ -203,3 +203,13 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - 3.161.1 (DJ): basketball's "Top rated so far" card removed (Leaders button covers it); win probability sits alone in a slim card (`.hp-wponly`). Football, hockey, soccer and baseball never had a top-players card.
 - 3.161.1 (DJ: "the dots are confusing"): shot dots removed. Instead: `.hp-plus` points stamp on made baskets (+1/+2/+3, a trip to the line adds up), streak tags from hpStory (`st.tag`: Heating up at 3 straight makes, On fire at 4+, Ice cold at 4+ straight misses), and context lines: Second-chance points (basket within 12s of the team's offensive rebound), Points off the turnover (within 8s), Answers right back (within 10s of the other team's basket).
 - 3.161.2 (DJ: "I don't like the +2 and +3"): the `.hp-plus` points stamp removed. Don't bring it back. What stays: banners, streak tags, story lines.
+
+## 3.162.0: Box score button replaces Leaders; highlights in the box score (DJ, Nov 26)
+- DJ: "I want box score to be a button, rather than show beneath the live feed", "Box score should replace leaders". `fdLdHook(list, g, sum)` in 145 now draws
+  a "Box score" button (`.fd-bxb`, open state in `slate-feed-box`, default closed) and puts `feedBox` inside `.fd-list` under the bar. Nothing is appended under the plays.
+  `fdLeaders`/`FD_LD` are still in 145 but not drawn.
+- DJ: "highlighting specific players or stats to catch the users eye". `fdBoxShine` (145) decorates the feed's box score only (the quick look and matchup box
+  scores are untouched): `.bx-hi` on the team's best number per column (ties of 3+ and "more isn't better" columns in `FD_BX_SKIP` are skipped), `.bx-star` row +
+  `.bx-chip` for a basketball double/triple-double, else the player with the most team highs ("Team high: 24 PTS").
+- Seen on screen for basketball only (folded Duo); football, hockey, soccer and baseball had no games on at the time.
+- The unfolded Duo's wide feed layout in 097-panes.css keys on `#feed-body > .fd-box`, which no longer exists: told the panes thread.

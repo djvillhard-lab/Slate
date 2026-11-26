@@ -455,15 +455,39 @@
     var two = el("div", "hp-two"); (order || ["away", "home"]).forEach(function (sd) { var hd = el("div", "fd-ldc"); if (cols[sd]) { cols[sd].insertBefore(el("p", "fd-ldt", abbr(g, sd)), cols[sd].firstChild); two.appendChild(cols[sd]); } else two.appendChild(hd); });
     card.appendChild(two); return card;
   }
-  // the Leaders button on the "Last play" line, for every sport: it sits just before the Delay control and opens the card right under the line.
-  // Open or closed is remembered on this phone (one setting for every sport).
-  function fdLdHook(list, g, sum, sideOf, over, order) {
-    var ldc = fdLeaders(g, sum, sideOf, over, order); if (!ldc) return;
+  // 3.162.0 (DJ: "I want box score to be a button, rather than show beneath the live feed" ... "Box score should replace leaders"): the Box score
+  // button on the "Last play" line, for every sport. It took the Leaders button's place (fdLeaders above is no longer drawn) and opens the box
+  // score right under the line; the box score no longer sits under the plays. Open or closed is remembered on this phone, for every sport.
+  function fdBoxOpen() { try { return localStorage.getItem("slate-feed-box") === "1"; } catch (e) { return false; } }
+  function fdLdHook(list, g, sum) {
+    var bx = null; try { bx = feedBox(g, sum); } catch (e) { bx = null; } if (!bx) return;
     var fb = list.querySelector(".fd-bar"); if (!fb) { fb = el("div", "fd-bar"); fb.appendChild(el("p", "fd-ago", "")); list.insertBefore(fb, list.firstChild); }
-    var ldOn = fdLdOpen(), lb = el("button", "fd-scf fd-ldb" + (ldOn ? " on" : ""), "Leaders"); lb.type = "button"; lb.setAttribute("aria-expanded", ldOn ? "true" : "false");
-    lb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-leaders", ldOn ? "0" : "1"); } catch (e) {} fdKeepY(renderFeed); });
+    var on = fdBoxOpen(), lb = el("button", "fd-scf fd-ldb fd-bxb" + (on ? " on" : ""), "Box score"); lb.type = "button"; lb.setAttribute("aria-expanded", on ? "true" : "false");
+    lb.addEventListener("click", function () { try { localStorage.setItem("slate-feed-box", on ? "0" : "1"); } catch (e) {} fdKeepY(renderFeed); });
     fb.insertBefore(lb, fb.querySelector(".fd-dlw"));
-    if (ldOn) { var aft = list.querySelector(".fd-dlrow") || fb, nx = aft.nextSibling; while (nx && nx.classList && nx.classList.contains("sc-stats")) nx = nx.nextSibling; list.insertBefore(ldc, nx); }
+    if (on) { var aft = list.querySelector(".fd-dlrow") || fb, nx = aft.nextSibling; while (nx && nx.classList && nx.classList.contains("sc-stats")) nx = nx.nextSibling; list.insertBefore(bx, nx); }
+  }
+  // 3.162.0 (DJ: "highlighting specific players or stats to catch the users eye"): in the feed's box score, each column's best number on the
+  // team is lit in the accent, and the player with the most of them gets a tinted row and a word on why ("Double-double", "Team high: 24 PTS").
+  // Only numbers already in the box score are compared; columns where more isn't better (minutes, fouls, turnovers, plus-minus, rates) are left alone.
+  var FD_BX_SKIP = /^(MIN|TO|PF|F|\+\/-|PIM|#P|PC|P|PC-ST|ERA|AVG|OBP|SLG|OPS|FC|YC|RC|OF|LOB|BB|K|ER|R|H|HR|INT|SACKS|SCK|LOST|FUM|GA|TOI|PN|GV|FL|OG|QBR|RTG|LONG|LNG|AB|GP|GS)$/i;
+  function fdBoxShine(root, sport) {
+    Array.prototype.forEach.call(root.querySelectorAll(".bxp-list"), function (grp) {
+      var rows = Array.prototype.slice.call(grp.querySelectorAll(".bxp")); if (rows.length < 2) return;
+      var hdr = grp.previousElementSibling, gname = hdr && hdr.classList.contains("bxp-grp") ? hdr.textContent : "", pit = /pitch/i.test(gname), defn = /defen|goal/i.test(gname);
+      var val = function (c) { var b = c.querySelector("b"), t = b && b.firstChild ? String(b.firstChild.nodeValue || "") : ""; var m = /^(-?\d+(?:\.\d+)?)(?:[-\/]\d+)?$/.exec(t.trim()); return m ? parseFloat(m[1]) : null; };
+      var lab = function (c) { var i = c.querySelector("i"); return i ? i.textContent.trim() : ""; };
+      var best = {}, hits = rows.map(function () { return []; });
+      rows.forEach(function (r) { Array.prototype.forEach.call(r.querySelectorAll(".bxp-c"), function (c) { var L = lab(c), v = val(c); if (!L || v == null || v <= 0) return;
+        var skip = FD_BX_SKIP.test(L) && !((pit && /^(K|IP)$/i.test(L)) || (!pit && sport === "baseball" && /^(H|HR|R)$/i.test(L)) || (defn && /^(INT|SACKS|SCK)$/i.test(L))); if (skip) return;
+        if (!best[L] || v > best[L].v) best[L] = { v: v, n: 1 }; else if (v === best[L].v) best[L].n++; }); });
+      rows.forEach(function (r, ri) { Array.prototype.forEach.call(r.querySelectorAll(".bxp-c"), function (c) { var L = lab(c), v = val(c), B = best[L]; if (B && v === B.v && B.n <= 2 && v >= (/^(PTS|YDS)$/i.test(L) ? 2 : 1)) { c.classList.add("bx-hi"); hits[ri].push({ L: L, v: v, t: c.querySelector("b").firstChild.nodeValue }); } }); });
+      var top = -1; hits.forEach(function (h, i) { if (h.length >= 2 && (top < 0 || h.length > hits[top].length)) top = i; });
+      var chip = function (r, txt) { var nm = r.querySelector(".bxp-nm"); if (nm) { var e = el("span", "bx-chip", txt); var st = nm.querySelector(".bxp-star"); nm.insertBefore(e, st || null); } };
+      if (sport === "bball") rows.forEach(function (r, ri) { var n10 = 0; Array.prototype.forEach.call(r.querySelectorAll(".bxp-c"), function (c) { if (/^(PTS|REB|AST|STL|BLK)$/i.test(lab(c)) && val(c) >= 10) n10++; });
+        if (n10 >= 2) { r.classList.add("bx-star"); chip(r, n10 >= 3 ? "Triple-double" : "Double-double"); if (ri === top) top = -1; } });
+      if (top >= 0) { var h0 = hits[top].filter(function (x) { return /^(PTS|YDS|G|H|K|SV|TD|REC|SOG|SH|ST)$/i.test(x.L); })[0] || hits[top][0]; rows[top].classList.add("bx-star"); chip(rows[top], "Team high: " + h0.t.trim() + " " + h0.L); }
+    });
   }
   // the live games in the switcher's order: your slate's first, then by start time
   function fdIn(x, sc) { return feedLive(x) && (sc === "all" || (sc === "slate" ? inLineup(x.id) : x.league === sc)); }
@@ -774,9 +798,8 @@ function renderFeed(fromPoll) {
     fdAgo(list, sum, st.state === "in", g); body.appendChild(list);
     // 3.73.1 (DJ: the top of the page left no room for plays on the folded Duo): the leaders card is folded away behind a Leaders button on the
     // "Last play" line, and opens right under that line. Open or closed is remembered on this phone.
-    if (allPlays.length) fdLdHook(list, g, sum, sideOf, over);
+    if (allPlays.length) fdLdHook(list, g, sum);
     fdMoreRow(list, !scOnly && allPlays.length > shown && shown >= cap, scOnly);
-    var bxw = feedBox(g, sum); if (bxw) body.appendChild(bxw);  // the box score under the plays (3.40.3)
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);

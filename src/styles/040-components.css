@@ -1943,3 +1943,12 @@ html .gv-head .gv-act { position: relative; min-height: 0 !important; height: 30
 /* basketball's part of the play cards with more flair (3.159.0; 3.161.1: the shot dots are gone, DJ found them confusing): a points stamp beside a made basket's headline */
 .hp-play > .fd-story { border-left-color: color-mix(in srgb, var(--hp-team, var(--accent)) 70%, transparent); }
 .fd-play.hp-play.fd-moment[style*="--hp-team"] { border-left-color: var(--hp-team); }
+
+/* 3.162.0 Live feed: the box score opens from the Box score button, with each column's team best lit and the standout player's row tinted (DJ, Nov 26) */
+.fd-list > .fd-box { margin-top: 0; padding: 10px 10px 4px; border-radius: 8px; background: var(--card); border: 1px solid var(--hair); }
+.fd-list > .fd-box .fd-boxh { display: none; }
+.fd-box .bxp-c.bx-hi b { color: var(--accent); }
+.fd-box .bxp-c.bx-hi i { color: var(--accent); opacity: .85; }
+.fd-box .bxp.bx-star { margin: 0 -6px; padding-left: 6px; padding-right: 6px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
+.fd-box .bxp.bx-star + .bxp, .fd-box .bxp.bx-star { border-top-color: transparent; }
+.bx-chip { margin-left: 6px; padding: 1px 7px 2px; border-radius: 6px; font-size: 11px; font-weight: 800; white-space: nowrap; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }

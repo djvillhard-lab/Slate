@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.162.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed, every sport: the box score is now a Box score button on the line above the plays, in place of Leaders. Tap it and the box score opens right there; it no longer sits under the plays. The app remembers whether you left it open.
+- Inside that box score, the team's best number in each column is lit in your accent color, and the standout player's row is tinted with a word on why: "Double-double", "Triple-double" or "Team high: 24 PTS". Columns where more isn't better (minutes, fouls, turnovers) are left alone.
+
 ## 3.161.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed, basketball: the "+2" and "+3" stamps beside made baskets are gone.
