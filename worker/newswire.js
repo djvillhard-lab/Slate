@@ -18,7 +18,9 @@ const LGS = [  // key (the app's league key), ESPN path, The Athletic's feed, ho
   ["ncaam", "basketball/mens-college-basketball", "college-basketball", 2], ["nhl", "hockey/nhl", "nhl", 2], ["mlb", "baseball/mlb", "mlb", 2],
   ["epl", "soccer/eng.1", "premier-league", 2], ["ncaaw", "basketball/womens-college-basketball", "womens-college-basketball", 1],
 ];
-export const WIRE_AUTO = { DAY_MAX: 6, GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
+// 3.141.2 (DJ, Nov 26: "rewrite one an hour from 6am to midnight"): one write-up in every Central hour from 6 AM through 11 PM, 18 a day,
+// news or not. DAY_MAX leaves room for a few retries of failed passes. The GAP_ and NEW_ numbers are no longer used.
+export const WIRE_AUTO = { DAY_MAX: 22, GAP_BREAK: 90, GAP_QUIET: 180, NEW_MIN: 5, NEW_FINALS: 3, FROM_HOUR: 6 };
 const FRESH_MS = 30 * 3600000;
 const NATIONAL = /^(ABC|CBS|NBC|FOX|ESPN|ESPN2|TNT|TBS|FS1|Prime Video|Peacock|NFL Network|NBA TV|truTV|USA Net|USA)$/i;
 const ctParts = (t) => { const p = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date(t)).forEach((x) => { p[x.type] = x.value; }); return { day: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) }; };
@@ -64,7 +66,7 @@ export async function wireSoon(env, getDoc, nowMs) {
   const now = nowMs || Date.now(), ct = ctParts(now); if (ct.hour < WIRE_AUTO.FROM_HOUR) return false;
   const saved = (await getDoc(env, "newsdeep/wire-auto")) || {}; if (saved.day !== ct.day) return true;
   if ((saved.n || 0) >= WIRE_AUTO.DAY_MAX) return false;
-  if ((now - (Number(saved.lastAt) || 0)) / 60000 >= WIRE_AUTO.GAP_BREAK) return true;
+  if (ctParts(Number(saved.lastAt) || 0).hour !== ct.hour || now - (Number(saved.lastAt) || 0) > 3600000) return true;   // nothing written this hour yet
   return !(await written(env, getDoc, ct.day, now));   // today's page has no finished pass yet (the first one failed): don't wait 90 minutes
 }
 // Should Claude write now? Returns null (no), or { facts, day, state } for the caller to start the write-up with.
@@ -75,7 +77,8 @@ export async function wireDue(env, getDoc, nowMs) {
   if ((st.n || 0) >= WIRE_AUTO.DAY_MAX) return null;
   const gap = (now - (Number(st.lastAt) || 0)) / 60000;
   const first = !st.n || !(await written(env, getDoc, ct.day, now));   // nothing finished yet today
-  if (!first && gap < WIRE_AUTO.GAP_BREAK) return null;   // too soon for anything: don't even fetch
+  const hourly = ctParts(Number(st.lastAt) || 0).hour !== ct.hour || gap > 60;   // nothing written this hour yet
+  if (!first && !hourly) return null;   // too soon for anything: don't even fetch
   // 3.140.7: the Central day, not the Eastern one (after 11 PM Central, Eastern is already tomorrow and the night's finals were missed): today's, plus yesterday's until noon Central so last night's late games get their recap
   const ymd = (off) => new Date(Date.parse(ct.day + "T12:00:00Z") + off * 86400000).toISOString().slice(0, 10).replace(/-/g, ""), days = [ymd(0)].concat(ct.hour < 12 ? [ymd(-1)] : [], ct.hour >= 18 ? [ymd(1)] : []);   // and tomorrow's from 6 PM, for the next games up
   const [lists, boards] = await Promise.all([
@@ -91,7 +94,7 @@ export async function wireDue(env, getDoc, nowMs) {
   const live = all.filter((g) => g.status === "live").sort(byW).slice(0, 5);
   const next = all.filter((g) => g.status === "not started" && Date.parse(g.start) - now < 20 * 3600000 && Date.parse(g.start) > now - 3600000).sort(byW).slice(0, 10);
   const seen = new Set(st.seen || []), fresh = hs.filter((a) => !seen.has(a.url)), freshF = finals.filter((g) => !seen.has("f:" + g.ev));
-  const due = first || ((fresh.some((a) => a.kind === "HeadlineNews") || freshF.length >= WIRE_AUTO.NEW_FINALS) && gap >= WIRE_AUTO.GAP_BREAK) || (fresh.length + freshF.length >= WIRE_AUTO.NEW_MIN && gap >= WIRE_AUTO.GAP_QUIET);
+  const due = first || hourly;
   if (!due) return null;
   // new stories first, so they're the ones kept if the facts have to be trimmed
   const ordered = fresh.concat(hs.filter((a) => seen.has(a.url)));

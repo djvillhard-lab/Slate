@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.141.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News: Claude now rewrites the page once an hour, every hour from 6 AM to midnight Central (18 times a day, a few minutes past the hour), instead of up to 6 times a day when news came in.
+
 ## 3.141.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Soccer one-liners list each scorer with the minutes they scored, one row per team, home team first: "SCP: Suárez 33' (pen), 80'" and "MAN: Fernandes 48' (pen), 50'". Own goals read "Pavlovic 12' (OG)".

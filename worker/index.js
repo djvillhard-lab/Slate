@@ -715,7 +715,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
     } catch (e) {
       await step.do("note the failure", async () => { await mergeDoc(this.env, t.path, t.patch({ writing: { at: p.at, kind: p.kind, error: String(e && e.message || e).slice(0, 200) } })); return true; });
       // the scheduled News pass (3.140.5): a failed one still counts toward the day's limit, but the next try comes in about 20 minutes, not 90
-      if (p.user === "wire") await step.do("news wire: try again sooner", async () => { const st = await getDoc(this.env, "newsdeep/wire-auto"); if (st && st.lastAt) await putDoc(this.env, "newsdeep/wire-auto", Object.assign({}, st, { lastAt: Date.now() - (WIRE_AUTO.GAP_BREAK - 20) * 60000, seen: (st.seen || []).slice(40) })); return true; });
+      if (p.user === "wire") await step.do("news wire: try again sooner", async () => { const st = await getDoc(this.env, "newsdeep/wire-auto"); if (st && st.lastAt) await putDoc(this.env, "newsdeep/wire-auto", Object.assign({}, st, { lastAt: Date.now() - 61 * 60000, seen: (st.seen || []).slice(40) })); return true; });
     }
   }
 }

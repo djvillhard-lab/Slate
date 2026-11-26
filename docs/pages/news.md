@@ -58,6 +58,7 @@ further filter the information shown."
 - Open: delete the retired News code; Settings may still list News options that no longer apply (check); related game
   on the story view; DJ's read of the first real passes (tune the prompt from his notes).
 
+- 3.141.2 (DJ, Nov 26: "Raise it to rewrite one an hour from 6am to midnight"): the schedule is now one write-up in every Central hour, 6 AM through 11 PM (18 a day, at about 6 past the hour), whether or not there is news. This replaces the "only when there is news, 6 a day" rules below. Told DJ the cost: roughly $110 to $165 a month at the measured $0.20 to $0.31 a pass.
 - 3.140.7: the scheduled pass picks its games by the Central day (the Eastern date rolled an hour early and the 11:26 PM pass on Nov 25 had previews for the next day but no recaps). First automatic v2 pass confirmed saved 11:27 PM CT Nov 25 (74 seconds, 25 wire items, 4 previews, 6 leagues).
 
 ## Done
