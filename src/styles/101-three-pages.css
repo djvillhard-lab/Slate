@@ -121,3 +121,20 @@ html[data-n3f] .n3-dt { bottom: 162px; }
 html[data-nav3] header.top .pillgroup { gap: 6px !important; }
 html[data-nav3] .toprow.lineup-top > .pillgroup { grid-template-columns: repeat(2, calc(44px / var(--z, 1))) !important; grid-template-rows: calc(44px / var(--z, 1)) !important; gap: 6px !important; }
 html[data-nav3] .toprow.lineup-top > .pillgroup #l-btn-settings { color: var(--head) !important; }
+
+/* 3.141.0 (DJ, Nov 25): the unfolded Duo's layout button, at the end of the bar: a picture of the layout you are in
+   (two pages, or one page across the whole screen). The switch itself is in 288-panes.js. */
+.n3-bar.has-lay { width: 250px; grid-template-columns: 1fr 1fr 1fr 54px; left: calc(50% - 27px); }
+.n3-lay { width: 46px; height: 46px; }
+.n3-lay::before { content: ""; position: absolute; left: -5px; top: 9px; bottom: 9px; width: 1px; background: var(--n3-line); }
+.n3-lay svg, .n3-lay2 svg { width: 27px; height: 21px; }
+.n3-lay[data-lay="full"] .n3-l2, .n3-lay[data-lay="two"] .n3-l1, .n3-lay2[data-lay="full"] .n3-l2, .n3-lay2[data-lay="two"] .n3-l1 { display: none; }
+/* the row of other pages stays over the hammer, which is no longer the middle of the bar */
+.n3-haslay .n3-row { left: calc(50% - 54px); }
+/* a full-screen page: the bar stays on the right half, under the thumb, and never on the fold */
+html.pn-full .n3-bar.has-lay { left: calc(75% - 54px); }
+html.pn-full .n3-haslay .n3-row { left: calc(75% - 81px); }
+/* on a page with Back (a game, a Live feed): the same button, beside Back */
+.n3-lay2 { position: absolute; right: 74px; bottom: 0; z-index: 2; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); padding: 0;
+  background: var(--n3-glass); border: 1px solid var(--n3-line); -webkit-backdrop-filter: blur(6px) saturate(1.8); backdrop-filter: blur(6px) saturate(1.8); box-shadow: var(--n3-hi); transition: transform .12s ease-out; -webkit-tap-highlight-color: transparent; }
+.n3-lay2:active { transform: scale(.92); }

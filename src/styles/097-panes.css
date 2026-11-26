@@ -43,3 +43,20 @@ html.in-pane .title.has-brand.one-line > svg.brand { width: 42px !important; hei
 .pn-hinge { width: 0; }
 .pn-hinge::after { display: none; }
 .pn-grip { width: 32px; margin-left: -16px; }
+
+/* ---------- 3.141.0 (DJ, Nov 25): full-screen pages on the unfolded Duo ----------
+   One frame covers both halves (288-panes.js pnPlace); the fold grip only shows with two pages. */
+.pn-one .pn-hinge { display: none; }
+/* the page uses the whole width */
+html.in-pane.pn-full main.wrap, html.in-pane.pn-full .top-inner { max-width: none !important; }
+/* the slate: its times run in two columns */
+html.in-pane.pn-full #lineup-body .tgroups { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+/* All games in "2 columns": three across */
+html.in-pane.pn-full #games-body.ag2 .glist { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+/* each column is as wide as a folded-phone page, so the time sits above its games as it does there */
+html.in-pane.pn-full #lineup-body .tgroup { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+html.in-pane.pn-full #lineup-body .tg-time { display: flex; align-items: baseline; gap: 4px; padding: 0 2px; }
+html.in-pane.pn-full #lineup-body .tg-time b { font-size: 22px; }
+html.in-pane.pn-full #lineup-body .tg-time i { margin: 0; font-size: 13px; }
+html.in-pane.pn-full #lineup-body .tg-chev { margin: 0 0 0 6px; align-self: center; }
+html.in-pane.pn-full #lineup-body button.tg-time { min-height: 32px; }

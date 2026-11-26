@@ -21,7 +21,7 @@
     return Math.round(base + (Number(state.foldNudge) || 0));
   }
   function applyLayout(force) {
-    var root = document.documentElement, split = deviceMode() === "duo" && mqSplit.matches, big = mqBig.matches;
+    var root = document.documentElement, split = !PANE && deviceMode() === "duo" && mqSplit.matches, big = !PANE && mqBig.matches;
     // 3.80.0: unfolded, the screen holds two panes that each run their own page (292-panes.js); this copy of the page
     // waits behind them, laid out like the folded phone, and comes back when the phone is folded
     var host = split && panesOK();

@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.141.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- New on the unfolded iPhone Duo (held sideways): a page now opens across the whole screen instead of always sharing it with a second page.
+- Tap a game, a Live feed or a team on a full-screen page and it opens on the right half, with the page you were on kept on the left. Tap another game on the left and the right side changes. Back closes it and the page takes the whole screen again.
+- The bar has a fourth button, a small picture of the layout you are in. Tap it to switch between one full-screen page and two pages side by side. On a game or Live feed the same button sits beside Back.
+- Each page remembers how you left it: a page you put in two pages comes back in two pages.
+- On a full-screen page the slate runs in two columns, and All games in "2 columns" shows three across. The bar stays on the right half, under your thumb.
+- Unfolding: the page from the front screen opens on the side with the bar. With two pages, the fold grip still swaps the sides.
+
 ## 3.140.7 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: a pass written after 11 PM Central looked at the next day's games and skipped the night's finished ones, so it had no recaps. Passes now go by the Central day, so late passes recap that night's games.

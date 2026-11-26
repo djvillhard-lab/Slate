@@ -32,3 +32,7 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 
 ## No live dot on the bar (3.140.4, DJ Nov 25, 2026)
 - DJ: "Remove red dot on all games menu." The All games button in the bar no longer gets a red dot when a game is live. The league rail's dots (`.n3-lg .n3-live`) stay.
+
+## Layout button on the unfolded Duo (3.141.0)
+- In a pane on the bar's side, the bar gets a fourth button (`#n3-lay`, `.n3-bar.has-lay`, 250px wide) and pages with Back get `#n3-lay2` beside Back. It switches one full-screen page <-> two pages. All the logic is in 288-panes.js; see docs/pages/panes.md.
+- With the button the hammer is no longer the bar's middle, so `.n3-haslay .n3-row` moves the row of other pages over it. On a full-screen page the bar is centered at 75% minus 54px so it stays on the right half and clear of the day arrows.

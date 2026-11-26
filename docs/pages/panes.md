@@ -1,4 +1,39 @@
-# Two panes on the unfolded Duo
+# The unfolded Duo: full-screen pages and two pages
+
+## Full-screen pages (3.141.0, DJ Nov 25, 2026: "B plus the bar button")
+DJ: "I liked the idea of two pages at once, but now I'm wanting a full screen news page and other pages. So I want
+options and intuitive controls." Concepts: https://claude.ai/artifact/Jq1JSgBNZfibgcuANLqftv (mock files in the project
+files under `duo-layout/`). DJ picked B (pages open full, a tap opens things beside them) with A's layout button.
+- Still two frames (`?pane=a/b`). **Full** (`PN.full`): the right side's frame spans both halves (`pnPlace`, grid column
+  `1 / 4`), the other frame waits under it, hidden, in the right half. The pane gets `html.pn-full`.
+- **Opens beside** (`PN.beside`): on a full page, `openMatchup` / `openFeed` / `openTeam` call the host's
+  `slatePaneBeside`, which sends the route to the hidden frame's `paneGo`. Every `paneGo` first tells the host
+  (`slatePaneWake`): a hidden frame opening a game, feed, team or News story flips the layout, so the page frame becomes
+  the left side (same frame, so its scroll and state stay) and the hidden one shows on the right. That also covers the
+  News Front Page, which calls the other frame's `paneGo` / `newsStory` itself. The right pane gets `html.pn-beside`.
+- **Back closes it**: the pane wraps `goBack`; leaving the last game/feed/team view while `pn-beside` calls
+  `slatePaneClose`, and the page on the left goes full again. A story's Close does the same through `slatePaneWake`.
+  Swapping with the grip, or the layout button, turns "beside" into plain two pages.
+- **Layout button** (`#n3-lay` at the end of the bar, `#n3-lay2` beside Back on pages with no bar; 283-three-pages.js)
+  calls `slatePaneLayout(id)`: full <-> two. It shows the layout you are in. Going to two pages, the left side shows its
+  last page, never the same page as the right.
+- **Each page remembers** (`localStorage["slate-duo-lay"]`, only `"two"` is stored; full is the default): when the bar's
+  side moves to another menu page, that page's layout is applied (`slatePaneSync`; not in the first 4 s after unfolding,
+  not while something is open beside).
+- Unfolding now puts the front screen's page on the RIGHT (the bar's side), full unless that page remembers two pages.
+  This replaces 3.90.6's "front page on the left". Folding shows the full page, or the left page when two are up.
+- A pane no longer splits or goes "roomy" by its own width (`290-layout.js`: `!PANE &&`), so a full page keeps the
+  folded phone's text sizes. Wide layouts live in `097-panes.css` under `html.in-pane.pn-full`: the slate's times in two
+  columns, All games "2 columns" three across. The bar sits on the right half (`101-three-pages.css`), never on the fold.
+- `scripts/shots.py --sizes open` now shows the full page; `--two` for two pages; `window.slatePaneInfo()` on the host
+  says which frame is where.
+### Open
+- News has no wide layout of its own yet (the News thread holds its files). Next: lead story left, Five things right.
+- Upright (portrait) unfolded is still one stretched page: full page works, "opens below the fold" is not built.
+- No slide animation when a page opens beside or closes.
+- The hold-for-three-choices on the button was dropped: there are only two layouts.
+
+# Two panes (the "two pages" layout)
 
 Shipped 3.80.0 (DJ, Nov 17, 2026): "split the screen in two, drag the right side to the left, pick a new page for the
 right, so I can have two live feeds at once."

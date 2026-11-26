@@ -66,6 +66,19 @@
       });
       bar.appendChild(b);
     });
+    // 3.141.0 (DJ): on the unfolded Duo the bar ends with a layout button: this page across the whole screen, or two
+    // pages side by side. It shows the layout you are in. On a page with Back instead of the bar, the same button
+    // sits beside Back. The two sides and the switch itself live in 288-panes.js.
+    if (PANE) {
+      var layIc = function () {
+        var s2 = el("span", "n3-l2"); s2.innerHTML = '<svg viewBox="0 0 28 22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="10.5" height="16" rx="2.5"/><rect x="15.5" y="3" width="10.5" height="16" rx="2.5"/></svg>';
+        var s1 = el("span", "n3-l1"); s1.innerHTML = '<svg viewBox="0 0 28 22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="24" height="16" rx="2.5"/></svg>';
+        return [s2, s1];
+      };
+      var layGo = function () { N3.row = false; N3.filt = false; try { window.parent.slatePaneLayout(PANE); } catch (e) {} };
+      var lb = el("button", "n3-b n3-lay"); lb.type = "button"; lb.id = "n3-lay"; lb.hidden = true; layIc().forEach(function (x) { lb.appendChild(x); }); lb.addEventListener("click", layGo); bar.appendChild(lb);
+      var lb2 = el("button", "n3-lay2"); lb2.type = "button"; lb2.id = "n3-lay2"; lb2.hidden = true; layIc().forEach(function (x) { lb2.appendChild(x); }); lb2.addEventListener("click", layGo); root.appendChild(lb2);
+    }
     root.appendChild(bar);
     // All games on the Duo: the filter button and what it opens
     var fp = el("div", "n3-fp"); fp.id = "n3-fp"; fp.hidden = true;
@@ -157,7 +170,9 @@
     else if (filt && state.league !== "all") filterOpts(visibleGames()).forEach(function (o) { if (o[0] === state.league) lgTag = o[1]; });
     var dNow = dayb ? n3DayOf() : "";
     var offDay = dayb && dNow !== todayInHome() ? fmtDate(dNow, { weekday: "short" }) + " " + fmtDate(dNow, { month: "short", day: "numeric" }) : "";
-    var sig = [on, bar, filt, dayb, offDay, state.view, N3.row, N3.filt, liveAny, lgTag].join("|");
+    // the layout button: only on the side of the unfolded Duo the bar works ("full" or "two")
+    var lay = PANE && on && h.classList.contains("pn-right") ? (h.classList.contains("pn-full") ? "full" : "two") : "";
+    var sig = [on, bar, filt, dayb, offDay, state.view, N3.row, N3.filt, liveAny, lgTag, lay].join("|");
     if (sig !== N3.sig) {
       N3.sig = sig;
       N3.el.hidden = !on;
@@ -168,6 +183,11 @@
         if (p === "lineup") { b.setAttribute("aria-expanded", N3.row ? "true" : "false"); b.setAttribute("aria-label", cur ? (N3.row ? "Close more pages" : "Slate. Tap for more pages") : "Slate"); }
       });
       $("n3-row").hidden = !N3.row;
+      if ($("n3-lay")) {
+        var layLab = lay === "full" ? "Full screen. Tap for two pages" : "Two pages. Tap to give this page the whole screen";
+        $("n3-bar").classList.toggle("has-lay", !!lay); N3.el.classList.toggle("n3-haslay", !!lay);
+        [$("n3-lay"), $("n3-lay2")].forEach(function (b, i) { b.hidden = !lay || (i === 1 && bar); b.setAttribute("data-lay", lay); b.setAttribute("aria-label", layLab); });
+      }
       $("n3-fb").hidden = !filt; $("n3-fb").setAttribute("aria-expanded", N3.filt ? "true" : "false");
       $("n3-dr").hidden = !dayb || N3.row; $("n3-dt").hidden = !offDay || N3.row || N3.filt; $("n3-dd").hidden = !offDay || N3.row || N3.filt; $("n3-dd").textContent = offDay;
       var tg = $("n3-fb").querySelector(".n3-tag"); tg.textContent = lgTag; tg.hidden = !lgTag || N3.filt;

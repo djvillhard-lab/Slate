@@ -22,20 +22,71 @@
   function pnOther(id) { return id === "a" ? "b" : "a"; }
   function pnWin(id) { var f = PN.frames[id]; try { return f && f.contentWindow && f.contentWindow.SlateApp ? f.contentWindow : null; } catch (e) { return null; } }
   function pnSave() { try { sessionStorage.setItem(PN_KEY, JSON.stringify({ left: PN.left, routes: PN.routes, lock: !!PN.lock })); } catch (e) {} }
+  // ---- 3.141.0 (DJ, Nov 25: "B plus the bar button"): full-screen pages on the unfolded Duo ----
+  // A page opens across the whole screen (PN.full): the right side's frame is stretched over both halves and the other
+  // frame waits hidden under it. Tapping a game, Live feed, team or story there opens it beside the page (PN.beside):
+  // the page slides into the left half, the hidden frame shows the game on the right, and Back on the right closes it
+  // and gives the page the whole screen again. The layout button in the bar (283-three-pages.js) switches between
+  // full screen and two pages by hand, and each page remembers which one it was left in (localStorage slate-duo-lay,
+  // only "two" is kept: full screen is the default).
+  var PN_LAY_KEY = "slate-duo-lay";
+  function pnKind(r) { return String(r || "lineup").split(":")[0]; }
+  function pnDetail(r) { return /^(feed|game|team):/.test(r || ""); }
+  function pnPrefs() { try { return JSON.parse(localStorage.getItem(PN_LAY_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function pnWant(r) { return pnPrefs()[pnKind(r)] === "two" ? "two" : "full"; }
+  function pnRemember(r, lay) { if (pnDetail(r)) return; try { var p = pnPrefs(), k = pnKind(r); if (lay === "two") p[k] = "two"; else delete p[k]; localStorage.setItem(PN_LAY_KEY, JSON.stringify(p)); } catch (e) {} }
+  function pnAfter() { pnPlace(); pnSave(); pnAlign(); setTimeout(pnAlign, 300); if (typeof nativeSync === "function") nativeSync(); }
+  // full screen: the frame `id` takes both halves
+  function pnFull(id) { PN.full = true; PN.beside = false; PN.story = false; PN.left = pnOther(id); pnAfter(); }
+  // two pages: the right side stays where the bar is; the left side shows its last page, never the same page twice
+  function pnTwo() {
+    PN.full = false; PN.beside = false; PN.story = false;
+    var lw = pnWin(PN.left), rr = PN.routes[pnRight()], lr = PN.routes[PN.left];
+    if (lw && lw.SlateApp.paneGo && (!lr || lr === rr || pnDetail(lr))) lw.SlateApp.paneGo(rr === "games" ? "lineup" : "games");
+    pnAfter();
+  }
+  // the layout button: full screen <-> two pages, remembered for the page the bar is on
+  window.slatePaneLayout = function (id, want) {
+    if (!PN.on) return;
+    var to = want || (PN.full ? "two" : "full"), r = PN.routes[pnRight()];
+    if (to === "two") { if (PN.full) pnTwo(); else { PN.beside = false; PN.story = false; pnAfter(); } } else pnFull(PN.full ? pnRight() : (id === "a" || id === "b" ? id : pnRight()));
+    pnRemember(r, to);
+  };
+  window.slatePaneInfo = function () { return { on: PN.on, full: !!PN.full, beside: !!PN.beside, left: PN.left, right: pnRight() }; };
+  // a frame is about to open something. The hidden frame opening a game, feed, team or story means "open it beside
+  // the page": the page moves to the left half and this frame shows on the right.
+  window.slatePaneWake = function (id, r) {
+    if (!PN.on) return;
+    var det = r === "story" || pnDetail(r);
+    if (PN.full && id === PN.left && det) { PN.full = false; PN.beside = true; PN.story = r === "story"; PN.left = pnOther(id); pnAfter(); return; }
+    // a story's Close puts the right side back on its old page: the page on the left gets the whole screen again
+    if (PN.beside && PN.story && id === pnRight() && !det) pnFull(PN.left);
+  };
+  // the full-screen page tapped a game, Live feed or team: it opens in the other frame, beside the page
+  window.slatePaneBeside = function (id, route) {
+    if (!PN.on || !PN.full || id !== pnRight()) return false;
+    var w = pnWin(pnOther(id)); if (!w || !w.SlateApp.paneGo) return false;
+    w.SlateApp.paneGo(route); return true;
+  };
+  // Back on the right side left the game that was opened beside the page: the page takes the whole screen again
+  window.slatePaneClose = function (id) { if (PN.on && PN.beside && id === pnRight()) pnFull(PN.left); };
   function pnLoad() { try { return JSON.parse(sessionStorage.getItem(PN_KEY) || "null") || {}; } catch (e) { return {}; } }
 
   // ---- the host: builds the two frames and the grip ----
   function enterPanes() {
     if (PN.on) return;
-    var sv = pnLoad(); PN.on = true; PN.lock = !!sv.lock;
+    var sv = pnLoad(); PN.on = true; PN.lock = !!sv.lock; PN.beside = false; PN.story = false; PN.at = Date.now();
     PN.left = sv.left === "b" ? "b" : "a";
     PN.routes = sv.routes && typeof sv.routes === "object" ? sv.routes : {};
     // DJ (Nov 17): the left side opens on whatever the front screen showed; the right side keeps its last page, but
     // never the same page as the left (then All games, or the slate when the left is All games)
-    var lr = pnRouteOf(), rr = PN.routes[pnOther(PN.left)];
-    PN.routes[PN.left] = lr;
-    if (!rr || rr === lr) rr = lr === "games" ? "lineup" : "games";
-    PN.routes[pnOther(PN.left)] = rr;
+    // 3.141.0 (DJ): the front screen's page now opens on the right side, where the bar is, across the whole screen
+    // unless that page was left in two pages; the other side keeps its last page for when two pages come back
+    var lr = pnRouteOf(), rr = PN.routes[PN.left];
+    if (PN.routes[pnOther(PN.left)] && PN.routes[pnOther(PN.left)] !== lr && !pnDetail(PN.routes[pnOther(PN.left)])) rr = PN.routes[pnOther(PN.left)];
+    if (!rr || rr === lr || pnDetail(rr)) rr = lr === "games" ? "lineup" : "games";
+    PN.routes[pnOther(PN.left)] = lr; PN.routes[PN.left] = rr;
+    PN.full = pnWant(lr) !== "two";
     state.menuOpen = false;
     document.documentElement.classList.add("panes");
     var box = el("div", "pn"); box.id = "panes";
@@ -63,7 +114,7 @@
   function exitPanes() {
     if (!PN.on) return;
     // DJ (Nov 17): folding shows the left side's page on the front screen
-    var lw = pnWin(PN.left), lr = PN.routes[PN.left] || "lineup";
+    var keep = PN.full ? pnRight() : PN.left, lw = pnWin(keep), lr = PN.routes[keep] || "lineup";
     try { if (lw && lw.SlateApp.paneRoute) lr = lw.SlateApp.paneRoute(); } catch (e) {}
     PN.on = false; PN.drag = null; pnSave();
     if (PN.el) PN.el.remove(); PN.el = null; PN.frames = {};
@@ -75,9 +126,13 @@
     if (!PN.on) return;
     ["a", "b"].forEach(function (id) {
       var f = PN.frames[id], left = PN.left === id;
-      f.style.gridColumn = left ? "1" : "3";
-      f.title = left ? "Left side" : "Right side";
+      // full screen: the right side's frame covers both halves; the other one waits under it, where it will show
+      f.style.gridColumn = PN.full ? (left ? "3" : "1 / 4") : left ? "1" : "3";
+      f.style.visibility = PN.full && left ? "hidden" : ""; f.style.zIndex = PN.full && !left ? "2" : "";
+      f.title = PN.full ? (left ? "" : "Page") : left ? "Left side" : "Right side";
+      if (PN.full && left) f.setAttribute("aria-hidden", "true"); else f.removeAttribute("aria-hidden");
     });
+    if (PN.el) PN.el.classList.toggle("pn-one", !!PN.full);
     pnMark();
   }
   // DJ (Nov 17): one menu. The menu and Back (the app's own capsule, or the right side's buttons in a browser) always
@@ -92,7 +147,10 @@
       var left = PN.left === id;
       // locked: the left side keeps its own menu and Back and opens things on its own side
       // the left side never has its own menu or Back (DJ). Unlocked, it also opens things on the right side.
-      d.classList.toggle("pn-left", left); d.classList.toggle("pn-fwd", left && !PN.lock); d.classList.toggle("pn-right", !left);
+      var was = d.className;
+      d.classList.toggle("pn-left", left); d.classList.toggle("pn-fwd", left && !PN.lock && !PN.full); d.classList.toggle("pn-right", !left);
+      d.classList.toggle("pn-full", !!PN.full && !left); d.classList.toggle("pn-beside", !!PN.beside && !left);
+      if (was !== d.className) { var mw = pnWin(id); try { if (mw && mw.SlateApp.paneMark) mw.SlateApp.paneMark(); } catch (e) {} }
       // the app draws the menu capsule over the right side: that side hides its own, like the app's floating menu does
       if (!left && nm) d.setAttribute("data-float", ""); else d.removeAttribute("data-float");
       var w = pnWin(id); if (left && w && w.SlateApp.paneMenu) w.SlateApp.paneMenu(false);
@@ -157,7 +215,7 @@
     var fin = function () {
       [L, R].forEach(function (f) { f.style.transition = "none"; f.style.transform = ""; f.classList.remove("pn-moving", "pn-dim"); });
       PN.el.classList.remove("pn-dragging");
-      PN.left = pnOther(PN.left);
+      PN.left = pnOther(PN.left); PN.beside = false; PN.story = false;
       pnPlace(); pnSave();
       if (typeof nativeSync === "function") nativeSync();
     };
@@ -182,7 +240,18 @@
   window.slatePaneSync = function (id) {
     if (!PN.on) return;
     var w = pnWin(id);
-    if (w && w.SlateApp.paneRoute) { var r = w.SlateApp.paneRoute(); if (r !== PN.routes[id]) { PN.routes[id] = r; pnSave(); } }
+    if (w && w.SlateApp.paneRoute) {
+      var r = w.SlateApp.paneRoute();
+      if (r !== PN.routes[id]) {
+        var r0 = PN.routes[id]; PN.routes[id] = r; pnSave();
+        // the bar's side moved to another page (not while things settle after unfolding, not for a game opened beside):
+        // that page comes up the way it was left, full screen unless it was left in two pages
+        if (id === pnRight() && !PN.beside && !pnDetail(r) && pnKind(r) !== pnKind(r0) && Date.now() - (PN.at || 0) > 4000) {
+          var want = pnWant(r);
+          if (want === "two" && PN.full) pnTwo(); else if (want === "full" && !PN.full && !pnDetail(r0)) pnFull(id);
+        }
+      }
+    }
     pnMark(); pnAlign(); setTimeout(pnAlign, 400);
     if ((id === pnRight() || (PN.lock && id === PN.touched)) && typeof nativeSync === "function") nativeSync();
   };
@@ -296,6 +365,7 @@
       return out;
     };
     window.SlateApp.paneHeadSet = function (h, pad) { var rs = document.documentElement.style; rs.setProperty("--pn-head", (h || 0) + "px"); rs.setProperty("--pn-tpad", (pad || 0) + "px"); };
+    window.SlateApp.paneMark = function () { render(); if (typeof n3Draw === "function") n3Draw(); renderBack(); };  // the width changed: cards re-fit their names
     window.SlateApp.paneMenu = function (on) { if (!!state.menuOpen === !!on) return; state.menuOpen = !!on; renderTop(); };
     window.SlateApp.paneSettings = function (json) {
       var d; try { d = JSON.parse(json); } catch (e) { return; }
@@ -309,15 +379,31 @@
     // on the left side, a game, Live feed or team tapped in a list opens on the right side (the left stays put).
     // Inside a matchup or Live feed that was slid over to the left, switching games stays on the left.
     var pnLeft = function () { return document.documentElement.classList.contains("pn-fwd") && state.view !== "feed" && state.view !== "game" && state.view !== "team"; };
+    // 3.141.0: on a full-screen page, a game, Live feed or team tapped in a list opens beside the page
+    var pnDet = function () { return state.view === "feed" || state.view === "game" || state.view === "team"; };
+    var pnSolo = function () { return document.documentElement.classList.contains("pn-full") && !pnDet(); };
+    var pnBeside = function (r) { try { return !!window.parent.slatePaneBeside(PANE, r); } catch (e) { return false; } };
+    // Back out of the game that was opened beside a page: the page gets the whole screen again
+    var pnBack0 = goBack;
+    goBack = function () {
+      var bes = document.documentElement.classList.contains("pn-beside") && pnDet(), r = pnBack0.apply(null, arguments);
+      if (bes && !pnDet()) try { window.parent.slatePaneClose(PANE); } catch (e) {}
+      return r;
+    };
     window.addEventListener("pointerdown", function () { try { window.parent.slatePaneTouch(PANE); } catch (e) {} }, { capture: true, passive: true });
     var pnToRight = function (r) { try { window.parent.slatePaneOpen(r); return true; } catch (e) { return false; } };
     var pnOpenM0 = openMatchup, pnOpenF0 = openFeed, pnOpenT0 = openTeam;
-    openMatchup = function (g) { if (g && pnLeft() && pnToRight("game:" + g.id)) return; return pnOpenM0.apply(null, arguments); };
-    openFeed = function (g) { if (g && pnLeft() && pnToRight("feed:" + g.id)) return; return pnOpenF0.apply(null, arguments); };
-    openTeam = function (name, lg) { if (pnLeft() && pnToRight("team:" + JSON.stringify([name, lg || ""]))) return; return pnOpenT0.apply(null, arguments); };
+    openMatchup = function (g) { if (g && pnLeft() && pnToRight("game:" + g.id)) return; if (g && pnSolo() && pnBeside("game:" + g.id)) return; return pnOpenM0.apply(null, arguments); };
+    openFeed = function (g) { if (g && pnLeft() && pnToRight("feed:" + g.id)) return; if (g && pnSolo() && pnBeside("feed:" + g.id)) return; return pnOpenF0.apply(null, arguments); };
+    openTeam = function (name, lg) { var tr = "team:" + JSON.stringify([name, lg || ""]); if (pnLeft() && pnToRight(tr)) return; if (pnSolo() && pnBeside(tr)) return; return pnOpenT0.apply(null, arguments); };
     // open the page this side had (#go=feed:<game>, game:<game>, or a menu page)
-    var pnGo = function (r) { pnGoTo(r, pnOpenM0, pnOpenF0, pnOpenT0); };
+    var pnGo = function (r) { try { window.parent.slatePaneWake(PANE, r); } catch (e) {} pnGoTo(r, pnOpenM0, pnOpenF0, pnOpenT0); };
     window.SlateApp.paneGo = pnGo;
+    // a News story sent over from the other side (203-news-front.js) shows this side first when it was hidden
+    setTimeout(function () {
+      var ns0 = window.SlateApp.newsStory; if (!ns0) return;
+      window.SlateApp.newsStory = function () { try { window.parent.slatePaneWake(PANE, "story"); } catch (e) {} return ns0.apply(window.SlateApp, arguments); };
+    }, 0);
     var pnStart = /[#&]go=([^&]+)/.exec(location.hash);
     if (pnStart) setTimeout(function () { pnGo(decodeURIComponent(pnStart[1])); }, 0);
 

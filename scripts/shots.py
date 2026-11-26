@@ -17,6 +17,7 @@ upcoming games), --full (the whole page, not just the first screen), --wait seco
 --simple [l|xl|xxl] (Simple mode on for this run, at that text size; tap its buttons with --eval),
 --old-app (an iPhone app build from before Three pages: shows the Classic menu; without it the app hands the bottom of the screen to the page),
 --pane left|right (open Duo: which side the page, game, filters and --click go to; default right; --eval runs on the whole screen),
+--two (open Duo, 3.141.0: show two pages side by side; without it the page is full screen),
 --readonly (with a passcode: log in but block every save), --gate [invite] (no passcode: show the log-in page, or the sign-up page with a pretend invite).
 
 Pages: any view SlateApp.go() opens (lineup, games, tv, teams, moments, best, news, settings, notify, rules),
@@ -24,7 +25,7 @@ plus game:<team> (that game's matchup page), look:<team> (its quick look on All 
 
 Sizes (--sizes, default all three):
     folded  iPhone Duo folded: 466 x 678, the app's side column on the right (strip mode, 84-point inset)
-    open    iPhone Duo unfolded and sideways: 765 x 538, two panes (3.80.0), each its own page: the slate on the left, pages on the right
+    open    iPhone Duo unfolded and sideways: 765 x 538, one page full screen (3.141.0); --two for two pages, each its own page
     iphone  a regular iPhone: 390 x 844
 The page is told which phone it's on, so the test profile's own Phone setting doesn't matter (nothing is saved).
 
@@ -61,6 +62,7 @@ def main():
     teams = None  # --teams "Notre Dame,Duke": favorite teams for this run only (read-only, never saved)
     sizes, wait, scroll, pages, text, tomorrow, full, look, league, filt, click = list(SIZES), 6.0, None, [], None, False, False, None, None, None, None
     oldapp = False
+    two = False
     simple = ""  # --simple [l|xl|xxl]: Simple mode on for this run (287-simple.js), at that text size
     pane = "right"
     ev, name, readonly, gate = None, "", False, None
@@ -87,6 +89,7 @@ def main():
             continue
         if a == "--yesterday": tomorrow = "prev"; i += 1; continue  # the day before: finished games
         if a == "--full": full = True; i += 1; continue
+        if a == "--two": two = True; i += 1; continue  # open Duo (3.141.0): two pages side by side instead of one full-screen page
         if a == "--old-app": oldapp = True; i += 1; continue  # an iPhone app build from before Three pages (3.128.0): the Classic menu
         if a == "--eval": ev = args[i + 1]; i += 2; continue
         if a == "--name": name = args[i + 1]; i += 2; continue
@@ -171,12 +174,13 @@ def main():
             if S["inset"]: page.evaluate("SlateApp.setInset(%d)" % S["inset"]); page.wait_for_timeout(400)
             if tomorrow: page.evaluate("document.getElementById('l-day-%s').click()" % ("prev" if tomorrow == "prev" else "next")); page.wait_for_timeout(int(wait * 1000))
             mode = page.evaluate("document.documentElement.className")
+            if two and "panes" in mode: page.evaluate("window.slatePaneLayout && window.slatePaneLayout('', 'two')"); page.wait_for_timeout(1500)
             # open Duo (3.80.0): two panes, each its own copy of the page in a frame. Pages, games, filters and clicks
             # go to the right side (--pane left for the left one); --eval and the screenshot stay on the whole screen.
             host = page
             def tgt():
                 if "panes" not in mode: return host
-                side = host.evaluate("(w => { const a = document.getElementById('pn-a'); if (!a) return ''; const l = a.style.gridColumn === '1' ? 'a' : 'b'; return w === 'left' ? l : (l === 'a' ? 'b' : 'a'); })(%s)" % json.dumps(pane))
+                side = host.evaluate("(w => { const i = window.slatePaneInfo && window.slatePaneInfo(); if (!i || !i.on) return ''; return w === 'left' ? i.left : i.right; })(%s)" % json.dumps(pane))
                 for fr in host.frames:
                     if ("pane=" + side) in fr.url: return fr
                 return host
@@ -209,6 +213,7 @@ def main():
                         page.evaluate("document.querySelector('.tray .full-mu').click()"); page.wait_for_timeout(2000)
                 else:
                     page.evaluate("SlateApp.go(%s)" % json.dumps(kind)); page.wait_for_timeout(2500)
+                if two and "panes" in mode: host.evaluate("window.slatePaneLayout && window.slatePaneLayout('', 'two')"); host.wait_for_timeout(1500)
                 for sel, want in (("#strip button", league if kind not in ("game", "feed", "look") else ""), ("#substrip button", filt)):  # tap a league tab and/or a filter, by its text
                     if not want: continue
                     if not page.evaluate("""((S, T) => { const b = [...document.querySelectorAll(S)].find(x => x.innerText.trim().toLowerCase() === T.toLowerCase()); if (!b) return false; b.click(); return true; })(%s, %s)""" % (json.dumps(sel), json.dumps(want))):
