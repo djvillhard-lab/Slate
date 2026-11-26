@@ -1,7 +1,7 @@
   "use strict";
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
   // It must match the newest entry in CHANGELOG.md (build.py checks), and the iPhone app's builds read it from index.html.
-  var SLATE_VERSION = "3.134.3";
+  var SLATE_VERSION = "3.134.4";
 
   var HOME_TZ = "America/Chicago";
   var DEFAULT_TEAMS = ["St. Louis Blues", "St. Louis Cardinals", "Manchester United", "St. Louis City SC"];
@@ -92,16 +92,10 @@
   function watchLink(n, cls, label) {
     var opts = watchOptions(n);
     if (!opts.length) return null;
-    var a;
-    if (opts.length === 1) {
-      a = el("a", cls); a.href = opts[0][1]; a.target = "_blank"; a.rel = "noopener";
-      a.setAttribute("aria-label", "Watch " + n + " in " + opts[0][0]);
-      appFirst(a, opts[0]);
-    } else {
-      a = el("button", cls); a.type = "button";
-      a.setAttribute("aria-label", "Watch " + n + ": choose " + opts.map(function (o) { return o[0]; }).join(" or "));
-      a.addEventListener("click", function (e) { e.preventDefault(); openWatch(n, opts); });
-    }
+    // every channel button opens the Watch sheet, even with one app, so a tap never leaves Slate by surprise (3.134.4)
+    var a = el("button", cls); a.type = "button";
+    a.setAttribute("aria-label", "Watch " + n + ": " + (opts.length === 1 ? "open " + opts[0][0] : "choose " + opts.map(function (o) { return o[0]; }).join(" or ")));
+    a.addEventListener("click", function (e) { e.preventDefault(); openWatch(n, opts); });
     if (label) a.textContent = typeof label === "function" ? label(opts) : label;
     return a;
   }
