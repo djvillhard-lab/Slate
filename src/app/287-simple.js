@@ -30,16 +30,16 @@
     ".sm-h { font-size: 1.25em; font-weight: 800; color: var(--muted); display: flex; align-items: center; gap: .4em; margin: .3em 0 0; }" +
     ".sm-h.live { color: var(--live); } .sm-h.live::before { content: ''; width: .6em; height: .6em; border-radius: 50%; background: var(--live); }" +
     ".sm-card { display: flex; flex-direction: column; gap: .55em; width: 100%; text-align: left; background: var(--card); color: inherit; border: 2px solid var(--line); border-radius: 8px; padding: .8em; font: inherit; margin: 0; }" +
-    ".sm-team { display: flex; align-items: center; gap: .7em; } .sm-team .nm { flex: 1; min-width: 0; font-size: 1.65em; font-weight: 800; overflow-wrap: anywhere; }" +
-    ".sm-team .sc { font-size: 3em; font-weight: 800; font-stretch: 66%; line-height: 1; } .sm-team .sc.rec { font-size: 1.7em; color: var(--muted); } .sm-team.behind .sc { color: var(--muted); }" +
+    ".sm-team { display: flex; align-items: center; gap: .7em; } .sm-team .sm-nm { flex: 1; min-width: 0; font-size: 1.65em; font-weight: 800; overflow-wrap: anywhere; }" +
+    ".sm-team .sm-sc { font-size: 3em; font-weight: 800; font-stretch: 66%; line-height: 1; } .sm-team .sm-sc.sm-rec { font-size: 1.7em; color: var(--muted); } .sm-team.behind .sm-sc { color: var(--muted); }" +
     ".sm-lg { width: 2.8em; height: 2.8em; flex: none; display: flex; align-items: center; justify-content: center; } .sm-lg img { width: 100%; height: 100%; object-fit: contain; }" +
     ".sm-stat { font-size: 1.3em; font-weight: 800; } .sm-stat.live { color: var(--live); } .sm-stat b { color: var(--ink); font-weight: 800; } .sm-say { font-size: 1.3em; }" +
     ".sm-when { font-size: 2.1em; font-weight: 800; text-align: center; padding: .1em 0; }" +
     ".sm-row { display: grid; grid-template-columns: 4.6em 1fr auto; gap: .7em; align-items: center; width: 100%; min-height: 4.4em; text-align: left; background: none; color: inherit; border: 0; border-top: 2px solid var(--hair); padding: .4em 0; margin: 0; font: inherit; }" +
     ".sm-rows { display: flex; flex-direction: column; }" +
-    ".sm-row .tm { font-size: 1.55em; font-weight: 800; font-stretch: 70%; line-height: 1.05; } .sm-row .tm small { display: block !important; font-size: .7em; color: var(--muted); margin: 0; }" +
-    ".sm-row .gm { display: flex; flex-direction: column; gap: .2em; font-size: 1.375em; font-weight: 800; min-width: 0; } .sm-row .gm .t { display: flex; align-items: center; gap: .4em; min-width: 0; }" +
-    ".sm-row .gm .sm-lg { width: 1.4em; height: 1.4em; } .sm-row .gm .sm-lg .badge { zoom: .7; }" +
+    ".sm-row .sm-tm { font-size: 1.55em; font-weight: 800; font-stretch: 70%; line-height: 1.05; } .sm-row .sm-tm small { display: block; font-size: .7em; color: var(--muted); margin: 0; }" +
+    ".sm-row .sm-gm { display: flex; flex-direction: column; gap: .2em; font-size: 1.375em; font-weight: 800; min-width: 0; } .sm-row .sm-gm .sm-t { display: flex; align-items: center; gap: .4em; min-width: 0; }" +
+    ".sm-row .sm-gm .sm-lg { width: 1.4em; height: 1.4em; } .sm-row .sm-gm .sm-lg .badge { zoom: .7; }" +
     ".sm-mine { font-size: 16px; color: var(--accent); font-weight: 800; }" +
     ".sm-ch { border: 2px solid var(--ink); border-radius: 4px; padding: .3em .5em; font-size: 1.3em; font-weight: 800; text-align: center; max-width: 6.5em; }" +
     ".sm-bar { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 16px max(env(safe-area-inset-bottom, 0px), 12px); border-top: 2px solid var(--hair); background: var(--bg); }" +
@@ -73,8 +73,8 @@
   }
   function smName(g, sd) { return (g[sd + "Rank"] ? "#" + g[sd + "Rank"] + " " : "") + short(g, sd); }
   function smTeam(g, sd, right, behind, rec) {
-    var r = el("div", "sm-team" + (behind ? " behind" : "")); r.appendChild(smLogo(g, sd)); r.appendChild(el("span", "nm", smName(g, sd)));
-    if (right != null && right !== "") r.appendChild(el("span", "sc" + (rec ? " rec" : ""), String(right)));
+    var r = el("div", "sm-team" + (behind ? " behind" : "")); r.appendChild(smLogo(g, sd)); r.appendChild(el("span", "sm-nm", smName(g, sd)));
+    if (right != null && right !== "") r.appendChild(el("span", "sm-sc" + (rec ? " sm-rec" : ""), String(right)));
     return r;
   }
   function smOrd(n) { return n + (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"); }
@@ -165,10 +165,10 @@
     };
     var row = function (g) {
       var b = el("button", "sm-row"); b.type = "button"; b.addEventListener("click", open(g));
-      var tt = timeText(g.start), m = /^(.*?)\s*([AP]M)$/i.exec(tt), tm = el("div", "tm", m ? m[1] : tt); if (m) tm.appendChild(el("small", null, m[2])); b.appendChild(tm);
-      var gm = el("div", "gm"); if (hasFav(g)) gm.appendChild(el("span", "sm-mine", "Your team"));
-      if (g.custom) gm.appendChild(el("span", "t", g.home));
-      else sideOrder(g).forEach(function (sd) { var l = el("span", "t"); l.appendChild(smLogo(g, sd)); l.appendChild(el("span", null, smName(g, sd))); gm.appendChild(l); });
+      var tt = timeText(g.start), m = /^(.*?)\s*([AP]M)$/i.exec(tt), tm = el("div", "sm-tm", m ? m[1] : tt); if (m) tm.appendChild(el("small", null, m[2])); b.appendChild(tm);
+      var gm = el("div", "sm-gm"); if (hasFav(g)) gm.appendChild(el("span", "sm-mine", "Your team"));
+      if (g.custom) gm.appendChild(el("span", "sm-t", g.home));
+      else sideOrder(g).forEach(function (sd) { var l = el("span", "sm-t"); l.appendChild(smLogo(g, sd)); l.appendChild(el("span", null, smName(g, sd))); gm.appendChild(l); });
       b.appendChild(gm);
       var ch = smChan(g); if (ch) b.appendChild(el("div", "sm-ch", NET_SHORT[ch] || ch)); else b.appendChild(el("span"));
       return b;

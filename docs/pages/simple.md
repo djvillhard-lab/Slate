@@ -1,5 +1,5 @@
 # Simple mode
-Last updated: Nov 26, 2026, 3.140.0
+Last updated: Nov 26, 2026, 3.140.3
 Code: `src/app/287-simple.js` only (its styles are injected from the file as `#sm-css`, and it adds its own switch to
 Settings > Look and text size). Check it with `python3 scripts/shots.py lineup --simple [l|xl|xxl]` and tap its buttons with `--eval`.
 Concept page with DJ's picks: https://claude.ai/artifact/8LvyNL4aK2bvAYSpuzR6os
@@ -32,6 +32,8 @@ regular News page in bigger type, team logos, player stats, a simple way to make
   before 288 and 290). The layer draws two halves itself: the slate on the left, the tapped game (or Help, My slate)
   on the right. News in this shape shows the app's old split behind the bar.
 - Touches on the layer stop before `document`, so swipe, pull-down and long press never fire.
+
+- Class names inside the layer all start with `sm-` (3.140.3): the app styles bare `.tm`, `.nm` and the like for its own game cards.
 
 ## Open
 - Not tried on a real phone yet: the top and bottom safe areas, the Dynamic Island on the folded Duo and the right

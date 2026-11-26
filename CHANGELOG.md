@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.140.3 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Simple mode: the "PM" under a later game's time really sits under it now. The fix in 3.140.1 did not take: the time was picking up a style meant for the regular game cards.
+
 ## 3.140.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: sliding a finger along the pills now only scrolls the pills. It no longer starts swiping the page over to the slate.
@@ -22,6 +26,7 @@ TestFlight: 3.133.2 (58), no new build (web only)
 - My slate (from Help) shows your slate rules as plain sentences, each with Remove. Add games is two steps: pick a sport, then which games. They are the same rules as the full app's Slate rules page.
 - News opens the regular News page in bigger type with a "Back to my slate" button. Help has three text sizes, dark or light, Change my teams, a way to tell DJ something looks wrong, and Use the full app.
 - Unfolded Duo: your slate stays on the left and the game you tap shows on the right.
+
 ## 3.139.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: the scheduled pass was not starting, so the page stayed on the last hand-made write-up. The check for new stories now runs on its own in the background instead of inside the every-minute alerts job, which had no room left for it.
