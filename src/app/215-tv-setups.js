@@ -48,6 +48,20 @@
     ".tvs-slots::-webkit-scrollbar { display: none; }" +
     "@container (max-width: 240px) { .tvs-swn .pre { display: none; } }" +
     ".tvs-wall { touch-action: pan-y; }" +
+    ".tvs-lt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }" +
+    ".tvs-why { max-width: 100%; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: clamp(8px, 6.5cqh, 12px); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }" +
+    ".tvs-why.mine { background: var(--accent-fill); color: var(--on-accent); }" +
+    "@container (max-width: 120px) { .tvs-why { display: none; } }" +
+    ".tvs-row .tx > span.tvs-whyl { color: var(--ink); font-weight: 700; }" +
+    ".tvs-af { margin-bottom: 4px; }" +
+    ".tvs-pk { padding: 10px 0; border-top: 1px solid var(--hair); }" +
+    ".tvs-pk-t { display: flex; align-items: center; gap: 12px; }" +
+    ".tvs-pk-t .tx { flex: 1; min-width: 0; } .tvs-pk-t .tx b { display: block; font-size: 15px; font-weight: 800; } .tvs-pk-t .tx > span { display: block; font-size: 12px; color: var(--muted); } .tvs-pk-t .live { color: var(--live); }" +
+    ".tvs-pk-b { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }" +
+    ".tvs-pk-b button { min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--lg-edge); background: var(--lg-fill); box-shadow: var(--lg-hi); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; }" +
+    ".tvs-pk-b button[aria-pressed=\"true\"] { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }" +
+    ".tvs-pk-b button:disabled { opacity: .4; }" +
+    ".tvs-more { display: block; width: 100%; min-height: 44px; text-align: center; }" +
     ".tvs-slots { touch-action: pan-x; overscroll-behavior-x: contain; }" +
     ".tvs-swn { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 2cqh 4cqw; background: rgba(0,0,0,.72); color: #fff; font-size: clamp(8px, 7.5cqh, 14px); font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }" +
     ".tvs-row .tx > span.tvs-swl { display: block; color: var(--ink); font-weight: 700; }" +
@@ -306,10 +320,17 @@
     });
     var used = {}, byId = {}, out = setup.tvs.map(function () { return []; });
     pool.forEach(function (g) { byId[g.id] = g; });
-    var pins = TVS.pins[setup.id + "|" + slot.k] || {};
-    order.forEach(function (i) {
-      var t = setup.tvs[i], n = Math.max(1, t.split || 1);
-      (pins[t.id] || []).forEach(function (id, j) { if (j < n && byId[id] && !used[id] && (n === 1 || tvsYT(byId[id]))) { out[i][j] = byId[id]; used[id] = 1; } });
+    // 3.158.0 (DJ): games you put on a TV are saved to that time and stay on that TV while they're still on,
+    // through later times and into Live now, until you pick something else for that TV. Newest pick first.
+    var src = {}, at = tvsSlotTime(slot);
+    tvsPinKeys(setup).filter(function (x) { return x.t <= at; }).forEach(function (x) {
+      var pins = TVS.pins[x.key] || {};
+      order.forEach(function (i) {
+        var t = setup.tvs[i], n = Math.max(1, t.split || 1);
+        (pins[t.id] || []).forEach(function (id, j) {
+          if (j < n && !out[i][j] && byId[id] && !used[id] && (n === 1 || tvsYT(byId[id]))) { out[i][j] = byId[id]; used[id] = 1; src[id] = { k: "pick", t: x.t }; }
+        });
+      });
     });
     // your team rules: "Manchester United always goes on the Main TV", in the order you listed them
     var mainI = order[0];
@@ -323,7 +344,7 @@
           if (nn > 1 && !tvsYT(g)) continue;
           var free = -1; for (var jj = 0; jj < nn; jj++) if (!out[k][jj]) { free = jj; break; }
           if (free === -1) continue;
-          out[k][free] = g; used[g.id] = 1; return;
+          out[k][free] = g; used[g.id] = 1; src[g.id] = { k: "rule", p: p, tv: k }; return;
         }
       });
     });
@@ -337,19 +358,45 @@
         if (!g) g = pool.filter(ok)[0] || null;
         if (!g) break;
         out[i][j] = g; used[g.id] = 1;
+        src[g.id] = { k: "auto", n: pool.filter(function (x) { return n === 1 || tvsYT(x); }).indexOf(g) };
       }
     });
     out = out.map(function (l) { return l.filter(Boolean); });
+    out.src = src;
     return out;
   }
-  function tvsWhy(g) {
-    if (tvsPinOf(g)) return "Your rule";
-    if (hasFav(g)) return "Your team";
-    if (tvsLgRank(g)) return "Your league order";
-    var w = state.why && state.why[g.id];
-    if (state.slateSet[g.id]) return w && w[0] && w[0] !== "Added" ? "On your slate · " + w[0] : "On your slate";
-    return "Also on";
+  // a time's moment: Live now is right now; a time is its quarter hour
+  function tvsSlotTime(slot) { return slot.live ? Date.now() : slot.t; }
+  // your picks are saved under the quarter hour they're for ("<setup>|<ms>"); a pick made on Live now goes under now
+  function tvsPinKey(setup, slot) { return setup.id + "|" + (slot.live ? Math.floor(Date.now() / 900000) * 900000 : slot.t); }
+  function tvsPinKeys(setup) {
+    var pre = setup.id + "|", out = [];
+    Object.keys(TVS.pins).forEach(function (k) { if (k.indexOf(pre) !== 0) return; var t = Number(k.slice(pre.length)); if (!isNaN(t)) out.push({ key: k, t: t }); });
+    return out.sort(function (a, b) { return b.t - a.t; });
   }
+  // 3.158.0 (DJ): why this game is on this TV at this time. short = the tag on the TV, long = the line in the list.
+  function tvsWhyOf(g, fill, setup) {
+    var s = (fill && fill.src && fill.src[g.id]) || {};
+    if (s.k === "pick") return { short: "Your pick", long: "Your pick for " + timeText(new Date(s.t).toISOString()) };
+    if (s.k === "rule") return { short: "Your rule", long: "Your rule: " + parseTeam(s.p.team).name + " on " + tvsPinName(s.p.tv, setup).replace(/^the /, "") };
+    if (hasFav(g)) {
+      var fn = [g.away, g.home].filter(function (n) { return isFav(n, g.league); }).map(function (n) { return short(g, n === g.away ? "away" : "home"); });
+      return { short: "Your team", long: "Your team: " + (fn[0] || "") };
+    }
+    var L = TVS.rules.lg;
+    for (var i = 0; i < L.length; i++) if (L[i].k === g.league && tvsLgRank(g)) {
+      var nm = (LEAGUES[g.league] || {}).name || g.league;
+      return { short: nm + " #" + (i + 1), long: "Your league order: " + nm + " is #" + (i + 1) + (L[i].prime ? " in prime time" : "") };
+    }
+    var w = (state.why && state.why[g.id]) || [], h = ruleHits(g).why.filter(function (x) { return x !== "Your team"; });
+    var tag = (w[0] && w[0] !== "Added" ? w[0] : "") || h[0] || "";
+    if (tag === "Event" && eventKey(g)) tag = eventKey(g);   // the event's own name ("Players Era Festival")
+    if (state.slateSet[g.id]) return { short: tag || "On your slate", long: "On your slate" + (tag ? ": " + tag : w[0] === "Added" ? ": you added it" : "") };
+    if (s.k === "auto" && s.n === 0) return { short: tag || "Best one on", long: "Best game on at this time" + (tag ? ": " + tag : "") };
+    if (natFor(g)) return { short: tag || "National TV", long: (tag ? tag + ", " : "") + "on national TV" };
+    return { short: tag || "Also on", long: tag ? "Also on: " + tag : "Also on at this time" };
+  }
+  function tvsWhy(g, fill, setup) { return tvsWhyOf(g, fill, setup).long; }
   function tvsStatus(g) {
     var s = status(g), sc = scoreOf(g);
     if (s.kind === "live") return { live: true, text: sc && sc.detail ? sc.detail : "Live" };
@@ -381,11 +428,13 @@
     var kt = typeof teamByName === "function" ? teamByName(g[s]) : null; if (kt && hexOk(kt.c1)) return kt.c1;
     return colors(g[s])[0];
   }
-  function tvsFace(box, g, name, yt, note) {
+  function tvsFace(box, g, name, yt, note, why) {
     var o = sideOrder(g), sc = scoreOf(g), st = tvsStatus(g);
     o.forEach(function (s, i) { var pl = el("span", "tvs-pl " + (i ? "r" : "l")); pl.style.setProperty("--tc", tvsColor(g, s)); box.appendChild(pl); });
     var top = el("span", "tvs-top2");
-    top.appendChild(el("span", "tvs-tn", name || ""));
+    var lt = el("span", "tvs-lt"); lt.appendChild(el("span", "tvs-tn", name || ""));
+    if (why) lt.appendChild(el("span", "tvs-why" + (why === "Your pick" ? " mine" : ""), why));
+    top.appendChild(lt);
     var ch = tvsChan(g, yt).main;
     top.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-ch none", "No channel"));
     box.appendChild(top);
@@ -410,8 +459,8 @@
       box.appendChild(sn);
     }
   }
-  function tvsTile(t, list, tag, bx, notes) {
-    notes = notes || [];
+  function tvsTile(t, list, tag, bx, notes, whys) {
+    notes = notes || []; whys = whys || [];
     var node = el(tag || "div", "tvs-tv" + (t.main ? " main" : ""));
     tvsPlace(node, t, bx);
     var n = Math.max(1, t.split || 1);
@@ -427,13 +476,13 @@
       var grid = el("span", "tvs-split" + (n === 4 ? " four" : ""));
       for (var j = 0; j < n; j++) {
         var c = el("span", "tvs-cell"), g = list[j];
-        if (g) tvsFace(c, g, j === 0 ? t.name : "", true, notes[j]); else { c.appendChild(el("span", "tvs-tn", j === 0 ? t.name : "")); c.appendChild(el("span", "tvs-empty", "No YouTube TV game")); }
+        if (g) tvsFace(c, g, j === 0 ? t.name : "", true, notes[j], whys[j]); else { c.appendChild(el("span", "tvs-tn", j === 0 ? t.name : "")); c.appendChild(el("span", "tvs-empty", "No YouTube TV game")); }
         grid.appendChild(c);
       }
       node.appendChild(grid);
       return node;
     }
-    if (list[0]) tvsFace(node, list[0], t.name, false, notes[0]);
+    if (list[0]) tvsFace(node, list[0], t.name, false, notes[0], whys[0]);
     else { node.appendChild(el("span", "tvs-tn", t.name)); node.appendChild(el("span", "tvs-empty", "Nothing else on")); }
     return node;
   }
@@ -488,7 +537,7 @@
     var pool = tvsPool(gs, slot), fill = tvsFill(setup, pool, slot), notes = tvsSwitches(setup, gs, slot, slots, fill);
     var wall = el("div", "tvs-wall"), bx = tvsBox(setup.tvs); wall.setAttribute("aria-hidden", "true");
     wall.style.aspectRatio = bx.w + " / " + bx.h;
-    setup.tvs.forEach(function (t, i) { wall.appendChild(tvsTile(t, fill[i], null, bx, notes[i])); });
+    setup.tvs.forEach(function (t, i) { wall.appendChild(tvsTile(t, fill[i], null, bx, notes[i], fill[i].map(function (g) { return tvsWhyOf(g, fill, setup).short; }))); });
     wrap.appendChild(wall);
     // 3.153.1 (DJ): swipe the TVs to step through the times: left for the next one, right for the one before
     if (TVS.slideDir) { wall.classList.add(TVS.slideDir === "l" ? "sl-l" : "sl-r"); TVS.slideDir = ""; }
@@ -516,13 +565,75 @@
       for (var j = 0; j < n; j++) {
         var g = fill[i][j];
         if (!g && j > 0) continue;
-        wrap.appendChild(tvsRow(setup, slot, t, j, n, g, pool, shown, notes[i][j]));
+        wrap.appendChild(tvsRow(setup, slot, t, j, n, g, pool, shown, notes[i][j], fill));
       }
       if (n > 1 && fill[i].length < n) wrap.appendChild(el("p", "tvs-hint", t.name + " can only split YouTube TV channels, and " + (fill[i].length ? "only " + fill[i].length + " of its " + n + " screens have a game on one" : "no game left is on one") + " at this time."));
     });
+    tvsPicker(wrap, setup, slot, gs, fill);
     body.appendChild(wrap);
   }
-  function tvsRow(setup, slot, t, j, n, g, pool, shown, note) {
+  // 3.158.0 (DJ): under the TVs, every game on at this time: filter by league or Live now, and put one straight on a TV.
+  // The pick is saved to this time (tvsPinKey), so when the time comes later in the day it's still on that TV.
+  function tvsPicker(wrap, setup, slot, gs, fill) {
+    var at = tvsSlotTime(slot), list = slot.live ? gs.filter(function (g) { var k = status(g).kind; return k === "live" || (k === "upcoming" && new Date(g.start).getTime() <= at + 20 * 60000); })
+      : gs.filter(function (g) { var k = status(g).kind; if (k === "over" || k === "tbd") return false; var st = new Date(g.start).getTime(); return !isNaN(st) && st < at + 900000 && st + info(g).hrs * 3600000 > at + 900000; });
+    var h = el("div", "tvs-h"); h.appendChild(el("h2", null, "Put a game on a TV"));
+    h.appendChild(el("span", "count", slot.live ? "Live now" : "At " + slot.label)); wrap.appendChild(h);
+    if (!list.length) { wrap.appendChild(el("p", "tvs-hint", "No other games on at this time.")); return; }
+    wrap.appendChild(el("p", "tvs-hint", slot.live ? "Tap a TV to put the game on it now. It stays there until the game ends or you pick another." : "Tap a TV to save the game to it for " + slot.label + ". It'll be on that TV when " + slot.label + " comes."));
+    // the filters: All, Live now, then each league on at this time
+    var lgs = [], seenL = {}; list.forEach(function (g) { if (!seenL[g.league]) { seenL[g.league] = 1; lgs.push(g.league); } });
+    var anyLive = list.some(function (g) { return status(g).kind === "live"; });
+    var opts = [["all", "All"]].concat(anyLive ? [["live", "Live now"]] : []).concat(lgs.map(function (k) { return [k, info({ league: k }).tag]; }));
+    if (!opts.some(function (o) { return o[0] === TVS.af; })) TVS.af = "all";
+    var fr = tvsNoSwipe(el("div", "tvs-slots tvs-af")); fr.setAttribute("role", "group"); fr.setAttribute("aria-label", "Show games");
+    opts.forEach(function (o) {
+      var b = el("button"); b.type = "button"; b.setAttribute("aria-pressed", TVS.af === o[0] ? "true" : "false");
+      if (o[0] === "live") b.appendChild(el("i")); b.appendChild(document.createTextNode(o[1]));
+      b.addEventListener("click", function () { TVS.af = o[0]; TVS.afAll = false; keepScroll(renderTV); });
+      fr.appendChild(b);
+    });
+    wrap.appendChild(fr);
+    var shown = list.filter(function (g) { return TVS.af === "all" || (TVS.af === "live" ? status(g).kind === "live" : g.league === TVS.af); })
+      .sort(function (a, b) { var la = status(a).kind === "live" ? 0 : 1, lb = status(b).kind === "live" ? 0 : 1; return la - lb || tvsRank(b) - tvsRank(a) || byStart(a, b); });
+    var where = {}; fill.forEach(function (l, i) { l.forEach(function (g) { where[g.id] = i; }); });
+    var key = tvsPinKey(setup, slot);
+    (TVS.afAll ? shown : shown.slice(0, 8)).forEach(function (g) {
+      var r = el("div", "tvs-pk");
+      var top = el("div", "tvs-pk-t"), ch = tvsChan(g).main;
+      top.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-noch", "No channel"));
+      var tx = el("div", "tx"); tx.appendChild(el("b", null, pairText(g, function (s) { return short(g, s); }, homeFirst(g) || g.neutral ? " vs " : " at ")));
+      var st = tvsStatus(g), sub = el("span"); sub.appendChild(document.createTextNode(info(g).tag + " · ")); sub.appendChild(el("span", st.live ? "live" : null, st.text));
+      if (where[g.id] !== undefined) sub.appendChild(document.createTextNode(" · on " + setup.tvs[where[g.id]].name));
+      tx.appendChild(sub); top.appendChild(tx); r.appendChild(top);
+      var bs = el("div", "tvs-pk-b");
+      setup.tvs.forEach(function (t, i) {
+        var n = Math.max(1, t.split || 1), on = where[g.id] === i, okYT = n === 1 || tvsYT(g);
+        var b = el("button", null, t.name); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
+        if (!okYT) { b.disabled = true; b.title = "Split screen: YouTube TV channels only"; }
+        b.setAttribute("aria-label", (on ? "On " : "Put it on ") + t.name);
+        b.addEventListener("click", function () {
+          var P = TVS.pins[key] = TVS.pins[key] || {}, before = JSON.stringify(TVS.pins);
+          var mine = (P[t.id] || []).indexOf(g.id) !== -1;
+          // it leaves any other TV it was picked for at this time
+          Object.keys(P).forEach(function (tid) { P[tid] = (P[tid] || []).map(function (id) { return id === g.id ? null : id; }); });
+          if (mine) { tvsPinsSave(); keepScroll(renderTV); topUndo("Pick removed", function () { TVS.pins = JSON.parse(before); tvsPinsSave(); keepScroll(renderTV); }); return; }
+          var cur = P[t.id] = (P[t.id] || []).slice(), j = 0;
+          if (n > 1) { j = -1; for (var q = 0; q < n; q++) if (!cur[q]) { j = q; break; } if (j === -1) j = n - 1; }
+          while (cur.length < j) cur.push(null); cur[j] = g.id;
+          tvsPinsSave(); keepScroll(renderTV);
+          topUndo(short(g, "away") + " vs " + short(g, "home") + " on " + t.name + (slot.live ? "" : " at " + slot.label), function () { TVS.pins = JSON.parse(before); tvsPinsSave(); keepScroll(renderTV); });
+        });
+        bs.appendChild(b);
+      });
+      r.appendChild(bs); wrap.appendChild(r);
+    });
+    if (!TVS.afAll && shown.length > 8) {
+      var more = el("button", "rlink tvs-more", "Show all " + shown.length + " games"); more.type = "button";
+      more.addEventListener("click", function () { TVS.afAll = true; keepScroll(renderTV); }); wrap.appendChild(more);
+    }
+  }
+  function tvsRow(setup, slot, t, j, n, g, pool, shown, note, fill) {
     var box = el("div"), row = el("div", "tvs-row");
     var ch = g ? tvsChan(g, n > 1).main : "";
     row.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-noch", g ? "No channel listed" : ""));
@@ -532,10 +643,10 @@
       var st = tvsStatus(g), sub = el("span");
       sub.appendChild(document.createTextNode(lbl + " · "));
       sub.appendChild(el("span", st.live ? "live" : null, st.text));
-      sub.appendChild(document.createTextNode(" · " + tvsWhy(g)));
+      var wl0 = el("span", "tvs-whyl", tvsWhy(g, fill, setup));
       var more = tvsChan(g).more.filter(function (m) { return m !== ch; });
       if (more.length) sub.appendChild(document.createTextNode(" · also " + more.slice(0, 2).join(", ")));
-      tx.appendChild(sub);
+      tx.appendChild(sub); tx.appendChild(wl0);
       if (note) tx.appendChild(el("span", "tvs-swl", tvsNoteText(note) + ", before this one ends"));
     } else { tx.appendChild(el("b", null, lbl)); tx.appendChild(el("span", null, "Nothing else on at this time")); }
     row.appendChild(tx);
@@ -556,7 +667,7 @@
         b.appendChild(el("span", null, pairText(x, function (s) { return short(x, s); }, homeFirst(x) || x.neutral ? " vs " : " at ")));
         b.appendChild(el("span", "d", shown[x.id] ? "On another TV" : tvsStatus(x).text));
         b.addEventListener("click", function () {
-          var pk = setup.id + "|" + slot.k, P = TVS.pins[pk] = TVS.pins[pk] || {};
+          var pk = tvsPinKey(setup, slot), P = TVS.pins[pk] = TVS.pins[pk] || {};
           // the game leaves whatever TV it was pinned to, then takes this spot
           Object.keys(P).forEach(function (tid) { P[tid] = (P[tid] || []).map(function (id) { return id === x.id ? null : id; }); });
           var cur = P[t.id] = (P[t.id] || []).slice(); while (cur.length < j) cur.push(null); cur[j] = x.id;

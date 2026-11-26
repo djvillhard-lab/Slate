@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.158.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV, My TVs: every TV now says why its game is there, right on the TV: "Your team", "Your rule", "Your pick", your league order ("NBA #1"), the slate reason ("Top 25 matchup") or "Best one on". The list under the TVs spells it out: "Your rule: Manchester United on Main TV", "On your slate: Ranked matchup".
+- New "Put a game on a TV" list under the TVs: every game on at the time you picked, filtered by league (CFB, NBA, NFL and so on) or Live now. Tap a TV's name under a game to put it on that TV. Tap it again to take it off.
+- A game you put on a TV is saved to that time. When that time comes later in the day it's on that TV, and it stays there while it's on, until you pick another game for that TV.
 ## 3.157.3 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Today's Slate: Time | League, Board and Live always fit on one line now. They stay at their regular size at L and XL, so the row doesn't break onto a second line.

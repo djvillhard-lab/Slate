@@ -27,6 +27,8 @@ Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css
 
 - 3.153.1 (DJ): swiping the TV wall steps through the times (left = next, right = before). The wall stops its touches from reaching the page swipe; `touch-action: pan-y` keeps up-and-down scrolling. The new wall slides in (`sl-l`/`sl-r`).
 
+- 3.158.0 (DJ): why on every TV (`tvsWhyOf`: short tag on the tile `.tvs-why`, long line `.tvs-whyl` in the list); `tvsFill` returns `out.src` (pick / rule / auto with rank). "Put a game on a TV" (`tvsPicker`): games on at the time, filters All / Live now / each league (`TVS.af`), a button per TV. Picks are saved per quarter hour (`tvsPinKey`, key `<setup>|<ms>`, Live now = the current quarter hour) in `slate-tv-pins` (cleared next day); `tvsFill` applies every pick from that time or earlier, newest first, while the game is still on, so a 7 PM pick is there at Live now after 7. The Swap list writes the same keys. Old `|live` keys are ignored.
+
 ## Open
 - Second release (DJ picked it): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.
 - Hidden channels are per phone. Saving them with the profile needs `260-persistence.js` (shared file).
