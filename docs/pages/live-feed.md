@@ -213,3 +213,11 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   `.bx-chip` for a basketball double/triple-double, else the player with the most team highs ("Team high: 24 PTS").
 - Seen on screen for basketball only (folded Duo); football, hockey, soccer and baseball had no games on at the time.
 - The unfolded Duo's wide feed layout in 097-panes.css keys on `#feed-body > .fd-box`, which no longer exists: told the panes thread.
+
+## 3.162.2: filter pill clear of the Dynamic Island, box score scrolls sideways
+- DJ: "Make the gray pill filter bar fit without going behind the Dynamic Island". The filter bar became a glass pill in 100-glass.css, which sets its padding
+  and margin with `!important`, so the older `padding-right` island rules (040-components.css, `.fd-strip`) stopped working for it. Fix: `margin-right` with
+  `!important` on `.fd-strip.fd-filt`, `--strip-w` on the folded Duo and `--fd-isl` in the unfolded right pane (end of 040-components.css). Buttons wrap inside.
+- DJ: "I can't scroll on box score, it wants to swipe between games". The Nov 17 rule (a swipe anywhere on the feed changes games, a wide table scrolls first)
+  didn't hold on the phone: the swipe locked before the table had moved. Now a touch that starts inside `.fd-box` never starts a game swipe
+  (280-ios-bridge.js, touchstart). Swipes on the plays, score bug and bar are unchanged. Checked with synthetic touches, not on a real phone.

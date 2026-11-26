@@ -6,5 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | shared: styles/040-components.css (Live feed filter bar stops short of the Dynamic Island) | src/styles/040-components.css, docs/pages/live-feed.md | 2026-11-26 17:09 |
-| DJ | shared: 280-ios-bridge.js (a sideways swipe on the Live feed box score scrolls it, never changes games) | src/app/280-ios-bridge.js, docs/pages/live-feed.md | 2026-11-26 17:20 |

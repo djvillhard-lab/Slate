@@ -1952,3 +1952,8 @@ html .gv-head .gv-act { position: relative; min-height: 0 !important; height: 30
 .fd-box .bxp.bx-star { margin: 0 -6px; padding-left: 6px; padding-right: 6px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 9%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
 .fd-box .bxp.bx-star + .bxp, .fd-box .bxp.bx-star { border-top-color: transparent; }
 .bx-chip { margin-left: 6px; padding: 1px 7px 2px; border-radius: 6px; font-size: 11px; font-weight: 800; white-space: nowrap; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+/* 3.162.2 (DJ: "Make the gray pill filter bar fit without going behind the Dynamic Island"): the feed's filter bar is a glass pill (100-glass.css sets its
+   padding and margin with !important), so the older padding-right never held and the pill ran under the clock and Wi-Fi. The pill itself now ends left of
+   them: on the folded Duo, and in the right pane of the unfolded Duo (DJ's rule: island fixes go to both). */
+html[data-native].side-col:not(.duo) #feed-body .fd-strip.fd-filt { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)) !important; }
+html.pn-right #view-feed.fd-isl #feed-body .fd-strip.fd-filt { margin-right: calc(var(--fd-isl, 0px) / var(--z, 1)) !important; }

@@ -185,6 +185,9 @@
       var t = e.touches[0];
       if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
       mode = swipeMode(e.target, t); if (!mode) return;
+      // 3.162.2 (DJ: "I can't scroll on box score, it wants to swipe between games"): on the Live feed, a touch that starts inside the box score never changes
+      // games. The finger scrolls the stat columns; swipes anywhere else on the feed still move to the next game.
+      if (mode === "feed" && e.target.closest(".fd-box")) { x0 = null; return; }
       // a wide box score scrolls sideways first; the swipe only counts if the table didn't move (it was already at its edge)
       scroller = e.target.closest(".bxp-sc, .bx-scroll, .bxp-cells, .tm-tbl-w, #strip, #substrip, .rk-strip, .rk-sub, .mm-strip, .fd-strip"); sx0 = scroller ? scroller.scrollLeft : 0;
       // inside a box score or stats table that scrolls sideways, the finger scrolls the table, never the page
