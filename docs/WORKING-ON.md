@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Game cards: Worth watching back tag | src/app/152-watch-back.js, docs/pages/slate.md | 2026-11-26 02:44 |
+| DJ | shared: 010-core.js (watch popup for every channel button) | src/app/010-core.js | 2026-11-26 02:50 |
