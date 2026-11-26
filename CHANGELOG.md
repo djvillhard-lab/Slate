@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.172.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed focus view, folded iPhone Duo: the score card and the field card no longer overlap. They are two separate cards with a small gap. The down and distance sits on top of the field again, because beside two-digit scores it ran out of its pill.
+
 ## 3.172.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Today's Slate, folded iPhone Duo: Time | League, the two columns button, Board and Live are back on one line. With the Board on ("Board 4") the row was a little too wide for the space left of the clock and Wi-Fi, so Board and Live dropped to a second line. Board no longer shows its small grid icon in this row, which also looked like the two columns button beside it.

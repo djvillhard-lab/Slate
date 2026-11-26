@@ -37,9 +37,9 @@ html.panes .fdc-btn { display: none !important; }  /* the two-page screen itself
 html.fd-cmp .fdc-btn { background: color-mix(in srgb, var(--accent) 22%, var(--glass-clear)); }  /* on: a light accent tint, the icon stays the same green as Back's arrow */
 html.fd-cmp .fdc-btn .fdc-in, html:not(.fd-cmp) .fdc-btn .fdc-out { display: none; }
 
-/* a narrow screen (a regular iPhone, or one side of two pages; the folded Duo is wide enough since 3.172.1): the down and distance does not fit
+/* a narrow screen (a regular iPhone, the folded Duo, or one side of two pages): the down and distance does not fit
    beside the score either, so it goes on top of the field the same way */
-@media (max-width: 430px) {
+@media (max-width: 500px) {
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug { overflow: visible; z-index: 4; }
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sit { position: absolute; left: 10px; top: calc(100% + 6px); z-index: 5; margin: 0; white-space: nowrap; }
   html.fd-cmp[data-view="feed"] #feed-body > .fd-bug:has(> .fd-sit) ~ .fd-field:not(.hp-top) { padding-top: 32px; }
@@ -47,13 +47,16 @@ html.fd-cmp .fdc-btn .fdc-in, html:not(.fd-cmp) .fdc-btn .fdc-out { display: non
 
 /* 3.172.1 (DJ, folded Duo: "This view for collapsed live feed doesn't look good and gets covered by Dynamic Island").
    With the page header gone, the top of the feed slides up beside the clock and Wi-Fi, which sit on the right from about
-   50 to 160 points down. The score line is above them, so it uses its whole width and holds the down and distance
-   again. The pinned field and the "Last play" line with its buttons are level with them, so both stop short of that
+   50 to 160 points down. The score line is above them. The pinned field and the "Last play" line with its buttons are level with them, so both stop short of that
    corner (the same --strip-w the full feed's score bar uses). */
 html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug { padding: 0 46px 0 12px !important; }
-html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sit { margin-left: 12px !important; }
-html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-field:not(.hp-top) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)); border-radius: 0 0 8px 8px !important; }
-html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug:has(~ .fd-field:not(.hp-top)) { border-radius: 8px 8px 8px 0 !important; }
+/* 3.172.2: the down and distance does not fit on the score line beside two-digit scores (it ran out of its pill), so on
+   the folded Duo it sits on top of the field like on an iPhone; 13 points down because of the gap between the cards */
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug > .fd-sit { top: calc(100% + 13px); }
+/* 3.172.2 (DJ: "Top two graphics overlapping slightly"): the field is narrower than the score line here, so the two are
+   no longer one joined box. Each is its own rounded card with a 6-point gap. */
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-field:not(.hp-top) { margin-right: calc(var(--strip-w, 0px) / var(--z, 1)); margin-top: 6px; top: calc(var(--fd-top) + 48px); border-top: 1px solid var(--hair); border-radius: 8px !important; box-shadow: 0 -7px 0 var(--bg), 0 10px 14px -8px var(--bg); }
+html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body > .fd-bug { border-bottom: 1px solid var(--hair); border-radius: 8px !important; }
 html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body .fd-list > .fd-bar { padding-right: calc(var(--strip-w, 0px) / var(--z, 1)); }
 /* that line now has less room, so "Last play 1:01 ago" takes two short lines and the buttons sit closer: all four stay on one line */
 html[data-native].side-col:not(.duo).fd-cmp[data-view="feed"] #feed-body .fd-list > .fd-bar { flex-wrap: nowrap; gap: 5px; justify-content: flex-start; }
