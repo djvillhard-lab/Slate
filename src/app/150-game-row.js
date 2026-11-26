@@ -230,5 +230,12 @@
       .replace(/\b(Concacaf|UEFA|CONMEBOL|CAF|AFC) Nations League\b/i, "Nations League")
       .replace(/\b(1st|2nd) Leg\b/g, function (m, x) { return x + " leg"; })
       .replace(/^The /, "").replace(/^U\.S\. Virgin Islands /, "").replace(/^Shriners Children's /, "")
-      .replace(/\s+/g, " ").trim();
+      // 3.138.1: tournament names fit and read short. Only sponsor words that aren't the event's name go:
+      // "Southwest Maui Invitational" is the Maui Invitational, "pres. by Belk" is a sponsor tag.
+      .replace(/^Southwest (Maui Invitational)/i, "$1").replace(/\s+(pres\.|presented) by\s+[^-·]+/i, "")
+      .replace(/\b(First|Third|Fifth|Seventh|Ninth|Eleventh) Place( Game)?\b/i, function (m, w) {
+        return { first: "1st", third: "3rd", fifth: "5th", seventh: "7th", ninth: "9th", eleventh: "11th" }[w.toLowerCase()] + " place"; })
+      .replace(/\bChampionship Game\b/i, "Championship")
+      .replace(/\s+-\s+/g, "\u00a0· ")   // the dot stays with the word before it when the line wraps
+      .replace(/[ \t\n]+/g, " ").trim();
   }

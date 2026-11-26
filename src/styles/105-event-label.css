@@ -1,0 +1,7 @@
+/* 3.138.1: a game card's tournament line shows the whole name instead of ending in "…".
+   The line flows like a sentence (icon, league, then the event), so a long name wraps
+   back to the card's left edge rather than into a narrow column. */
+.g .g-lg, .sl-fin .g.panel .g-lg.g-lg { display: block !important; white-space: normal; line-height: 1.3; }
+.g .g-lg svg { display: inline-block; vertical-align: -2px; margin-right: 4px; }
+.g .g-lg .lgn { margin-right: 4px; }
+.g .g-lg .nt { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
