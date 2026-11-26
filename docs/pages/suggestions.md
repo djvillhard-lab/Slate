@@ -47,3 +47,20 @@ rendered from `230-settings.js`, styles at the end of `src/styles/070-ux-review-
 
 ## Settings sub-page (3.61.0)
 The "Thumbs up and down" row now sits on Settings > Slate and games (see `docs/pages/settings.md`). Ids and behavior are unchanged.
+
+## Worth a look: which games, league by league (3.134.0, Nov 26, 2026)
+DJ asked for more specific Worth a look rules for college and other leagues (only ranked teams, power conferences…).
+- Settings > Slate and games > Worth a look: under the league chips, "Which games, league by league" lists each picked
+  league that has choices, as `.rchoice` chips (same chips as the Slate rules page, 44px tall here). "Every game" = none picked.
+  Picks are OR'd: a game shows if it fits any one.
+- Stored as `state.walRules.by = { ncaaf: ["ranked", "power2"], … }`. The old `walRules.ranked` switch ("College: ranked
+  teams only") is gone; when `by` hasn't been saved yet and `ranked` was on, the three college leagues read as ["ranked"].
+- Choices (`walOpts` in 180-worth-a-look.js): college = a ranked team, ranked vs ranked, a top-10 team, a power conference
+  team, power vs power, rivalries. Power = SEC, Big Ten, Big 12, ACC, plus Notre Dame in football and Big East in hoops
+  (`WAL_POWER`, `walPower`; conference names come from slates.py's CONF map). NBA/NHL/WNBA = top N (TOP_N) teams, both
+  winning records, rivalries. NFL = both winning records, division games, rivalries. MLB = winning records, rivalries.
+  EPL = top of table, Big Six, derbies; FA Cup = Big Six, derbies; UCL/UEL = giants, English club, knockouts, derbies;
+  other soccer = top of table, derbies; Internationals = USA, big nation, games that count. Tests reuse MATCH and rivalOf.
+- Applies to live games not on your slate (`liveSuggestions` via `walLgPass`). Games on your slate keep their tag regardless.
+- Open: "playoff contenders" is approximated by both winning records (no playoff-odds source). Rivalries only cover the
+  RIVALS list in 180-worth-a-look.js; add pairs there if DJ names more.

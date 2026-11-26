@@ -67,7 +67,48 @@
   function suggestSkipped() { var sk = {}; actRecent(3).forEach(function (e) { if (e.a === "skip") sk[e.d + "|" + e.id] = 1; }); return sk; }
   // live now: a close finish, or someone having a big night
   // "Worth a look right now" rules (Settings): on/off, close finishes, big nights, which leagues
-  function walRules() { var r = state.walRules || {}; return { on: r.on !== false, close: r.close !== false, upset: r.upset !== false, big: r.big !== false, nat: !!r.nat, ranked: !!r.ranked, leagues: Array.isArray(r.leagues) ? r.leagues : walDefaultLgs() }; }
+  function walRules() {
+    var r = state.walRules || {}, by = {}, src = r.by && typeof r.by === "object" ? r.by : null;
+    if (src) Object.keys(src).forEach(function (k) { if (Array.isArray(src[k])) by[k] = src[k].filter(function (o) { return walOptKeys(k).indexOf(o) !== -1; }); });
+    else if (r.ranked) ["ncaaf", "ncaam", "ncaaw"].forEach(function (k) { by[k] = ["ranked"]; });  // before 3.134.0: one "College: ranked teams only" switch
+    return { on: r.on !== false, close: r.close !== false, upset: r.upset !== false, big: r.big !== false, nat: !!r.nat, by: by, leagues: Array.isArray(r.leagues) ? r.leagues : walDefaultLgs() };
+  }
+  // league by league, which games Worth a look can show (3.134.0). Pick any number; a game needs just one. None = every game.
+  var WAL_POWER = ["SEC", "Big Ten", "Big 12", "ACC"];
+  function walPower(g, sd) { var c = String(g[sd + "Conf"] || ""); return WAL_POWER.indexOf(c) !== -1 || (g.league !== "ncaaf" && c === "Big East") || (g.league === "ncaaf" && /notre dame/i.test(g[sd] || "")); }
+  function walOpts(k) {
+    var L = LEAGUES[k] || {}, n = TOP_N[k] || 4, riv = ["rival", "Rivalries"];
+    if (L.college) return [["ranked", "A ranked team"], ["both", "Ranked vs ranked"], ["top10", "A top-10 team"], ["power", "A power conference team"], ["power2", "Power vs power"], riv];
+    if (k === "nfl") return [["winning", "Both winning records"], ["division", "Division games"], riv];
+    if (k === "nba" || k === "nhl" || k === "wnba") return [["top", "Top " + n + " teams"], ["winning", "Both winning records"], riv];
+    if (k === "mlb") return [["winning", "Both winning records"], riv];
+    if (k === "intl") return [["usa", "USA"], ["bignations", "A big nation"], ["competitive", "Games that count"]];
+    if (k === "ucl" || k === "uel") return [["bigclubs", "One of Europe's giants"], ["english", "An English club"], ["knockout", "Knockout rounds"], riv];
+    if (k === "epl" || k === "facup") return (k === "epl" ? [["top", "Top " + n + " of the table"]] : []).concat([["bigsix", "A Big Six club"], riv]);
+    if (SOCCER[k]) return [["top", "Top " + n + " of the table"], riv];
+    return [];
+  }
+  function walOptKeys(k) { return walOpts(k).map(function (o) { return o[0]; }); }
+  function walOptHelp(k) {
+    var L = LEAGUES[k] || {};
+    if (L.college) return "Rankings are the AP Top 25. Power conferences: SEC, Big Ten, Big 12 and ACC" + (k === "ncaaf" ? ", plus Notre Dame." : ", plus the Big East.");
+    if (k === "nba" || k === "nhl" || k === "wnba") return "Top " + (TOP_N[k] || 4) + " means both teams are in the top " + (TOP_N[k] || 4) + " of their conference.";
+    if (k === "epl" || k === "facup" || k === "ucl" || k === "uel") return "Big Six: Arsenal, Chelsea, Liverpool, Man City, Man United and Spurs. Rivalries are the big derbies.";
+    return "";
+  }
+  function walOptPass(g, o) {
+    switch (o) {
+      case "ranked": return !!MATCH.ranked(g, "any");
+      case "both": return !!MATCH.ranked(g, "both");
+      case "top10": return !!MATCH.ranked(g, "top10");
+      case "power": return walPower(g, "away") || walPower(g, "home");
+      case "power2": return walPower(g, "away") && walPower(g, "home");
+      case "rival": return rivalOf(g);
+      case "bigsix": case "bigclubs": case "bignations": return !!MATCH[o](g, "any");
+      default: return MATCH[o] ? !!MATCH[o](g) : false;
+    }
+  }
+  function walLgPass(g, wr) { var picked = wr.by[g.league] || []; return !picked.length || picked.some(function (o) { try { return walOptPass(g, o); } catch (e) { return false; } }); }
   // Worth a look's leagues until you pick your own: the leagues in your slate rules plus your teams' leagues
   function walDefaultLgs() {
     var on = {}; Object.keys(((state.rules || {}).by) || {}).forEach(function (k) { on[k] = 1; });
@@ -139,9 +180,9 @@
       if (g.custom || keptIds[g.id] || removed[g.id] || sk[state.date + "|" + g.id]) return;
       var v = scoreRaw(g.id); if (!v || v.state !== "in") return;
       if (inLineup(g.id)) return;  // on your slate: its card carries the tag instead
-      var best = walEval(g, v, wr, aff), coll = (LEAGUES[g.league] || {}).college;
-      // it must be in your Worth a look leagues and pass its filters
-      var okLg = wr.leagues.indexOf(g.league) !== -1 && (!wr.nat || natFor(g)) && (!wr.ranked || !coll || g.awayRank || g.homeRank);
+      var best = walEval(g, v, wr, aff);
+      // it must be in your Worth a look leagues and pass its filters (national TV, and that league's own picks)
+      var okLg = wr.leagues.indexOf(g.league) !== -1 && (!wr.nat || natFor(g)) && walLgPass(g, wr);
       if (!best || !okLg) return;
       // your thumbs move it up or down; a strong thumbs down on this kind of game keeps it out
       var fa = fbAdj(g, best.tag); if (fa.veto || fa.adj <= -20) return;

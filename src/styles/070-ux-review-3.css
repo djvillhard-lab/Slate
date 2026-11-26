@@ -118,3 +118,9 @@ html #fb-head { min-height: calc(44px / var(--z, 1)) !important; }
 .fb-chip { padding: 4px 8px; border-radius: 4px; background: var(--raise); color: var(--ink); font-size: 13px; font-weight: 700; }
 .fb-reset { min-height: calc(44px / var(--z, 1)); margin-top: 8px; padding: 0 16px; border: 1px solid var(--line); border-radius: 8px; background: none; color: var(--ink); font: inherit; font-weight: 800; }
 .fb-set .fb-reset { display: block; }
+
+/* 3.134.0 Worth a look: which games, league by league (Settings › Slate and games) */
+.wal-by-note { margin: 2px 0 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+.wal-by .rchoice { margin-top: 8px; gap: 6px; }
+.wal-by .rchoice button { height: 44px; padding: 0 14px; font-size: 14px; }
+.wal-kids.off .rchoice button { pointer-events: none; }

@@ -175,7 +175,8 @@
     }
     var ws = $("wal-set"); if (ws) { ws.textContent = ""; var wr = walRules(), wh = $("wal-head");
       var picks = [wr.close && "close finishes", wr.upset && "upset watch", wr.big && "big nights"].filter(Boolean);
-      $("wal-sum").textContent = !wr.on ? "Off" : !picks.length ? "On, but no rules picked" : "On: " + picks.join(" and ") + ", " + (wr.leagues.length ? wr.leagues.map(function (k) { return (LEAGUES[k] || {}).tag || k; }).join(", ") : "no leagues");
+      var nBy = wr.leagues.filter(function (k) { return (wr.by[k] || []).length; }).length;
+      $("wal-sum").textContent = !wr.on ? "Off" : !picks.length ? "On, but no rules picked" : "On: " + picks.join(" and ") + ", " + (wr.leagues.length ? wr.leagues.map(function (k) { return (LEAGUES[k] || {}).tag || k; }).join(", ") : "no leagues") + (nBy ? " (" + nBy + " narrowed down)" : "");
       ws.hidden = !state.walOpen; wh.setAttribute("aria-expanded", state.walOpen ? "true" : "false");
       if (!wh.dataset.on) { wh.dataset.on = "1"; wh.addEventListener("click", function () { state.walOpen = !state.walOpen; renderSettings(); }); }
       var setRule = function (k, v) { var r = Object.assign({}, state.walRules || {}); r[k] = v; state.walRules = r; saveSettings(); render(); };
@@ -194,7 +195,6 @@
       kids.appendChild(walRow("upset", "Upset watch", "A ranked college team trailing a lower-ranked or unranked team late: down 8 or more in football's second half, 7 or more in basketball's second half.", [[true, "On"], [false, "Off"]]));
       kids.appendChild(walRow("big", "Big individual nights", "The exact bar: 35 points (30 in WNBA and college), 300 passing or 130 rushing or receiving yards, or 2 goals in hockey.", [[true, "On"], [false, "Off"]]));
       kids.appendChild(walRow("nat", "National TV only", "Only games on national TV (ABC, CBS, NBC, FOX, ESPN, TNT and the like).", [[true, "On"], [false, "Off"]]));
-      kids.appendChild(walRow("ranked", "College: ranked teams only", "College games show only when a ranked team is playing.", [[true, "On"], [false, "Off"]]));
       var lr = el("div", "optrow col"), lt = el("div"); lt.appendChild(el("b", null, "Leagues")); lt.appendChild(el("span", null, "Games from these leagues can show up. Games on your slate always can.")); lr.appendChild(lt);
       var lc = el("div", "lgchips");
       ORDER.forEach(function (k) {
@@ -204,6 +204,26 @@
         lc.appendChild(bt);
       });
       lr.appendChild(lc); kids.appendChild(lr);
+      // 3.134.0: league by league, which games can show (ranked, power conferences, rivalries, top teams…)
+      var lgOpt = wr.leagues.filter(function (k) { return walOpts(k).length; });
+      if (lgOpt.length) {
+        kids.appendChild(el("p", "wal-kids-h", "Which games, league by league"));
+        kids.appendChild(el("p", "wal-by-note", "Pick any to narrow a league down. A game needs to fit just one. Nothing picked means every game."));
+        lgOpt.forEach(function (k) {
+          var picked = wr.by[k] || [], row = el("div", "optrow col wal-by"), t2 = el("div"); t2.appendChild(el("b", null, (LEAGUES[k] || {}).name || k));
+          var hp = walOptHelp(k); if (hp) t2.appendChild(el("span", null, hp)); row.appendChild(t2);
+          var ch = el("div", "rchoice"); ch.setAttribute("role", "group"); ch.setAttribute("aria-label", ((LEAGUES[k] || {}).name || k) + ": which games");
+          var setBy = function (list) { var by = Object.assign({}, walRules().by); if (list.length) by[k] = list; else delete by[k]; setRule("by", by); };
+          var all = el("button", null, "Every game"); all.type = "button"; all.setAttribute("aria-pressed", picked.length ? "false" : "true");
+          all.addEventListener("click", function () { setBy([]); }); ch.appendChild(all);
+          walOpts(k).forEach(function (o) {
+            var on = picked.indexOf(o[0]) !== -1, bt = el("button", null, o[1]); bt.type = "button"; bt.setAttribute("aria-pressed", on ? "true" : "false");
+            bt.addEventListener("click", function () { var l = (walRules().by[k] || []).slice(), i = l.indexOf(o[0]); if (i === -1) l.push(o[0]); else l.splice(i, 1); setBy(walOptKeys(k).filter(function (x) { return l.indexOf(x) !== -1; })); });
+            ch.appendChild(bt);
+          });
+          row.appendChild(ch); kids.appendChild(row);
+        });
+      }
       if (!wr.on) kids.querySelectorAll("button").forEach(function (bt) { bt.disabled = true; });
       ws.appendChild(kids);
     }
