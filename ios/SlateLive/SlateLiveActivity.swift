@@ -191,7 +191,7 @@ enum SlateLook {
         return parts.count == 2 ? parts[1] + " " + parts[0] : s.detail
     }
 
-    // after the final, the losing side dims
+    // after the final, the losing side dims (3.133.2, DJ: never while the game is live, the trailing score included)
     static func lost(_ s: SlateGameAttributes.ContentState, away: Bool) -> Bool {
         s.state == "post" && (away ? s.a < s.h : s.h < s.a)
     }
@@ -325,7 +325,7 @@ private struct LockCard: View {
             .padding(.bottom, 4)
             HStack(alignment: .top, spacing: 8) {
                 PillSide(name: a.away, abbr: a.awayAbbr, color: a.awayColor, alt: a.awayAlt, rank: a.awayRank, logo: a.awayLogo,
-                         score: pre ? nil : s.a, ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true), trail: live && s.a < s.h, left: true)
+                         score: pre ? nil : s.a, ball: live && s.poss == "away", dim: SlateLook.lost(s, away: true), left: true)
                 VStack(spacing: 4) {
                     if pre {
                         Text(SlateLook.clock(s))
@@ -363,7 +363,7 @@ private struct LockCard: View {
                 .frame(width: 104)
                 .padding(.top, 4)
                 PillSide(name: a.home, abbr: a.homeAbbr, color: a.homeColor, alt: a.homeAlt, rank: a.homeRank, logo: a.homeLogo,
-                         score: pre ? nil : s.h, ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), trail: live && s.h < s.a, left: false)
+                         score: pre ? nil : s.h, ball: live && s.poss == "home", dim: SlateLook.lost(s, away: false), left: false)
             }
 
 
@@ -559,7 +559,7 @@ struct BandShape: Shape {
 
 // a team on the face-off card: its logo (or chip) with the name under it, the football by the name when it has the ball
 // 3.101.0: one team on the Lock Screen card: a slanted pill of its color with its logo and big score (the score on
-// the inside, toward the clock), the football by the score when it has the ball, the team's name under the pill
+// the inside, toward the clock), the team's name under the pill, the football by the name when it has the ball (3.133.2)
 private struct PillSide: View {
     let name: String
     let abbr: String
@@ -570,22 +570,17 @@ private struct PillSide: View {
     let score: Int?
     let ball: Bool
     let dim: Bool
-    let trail: Bool
     let left: Bool
 
     var body: some View {
         let hasLogo = SlateLogos.image(logo) != nil
         VStack(alignment: left ? .leading : .trailing, spacing: 5) {
+            // 3.133.2 (DJ): the football no longer sits by the score, where it squeezed the score small (or out of
+            // the pill altogether); it sits by the team's name under the pill, on the inside edge toward the down
             HStack(spacing: 8) {
-                if !left {
-                    scoreView
-                    if ball { icon }
-                }
+                if !left { scoreView }
                 Chip(abbr: abbr, color: color, alt: alt, width: hasLogo ? 32 : 40, height: hasLogo ? 32 : 24, size: 13, logo: logo)
-                if left {
-                    if ball { icon }
-                    scoreView
-                }
+                if left { scoreView }
             }
             .padding(.leading, left ? 10 : 20)
             .padding(.trailing, left ? 20 : 10)
@@ -593,11 +588,13 @@ private struct PillSide: View {
             .frame(height: 48)
             .background(TeamWash(color: SlateLook.panelHex(color, alt), left: left).clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous)))
             HStack(spacing: 4) {
+                if ball && !left { icon }
                 if let rank { Text("\(rank)").font(SlateLook.bold(10)).foregroundStyle(SlateLook.muted) }
                 Text(name)
                     .font(SlateLook.bold(13))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
+                if ball && left { icon }
             }
             .padding(.horizontal, 4)
         }
@@ -610,15 +607,15 @@ private struct PillSide: View {
         if let score {
             Text("\(score)")
                 .font(SlateLook.num(34))
-                .opacity(trail ? 0.6 : 1)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
+                .layoutPriority(1)   // the score keeps its room before anything else in the pill
         }
     }
 
     private var icon: some View {
         Image(systemName: "football.fill")
-            .font(.system(size: 10))
+            .font(.system(size: 11))
             .foregroundStyle(SlateLook.ink)
             .accessibilityLabel("has the ball")
     }
@@ -792,18 +789,17 @@ private struct IslandTeam: View {
     let chipFirst: Bool
     let dim: Bool
     var logo: String? = nil
-    var ball: Bool = false   // 3.75.1: football, this team has it: the icon on the score's inside edge, by the down
+    var ball: Bool = false   // 3.75.1: football, this team has it (3.133.2: a small tag on the logo's corner)
 
     var body: some View {
         HStack(spacing: 9) {
             if chipFirst { badge }
-            if ball && !chipFirst { icon }
             Text("\(score)")
                 .font(SlateLook.num(34))
                 .foregroundStyle(SlateLook.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            if ball && chipFirst { icon }
+                .layoutPriority(1)   // 3.133.2: the score keeps its room first
             if !chipFirst { badge }
         }
         // 3.101.0 (DJ): the team's color behind its whole side, logo and score, with the slant toward the camera
@@ -813,9 +809,17 @@ private struct IslandTeam: View {
         .opacity(dim ? 0.5 : 1)
     }
 
-    // the logo a little bigger (3.85.0); the chip when there's no logo
-    @ViewBuilder
+    // the logo a little bigger (3.85.0); the chip when there's no logo. 3.133.2 (DJ): the football is a small tag on
+    // the logo's inside bottom corner (toward the camera) instead of a column of its own, which squeezed the score
     private var badge: some View {
+        logoOrChip
+            .overlay(alignment: chipFirst ? .bottomTrailing : .bottomLeading) {
+                if ball { icon.offset(x: chipFirst ? 6 : -6, y: 4) }
+            }
+    }
+
+    @ViewBuilder
+    private var logoOrChip: some View {
         if SlateLogos.image(logo) != nil {
             Chip(abbr: abbr, color: color, alt: alt, width: 30, height: 30, logo: logo)
         } else {
@@ -825,8 +829,10 @@ private struct IslandTeam: View {
 
     private var icon: some View {
         Image(systemName: "football.fill")
-            .font(.system(size: 11))
+            .font(.system(size: 9, weight: .bold))
             .foregroundStyle(SlateLook.ink)
+            .frame(width: 16, height: 16)
+            .background(Circle().fill(Color.black))   // the island is always black
             .accessibilityLabel("has the ball")
     }
 }

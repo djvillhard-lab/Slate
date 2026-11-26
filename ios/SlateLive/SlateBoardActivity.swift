@@ -170,9 +170,9 @@ private struct BoardLine: View {
                         }
                     } else {
                         HStack(spacing: 5) {
-                            Text("\(g.a)").opacity(fin && g.a < g.h || live && g.a < g.h ? 0.6 : 1)
+                            Text("\(g.a)").opacity(fin && g.a < g.h ? 0.6 : 1)   // 3.133.2 (DJ): only after the final, never while live
                             Rectangle().fill(SlateLook.ink.opacity(0.25)).frame(width: 2, height: dark ? 12 : 14)
-                            Text("\(g.h)").opacity(fin && g.h < g.a || live && g.h < g.a ? 0.6 : 1)
+                            Text("\(g.h)").opacity(fin && g.h < g.a ? 0.6 : 1)
                         }
                         .font(SlateLook.num(dark ? 24 : 27))
                         .lineLimit(1)

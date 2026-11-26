@@ -6,5 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | shared: ios/ (Live Activity football by the score) | ios/SlateLive/SlateLiveActivity.swift | 2026-11-26 01:22 |
 | DJ | Live scoreboard sheet (closing, scrolling) and Board button colors | src/body.html (sheet-board only), src/app/040-live.js, src/styles/050-ux-review.css (board rules) | 2026-11-26 01:55 |

@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.133.2 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), new build
+- Lock Screen live game: the score of the team with the ball is full size again. The little football used to sit right beside the score, and on a narrow screen it squeezed that score smaller than the other team's (Packers 0 next to a big Rams 0), or pushed it out of view. The football now sits by the team's name under the score.
+- Dynamic Island (held open): the football is now a small tag on the corner of the team's logo, so the score always shows at full size.
+- Live games on the Lock Screen (one game or your whole slate): the team that's behind is no longer grayed out while the game is on. Only the loser of a finished game dims.
+
 ## 3.133.1 (Nov 26, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Basketball box score (NBA, WNBA, college): free throws (FT) now show in the quick look's box score and the Live feed's, next to FG and 3PT, like the full box score already did. Each made-attempted number (FG 5-10, 3PT 2-4, FT 3-4) has the player's shooting percentage beside it in small gray type (5-10 50%). The percentage is worked out from ESPN's made and attempted numbers, and a player with no attempts shows none.
