@@ -91,3 +91,12 @@ html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > .gv-oddsbar { gri
 html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > .gv-cl { grid-column: 2; grid-row: 2; align-self: start; }
 html.in-pane.pn-full #game-body .gv-sec.open > .gv-sec-in { display: block; columns: 2; column-gap: 12px; }
 html.in-pane.pn-full #game-body .gv-sec.open > .gv-sec-in > * { break-inside: avoid; margin-top: 0; margin-bottom: 12px; }
+/* Live feed, full screen: the plays on the left, the box score beside them on the right */
+html.in-pane.pn-full #feed-body:has(> .fd-box) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-flow: row dense; column-gap: 12px; align-items: start; }
+html.in-pane.pn-full #feed-body:has(> .fd-box) > * { grid-column: 1 / -1; min-width: 0; }
+html.in-pane.pn-full #feed-body:has(> .fd-box) > .fd-field, html.in-pane.pn-full #feed-body:has(> .fd-box) > .fd-list { grid-column: 1; }
+html.in-pane.pn-full #feed-body:has(> .fd-box) > .fd-box { grid-column: 2; grid-row: span 2; margin-top: 6px; }
+/* Team page, full screen: the name across the top, the cards in two columns */
+html.in-pane.pn-full #team-body { columns: 2; column-gap: 12px; }
+html.in-pane.pn-full #team-body > .tm-head { column-span: all; }
+html.in-pane.pn-full #team-body > .gv-card { break-inside: avoid; }
