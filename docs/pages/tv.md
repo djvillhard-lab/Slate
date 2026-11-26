@@ -19,6 +19,8 @@ Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css
 
 - 3.137.2 (DJ): TV tiles use the Live notification face-off look (`tvsFace`): slanted team-color panels (62% to 30%), big logo (`badgeFor` scaled inside `.tvs-sd`, DJ's ask, an exception to the 42x24 logo box), abbreviation, big score, clock tag, channel big top right. All sizes are container units (`container-type: size` on `.tvs-tv` and each split `.tvs-cell`), so small TVs scale down. Editor panel: a row of TV buttons (`.tvs-which`) picks the TV; wording "My teams go on this TV" and "Games at once on this TV". "What's on at" time row; `TVS.slot` resets to Live now after 15 min or when leaving the tab.
 
+- 3.140.5 (DJ): split-screen TVs are YouTube TV Multiview, so they only take games on a YouTube TV channel (`tvsYT`: `NATIONAL_TV` minus `TV_NOT_YT`), in fill, pins and Swap; their screens show that channel (`tvsChan(g, true)`). A hint says when fewer games qualify. Other multiview services (Fubo, DirecTV) aren't separate yet; DJ only named YouTube TV.
+
 ## Open
 - Second release (DJ's pick pending on the decision cards): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.
 - Hidden channels are per phone. Saving them with the profile needs `260-persistence.js` (shared file).

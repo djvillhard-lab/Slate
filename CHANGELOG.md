@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.140.5 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- My TVs: a split-screen TV (YouTube TV Multiview) now only gets games on channels YouTube TV carries, like ESPN, FOX, TNT or CBSSN, and each of its screens shows that channel. Games only on Prime Video, Netflix, Peacock or ESPN+ never go on it, and Swap for that TV only offers YouTube TV games. When fewer games qualify than the TV has screens, a line under it says so.
+
 ## 3.140.4 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - The bottom bar: the red dot on the All games button is gone. Leagues with a live game still show their dot inside the All games filter.

@@ -184,8 +184,15 @@
   }
 
   // ---------- which games go on which TV ----------
-  function tvsChan(g) {
+  // 3.140.5 (DJ): a split-screen TV is YouTube TV Multiview, which only splits YouTube TV's own channels. So it only gets
+  // games on a channel YouTube TV carries: the national channels the Watch popup already sends to YouTube TV, less the
+  // ones it doesn't carry. Streaming-only games (Prime, Netflix, Peacock, ESPN+) never go on it.
+  var TV_NOT_YT = { "NBCSN": 1, "beIN SPORTS": 1 };
+  function tvsYTch(n) { return NATIONAL_TV.indexOf(n) !== -1 && !TV_NOT_YT[n]; }
+  function tvsYT(g) { return (g.tv || []).some(tvsYTch); }
+  function tvsChan(g, yt) {
     var tv = (g.tv || []).filter(Boolean);
+    if (yt) { var y = tv.filter(tvsYTch); if (y.length) return { main: y[0], more: tv }; }
     var nat = tv.filter(function (n) { return NATIONAL_TV.indexOf(n) !== -1; });
     var app = tv.filter(function (n) { return watchOptions(n).length; });
     return { main: nat[0] || app[0] || tv[0] || "", more: tv };
@@ -235,16 +242,16 @@
     var pins = TVS.pins[setup.id + "|" + slot.k] || {};
     order.forEach(function (i) {
       var t = setup.tvs[i], n = Math.max(1, t.split || 1);
-      (pins[t.id] || []).forEach(function (id, j) { if (j < n && byId[id] && !used[id]) { out[i][j] = byId[id]; used[id] = 1; } });
+      (pins[t.id] || []).forEach(function (id, j) { if (j < n && byId[id] && !used[id] && (n === 1 || tvsYT(byId[id]))) { out[i][j] = byId[id]; used[id] = 1; } });
     });
     order.forEach(function (i) {
       var t = setup.tvs[i], n = Math.max(1, t.split || 1);
       for (var j = 0; j < n; j++) {
         if (out[i][j]) continue;
         // the main TV takes your team's game first, wherever it ranks
-        var g = null;
-        if (t.main) g = pool.filter(function (x) { return !used[x.id] && hasFav(x); })[0] || null;
-        if (!g) g = pool.filter(function (x) { return !used[x.id]; })[0] || null;
+        var g = null, ok = function (x) { return !used[x.id] && (n === 1 || tvsYT(x)); };
+        if (t.main) g = pool.filter(function (x) { return ok(x) && hasFav(x); })[0] || null;
+        if (!g) g = pool.filter(ok)[0] || null;
         if (!g) break;
         out[i][j] = g; used[g.id] = 1;
       }
@@ -289,12 +296,12 @@
     var kt = typeof teamByName === "function" ? teamByName(g[s]) : null; if (kt && hexOk(kt.c1)) return kt.c1;
     return colors(g[s])[0];
   }
-  function tvsFace(box, g, name) {
+  function tvsFace(box, g, name, yt) {
     var o = sideOrder(g), sc = scoreOf(g), st = tvsStatus(g);
     o.forEach(function (s, i) { var pl = el("span", "tvs-pl " + (i ? "r" : "l")); pl.style.setProperty("--tc", tvsColor(g, s)); box.appendChild(pl); });
     var top = el("span", "tvs-top2");
     top.appendChild(el("span", "tvs-tn", name || ""));
-    var ch = tvsChan(g).main;
+    var ch = tvsChan(g, yt).main;
     top.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-ch none", "No channel"));
     box.appendChild(top);
     var fo = el("span", "tvs-fo");
@@ -329,7 +336,7 @@
       var grid = el("span", "tvs-split" + (n === 4 ? " four" : ""));
       for (var j = 0; j < n; j++) {
         var c = el("span", "tvs-cell"), g = list[j];
-        if (g) tvsFace(c, g, j === 0 ? t.name : ""); else { c.appendChild(el("span", "tvs-tn", j === 0 ? t.name : "")); c.appendChild(el("span", "tvs-empty", "Nothing else on")); }
+        if (g) tvsFace(c, g, j === 0 ? t.name : "", true); else { c.appendChild(el("span", "tvs-tn", j === 0 ? t.name : "")); c.appendChild(el("span", "tvs-empty", "No YouTube TV game")); }
         grid.appendChild(c);
       }
       node.appendChild(grid);
@@ -400,12 +407,13 @@
         if (!g && j > 0) continue;
         wrap.appendChild(tvsRow(setup, slot, t, j, n, g, pool, shown));
       }
+      if (n > 1 && fill[i].length < n) wrap.appendChild(el("p", "tvs-hint", t.name + " can only split YouTube TV channels, and " + (fill[i].length ? "only " + fill[i].length + " of its " + n + " screens have a game on one" : "no game left is on one") + " at this time."));
     });
     body.appendChild(wrap);
   }
   function tvsRow(setup, slot, t, j, n, g, pool, shown) {
     var box = el("div"), row = el("div", "tvs-row");
-    var ch = g ? tvsChan(g).main : "";
+    var ch = g ? tvsChan(g, n > 1).main : "";
     row.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-noch", g ? "No channel listed" : ""));
     var tx = el("div", "tx"), lbl = n > 1 ? t.name + ", screen " + (j + 1) : t.name;
     if (g) {
@@ -419,7 +427,7 @@
       tx.appendChild(sub);
     } else { tx.appendChild(el("b", null, lbl)); tx.appendChild(el("span", null, "Nothing else on at this time")); }
     row.appendChild(tx);
-    var key = t.id + ":" + j, alts = pool.filter(function (x) { return !g || x.id !== g.id; });
+    var key = t.id + ":" + j, alts = pool.filter(function (x) { return (!g || x.id !== g.id) && (n === 1 || tvsYT(x)); });
     if (alts.length) {
       var sw = el("button", "tvs-sw", TVS.swap === key ? "Close" : "Swap"); sw.type = "button";
       sw.setAttribute("aria-expanded", TVS.swap === key ? "true" : "false"); sw.setAttribute("aria-label", "Swap the game on " + lbl);
@@ -432,7 +440,7 @@
       var al = el("div", "tvs-alt");
       alts.slice(0, 10).forEach(function (x) {
         var b = el("button"); b.type = "button";
-        var c = tvsChan(x).main; if (c) b.appendChild(el("span", "tvs-ch", NET_SHORT[c] || c));
+        var c = tvsChan(x, n > 1).main; if (c) b.appendChild(el("span", "tvs-ch", NET_SHORT[c] || c));
         b.appendChild(el("span", null, pairText(x, function (s) { return short(x, s); }, homeFirst(x) || x.neutral ? " vs " : " at ")));
         b.appendChild(el("span", "d", shown[x.id] ? "On another TV" : tvsStatus(x).text));
         b.addEventListener("click", function () {
@@ -572,7 +580,7 @@
     sw.addEventListener("click", function () { var on = !t.main; s.tvs.forEach(function (x) { x.main = false; }); t.main = on; tvsEdRedraw(); });
     r1.appendChild(sw); panel.appendChild(r1);
     var r2 = el("div", "tvs-prow col"), l2 = el("span", null, "Games at once on this TV");
-    l2.appendChild(el("small", null, "Most TVs show 1. Pick 2 or 4 if this TV shows several games on one screen, like YouTube TV Multiview."));
+    l2.appendChild(el("small", null, "Most TVs show 1. Pick 2 or 4 if this TV uses YouTube TV Multiview. It only gets games on YouTube TV channels, since Multiview can't split Prime, Netflix, Peacock or ESPN+."));
     r2.appendChild(l2);
     var seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Games at once on this TV");
     [[1, "1 game"], [2, "2 games"], [4, "4 games"]].forEach(function (o) {
