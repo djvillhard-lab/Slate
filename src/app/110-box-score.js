@@ -155,7 +155,7 @@
   var BX_GROUP = { "": "Players", game: "Per game", team: "Skaters", goalkeeping: "Goalies", forwards: "Forwards", defenses: "Defense", goalies: "Goalies", passing: "Passing", rushing: "Rushing", receiving: "Receiving", fumbles: "Fumbles", defensive: "Defense", interceptions: "Interceptions", kickReturns: "Kick returns", puntReturns: "Punt returns", kicking: "Kicking", punting: "Punting", batting: "Batting", pitching: "Pitching", lineup: "Lineup", outfield: "Season stats", keepers: "Goalkeepers" };
   // the slate's quick look: a few columns and the top few players in each group
   var BX_COMPACT = {
-    bball: { "": { cols: ["MIN", "PTS", "REB", "AST", "FG", "3PT", "STL", "BLK", "+/-"], sort: ["PTS", "REB", "AST"], n: 6 } },
+    bball: { "": { cols: ["MIN", "PTS", "REB", "AST", "FG", "3PT", "FT", "STL", "BLK", "+/-"], sort: ["PTS", "REB", "AST"], n: 6 } },
     hockey: { forwards: { cols: ["G", "A", "+/-", "S", "TOI"], sort: ["G", "A", "S"], n: 4 }, defenses: { cols: ["G", "A", "S", "TOI"], sort: ["G", "A", "S"], n: 2 }, goalies: { cols: ["SA", "SV", "SV%"], sort: ["SA"], n: 2 } },
     football: { passing: { cols: ["C/ATT", "YDS", "TD", "INT"], sort: ["YDS"], n: 1 }, rushing: { cols: ["CAR", "YDS", "TD"], sort: ["YDS"], n: 2 }, receiving: { cols: ["REC", "YDS", "TD"], sort: ["YDS"], n: 3 } },
     baseball: { batting: { cols: ["AB", "R", "H", "RBI"], sort: ["H", "RBI", "R"], n: 4 }, pitching: { cols: ["IP", "H", "ER", "K"], sort: ["IP", "K"], n: 2 } },
@@ -216,11 +216,20 @@
     }
     return f;
   }
-  function bxCells(cols, idx, vals, plusCol, widths) {
+  // 3.133.1 (DJ): basketball's made-attempted pairs (FG, 3PT, FT) get their shooting % beside them, small and muted.
+  // ESPN gives each player only the made-attempted pair, so the % is worked out from those two numbers; nothing when there were no attempts.
+  var BX_PCT_COLS = { FG: 1, "3PT": 1, FT: 1 };
+  function bxPct(sport, col, v) {
+    if (sport !== "bball" || !BX_PCT_COLS[col]) return "";
+    var m = /^(\d+)-(\d+)$/.exec(String(v || "")); if (!m || !+m[2]) return "";
+    return Math.round(100 * m[1] / m[2]) + "%";
+  }
+  function bxCells(cols, idx, vals, plusCol, widths, sport) {
     var row = el("div", "bxp-cells");
     idx.forEach(function (i) {
       var v = vals[i]; v = v != null && v !== "" ? String(v) : "–";
-      var c = el("span", "bxp-c"), n = el("b", null, v);
+      var c = el("span", "bxp-c"), n = el("b", null, v), pc = bxPct(sport, cols[i], v);
+      if (pc) n.appendChild(el("small", "bxp-pct", pc));
       if (i === plusCol) { var x = parseFloat(v); if (x > 0) n.className = "up"; else if (x < 0) n.className = "down"; }
       if (widths && widths[i]) c.style.width = widths[i] + "px";
       c.appendChild(n); c.appendChild(el("i", null, cols[i])); row.appendChild(c);
@@ -285,7 +294,7 @@
     }
     // every row's column gets the same width, so the columns line up and scroll together
     var big = 10.5, widths = {};
-    idx.forEach(function (i) { var m = String(cols[i] || "").length * 7.5; played.forEach(function (r) { m = Math.max(m, String(r.s[i] == null ? "–" : r.s[i]).length * big); }); widths[i] = Math.ceil(Math.max(26, m)); });
+    idx.forEach(function (i) { var m = String(cols[i] || "").length * 7.5; played.forEach(function (r) { var pc = bxPct(sport, cols[i], r.s[i]); m = Math.max(m, String(r.s[i] == null ? "–" : r.s[i]).length * big + (pc ? pc.length * 6.5 + 3 : 0)); }); widths[i] = Math.ceil(Math.max(26, m)); });
     var wrap = el("div", "bxp-list"), sc = el("div", "bxp-sc");  // one sideways scroller for the whole group
     var split = sport === "bball" && gr.k !== "game" && played.some(function (r) { return r.st; }) && played.some(function (r) { return !r.st; });
     var parts = split ? [["Starters", played.filter(function (r) { return r.st; })], ["Bench", played.filter(function (r) { return !r.st; })]] : [[null, played]];
@@ -301,7 +310,7 @@
         if (r.st && !split && sport !== "bball") nm.appendChild(el("span", "bxp-s", "S"));
         if (r.id && team) { var ps = playerStar({ id: r.id, name: r.n, lg: g.league, team: team.abbr, teamName: team.name }); ps.classList.add("bxp-star"); nm.appendChild(ps); }
         right.appendChild(nm);
-        right.appendChild(bxCells(cols, idx, r.s, plus, widths));
+        right.appendChild(bxCells(cols, idx, r.s, plus, widths, sport));
         row.appendChild(right); sc.appendChild(row);
       });
     });

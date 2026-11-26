@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.133.1 (Nov 26, 2026)
+TestFlight: 3.129.0 (57), no new build (web only)
+- Basketball box score (NBA, WNBA, college): free throws (FT) now show in the quick look's box score and the Live feed's, next to FG and 3PT, like the full box score already did. Each made-attempted number (FG 5-10, 3PT 2-4, FT 3-4) has the player's shooting percentage beside it in small gray type (5-10 50%). The percentage is worked out from ESPN's made and attempted numbers, and a player with no attempts shows none.
+
 ## 3.133.0 (Nov 26, 2026)
 TestFlight: 3.129.0 (57), no new build (web only)
 - Live scoreboard (the Board button on the slate): a new choice on top, "Your slate, all day", on unless you turn it off. The live notification shows the first 4 games on your slate that are still to come or on, in start order. When a game ends, its final score stays 15 minutes, then the next game on your slate takes its place. It keeps rolling until the last game is over, starts again each day 15 minutes before your first game, and stays on day to day until you turn it off. Turn the choice off to pick 4 games yourself like before.
