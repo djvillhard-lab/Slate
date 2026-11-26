@@ -10,7 +10,7 @@
     python3 scripts/shots.py lineup --gate                                  (the log-in page; --gate invite = the sign-up page)
     SLATE_PASS=... python3 scripts/shots.py settings --readonly --name welcome-2 --eval "document.querySelector('#acct button').click(); document.querySelector('.wl-next').click()"
 
-Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --tap "sel" (a real finger tap on the first visible match, after --click), --yesterday (the day before: finished games), --tomorrow (the slate's next day:
+Options: --text xs|s|m|l|xl|auto (the Text size setting, for this run only), --look dark|paper (the theme, with its own accent, for this run only), --font archivo|mona|flex|saira|noto|serif (the Font setting, for this run only), --teams "A,B" (favorite teams for this run; add --readonly so they are never saved), --tap "sel" (a real finger tap on the first visible match, after --click), --yesterday (the day before: finished games), --tomorrow (the slate's next day:
 upcoming games), --full (the whole page, not just the first screen), --wait seconds,
 --espn-swap "a=>b,c=>d" (change ESPN request URLs, e.g. "dates=202611=>dates=202511" to show last season's games),
 --eval "js" (run in the page just before each screenshot, e.g. to tap something; what it returns is printed), --name label (added to the file names),
@@ -67,6 +67,7 @@ def main():
     safari = False  # --safari: the website in Safari on an iPhone (no app shell), with a pretend TestFlight link for invites
     simple = ""  # --simple [l|xl|xxl]: Simple mode on for this run (287-simple.js), at that text size
     pane = "right"
+    font = ""  # --font: the Font setting for this run (233-fonts.js)
     ev, name, readonly, gate = None, "", False, None
     swaps = []  # --espn-swap "a=>b,c=>d": change ESPN request URLs (e.g. show last season's playoffs: "dates=202611=>dates=202511")
     i = 0
@@ -97,6 +98,7 @@ def main():
         if a == "--name": name = args[i + 1]; i += 2; continue
         if a == "--espn-swap": swaps += [x.split("=>", 1) for x in args[i + 1].split(",") if "=>" in x]; i += 2; continue
         if a == "--readonly": readonly = True; i += 1; continue
+        if a == "--font": font = args[i + 1]; i += 2; continue
         if a == "--safari": safari = True; i += 1; continue
         if a == "--gate":
             gate = "login"; i += 1
@@ -132,6 +134,7 @@ def main():
                         row["data"]["device"] = device
                         if text: row["data"]["textSize"] = text; row["data"]["textSizeWide"] = text
                         if teams: row["data"]["teams"] = teams
+                        if font: row["data"]["font"] = font
                         if look: row["data"]["look"] = look; row["data"]["accent"] = {"paper": "navy"}.get(look, "green")
                 route.fulfill(response=r, body=json.dumps(d))
             except Exception:
@@ -158,8 +161,10 @@ def main():
             page.on("pageerror", lambda e: errors.append(str(e)))
             if safari: page.add_init_script("try{localStorage.setItem('slate-app-link','https://testflight.apple.com/join/SHOTS123')}catch(e){}")
             else: page.add_init_script("window.SLATE_NATIVE={platform:'ios',app:'3.0',strip:%s,webNav:%s};try{var k='lineup.look',v=JSON.parse(localStorage.getItem(k)||'{}');v.device='%s';localStorage.setItem(k,JSON.stringify(v));}catch(e){}" % ("true" if S["strip"] else "false", "false" if oldapp else "true", S["device"]))
+            if font: page.add_init_script("try{localStorage.setItem('slate-font','%s')}catch(e){}" % font)
             if simple: page.add_init_script("try{localStorage.setItem('slate-simple',JSON.stringify({on:true,size:'%s'}));}catch(e){}" % simple)
             page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/(\?.*)?(#.*)?$"), lambda r: r.fulfill(path=index, content_type="text/html"))
+            page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/fonts/[\w-]+\.woff2$"), lambda r: r.fulfill(path=os.path.join(ROOT, "fonts", r.request.url.rsplit("/", 1)[-1]), content_type="font/woff2"))  # 3.157.0 font choices, from this copy
             page.route(re.compile(r".*/version\.json.*"), lambda r: r.fulfill(path=ver, content_type="application/json"))
             page.route(re.compile(r"^https://site\.api\.espn\.com/.*"), espn)
             page.route(re.compile(r".*/api/wire\?lg=\w+$"), wire_local)  # News injuries and moves from this copy of worker/wire.js (3.115.0)
@@ -268,7 +273,7 @@ def main():
                     r = page.evaluate(ev); page.wait_for_timeout(1200)
                     if r is not None: print(r)  # whatever the script returns (e.g. computed styles)
                 wide = max([page.evaluate("document.scrollingElement.scrollWidth - innerWidth")] + [fr.evaluate("document.scrollingElement.scrollWidth - innerWidth") for fr in page.frames[1:] if "pane=" in fr.url])
-                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}{'-' + name if name else ''}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{('-yesterday' if tomorrow == 'prev' else '-tomorrow') if tomorrow else ''}.png")
+                path = os.path.join(OUT, f"{re.sub(r'[^A-Za-z0-9]+', '-', pg).strip('-')}{'-' + name if name else ''}-{size}{'-' + text if text else ''}{'-' + look if look else ''}{'-' + font if font else ''}{('-yesterday' if tomorrow == 'prev' else '-tomorrow') if tomorrow else ''}.png")
                 page.screenshot(path=path, full_page=full)
                 print(f"{path}  ({size}: {mode})" + (f"  WIDER THAN THE SCREEN by {wide}px" if wide > 1 else ""))
             for e in errors: print(f"  page error ({size}): {e}")

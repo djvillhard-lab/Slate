@@ -129,7 +129,7 @@
     set("sp-email", !signed ? "Log in to get your slate by email" : mp && mp.on ? "On, every day at " + meClock(mp.time || "07:00") : mp ? "Off" : "Your slate by email every morning");
     set("sp-slate", "Scores " + (state.showScores ? "shown" : "hidden") + " · newsletters, Worth a look, thumbs, quick reads");
     var th = THEMES[state.look], sz = state.textSize === "auto" ? "Auto" : String(state.textSize || "m").toUpperCase();
-    set("sp-look", (deviceMode() === "duo" ? "iPhone Duo" : "iPhone") + " · " + (th ? th[0] : "Midnight") + " · text " + sz);
+    set("sp-look", (deviceMode() === "duo" ? "iPhone Duo" : "iPhone") + " · " + (th ? th[0] : "Midnight") + " · " + fontName() + " · text " + sz);
     set("sp-account", !signed ? "Not logged in on this phone" : "Logged in as " + (me === "dj" ? "DJ" : nm || me) + (isAdmin() ? " · invites and people" : ""));
     set("sp-about", "Slate " + SLATE_VERSION + " · what's new, reset the app");
   }
@@ -153,6 +153,7 @@
       b.addEventListener("click", function () { state.look = k; state.accent = t[2]; applyLook(); saveSettings(); render(); });
       tg.appendChild(b);
     });
+    drawFonts();
     Array.prototype.forEach.call($("size-seg").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === state.textSize ? "true" : "false"); });
     var asn = $("auto-size-note"); if (asn) { var zz = Math.round(systemTextZoom() * 100); asn.textContent = "Auto matches your iPhone's text size (" + zz + "% right now). M is 100%."; }
     Array.prototype.forEach.call($("size-seg-wide").children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === (state.textSizeWide || state.textSize) ? "true" : "false"); });

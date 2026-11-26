@@ -39,7 +39,7 @@ self.addEventListener("fetch", function (e) {
     }));
     return;
   }
-  if (/(supabase\.js|icon\.png)$/.test(url.pathname)) {
+  if (/(supabase\.js|icon\.png|\/fonts\/[\w-]+\.woff2)$/.test(url.pathname)) {
     e.respondWith(caches.match(req, { ignoreSearch: true }).then(function (hit) { return hit || fresh(req, req); }));
   }
 });

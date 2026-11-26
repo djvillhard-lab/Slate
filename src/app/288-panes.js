@@ -12,7 +12,7 @@
   var PN_PAGES = [["lineup", "Tonight's Slate"], ["games", "All games"], ["moments", "Box Office"], ["tv", "On TV"], ["news", "News"], ["teams", "Teams"], ["settings", "Settings"]];
   // the settings both sides share: when one side saves, the other side (and the host) take the same values,
   // so neither one later saves an old copy over the change
-  var PN_SET_KEYS = ["teams", "look", "accent", "textSize", "textSizeWide", "device", "navPos", "watchVia", "foldNudge", "rules", "tickerLeague", "showScores", "hiddenLeagues", "gamesOrder", "players", "teamOrder", "pvStyle", "slateSort", "slateLgOrder", "slateFold", "walRules", "newsletters", "notify"];
+  var PN_SET_KEYS = ["teams", "look", "accent", "textSize", "textSizeWide", "font", "device", "navPos", "watchVia", "foldNudge", "rules", "tickerLeague", "showScores", "hiddenLeagues", "gamesOrder", "players", "teamOrder", "pvStyle", "slateSort", "slateLgOrder", "slateFold", "walRules", "newsletters", "notify"];
   function panesOn() { return PN.on; }
   function panesOK() {
     if (PANE || /[?&]panes=off\b/.test(location.search)) return false;

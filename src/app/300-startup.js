@@ -25,6 +25,7 @@
               if (d.accent) state.accent = d.accent;
               if (d.textSize) state.textSize = d.textSize;
               if (typeof d.textSizeWide === "string") state.textSizeWide = d.textSizeWide;
+              if (typeof d.font === "string") state.font = d.font;
               if (d.device === "duo" || d.device === "iphone") state.device = d.device;
               if (d.navPos) state.navPos = d.navPos;
               if (d.watchVia === "apps" || d.watchVia === "yttv") state.watchVia = d.watchVia;

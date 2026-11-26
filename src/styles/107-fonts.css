@@ -1,0 +1,18 @@
+/* 3.157.0 font choices (Settings > Look and text size > Font; 233-fonts.js). Each is a variable font with width and
+   weight axes, so the app's condensed scores (66%) and wide titles (112-118%) work the same in every font.
+   A file downloads only when its font is on screen (the chosen font, or the previews on the Look page). */
+@font-face { font-family: "Slate Mona Sans"; src: url(fonts/mona-sans.woff2) format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; font-display: swap; }
+@font-face { font-family: "Slate Roboto Flex"; src: url(fonts/roboto-flex.woff2) format("woff2"); font-weight: 100 1000; font-stretch: 25% 151%; font-display: swap; }
+@font-face { font-family: "Slate Saira"; src: url(fonts/saira.woff2) format("woff2"); font-weight: 100 900; font-stretch: 50% 125%; font-display: swap; }
+@font-face { font-family: "Slate Noto Sans"; src: url(fonts/noto-sans.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62.5% 100%; font-display: swap; }
+@font-face { font-family: "Slate Roboto Serif"; src: url(fonts/roboto-serif.woff2) format("woff2"); font-weight: 100 900; font-stretch: 50% 150%; font-display: swap; }
+
+/* the Font list: each row is drawn in its own font */
+.fonts { display: grid; gap: 8px; margin-top: 4px; }
+.fontopt { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; min-height: 64px; padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); text-align: left; font-weight: 700; }
+.fontopt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.fontopt b { font-size: 18px; font-weight: 800; font-stretch: 112%; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
+.fontopt i { grid-column: 1; font-style: normal; font-size: 13px; font-weight: 700; color: var(--muted); line-height: 1.25; }
+.fontopt .fo-score { grid-column: 2; grid-row: 1 / span 2; font-size: 22px; font-weight: 800; font-stretch: 66%; white-space: nowrap; color: var(--head); }
+.fontopt .fo-score em { font-style: normal; color: var(--muted); }
+.fontopt[aria-pressed="true"] .fo-score { color: var(--ink); }

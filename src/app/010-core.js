@@ -1,7 +1,7 @@
   "use strict";
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
   // It must match the newest entry in CHANGELOG.md (build.py checks), and the iPhone app's builds read it from index.html.
-  var SLATE_VERSION = "3.156.1";
+  var SLATE_VERSION = "3.157.0";
 
   var HOME_TZ = "America/Chicago";
   var DEFAULT_TEAMS = ["St. Louis Blues", "St. Louis Cardinals", "Manchester United", "St. Louis City SC"];
@@ -119,7 +119,7 @@
   function setPref(path, v) { var ks = path.split("."), o = state.notify; for (var i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; }
   function fmtHour(h) { h = Number(h); return (h % 12 === 0 ? 12 : h % 12) + " " + (h < 12 ? "AM" : "PM"); }
   var state = {
-    date: todayInHome(), view: "lineup", openId: null, crawlPaused: false, tickerLeague: "", league: "", conf: "all", gamesOrder: [], pvStyle: "para", players: [], bestConf: "all", q: "", showSearch: false, textSize: "m", textSizeWide: "", device: "", navPos: "auto", watchVia: "apps", foldNudge: 0, tvFilter: "all",
+    date: todayInHome(), view: "lineup", openId: null, crawlPaused: false, tickerLeague: "", league: "", conf: "all", gamesOrder: [], pvStyle: "para", players: [], bestConf: "all", q: "", showSearch: false, textSize: "m", textSizeWide: "", font: "archivo", device: "", navPos: "auto", watchVia: "apps", foldNudge: 0, tvFilter: "all",
     notify: clone(NOTIFY_DEFAULTS), notifyLoaded: false,
     autoAdd: true, showScores: true, newsletters: [], hiddenLeagues: [], scores: {}, scoresAt: null, lineupAutoDone: false,
     slate: null, slateStatus: "loading", lineup: { ids: [], added: [], removed: [], custom: [] }, lineupLoaded: false,

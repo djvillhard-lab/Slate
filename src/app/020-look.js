@@ -76,6 +76,7 @@
     root.classList.toggle("bigtext", z >= 1.08);
     root.style.setProperty("--z", String(z)); root.classList.toggle("zoomed", z > 1.1);
     if (["auto", "right", "bottom"].indexOf(state.navPos) === -1) state.navPos = "auto";
+    applyFont();  // the Font choice (233-fonts.js)
     try { localStorage.setItem("lineup.look", JSON.stringify({ look: state.look, accent: state.accent, textSize: state.textSize, textSizeWide: state.textSizeWide, device: state.device, navPos: state.navPos, foldNudge: state.foldNudge })); } catch (e) {}
   }
   applyLook();

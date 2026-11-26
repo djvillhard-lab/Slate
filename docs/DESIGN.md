@@ -49,7 +49,7 @@ notes `docs/pages/glass.md`). All of it lives in `src/styles/100-glass.css`.
 - Reduce Transparency and Increase Contrast get solid fills (the media query at the end of the file).
 
 ## Type
-- One family: Archivo (`--font`). Width does the work: `font-stretch` about **66%** for scores and times (condensed
+- One family: Archivo (`--font`), unless the person picks another in Settings > Font (3.157.0, `233-fonts.js`). Use `var(--font)`, never a font name, and any new font choice must have a width axis. Width does the work: `font-stretch` about **66%** for scores and times (condensed
   numerals), **78–92%** for chips and small labels, **112–118%** for page titles and league tabs.
 - Weights: 700 for text, 800 for names, numbers and titles. No light weights.
 - Sizes: 11 (small chip text) · 12–13 (meta: records, counts, times under things) · 15 (section titles, secondary
