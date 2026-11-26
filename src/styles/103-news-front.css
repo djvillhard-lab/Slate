@@ -333,3 +333,15 @@
 .nf-wh.sm > .nf-wc { flex-basis: min(44%, 200px); }
 .nf-wh > .nf-g, .nf-wh > .nf-s, .nf-wh > .nf-lg, .nf-wh > .nf-ji { align-self: stretch; }
 .nf-wh > .nf-ji { align-content: start; }
+
+/* ---------- 3.163.0 (DJ: a page designed fresh each write-up): the day's theme and Claude's own sections ---------- */
+.nf-th { display: grid; gap: 6px; margin: 0 calc(-1 * var(--pad)); padding: 18px var(--pad) 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 26%, var(--card)), var(--card) 70%); border-top: 3px solid var(--accent); border-bottom: 1px solid var(--line); }
+.nf-th span { font-size: 11.5px; font-weight: 800; font-stretch: 110%; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.nf-th h2 { font-size: 30px; font-weight: 900; font-stretch: 122%; line-height: 1.02; text-transform: uppercase; letter-spacing: .01em; color: var(--ink); overflow-wrap: anywhere; }
+.nl .nf-th p { font-size: 15px; line-height: 1.45; color: var(--ink); }
+.nl p.nf-in { margin-top: -4px; font-size: 14px; line-height: 1.4; color: var(--muted); }
+.nf-qa { display: grid; padding: 0 12px; }
+.nf-qa > div { display: grid; gap: 4px; padding: 12px 0; }
+.nf-qa > div + div { border-top: 1px solid var(--line); }
+.nf-qa h4 { font-size: 16px; font-weight: 800; line-height: 1.25; color: var(--ink); }
+.nl .nf-qa p { font-size: 14.5px; line-height: 1.45; color: var(--muted); }
