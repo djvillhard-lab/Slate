@@ -7,3 +7,5 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Slate: a two-column option like All games | src/app/170-slate-page.js, src/styles/109-slate-two.css (new), src/shell.html, docs/pages/slate.md | 2026-11-26 18:35 |
+| DJ | A game: box scores (tighter player rows, less empty space) | src/app/110-box-score.js, docs/pages/live-feed.md | 2026-11-26 18:45 |
+| DJ | shared: styles/040-components.css (box score row layout only) | src/styles/040-components.css | 2026-11-26 18:45 |
