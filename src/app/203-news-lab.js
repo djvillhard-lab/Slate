@@ -25,6 +25,7 @@
     var fill = function (x) {   // the photo, team and color for one entry
       var it = nlFeedItem(x.url); if (it && it.img) x.img = it.img;
       x.t = (x.team && nwTeam(x.team, x.lg)) || (it ? ncTeamOf(it) : null) || nwFindTeam(x.title, x.lg);
+      if (x.value && x.kind !== "fun" && x.kind !== "breaking") x.kind = "number";   // Claude sometimes files a number under "news"
       x.c = (x.t && nlHex(x.t.c1)) || ""; x.ms = Date.parse(x.at) || now; return x;
     };
     var free = function (a) { return fill({ kind: a.kind === "HeadlineNews" && now - (Date.parse(a.at) || 0) < 6 * 3600000 ? "breaking" : "news", tag: "", lg: a.lg, team: "", title: a.title, text: a.desc && a.desc.length > 20 ? String(a.desc).replace(/^\s*[—-]\s*/, "") : "", value: "", url: a.url, src: a.src, at: a.at, free: true }); };

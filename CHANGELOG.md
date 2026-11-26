@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.137.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- News (the layouts to try): numbers Claude writes into the wire now show as big numbers on every tab, including Number of the day on Rundown and Numbers today on Wire 3. Before, most were filed as plain stories and the number was hidden.
+
 ## 3.137.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Slate rules has a new layout. "Every league" and "By league" are gone. The page now shows what your slate picks, then Your rules: only the rules you have on, one row each in plain words with how many games it picks tonight.
