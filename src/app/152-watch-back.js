@@ -4,8 +4,7 @@
   try { WWB = JSON.parse(localStorage.getItem("slate-wwb") || "{}") || {}; } catch (e) { WWB = {}; }
   (function () { var now = Date.now(), ch = false; Object.keys(WWB).forEach(function (k) { if (now - (WWB[k].at || 0) > 4 * 864e5) { delete WWB[k]; ch = true; } }); if (ch) try { localStorage.setItem("slate-wwb", JSON.stringify(WWB)); } catch (e) {} })();
   (function () { var st = document.createElement("style"); st.id = "wwb-css"; st.textContent =
-    ".wwb { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; line-height: 1.7; font-weight: 700; color: var(--muted); }" +
-    ".wwb-k { display: inline-block; margin-right: 8px; line-height: 1.3; padding: 2px 6px; border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-stretch: 88%; color: var(--head); white-space: nowrap; }";
+    ".wwb { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; line-height: 1.7; font-weight: 700; color: var(--muted); }";
     document.head.appendChild(st); })();
   var WWB_REG = { nba: 4, wnba: 4, ncaaw: 4, ncaam: 2, nfl: 4, ncaaf: 4, nhl: 3 };
   function wwbClock(p) { var c = p.clock || {}; if (typeof c.value === "number") return c.value; var m = String(c.displayValue || "").match(/^(?:(\d+):)?(\d+(?:\.\d+)?)$/); return m ? (Number(m[1] || 0) * 60 + Number(m[2])) : null; }
@@ -58,7 +57,7 @@
     var c = WWB[g.id];
     if (!c) { var need = function () { if (!WWB[g.id] && !((bx.live[g.id] || {}).busy)) bxFetch(g); }; if (lazy && row) agSeen(row, need); else need(); return null; }
     if (!c.t.length) return null;
-    var p = el("p", "wwb"); p.appendChild(el("span", "wwb-k", "\u25B6\uFE0E Rewatch"));
+    var p = el("p", "wwb");
     p.appendChild(document.createTextNode(c.t.join(" · ")));
     return p;
   }
