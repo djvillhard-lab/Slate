@@ -55,9 +55,8 @@ html.side-col.zoomed .toprow.lineup-top:not(#pane-l .toprow) #title-t { font-siz
 /* 3.134.7: on a live card the Feed button's 44-point target reached up over the channel button, so the lower half of
    the channel name opened the Feed. The channel button now sits above it and stops where the Feed button starts. */
 .g.panel.has-feed .g-side .net { position: relative; z-index: 2; padding-bottom: 3px; margin-bottom: -3px; min-height: 0 !important; }
-/* 8: larger text keeps names whole: records hide, status and channel get their own line */
-html.bigtext .tm .rec { display: none; }
-@container (max-width: 330px) { .tm .rec { display: none; } }
+/* 8: larger text keeps names whole: status and channel get their own line. (Records used to hide here; since 3.155.1
+   they stay and drop under the name instead: 106-text-size.css) */
 .toprow .t, #title-t { font-size: clamp(20px, calc((100vw - var(--strip-w, 0px)) * .06), 28px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 11: Back sits left of the menu button in the bottom row, not stacked above it */
 html, body { overscroll-behavior-y: none; }

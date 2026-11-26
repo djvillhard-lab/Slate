@@ -106,6 +106,8 @@
         lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live"));
         lb.appendChild(el("b", null, String(nLive)));
         lb.addEventListener("click", function () { setLiveOnly(!liveOnly()); keepScroll(renderLineup); });
+        // 3.155.1: Board and Live travel together, so at large text sizes they move to a second line as a pair
+        var loEnd = el("span", "lo-end"); lo.appendChild(loEnd);
         // the live scoreboard (3.23.0): up to 4 of these games in one live notification; lit while it's on
         if (boardCtl()) {
           var bdn = boardIds().filter(function (id) { return lg.some(function (g) { return g.id === id; }); }).length;
@@ -114,9 +116,9 @@
           if (bdOn) bb.appendChild(el("b", null, String(bdn)));
           bb.setAttribute("aria-label", "Live scoreboard: up to 4 games in one live notification" + (bdOn ? ", on with " + bdn : ", off"));
           bb.addEventListener("click", openBoard);
-          lo.appendChild(bb);
+          loEnd.appendChild(bb);
         }
-        lo.appendChild(lb);
+        loEnd.appendChild(lb);
         if (liveOnly()) {
           var all = lg.length; lg = lg.filter(function (g) { return status(g).kind === "live"; });
           if (!lg.length) {

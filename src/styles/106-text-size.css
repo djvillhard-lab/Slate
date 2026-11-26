@@ -1,0 +1,24 @@
+/* ---- Larger text sizes (3.155.1, DJ: "XL font size, some things are cut off" / "XL also removes team records") ----
+   html.bigtext = text size L and up; html.zoomed = XL where it really grows (folded Duo, iPhone). */
+
+/* Team records stay at every text size. A name keeps its whole width first; when the name and its record don't fit
+   on one line, the record drops to a line of its own just under the name (only that team's row gets taller). */
+.tm .nmw { flex-wrap: wrap; column-gap: 4px; row-gap: 0; }
+.tm .nmw > .nm { max-width: 100%; }
+.tm .nmw > .rec { line-height: 1.2; }
+
+/* The slate's Time | League, Board and Live row: at large sizes the three no longer fit across a folded Duo, and the
+   row ran off the left edge (Time cut off). When they don't fit, Board and Live move to a second line together, still
+   on the right under the thumb. */
+.lo-row .lo-end { display: flex; align-items: center; margin-left: auto; }
+.lo-row:has(.lo-end) { flex-wrap: wrap; row-gap: 8px; }
+
+/* Every other page's header (All games, News, On TV...): at XL on the folded Duo and an iPhone the next-day arrow ran under Settings. Settings and
+   Search stack, the way the slate's header already does next to the Duo's column. */
+html.zoomed:not(.panes):not(.in-pane) #toprow-r > .pillgroup, html.zoomed[data-view]:not(.panes):not(.in-pane) #toprow-r > .pillgroup { flex-direction: column; height: auto !important; gap: 8px; align-self: center; }
+/* the slate's own header on a regular iPhone at XL: the same (it already stacked next to the folded Duo's column) */
+html.zoomed:not(.panes):not(.in-pane) .toprow.lineup-top:not(#pane-l .toprow) > .pillgroup { grid-template-columns: calc(44px / var(--z, 1)) !important; grid-template-rows: repeat(2, calc(44px / var(--z, 1))) !important; }
+/* Box Office and a game's top performers: at large sizes a long name ("Q. Montague") was cut short by the position,
+   team and Slate tags beside it. The name stays whole and the tags move under it when they don't fit. */
+html.bigtext .tp-top { flex-wrap: wrap; row-gap: 2px; }
+html.bigtext .tp-top > .tp-n { max-width: 100%; }

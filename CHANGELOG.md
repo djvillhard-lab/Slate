@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.155.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Text size XL (and L): team records are back on the game cards. A long name keeps its full width and its record moves just under it, so nothing gets cut.
+- Today's Slate, folded Duo and iPhone at XL: the Time | League, Board and Live row ran off the left edge, cutting off "Time". When the three don't fit, Board and Live now move to a line of their own on the right. Same fix in the right half of the unfolded Duo.
+- All games, News, On TV, Teams, Box Office and the matchup page at XL: the next-day arrow ran under the Settings button. Settings and Search now stack on the right, the way the slate's header already did on the folded Duo. The slate's header does the same on an iPhone at XL.
+- Box Office and a game's top performers at XL: long player names were cut short by the position and team tags beside them. The name stays whole and the tags move under it.
+
 ## 3.155.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Inviting someone is now one link. Text it, and on their iPhone it sets up their account (name and passcode), walks them through their teams and slate rules, then ends with "Get the app": Apple's TestFlight opens, they install Slate and log in with the passcode they just made, and their slate is already there.
