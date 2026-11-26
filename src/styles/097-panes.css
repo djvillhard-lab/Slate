@@ -107,3 +107,17 @@ html.in-pane.pn-full #tv-body .tvs::after { content: ""; display: block; clear: 
 /* On TV > All, National TV, Streaming: each channel's games two across */
 html.in-pane.pn-full #tv-body .glist { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; align-items: start; }
 html.in-pane.pn-full #tv-body .glist > .g.panel:has(> .tray), html.in-pane.pn-full #tv-body .glist > :not(.g) { grid-column: 1 / -1; }
+/* News Front Page, full screen (markup from the News thread, stable as of 3.144.2): a six-part grid.
+   The lead and its "Why it matters" box sit side by side, stories and game write-ups two across,
+   League Check three across, Stat Sheet four across. Headings, Just In and the More buttons span the page. */
+html.in-pane.pn-full .nl.nf { grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 12px; }
+html.in-pane.pn-full .nl.nf > * { grid-column: 1 / -1; }
+html.in-pane.pn-full .nl.nf > .nl-lead.bleed { grid-column: span 3; margin-right: 0; border-radius: 0 6px 6px 0; }
+html.in-pane.pn-full .nl.nf > .nl-lead.bleed + .nf-ld { grid-column: span 3; }
+html.in-pane.pn-full .nl.nf > .nf-s, html.in-pane.pn-full .nl.nf > .nf-g { grid-column: span 3; }
+html.in-pane.pn-full .nl.nf > .nf-lg { grid-column: span 2; }
+html.in-pane.pn-full .nl.nf > .nl-nums.nl-2c { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* an odd one out at the end of a run takes the whole row instead of leaving half the page empty */
+html.in-pane.pn-full .nl.nf > .nf-s:nth-child(odd of .nf-s):not(:has(+ .nf-s)),
+html.in-pane.pn-full .nl.nf > .nf-preview:nth-child(odd of .nf-preview):not(:has(+ .nf-preview)),
+html.in-pane.pn-full .nl.nf > .nf-recap:nth-child(odd of .nf-recap):not(:has(+ .nf-recap)) { grid-column: 1 / -1; }
