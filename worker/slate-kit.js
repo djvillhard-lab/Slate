@@ -11,7 +11,7 @@ export function slateKit(opts) {
   function info(g) { var L = LEAGUES[g.league] || {}; return { tag: L.tag || String(g.league || "").toUpperCase().slice(0, 5), name: L.name || "Other" }; }
   function hourCT(iso) { var h = Number(new Intl.DateTimeFormat("en-US", { timeZone: HOME_TZ, hour: "numeric", hourCycle: "h23" }).format(new Date(iso))); return h < 4 ? h + 24 : h; }
   function quickRecap() { return null; }  // the app's own box-score recap needs its loaded box scores; Claude doesn't need it
-  function rkFetch(u) { return fetch(u, { headers: { "user-agent": "slate-email" } }).then(function (r) { return r.ok ? r.json() : null; }, function () { return null; }); }
+  function rkFetch(u) { return fetch(u, { headers: { "user-agent": "slate-email" }, signal: AbortSignal.timeout(10000) }).then(function (r) { return r.ok ? r.json() : null; }, function () { return null; }); }
   // ---- from src/app/010-core.js
   var LEAGUES = {
     nfl: { tag: "NFL", name: "NFL", hrs: 3.5 }, nba: { tag: "NBA", name: "NBA", hrs: 2.5 }, nhl: { tag: "NHL", name: "NHL", hrs: 2.75 },

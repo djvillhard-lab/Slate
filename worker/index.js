@@ -179,7 +179,14 @@ export default {
   async scheduled(event, env, ctx) {
     // the morning email (worker/morning-email.js) has its own run every 2 minutes (wrangler.jsonc): sharing the minute run with
     // alerts cut off a big day's email mid-build (Drew's 53 games, Nov 27, 2026), with no error saved
-    if (event.cron === "*/2 * * * *") { ctx.waitUntil(runMorningEmail(env).catch((e) => console.log("morning email error", String(e)))); return; }
+    // Nov 27: even alone, the timed run stopped partway through that 53-game email, while the same build over /api took under a
+    // second. So the timed run only knocks, through the worker's binding to itself (SELF, wrangler.jsonc), and the work runs as a request.
+    if (event.cron === "*/2 * * * *") {
+      const run = env.SELF && env.SUPABASE_SECRET
+        ? env.SELF.fetch("https://slate.internal/api/morning-email/run", { method: "POST", headers: { "x-slate-run": env.SUPABASE_SECRET } }).then((r) => r.text())
+        : runMorningEmail(env);
+      ctx.waitUntil(run.catch((e) => console.log("morning email error", String(e)))); return;
+    }
     ctx.waitUntil(runAlerts(env).catch((e) => console.log("alerts error", String(e))));
     ctx.waitUntil(runNewsletters(env, getDoc, putDoc).catch((e) => console.log("newsletters error", String(e))));
     // the number job (scripts/tick.py on GitHub) every 10 minutes, started from here: GitHub's own schedule only
@@ -191,6 +198,11 @@ export default {
     const url = new URL(req.url);
     // the link in a morning-email confirmation (worker/morning-email.js, 3.86.0): no passcode, a one-time token
     if (url.pathname === "/api/morning-email/confirm") return confirmEmail(env, req, url);
+    // the timed run's knock (scheduled() above): only from this worker, which knows the secret
+    if (url.pathname === "/api/morning-email/run" && req.method === "POST") {
+      if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== env.SUPABASE_SECRET) return json({ error: "no" }, 403);
+      try { await runMorningEmail(env); return json({ ok: true }); } catch (e) { return json({ error: String(e && e.message || e).slice(0, 200) }, 500); }
+    }
     // every passcode check below goes through the login limit (see guardWho)
     const ip = req.headers.get("cf-connecting-ip") || "", whoIs = guardWho(ip);
     if (url.pathname.startsWith("/api/") && req.method === "POST" && (await failCount(ip)) >= FAIL_MAX)

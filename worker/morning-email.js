@@ -308,7 +308,7 @@ async function logoList(lg) {
   const hit = cache ? await cache.match(key) : null;
   if (hit) j = await hit.json();
   else {
-    const r = await fetch(url, { headers: { "user-agent": "slate-email" } }).catch(() => null); if (!r || !r.ok) return {};
+    const r = await fetch(url, { headers: { "user-agent": "slate-email" }, signal: AbortSignal.timeout(10000) }).catch(() => null); if (!r || !r.ok) return {};
     const raw = await r.json().catch(() => null), ts = raw && raw.sports && raw.sports[0] && raw.sports[0].leagues && raw.sports[0].leagues[0] && raw.sports[0].leagues[0].teams;
     j = {}; for (const x of ts || []) { const tm = x.team || {}, h = ((tm.logos || [])[0] || {}).href; if (h && tm.displayName) j[logoNorm(tm.displayName)] = h; }
     if (cache) await cache.put(key, new Response(JSON.stringify(j), { headers: { "cache-control": "max-age=604800" } }));

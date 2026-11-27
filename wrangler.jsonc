@@ -7,6 +7,8 @@
   "workflows": [{ "name": "slate-summary", "binding": "SUMMARY", "class_name": "SummaryWorkflow" }],
   "triggers": { "crons": ["* * * * *", "*/2 * * * *"] },  // the second one is the morning email's own run
   "observability": { "enabled": true },
+  // the worker's binding to itself: the morning email's timed run hands its work to a request (worker/index.js scheduled())
+  "services": [{ "binding": "SELF", "service": "slate" }],
   // keep variables added in the Cloudflare dashboard when GitHub deploys (without this, plain-text ones are wiped)
   "keep_vars": true
 }
