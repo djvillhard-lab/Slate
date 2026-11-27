@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.178.1 (Nov 27, 2026)
+TestFlight: 3.174.1 (61), no new build (web only)
+- News, the day's feature card: the big photo behind the title is now always about one of the featured games. This morning's "Black Friday Football" card showed a photo from a poll about TV shows ("Friday Night Lights"), only because its headline had the word "Friday" in it. The photo now has to come from a story about a team playing in one of the card's games: ESPN names that team in the photo, or tags the story with it. Both teams of one game beat one team. The day's name only counts on top of that, and fantasy and betting pieces never lead. If nothing fits, the card has no photo. Today it picks the Texas and Texas A&M rivalry photo.
+
 ## 3.178.0 (Nov 27, 2026)
 TestFlight: 3.174.1 (61), no new build (web only)
 - Made-for-TV golf: matches that aren't tour events (today's Skins Game on Prime Video, the Grant Thornton Invitational Dec 11 to 13) now show on the slate and on All games' golf tab, with who's playing, when, and the channel to tap. ESPN's golf feed only lists tour events, so Slate keeps these few by hand. It's a Slate rule (Slate rules → Golf and racing → Men's golf → Made-for-TV matches): turned on today for everyone who already uses Slate, and off to start for new people, like every other rule. No scores, because no free source has them.

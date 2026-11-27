@@ -398,11 +398,20 @@
         // story, whatever that story was (a player's injury portrait). Now the photo has to be about the day itself: a
         // picture ESPN names for one of the featured games ("Bears vs. Lions"), or a story about the day by name
         // ("Thanksgiving"), or a story about both teams of a featured game. With none of those the card has no photo.
-        var fkey = (String(F.title).toLowerCase().match(/[a-z]{6,}/) || [""])[0], fwd = function (t) { return String(t || "").toLowerCase().split(" ").pop(); }, fbest = null, fsc = 1;
+        // 3.178.1 (DJ, Black Friday: "Why were those photo options selected?"): the day's word alone ("friday") picked a TV-show
+        // poll's photo. Now a photo leads only when its story is about a team in a featured game: ESPN names the team in the
+        // photo (4 = both teams of one game, 2 = one), or tags the story with it (3 = both, 1 = one; stories tagged with more
+        // than 4 teams are lists, not about anyone). The day's word only adds to a story that passes. Fantasy and betting
+        // pieces never lead. Nothing passes = no photo.
+        var fkey = (String(F.title).toLowerCase().match(/[a-z]{6,}/) || [""])[0], fwd = function (t) { return String(t || "").toLowerCase().split(" ").pop(); }, fbest = null, fsc = 0;
+        var fesc = function (t) { return String(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }, fin = function (txt, w) { return !!w && new RegExp("(^|[^a-z0-9])" + fesc(w) + "($|[^a-z0-9])").test(txt); };
         F.games.map(function (g) { return g.lg; }).filter(function (k, ki, ka) { return k && ka.indexOf(k) === ki; }).forEach(function (lg) { (M.per[lg] || []).forEach(function (a) {
-          if (!a.img || a.kind === "Media") return; var nm = String(a.inm || "").toLowerCase(), tl = (a.title + " " + (a.events || []).join(" ")).toLowerCase(), sc = 0;
-          F.games.forEach(function (g) { var x = fwd(g.away), y = fwd(g.home); if (!x || !y) return; if (nm.indexOf(x) !== -1 && nm.indexOf(y) !== -1) sc = Math.max(sc, 4); else if (tl.indexOf(x) !== -1 && tl.indexOf(y) !== -1) sc = Math.max(sc, 2); });
-          if (fkey && tl.indexOf(fkey) !== -1) sc += 3;
+          if (!a.img || a.kind === "Media" || /fantasy|betting|\bodds\b|\bDFS\b/i.test(a.title)) return;
+          var nm = String(a.inm || "").toLowerCase(), tl = (a.title + " " + (a.events || []).join(" ")).toLowerCase(), tg = (a.teams || []).filter(function (t, ti, ta) { return ta.indexOf(t) === ti; }), sc = 0;
+          if (tg.length > 4) tg = []; tg = tg.map(function (t) { return String(t).toLowerCase(); });
+          var side = function (n) { n = String(n || "").toLowerCase(); if (!n) return 0; if (fin(nm, n) || fin(nm, fwd(n))) return 2; return tg.indexOf(n) !== -1 ? 1 : 0; };
+          F.games.forEach(function (g) { var x = side(g.away), y = side(g.home); sc = Math.max(sc, x && y ? (x === 2 && y === 2 ? 4 : 3) : Math.max(x, y)); });
+          if (sc && fkey && tl.indexOf(fkey) !== -1) sc += 3;
           if (sc > fsc) { fsc = sc; fbest = a; }
         }); });
         var fp = fbest, fi = fp ? nwImg(nwPic(fp.img, 800), "nf-ftp") : null; if (fi) { fh.classList.add(F.big === false ? "cl" : "ph"); fh.insertBefore(fi, fh.firstChild); }
