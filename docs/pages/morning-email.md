@@ -62,3 +62,4 @@ The Morning email controls moved from the Settings main page to their own sub-pa
 - Fix: `email_kit.py` copies `EV_RULES` and `homeFirst`, and now runs the new kit in Node with every rule option on every league before writing it; a kit that throws is never written. `build.py` runs `email_kit.py` on every build, so the copy can't go stale again.
 - DJ's Family list shows "On, but the last one didn't send: <reason>. Last sent <day>".
 - Claude can check everyone's state without addresses: POST `/api/morning-email` `{action: "status", key: <feedback reader key>}` (on, time, last, sentAt, err, note, fails, whether the address unseals, whether they're in today's alertsets).
+- 3.175.1: the email, confirm and expired-link pages say Settings > Alerts and email (Settings reorganized in 3.175.0).

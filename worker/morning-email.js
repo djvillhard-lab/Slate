@@ -433,7 +433,7 @@ a[x-apple-data-detectors],u+#body a,#MessageViewBody a[href^="x-"]{color:inherit
 <tr><td style="padding:8px 0 0;font:700 15px/1.4 ${FONT};color:${T.muted}">${name ? "Good morning, " + esc(name) + ". " : ""}${esc(lead)}</td></tr>
 ${h}
 <tr><td style="padding:20px 0 0"><a href="${APP}" style="display:block;background:${T.fill};color:${T.on};text-decoration:none;border-radius:8px;padding:14px 16px;font:800 16px ${FONT};text-align:center">Open Slate</a></td></tr>
-<tr><td style="padding:16px 0 0;font:700 13px/1.5 ${FONT};color:${T.dim}">${who.lines ? "Lines are DraftKings', from ESPN. " : ""}${fav.length ? "Recaps by Claude. " : ""}Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings &gt; Morning email.</td></tr>
+<tr><td style="padding:16px 0 0;font:700 13px/1.5 ${FONT};color:${T.dim}">${who.lines ? "Lines are DraftKings', from ESPN. " : ""}${fav.length ? "Recaps by Claude. " : ""}Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings &gt; Alerts and email.</td></tr>
 </table></td></tr></table></body></html>`;
 
   // plain text, for mail apps that don't show the designed version
@@ -446,7 +446,7 @@ ${h}
   const res = (g) => { const s = d.scores[g.id]; return `${kit.short(g, "away")} ${s.a}, ${kit.short(g, "home")} ${s.h} (${s.detail || "Final"})`; };
   if (fav.length) { tx.push("YOUR TEAMS YESTERDAY"); for (const g of fav) { tx.push(res(g)); const r = ((d.recaps[g.id] || {}).recap || {}).text; if (r) tx.push(r); tx.push(""); } }
   if (rest.length) { tx.push("LAST NIGHT"); for (const g of rest) tx.push(res(g)); tx.push(""); }
-  tx.push(`Open Slate: ${APP}`, "", "Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings > Morning email.");
+  tx.push(`Open Slate: ${APP}`, "", "Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings > Alerts and email.");
   return { date, subject, text: tx.join("\n"), html: emailize(html, T.dark), games: today.length, results: fav.length + rest.length, pending };
 }
 
@@ -514,10 +514,10 @@ export async function confirmEmail(env, req, url) {
   if (!/^[a-z0-9-]{2,40}$/.test(u) || !/^[0-9a-f]{36}$/.test(t)) return page("That link isn't right", "Open the link from the email again, or enter your address in Slate once more.");
   const doc = (await getDocs(env, [DOC]))[DOC] || {}, x = (doc.people || {})[u] || {};
   const ok = x.pendTok && x.pendTok === await shaHex(t) && (await pendingEmail(env, x));
-  if (!ok) return page("This link has expired", "Enter your address in Slate (Settings > Morning email) again and we'll send a new one.");
+  if (!ok) return page("This link has expired", "Enter your address in Slate (Settings > Alerts and email) again and we'll send a new one.");
   if (req.method !== "POST") return page("Confirm your email", "Tap Confirm to get Slate's morning email at this address.", `<form method="post"><input type="hidden" name="u" value="${esc(u)}"><input type="hidden" name="t" value="${esc(t)}"><button type="submit">Confirm</button></form>`);
   await mergeDoc(env, DOC, { people: { [u]: { email: x.pending, pending: "", pendTok: "", pendAt: "", err: "" } } });
-  return page("Email confirmed", "Slate's morning email will come to this address. You can change the time or turn it off in Slate: Settings > Morning email.");
+  return page("Email confirmed", "Slate's morning email will come to this address. You can change the time or turn it off in Slate: Settings > Alerts and email.");
 }
 
 // ---------- Claude's read-only check (3.173.x): why someone's morning email did or didn't go ----------

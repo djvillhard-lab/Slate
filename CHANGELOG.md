@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.175.1 (Nov 26, 2026)
+TestFlight: 3.174.1, no new build (web only)
+- Morning email: the email and its confirm page now point to Settings > Alerts and email, where the morning email lives since Settings was reorganized.
+
 ## 3.175.0 (Nov 27, 2026)
 TestFlight: 3.174.1, no new build (web only)
 - Settings has five rows instead of nine: My slate, Alerts and email, Look and text, Account, and Help and about. Each row's second line says what it's set to.
