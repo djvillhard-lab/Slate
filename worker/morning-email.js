@@ -536,9 +536,11 @@ export async function morningStatus(env, p) {
   }
   // {build: "<id>"}: build that person's email now without sending it, to see how long it takes or where it fails
   if (p.build && doc.people && doc.people[p.build]) {
-    const x = doc.people[p.build], t0 = Date.now();
+    const x = doc.people[p.build], t0 = Date.now(), f0 = globalThis.fetch; let nf = 0;
+    globalThis.fetch = function () { nf++; return f0.apply(this, arguments); };
     try { const b = await buildEmail(env, Object.assign({ id: p.build }, x), now); out.build = { ms: Date.now() - t0, subject: b.subject, games: b.games, results: b.results, pending: b.pending, wait: b.wait, skip: b.skip, why: b.why, size: (b.html || "").length }; }
     catch (e) { out.build = { ms: Date.now() - t0, error: String(e && e.stack || e).slice(0, 600) }; }
+    globalThis.fetch = f0; out.build.fetches = nf;
   }
   return { ok: true, gmailReady: gmailReady(env), now: now.toISOString(), people: out };
 }
