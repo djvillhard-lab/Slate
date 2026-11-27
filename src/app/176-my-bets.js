@@ -63,6 +63,15 @@
     ".myb-bar .myb-kind { font-size: 11px; padding: 1px 6px; }",
     ".myb-bar .up, .myb-bar .won { color: var(--accent); font-weight: 800; }",
     ".myb-bar .lost { color: var(--live); font-weight: 800; }",
+    ".myb-bar { flex-wrap: nowrap; }",
+    ".myb-bar > .myb-kind, .myb-bar > .myb-tag { flex: 0 0 auto; }",
+    ".myb-bar > b { flex: 0 1 auto; min-width: 0; }",
+    ".myb-dw { flex: 1 1 0; min-width: 0; height: 1.3em; align-self: center; align-items: center; overflow: hidden; display: flex; flex-wrap: wrap; justify-content: flex-end; }",
+    ".myb-dw::before { content: ''; width: 0; }",
+    ".myb-dt { white-space: nowrap; color: var(--muted); font-size: 12px; font-weight: 700; line-height: 1.3em; }",
+    ".myb-tag { padding: 2px 7px; border-radius: 4px; background: var(--raise); color: var(--ink); font-size: 12px; font-weight: 800; font-stretch: 85%; white-space: nowrap; }",
+    ".myb-bar .myb-tag.won, .myb-bar .myb-tag.up { background: color-mix(in srgb, var(--accent) 22%, var(--card)); color: var(--accent); }",
+    ".myb-bar .myb-tag.lost { background: color-mix(in srgb, var(--live) 20%, var(--card)); color: var(--live); }",
     ".myb-rec { margin: 8px 2px 0; font-size: 13px; line-height: 1.35; color: var(--dim); font-weight: 700; }",
     ".myb-rec b { color: var(--ink); }",
     ".myb-money { grid-column: 2; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }",
@@ -465,9 +474,29 @@
       var r = mybResult(b), say = mybSay(b, r, g, true), bar = mybTone(el("div", "myb-bar"), b, g);
       bar.appendChild(el("span", "myb-kind", mybKind(b))); bar.appendChild(el("b", null, mybLabel(b, g)));
       bar.setAttribute("aria-label", "Your bet, " + mybKind(b) + ": " + mybLabel(b, g) + (r.s !== "pre" ? ". " + say.t : ""));
-      if (r.s !== "pre") bar.appendChild(el("span", say.c || null, say.t.replace(/^Live[^·]*· /, "")));
+      if (r.s !== "pre") {
+        // 3.173.1 (DJ: "show I won the bet without forcing a second line"): the result is a small tag at the end of the first line,
+        // and its detail ("48 points") sits just before it only when there's room; otherwise it drops instead of wrapping
+        var k = mybTag(b, r), dw = el("span", "myb-dw");
+        if (k.d) dw.appendChild(el("span", "myb-dt", k.d));
+        bar.appendChild(dw); bar.appendChild(el("span", "myb-tag" + (k.c ? " " + k.c : ""), k.t));
+      }
       return bar;
     });
+  }
+  // the game card's short result: a tag (t) and an optional detail (d) shown before it when it fits
+  function mybTag(b, r) {
+    var n = r.now == null ? null : mybNum(r.now), noun = mybNoun(b), cnt = n != null && (b.kind === "total" || b.kind === "prop") ? n + " " + noun : "";
+    if (r.s === "won") return { t: "✓ Won", c: "won", d: cnt };
+    if (r.s === "lost") return { t: "✗ Lost", c: "lost", d: cnt };
+    if (r.s === "push") return { t: "Push", c: "", d: cnt || "on the line" };
+    if (r.s === "void") return { t: "No bet", c: "", d: (r.why || "").replace(/^./, function (x) { return x.toLowerCase(); }) };
+    if (b.kind === "spread") return r.m > 0 ? { t: "Covering", c: "up", d: "by " + mybNum(r.m) } : r.m < 0 ? { t: "Short " + mybNum(-r.m), c: "" } : { t: "On the line", c: "" };
+    if (b.kind === "ml") { if (b.sd === "draw") return r.m === 0 ? { t: "Tied", c: "up" } : { t: "Not tied", c: "" }; return r.m > 0 ? { t: "Up " + r.m, c: "up" } : r.m < 0 ? { t: "Down " + -r.m, c: "" } : { t: "Tied", c: "" }; }
+    if (n == null) return { t: "Waiting", c: "", d: "for the box score" };
+    var room = Number(b.line) - Number(r.now);
+    if (b.ou === "over") return { t: "Needs " + mybNum(Math.floor(room) + 1), c: "", d: n + " so far" };
+    return { t: "Room for " + mybNum(Math.max(0, Math.ceil(room) - 1)), c: "up", d: n + " so far" };
   }
   // the slate: My bets, under Betting lines (today's bets, wherever the game is), with the last seven days' record
   function mybBlock() {

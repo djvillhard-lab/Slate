@@ -61,3 +61,10 @@ Code: `src/app/176-my-bets.js` (everything, styles injected from the file as `#m
 - Parlays not supported. Stake/odds/profit was option 2 on DJ's card if he wants it later.
 - Private only once DJ runs `docs/security/lockdown.sql` (data/users/* is personal); until then the docs table is readable like everything else.
 - Not yet seen during a live game on a phone.
+
+- 3.173.1 (DJ: "show I won the bet without forcing a second line"): the game card's bet note (`mybBars`) is one line: kind tag, the bet,
+  then the result as a small tag at the end (`mybTag`: ✓ Won accent, ✗ Lost red, Push, No bet; live: Covering / Short 2 / Up 3 / Down 3 /
+  Tied / Needs 4 / Room for 3 / Waiting). Its detail ("48 points", "by 2.5", "180 so far") sits before the tag in `.myb-dw`, which is one line
+  tall: if the detail doesn't fit it wraps out of sight instead of making a second line. "already over" is gone from the card (the tag says
+  Won while the card shows the game live). Only a very long player bet label can still wrap, and the tag stays on its first line.
+  The My bets section rows (`mybRow`) keep the full `mybSay` wording. Checked folded and iPhone with test bets (won, lost, push, live).
