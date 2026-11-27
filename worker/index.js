@@ -6,7 +6,7 @@
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
-import { runMorningEmail, morningApi, confirmEmail } from "./morning-email.js";
+import { runMorningEmail, morningApi, confirmEmail, morningStatus } from "./morning-email.js";
 import { feedbackRoute } from "./feedback.js";
 import { factCheck, teamFacts } from "./factcheck.js";
 import { usageRoute } from "./usage.js";
@@ -350,6 +350,7 @@ export default {
     // the slate or teams just changed on the phone: follow those games now, not at the next 10-minute tick
     if (url.pathname === "/api/follow" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      if (p && p.action === "status" && p.key) { const out = await morningStatus(env, p).catch((e) => ({ error: String(e && e.message || e).slice(0, 200) })); return json(out, out.error ? 400 : 200); }
       const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
       if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
       return json(await followNow(env, me.id === "dj" ? "" : "u/" + me.id + "/", p));
@@ -357,6 +358,7 @@ export default {
     // the morning email's settings, test send and preview (worker/morning-email.js)
     if (url.pathname === "/api/morning-email" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
+      if (p && p.action === "status" && p.key) { const out = await morningStatus(env, p).catch((e) => ({ error: String(e && e.message || e).slice(0, 200) })); return json(out, out.error ? 400 : 200); }
       const me = await whoIs(env, p && p.pass); if (!me) return json({ error: "Wrong passcode" }, 403);
       if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
       try { const out = await morningApi(env, me, p); return json(out, out.error ? 400 : 200); } catch (e) { return json({ error: String(e && e.message || e).slice(0, 200) }, 500); }

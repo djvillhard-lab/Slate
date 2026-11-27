@@ -520,6 +520,23 @@ export async function confirmEmail(env, req, url) {
   return page("Email confirmed", "Slate's morning email will come to this address. You can change the time or turn it off in Slate: Settings > Morning email.");
 }
 
+// ---------- Claude's read-only check (3.173.x): why someone's morning email did or didn't go ----------
+// POST /api/morning-email {action: "status", key: <feedback reader key>}. No addresses, only whether one is saved and readable.
+const READER_HASH = "c67723111b4760fef693da748e542a933145f2ee29eae1dfe5fb551e478b0c58";   // the same reader key as worker/feedback.js
+export async function morningStatus(env, p) {
+  if (!p || !p.key || (await shaHex(p.key)) !== READER_HASH) return { error: "Wrong key" };
+  const now = new Date(), doc = (await getDocs(env, [DOC]))[DOC] || {}, out = {};
+  for (const [id, x] of Object.entries(doc.people || {})) {
+    if (!x) continue;
+    const tz = okTz(x.tz) ? x.tz : "America/Chicago", lt = local(now, tz);
+    const asets = await getDocs(env, [`alertsets/${lt.date}`]), aset = asets[`alertsets/${lt.date}`];
+    out[id] = { on: !!x.on, time: x.time, tz: x.tz, hasEmail: !!x.email, emailReadable: !!(x.email && await unseal(env, x.email)), pending: !!x.pending,
+      last: x.last, sentAt: x.sentAt, err: x.err, note: x.note, fails: x.fails, failDay: x.failDay, prepDay: x.prepDay, sending: x.sending, testAt: x.testAt,
+      today: lt.date, inSlateToday: !!(aset && (aset.people || []).some((q) => q && q.prefix === prefixOf(id))), slateTodayExists: !!aset };
+  }
+  return { ok: true, gmailReady: gmailReady(env), now: now.toISOString(), people: out };
+}
+
 // ---------- Settings: POST /api/morning-email// ---------- Settings: POST /api/morning-email {pass, action: "get" | "save" | "test" | "preview", ...} ----------
 const EMAIL = /^[^\s@<>()"',;:]{1,64}@[A-Za-z0-9.-]{1,180}\.[A-Za-z]{2,24}$/;
 export async function morningApi(env, me, p) {
