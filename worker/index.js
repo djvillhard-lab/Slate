@@ -177,9 +177,11 @@ async function newsWireStart(env) {
 export default {
   // every minute: phone alerts from live ESPN scores
   async scheduled(event, env, ctx) {
+    // the morning email (worker/morning-email.js) has its own run every 2 minutes (wrangler.jsonc): sharing the minute run with
+    // alerts cut off a big day's email mid-build (Drew's 53 games, Nov 27, 2026), with no error saved
+    if (event.cron === "*/2 * * * *") { ctx.waitUntil(runMorningEmail(env).catch((e) => console.log("morning email error", String(e)))); return; }
     ctx.waitUntil(runAlerts(env).catch((e) => console.log("alerts error", String(e))));
     ctx.waitUntil(runNewsletters(env, getDoc, putDoc).catch((e) => console.log("newsletters error", String(e))));
-    ctx.waitUntil(runMorningEmail(env).catch((e) => console.log("morning email error", String(e))));  // the morning email (worker/morning-email.js)
     // the number job (scripts/tick.py on GitHub) every 10 minutes, started from here: GitHub's own schedule only
     // ran it every few hours at night. Needs a GitHub token (Actions: read and write on this repo) saved in Cloudflare as GH_TOKEN.
     if (new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 6) ctx.waitUntil(runNewsWire(env).catch((e) => console.log("news wire error", String(e))));

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.177.2 (Nov 27, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Morning email: on a big day (53 games on Drew's slate this Friday) the email was cut off partway through being put together and never sent, with no error saved. It now gets its own run on Slate's server instead of sharing one with the live alerts, so Drew's should arrive within a few minutes.
+
 ## 3.177.1 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed, football: the fun sayings that faded in on play cards a few seconds after a play are gone. The cards keep their headline, the play, the banner on big moments and the facts line (longest play of the game, lead changes and the like).
