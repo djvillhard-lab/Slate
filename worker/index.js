@@ -6,7 +6,7 @@
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
-import { runMorningEmail, morningApi, confirmEmail, morningStatus } from "./morning-email.js";
+import { runMorningEmail, morningApi, confirmEmail, morningStatus, linesApi } from "./morning-email.js";
 import { feedbackRoute } from "./feedback.js";
 import { factCheck, teamFacts } from "./factcheck.js";
 import { usageRoute } from "./usage.js";
@@ -198,6 +198,8 @@ export default {
     const url = new URL(req.url);
     // the link in a morning-email confirmation (worker/morning-email.js, 3.86.0): no passcode, a one-time token
     if (url.pathname === "/api/morning-email/confirm") return confirmEmail(env, req, url);
+    // a big slate's preview lines, 10 games at a time (worker/morning-email.js buildEmail): only from this worker
+    if (url.pathname === "/api/morning-email/lines" && req.method === "POST") { const out = await linesApi(env, req).catch((e) => ({ error: String(e && e.message || e).slice(0, 200) })); return json(out, out.error ? 403 : 200); }
     // the timed run's knock (scheduled() above): only from this worker, which knows the secret
     if (url.pathname === "/api/morning-email/run" && req.method === "POST") {
       if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== env.SUPABASE_SECRET) return json({ error: "no" }, 403);

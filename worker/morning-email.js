@@ -373,7 +373,17 @@ export async function buildEmail(env, who, nowT) {
   };
   // 1. today's slate, in time order, with the slate's own tag and preview line
   const today = d.today.slice().sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  // Nov 27, 2026: a Worker run may make only 50 web requests, and every game's line needs ESPN's summary (Drew's 53-game Friday
+  // stopped the email). On a big slate the lines are worked out 10 games at a time in their own runs (/api/morning-email/lines).
+  const got = {}, need = today.filter((g) => !d.pvlines[g.id]);
+  if (env.SELF && env.SUPABASE_SECRET && need.length > 10) {
+    const chunks = []; for (let i = 0; i < need.length; i += 10) chunks.push(need.slice(i, i + 10));
+    await Promise.all(chunks.map((c) => env.SELF.fetch("https://slate.internal/api/morning-email/lines", { method: "POST", headers: { "content-type": "application/json", "x-slate-run": env.SUPABASE_SECRET },
+      body: JSON.stringify({ rules: d.sett.rules || null, mine: mineT, games: c }) }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      .then((j) => c.forEach((g, k) => { got[g.id] = (j && j.lines && j.lines[k]) || { line: "" }; }))));
+  }
   const lines = await pool(today, 6, async (g) => {
+    if (got[g.id]) { const x = got[g.id]; for (const sd of ["away", "home"]) if (!g[sd + "Logo"] && x[sd + "Logo"]) g[sd + "Logo"] = x[sd + "Logo"]; return x.line || ""; }
     const sum = g.ev && kit.BX_SPORT[g.league] ? await kit.rkFetch(kit.bxSummaryUrl(g.league, g.ev)) : null;
     for (const c of ((((sum && sum.header || {}).competitions || [])[0] || {}).competitors) || []) { const sd = c.homeAway, h = ((c.team || {}).logos || [])[0] || {}; if ((sd === "away" || sd === "home") && !g[sd + "Logo"] && (h.href || (c.team || {}).logo)) g[sd + "Logo"] = h.href || c.team.logo; }
     if (d.pvlines[g.id]) return cardRanks(g, d.pvlines[g.id]);  // the line DJ's phone is showing, with the card's ranks
@@ -448,6 +458,21 @@ ${h}
   if (rest.length) { tx.push("LAST NIGHT"); for (const g of rest) tx.push(res(g)); tx.push(""); }
   tx.push(`Open Slate: ${APP}`, "", "Sent from DJ's Gmail by Slate. Change the time or turn it off in Slate: Settings > Alerts and email.");
   return { date, subject, text: tx.join("\n"), html: emailize(html, T.dark), games: today.length, results: fav.length + rest.length, pending };
+}
+
+// one batch of a big slate's preview lines, in its own run (buildEmail above); only this worker can call it
+export async function linesApi(env, req) {
+  if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== env.SUPABASE_SECRET) return { error: "no" };
+  const p = await req.json().catch(() => ({})), games = Array.isArray(p.games) ? p.games.slice(0, 12) : [];
+  const kit = slateKit({ rules: p.rules || null, mine: p.mine || {} });
+  const lines = await pool(games, 6, async (g) => {
+    const sum = g.ev && kit.BX_SPORT[g.league] ? await kit.rkFetch(kit.bxSummaryUrl(g.league, g.ev)) : null, out = { line: "" };
+    for (const c of ((((sum && sum.header || {}).competitions || [])[0] || {}).competitors) || []) { const sd = c.homeAway, h = ((c.team || {}).logos || [])[0] || {}; if ((sd === "away" || sd === "home") && (h.href || (c.team || {}).logo)) out[sd + "Logo"] = h.href || c.team.logo; }
+    if (!sum) return out;
+    const q = await kit.pvQB(g.league, sum).catch(() => []);
+    out.line = kit.pvCompute(g.league, sum, q, g) || ""; return out;
+  });
+  return { ok: true, lines: lines.map((x) => x || { line: "" }) };
 }
 
 // ---------- the minute job ----------

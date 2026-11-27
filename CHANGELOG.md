@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.177.4 (Nov 27, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Morning email, the real cause on big days: Slate's server may only make 50 web requests in one go, and each game's one-liner needs one from ESPN, so Drew's 53-game Friday never finished. On a slate of more than 10 games, the one-liners are now worked out 10 games at a time, each batch on its own.
+
 ## 3.177.3 (Nov 27, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Morning email, second fix for big days: the email is now put together and sent the same way as "Send one now" (which works on Drew's 53-game slate in under a second), and slow ESPN answers are given up on after 10 seconds instead of holding the email up.
