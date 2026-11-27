@@ -477,6 +477,7 @@ export async function runMorningEmail(env) {
     try {
       // a recap still being written: wait for it, 20 minutes at most (5 for a test)
       const out = await buildEmail(env, Object.assign({ id }, p), now);
+      await mergeDoc(env, DOC, { people: { [id]: { stage: `built ${Date.now() - now} ms, ${(out.html || "").length} bytes, at ${new Date().toISOString()}` } } });  // where a run that never finishes got to
       if (out.pending && (testDue ? testAge < 5 : lt.min < at + 20)) patch = { note: "waiting for Claude's recaps" };
       else if (testDue) {
         if (out.wait || out.skip) patch = { testAt: "", note: "test not sent: " + out.why };
@@ -531,7 +532,7 @@ export async function morningStatus(env, p) {
     const tz = okTz(x.tz) ? x.tz : "America/Chicago", lt = local(now, tz);
     const asets = await getDocs(env, [`alertsets/${lt.date}`]), aset = asets[`alertsets/${lt.date}`];
     out[id] = { on: !!x.on, time: x.time, tz: x.tz, hasEmail: !!x.email, emailReadable: !!(x.email && await unseal(env, x.email)), pending: !!x.pending,
-      last: x.last, sentAt: x.sentAt, err: x.err, note: x.note, fails: x.fails, failDay: x.failDay, prepDay: x.prepDay, sending: x.sending, testAt: x.testAt,
+      last: x.last, sentAt: x.sentAt, err: x.err, note: x.note, stage: x.stage, fails: x.fails, failDay: x.failDay, prepDay: x.prepDay, sending: x.sending, testAt: x.testAt,
       today: lt.date, inSlateToday: !!(aset && (aset.people || []).some((q) => q && q.prefix === prefixOf(id))), slateTodayExists: !!aset };
   }
   // {build: "<id>"}: build that person's email now without sending it, to see how long it takes or where it fails
