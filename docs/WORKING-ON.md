@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Game cards fit on regular iPhone; one-liner order | src/app/150-game-row.js, src/app/100-highlights.js, src/styles/105-event-label.css, src/styles/050-ux-review.css, docs/pages/slate.md | 2026-11-27 03:15 |

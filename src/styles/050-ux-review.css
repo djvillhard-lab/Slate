@@ -329,6 +329,9 @@ html:has(#sheet-board.open), html:has(#sheet-board.open) body, html:has(#sheet-b
 .g-feed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live, #E5484D); }
 .g-feed-chev { width: 6px; height: 6px; border-right: 2px solid currentColor; border-top: 2px solid currentColor; transform: rotate(45deg); opacity: .6; margin-left: -1px; }
 .g.panel.has-feed > .hl { padding-right: 76px; }
+/* 3.176.1: team rows use the card's full width; only the last row stays clear of the Feed button in the corner */
+.g.panel.has-feed > .hl.hl-rows { padding-right: 0; }
+.g.panel.has-feed > .hl.hl-rows .hl-row:last-child { padding-right: 76px; }
 .g.panel.has-feed:has(> .tray) > .g-feed { display: none; }
 /* 3.111.x (DJ: "Cutoff text"): your bet's line under a live game wraps clear of the Feed button in the corner */
 .g.panel.has-feed > .myb-bar:not(:has(~ .myb-bar)) { margin-right: 72px; }

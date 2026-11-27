@@ -5,3 +5,8 @@
 .g .g-lg svg { display: inline-block; vertical-align: -2px; margin-right: 4px; }
 .g .g-lg .lgn { margin-right: 4px; }
 .g .g-lg .nt { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
+
+/* 3.176.1 (DJ: crowded on a regular iPhone): there the league's short tag stands in for its name when the card has a tournament name */
+.g .g-lg .lgt { display: none; }
+html.iphone .g .g-lg:has(.nt) .lgn { display: none; }
+html.iphone .g .g-lg .lgt { display: inline; margin-right: 4px; }

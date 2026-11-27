@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.176.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Game cards on a regular iPhone: one-liners use the card's full width, so each team's line wraps far less. Only the last line stays clear of the Feed button.
+- Game cards on a regular iPhone: a game with a tournament name shows the league's short tag (CBB, WCBB) instead of "College Hoops", so the name fits on one line more often. The Duo keeps the full league name.
+- One-liners: in each team's line, facts about the team come first and the player's stats after them, like "LAC: Went 6-of-30 from three; Brandon Ingram had 18 pts".
+
 ## 3.176.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - On TV, My TVs: "Put a game on a TV" now looks like All games' ALL tab. Each league is a drop-down with its game count and how many are live, folded until you open it (it stays how you left it). Inside are the same game cards as All games: score, time left, the one-liner and the quick look. Under each card is "Put on" with a button for each of your TVs.

@@ -17,6 +17,9 @@
     var ng = noteShort(g.note);   // 3.89.2: the league line fits; a two-legged tie's aggregate is in the one-liner instead
     if (opts.league || mode === "lineup" || mode === "tv") {
       var ln = leagueLine(ng !== g.note ? Object.assign({}, g, { note: ng }) : g, true);
+      // 3.176.1 (DJ: "looks great for duo, looks crowded on regular iphone"): with a tournament name, a regular iPhone shows the
+      // league's short tag (CBB, WCBB) in place of "College Hoops", so the name fits on one line more often (CSS: html.iphone)
+      var lgn0 = ln.querySelector(".lgn"), tg0 = !g.custom && info(g).tag; if (lgn0 && ng && tg0) { var lgt = el("span", "lgt", tg0); lgn0.parentNode.insertBefore(lgt, lgn0.nextSibling); }
       main.appendChild(ln);
     } else if (g.note) { var ln2 = el("span", "g-lg"); ln2.appendChild(el("span", "nt", ng)); main.appendChild(ln2); }
     if (g.custom) {

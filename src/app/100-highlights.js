@@ -459,6 +459,11 @@
       var same = rows.filter(function (r) { return r.side === sd; })[0];   // one row per team, in the order the line names them
       if (same) same.text += "; " + t; else rows.push({ side: sd, text: t });
     });
+    // 3.176.1 (DJ: "team related ones should come first, then best player stats"): in a team's row, a player's numbers go last
+    var PSTAT = /^[A-Z][^;]*? (?:had|has|averages) [\d.]+ (?:pts|points|reb|ast|passing|rushing|receiving|TD|goals?|ppg|rebounds|assists|saves|hits?|H\b|K\b)|\(\d+-\d+ FG\)/;
+    rows.forEach(function (r) { if (!r.side) return; var cs = r.text.split("; "); if (cs.length < 2) return;
+      var tm = cs.filter(function (x) { return !PSTAT.test(x); }), pl = cs.filter(function (x) { return PSTAT.test(x); });
+      if (tm.length && pl.length) { tm[0] = tm[0].charAt(0).toUpperCase() + tm[0].slice(1); r.text = tm.concat(pl).join("; "); } });
     rows = rows.filter(function (r) { return !r.side; }).concat(rows.filter(function (r) { return r.side; }));
     return rows.length ? rows : [{ side: tmSide || null, text: String(text || "") }];
   }
