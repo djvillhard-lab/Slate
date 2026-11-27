@@ -3,11 +3,9 @@
 //   → checks the passcode, marks the item "writing", starts a background workflow, answers at once.
 // The workflow asks Claude (with web search) for the summary and saves it to Supabase; the app sees it appear.
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
-// SLATE_KEY (optional, code review 3.179.3): the key everything that is NOT the database is made from (passcode and invite
-// hashes, the encryption of feedback, usage and email addresses, browser push signing, the worker's knock on itself).
-// Until it is set, SUPABASE_SECRET does those jobs as before. To be able to replace the database key one day, first save
-// SLATE_KEY with EXACTLY the value SUPABASE_SECRET has now; after that the database key can change without breaking any of
-// them. Any other value for SLATE_KEY locks out invited people and breaks saved feedback and browser notifications.
+// SLATE_KEY (optional): the key everything that is NOT the database is made from. worker/key.js explains it and
+// checks it; docs/security/second-key.md has DJ's steps.
+import { slateKey, keyGuard, keyCheck } from "./key.js";
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
@@ -36,6 +34,23 @@ async function rpc(env, fn, body, key) {
 // deep-merge a patch into a document (service key)
 const mergeDoc = (env, path, data) => rpc(env, "mirror_doc", { p_path: path, p_data: data, p_merge: true });
 const putDoc = (env, path, data) => rpc(env, "mirror_doc", { p_path: path, p_data: data, p_merge: false });
+// One-step saves (code review, Nov 27, 2026): the lists several people can change at once (the people, the phones logged in,
+// invites, sign-in tickets, today's Claude count) are changed inside the database, one entry at a time, so two changes
+// in the same second can't overwrite each other. patchDoc: in the document's `field` list, add or replace the entries
+// in `set` and remove the keys in `drop`. addDoc: add the numbers in `add` to the same places in the document.
+// The two database functions come from docs/security/one-step-saves.sql. Until DJ has run it in Supabase they aren't
+// there (404), and the save goes the old way: read the list, change it, write it back.
+async function patchDoc(env, path, field, set, drop) {
+  const r = await rpc(env, "doc_patch", { p_path: path, p_field: field, p_set: set || {}, p_drop: drop || [] });
+  if (r.ok || r.status !== 404) return r;
+  const d = (await getDoc(env, path)) || {};
+  d[field] = Object.assign({}, d[field], set || {}); (drop || []).forEach((k) => delete d[field][k]);
+  return putDoc(env, path, d);
+}
+async function addDoc(env, path, add, old) {
+  const r = await rpc(env, "doc_add", { p_path: path, p_add: add });
+  return r.ok || r.status !== 404 ? r : old();
+}
 
 async function getDoc(env, path) {
   const r = await fetch(`${SB}/rest/v1/docs?select=data&path=eq.${encodeURIComponent(path)}`, { headers: { apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET } });
@@ -99,16 +114,22 @@ const PRICE = { in: 2 / 1e6, out: 10 / 1e6, search: 10 / 1000 };
 const HAIKU = { in: 1 / 1e6, out: 5 / 1e6 };   // the old Haiku helper lines (none run today)
 const HAIKU55 = { in: 0.1 / 1e6, out: 0.5 / 1e6 };  // Claude Haiku 5.5: recaps since 3.85.0
 async function logUsage(env, user, u, model, failed) {
-  const d = ctDay(), doc = (await getDoc(env, "stats/usage")) || { days: {} }, day = (doc.days || {})[d] || { n: 0, in: 0, out: 0, search: 0, usd: 0, by: {} };
+  const d = ctDay();
   const inT = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0), outT = u.output_tokens || 0, sr = ((u.server_tool_use || {}).web_search_requests) || 0;
-  day.n += 1; day.in += inT; day.out += outT; day.search += sr;
-  const pr = model === "haiku" ? HAIKU : model === "haiku55" ? HAIKU55 : PRICE;
-  day.usd = Math.round((day.usd + inT * pr.in + outT * pr.out + sr * PRICE.search) * 10000) / 10000;
-  day.by = day.by || {};
+  const pr = model === "haiku" ? HAIKU : model === "haiku55" ? HAIKU55 : PRICE, cost = inT * pr.in + outT * pr.out + sr * PRICE.search;
   // Haiku lines (free-tier helpers) don't count toward anyone's daily summary limit
   // a request that failed (an answer that ran too long) is still paid for, so its cost is logged, but it doesn't use up one of the person's 10
-  if (model === "haiku") { day.hl = (day.hl || 0) + 1; day.n -= 1; } else if (failed) day.fail = (day.fail || 0) + 1; else day.by[user] = (Number(day.by[user]) || 0) + 1;
-  await mergeDoc(env, "stats/usage", { days: { [d]: day } });
+  // what this one request adds to the day: the database does the adding (addDoc), so two summaries finishing together both count
+  const add = { n: model === "haiku" ? 0 : 1, in: inT, out: outT, search: sr, usd: Math.round(cost * 1e6) / 1e6 };
+  if (model === "haiku") add.hl = 1; else if (failed) add.fail = 1; else add.by = { [user]: 1 };
+  await addDoc(env, "stats/usage", { days: { [d]: add } }, async () => {
+    const doc = (await getDoc(env, "stats/usage")) || { days: {} }, day = (doc.days || {})[d] || { n: 0, in: 0, out: 0, search: 0, usd: 0, by: {} };
+    day.n += add.n; day.in += inT; day.out += outT; day.search += sr;
+    day.usd = Math.round((day.usd + cost) * 10000) / 10000;
+    day.by = day.by || {};
+    if (add.hl) day.hl = (day.hl || 0) + 1; else if (add.fail) day.fail = (day.fail || 0) + 1; else day.by[user] = (Number(day.by[user]) || 0) + 1;
+    return mergeDoc(env, "stats/usage", { days: { [d]: day } });
+  });
 }
 
 // the daily Claude budget ran out: note it once, and tell the admin's phones
@@ -182,13 +203,14 @@ async function newsWireStart(env) {
 export default {
   // every minute: phone alerts from live ESPN scores
   async scheduled(event, env, ctx) {
+    await keyGuard(env);
     // the morning email (worker/morning-email.js) has its own run every 2 minutes (wrangler.jsonc): sharing the minute run with
     // alerts cut off a big day's email mid-build (Drew's 53 games, Nov 27, 2026), with no error saved
     // Nov 27: even alone, the timed run stopped partway through that 53-game email, while the same build over /api took under a
     // second. So the timed run only knocks, through the worker's binding to itself (SELF, wrangler.jsonc), and the work runs as a request.
     if (event.cron === "*/2 * * * *") {
       const run = env.SELF && env.SUPABASE_SECRET
-        ? env.SELF.fetch("https://slate.internal/api/morning-email/run", { method: "POST", headers: { "x-slate-run": (env.SLATE_KEY || env.SUPABASE_SECRET) } }).then((r) => r.text())
+        ? env.SELF.fetch("https://slate.internal/api/morning-email/run", { method: "POST", headers: { "x-slate-run": slateKey(env) } }).then((r) => r.text())
         : runMorningEmail(env);
       ctx.waitUntil(run.catch((e) => console.log("morning email error", String(e)))); return;
     }
@@ -200,14 +222,17 @@ export default {
     if (env.GH_TOKEN && new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 3) ctx.waitUntil(startTick(env).catch((e) => console.log("tick error", String(e))));
   },
   async fetch(req, env, ctx) {
+    await keyGuard(env);  // worker/key.js: is the second key the right one? (before anything uses it)
     const url = new URL(req.url);
+    // which key is in use, and its fingerprint (worker/key.js). Tells nothing about the key itself.
+    if (url.pathname === "/api/keycheck") return json(await keyCheck(env));
     // the link in a morning-email confirmation (worker/morning-email.js, 3.86.0): no passcode, a one-time token
     if (url.pathname === "/api/morning-email/confirm") return confirmEmail(env, req, url);
     // a big slate's preview lines, 10 games at a time (worker/morning-email.js buildEmail): only from this worker
     if (url.pathname === "/api/morning-email/lines" && req.method === "POST") { const out = await linesApi(env, req).catch((e) => ({ error: String(e && e.message || e).slice(0, 200) })); return json(out, out.error ? 403 : 200); }
     // the timed run's knock (scheduled() above): only from this worker, which knows the secret
     if (url.pathname === "/api/morning-email/run" && req.method === "POST") {
-      if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== (env.SLATE_KEY || env.SUPABASE_SECRET)) return json({ error: "no" }, 403);
+      if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== slateKey(env)) return json({ error: "no" }, 403);
       try { await runMorningEmail(env); return json({ ok: true }); } catch (e) { return json({ error: String(e && e.message || e).slice(0, 200) }, 500); }
     }
     // every passcode check below goes through the login limit (see guardWho)
@@ -429,9 +454,9 @@ export default {
       return r.ok ? json({ ok: true }) : fail("Couldn't save " + r.status, 502);
     }
     // Sign in with Google, tied to an existing profile (worker/google.js)
-    if (url.pathname.startsWith("/api/google/")) return googleRoutes(req, env, url, { json, whoIs, getDoc, putDoc, passKey });
+    if (url.pathname.startsWith("/api/google/")) return googleRoutes(req, env, url, { json, whoIs, getDoc, putDoc, patchDoc, passKey });
     // invite-only sign-up (signup.js)
-    if (url.pathname === "/api/invite" || url.pathname === "/api/invite-check" || url.pathname === "/api/signup" || url.pathname === "/api/handoff") return signupRoutes(req, env, url, { json, whoIs, getDoc, putDoc });
+    if (url.pathname === "/api/invite" || url.pathname === "/api/invite-check" || url.pathname === "/api/signup" || url.pathname === "/api/handoff") return signupRoutes(req, env, url, { json, whoIs, getDoc, putDoc, patchDoc });
     return env.ASSETS.fetch(req);
   }
 };
@@ -663,6 +688,7 @@ const strs = (a, n) => (Array.isArray(a) ? a : []).map((x) => String(x || "").tr
 
 export class SummaryWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
+    await keyGuard(this.env);
     let p = event.payload;
     if (p.kind === "wirecheck") {   // the News page's scheduled check (worker/newswire.js); most runs end right here
       let st;

@@ -16,11 +16,12 @@
 // opened, seconds on screen, and how many times each page was shown. Nothing about what was looked at.
 // Storage: the existing docs table, one document per person, stats/use/<id>. That table can be read with the app's
 // public key, so each document is encrypted (AES-GCM, key made from the worker's SUPABASE_SECRET), like feedback.
+import { slateKey } from "./key.js";
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const b64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 async function cryptoKey(env) {
-  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-usage|" + (env.SLATE_KEY || env.SUPABASE_SECRET)));
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-usage|" + slateKey(env)));
   return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 async function seal(env, obj) {

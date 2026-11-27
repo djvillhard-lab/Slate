@@ -19,11 +19,12 @@ const DAYS = 7, MAX_OPEN = 20, MAX_TRIES = 8;
 const ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";  // no 0/O, 1/I/L
 
 async function hmac(env, s) {
-  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("slate-signup:" + (env.SLATE_KEY || env.SUPABASE_SECRET || "")), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("slate-signup:" + slateKey(env)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const b = await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(String(s)));
   return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 // the key a passcode chosen at sign-up is stored under in users/registry
+import { slateKey } from "./key.js";
 import { TEST_IDS } from "./usage.js";
 export const passKey = async (env, pass) => "h2:" + (await hmac(env, "pass:" + pass));
 const codeKey = (env, code) => hmac(env, "invite:" + String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, ""));
@@ -34,7 +35,7 @@ const appLink = async (getDoc, env) => { const u = String(((await getDoc(env, "c
 const state = (v) => (v.used ? "used" : v.tries >= MAX_TRIES ? "locked" : expired(v) ? "expired" : "open");
 
 export async function signupRoutes(req, env, url, h) {
-  const { json, whoIs, getDoc, putDoc } = h;
+  const { json, whoIs, getDoc, putDoc, patchDoc } = h;  // patchDoc: one entry at a time, inside the database (worker/index.js)
   if (req.method !== "POST") return json({ error: "bad request" }, 400);
   if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
   let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
@@ -46,16 +47,18 @@ export async function signupRoutes(req, env, url, h) {
     if (!me || !me.admin) return json({ error: "Only the admin can invite people" }, 403);
     const d = await load();
     // tidy: used or dead invites drop off the list after 30 days
-    Object.keys(d.list).forEach((k) => { if (Date.now() - Date.parse(d.list[k].at || 0) > 30 * 86400000) delete d.list[k]; });
+    const old = Object.keys(d.list).filter((k) => Date.now() - Date.parse(d.list[k].at || 0) > 30 * 86400000);
+    old.forEach((k) => delete d.list[k]);
     let code = "";
     if (p.action === "new") {
       if (Object.values(d.list).filter((v) => state(v) === "open").length >= MAX_OPEN) return json({ error: "Too many open invites. Cancel one first." }, 400);
       code = newCode();
-      d.list[await codeKey(env, code)] = { at: new Date().toISOString(), note: String(p.note || "").trim().slice(0, 30) };
-      await putDoc(env, "users/invites", d);
+      const ik = await codeKey(env, code);
+      d.list[ik] = { at: new Date().toISOString(), note: String(p.note || "").trim().slice(0, 30) };
+      await patchDoc(env, "users/invites", "list", { [ik]: d.list[ik] }, old);
     } else if (p.action === "cancel") {
       const k = Object.keys(d.list).find((x) => x.slice(0, 10) === String(p.k || ""));
-      if (k && !d.list[k].used) { delete d.list[k]; await putDoc(env, "users/invites", d); }
+      if (k && !d.list[k].used) { delete d.list[k]; await patchDoc(env, "users/invites", "list", {}, old.concat(k)); }
     }
     // the iPhone app's public TestFlight link: set, or cleared with an empty url
     if (p.action === "applink") {
@@ -68,12 +71,12 @@ export async function signupRoutes(req, env, url, h) {
     const reg = (await getDoc(env, "users/registry")) || {}, users = reg.users || {};
     if (p.action === "remove") {
       const gone = Object.keys(users).filter((k) => users[k].id === String(p.id || "") && users[k].id !== "dj" && users[k].admin !== true);
-      if (gone.length) { gone.forEach((k) => delete users[k]); reg.users = users; await putDoc(env, "users/registry", reg); }
+      if (gone.length) { gone.forEach((k) => delete users[k]); await patchDoc(env, "users/registry", "users", {}, gone); }
       // and the phones they signed in on with Google (worker/google.js); their Google link goes too
       const dv = (await getDoc(env, "users/devices")) || {}, ks = Object.keys(dv.keys || {}).filter((k) => dv.keys[k].id === String(p.id || ""));
-      if (ks.length && gone.length) { ks.forEach((k) => delete dv.keys[k]); await putDoc(env, "users/devices", dv); }
+      if (ks.length && gone.length) { await patchDoc(env, "users/devices", "keys", {}, ks); }
       const gl = (await getDoc(env, "users/google")) || {}, gs = Object.keys(gl.links || {}).filter((k) => gl.links[k].id === String(p.id || ""));
-      if (gs.length && gone.length) { gs.forEach((k) => delete gl.links[k]); await putDoc(env, "users/google", gl); }
+      if (gs.length && gone.length) { await patchDoc(env, "users/google", "links", {}, gs); }
     }
     // "setpass" (security review, 3.83.0): the admin gives someone a new passcode, kept the safe way (HMAC, like sign-up).
     // Their old passcode stops working (within 5 minutes, the server's memory of right passcodes); their data stays theirs.
@@ -86,8 +89,9 @@ export async function signupRoutes(req, env, url, h) {
       if (await whoIs(env, np)) return json({ error: "That passcode can't be used. Pick a different one." }, 400);
       const keep = Object.assign({}, users[keys[0]], { rekeyed: new Date().toISOString() });
       keys.forEach((k) => delete users[k]);
-      users[await passKey(env, np)] = keep; reg.users = users;
-      const w = await putDoc(env, "users/registry", reg);
+      const nk = await passKey(env, np);
+      users[nk] = keep;
+      const w = await patchDoc(env, "users/registry", "users", { [nk]: keep }, keys.filter((k) => k !== nk));
       if (!w.ok) return json({ error: "Couldn't save. Try again." }, 502);
     }
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -102,26 +106,26 @@ export async function signupRoutes(req, env, url, h) {
   if (url.pathname === "/api/handoff") {
     const hk = (t) => hmac(env, "handoff:" + String(t || ""));
     const hd = (await getDoc(env, "users/handoff")) || {}, list = hd.list || {};
-    Object.keys(list).forEach((k) => { if (Date.now() - Date.parse(list[k].at || 0) > 20 * 60000) delete list[k]; });
+    const stale = Object.keys(list).filter((k) => Date.now() - Date.parse(list[k].at || 0) > 20 * 60000);
+    stale.forEach((k) => delete list[k]);
     if (p.action === "new") {
       const me = await whoIs(env, p.pass);
       if (!me || me.id === "dj") return json({ error: "Log in first." }, 403);  // DJ's own passcode is checked by the database, not a device key
       if (Object.keys(list).length >= 50) return json({ error: "Try again in a few minutes." }, 429);
       const t = [...crypto.getRandomValues(new Uint8Array(18))].map((x) => x.toString(16).padStart(2, "0")).join("");
-      list[await hk(t)] = { id: me.id, at: new Date().toISOString() };
-      hd.list = list; const w = await putDoc(env, "users/handoff", hd);
+      const tk = await hk(t);
+      list[tk] = { id: me.id, at: new Date().toISOString() };
+      const w = await patchDoc(env, "users/handoff", "list", { [tk]: list[tk] }, stale);
       return w.ok ? json({ ok: true, t }) : json({ error: "Couldn't save. Try again." }, 502);
     }
     if (p.action === "redeem") {
       const k = await hk(p.t), h = list[k];
       if (!/^[0-9a-f]{36}$/.test(String(p.t || "")) || !h) return json({ error: "That link ran out. Open Slate and log in with your passcode." }, 403);
-      delete list[k]; hd.list = list; await putDoc(env, "users/handoff", hd);  // one use, even if the rest fails
+      delete list[k]; await patchDoc(env, "users/handoff", "list", {}, stale.concat(k));  // one use, even if the rest fails
       const reg = (await getDoc(env, "users/registry")) || {}, u = Object.values(reg.users || {}).find((x) => x && x.id === h.id);
       if (!u) return json({ error: "That account isn't there any more." }, 403);
       const key = "g1-" + [...crypto.getRandomValues(new Uint8Array(24))].map((x) => x.toString(16).padStart(2, "0")).join("");
-      const dv = (await getDoc(env, "users/devices")) || {}; dv.keys = dv.keys || {};
-      dv.keys[await passKey(env, key)] = { id: h.id, via: "handoff", at: new Date().toISOString(), ua: String(req.headers.get("user-agent") || "").slice(0, 80) };
-      const w = await putDoc(env, "users/devices", dv);
+      const w = await patchDoc(env, "users/devices", "keys", { [await passKey(env, key)]: { id: h.id, via: "handoff", at: new Date().toISOString(), ua: String(req.headers.get("user-agent") || "").slice(0, 80) } });
       return w.ok ? json({ ok: true, key, id: h.id, name: u.name || h.id, admin: u.admin === true }) : json({ error: "Couldn't log in. Try again." }, 502);
     }
     return json({ error: "bad request" }, 400);
@@ -140,7 +144,7 @@ export async function signupRoutes(req, env, url, h) {
     if (/^(.)\1+$/.test(pass) || /^(12345678|password|passcode)/i.test(pass)) return json({ error: "That passcode is too easy to guess. Pick another." }, 400);
     if (await whoIs(env, pass)) {
       // never say whose it is; a few misses and the invite locks, so an invite can't be used to guess passcodes
-      inv.tries = (inv.tries || 0) + 1; await putDoc(env, "users/invites", d);
+      inv.tries = (inv.tries || 0) + 1; await patchDoc(env, "users/invites", "list", { [ck]: inv });
       return json({ error: "That passcode can't be used. Pick a different one." }, 400);
     }
     const reg = (await getDoc(env, "users/registry")) || {}, users = reg.users || {};
@@ -154,12 +158,10 @@ export async function signupRoutes(req, env, url, h) {
     let id = "";
     for (const sfx of ["", "b", "c", "d", "e", "f", "g", "h", "j", "k"]) { const c = base + sfx; if (!taken.has(c) && !(await used(c))) { id = c; break; } }
     if (!id) return json({ error: "Couldn't set that name up. Try a different name." }, 400);
-    users[await passKey(env, pass)] = { id, name, cap: 10, at: new Date().toISOString(), via: "invite" };
-    reg.users = users;
-    const w = await putDoc(env, "users/registry", reg);
+    const w = await patchDoc(env, "users/registry", "users", { [await passKey(env, pass)]: { id, name, cap: 10, at: new Date().toISOString(), via: "invite" } });
     if (!w.ok) return json({ error: "Couldn't save. Try again." }, 502);
     inv.used = new Date().toISOString(); inv.name = name; inv.id = id;
-    await putDoc(env, "users/invites", d);
+    await patchDoc(env, "users/invites", "list", { [ck]: inv });
     return json({ ok: true, id, name, app: await appLink(getDoc, env) });
   }
   return json({ error: "bad request" }, 400);

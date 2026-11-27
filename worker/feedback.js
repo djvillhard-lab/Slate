@@ -20,7 +20,7 @@ const KINDS = ["bug", "idea", "other"];
 const b64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 async function cryptoKey(env) {
-  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-feedback|" + (env.SLATE_KEY || env.SUPABASE_SECRET)));
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-feedback|" + slateKey(env)));
   return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 async function seal(env, obj) {
@@ -41,6 +41,7 @@ async function rows(env, prefix, extra) {
   return r.ok ? r.json() : [];
 }
 
+import { slateKey } from "./key.js";
 import { TEST_IDS } from "./usage.js";
 import { sendPush, sendApns } from "./alerts.js";
 // 3.x (DJ, Nov 17): a push to DJ's phones the moment feedback arrives, from his own notification list (prefs/push).

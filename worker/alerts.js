@@ -3,6 +3,7 @@
 // written by the tick job. Settings: <prefix>prefs/notify, phones: <prefix>prefs/push, sent: <prefix>prefs/sent-<D>.
 // The VAPID key is derived from SLATE_KEY (or, until that is set, SUPABASE_SECRET); its public half is in the app.
 
+import { slateKey } from "./key.js";
 const SB = "https://xpkzcdaawaqiqgwkkwst.supabase.co";
 const VAPID_PUBLIC = "BGOiSg4w33W5Lui867BMvNq2fDnRLjdoOADhr5Vx_C2gOaibYV8joMK8K6ibx9o8sZFByk_K107NupNiJNORWNY";
 const LA_LINGER = 30 * 60;  // a finished game's live notification stays this many seconds after the final (3.112.0: 20 minutes; 3.113.0, DJ: 30)
@@ -61,7 +62,7 @@ async function hmac(key, data) { const k = await crypto.subtle.importKey("raw", 
 let VAPID_KEY = null;
 async function vapidKey(env) {
   if (VAPID_KEY) return VAPID_KEY;
-  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode("slate-vapid|" + (env.SLATE_KEY || env.SUPABASE_SECRET))));
+  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode("slate-vapid|" + slateKey(env))));
   const pub = unb64u(VAPID_PUBLIC);
   VAPID_KEY = await crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", d: b64u(d), x: b64u(pub.slice(1, 33)), y: b64u(pub.slice(33, 65)), ext: true }, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
   return VAPID_KEY;

@@ -19,6 +19,7 @@
 // don't count toward anyone's 10 a day). At their time it sends, waiting up to 20 minutes for a recap still being
 // written. "last" (their local date) and a 10-minute lease make a day go out once.
 
+import { slateKey } from "./key.js";
 import { connect } from "cloudflare:sockets";
 import { slateKit } from "./slate-kit.js";
 
@@ -62,7 +63,7 @@ const prefixOf = (id) => (id === "dj" ? "" : "u/" + id + "/");
 
 // ---------- the address, encrypted ----------
 async function aesKey(env) {
-  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-email|" + (env.SLATE_KEY || env.SUPABASE_SECRET)));
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-email|" + slateKey(env)));
   return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 const b64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
@@ -381,7 +382,7 @@ export async function buildEmail(env, who, nowT) {
   const got = {}, need = today.filter((g) => !d.pvlines[g.id]);
   if (env.SELF && env.SUPABASE_SECRET && need.length > 10) {
     const chunks = []; for (let i = 0; i < need.length; i += 10) chunks.push(need.slice(i, i + 10));
-    await Promise.all(chunks.map((c) => env.SELF.fetch("https://slate.internal/api/morning-email/lines", { method: "POST", headers: { "content-type": "application/json", "x-slate-run": (env.SLATE_KEY || env.SUPABASE_SECRET) },
+    await Promise.all(chunks.map((c) => env.SELF.fetch("https://slate.internal/api/morning-email/lines", { method: "POST", headers: { "content-type": "application/json", "x-slate-run": slateKey(env) },
       body: JSON.stringify({ rules: d.sett.rules || null, mine: mineT, games: c }) }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       .then((j) => c.forEach((g, k) => { got[g.id] = (j && j.lines && j.lines[k]) || { line: "" }; }))));
   }
@@ -465,7 +466,7 @@ ${h}
 
 // one batch of a big slate's preview lines, in its own run (buildEmail above); only this worker can call it
 export async function linesApi(env, req) {
-  if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== (env.SLATE_KEY || env.SUPABASE_SECRET)) return { error: "no" };
+  if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== slateKey(env)) return { error: "no" };
   const p = await req.json().catch(() => ({})), games = Array.isArray(p.games) ? p.games.slice(0, 12) : [];
   const kit = slateKit({ rules: p.rules || null, mine: p.mine || {} });
   const lines = await pool(games, 6, async (g) => {

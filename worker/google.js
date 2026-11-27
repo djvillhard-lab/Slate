@@ -59,14 +59,15 @@ async function appleUser(token, nonce) {
 const isApple = (k) => k.startsWith("apple:");
 
 export async function googleRoutes(req, env, url, h) {
-  const { json, whoIs, getDoc, putDoc, passKey } = h;
+  const { json, whoIs, getDoc, patchDoc, passKey } = h;  // patchDoc: one entry at a time, inside the database (worker/index.js)
+  let staleT = [];  // tickets that ran out, dropped with the next ticket save
   if (req.method !== "POST") return json({ error: "bad request" }, 400);
   if (!env.SUPABASE_SECRET) return json({ error: "not set up" }, 503);
   let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }
   p = p || {};
   const op = url.pathname.slice("/api/google/".length);
   const now = Date.now();
-  const loadT = async () => { const d = (await getDoc(env, "users/gtickets")) || {}; d.t = d.t || {}; Object.keys(d.t).forEach((k) => { if (now - Date.parse(d.t[k].at || 0) > TICKET_MIN * 60000) delete d.t[k]; }); return d; };
+  const loadT = async () => { const d = (await getDoc(env, "users/gtickets")) || {}; d.t = d.t || {}; staleT = Object.keys(d.t).filter((k) => now - Date.parse(d.t[k].at || 0) > TICKET_MIN * 60000); staleT.forEach((k) => delete d.t[k]); return d; };
   const nameOf = async (id) => { const reg = ((await getDoc(env, "users/registry")) || {}).users || {}; const u = Object.values(reg).find((x) => x && x.id === id); return u ? u.name || u.id : id === "dj" ? "DJ" : id; };
 
   if (op === "status" || op === "unlink") {
@@ -75,8 +76,7 @@ export async function googleRoutes(req, env, url, h) {
     const d = (await getDoc(env, "users/google")) || {}, links = d.links || {};
     const g = Object.keys(links).filter((k) => links[k].id === me.id && !isApple(k)), a = Object.keys(links).filter((k) => links[k].id === me.id && isApple(k));
     if (op === "status") return json({ linked: g.length > 0, email: g.length ? links[g[0]].email || "" : "", apple: a.length > 0, appleEmail: a.length ? links[a[0]].email || "" : "" });
-    (p.p === "apple" ? a : g).forEach((k) => delete links[k]); d.links = links;
-    const w = await putDoc(env, "users/google", d);
+    const w = await patchDoc(env, "users/google", "links", {}, p.p === "apple" ? a : g);
     return w.ok ? json({ ok: true }) : json({ error: "Couldn't save. Try again." }, 502);
   }
 
@@ -87,8 +87,7 @@ export async function googleRoutes(req, env, url, h) {
     const d = await loadT();
     if (Object.keys(d.t).length >= MAX_OPEN) return json({ error: "Too many people are signing in right now. Try again in a few minutes." }, 429);
     const t = hex(18), s = hex(18);
-    d.t[await sha(t)] = { kind, id, s: await sha(s), at: new Date().toISOString() };
-    const w = await putDoc(env, "users/gtickets", d);
+    const w = await patchDoc(env, "users/gtickets", "t", { [await sha(t)]: { kind, id, s: await sha(s), at: new Date().toISOString() } }, staleT);
     return w.ok ? json({ t, s }) : json({ error: "Couldn't start. Try again." }, 502);
   }
 
@@ -98,9 +97,8 @@ export async function googleRoutes(req, env, url, h) {
     const gd = (await getDoc(env, "users/google")) || {}, links = gd.links || {};
     if (kind === "link") {
       if (links[g.uid] && links[g.uid].id !== id) return { error: "That " + name + " is already connected to another Slate profile.", code: 409 };
-      Object.keys(links).forEach((k) => { if (links[k].id === id && isApple(k) === isApple(g.uid)) delete links[k]; });  // one of each per profile
-      links[g.uid] = { id, email: g.email, at: new Date().toISOString() }; gd.links = links;
-      const w = await putDoc(env, "users/google", gd);
+      const others = Object.keys(links).filter((k) => k !== g.uid && links[k].id === id && isApple(k) === isApple(g.uid));  // one of each per profile
+      const w = await patchDoc(env, "users/google", "links", { [g.uid]: { id, email: g.email, at: new Date().toISOString() } }, others);
       if (!w.ok) return { error: "Couldn't save. Try again.", code: 502 };
       return { ok: true, kind: "link", p: g.p || "google", email: g.email };
     }
@@ -109,12 +107,10 @@ export async function googleRoutes(req, env, url, h) {
     if (l.id === "dj") return { error: "DJ's profile still logs in with its passcode.", code: 403 };
     const reg = ((await getDoc(env, "users/registry")) || {}).users || {}, u = Object.values(reg).find((v) => v && v.id === l.id);
     if (!u) return { error: "That Slate profile isn't active any more. Ask DJ.", code: 403 };
-    const key = "g1-" + hex(24), dv = (await getDoc(env, "users/devices")) || {}, keys = dv.keys || {};
-    keys[await passKey(env, key)] = { id: l.id, via: g.p || "google", at: new Date().toISOString(), ua: String(req.headers.get("user-agent") || "").slice(0, 80) };
-    dv.keys = keys;
-    const w = await putDoc(env, "users/devices", dv);
+    const key = "g1-" + hex(24);
+    const w = await patchDoc(env, "users/devices", "keys", { [await passKey(env, key)]: { id: l.id, via: g.p || "google", at: new Date().toISOString(), ua: String(req.headers.get("user-agent") || "").slice(0, 80) } });
     if (!w.ok) return { error: "Couldn't save. Try again.", code: 502 };
-    l.last = new Date().toISOString(); await putDoc(env, "users/google", gd);
+    l.last = new Date().toISOString(); await patchDoc(env, "users/google", "links", { [g.uid]: l });
     return { ok: true, kind: "signin", pass: key, id: l.id, name: u.name || l.id, admin: u.admin === true };
   }
 
@@ -140,14 +136,14 @@ export async function googleRoutes(req, env, url, h) {
     if (!g) return json({ error: "Google didn't confirm who you are. Try again." }, 403);
     const r = await tie(x.kind, x.id, g);
     if (r.error) return json({ error: r.error }, r.code || 400);
-    x.res = r; d.t[tk] = x; await putDoc(env, "users/gtickets", d);
+    x.res = r; await patchDoc(env, "users/gtickets", "t", { [tk]: x }, staleT);
     return json({ ok: true, kind: x.kind, name: x.kind === "link" ? await nameOf(x.id) : r.name, email: g.email });
   }
 
   if (op === "poll") {
     if (!x.s || x.s !== (await sha(p.s))) return json({ error: "That link isn't right. Start again." }, 403);
     if (!x.res) return json({ wait: true });
-    delete d.t[tk]; await putDoc(env, "users/gtickets", d);  // the answer (and any device key) is handed over once
+    await patchDoc(env, "users/gtickets", "t", {}, staleT.concat(tk));  // the answer (and any device key) is handed over once
     return json(x.res);
   }
   return json({ error: "bad request" }, 400);

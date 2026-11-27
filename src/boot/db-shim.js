@@ -307,9 +307,45 @@
     var list = subs[path]; if (!list || !list.length) return;
     fetchRow(path).then(function (row) { (subs[path] || []).slice().forEach(function (s) { try { s.cb(snap(row)); } catch (e) { console.error(e); } }); }, function () {});
   }
-  sb.channel("docs-all").on("postgres_changes", { event: "*", schema: "public", table: "docs" }, function (p) {
-    var path = (p.new && p.new.path) || (p.old && p.old.path); if (path) notify(path);
-  }).subscribe();
+  // The live connection (code review, 3.181.2). It used to listen for every change to every shared document, and each
+  // message carries the whole document: about 570 KB in 15 minutes on a busy day (measured Nov 27, 2026), nearly all of
+  // it for pages that weren't open. Now it listens only for the documents some page is showing. When that list
+  // changes, a new connection for the new list is opened first and the old one closed once the new one is up; then
+  // one small check finds anything that changed in between.
+  var live = null, liveKey = null, liveT = null, liveN = 0;
+  // did any of these change while nothing was listening? One small question (names and times only); a document is
+  // read again, and its page told, only when its time differs from the copy this phone has
+  function caughtUp(paths) {
+    if (!paths.length || paths.length > 100) return;
+    sb.from("docs").select("path,updated_at").in("path", paths).then(function (r) {
+      if (r.error || !r.data) return;
+      var at = {}; r.data.forEach(function (x) { at[x.path] = x.updated_at; });
+      paths.forEach(function (x) { var c = cacheGet(x), had = c ? (c.none ? "none" : c.updated_at) : null; if (had !== null && had !== (at[x] || "none")) notify(x); });
+    }, function () {});
+  }
+  function onLive(p) { var path = (p.new && p.new.path) || (p.old && p.old.path); if (path) notify(path); }
+  function listen() {
+    clearTimeout(liveT);
+    liveT = setTimeout(function () {
+      var paths = Object.keys(subs).filter(function (x) { return isShared(x) && (subs[x] || []).length; }).sort();
+      // the filter takes up to 100 names, plain characters only; anything else and it listens to everything, as before
+      var plain = paths.length <= 100 && paths.every(function (x) { return /^[\w\/.:-]+$/.test(x); });
+      var key = !paths.length ? "" : plain ? paths.join(",") : "*";
+      if (key === liveKey) return;
+      liveKey = key;
+      var old = live; live = null;
+      if (!key) { if (old) sb.removeChannel(old); return; }
+      var opt = { event: "*", schema: "public", table: "docs" }; if (plain) opt.filter = "path=in.(" + key + ")";
+      var ch = live = sb.channel("docs-" + (++liveN)).on("postgres_changes", opt, onLive);
+      ch.subscribe(function (st) {
+        if (st !== "SUBSCRIBED" || live !== ch) return;
+        if (old) { sb.removeChannel(old); old = null; }
+        caughtUp(paths);
+      });
+      // the new connection never came up (offline?): let go of the old one anyway; the 5-minute catch-up still runs
+      setTimeout(function () { if (old) { sb.removeChannel(old); old = null; } }, 20000);
+    }, 800);
+  }
   // phones drop the live connection in the background: catch up when the page comes back
   document.addEventListener("visibilitychange", function () { if (!document.hidden) Object.keys(subs).forEach(notify); });
   setInterval(function () { if (!document.hidden) Object.keys(subs).forEach(notify); }, 5 * 60000);
@@ -357,6 +393,7 @@
       },
       onSnapshot: function (cb, err) {
         var s = { cb: cb, err: err }; (subs[path] = subs[path] || []).push(s);
+        if (isShared(path)) listen();
         var c = cacheGet(path), shown = null;
         if (c) { shown = c.none ? "none" : c.updated_at; Promise.resolve().then(function () { if ((subs[path] || []).indexOf(s) !== -1) cb(snap(c.none ? null : c)); }); }
         fetchRow(path).then(function (row) {
@@ -364,7 +401,7 @@
           if (shown !== null && shown === (row ? row.updated_at : "none")) return;  // the cached copy was already current
           cb(snap(row));
         }, function (e) { if (!c && err) err(e); });
-        return function () { var l = subs[path] || []; var i = l.indexOf(s); if (i !== -1) l.splice(i, 1); };
+        return function () { var l = subs[path] || []; var i = l.indexOf(s); if (i !== -1) l.splice(i, 1); if (isShared(path)) listen(); };
       }
     };
   }

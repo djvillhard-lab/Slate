@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.181.2 (Nov 27, 2026)
+TestFlight: 3.178.6 (62), no new build (web only)
+- Code review, speed: lighter live updates. While Slate is open it keeps a live line to the database, and that line used to deliver every change to every shared page (scores, previews, standouts, the News wire), whole, whether or not you were looking at that page: about 570 KB in 15 minutes on a busy afternoon. Now it only hears about the pages that are open. Nothing looks different; it just uses less data and battery.
+- Code review, security: the lists several people can change at once (the people, the phones logged in, invites, sign-in tickets, today's Claude count) are now changed one entry at a time inside the database, so two changes in the same second can't overwrite each other. This switches on once DJ runs a short script in Supabase (docs/security/one-step-saves.sql); until then saves work the old way.
+- Code review, security: the second server key from 3.179.3 now has a safety check. If the wrong value is ever pasted in, the server ignores it and carries on as before, so a typo can't log anyone out. DJ's steps are in docs/security/second-key.md.
+
 ## 3.181.1 (Nov 27, 2026)
 TestFlight: 3.178.6 (62), no new build (web only)
 - Code review, security: Slate's page now carries a script rule. The browser runs only Slate's own code (each block is listed in the page by its fingerprint, which the build writes), and the page may only fetch data from Slate, ESPN and Slate's database. If a headline, a name or a link from an outside feed ever tried to smuggle code into the page, the browser would refuse to run it. Nothing looks or works differently.
