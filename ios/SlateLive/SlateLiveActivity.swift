@@ -895,11 +895,12 @@ struct MiniSide: View {
                 Chip(abbr: abbr, color: color, alt: alt, width: 20, height: SlateLogos.image(logo) != nil ? 18 : 13, size: 8, stripe: 1.5, radius: 2, logo: logo)
             }
         }
-        .frame(maxWidth: 22)
+        .frame(maxWidth: 26)
     }
 
+    // DJ (Nov 26): the score bigger on the Duo's side Island (12 pt was hard to read)
     private var num: some View {
-        Text("\(score)").font(SlateLook.num(12)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
+        Text("\(score)").font(SlateLook.num(18)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
     }
 }
 

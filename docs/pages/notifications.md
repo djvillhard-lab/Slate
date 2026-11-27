@@ -134,3 +134,4 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   notification for a team the app never saved (Slate not opened that day) shows the chip; fixing that needs the app
   to save logos in the background (iPhone build).
 - 3.163.3 (DJ): the Board's narrow island (the Duo's side screen, MiniSide) now gets g.al/g.hl; MiniSide gives a logo 18 pt.
+- 3.174.1 (DJ): MiniSide (narrow island, Duo side screen) score 18 pt (was 12), column 26 pt.

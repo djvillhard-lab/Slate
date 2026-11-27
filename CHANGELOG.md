@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.174.1 (Nov 27, 2026)
+TestFlight: 3.174.1, new build
+- Dynamic Island on the iPhone Duo's side screen: the score is bigger, half again its old size, for one game and for the live scoreboard.
+
 ## 3.174.0 (Nov 26, 2026)
 TestFlight: 3.163.3 (60), no new build (web only)
 - Standings moved off the Teams page to All games. A Standings button in the row with Live (next to 2 columns) flips the page from games to standings; tap it again to go back to the games. It opens on the league you're looking at, and its row of leagues still reaches every league, even on a day that league doesn't play.

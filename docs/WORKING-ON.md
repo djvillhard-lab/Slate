@@ -7,4 +7,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Settings: Morning email (daily emails stopped) | 235-morning-email.js, worker/morning-email.js, worker/index.js (morning-email route only) | 2026-11-27 01:03 |
-| DJ | shared: ios/ (bigger score in the Duo Dynamic Island; iPhone build, waits for DJ) | ios/SlateLive/SlateLiveActivity.swift (MiniSide) | 2026-11-27 01:05 |
