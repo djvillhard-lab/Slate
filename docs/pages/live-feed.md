@@ -288,3 +288,8 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - Top field yard lines are now real marks placed with the same sum as the ball and the numbers (the striped background had a 7% period where
   the numbers use 8.4%).
 - The scoring list on the matchup page (`fdScoringList`) is not frozen; it still shows current lines.
+
+## 3.177.1 (Nov 26): fun sayings off
+- DJ: "Remove the flare lines completely". Read as the fun sayings (`FD_SAY`). `FD_SAY_ON = false` in `145-live-feed.js` drops them at render;
+  the lines, the picker and `fdSayEl` stay so they can come back. Banners, tags and the facts line (`fd-story`) are unchanged.
+  Do not add sayings to other sports. If DJ meant the facts line too, that is `sty.lines` in the same render line.

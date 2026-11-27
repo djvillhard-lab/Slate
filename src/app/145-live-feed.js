@@ -358,6 +358,8 @@
       if (ok) return o; }
     return "";
   }
+  // 3.177.1 (DJ: "Remove the flare lines completely"): the fun sayings are off. The lines and the code stay so they can come back: set this to true.
+  var FD_SAY_ON = false;
   var FD_SAY_AT = {};
   // the line comes in about 3 seconds after its play first shows, so the play itself is never held up. Its space is kept, so nothing jumps.
   function fdSayEl(pid, txt, isNew) {
@@ -488,6 +490,7 @@
     if (sty && sty.tr) card.appendChild(fdTracer(g, sty.tr));
     var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); px.appendChild(el("p", null, lines.join(" · "))); card.appendChild(px); }  /* 3.177.0 (DJ: "too many lines of text on each play"): the extra point, the fumble and the rest follow on the same line */
     // 3.177.0 (DJ: compact them slightly): what the play meant and the fun line share one line. The fun line still comes in 3 seconds later, at the end.
+    if (sty && !FD_SAY_ON) sty.say = null;
     if (sty && (sty.lines.length || sty.say)) { var fl = el("p", "fd-story", sty.lines.join(" · ")); if (sty.say) { if (sty.lines.length) fl.appendChild(document.createTextNode(" · ")); fl.appendChild(fdSayEl(pid, sty.say, isNew)); } card.appendChild(fl); }
     var plw = el("div", "fd-pls"); rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdFzLine(pid, String(o.P.id || o.P.name || ""), fdLine(o.P, o.k)); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); plw.appendChild(row); }); if (plw.firstChild) card.appendChild(plw);
     return card;

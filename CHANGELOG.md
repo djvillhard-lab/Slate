@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.177.1 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed, football: the fun sayings that faded in on play cards a few seconds after a play are gone. The cards keep their headline, the play, the banner on big moments and the facts line (longest play of the game, lead changes and the like).
+
 ## 3.177.0 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed: a player's stat line on a past play no longer keeps updating. It stays live only on his newest play; every older play keeps the numbers it showed when it happened, like a game log. All sports. A play from before the feed was first opened on this phone has no saved numbers, so it shows the player without a stat line instead of a later total.
