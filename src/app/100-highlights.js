@@ -367,8 +367,9 @@
         if (nm) (bp[ti] = bp[ti] || []).push({ nm: nm, what: what, st: st }); });
       var ordB = tid.slice().sort(function (a, b) { return (teams[a].side === "home") - (teams[b].side === "home"); });
       ordB.forEach(function (i) { var L = bp[i]; if (!L) return; var allD = L.every(function (x) { return !x.st; }), allS = L.every(function (x) { return x.st; });
-        bigTx += "; " + teams[i].abbr + ": " + (L.length === 1 ? L[0].nm + " scored on " + (/^(8|11|18)\b|^[aeiou]/i.test(L[0].what) ? "an " : "a ") + L[0].what :
-          L.length + (allD ? " defensive" : allS ? " special-teams" : " defense and special-teams") + " TDs: " + L.map(function (x) { return x.nm + " (" + x.what + ")"; }).join(", ")); }); }
+        // 3.179.1 (DJ: "Too much detail… makes it too long"): just the count and kind
+        bigTx += "; " + teams[i].abbr + ": " + (L.length === 1 ? (/pick-six/.test(L[0].what) ? "Pick-six" : (allD ? "Defensive" : "Special-teams") + " TD") :
+          L.length + (allD ? " defensive" : allS ? " special-teams" : " defense and special-teams") + " TDs"); }); }
     var storyTx = function (skip) { return story.filter(function (x) { return x.tm && (!skip || x.text !== skip); }).map(function (x) { return "; " + x.tm + ": " + x.text + (x.pair ? "; " + x.pair.tm + ": " + x.pair.text : ""); }).join(""); };
     var storyLead = function () { return story.filter(function (x) { return !x.tm; }).map(function (x) { return x.text + "; "; }).join(""); };
     var SCK = /^(scorers|solo|allsc|brace|goal|late|lateq|quick|cb|cbd|fest|hksc|g|hkpts|hka|top)$/;
