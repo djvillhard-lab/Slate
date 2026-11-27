@@ -355,6 +355,20 @@
       story = story.filter(function (x) { return x.sc >= 36; }); if (story.length > 1 && story[1].tm && story[1].tm === story[0].tm && story.length > 2) story.splice(1, 1); story = story.slice(0, 2);
     }
     // a fact about both teams (lead changes) goes first as its own row; a team's fact joins that team's row
+    // 3.178.5 (DJ: "Steelers have 2 defensive TDs. The live one liner should include that"): touchdowns the offense didn't score
+    // (pick-sixes, fumble returns, punt and kick returns, blocked kicks), live and final, on the scoring team's row
+    var bigTx = "";
+    if (sport === "football" && tid.length === 2) { var bp = {};
+      (sum.scoringPlays || []).forEach(function (p) { var ty = String((p.type || {}).text || ""), tx = String(p.text || ""), ti = String((p.team || {}).id || "");
+        if (!teams[ti] || !/touchdown|end zone/i.test(ty + " " + tx) || !/interception|fumble|punt|kickoff|blocked|return/i.test(ty) && !/fumble recovery in end zone/i.test(tx)) return;
+        var nm = (/^(.+?)\s+(?:\d+\s+Yd|Fumble|Blocked)/.exec(tx) || [])[1] || "", yd = +((/(\d+)\s+Yd/.exec(tx) || [])[1]) || 0, st = /punt|kickoff|kick return|blocked (?:punt|field goal|fg)/i.test(ty + " " + tx);
+        var what = /interception/i.test(ty + tx) ? (yd ? yd + "-yard " : "") + "pick-six" : /fumble/i.test(ty + tx) ? (/end zone/i.test(tx) ? "fumble recovery in the end zone" : (yd ? yd + "-yard " : "") + "fumble return") :
+          /punt/i.test(ty + tx) ? (yd ? yd + "-yard " : "") + "punt return" : /kickoff|kick return/i.test(ty + tx) ? (yd ? yd + "-yard " : "") + "kickoff return" : "blocked-kick return";
+        if (nm) (bp[ti] = bp[ti] || []).push({ nm: nm, what: what, st: st }); });
+      var ordB = tid.slice().sort(function (a, b) { return (teams[a].side === "home") - (teams[b].side === "home"); });
+      ordB.forEach(function (i) { var L = bp[i]; if (!L) return; var allD = L.every(function (x) { return !x.st; }), allS = L.every(function (x) { return x.st; });
+        bigTx += "; " + teams[i].abbr + ": " + (L.length === 1 ? L[0].nm + " scored on " + (/^(8|11|18)\b|^[aeiou]/i.test(L[0].what) ? "an " : "a ") + L[0].what :
+          L.length + (allD ? " defensive" : allS ? " special-teams" : " defense and special-teams") + " TDs: " + L.map(function (x) { return x.nm + " (" + x.what + ")"; }).join(", ")); }); }
     var storyTx = function (skip) { return story.filter(function (x) { return x.tm && (!skip || x.text !== skip); }).map(function (x) { return "; " + x.tm + ": " + x.text + (x.pair ? "; " + x.pair.tm + ": " + x.pair.text : ""); }).join(""); };
     var storyLead = function () { return story.filter(function (x) { return !x.tm; }).map(function (x) { return x.text + "; "; }).join(""); };
     var SCK = /^(scorers|solo|allsc|brace|goal|late|lateq|quick|cb|cbd|fest|hksc|g|hkpts|hka|top)$/;
@@ -371,7 +385,7 @@
     if (/^(bball|football|baseball)$/.test(sport) && tid.length === 2) {
       var ord = tid.slice().sort(function (a, b) { return (teams[a].side === "home") - (teams[b].side === "home"); }), bl = ord.filter(function (i) { return bestP[i]; });
       var trump = c.filter(function (x) { var k = x.key.split("|"); return k[0] === "win" || k[0] === "td" && /triple-double(:|$)/.test(x.text) && !/watch/.test(x.text) || k[0] === "pts" && +k[2] >= 8 || k[0] === "run" && /\b(1[5-9]|[2-9]\d)-0 run/.test(x.text); })[0];
-      if (bl.length && !trump) c.push({ key: "best|" + bl.map(function (i) { return bestP[i].tx.split(" ")[0] + Math.floor(bestP[i].sc / 5); }).join("|"), score: 998, tone: 0, text: (done ? storyLead() : "") + bl.map(function (i) { return bestP[i].tx; }).join("; ") + (done ? storyTx() : ""), facts: {}, tm: bl.length === 1 && !(done && story.length) ? teams[bl[0]].abbr : "" });
+      if (bl.length && !trump) c.push({ key: "best|" + bl.map(function (i) { return bestP[i].tx.split(" ")[0] + Math.floor(bestP[i].sc / 5); }).join("|") + (bigTx ? "|big" + bigTx.split("; ").length : ""), score: 998, tone: 0, text: (done ? storyLead() : "") + bl.map(function (i) { return bestP[i].tx; }).join("; ") + bigTx + (done ? storyTx() : ""), facts: {}, tm: bl.length === 1 && !(done && story.length) && !bigTx ? teams[bl[0]].abbr : "" });
     }
     if (!c.length) return null;
     c.sort(function (a, b) { return b.score - a.score; });
