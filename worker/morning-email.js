@@ -534,6 +534,12 @@ export async function morningStatus(env, p) {
       last: x.last, sentAt: x.sentAt, err: x.err, note: x.note, fails: x.fails, failDay: x.failDay, prepDay: x.prepDay, sending: x.sending, testAt: x.testAt,
       today: lt.date, inSlateToday: !!(aset && (aset.people || []).some((q) => q && q.prefix === prefixOf(id))), slateTodayExists: !!aset };
   }
+  // {build: "<id>"}: build that person's email now without sending it, to see how long it takes or where it fails
+  if (p.build && doc.people && doc.people[p.build]) {
+    const x = doc.people[p.build], t0 = Date.now();
+    try { const b = await buildEmail(env, Object.assign({ id: p.build }, x), now); out.build = { ms: Date.now() - t0, subject: b.subject, games: b.games, results: b.results, pending: b.pending, wait: b.wait, skip: b.skip, why: b.why, size: (b.html || "").length }; }
+    catch (e) { out.build = { ms: Date.now() - t0, error: String(e && e.stack || e).slice(0, 600) }; }
+  }
   return { ok: true, gmailReady: gmailReady(env), now: now.toISOString(), people: out };
 }
 
