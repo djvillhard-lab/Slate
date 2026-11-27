@@ -1,5 +1,5 @@
 # Events: golf and F1 (sports without two teams)
-Last updated: Nov 27, 2026, 3.178.0
+Last updated: Nov 27, 2026, 3.178.2
 Code: `src/app/165-events.js` (data + card + All games sections + slate block), hooks in `160-all-games.js` (tabs in
 `filterOpts`, a GOLF/F1 tab in `renderGames`, sections under the leagues on ALL) and `170-slate-page.js` (`evSlateBlock`
 under the games, above Finished). Styles `src/styles/098-events.css`.
@@ -39,6 +39,12 @@ under the games, above Finished). Styles `src/styles/098-events.css`.
 - In the list: Skins Game (Nov 27), Grant Thornton Invitational (Dec 11 to 13, Golf Channel then NBC). Left out until times are announced: Golf
   Channel Games (Dec 16, prime time, Golf Channel + USA, McIlroy's team vs Scheffler's) and the PNC Championship (Dec 19 to 20, NBC/Golf Channel).
   Where to look: golf.com / Golf Digest "TV schedule" posts, pgatour.com tournament pages. TGL is in ESPN's `golf/tgl` feed (team matches; not wired up yet).
+
+## 3.178.2: Skins Game leaderboard (DJ: "Can you find a leaderboard for the skins game? And keep it updated in my slate?")
+- No usable feed. ESPN: not in any golf league. theScore's public API (`api.thescore.com/golf/events/4030`) gives only status;
+  its event pages (`pga/events/<id>`) stop at 2019 events. FOX Sports has a live to-par board (eventId 2957), but its data API needs a site key,
+  which Slate isn't allowed to use. Neither shows skins or money. A probe route `/api/golf-tv` was added, then removed again in this release.
+- So the card says "Started 9:00 AM" / "Starts …" (your time) and, once it's on, a "Live leaderboard" link (`board` in GOLF_TV) to FOX's page.
 
 ## Open (DJ's order: golf, F1, then UFC, tennis, NASCAR)
 - UFC: on hold (DJ, Nov 20). When it's a go: fight cards are head-to-head (`mma/ufc`, competitions = bouts with 2 competitors) and run every weekend.

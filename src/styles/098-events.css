@@ -38,3 +38,4 @@
 /* made-for-TV golf (3.178.0): who's playing, no positions or scores */
 .ev-card.tv .ev-board .ev-r { grid-template-columns: minmax(0, 1fr); }
 .ev-card.tv .ev-pos, .ev-card.tv .ev-thru, .ev-card.tv .ev-val { display: none; }
+a.ev-more { display: inline-flex; align-items: center; text-decoration: none; }

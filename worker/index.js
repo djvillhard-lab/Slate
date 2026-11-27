@@ -210,15 +210,6 @@ export default {
     if (url.pathname.startsWith("/api/") && req.method === "POST" && (await failCount(ip)) >= FAIL_MAX)
       return json({ error: "Too many wrong passcodes from this network. Try again in 15 minutes." }, 429);
     // News: ESPN's injury report and trades and signings, trimmed for the phone (worker/wire.js, 3.114.0)
-    // made-for-TV golf leaderboards (3.178.x): ESPN doesn't carry them; theScore's free feed does. Only its PGA event
-    // pages pass through, cached a minute at Cloudflare
-    if (url.pathname === "/api/golf-tv") {
-      const p = url.searchParams.get("p") || "";
-      if (!/^(pga|golf|lpga|eur|liv|champions|tgl)\/(events|tournaments|leaderboards)(\/\d{1,7})?(\/[a-z_]{1,24})?$/.test(p)) return json({ error: "bad path" }, 400);
-      const r = await fetch("https://api.thescore.com/" + p + (url.searchParams.get("q") ? "?" + url.searchParams.get("q").replace(/[^a-z0-9_=&.,-]/gi, "") : ""), { headers: { accept: "application/json", "x-country-code": "US", "x-region-code": "US" }, cf: { cacheTtl: 60, cacheEverything: true } }).catch(() => null);
-      if (!r || !r.ok) return json({ error: "no answer", status: r ? r.status : 0 }, 502);
-      return new Response(await r.text(), { headers: { "content-type": "application/json", "cache-control": "public, max-age=60", "x-content-type-options": "nosniff" } });
-    }
     if (url.pathname === "/api/wire") return wireRoute(req, url, { json });
     // Soccer player pictures for the lineup pitch, from TheSportsDB (worker/photos.js, 3.124.0)
     if (url.pathname === "/api/photos" || url.pathname === "/api/photos/img") return photosRoute(req, url, ctx, { json, env });

@@ -84,7 +84,7 @@
   // the channel, and who's playing. No scores, because no free source has them; the card says who's playing and where.
   // Add the next ones as they're announced (docs/pages/events.md lists where to look).
   var GOLF_TV = [
-    { id: "skins26", sport: "golf", name: "Farmers Insurance Skins Game", on: [["2026-11-27T09:00:00-05:00", 5]], nets: ["Prime Video"],
+    { id: "skins26", sport: "golf", name: "Farmers Insurance Skins Game", on: [["2026-11-27T09:00:00-05:00", 5]], nets: ["Prime Video"], board: "https://www.foxsports.com/golf/leaderboard?eventId=2957",
       what: "Skins game · Atlantic Fields Club, Hobe Sound, Fla.", players: ["Brooks Koepka", "Justin Thomas", "Jackson Koivun", "Wyndham Clark"] },
     // PGA Tour and LPGA pairs; Golf Channel's window, then NBC's on the weekend (times from Grant Thornton's Oct 2026 release)
     { id: "gti26", sport: "golf", name: "Grant Thornton Invitational", on: [["2026-12-11T13:00:00-05:00", 3], ["2026-12-12T14:00:00-05:00", 3], ["2026-12-13T13:00:00-05:00", 3]],
@@ -100,10 +100,11 @@
       if (day < first.day || day > last.day) return;
       var live = ss.filter(function (s) { return now >= s.t && now < s.end; })[0], today = ss.filter(function (s) { return s.day === day; })[0];
       var kind = live ? "live" : now >= last.end ? "over" : "upcoming", at = live || today || ss.filter(function (s) { return s.t > now; })[0] || last;
-      var many = ss.length > 1, detail = g.what;
-      if (many) detail = "Day " + (at.i + 1) + " of " + ss.length + " · " + g.what;
+      // when it starts or started (DJ, 3.178.2: "show it like the others showing what time it started")
+      var many = ss.length > 1, when = (now >= at.t ? "Started " : "Starts ") + timeText(new Date(at.t).toISOString()), detail = when + " · " + g.what;
+      if (many) detail = "Day " + (at.i + 1) + " of " + ss.length + " · " + detail;
       out.push({ id: "ev-tv-" + g.id, sport: g.sport, golf: true, tv: true, tour: "TV", name: g.name, kind: kind, detail: detail, start: new Date(at.t).toISOString(),
-        startsToday: !!today && today.day === day, nets: g.nets.slice(), link: "", round: live && many ? live.i + 1 : 0, field: g.players.length,
+        startsToday: !!today && today.day === day, nets: g.nets.slice(), link: "", board: g.board || "", round: live && many ? live.i + 1 : 0, field: g.players.length,
         rows: g.players.map(function (n) { return { id: n, name: n, short: n, flag: { src: "", alt: "" }, pos: "", val: "", tot: null, thru: "" }; }) });
     });
     return out;
@@ -187,6 +188,11 @@
       more.addEventListener("click", function () { EV_OPEN[x.id] = !open; if (where === "games") keepScroll(renderGames); else keepScroll(renderLineup); });
       foot.appendChild(more);
     } else foot.appendChild(el("span"));
+    // made-for-TV golf: no free feed has its scores, so the card links to a live leaderboard instead (3.178.2)
+    if (x.tv && x.board && x.kind !== "upcoming") {
+      var lb = el("a", "ev-more", "Live leaderboard"); lb.href = x.board; lb.target = "_blank"; lb.rel = "noopener";
+      if (foot.firstChild && foot.firstChild.tagName === "SPAN") foot.replaceChild(lb, foot.firstChild); else foot.insertBefore(lb, foot.firstChild);
+    }
     var nets = el("span", "nets ev-nets");
     x.nets.slice(0, 2).forEach(function (n) { var a = watchLink(n, "net", n); nets.appendChild(a || el("span", "net", n)); });
     foot.appendChild(nets);
