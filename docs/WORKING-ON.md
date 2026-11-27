@@ -7,3 +7,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Code review: shrink the app's code at build time | build.py, scripts/rjsmin.py (new), scripts/shots.py (profile note only), README.md and CLAUDE.md (build notes) | 2026-11-27 21:24 |
+| DJ | shared: ios/ (Board: no graying while live; iPhone build, waits for DJ) | ios/SlateLive/SlateTonightWidget.swift (TonightTile), ios/SlateWatch/TonightList.swift (WatchTile) | 2026-11-27 21:25 |
