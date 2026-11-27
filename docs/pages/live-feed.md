@@ -274,3 +274,17 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
   No running counts in the line (4th-down and three-and-out counts were dropped because the classifier doesn't see every attempt).
 - Football only so far. DJ: "Start with football, then we'll move to other sports". Wait for his word before adding other sports.
 - Checked on screen on CHI@DET and by running a full finished game (39 of 187 plays got a line) through the pass and reading every line.
+
+## 3.177.0 (Nov 26): frozen stat lines, shorter football cards, yard lines
+- DJ: "I don't think I want player stats to continue to update on past live feed plays". He chose freeze. `FZ` / `fdFzStart` / `fdFzMark` /
+  `fdFzLine` / `fdFzEnd` in `145-live-feed.js`, used by all five sports. Each render marks every play newest first (before any Scoring / Big
+  plays filter), so the first play seen for a player is his newest: that card shows the live line and saves it; older cards show what was saved
+  (`localStorage` `slate-fd-fz-<game id>`, last 4 games kept). No saved line = no line. Nothing is computed: it is ESPN's box line as read then.
+  A basketball rebound shown on the miss's card is keyed by the rebound's own play id. Baseball keys batter and pitcher lines apart.
+- Known limit: plays from before the feed was first opened on that phone (and all but each player's last play of a finished game) show no line.
+  ESPN's box can lag a play by a few seconds; the line keeps refreshing until the player's next play, so it settles on the right numbers.
+- Football cards shorter (DJ: flair "creates too many lines of text"): story and saying share one line (`span.fd-say`), player rows wrap side
+  by side in `.fd-pls`, "Caps a N-play drive" is off (the drive header says it), tighter banner and margins (end of `040-components.css`).
+- Top field yard lines are now real marks placed with the same sum as the ball and the numbers (the striped background had a 7% period where
+  the numbers use 8.4%).
+- The scoring list on the matchup page (`fdScoringList`) is not frozen; it still shows current lines.

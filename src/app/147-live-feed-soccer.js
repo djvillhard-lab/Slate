@@ -164,10 +164,12 @@
       if (!top.parentNode) body.insertBefore(top, bug.nextSibling); }
     var keyOnly = !!FD.scOnly && !fromKey, list = el("div", "fd-list"), cap = keyOnly ? 1e9 : 14 * (1 + (+FD.more || 0)), shown = 0, total = 0, fresh = FD.seen || null, seenNow = {};
     var plRow = function (nm, sd, role) { var P = ix[scNorm(nm)] || { name: nm, jer: "", st: {} }, psd = sideOf[P.tid] || sd || "away", row = el("div", "fd-pl"); row.appendChild(fdJerseyOnly(g, psd, P));
-      var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort({ name: nm }))); if (role) w.appendChild(el("em", "fd-pos", role)); var ln = role === "on" || role === "off" ? "" : scLine(P); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); return row; };
+      var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort({ name: nm }))); if (role) w.appendChild(el("em", "fd-pos", role)); var ln = role === "on" || role === "off" ? "" : fdFzLine(R.pid, scNorm(nm), scLine(P)); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); return row; };
     var story = {}; try { story = scStory(rows, g); } catch (e) { story = {}; }
+    fdFzStart(g);
     for (var i = rows.length - 1; i >= 0; i--) {
       var R = rows[i], rd = R.rd; seenNow[R.pid] = 1;
+      (rd.names || []).forEach(function (nm) { fdFzMark(scNorm(nm), R.pid); });
       if (keyOnly && !rd.key) continue;
       var isNew = !!(fresh && !fresh[R.pid]);
       if (rd.note) { if (shown < cap) list.appendChild(fdNoteCard(rd.title, isNew, R.pid, R.min, abbr(g, "home") + " " + R.h + "  " + abbr(g, "away") + " " + R.a)); continue; }
@@ -202,6 +204,7 @@
     body.appendChild(list);
     fdMoreRow(list, !keyOnly && total > shown, keyOnly);
     body.appendChild(el("p", "pv-at fd-at", over ? "Full time" : "Updates every few seconds while this page is open"));
+    fdFzEnd();
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);
   }

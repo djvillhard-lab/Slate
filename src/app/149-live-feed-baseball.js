@@ -178,10 +178,12 @@
     var keyOnly = !!FD.scOnly, list = el("div", "fd-list"), cap = keyOnly ? 1e9 : 14 * (1 + (+FD.more || 0)), shown = 0, total = 0, fresh = FD.seen || null, seenNow = {};
     var scoreTx = function (pl) { return pl.awayScore != null && pl.homeScore != null ? abbr(g, "away") + " " + pl.awayScore + "  " + abbr(g, "home") + " " + pl.homeScore : ""; };
     var plRow = function (card, id, role, asP, sd) { var P = ix[id]; if (!P) return; var psd = sideOf[P.tid] || sd || "away", row = el("div", "fd-pl"); row.appendChild(fdFace(g, psd, P, fdJerseyOnly(g, psd, P)));
-      var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort(P))); w.appendChild(el("em", "fd-pos", role)); var ln = bbLine(P, asP); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); card.appendChild(row); };
+      var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort(P))); w.appendChild(el("em", "fd-pos", role)); var ln = fdFzLine(it.pid, id + (asP ? "|p" : "|b"), bbLine(P, asP)); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); card.appendChild(row); };
     var story = {}; try { story = bbStory(items, g, ix); } catch (e) { story = {}; }
+    fdFzStart(g);
     for (var k = items.length - 1; k >= 0; k--) {
       var it = items[k], p = it.pl; seenNow[it.pid] = 1;
+      if (!it.note) { var fzb = bbWho(p, "batter"), fzh = bbWho(p, "pitcher"); if (fzb) fdFzMark(fzb + "|b", it.pid); if (fzh) fdFzMark(fzh + "|p", it.pid); }
       var isNew = !!(fresh && !fresh[it.pid]);
       if (it.note) { if (keyOnly) continue; if (shown < cap) list.appendChild(fdNoteCard(String(p.text || (p.type || {}).text || ""), isNew, it.pid, "", scoreTx(p))); continue; }
       var rd = it.ab ? bbResult(p) : it.ev ? bbEvent(p) : { kind: "", emoji: "🧢", title: (ix[bbWho(p, "batter")] ? fdShort(ix[bbWho(p, "batter")]) : "Batter") + " at bat", tx: "", key: false, tags: [] };
@@ -225,6 +227,7 @@
     body.appendChild(list);
     fdMoreRow(list, !keyOnly && total > shown, keyOnly);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
+    fdFzEnd();
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);
   }

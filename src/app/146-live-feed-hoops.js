@@ -257,14 +257,16 @@
       var Tp = tripOf[hpPid(pv)]; if (Tp && Tp.length > 1 && hpPid(Tp[Tp.length - 1]) !== hpPid(pv)) { if (!(p.participants || []).length) rebSkip[hpPid(p)] = 1; return; }
       rebOf[hpPid(pv)] = p; rebSkip[hpPid(p)] = 1; });
     var foulLimit = lg === "nba" || lg === "wnba" ? 6 : 5;
-    var plRow = function (P, k, sdF, lab) { var psd = sideOf[P.tid] || sdF || "away", row = el("div", "fd-pl"); row.appendChild(hpJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", lab || P.pos || abbr(g, psd))); var lnx = hpLine(P, k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); return row; };
+    var plRow = function (P, k, sdF, lab, fzPid) { var psd = sideOf[P.tid] || sdF || "away", row = el("div", "fd-pl"); row.appendChild(hpJersey(g, psd, P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(P))); nmw.appendChild(el("em", "fd-pos", lab || P.pos || abbr(g, psd))); var lnx = fdFzLine(fzPid, String(P.id || P.name || ""), hpLine(P, k)); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); return row; };
     var byP = {}, order = []; plays.forEach(function (p) { var n = Number((p.period || {}).number) || 0; if (!byP[n]) { byP[n] = []; order.push(n); } byP[n].push(p); });
+    fdFzStart(g);
     for (var oi = order.length - 1; oi >= 0 && items < cap2; oi--) {
       var pn = order[oi], ps = byP[pn].slice().reverse(), isCur = !over && pn === per && !brk;
       var grp = null;
       var flush = function () {};  // 3.38.1: minor plays are plain one-line rows, nothing folded
       for (var pi = 0; pi < ps.length && items < cap2; pi++) {
         var pl = ps[pi], rd = hpRead(pl, ix), pid = hpPid(pl), isNew = !!(fresh && !fresh[pid]), ck = String((pl.clock || {}).displayValue || ""); seenNow[pid] = 1; total++;
+        if (rd.P) fdFzMark(String(rd.P.id || rd.P.name || ""), pid); if (rd.P2) fdFzMark(String(rd.P2.id || rd.P2.name || ""), pid);
         var T = tripOf[pid], tg = tags[pid], raw = rd.desc || String(pl.text || "").replace(/\s+/g, " ").trim();
         if (T && T.length > 1) {
           if (hpPid(T[T.length - 1]) !== pid) continue;
@@ -300,10 +302,10 @@
         // the gray and red boxes say it in the headline and the player's line; ESPN's sentence is kept where it adds something
         if (raw && raw !== rd.title && (!gray || (!rd.P && rd.kind === "miss" && !rd.reb))) c2.appendChild(el("p", "fd-px", raw));
         if (sty && sty.lines.length) c2.appendChild(el("p", "fd-story", sty.lines.join(" · ")));
-        if (rd.P) c2.appendChild(plRow(rd.P, rd.k, sd2, ""));
+        if (rd.P) c2.appendChild(plRow(rd.P, rd.k, sd2, "", pid));
 
-        if (rd.P2) c2.appendChild(plRow(rd.P2, rd.k2, sd2, rd.l2));
-        if (rbR) { if (rbR.P) c2.appendChild(plRow(rbR.P, "reb", "", rbR.off ? "offensive rebound" : "rebound")); else { var rsd = sideOf[String((rb.team || {}).id || "")] || ""; c2.appendChild(el("p", "fd-px hp-treb", "Team rebound" + (rsd ? ", " + abbr(g, rsd) : ""))); } }
+        if (rd.P2) c2.appendChild(plRow(rd.P2, rd.k2, sd2, rd.l2, pid));
+        if (rbR) { if (rbR.P) c2.appendChild(plRow(rbR.P, "reb", "", rbR.off ? "offensive rebound" : "rebound", hpPid(rb))); else { var rsd = sideOf[String((rb.team || {}).id || "")] || ""; c2.appendChild(el("p", "fd-px hp-treb", "Team rebound" + (rsd ? ", " + abbr(g, rsd) : ""))); } }
         list.appendChild(c2);
       }
       flush();
@@ -318,6 +320,7 @@
     body.appendChild(list);
     fdMoreRow(list, !bigOnly && plays.length > total, bigOnly);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
+    fdFzEnd();
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);
   }

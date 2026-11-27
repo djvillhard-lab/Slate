@@ -187,6 +187,33 @@
     var L = (ix.byLast[fdKey(last)] || []).filter(function (P) { return String(P.first).toLowerCase().indexOf(String(init).toLowerCase()) === 0; });
     return L.length > 1 ? (L.filter(function (P) { return P.tid === offTid; })[0] || L[0]) : L[0] || null;
   }
+  // 3.177.0 (DJ: "I don't think I want player stats to continue to update on past live feed plays"): a player's stat line stays live only on
+  // his newest play. On every older play it keeps what it read when that play was his newest (ESPN's own box numbers, saved per game on this
+  // phone). A play from before the feed was first opened has no saved line, so it shows none rather than a later total.
+  var FZ = { id: null, snap: {}, latest: {}, on: false, dirty: false };
+  function fdFzStart(g) {
+    var id = String((g && g.id) || "");
+    if (FZ.id !== id) { FZ.id = id; FZ.snap = {}; try { FZ.snap = JSON.parse(localStorage.getItem("slate-fd-fz-" + id) || "{}") || {}; } catch (e) { FZ.snap = {}; } }
+    FZ.latest = {}; FZ.on = !!id; FZ.dirty = false;
+  }
+  // called newest play first, for every play (also the ones a filter hides): the first play seen for a player is his newest
+  function fdFzMark(key, pid) { if (FZ.on && key && pid && FZ.latest[key] == null) FZ.latest[key] = pid; }
+  function fdFzLine(pid, key, live) {
+    if (!FZ.on || !key || !pid || FZ.latest[key] == null) return live;
+    var k = pid + "|" + key;
+    if (FZ.latest[key] === pid) { if (live && FZ.snap[k] !== live) { FZ.snap[k] = live; FZ.dirty = true; } return live; }
+    return FZ.snap[k] || "";
+  }
+  function fdFzEnd() {
+    var was = FZ.on; FZ.on = false; if (!was || !FZ.dirty) return;
+    try {
+      localStorage.setItem("slate-fd-fz-" + FZ.id, JSON.stringify(FZ.snap));
+      var ids = []; try { ids = JSON.parse(localStorage.getItem("slate-fd-fz-ids") || "[]") || []; } catch (e) { ids = []; }
+      ids = ids.filter(function (x) { return x !== FZ.id; }); ids.push(FZ.id);
+      while (ids.length > 4) localStorage.removeItem("slate-fd-fz-" + ids.shift());
+      localStorage.setItem("slate-fd-fz-ids", JSON.stringify(ids));
+    } catch (e) {}
+  }
   function fdLine(P, first) {
     var s = P.st, n = function (v) { return parseFloat(v) || 0; }, part = {};
     if (s.passing && n(String(s.passing["C/ATT"]).split("/")[1])) { var p = s.passing; part.passing = p["C/ATT"] + ", " + p.YDS + " yds" + (n(p.TD) ? ", " + p.TD + " TD" : "") + (n(p.INT) ? ", " + p.INT + " INT" : ""); }
@@ -334,10 +361,10 @@
   var FD_SAY_AT = {};
   // the line comes in about 3 seconds after its play first shows, so the play itself is never held up. Its space is kept, so nothing jumps.
   function fdSayEl(pid, txt, isNew) {
-    var p = el("p", "fd-say", txt); p.style.cssText = "margin:5px 0 2px;font-size:14px;font-weight:750;line-height:1.3;color:var(--ink);transition:opacity .5s ease, transform .5s ease";
+    var p = el("span", "fd-say", txt); p.style.cssText = "font-weight:750;color:var(--ink);transition:opacity .5s ease";
     if (isNew && !FD_SAY_AT[pid]) FD_SAY_AT[pid] = Date.now();
     var left = FD_SAY_AT[pid] ? 3000 - (Date.now() - FD_SAY_AT[pid]) : 0;
-    if (left > 0) { p.style.opacity = "0"; p.style.transform = "translateY(4px)"; setTimeout(function () { p.style.opacity = "1"; p.style.transform = "none"; }, left); }
+    if (left > 0) { p.style.opacity = "0"; setTimeout(function () { p.style.opacity = "1"; }, left); }
     return p;
   }
   function fdStory(drives, g, sideOf, ix) {
@@ -361,7 +388,7 @@
           if (!pa && !ph) st.lines.push("First points of the game");
           else if (l0 && l0 === l1) st.lines.push(l1 === scSd ? "Lead grows to " + mg : "Cuts it to " + mg);  // a lead change or a tie is already a tag
           var dm = /(\d+) plays?, (-?\d+) yards?, (\d+:\d\d)/.exec(String(d.description || ""));
-          if (dm && k === lastSc && d.team && sideOf[String(d.team.id || "")] === scSd && +dm[1] > 1 && +dm[2] > 0) st.lines.push("Caps " + (/^(8|11|18)\b/.test(dm[1]) ? "an " : "a ") + dm[1] + "-play, " + dm[2] + "-yard drive in " + dm[3]);
+          if (false && dm && k === lastSc && d.team && sideOf[String(d.team.id || "")] === scSd && +dm[1] > 1 && +dm[2] > 0) st.lines.push(  /* 3.177.0: off, the drive's own header just above the play says "13 plays, 90 yards, 7:12" */ "Caps " + (/^(8|11|18)\b/.test(dm[1]) ? "an " : "a ") + dm[1] + "-play, " + dm[2] + "-yard drive in " + dm[3]);
           var P0 = (rd.ps[0] || {}).P, P1 = (rd.ps[1] || {}).P, n;
           if (/Passing Touchdown/i.test(ty) && P0) { n = bump("ptd" + P0.id); if (n >= 2) st.lines.push(fdPoss(ln(P0)) + " " + ordN(n) + " TD pass today"); }
           if (/Passing Touchdown/i.test(ty) && P1) { n = bump("rtd" + P1.id); if (n >= 2) st.lines.push(fdPoss(ln(P1)) + " " + ordN(n) + " TD catch today"); }
@@ -459,10 +486,10 @@
     var tg = tags[String(pl.id || pl.sequenceNumber || "")]; if (tg && sty && sty.ban) tg = tg.filter(function (x) { return x.t !== "Big play"; }); if (tg && tg.length) { var tw = el("div", "fd-tags"); tg.forEach(function (x) { tw.appendChild(el("span", "fd-tag" + (x.c ? " " + x.c : ""), fdTagText(x.t))); }); card.appendChild(tw); }
     card.appendChild(fdTitle(rd.title));
     if (sty && sty.tr) card.appendChild(fdTracer(g, sty.tr));
-    var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); lines.forEach(function (l) { px.appendChild(el("p", null, l)); }); card.appendChild(px); }
-    if (sty && sty.lines.length) card.appendChild(el("p", "fd-story", sty.lines.join(" · ")));
-    if (sty && sty.say) card.appendChild(fdSayEl(pid, sty.say, isNew));
-    rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdLine(o.P, o.k); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); card.appendChild(row); });
+    var lines = fdLines(fdClean(pl.text), rd.title); if (lines.length) { var px = el("div", "fd-px"); px.appendChild(el("p", null, lines.join(" · "))); card.appendChild(px); }  /* 3.177.0 (DJ: "too many lines of text on each play"): the extra point, the fumble and the rest follow on the same line */
+    // 3.177.0 (DJ: compact them slightly): what the play meant and the fun line share one line. The fun line still comes in 3 seconds later, at the end.
+    if (sty && (sty.lines.length || sty.say)) { var fl = el("p", "fd-story", sty.lines.join(" · ")); if (sty.say) { if (sty.lines.length) fl.appendChild(document.createTextNode(" · ")); fl.appendChild(fdSayEl(pid, sty.say, isNew)); } card.appendChild(fl); }
+    var plw = el("div", "fd-pls"); rd.ps.forEach(function (o) { var psd = sideOf[o.P.tid] || "away", row = el("div", "fd-pl"); row.appendChild(fdJersey(g, psd, o.P)); var nmw = el("span", "fd-pn"); nmw.appendChild(el("b", null, fdShort(o.P))); var pos = fdPos(o.P, g.league); if (pos) nmw.appendChild(el("em", "fd-pos", pos)); var lnx = fdFzLine(pid, String(o.P.id || o.P.name || ""), fdLine(o.P, o.k)); if (lnx) nmw.appendChild(el("i", null, lnx)); row.appendChild(nmw); plw.appendChild(row); }); if (plw.firstChild) card.appendChild(plw);
     return card;
   }
   // the quick look's Scoring (3.72.0, DJ: "match the score boxes from the live feed"): every scoring play as the feed's box,
@@ -474,6 +501,7 @@
     var dr = sum.drives || {}, seen = {}, allPlays = [];
     (dr.previous || []).concat(dr.current ? [dr.current] : []).forEach(function (d) { if (!d || !d.id || seen[d.id]) return; seen[d.id] = 1; (d.plays || []).forEach(function (p2) { allPlays.push(p2); }); });
     if (!allPlays.length) return null;
+    FZ.on = false;
     var ix = fdIndex(sum), tags = fdTags(allPlays, sum, g, sideOf), list = el("div", "fd-list scs-fd"), n = 0;
     allPlays.forEach(function (pl, k) { var rd = fdRead(pl, ix); if (rd.kind !== "score") return; n++; list.appendChild(fdPlayCard(g, pl, rd, String(pl.id || pl.sequenceNumber || k), sideOf, tags, false)); });
     return n ? list : null;
@@ -883,6 +911,11 @@ function renderFeed(fromPoll) {
       var y2e = Number(E.yardsToEndzone); if (down && y2e > 0 && y2e <= 20) dd.appendChild(el("em", "fd-rz", "Red zone"));
       if (!down) fld.appendChild(dd);  /* 3.73.1 (DJ: too much above the plays on the folded Duo): the down and distance is in the score bar now, and the field shows the spot */
       var pitch = el("div", "fd-pitch"); pitch.setAttribute("aria-hidden", "true");
+      // 3.177.0 (DJ: "Yard lines are messed up and not lined up here"): the yard lines were a striped background that was sized wrong (a line every 7%
+      // of the field, not every 8.4%), so they drifted away from the numbers under them and from the ball. Each line is now its own mark, placed with
+      // the same sum as the numbers, the ball and the line to gain.
+      pitch.style.backgroundImage = "none";
+      for (var yk = 0; yk <= 10; yk++) { var yln = el("i"); yln.style.cssText = "position:absolute;top:0;bottom:0;width:1px;margin-left:-.5px;background:rgba(255,255,255," + (yk === 5 ? ".3" : ".16") + ");left:" + (8 + yk * 8.4) + "%"; pitch.appendChild(yln); }
       ["away", "home"].forEach(function (sd) { var ez = el("span", "fd-ez fd-ez-" + sd, abbr(g, sd)); ez.style.background = badgeColor(g, sd) || "var(--raise)"; if (lum(badgeColor(g, sd) || "#333333") > 0.62) ez.style.color = "#111"; fdEzLogo(ez, g, sd, 18); pitch.appendChild(ez); });
       var at = function (v) { return (8 + Math.max(0, Math.min(100, v)) * 0.84) + "%"; };
       if (x != null) {
@@ -911,6 +944,8 @@ function renderFeed(fromPoll) {
     // 3.69.1 (DJ): the Scoring button shows only the scoring plays (all of them, under their drives)
     var scOnly = !!FD.scOnly, isScore = function (p) { return fdRead(p, ix).kind === "score"; };
     var list = el("div", "fd-list"), shown = 0, cap = scOnly ? 1e9 : 8 * (1 + (+FD.more || 0)), fresh = FD.seen ? FD.seen : null, seenNow = {};
+    fdFzStart(g);
+    for (var fzd = drives.length - 1; fzd >= 0; fzd--) { var fzp = drives[fzd].plays || []; for (var fzi = fzp.length - 1; fzi >= 0; fzi--) { var fzid = String(fzp[fzi].id || fzp[fzi].sequenceNumber || ""); if (!fzid) continue; try { fdRead(fzp[fzi], ix).ps.forEach(function (o) { fdFzMark(String(o.P.id || o.P.name || ""), fzid); }); } catch (e) {} } }
     for (var di = drives.length - 1; di >= 0 && shown < cap; di--) {
       var d2 = drives[di], dsd = sideOf[String((d2.team || {}).id || "")] || "", isCur = dr.current && d2.id === dr.current.id && !over && !d2.displayResult && (!posSide || dsd === posSide);  // a punt or turnover ends it before ESPN opens the next drive
       var pls = (d2.plays || []).slice().reverse(); if (scOnly) { pls = pls.filter(isScore); if (!pls.length) continue; }
@@ -941,6 +976,7 @@ function renderFeed(fromPoll) {
     if (allPlays.length) { try { fdDrvHook(list, g, drives, sideOf, !over && dr.current ? dr.current.id : ""); } catch (e) {} fdLdHook(list, g, sum); }
     fdMoreRow(list, !scOnly && allPlays.length > shown && shown >= cap, scOnly);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
+    fdFzEnd();
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);
   }

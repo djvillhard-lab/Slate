@@ -111,8 +111,10 @@
     // the plays, newest first
     var keyOnly = !!FD.scOnly, list = el("div", "fd-list"), cap = keyOnly ? 1e9 : 14 * (1 + (+FD.more || 0)), shown = 0, total = 0, fresh = FD.seen || null, seenNow = {};
     var story = {}; try { story = hkStory(plays, g, sideOf, playoffs); } catch (e) { story = {}; }
+    fdFzStart(g);
     for (var i = plays.length - 1; i >= 0; i--) {
       var pl = plays[i], rd = hkRead(pl), pid = hpPid(pl); seenNow[pid] = 1;
+      (rd.rows || []).forEach(function (r) { fdFzMark(String(r.id || r.name || ""), pid); });
       if (rd.skip || (keyOnly && !rd.key)) continue;
       var isNew = !!(fresh && !fresh[pid]);
       if (rd.note) { if (shown < cap) list.appendChild(fdNoteCard(rd.title, isNew, pid, "", "")); continue; }
@@ -125,7 +127,7 @@
       card.appendChild(el("p", "fd-pt", (rd.emoji ? rd.emoji + " " : "") + rd.title));
       if (rd.tx && rd.tx !== rd.title) card.appendChild(el("p", "fd-px", rd.tx));
       rd.rows.forEach(function (r) { var P = ix[r.id] || { id: r.id, name: r.name, jer: "", st: {} }, psd = sideOf[P.tid] || sd || "away", row = el("div", "fd-pl"); row.appendChild(fdFace(g, psd, P, fdJerseyOnly(g, psd, P)));
-        var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort({ name: r.name }))); w.appendChild(el("em", "fd-pos", r.role)); var ln = hkLine(P); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); card.appendChild(row); });
+        var w = el("span", "fd-pn"); w.appendChild(el("b", null, fdShort({ name: r.name }))); w.appendChild(el("em", "fd-pos", r.role)); var ln = fdFzLine(pid, String(r.id || r.name || ""), hkLine(P)); if (ln) w.appendChild(el("i", null, ln)); row.appendChild(w); card.appendChild(row); });
       fdFlair(card, g, story[pid]);
       list.appendChild(card);
     }
@@ -148,6 +150,7 @@
     body.appendChild(list);
     fdMoreRow(list, !keyOnly && total > shown, keyOnly);
     body.appendChild(el("p", "pv-at fd-at", over ? "Final" : "Updates every few seconds while this page is open"));
+    fdFzEnd();
     FD.seen = Object.assign(FD.seen || {}, seenNow);
     fdSettle(body, g, anchor, aTop, sc);
   }

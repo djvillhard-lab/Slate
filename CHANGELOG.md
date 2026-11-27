@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.177.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed: a player's stat line on a past play no longer keeps updating. It stays live only on his newest play; every older play keeps the numbers it showed when it happened, like a game log. All sports. A play from before the feed was first opened on this phone has no saved numbers, so it shows the player without a stat line instead of a later total.
+- Live feed, football: play cards are shorter. The fun saying now sits on the same line as the play's story instead of its own line, the two players on a pass sit side by side when they fit, the drive line no longer repeats what the drive header already says, and the banner and spacing are tighter.
+- Live feed, football: the yard lines on the field at the top now sit exactly on the yard numbers under them. They were drawn a little too close together, so they drifted off the numbers toward the right.
+
 ## 3.176.2 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - On TV, My TVs: the tag "NBA #3" on a TV now reads "Your league order". It meant the game got that TV because of the league order you set in Rules ("When games clash, put these first"), where NBA was third. The line under the TVs says it in full: "Your league order: NBA is third on your list in Rules".
