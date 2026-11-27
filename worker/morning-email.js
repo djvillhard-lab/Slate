@@ -535,6 +535,8 @@ export async function morningStatus(env, p) {
       last: x.last, sentAt: x.sentAt, err: x.err, note: x.note, stage: x.stage, fails: x.fails, failDay: x.failDay, prepDay: x.prepDay, sending: x.sending, testAt: x.testAt,
       today: lt.date, inSlateToday: !!(aset && (aset.people || []).some((q) => q && q.prefix === prefixOf(id))), slateTodayExists: !!aset };
   }
+  // {run: true}: the timed job right now, here, reporting how it ended (it only sends emails that are due anyway)
+  if (p.run) { const t0 = Date.now(); try { await runMorningEmail(env); out.run = { ms: Date.now() - t0 }; } catch (e) { out.run = { ms: Date.now() - t0, error: String(e && e.stack || e).slice(0, 600) }; } }
   // {build: "<id>"}: build that person's email now without sending it, to see how long it takes or where it fails
   if (p.build && doc.people && doc.people[p.build]) {
     const x = doc.people[p.build], t0 = Date.now(), f0 = globalThis.fetch; let nf = 0;
