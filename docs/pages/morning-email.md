@@ -56,3 +56,9 @@ The Morning email controls moved from the Settings main page to their own sub-pa
 - A new or changed address is stored as `pending` (sealed) with a hashed token; Slate emails a confirm link (`/api/morning-email/confirm?u=<id>&t=<token>`, GET shows a Confirm button, POST confirms). 48-hour window, 3 confirm emails per person per day.
 - Sends go only to the confirmed `email`. Addresses saved before 3.94.0 were grandfathered as confirmed.
 - Why: the security review found Slate could send from DJ's Gmail to any unverified address.
+
+## 3.174.2: emails stopped Nov 20-26 (fixed Nov 26)
+- Cause: `worker/slate-kit.js` was stale. Slate rules for golf and F1 (3.119.1, Nov 19) made `normRules` read `EV_RULES`, which the kit didn't copy, so `buildEmail` threw "EV_RULES is not defined" for anyone with those rules (Drew, Dad). Three fails a day, then `last` was set and nothing more. Test account and DJ (no sports rules) still worked, so it went unnoticed.
+- Fix: `email_kit.py` copies `EV_RULES` and `homeFirst`, and now runs the new kit in Node with every rule option on every league before writing it; a kit that throws is never written. `build.py` runs `email_kit.py` on every build, so the copy can't go stale again.
+- DJ's Family list shows "On, but the last one didn't send: <reason>. Last sent <day>".
+- Claude can check everyone's state without addresses: POST `/api/morning-email` `{action: "status", key: <feedback reader key>}` (on, time, last, sentAt, err, note, fails, whether the address unseals, whether they're in today's alertsets).

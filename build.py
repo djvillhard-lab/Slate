@@ -105,6 +105,12 @@ def main():
         print("index.html matches src/")
         return
     version = check_version(same)
+    # the morning email copies slate code out of src/app/ (worker/slate-kit.js); keep that copy current on every build.
+    # It went stale on Nov 19, 2026 and every email to someone with golf or F1 rules failed for a week.
+    import subprocess
+    kit = subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "email_kit.py"), "--quiet"], capture_output=True, text=True)
+    if kit.stdout.strip(): print(kit.stdout.strip())
+    if kit.returncode: print("WARNING, the morning email's copy of the slate code wasn't updated:\n" + (kit.stderr or kit.stdout).strip())
     if same == current_body and m:
         print("Slate %s: index.html already up to date (build %s)" % (version, old_build))
         return

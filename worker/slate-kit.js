@@ -103,6 +103,10 @@ export function slateKit(opts) {
       EV_RULES[k].forEach(function (x) { if (b[x[0]] === true) { ok[x[0]] = true; any = true; } });
       if (any) o.sports[k] = ok;
     });
+    // 3.121.2: before golf was split, one Golf card held both tours; carry its picks over to Women's golf
+    var og = r.sports && r.sports.golf; if (og && typeof og === "object" && !r.sports.wgolf && (og.lpga === true || og.majors === true)) {
+      o.sports.wgolf = {}; if (og.lpga === true) o.sports.wgolf.lpga = true; if (og.majors === true) o.sports.wgolf.majors = true;
+    }
     function put(k, key, v) { if (!LG_OPTS[k] || LG_OPTS[k].indexOf(key) === -1) return; (o.by[k] = o.by[k] || {})[key] = v; }
     if (r.v === 2) {
       if (r.by && typeof r.by === "object") Object.keys(r.by).forEach(function (k) { var b = normLg(k, r.by[k]); if (b) o.by[k] = b; });
@@ -161,6 +165,7 @@ export function slateKit(opts) {
     return { why: why, score: hits.length ? hits[0][1] : 0, fav: fav };
   }
   // ---- from src/app/040-live.js
+  function homeFirst(g) { return !!(g && SOCCER[g.league]); }
   var ESPN_URLS = {
     nfl: ["football/nfl"], ncaaf: ["football/college-football&groups=80&limit=500", "football/college-football&groups=81&limit=500"],
     nba: ["basketball/nba"], wnba: ["basketball/wnba"], ncaam: ["basketball/mens-college-basketball&groups=50&limit=500"],
@@ -176,8 +181,8 @@ export function slateKit(opts) {
     return a.toUpperCase().slice(0, 4);
   }
   function short(g, side) { var s = g[side + "Short"]; if (s) return s; var n = g[side] || "", p = n.split(" "); return p.length > 1 ? p[p.length - 1] : n; }
-  function sideOrder(g) { return SOCCER[g.league] ? ["home", "away"] : ["away", "home"]; }
-  function sep(g) { return SOCCER[g.league] || g.neutral ? " vs " : " @ "; }
+  function sideOrder(g) { return homeFirst(g) ? ["home", "away"] : ["away", "home"]; }
+  function sep(g) { return homeFirst(g) || g.neutral ? " vs " : " @ "; }
   // ---- from src/app/060-cards.js
   var SPORT = { nba: "bb", wnba: "bb", ncaam: "bb", ncaaw: "bb", nfl: "fb", ncaaf: "fb", nhl: "hk", mlb: "base" };
   var SPORT_PATH = {
@@ -195,6 +200,10 @@ export function slateKit(opts) {
   function bxApi(lg, rest) { return "https://site.api.espn.com/apis/site/v2/sports/" + bxBase(lg) + "/" + rest; }
   // ---- from src/app/100-highlights.js
   function pvCompute(lg, sum, qbx, g) {
+    // 3.156.1 (DJ: "The player positions in one-liners are sometimes confusing. And not obvious that they are player positions"),
+    // 3.157.1 (DJ didn't like them spelled out: "I liked the abbreviations just need a new format"; picked on a card): the full name
+    // with the position after it in brackets, as box scores and injury reports write it: "Chuck Clark (S)", "Jalen Hurts (QB)"
+    function pvPosWord(pos, name) { pos = String(pos || "").toUpperCase(); return pos ? name + " (" + pos + ")" : name; }
     pvCompute.fb = false; pvCompute.tm = ""; pvCompute.sc = 0; pvCompute.f = ""; pvCompute.recs = null;
     var sport = BX_SPORT[lg], comp = ((sum.header || {}).competitions || [])[0] || {}, c = [], T = {}, ids = [];
     (comp.competitors || []).forEach(function (k) { var tm = k.team || {}, id = String(tm.id || ""); ids.push(id);
@@ -223,11 +232,16 @@ export function slateKit(opts) {
     var add = function (k, sc, tx) { c.push({ k: k, sc: sc, tx: conj(tx) }); };
     var byAbbr = {}; ids.forEach(function (i) { byAbbr[T[i].abbr] = i; });
     // form: streaks from the last five
-    var form = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).filter(function (e) {
+    var form = {}, formEv = {}; (sum.lastFiveGames || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (T[i]) form[i] = l5Season(t.events, comp.date).filter(function (e) {
       // soccer (Nov 20, 2026): only games in this competition, so a streak can be checked against the record on the card (Bournemouth's
       // "won five in a row" counted a Carabao Cup and a Europa League win on a 4-3-3 league record)
       var ln = String(e.leagueName || e.leagueAbbreviation || ""), gl = String(((sum.header || {}).league || {}).name || ""), ga = String(((sum.header || {}).league || {}).abbreviation || "");
-      return sport !== "soccer" || !ln || !gl || ln === gl || ln === ga || String(e.leagueAbbreviation || "") === ga; }).map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
+      return sport !== "soccer" || !ln || !gl || ln === gl || ln === ga || String(e.leagueAbbreviation || "") === ga; }); formEv[i] = form[i]; form[i] = form[i].map(function (e) { return e.gameResult; }); });  // this season only (3.91.3)
+    // Nov 20, 2026 (DJ: "I'd like to know who Murray State lost to"): the one game that broke a four-of-five run, by name
+    var oppNm = function (o) { var dn = String((o || {}).displayName || ""), row = ((typeof window !== "undefined" && window.TEAM_LIST) || []).filter(function (r) { return r[0] === dn; })[0]; return row && row[5] && row[5].length <= 18 ? row[5] : dn; };
+    var odd = function (i, res) { var ev = formEv[i] || [], k = -1, n = 0; ev.forEach(function (e, j) { if (e.gameResult !== "W" && res === "W" || e.gameResult === "W" && res !== "W") { n++; k = j; } }); if (n !== 1 || !(ev[k].opponent || {}).displayName) return "";
+      var o = (sing ? "" : "the ") + oppNm(ev[k].opponent), lt = k === ev.length - 1 ? " last time out" : "", r0 = ev[k].gameResult;
+      return res === "W" ? (r0 === "L" ? ", losing only to " + o + lt : r0 === "D" ? ", with a draw against " + o + lt : "") : ", beating only " + o + lt; };
     // 3.100.9 (DJ: "Houston has won four straight" on a 4-0 team just repeats the record): early in a season, when the last five
     // are the whole season, or a win streak covers every game (no losses yet), the streak lines say nothing new and are left out
     var wl = function (i) { var r = String(T[i].rec.total || "").split("-").map(Number); return r.length === 3 ? { w: r[0], l: r[2], gp: r[0] + r[1] + r[2] } : r.length === 2 ? { w: r[0], l: r[1], gp: r[0] + r[1] } : null; };
@@ -237,7 +251,8 @@ export function slateKit(opts) {
       var all = n === f.length && f.length >= 5 ? " in a row" : " straight";
       if (last === "W" && n >= 4) T[i].hot = n, add("won|" + i, 36 + n * 5, T[i].name + " have won " + NW[n] + all);
       if (last === "L" && n >= 4) T[i].cold = n, add("lost|" + i, 34 + n * 5, T[i].name + " have lost " + NW[n] + all);
-      if (sport === "soccer" && f.indexOf("L") < 0 && f.length >= 5) add("unb|" + i, 40, T[i].name + " are unbeaten in their last five"); });
+      if (sport === "soccer" && f.indexOf("L") < 0 && f.length >= 5) add("unb|" + i, 40, T[i].name + " are unbeaten in their last five");
+      if (sport === "soccer" && f.indexOf("W") < 0 && f.length >= 5 && last !== "L") add("winl|" + i, 40, T[i].name + " are winless in their last five"); });
     if (T[A].hot && T[H].cold || T[H].hot && T[A].cold) { var ho = T[A].hot ? A : H; add("form", 64, T[ho].name + " have won " + NW[T[ho].hot] + " straight; " + T[oth(ho)].name + " have lost " + NW[T[oth(ho)].cold]); }
     if (T[A].hot && T[H].hot) add("bothhot", 60, T[A].hot === T[H].hot ? "Both teams have won " + NW[T[A].hot] + " in a row" : "Both on a roll: " + T[A].name + " have won " + NW[T[A].hot] + " straight, " + T[H].name + " " + NW[T[H].hot]);
     // a two-legged tie's second leg (3.88.3): the aggregate score is the story ("USA leads 6-0 on aggregate going into the second leg")
@@ -253,11 +268,16 @@ export function slateKit(opts) {
       if (/series/i.test(sx) && !/^\s*series starts/i.test(sx)) add("pser", 72, sx.charAt(0).toUpperCase() + sx.slice(1)); }
     // the team's leaders who won't play
     var lead = {}; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); (L.leaders || []).forEach(function (cat) { (cat.leaders || []).slice(0, 1).forEach(function (x) { var a = x.athlete || {}; if (a.displayName) (lead[i] = lead[i] || {})[a.displayName] = { pos: (a.position || {}).abbreviation || "", cat: cat.displayName || cat.name, v: x.displayValue }; }); }); });
+    var keyOut = {};
     (sum.injuries || []).forEach(function (t) { var i = String((t.team || {}).id || ""); if (!T[i]) return; var outs = [], q = [];
       (t.injuries || []).forEach(function (x) { var n = ((x.athlete || {}).displayName) || "", stt = String(x.status || ""); if (!(lead[i] || {})[n]) return; var ln = (x.athlete || {}).lastName || n.split(" ").slice(1).join(" ") || n;
         // with the position in front ("QB Wilson"), from the injury report or the team's leaders (3.29.2)
-        var pos = ((x.athlete || {}).position || {}).abbreviation || ((lead[i] || {})[n] || {}).pos || ""; if (pos && sport === "football") ln = pos + " " + ln;  // football only (3.46.1): "QB Wilson" reads; "G Curry" in the NBA doesn't
+        var pos = ((x.athlete || {}).position || {}).abbreviation || ((lead[i] || {})[n] || {}).pos || ""; if (pos && sport === "football") ln = pvPosWord(pos, n);  // football only (3.46.1): "QB Wilson" reads; "G Curry" in the NBA doesn't
         if (/out|reserve|suspen/i.test(stt)) outs.push(ln); else if (/question|doubt|day-to-day/i.test(stt)) q.push(ln); });
+      // 3.153.2: who might explain a big line move: a quarterback or one of the team's leaders who is out
+      (t.injuries || []).forEach(function (x) { var a0 = x.athlete || {}, n = a0.displayName || "", ps0 = (a0.position || {}).abbreviation || "";
+        if (!/out|reserve|suspen/i.test(String(x.status || "")) || !(ps0 === "QB" && sport === "football" || (lead[i] || {})[n])) return;
+        (keyOut[i] = keyOut[i] || []).push(sport === "football" && ps0 ? pvPosWord(ps0, n) : (a0.lastName || n.split(" ").slice(1).join(" ") || n)); });
       if (outs.length) add("out|" + i, 58 + outs.length * 4, T[i].name + " are without " + outs.slice(0, 2).join(" and "));
       else if (q.length) add("q|" + i, 40, q[0] + " is " + (/doubt/i.test(JSON.stringify(t.injuries)) ? "doubtful" : "a question mark") + " for " + T[i].name); });
     // a quarterback's first start of the season (3.31.0): the depth chart's QB1 isn't the team's passing leader and hasn't had a starter's game yet (see pvQB)
@@ -269,16 +289,43 @@ export function slateKit(opts) {
     if (m && byAbbr[m[1]] && (sport === "football" || sport === "bball")) { var sp = Math.abs(parseFloat(m[2])), fav = byAbbr[m[1]];
       if (sp <= 2.5) add("tight", 42, T[fav].name + " are only " + sp + "-point favorites"); else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " are " + sp + "-point favorites"); }
     if (m && byAbbr[m[1]] && byAbbr[m[1]] !== H && parseFloat(m[2]) <= -1 && sport !== "football" && sport !== "bball") {}
+    // 3.144.1 (DJ: "I expect more with the one liners"): how the betting line has moved since it opened (DraftKings, in ESPN's pick center)
+    var psp = (pk && pk.pointSpread) || {}, oH = parseFloat(((psp.home || {}).open || {}).line), cH = parseFloat(((psp.home || {}).close || {}).line);
+    // never at a neutral site, where ESPN's opening line is sometimes from the other side (Kansas State "opened 12.5-point favorites"
+    // over Alabama, now 15.5-point underdogs); a flip only when the line moved 6 points or less
+    if (!comp.neutralSite && !isNaN(oH) && !isNaN(cH) && oH !== cH && Math.abs(cH) <= 45) {
+      // 3.153.2 (DJ: "Become the favorite" read badly; "more valuable to say WHY the line moved"): the line now, then where it opened
+      // (DraftKings' first line, often posted a week or more ahead). Shown only with a reason: a QB or one of the team's leaders
+      // out for the side the line moved against, or that side's QB making his first start. A move with no reason is left out
+      var thT = /^(nfl|nba|wnba|nhl|mlb)$/.test(lg) ? "the " : "";
+      var why = function (fv0) { var o0 = oth(fv0), k1 = keyOut[o0] || [], k0 = k1.filter(function (n) { return /\(QB\)$/.test(n); }).concat(k1.filter(function (n) { return !/\(QB\)$/.test(n); })).slice(0, 1);
+        if (k0.length) c = c.filter(function (x) { return x.k !== "out|" + o0; });  // the injury is in the line-move sentence instead
+        var q0 = (qbx || []).filter(function (q) { return q.team === o0 && q.name; })[0];
+        return k0.length ? ", with " + k0.join(" and ") + " out for " + thT + T[o0].name : q0 ? ", with " + q0.name + " (QB) making his first start for " + thT + T[o0].name : ""; };
+      if (oH * cH < 0 && Math.abs(oH - cH) <= 6) { var nf = cH < 0 ? H : A, wy = why(nf); if (wy) add("flip|" + nf, 54, T[nf].name + " are now " + Math.abs(cH) + "-point favorites after opening as " + Math.abs(oH) + "-point underdogs" + wy); }
+      else if (oH * cH > 0 && Math.abs(cH - oH) >= 2) { var fv = cH < 0 ? H : A, o1 = Math.abs(oH), c1 = Math.abs(cH), wy2 = why(c1 > o1 ? fv : oth(fv));
+        if (wy2) add("move|" + fv, 46, T[fv].name + " are now " + c1 + "-point favorites, " + (c1 > o1 ? "up" : "down") + " from " + o1 + " when the line opened" + wy2); } }
+    var tto = (pk && pk.total && pk.total.over) || {}, tO = parseFloat(String(((tto.open || {}).line) || "").replace(/^[ou]/, "")), tC = parseFloat(String(((tto.close || {}).line) || "").replace(/^[ou]/, ""));
+    if (!isNaN(tO) && !isNaN(tC) && Math.abs(tC - tO) >= (sport === "football" ? 3 : sport === "bball" ? 4 : 99)) add("tot", 32, "The over/under has " + (tC > tO ? "climbed" : "dropped") + " from " + tO + " to " + tC);
     var pr = sum.predictor; if (pr && pr.homeTeam && pr.awayTeam) { var ph = parseFloat(pr.homeTeam.gameProjection), pa = parseFloat(pr.awayTeam.gameProjection);
       if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.min(99, Math.round(Math.max(ph, pa))); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
     // the table: leaders, top-of-table and relegation clashes
     var pos = {}, grp = (((sum.standings || {}).groups || [])[0] || {}), ent = ((grp.standings || {}).entries || []);
-    if (sport === "soccer" && ent.length >= 10) { ent.forEach(function (e, n) { var id = String(e.id || ""); if (T[id]) pos[id] = n + 1; });
-      if (pos[A] && pos[H]) { var N = ent.length, top = Math.min(pos[A], pos[H]);
-        if (pos[A] <= 4 && pos[H] <= 4) add("topclash", 66, ORD(pos[H]) + " hosts " + ORD(pos[A]) + ": " + T[H].name + " vs " + T[A].name);
-        else if (pos[A] > N - 4 && pos[H] > N - 4) add("relclash", 58, "Bottom-of-the-table scrap: " + T[H].name + " (" + ORD(pos[H]) + ") vs " + T[A].name + " (" + ORD(pos[A]) + ")");
-        else if (top === 1) { var L1 = pos[A] === 1 ? A : H; add("leader", 48, "League leaders " + T[L1].name + (L1 === H ? " host " : " visit ") + T[oth(L1)].name + " (" + ORD(pos[oth(L1)]) + ")"); }
-        else if (Math.abs(pos[A] - pos[H]) >= 12) { var hi2 = pos[A] < pos[H] ? A : H; add("gap", 30, T[hi2].name + " (" + ORD(pos[hi2]) + ") against " + T[oth(hi2)].name + " (" + ORD(pos[oth(hi2)]) + ")"); } } }
+    if (sport === "soccer" && ent.length >= 10) { var PT = [], GPn = 0; ent.forEach(function (e, n) { var id = String(e.id || ""), sv = {}; (e.stats || []).forEach(function (x) { sv[x.abbreviation] = x.displayValue; });
+        PT[n] = parseInt(sv.P, 10); GPn = Math.max(GPn, parseInt(sv.GP, 10) || 0); if (T[id]) pos[id] = n + 1; });
+      // 3.121.11 (DJ: "These one-liners don't provide a ton of value for soccer"): the card shows each team's place now, so the line
+      // says what the place means in points (ESPN's own table): the lead at the top, the gap to the leaders, the gap to the drop zone,
+      // or how close two sides are. Never just the two places again
+      var N = ent.length, ptsOf = function (i) { return PT[pos[i] - 1]; }, pw = function (n) { return n === 1 ? "a point" : NW[n] && n <= 6 ? NW[n] + " points" : n + " points"; };
+      var DZ = { epl: 3, laliga: 3, seriea: 3, bundesliga: 2, ligue1: 2 }[lg] || 0, drop = DZ && N >= 18 ? N - DZ + 1 : 0;   // the first place in the drop zone (direct relegation; no relegation in MLS or Europe)
+      if (pos[A] && pos[H] && GPn >= 5 && PT.every(function (x) { return !isNaN(x); })) {
+        ids.forEach(function (i) { var p0 = pos[i], me = ptsOf(i);
+          if (p0 === 1) { var g1 = me - PT[1]; if (g1 > 0) add("top|" + i, 50 + Math.min(g1, 6), T[i].name + " are " + pw(g1) + " clear at the top"); else add("top|" + i, 50, T[i].name + " lead the table on goal difference"); }
+          else if (p0 <= 3) { var gb = PT[0] - me; if (gb <= 6) add("chase|" + i, 46 - gb, T[i].name + " are " + (gb ? pw(gb) + " behind" : "level on points with") + " the leaders"); }
+          if (drop && p0 >= drop) { var safe = PT[drop - 2] - me; add("drop|" + i, 48, T[i].name + (safe > 0 ? " are " + pw(safe) + " from safety" : " are in the drop zone on goal difference")); }
+          else if (drop && p0 >= drop - 3) { var ab = me - PT[drop - 1]; if (ab >= 0 && ab <= 3) add("drop|" + i, 44, T[i].name + (ab ? " are only " + pw(ab) + " above the drop zone" : " are level on points with the drop zone")); } });
+        var dp = Math.abs(ptsOf(A) - ptsOf(H)); if (Math.abs(pos[A] - pos[H]) <= 4 && dp <= 2) add("close", 40, dp ? "Only " + pw(dp) + " between them in the table" : "Level on points in the table");
+        else if (Math.abs(pos[A] - pos[H]) <= 4 && dp <= 3) add("close", 34, "A win would lift " + T[ptsOf(A) < ptsOf(H) ? A : H].name + " level on points with " + T[ptsOf(A) < ptsOf(H) ? H : A].name); } }
     // 3.100.9: "still unbeaten" / "looking for a first win" are on the card's record already, so these two stay off
     if (false) ids.forEach(function (i) { var r = String(T[i].rec.total || "").split("-"); if (r.length === 3 && +r[2] === 0 && (+r[0] + +r[1]) >= 6) add("unbs|" + i, 50, T[i].name + " are still unbeaten this season"); if (r.length === 3 && +r[0] === 0 && (+r[1] + +r[2]) >= 6) add("winless|" + i, 46, T[i].name + " are still looking for a first win"); });
     // records: perfect or awful at home and on the road, unbeaten seasons
@@ -289,15 +336,15 @@ export function slateKit(opts) {
     // head to head
     var ss = (sum.seasonseries || [])[0];
     if (ss) { var sm = /^(\w+) leads? (?:series|season) (\d+)-(\d+)/i.exec(String(ss.summary || "")), who = sm && byAbbr[sm[1]];
-      if (sm && who && ss.type === "head-to-head" && +sm[3] === 0 && +sm[2] >= 3) add("h2h", 50, T[who].name + " have won the last " + NW[+sm[2]] + " meetings");
-      else if (sm && who && ss.type === "head-to-head" && +sm[2] >= 3) add("h2h", 34, T[who].name + " have won " + NW[+sm[2]] + " of the last " + NW[+sm[2] + +sm[3]] + " meetings");
+      if (sm && who && ss.type === "head-to-head" && +sm[3] === 0 && +sm[2] >= 3) add("h2h", sport === "soccer" ? 30 : 50, T[who].name + " have won the last " + NW[+sm[2]] + " meetings");
+      else if (sm && who && ss.type === "head-to-head" && +sm[2] >= 3) add("h2h", sport === "soccer" ? 18 : 34, T[who].name + " have won " + NW[+sm[2]] + " of the last " + NW[+sm[2] + +sm[3]] + " meetings");
       else if (sm && who && ss.type !== "head-to-head" && +sm[2] >= 2) add("ser", 30, T[who].name + " lead the season series " + sm[2] + "-" + sm[3]); }
     // quieter form: four wins from the last five without a current streak. 3.113.2 (DJ: accuracy review): never "five of its last five"
     // (High Point at 6-0: the streak line is left out on an unbeaten record, and this one stepped in with it)
-    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && w < f.length && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five"); });
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w >= 4 && w < f.length && !T[i].hot) add("form5|" + i, 28 + w, T[i].name + " have won " + NW[w] + " of their last five" + odd(i, "W")); });
     // 3.91.2 (DJ: "Pistons (8-4) at Pelicans (5-10)" is not informative): quieter facts that only win when nothing above stands out
     // a slump: one or no wins in the last five, without a current four-game skid
-    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && w > 0 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five"); });
+    ids.forEach(function (i) { var f = form[i] || [], w = f.filter(function (x) { return x === "W"; }).length; if (f.length >= 5 && w <= 1 && w > 0 && f.indexOf("D") < 0 && !T[i].cold) add("slump|" + i, 31, T[i].name + " have lost " + NW[5 - w] + " of their last five" + odd(i, "L")); });
     // the division race (pro leagues; ESPN's summary carries each team's division): first place by how much, or last place
     if (/^(nba|wnba|nhl|nfl|mlb)$/.test(lg)) (((sum.standings || {}).groups) || []).forEach(function (gr) {
       var es = ((gr.standings || {}).entries || []), dv = String(gr.header || "").replace(/^\d{4}(-\d{2,4})?\s+/, "").replace(/\s+Standings$/i, "").trim();
@@ -322,21 +369,36 @@ export function slateKit(opts) {
     if (sport === "bball") { var bt = (parseFloat(String(T[A].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[A].rec.total).split("-")[1]) || 0) >= (parseFloat(String(T[H].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[H].rec.total).split("-")[1]) || 0) ? A : H;
       (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
         var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseFloat(x && x.displayValue); if (a.displayName && v >= 15) add("scorer|" + bt, 20, (a.lastName || a.displayName) + " averages " + v + " points for " + T[bt].name); }); }); }
+    // 3.144.1: each team's season leader, so every team can carry a real fact of its own (the card has one row per team)
+    (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; var cats = {};
+      (L.leaders || []).forEach(function (cat) { var x = (cat.leaders || [])[0]; if (x && x.athlete && x.athlete.displayName) cats[cat.name || ""] = { n: x.athlete.displayName, v: String(x.displayValue || "") }; });
+      var num = function (v, rx) { var m0 = rx.exec(v); return m0 ? parseFloat(m0[1].replace(/,/g, "")) : NaN; };
+      if (sport === "football") { var ps = cats.passingYards, ru = cats.rushingYards, re = cats.receivingYards, pick = null;
+        if (ru && num(ru.v, /([\d,]+) YDS/) >= 900) pick = ru.n + " has " + num(ru.v, /([\d,]+) YDS/).toLocaleString("en-US") + " rushing yds" + (num(ru.v, /(\d+) TD/) ? " and " + num(ru.v, /(\d+) TD/) + " TD" : "");
+        else if (re && num(re.v, /([\d,]+) YDS/) >= 900) pick = re.n + " has " + num(re.v, /([\d,]+) YDS/).toLocaleString("en-US") + " receiving yds" + (num(re.v, /(\d+) TD/) ? " and " + num(re.v, /(\d+) TD/) + " TD" : "");
+        else if (ps && num(ps.v, /(\d+) TD/) >= 8) pick = ps.n + " has " + num(ps.v, /(\d+) TD/) + " TD passes and " + (num(ps.v, /(\d+) INT/) || 0) + " INT";
+        if (pick) add("lead|" + i, 22, pick + " for " + T[i].abbr); }
+      if (sport === "bball" && !c.some(function (x) { return x.k === "scorer|" + i; })) { var pt = cats.points || cats.pointsPerGame; var pv0 = pt ? parseFloat(pt.v) : NaN;
+        if (pt && pv0 >= 12) add("scorer|" + i, 20, pt.n + " averages " + pv0 + " points for " + T[i].abbr); }
+      if ((sport === "hockey" || sport === "soccer") && !c.some(function (x) { return x.k === "goals|" + i; })) { var gq = cats.goals || cats.goalsLeaders; var gv = gq ? (/Goals:\s*(\d+)/i.test(gq.v) ? +/Goals:\s*(\d+)/i.exec(gq.v)[1] : parseInt(gq.v, 10)) : NaN;
+        if (gq && gv >= 3) add("goals|" + i, 18, gq.n + " has " + gv + " goals for " + T[i].abbr); }
+    });
     // Nov 20, 2026 (DJ: "We need some one-liner text to show for every slate game"): last real facts before the plain records line
     // the top scorer in goals (hockey, soccer), from ESPN's team leaders
-    if (sport === "hockey" || sport === "soccer") { var gl0 = null; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; (L.leaders || []).forEach(function (cat) { if (!/^goals$/i.test(cat.name || "")) return;
-        var x = (cat.leaders || [])[0], a = x && x.athlete || {}, v = parseInt(x && x.displayValue, 10); if (a.displayName && v >= 3 && (!gl0 || v > gl0.v)) gl0 = { i: i, n: a.displayName, v: v }; }); });
-      if (gl0) add("goals|" + gl0.i, 19, gl0.n + " leads " + (sing ? "" : "the ") + T[gl0.i].name + " with " + gl0.v + " goals"); }
+    if (sport === "hockey" || sport === "soccer") { var gl0 = null; (sum.leaders || []).forEach(function (L) { var i = String((L.team || {}).id || ""); if (!T[i]) return; (L.leaders || []).forEach(function (cat) { if (!/^goals(Leaders)?$/i.test(cat.name || "")) return;
+        // soccer's value reads "Matches: 10, Goals: 9" (3.121.11: the line never showed for soccer before)
+        var x = (cat.leaders || [])[0], a = x && x.athlete || {}, dv = String(x && x.displayValue || ""), v = /Goals:\s*(\d+)/i.test(dv) ? +/Goals:\s*(\d+)/i.exec(dv)[1] : parseInt(dv, 10); if (a.displayName && v >= 3 && (!gl0 || v > gl0.v)) gl0 = { i: i, n: a.displayName, v: v }; }); });
+      if (gl0 && !c.some(function (x) { return x.k === "goals|" + gl0.i; })) add("goals|" + gl0.i, sport === "soccer" && gl0.v >= 5 ? 36 + Math.min(gl0.v, 12) / 2 : 19, gl0.n + " leads " + (sing ? "" : "the ") + T[gl0.i].name + " with " + gl0.v + " goals"); }
     // the soccer table, both places
-    if (sport === "soccer" && pos[A] && pos[H] && Math.abs(pos[A] - pos[H]) < 12) add("table", 15, T[H].name + " (" + ORD(pos[H]) + ") host " + T[A].name + " (" + ORD(pos[A]) + ")");
+    // (no "Bournemouth (7th) host Forest (16th)": the card shows each team's place, 3.121.11)
     // a home or road record the lines above didn't use, whatever it is (the card shows only the overall record)
     ids.forEach(function (i) { var r0 = String(T[i].rec[i === H ? "home" : "road"] || ""), w = r0.split("-").map(Number);
       if (sport !== "soccer" && w.length >= 2 && !w.some(isNaN) && w[0] + w[1] >= 3 && !pvAllHome(T[i], w[0], w[1]) && !c.some(function (x) { return x.k === "perf|" + i || x.k === "bad|" + i || x.k === "good|" + i; }))
         add("split|" + i, 12 + Math.abs(w[0] / (w[0] + w[1]) - 0.5) * 6, T[i].name + " are " + r0 + " " + (i === H ? "at home" : "on the road")); });
     // ESPN's preview headline: a solid fallback
-    var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 90 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 33, hd);
+    var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 120 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 44, hd);   // 3.144.1: ESPN's preview headline is the storyline (rivalry, holiday, what's at stake)
     // a playoff game (3.92.0): the regular-season table, division race and season series no longer decide anything
-    if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser)(\||$)/.test(x.k); });
+    if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser|top|chase|drop|close)(\||$)/.test(x.k); });
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
       var rc = function (x) { return T[x].rec.total ? " (" + T[x].rec.total + ")" : ""; };
       pvCompute.fb = true;
@@ -350,25 +412,19 @@ export function slateKit(opts) {
     var idIn = function (k) { return String(k || "").split("|").filter(function (x) { return T[x]; })[0] || ""; };
     pvCompute.tm = idIn(c[0].k) ? T[idIn(c[0].k)].abbr : "";
     pvCompute.sc = c[0].sc; pvCompute.f = c[0].k === "art" ? "" : c[0].tx;   // for pvBlend (105-pv-notes.js): how strong the line is, and its best fact alone
-    // the second fact must add something: after "Both on a roll" or a hot-vs-cold line, the streaks are already said
-    var STREAK = /^(form|bothhot|won|lost|unb|form5)$/, streaky = STREAK.test(c[0].k.split("|")[0]);
-    var qbFirst = c[0].k.indexOf("qb1|") === 0;  // "Raiders QB Mendoza makes his first start" doesn't read on into "and are without…": the second fact is the other team's
-    var t = c[0].tx, s2 = c.filter(function (x) { var k0 = x.k.split("|")[0]; return x.k !== "art" && k0 !== c[0].k.split("|")[0] && x.k.indexOf("form") < 0 && !(streaky && STREAK.test(k0)) && !(qbFirst && idIn(x.k) === idIn(c[0].k)) && !(/^(big|tight)$/.test(c[0].k) && /^(pred|coin)$/.test(x.k)) && !(/^(pred|coin)$/.test(c[0].k) && /^(big|tight)$/.test(x.k)); })[0];
-    if (c[0].k !== "art" && s2 && t.length + s2.tx.length <= 100 && s2.sc >= 30) {  // two facts when they fit in about a line and a half
-      // same team twice reads as one sentence: "Canucks have lost five straight and are 1-8 at home"
-      // 3.111.x: never join onto a line that already names both teams ("Heat have won five straight; Bucks have lost five" + "Heat are
-      // 12.5-point favorites" read as the Bucks being favorites)
-      var who0 = qbFirst || s2.k.indexOf("qb1|") === 0 || t.indexOf("; ") >= 0 || /^Both /.test(t) ? null : ids.filter(function (i) { return t.indexOf(T[i].name + " ") === 0 && s2.tx.indexOf(T[i].name + " ") === 0; })[0];
-      var rest = who0 ? s2.tx.slice(T[who0].name.length + 1) : "";
-      // 3.88.3: no repeated verb. "USA has won five in a row and has won the last four meetings" -> "...and the last four meetings";
-      // "are without X and are 5-0 at home" -> "...and 5-0 at home"
-      if (who0) { var p1 = t.slice(T[who0].name.length + 1).split(" "), p2 = rest.split(" ");
-        if (p1[0] === p2[0] && /^(have|has)$/.test(p1[0]) && p1[1] === p2[1]) rest = p2.slice(2).join(" ");
-        else if (p1[0] === p2[0] && /^(are|is|have|has)$/.test(p1[0]) && !/^(still|only|looking)$/.test(p2[1] || "")) rest = p2.slice(1).join(" ");
-        else if (!/^(are|have|is|has|leads?) /.test(rest)) rest = ""; }
-      t = who0 && rest ? t + " and " + rest : who0 ? t : t + "; " + s2.tx;
-      if (!who0 && idIn(s2.k) !== idIn(c[0].k)) pvCompute.tm = "";  // two teams' facts: no single team
-    }
+    // 3.144.1 (DJ: "I expect more with the one liners for my slate tomorrow"): the card shows one "ABBR: fact" row per team, so the
+    // line gives each team its own facts: a storyline or matchup fact first (ESPN's preview headline, both streaks, a coin flip, the
+    // spread or the over/under moving), then each team's best fact, plus its second best when it's strong and short
+    var STREAK = /^(form|bothhot|won|lost|unb|form5|slump)$/, k0 = function (x) { return x.k.split("|")[0]; };
+    var mu = c.filter(function (x) { return !idIn(x.k) && x.sc >= 28; })[0], streaky = mu && /^(form|bothhot)$/.test(mu.k);
+    var used = mu ? [mu] : [], order = sport === "soccer" ? [H, A] : [A, H], parts = mu ? [mu.k === "close" ? mu.tx : mu.tx] : [];
+    order.forEach(function (i) {
+      var mine = c.filter(function (x) { return idIn(x.k) === i && x.k !== "art" && used.indexOf(x) < 0 && !(streaky && STREAK.test(k0(x))) && !(mu && /^(tight|big)$/.test(mu.k) && /^(pred|coin)$/.test(k0(x))); });
+      var f1 = mine[0]; if (!f1) return; used.push(f1); parts.push(f1.tx);
+      var f2 = mine.filter(function (x) { return k0(x) !== k0(f1) && !(STREAK.test(k0(x)) && STREAK.test(k0(f1))) && !(/^(qb1)$/.test(k0(f1))); })[0];
+      if (f2 && f2.sc >= 28 && f1.tx.length + f2.tx.length <= 110) { used.push(f2); parts.push(f2.tx); } });
+    var t = parts.length ? parts.join("; ") : c[0].tx;
+    if (parts.length > 1) pvCompute.tm = "";
     return t;
   }
   function pvBlandHead(t, names) {
@@ -378,8 +434,10 @@ export function slateKit(opts) {
     names = (names || []).filter(function (x) { return x && String(x).length >= 2; }).sort(function (a, b) { return b.length - a.length; });
     if (!names.length) return false;
     var N = "(?:" + names.map(esc).join("|") + ")";
-    if (!new RegExp("^(the )?" + N + "('s?)? (take on|takes on|face|faces|host|hosts|visit|visits|meet|meets|battle|battles|play|plays|welcome|welcomes|square off|clash|vs\\.?|at|and)\\b", "i").test(t)) return false;
+    if (!new RegExp("^(the )?" + N + "('s?)? (take on|takes on|face|faces|host|hosts|visit|visits|meet|meets|battle|battles|play|plays|welcome|welcomes|square off|squares off|face off|faces off|tip off|tips off|clash|vs\\.?|at|and)\\b", "i").test(t)) return false;
     var rest = t.replace(new RegExp("(^|[^\\w])" + N + "('s?)?(?![\\w])", "g"), " ");
+    // 3.144.1: where they play ("…meet in Cypress Lake, Florida") and a school's state tag ("Saint Mary's (CA)") aren't news either
+    rest = rest.replace(/\([^)]{1,12}\)/g, " ").replace(/\s+(in|at)\s+[A-Z][\w'.-]*(\s+[A-Z][\w'.-]*)*(,\s+[A-Z][\w.]*(\s+[A-Z][\w.]*)*)?\s*$/, "");
     return !/(^|[\s,;:-])(?!(The|A|An|In|On|At|As|And|To|For|With|After|Before|Look|Looks|Seek|Seeks|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Game|Week)\b)[A-Z][a-z]/.test(rest.slice(1));
   }
   function pvAllHome(t, W, L) { var r = String((t.rec || {}).total || "").split("-").map(Number); return r.length >= 2 && r[0] === W && r.slice(1).reduce(function (a, b) { return a + (b || 0); }, 0) === L; }
@@ -472,6 +530,15 @@ export function slateKit(opts) {
     return f;
   }
   function clGame(g) { var o = {}; ["league", "away", "home", "awayShort", "homeShort", "awayAbbr", "homeAbbr", "awayRank", "homeRank", "awayRecord", "homeRecord", "awayStanding", "homeStanding", "awayConf", "homeConf", "tv", "start", "note", "neutral", "comp", "stage", "post"].forEach(function (k) { if (g[k] != null && g[k] !== "") o[k] = g[k]; }); o.leagueName = info(g).name; if (g.start) o.day = clDay(g.start, true) + " (US Eastern date)"; return o; }
+  // ---- from src/app/165-events.js
+  var EV_RULES = {
+    golf: [["majors", "Majors and big events", "The Masters, the PGA Championship, the U.S. Open, the Open, the Players, the Tour Championship, and the Ryder and Presidents Cups."],
+           ["pga", "Every PGA Tour event", "Every PGA Tour tournament, all four rounds."]],
+    wgolf: [["majors", "Majors and big events", "The Chevron, the U.S. Women's Open, the Women's PGA, the Evian, the Women's Open, the CME Group Tour Championship and the Solheim Cup."],
+            ["lpga", "Every LPGA event", "Every LPGA tournament, all four rounds."]],
+    f1: [["race", "Race days", "The day of each Grand Prix."],
+         ["qual", "Qualifying and sprint days", "The days with qualifying or a sprint race."]]
+  };
   state.rules = normRules(state.rules || RULE_DEFAULTS);
   return { ruleHits: ruleHits, pvCompute: pvCompute, pvQB: pvQB, trimEspn: trimEspn, clGame: clGame, short: short, sideOrder: sideOrder, sep: sep, SPORT: SPORT, SPORT_PATH: SPORT_PATH, hourCT: hourCT, rkFetch: rkFetch, bxSummaryUrl: bxSummaryUrl, info: info, abbr: abbr, BX_SPORT: BX_SPORT, LEAGUES: LEAGUES };
 }

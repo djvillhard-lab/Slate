@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.174.2 (Nov 26, 2026)
+TestFlight: 3.174.1, no new build (web only)
+- Morning email: it stopped going out after Nov 19. Anyone with golf or F1 turned on in Slate rules (Drew and Dad) got nothing, because the email's copy of the slate code was missing a piece added that day. It's fixed and their emails start again tomorrow morning. A check now stops this kind of gap before it ships.
+- Settings > Morning email, Family list: if someone's email fails to send, their row now says so, with the reason and the day it last went out.
+
 ## 3.174.1 (Nov 27, 2026)
 TestFlight: 3.174.1, new build
 - Dynamic Island on the iPhone Duo's side screen: the score is bigger, half again its old size, for one game and for the live scoreboard.

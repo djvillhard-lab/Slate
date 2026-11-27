@@ -546,7 +546,7 @@ export async function morningApi(env, me, p) {
     const docs = await getDocs(env, ["users/registry", DOC]), reg = (docs["users/registry"] || {}).users || {}, ppl = ((docs[DOC] || {}).people) || {};
     const list = Object.values(reg).filter((u) => u && u.id && u.id !== "dj" && u.id !== "tester").sort((a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id)));
     const out = [];
-    for (const u of list) { const x = ppl[u.id] || {}; out.push({ id: u.id, name: u.name || u.id, on: !!x.on, time: x.time || "06:00", email: (await pendingEmail(env, x)) || await unseal(env, x.email), pending: !!(await pendingEmail(env, x)), tz: x.tz || "" }); }
+    for (const u of list) { const x = ppl[u.id] || {}; out.push({ id: u.id, name: u.name || u.id, on: !!x.on, time: x.time || "06:00", email: (await pendingEmail(env, x)) || await unseal(env, x.email), pending: !!(await pendingEmail(env, x)), tz: x.tz || "", err: x.err || "", sentAt: x.sentAt || "" }); }
     return { ok: true, people: out };
   }
   // DJ can set it up for someone else in the family ({for: "<their id>"}); they see it and change it in their own Settings

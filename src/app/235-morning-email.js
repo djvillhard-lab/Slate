@@ -57,7 +57,7 @@
     list.forEach(function (u) {
       var save = function (patch, msg) {
         patch.action = "save"; patch.for = u.id; if (!u.tz) patch.tz = "America/Chicago";
-        meCall(patch).then(function (j) { var q = j.prefs || {}; u.on = q.on; u.email = q.email; u.pending = q.pending; u.time = q.time; u.tz = q.tz; draw(); if (patch.email && q.pending) toast(u.name + " needs to confirm: Slate sent them an email"); else if (msg) toast(msg); }, function (e) { draw(); toast(e.message); });
+        meCall(patch).then(function (j) { var q = j.prefs || {}; u.on = q.on; u.email = q.email; u.pending = q.pending; u.time = q.time; u.tz = q.tz; u.err = q.err; u.sentAt = q.sentAt; draw(); if (patch.email && q.pending) toast(u.name + " needs to confirm: Slate sent them an email"); else if (msg) toast(msg); }, function (e) { draw(); toast(e.message); });
       };
       var row = el("div", "optrow"), tx = el("div"), nm = el("b", null, u.name), st = el("span"); tx.appendChild(nm); tx.appendChild(st); row.appendChild(tx);
       var sw = el("button", "switch"); sw.type = "button"; sw.setAttribute("role", "switch"); sw.setAttribute("aria-label", "Morning email for " + u.name); sw.appendChild(el("span", "knob")); row.appendChild(sw);
@@ -71,7 +71,9 @@
         sw.setAttribute("aria-checked", u.on ? "true" : "false");
         if (document.activeElement !== inp) inp.value = u.email || "";
         sel.value = u.time || "06:00";
-        st.textContent = u.pending ? "Waiting for " + u.name + " to confirm " + u.email : u.on ? "On: every day at " + meClock(u.time || "06:00") + (u.tz ? ", " + meTzName(u.tz) : "") : "Off";
+        // 3.174.2: a send that keeps failing shows here, so DJ sees it the same day (Nov 19-26, 2026 went unnoticed)
+        var last = u.sentAt ? ". Last sent " + new Date(u.sentAt).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) : "";
+        st.textContent = u.pending ? "Waiting for " + u.name + " to confirm " + u.email : u.on && u.err ? "On, but the last one didn't send: " + u.err + last : u.on ? "On: every day at " + meClock(u.time || "06:00") + (u.tz ? ", " + meTzName(u.tz) : "") : "Off";
       }
       sw.addEventListener("click", function () {
         var on = sw.getAttribute("aria-checked") !== "true", em = inp.value.trim();

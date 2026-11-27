@@ -18,12 +18,13 @@ TAKE = {
                             "eventOn", "SOCCER", "LG_OPTS", "CHOICES", "BIG_CLUBS", "ENGLISH", "BIG_NATIONS", "inList", "isUSA", "isKnockout",
                             "isCompetitive", "TOP_N", "NAT_EXTRA", "BIG_SIX", "NFL_DIV", "normLg", "normRules", "natFor", "winRec", "standNo",
                             "bigSix", "topLabel", "MATCH", "lgRules", "ruleHits"],
-    "040-live.js": ["ESPN_URLS", "abbr", "short", "sideOrder", "sep"],
+    "040-live.js": ["homeFirst", "ESPN_URLS", "abbr", "short", "sideOrder", "sep"],
     "060-cards.js": ["SPORT", "SPORT_PATH"],
     "090-box-data.js": ["BX_SPORT"],
     "110-box-score.js": ["bxBase", "bxSummaryUrl", "bxApi"],
     "100-highlights.js": ["pvCompute", "pvBlandHead", "pvAllHome", "QBD", "depthOf", "pvQB"],
     "080-claude.js": ["l5Season", "recapStandouts", "clDay", "trimEspn", "clGame"],
+    "165-events.js": ["EV_RULES"],  # normRules reads it for golf and F1 Slate rules (3.119.1); without it the email failed for anyone with those rules
 }
 
 def grab(lines, name, fn):
@@ -73,11 +74,44 @@ TAIL = '''
 }
 '''
 
+# runs the kit the way worker/morning-email.js does, with Slate rules that use every option (golf, F1, soccer, college),
+# on a game from each league: a name the copied code uses but the kit doesn't have shows up here as a ReferenceError
+SMOKE = r'''
+import { slateKit } from "%s";
+const rules = { sports: { golf: { majors: true, pga: true }, wgolf: { lpga: true }, f1: { race: true, qual: true } } };
+for (const r of [null, rules]) {
+  const k = slateKit({ rules: r, mine: { g0: 1 } });
+  Object.keys(k.LEAGUES).forEach((lg, i) => {
+    const g = { id: "g" + i, league: lg, start: new Date().toISOString(), away: "Away Team", home: "Home Team", awayShort: "Away", homeShort: "Home",
+      awayAbbr: "AWY", homeAbbr: "HOM", awayRank: 5, homeRank: 12, tv: ["ESPN"], name: "Away Team at Home Team" };
+    k.ruleHits(g); k.sideOrder(g); k.sep(g); k.short(g, "home"); k.info(g); k.abbr(g, "away");
+  });
+}
+console.log("ok");
+'''
+def smoke(js):
+    import subprocess, tempfile
+    d = tempfile.mkdtemp(prefix="slate-kit-")
+    kit, test = os.path.join(d, "kit.mjs"), os.path.join(d, "test.mjs")
+    open(kit, "w", encoding="utf-8").write(js)
+    open(test, "w", encoding="utf-8").write(SMOKE % kit.replace("\\", "/"))
+    try: r = subprocess.run(["node", test], capture_output=True, text=True, timeout=60)
+    except FileNotFoundError: return ""  # no Node here: skip the check
+    if r.returncode == 0 and "ok" in r.stdout: return ""
+    err = [l for l in r.stderr.split("\n") if "Error" in l]
+    return (err[0] if err else "") + "\n" + r.stderr.strip()[:600]
+
 if __name__ == "__main__":
     js = build()
     if "--check" in sys.argv:
         cur = open(OUT, encoding="utf-8").read() if os.path.exists(OUT) else ""
         if cur != js: sys.exit("worker/slate-kit.js is out of date: run python3 scripts/email_kit.py")
         print("worker/slate-kit.js is current"); sys.exit(0)
+    bad = smoke(js)
+    if bad:  # never write a kit that throws: the morning email would quietly stop for everyone it reaches (Nov 19-26, 2026)
+        sys.exit("email_kit.py: the new worker/slate-kit.js fails, so the old one was kept. Add what it's missing to TAKE:\n" + bad)
+    if open(OUT, encoding="utf-8").read() == js if os.path.exists(OUT) else False:
+        if "--quiet" not in sys.argv: print("worker/slate-kit.js is current")
+        sys.exit(0)
     open(OUT, "w", encoding="utf-8").write(js)
     print("wrote worker/slate-kit.js (%d KB)" % (len(js) // 1024))
