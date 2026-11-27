@@ -75,6 +75,11 @@ If build.py says index.html was edited by hand, it prints those edits. Move them
 
 The app's code goes into index.html with comments and spare spaces stripped (`scripts/rjsmin.py`; nothing is renamed). To read a page error or a `shots.py --profile` by line number, build with `python3 build.py --plain`, look, then run `python3 build.py` again before committing. Never commit a `--plain` build.
 
+**The page's script rule (CSP, Web 3.181.1).** The browser runs only Slate's own code and lets the page fetch only from Slate, ESPN and Supabase. Three things follow:
+- Never write `onclick="..."`, `onerror="..."` or any other `on...=` attribute, or a `javascript:` link, into HTML (in `body.html` or in a string the code builds). The browser ignores them now. Use `addEventListener` or `el.onclick = function`.
+- A new `<script>` block in `src/shell.html` needs nothing: build.py lists every block's fingerprint in the page. A script file from another site is refused; copy it into the repo instead.
+- Fetching from a new outside address? Add it to `connect-src` in `_headers`, or the request fails silently in the app. `scripts/shots.py` sends the page with those headers and prints `blocked by the script rule: ...` when the rule stops something, so check its output.
+
 ## Commit messages (DJ and Drew read the feed)
 DJ and his brother Drew each run their own Claude on this repo and follow each other's work in the commit feed on GitHub (`/commits/main`). Every commit that lands on main, including a squash or merge commit, must read well there:
 - **Author = the person who asked.** Commit with `--author="<Name> <<github-id>+<login>@users.noreply.github.com>"`, for the person you work for (see **People** below). GitHub then shows that person's account on the commit, with Claude as co-author. Only ever use this GitHub noreply address, never a real email, and never a token.

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.181.1 (Nov 27, 2026)
+TestFlight: 3.178.6 (62), no new build (web only)
+- Code review, security: Slate's page now carries a script rule. The browser runs only Slate's own code (each block is listed in the page by its fingerprint, which the build writes), and the page may only fetch data from Slate, ESPN and Slate's database. If a headline, a name or a link from an outside feed ever tried to smuggle code into the page, the browser would refuse to run it. Nothing looks or works differently.
+- For the chats: scripts/shots.py now sends the page with the site's headers and prints anything the rule blocks, the same way it prints page errors.
 ## 3.181.0 (Nov 27, 2026)
 TestFlight: 3.178.6 (62), no new build (web only)
 - One button kit, the second of three releases from the simplicity review. Every capsule button is now the same height (32 points, with the same 44-point tap area). Before, the same button came in six heights: Feed on a game card, Add bet, Add to slate, the sport chips on Teams and the TV picker on On TV were all different.

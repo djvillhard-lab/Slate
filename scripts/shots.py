@@ -41,6 +41,20 @@ Needs Playwright: pip install playwright --break-system-packages && python3 -m p
 import json, os, re, sys, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def site_headers():  # the headers the live site sends with every file (_headers, the lines under "/*")
+    out = {}
+    try:
+        on = False
+        for line in open(os.path.join(ROOT, "_headers"), encoding="utf-8"):
+            if line.strip() and not line[0].isspace(): on = line.strip() == "/*"
+            elif on and ":" in line: k, v = line.strip().split(":", 1); out[k.strip()] = v.strip()
+    except OSError: pass
+    return out
+
+
+SITE_HEADERS = site_headers()
 SITE = "https://slate.djvillhard.workers.dev/"
 SIZES = {
     "folded": {"w": 466, "h": 678, "device": "duo", "strip": True, "inset": 84},
@@ -168,11 +182,14 @@ def main():
             page = ctx.new_page()
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
+            # the page goes out with the site's own headers (_headers), so anything its script rule (CSP) blocks shows up here
+            page.on("console", lambda m: errors.append("blocked by the script rule: " + m.text[9:]) if m.text.startswith("SLATECSP ") and ("blocked by the script rule: " + m.text[9:]) not in errors else None)
+            page.add_init_script("document.addEventListener('securitypolicyviolation',function(e){console.log('SLATECSP '+e.effectiveDirective+' '+(e.blockedURI||'inline')+(e.sample?' ['+e.sample+']':''))});")
             if safari: page.add_init_script("try{localStorage.setItem('slate-app-link','https://testflight.apple.com/join/SHOTS123')}catch(e){}")
             else: page.add_init_script("window.SLATE_NATIVE={platform:'ios',app:'3.0',strip:%s,webNav:%s};try{var k='lineup.look',v=JSON.parse(localStorage.getItem(k)||'{}');v.device='%s';localStorage.setItem(k,JSON.stringify(v));}catch(e){}" % ("true" if S["strip"] else "false", "false" if oldapp else "true", S["device"]))
             if font: page.add_init_script("try{localStorage.setItem('slate-font','%s')}catch(e){}" % font)
             if simple: page.add_init_script("try{localStorage.setItem('slate-simple',JSON.stringify({on:true,size:'%s'}));}catch(e){}" % simple)
-            page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/(\?.*)?(#.*)?$"), lambda r: r.fulfill(path=index, content_type="text/html"))
+            page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/(\?.*)?(#.*)?$"), lambda r: r.fulfill(path=index, content_type="text/html", headers=SITE_HEADERS))
             page.route(re.compile(r"^https://slate\.djvillhard\.workers\.dev/fonts/[\w-]+\.woff2$"), lambda r: r.fulfill(path=os.path.join(ROOT, "fonts", r.request.url.rsplit("/", 1)[-1]), content_type="font/woff2"))  # 3.157.0 font choices, from this copy
             page.route(re.compile(r".*/version\.json.*"), lambda r: r.fulfill(path=ver, content_type="application/json"))
             page.route(re.compile(r"^https://site\.api\.espn\.com/.*"), espn)

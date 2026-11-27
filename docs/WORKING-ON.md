@@ -6,5 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Code review: script rule for the page (CSP) | _headers, scripts/shots.py (sends the page with its headers, prints rule violations), docs/pages/security.md | 2026-11-27 22:00 |
-| DJ | Code review: one-step saves for the people, phones, invites and Claude count lists | worker/index.js (save helpers, cost log), worker/signup.js, worker/google.js, docs/security/one-step-saves.sql | 2026-11-27 22:35 |
+| DJ | Code review: one-step saves for the people, phones, invites and Claude count lists | worker/index.js (save helpers, cost log, key check), worker/key.js (new), worker/signup.js, worker/google.js, the one line that reads the second key in worker/alerts.js, feedback.js, usage.js, morning-email.js, docs/security/ | 2026-11-27 22:35 |

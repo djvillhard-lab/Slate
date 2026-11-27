@@ -73,6 +73,8 @@ def assemble(build):
             return json.dumps(recent(read(LOG)))
         if key == "BUILD":
             return build
+        if key == "CSP":
+            return CSP_MARK
         paths = sorted(glob.glob(os.path.join(SRC, key))) if "*" in key else [os.path.join(SRC, key)]
         if not paths or not all(os.path.isfile(p) for p in paths):
             sys.exit("build.py: src/%s not found" % key)
@@ -81,7 +83,22 @@ def assemble(build):
             return shrink_css(text)
         return shrink(text) if key == "app/*.js" and not PLAIN else text
 
-    return re.sub(r"\{\{([A-Za-z0-9_./*-]+)\}\}", sub, shell)
+    body = re.sub(r"\{\{([A-Za-z0-9_./*-]+)\}\}", sub, shell)
+    return body.replace(CSP_MARK, script_rule(body), 1)
+
+
+CSP_MARK = "<!--script-rule-->"
+
+
+def script_rule(body):
+    # The page's script rule (CSP), written into the page itself so it can never fall out of step with the code:
+    # only the script blocks build.py put here (listed by fingerprint) and files from Slate's own address may run.
+    # A script that got in any other way (say inside a headline or a name from an outside feed) is refused by the browser.
+    # The rest of the rule (where the page may send and fetch) is in _headers.
+    import base64
+    blocks = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", body, re.S)
+    marks = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(b.encode("utf-8")).digest()).decode() for b in blocks)
+    return '<meta http-equiv="Content-Security-Policy" content="script-src \'self\' %s">' % marks
 
 
 def strip_head(html):
