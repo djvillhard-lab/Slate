@@ -10,11 +10,24 @@ self.addEventListener("activate", function (e) {
 });
 function fresh(req, key) {
   // a plain URL fetch: some browsers refuse to copy a page navigation into a new request
-  // "no-cache" (3.178.3) still asks the server every time, but an unchanged page comes back as a short "same as before"
-  // answer instead of the whole app again (about 850 KB on every open with "no-store")
-  return fetch(req.mode === "navigate" ? req.url : req, { cache: "no-cache", credentials: "same-origin" }).then(function (r) {
+  return fetch(req.mode === "navigate" ? req.url : req, { cache: "no-store", credentials: "same-origin" }).then(function (r) {
     if (r && r.ok) { var copy = r.clone(); caches.open(SHELL).then(function (c) { c.put(key, copy); }); }
     return r;
+  });
+}
+// 3.178.4: the phone's copy of the app is only downloaded again when the server has a different build. Every open used
+// to pull the whole page (about 850 KB) in the background; now it reads version.json (a few bytes) and stops there
+// unless the build changed. The server sends the page without a tag a browser could use to ask "same as before?", so the
+// build stamp does that job. The stamp is read before the page, so the saved stamp is never newer than the saved page.
+var BUILD_KEY = "slate-build";
+function liveBuild() { return fetch("version.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { return (j && j.build) || ""; }, function () { return ""; }); }
+function keptBuild() { return caches.open(SHELL).then(function (c) { return c.match(BUILD_KEY); }).then(function (r) { return r ? r.text() : ""; }).catch(function () { return ""; }); }
+function refresh(req) {
+  return Promise.all([liveBuild(), keptBuild()]).then(function (b) {
+    if (b[0] && b[0] === b[1]) return null;
+    return fresh(req, "./").then(function (r) {
+      if (r && r.ok && b[0]) return caches.open(SHELL).then(function (c) { return c.put(BUILD_KEY, new Response(b[0])); });
+    });
   });
 }
 self.addEventListener("fetch", function (e) {
@@ -35,10 +48,9 @@ self.addEventListener("fetch", function (e) {
       e.respondWith(fresh(req, "./").catch(function () { return caches.match("./"); }));
       return;
     }
-    e.respondWith(caches.match("./").then(function (hit) {
-      var net = fresh(req, "./").catch(function () { return hit; });
-      return hit || net;
-    }));
+    var kept = caches.match("./");
+    e.respondWith(kept.then(function (hit) { return hit || fresh(req, "./"); }));
+    e.waitUntil(kept.then(function (hit) { return hit ? refresh(req) : null; }).catch(function () {}));
     return;
   }
   if (/(supabase\.js|icon\.png|\/fonts\/[\w-]+\.woff2)$/.test(url.pathname)) {
