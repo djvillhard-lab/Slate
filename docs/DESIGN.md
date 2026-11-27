@@ -48,6 +48,13 @@ notes `docs/pages/glass.md`). All of it lives in `src/styles/100-glass.css`.
   panels (3.127.0).
 - Reduce Transparency and Increase Contrast get solid fills (the media query at the end of the file).
 
+## Buttons: one kit (3.181.0)
+DJ asked for fewer button formats (Nov 27, 2026 simplicity review). All of it lives in `src/styles/112-button-kit.css`, loaded last; notes `docs/pages/buttons.md`. A new button uses one of these three, never a new look:
+- **Capsule**: 32 points tall, 13px text, glass fill and edge (`--lg-fill`, `--lg-edge`, `--lg-hi`), ink text, a 44-point tap area through an invisible `::after`. Toolbar pills (`.lo-btn`), card buttons (`.g-feed`, `.gv-act`, `.myb-chip`), chips (`.csp-c`), On TV's picker and row buttons.
+- **The one main action**: the 16px block (`.full-mu`, `.feed-go`, `.cl-go`). One per screen; if a second shares the screen it takes the plain glass fill.
+- **Accent words**: only "show more" links and the second-row filters (`.substrip`).
+- Picked is lit glass (`--lg-lit`) in a row of tabs or chips, the accent for a chosen option, red only for live. No accent outlines on controls.
+
 ## Type
 - One family: Archivo (`--font`), unless the person picks another in Settings > Font (3.157.0, `233-fonts.js`). Use `var(--font)`, never a font name, and any new font choice must have a width axis. Width does the work: `font-stretch` about **66%** for scores and times (condensed
   numerals), **78–92%** for chips and small labels, **112–118%** for page titles and league tabs.

@@ -1,0 +1,37 @@
+/* One button kit (3.181.0, DJ Nov 27 2026: simplicity review, release 2 of 3; https://claude.ai/artifact/LajCd8TxtmjXzmUDZzjTPh)
+   Before this, the same capsule button came in six heights (26 to 40) and some buttons were squared boxes or green words.
+   The kit, used on every page:
+     1. Capsule button: 32 points tall, 13px text, glass fill and edge, ink text. Tap area 44 through an invisible ::after.
+     2. The one main action: the 16px block (.full-mu, .feed-go, .cl-go). One per screen; a second one on the same screen goes quiet.
+     3. Plain accent words: only for "show more" links and the second-row filters the glass release set (.substrip).
+   Picked = lit glass (--lg-lit) in a row of tabs or chips; the accent for a chosen option; red only for live.
+   Loaded last. To undo: remove the {{styles/112-button-kit.css}} line in src/shell.html (restore branch: pre-button-kit).
+   :not(#_) repeats beat the id-based !important rules in 050/070/100, as 100-glass.css does. */
+
+/* 1. capsules: one height */
+html .g-feed:not(#_):not(#_), html .myb-chip:not(#_):not(#_), html .gv-act:not(#_):not(#_), html .csp-c:not(#_):not(#_),
+html .tvs-pill:not(#_):not(#_), html .tvs-row .tvs-sw:not(#_):not(#_), html .tvs-row .chwatch:not(#_):not(#_), html .tvs-acts .rlink:not(#_):not(#_) {
+  height: calc(32px / var(--z, 1)) !important; min-height: 0 !important; box-sizing: border-box !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center;
+  padding-top: 0 !important; padding-bottom: 0 !important; border-radius: 999px !important; font-size: 13px !important; line-height: 1 !important;
+}
+/* the ones that were squared boxes, outlines or green words get the capsule's glass and ink */
+html .myb-chip:not(#_):not(#_), html .tvs-row .tvs-sw:not(#_):not(#_), html .tvs-row .chwatch:not(#_):not(#_), html .tvs-acts .rlink:not(#_):not(#_) {
+  background: var(--lg-fill) !important; border: 1px solid var(--lg-edge) !important; box-shadow: var(--lg-hi) !important; color: var(--ink) !important;
+  padding-left: 12px !important; padding-right: 12px !important; font-weight: 800;
+}
+html .gv-act:not(#_):not(#_) { color: var(--ink) !important; }
+html .gv-act:not(#_):not(#_) svg { color: var(--accent); }
+/* 44-point tap area on the ones that had none of their own (Swap, the TV picker) */
+html .tvs-row .tvs-sw, html .tvs-pill, html .csp-c, html .myb-chip { position: relative; }
+html .tvs-row .tvs-sw::after, html .tvs-pill::after, html .csp-c::after, html .myb-chip::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: calc(44px / var(--z, 1)); transform: translateY(-50%); }
+html .tvs-top .tvs-acts { gap: 8px !important; margin-top: 0 !important; align-items: center !important; }
+
+/* 2. one main action per screen. The matchup page: the Live feed block is it while there is one, and Claude's button goes quiet */
+html .gv-head .feed-go:not(#_):not(#_):not(#_) { border-radius: 16px !important; }
+html #game-body:has(.feed-go) .cl-go:not(#_):not(#_) { background: var(--lg-fill) !important; border-color: var(--lg-edge) !important; }
+/* a folding section's title is a title, not a pick: ink, not the accent */
+html .gv-toggle:not(#_) { color: var(--ink) !important; }
+
+/* picked: lit glass, no accent outline (the Live feed's game chips) */
+html .fd-chip.on:not(#_):not(#_) { border-color: var(--lg-edge) !important; background: var(--lg-lit) !important; box-shadow: var(--lg-hi) !important; }

@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.181.0 (Nov 27, 2026)
+TestFlight: 3.178.6 (62), no new build (web only)
+- One button kit, the second of three releases from the simplicity review. Every capsule button is now the same height (32 points, with the same 44-point tap area). Before, the same button came in six heights: Feed on a game card, Add bet, Add to slate, the sport chips on Teams and the TV picker on On TV were all different.
+- On TV: Swap and Watch were squared boxes and Rules and Edit were green words. All four are capsules like the app's other buttons.
+- Matchup: Add to slate and Add bet look the same (Add bet was a faint outline). While a game is live the Live feed block is the one main action, with the same rounded corners as the app's other main actions, and Write Claude's preview sits quieter under it. The Top performers heading is white like other headings, not green.
+- Live feed: the game you're on in the row of games is lit like a picked tab, instead of a green outline.
+
 ## 3.180.0 (Nov 27, 2026)
 TestFlight: 3.178.6 (62), no new build (web only)
 - Navigation tidy, the first of three releases from the simplicity review. One set of day arrows: on the slate, All games, News, On TV and Box Office the small arrows beside the date at the top are gone, because the glass pair at the bottom right already does the same job under your thumb. The date at the top stays. (The Classic menu and the left side of the unfolded Duo, which have no bottom arrows, keep the top ones.)
