@@ -214,7 +214,7 @@ export default {
     // pages pass through, cached a minute at Cloudflare
     if (url.pathname === "/api/golf-tv") {
       const p = url.searchParams.get("p") || "";
-      if (!/^pga\/events\/\d{1,7}(\/[a-z_]{1,24})?$/.test(p)) return json({ error: "bad path" }, 400);
+      if (!/^(pga|golf)\/(events|tournaments|leaderboards)(\/\d{1,7})?(\/[a-z_]{1,24})?$/.test(p)) return json({ error: "bad path" }, 400);
       const r = await fetch("https://api.thescore.com/" + p, { headers: { accept: "application/json" }, cf: { cacheTtl: 60, cacheEverything: true } }).catch(() => null);
       if (!r || !r.ok) return json({ error: "no answer", status: r ? r.status : 0 }, 502);
       return new Response(await r.text(), { headers: { "content-type": "application/json", "cache-control": "public, max-age=60", "x-content-type-options": "nosniff" } });
