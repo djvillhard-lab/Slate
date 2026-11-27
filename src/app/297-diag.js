@@ -4,7 +4,10 @@
   // any errors. It's sent every 30 seconds with the passcode (worker/usage.js keeps the latest 300 entries per person,
   // encrypted) and read with the feedback reader key. No game or team names, only page parts. Remove once solved.
   (function () {
-    var on = function () { try { return localStorage.getItem("slate-diag") === "1" || !!(window.slateIsAdmin && window.slateIsAdmin()); } catch (e) { return false; } };
+    // 3.178.3: checked at most every 30 seconds, and on everyone else's phone the listeners below do nothing at all
+    // (before, every touch on every phone watched the page for changes for 0.9 s and a timer ran ten times a second)
+    var onAt = 0, onV = false;
+    var on = function () { var n = Date.now(); if (n - onAt < 30000) return onV; onAt = n; try { onV = localStorage.getItem("slate-diag") === "1" || !!(window.slateIsAdmin && window.slateIsAdmin()); } catch (e) { onV = false; } return onV; };
     var LOG = [], t0 = Date.now(), lastDown = null, renders = 0;
     function what(n) {
       if (!n || !n.tagName) return "none";
@@ -15,6 +18,7 @@
     function add(e) { if (!on()) return; e.t = Math.round((Date.now() - t0) / 100) / 10; e.v = (state && state.view) || ""; LOG.push(e); if (LOG.length > 150) LOG.shift(); }
     ["pointerdown", "touchstart"].forEach(function (k) {
       window.addEventListener(k, function (ev) {
+        if (!on()) return;
         var pt = ev.touches && ev.touches[0] ? ev.touches[0] : ev, x = Math.round(pt.clientX || 0), y = Math.round(pt.clientY || 0);
         var top = document.elementFromPoint(x, y);
         if (k === "touchstart") { add({ k: "touch", x: x, y: y }); return; }   // the same touch as its pointerdown
@@ -43,9 +47,10 @@
     window.addEventListener("unhandledrejection", function (ev) { add({ k: "error", m: String((ev.reason && ev.reason.message) || ev.reason || "").slice(0, 160) }); });
     // the page froze: a timer meant to run every 100ms ran late
     var tick = Date.now();
-    setInterval(function () { var n = Date.now(), late = n - tick - 100; tick = n; if (late > 250 && document.visibilityState === "visible") add({ k: "freeze", ms: late }); }, 100);
+    setInterval(function () { var n = Date.now(), late = n - tick - 100; tick = n; if (late > 250 && on() && document.visibilityState === "visible") add({ k: "freeze", ms: late }); }, 100);
     var why = {};
     window.slateDiagRender = function (st) {   // what asked for each All games redraw (function names only), counted
+      if (!on()) return;
       renders++;
       var k = String(st || "").split("\n").slice(3, 9).map(function (l) { l = l.trim(); var nm = (l.match(/^(?:at )?([\w$.]+)[ @(]/) || [])[1] || ""; var ln = (l.match(/:(\d+):\d+\)?$/) || [])[1] || ""; return (nm || "?") + (ln ? ":" + ln : ""); }).join("<").slice(0, 150);  // 3.100.3: with index.html line numbers
       why[k] = (why[k] || 0) + 1;

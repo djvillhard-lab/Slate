@@ -31,13 +31,21 @@ def one(text):  # a file's text without its final newline (the marker's own line
     return text[:-1] if text.endswith("\n") else text
 
 
+RECENT = 40  # release notes built into the page; Settings > Release history loads the rest from /CHANGELOG.md when opened
+
+
+def recent(log):  # the changelog's opening lines and its newest entries (the whole file was 14% of the page, on every load)
+    parts = re.split(r"(?m)^(?=## )", log)
+    return "".join(parts[:RECENT + 1])
+
+
 def assemble(build):
     shell = read(os.path.join(SRC, "shell.html"))
 
     def sub(m):
         key = m.group(1)
         if key == "CHANGES":
-            return json.dumps(read(LOG))
+            return json.dumps(recent(read(LOG)))
         if key == "BUILD":
             return build
         paths = sorted(glob.glob(os.path.join(SRC, key))) if "*" in key else [os.path.join(SRC, key)]

@@ -90,7 +90,12 @@ export async function encryptPush(sub, text) {
   const rs = new Uint8Array([0, 0, 16, 0]);
   return cat(salt, rs, new Uint8Array([asPub.length]), asPub, ct);
 }
+// Only real browser push services (3.178.3): the address comes from the phone's saved settings, so anything else is refused
+// instead of the server posting to wherever a saved setting points.
+const PUSH_HOST = /(^|\.)(push\.apple\.com|fcm\.googleapis\.com|push\.services\.mozilla\.com|notify\.windows\.com)$/;
+const pushOk = (u) => { try { const x = new URL(String(u)); return x.protocol === "https:" && !x.port && PUSH_HOST.test(x.hostname); } catch (e) { return false; } };
 export async function sendPush(env, sub, msg) {
+  if (!sub || !pushOk(sub.endpoint)) return 0;
   const body = await encryptPush(sub, JSON.stringify(msg));
   const r = await fetch(sub.endpoint, { method: "POST", body, headers: { "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", TTL: "3600", Urgency: "high", Authorization: await vapidAuth(env, sub.endpoint) } });
   return r.status;

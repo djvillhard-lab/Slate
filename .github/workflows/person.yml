@@ -21,6 +21,8 @@ on:
       hash:
         description: "SHA-256 hash of their passcode (64 characters); only needed to add"
         required: false
+permissions:
+  contents: read
 jobs:
   person:
     runs-on: ubuntu-latest

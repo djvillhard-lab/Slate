@@ -59,7 +59,8 @@
   $("open-notify").addEventListener("click", function () { openSub("notify"); });
   $("open-rules").addEventListener("click", function () { openSub("rules"); });
   $("nt-phone-btn").addEventListener("click", pushTurnOn);
-  // release history: CHANGELOG.md, built into the page as window.SLATE_CHANGES
+  // release history: the newest entries of CHANGELOG.md are built into the page as window.SLATE_CHANGES (build.py RECENT);
+  // the full history is fetched from /CHANGELOG.md the first time the list is opened (3.178.3)
   (function () {
     var tg = $("rel-tg"), list = $("rel-list"); if (!tg || !list) return;
     tg.appendChild(icon("more"));
@@ -78,7 +79,10 @@
       if (!list.children.length) list.appendChild(el("p", "pv-none", "No release notes yet."));
     }
     tg.addEventListener("click", function () {
-      var open = list.hidden; if (open && !built) fill();
+      var open = list.hidden; if (open && !built) {
+        fill();
+        try { fetch("CHANGELOG.md").then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) { if (t && t.length > md.length && /^## \d/m.test(t)) { md = t; fill(); } }, function () {}); } catch (e) {}
+      }
       list.hidden = !open; tg.setAttribute("aria-expanded", open ? "true" : "false"); $("rel-sec").classList.toggle("open", open);
     });
   })();

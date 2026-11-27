@@ -10,7 +10,9 @@ self.addEventListener("activate", function (e) {
 });
 function fresh(req, key) {
   // a plain URL fetch: some browsers refuse to copy a page navigation into a new request
-  return fetch(req.mode === "navigate" ? req.url : req, { cache: "no-store", credentials: "same-origin" }).then(function (r) {
+  // "no-cache" (3.178.3) still asks the server every time, but an unchanged page comes back as a short "same as before"
+  // answer instead of the whole app again (about 850 KB on every open with "no-store")
+  return fetch(req.mode === "navigate" ? req.url : req, { cache: "no-cache", credentials: "same-origin" }).then(function (r) {
     if (r && r.ok) { var copy = r.clone(); caches.open(SHELL).then(function (c) { c.put(key, copy); }); }
     return r;
   });

@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.178.3 (Nov 27, 2026)
+TestFlight: 3.174.1 (61), no new build (web only)
+- Code review, speed: opening Slate no longer downloads the whole app again when nothing has changed. Every open used to pull about 850 KB in the background; now the server just answers "same as before" unless there is a new version.
+- Code review, speed: the page is about 100 KB lighter to download. The full release history (almost 700 entries) was built into every copy of the app; now only the newest 40 are, and Settings > Release history loads the rest when you open it.
+- Code review, speed: the tap check from 3.96.1 (it logs touches and freezes on DJ's phone) was also running quietly on everyone else's phone, watching the page on every touch. It now does nothing unless it is DJ's phone.
+- Code review, security: a link that carries a passcode or a log-in ticket can no longer quietly replace the profile a phone is already logged in with. It asks "Switch profiles?" first.
+- Code review, security: Slate's server only sends browser notifications to the real notification services (Apple, Google, Mozilla, Microsoft), never to another address saved in someone's settings.
+- Code review, security: the two GitHub jobs that run with Slate's database key (the number job and "Add a person") can now only read the code, not change it.
+
 ## 3.178.2 (Nov 27, 2026)
 TestFlight: 3.174.1 (61), no new build (web only)
 - Made-for-TV golf cards say when the match started ("Started 9:00 AM"), and the Skins Game card has a Live leaderboard button that opens FOX Sports' leaderboard. Slate can't show the scores itself: ESPN doesn't cover the match, and the sites that do (FOX Sports, theScore) have no free feed Slate is allowed to read.

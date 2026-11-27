@@ -2,7 +2,10 @@
 (function () {
   var C = window.SLATE_SELF;
   var sb = window.supabase.createClient(C.url, C.key, { auth: { persistSession: false } });
-  try { var m = /[#&]pass=([^&]+)/.exec(location.hash); if (m) { localStorage.setItem("slate-pass", decodeURIComponent(m[1])); history.replaceState(null, "", location.pathname + location.search); } } catch (e) {}
+  // 3.178.3: a link that carries a passcode never quietly replaces the one this phone is already logged in with
+  // (anyone could send such a link); it asks first
+  function swapOk(next) { try { var cur = localStorage.getItem("slate-pass") || ""; return !cur || cur === next || window.confirm("This link logs this phone in to a different Slate profile. Switch profiles?"); } catch (e) { return true; } }
+  try { var m = /[#&]pass=([^&]+)/.exec(location.hash); if (m) { var hp = decodeURIComponent(m[1]); history.replaceState(null, "", location.pathname + location.search); if (swapOk(hp)) localStorage.setItem("slate-pass", hp); } } catch (e) {}
   function pass() { try { return localStorage.getItem("slate-pass") || ""; } catch (e) { return ""; } }
   // ---- the log-in and sign-up page (3.55.0): a real page instead of the old pop-up prompt ----
   // Log in with a passcode, sign up with an invite (a link from DJ: /#invite=CODE, or the code typed in), or just look around.
@@ -93,6 +96,7 @@
   // the iPhone app, opened from Safari right after an invite's setup (slatedj://open#h=<ticket>, 3.156.0): the ticket
   // is traded for this phone's own key, and the app opens logged in as that person (worker/signup.js /api/handoff)
   window.slateHandoff = function (t) {
+    if (pass() && !window.confirm("This link logs this phone in to a different Slate profile. Switch profiles?")) return;
     post("/api/handoff", { action: "redeem", t: String(t || "") }).then(function (j) {
       if (j.ok && j.key) { try { localStorage.setItem("slate-handed", "1"); } catch (e) {} signedIn(j.key, j.id, j.name, false, j.admin === true); return; }
       if (!pass()) gate("login", j.error || "Couldn't log in from Safari. Log in with your passcode.");
