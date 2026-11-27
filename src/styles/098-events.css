@@ -35,3 +35,6 @@
 .ev-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
 .ev-more { min-height: 44px; padding: 0 4px; background: none; border: 0; font: inherit; font-size: 13px; font-weight: 800; color: var(--accent); cursor: pointer; }
 .ev-nets { display: flex; gap: 4px; min-width: 0; justify-content: flex-end; }
+/* made-for-TV golf (3.178.0): who's playing, no positions or scores */
+.ev-card.tv .ev-board .ev-r { grid-template-columns: minmax(0, 1fr); }
+.ev-card.tv .ev-pos, .ev-card.tv .ev-thru, .ev-card.tv .ev-val { display: none; }

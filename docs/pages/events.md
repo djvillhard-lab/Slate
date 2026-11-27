@@ -1,5 +1,5 @@
 # Events: golf and F1 (sports without two teams)
-Last updated: Nov 20, 2026, 3.121.2
+Last updated: Nov 27, 2026, 3.178.0
 Code: `src/app/165-events.js` (data + card + All games sections + slate block), hooks in `160-all-games.js` (tabs in
 `filterOpts`, a GOLF/F1 tab in `renderGames`, sections under the leagues on ALL) and `170-slate-page.js` (`evSlateBlock`
 under the games, above Finished). Styles `src/styles/098-events.css`.
@@ -27,6 +27,18 @@ under the games, above Finished). Styles `src/styles/098-events.css`.
 - Two sports: `golf` (Men's golf, PGA tab, `golf/pga`) and `wgolf` (Women's golf, LPGA tab, `golf/lpga`); both have `golf: true`
   in EV_SPORTS and events carry `x.golf`. Separate sections, Slate rules cards (majors / every event each) and slate sections.
 - normRules moves an old `sports.golf.lpga` / `.majors` to `sports.wgolf` once.
+
+## 3.178.0: made-for-TV golf (DJ: "4 pro golfers playing a match on prime video right now. Would've been cool for slate to know that")
+- Why it was missed: ESPN's golf scoreboards (`golf/pga`, `lpga`, `liv`, `eur`) only list tour events. The Skins Game (Prime Video, Nov 27, 2026)
+  wasn't in any; neither were last December's Showdown, Grant Thornton Invitational or PNC Championship. TheSportsDB isn't reachable from cloud sessions.
+- So `GOLF_TV` in 165-events.js is a hand-kept list: each day's broadcast start (with time zone) and about how many hours it runs, channel(s), a
+  one-line "what", and who's playing (pairs for team events). `evTv(day)` turns them into event cards (`x.tv`), added in `evList` (not cached, so
+  Live/Final follows the clock). Card: "TV" tag, Live / Day N / start time, a "Playing" list (no positions or scores: no free source has them), Watch buttons.
+- Slate rules: Men's golf → "Made-for-TV matches" (`sports.golf.tv`). DJ: on for everyone who had saved rules before 3.178.0 (normRules turns it on
+  once and marks `tvg: 1`, so turning it off sticks), off for new people like every rule (welcome and RULE_DEFAULTS carry `tvg: 1`).
+- In the list: Skins Game (Nov 27), Grant Thornton Invitational (Dec 11 to 13, Golf Channel then NBC). Left out until times are announced: Golf
+  Channel Games (Dec 16, prime time, Golf Channel + USA, McIlroy's team vs Scheffler's) and the PNC Championship (Dec 19 to 20, NBC/Golf Channel).
+  Where to look: golf.com / Golf Digest "TV schedule" posts, pgatour.com tournament pages. TGL is in ESPN's `golf/tgl` feed (team matches; not wired up yet).
 
 ## Open (DJ's order: golf, F1, then UFC, tennis, NASCAR)
 - UFC: on hold (DJ, Nov 20). When it's a go: fight cards are head-to-head (`mma/ufc`, competitions = bouts with 2 competitors) and run every weekend.

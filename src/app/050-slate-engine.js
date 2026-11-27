@@ -1,6 +1,6 @@
   // ---------- the slate engine: rules pick the games; manual adds and removals stick ----------
   // Rules v2: two global rules (your teams, big events), then per-league rules that fit each sport.
-  var RULE_DEFAULTS = { v: 2, favorites: true, events: true, after: 0, max: 0, by: { ncaaf: { ranked: "both" }, ncaam: { ranked: "both" } } };
+  var RULE_DEFAULTS = { v: 2, tvg: 1, favorites: true, events: true, after: 0, max: 0, by: { ncaaf: { ranked: "both" }, ncaam: { ranked: "both" } } };
   var EVENT_RX = /(classic|tournament|invitational|showcase|challenge|rivalry|cup|bowl|final|playoff|championship|derby|world series|battle|clash|tip-off|tipoff|opener)/i;
   function isEvent(g) { return !!(g.note && EVENT_RX.test(g.note) && !/group (play|stage)/i.test(g.note)); }
   // which events count: every one (minus any switched off), or only the ones DJ picked
@@ -84,11 +84,16 @@
     if ([0, 17, 18, 19, 20].indexOf(Number(r.after)) !== -1) o.after = Number(r.after);
     if ([0, 4, 6, 8, 10].indexOf(Number(r.max)) !== -1) o.max = Number(r.max);
     // golf and F1 (3.119.1): off unless turned on in Slate rules; options in EV_RULES (165-events.js)
+
     o.sports = {}; if (r.sports && typeof r.sports === "object" && EV_RULES) Object.keys(EV_RULES).forEach(function (k) {
       var b = r.sports[k], ok = {}, any = false; if (!b || typeof b !== "object") return;
       EV_RULES[k].forEach(function (x) { if (b[x[0]] === true) { ok[x[0]] = true; any = true; } });
       if (any) o.sports[k] = ok;
     });
+    // 3.178.0 (DJ): made-for-TV golf matches start on for everyone who had saved rules before them, once (tvg marks it
+    // done, so turning it off sticks); new people start with it off like every other rule
+    o.tvg = 1;
+    if (r.v === 2 && !r.tvg) o.sports.golf = Object.assign({}, o.sports.golf || {}, { tv: true });
     // 3.121.2: before golf was split, one Golf card held both tours; carry its picks over to Women's golf
     var og = r.sports && r.sports.golf; if (og && typeof og === "object" && !r.sports.wgolf && (og.lpga === true || og.majors === true)) {
       o.sports.wgolf = {}; if (og.lpga === true) o.sports.wgolf.lpga = true; if (og.majors === true) o.sports.wgolf.majors = true;

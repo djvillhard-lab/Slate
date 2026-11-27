@@ -30,7 +30,7 @@
       if (!Object.keys(b).length) b = clone(WL_SIZE.big.by[k] || {});
       by[k] = b;
     });
-    var r = { v: 2, favorites: true, events: a.events !== "none", eventMode: a.events === "mine" ? "pick" : "all", eventGroups: {}, eventsOn: [], eventsOff: [], after: a.after, max: S.max, by: by };
+    var r = { v: 2, tvg: 1, favorites: true, events: a.events !== "none", eventMode: a.events === "mine" ? "pick" : "all", eventGroups: {}, eventsOn: [], eventsOff: [], after: a.after, max: S.max, by: by };
     // every event: only from the sports they follow (no Winter Classic for someone who didn't pick hockey)
     if (a.events === "all") {
       var sports = {}; keys.forEach(function (k) { sports[evSport(k)] = 1; });

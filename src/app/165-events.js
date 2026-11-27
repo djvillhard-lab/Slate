@@ -76,6 +76,39 @@
       sessions: ss, day: day, venue: ((e.circuit || {}).fullName) || "" };
   }
 
+  // ---------- made-for-TV golf (3.178.0, DJ: "There's 4 pro golfers playing a match on prime video right now.
+  // Would've been cool for slate to know that") ----------
+  // ESPN's golf scoreboards list only tour events, so skins games, team matches and other made-for-TV golf never come
+  // through (checked Nov 27, 2026: the Skins Game, and last December's Showdown, Grant Thornton and PNC weren't there).
+  // The few each year are kept here by hand: each day's broadcast start (with its time zone) and about how long it runs,
+  // the channel, and who's playing. No scores, because no free source has them; the card says who's playing and where.
+  // Add the next ones as they're announced (docs/pages/events.md lists where to look).
+  var GOLF_TV = [
+    { id: "skins26", sport: "golf", name: "Farmers Insurance Skins Game", on: [["2026-11-27T09:00:00-05:00", 5]], nets: ["Prime Video"],
+      what: "Skins game · Atlantic Fields Club, Hobe Sound, Fla.", players: ["Brooks Koepka", "Justin Thomas", "Jackson Koivun", "Wyndham Clark"] },
+    // PGA Tour and LPGA pairs; Golf Channel's window, then NBC's on the weekend (times from Grant Thornton's Oct 2026 release)
+    { id: "gti26", sport: "golf", name: "Grant Thornton Invitational", on: [["2026-12-11T13:00:00-05:00", 3], ["2026-12-12T14:00:00-05:00", 3], ["2026-12-13T13:00:00-05:00", 3]],
+      nets: ["Golf Channel", "NBC"], what: "Mixed teams · Tiburón Golf Club, Naples, Fla.",
+      players: ["Korda / Brennan", "Ko / Day", "Henderson / Conners", "Woad / Fitzpatrick", "Thompson / English", "Kupcho / Gotterup", "Romero / Koivun", "Vu / M. Kim",
+        "Lopez / Cauley", "Ryu / T. Kim", "A. Lee / Kitayama", "Yin / Bhatia", "Coughlin / Novak", "Tavatanakit / Knapp", "Henseleit / Bridgeman", "Noh / Gerard"] }
+  ];
+  function evTv(day) {
+    var now = Date.now(), out = [];
+    GOLF_TV.forEach(function (g) {
+      var ss = g.on.map(function (o, i) { var t = new Date(o[0]).getTime(); return { i: i, t: t, end: t + o[1] * 3600000, day: evDay(o[0]) }; });
+      var first = ss[0], last = ss[ss.length - 1];
+      if (day < first.day || day > last.day) return;
+      var live = ss.filter(function (s) { return now >= s.t && now < s.end; })[0], today = ss.filter(function (s) { return s.day === day; })[0];
+      var kind = live ? "live" : now >= last.end ? "over" : "upcoming", at = live || today || ss.filter(function (s) { return s.t > now; })[0] || last;
+      var many = ss.length > 1, detail = g.what;
+      if (many) detail = "Day " + (at.i + 1) + " of " + ss.length + " · " + g.what;
+      out.push({ id: "ev-tv-" + g.id, sport: g.sport, golf: true, tv: true, tour: "TV", name: g.name, kind: kind, detail: detail, start: new Date(at.t).toISOString(),
+        startsToday: !!today && today.day === day, nets: g.nets.slice(), link: "", round: live && many ? live.i + 1 : 0, field: g.players.length,
+        rows: g.players.map(function (n) { return { id: n, name: n, short: n, flag: { src: "", alt: "" }, pos: "", val: "", tot: null, thru: "" }; }) });
+    });
+    return out;
+  }
+
   // fetch a day's events (shared by every page asking at once); live days refresh every minute, others every 15
   function evNeed(day) {
     var e = EV[day], now = Date.now();
@@ -103,20 +136,20 @@
     evPollT = setTimeout(function () { if (!document.hidden && (state.view === "games" || state.view === "lineup" || isDuo)) evNeed(todayInHome()); else evSchedule(); }, 60000);
   }
   document.addEventListener("visibilitychange", function () { if (!document.hidden && state.date) evNeed(state.date); });
-  function evList(day, sp) { evNeed(day); return ((EV[day] || {}).list || []).filter(function (x) { return !sp || x.sport === sp; }); }
+  function evList(day, sp) { evNeed(day); return ((EV[day] || {}).list || []).concat(evTv(day)).filter(function (x) { return !sp || x.sport === sp; }); }
 
   // ---------- the card ----------
-  function evRowsFor(x, open) { var n = open ? 10 : x.golf ? 5 : 3; return x.rows.slice(0, n); }
+  function evRowsFor(x, open) { var n = open ? (x.tv ? 99 : 10) : x.golf ? 5 : 3; return x.rows.slice(0, n); }
   function evCard(x, where) {
-    var open = !!EV_OPEN[x.id], card = el("div", "ev-card panel" + (x.kind === "over" && state.date >= todayInHome() ? " over" : ""));
+    var open = !!EV_OPEN[x.id], card = el("div", "ev-card panel" + (x.tv ? " tv" : "") + (x.kind === "over" && state.date >= todayInHome() ? " over" : ""));
     var top = el("div", "ev-top");
     var lg = el("span", "g-lg ev-lg"); lg.appendChild(el("span", "nt", x.tour)); top.appendChild(lg);
-    var bug = el("span", "bug" + (x.kind === "live" ? " live" : ""), x.kind === "live" ? (x.golf ? (x.round ? "Round " + x.round : "Live") : "Live") : x.kind === "over" ? "Final" : x.golf ? "Upcoming" : timeText(x.start));
+    var bug = el("span", "bug" + (x.kind === "live" ? " live" : ""), x.kind === "live" ? (x.golf ? (x.round ? (x.tv ? "Day " : "Round ") + x.round : "Live") : "Live") : x.kind === "over" ? "Final" : x.tv && x.startsToday ? timeText(x.start) : x.golf ? "Upcoming" : timeText(x.start));
     top.appendChild(bug);
     card.appendChild(top);
     card.appendChild(el("div", "ev-name", x.name));
     // the tag already says the round (golf) or the next session's time (F1), so the line under the name doesn't repeat it
-    var sub = x.sport === "f1" ? x.venue : x.kind === "upcoming" ? x.detail : String(x.detail || "").replace(/^Round \d+ · /, "").replace(/^\w/, function (c) { return c.toUpperCase(); }).replace(/ (\w)/g, function (m, c) { return " " + c.toLowerCase(); });
+    var sub = x.sport === "f1" || x.tv ? x.venue || x.detail : x.kind === "upcoming" ? x.detail : String(x.detail || "").replace(/^Round \d+ · /, "").replace(/^\w/, function (c) { return c.toUpperCase(); }).replace(/ (\w)/g, function (m, c) { return " " + c.toLowerCase(); });
     if (sub) card.appendChild(el("div", "ev-sub", sub));
     if (x.sport === "f1") {
       var sl = el("div", "ev-sess");
@@ -129,6 +162,7 @@
       card.appendChild(sl);
       if (x.rows.length) card.appendChild(el("div", "ev-of", x.rowsOf + (x.kind === "live" ? ", running order" : "")));
     }
+    if (x.tv) card.appendChild(el("div", "ev-of", "Playing"));
     if (x.rows.length) {
       var tb = el("ol", "ev-board");
       evRowsFor(x, open).forEach(function (r) {
@@ -148,7 +182,7 @@
     } else if (x.golf && x.kind === "upcoming") card.appendChild(el("div", "ev-none", "The leaderboard starts with the first round."));
     var foot = el("div", "ev-foot");
     if (x.rows.length > evRowsFor(x, false).length) {
-      var more = el("button", "ev-more", open ? "Show fewer" : "Show top 10"); more.type = "button";
+      var more = el("button", "ev-more", open ? "Show fewer" : x.tv ? "Show all " + x.rows.length : "Show top 10"); more.type = "button";
       more.setAttribute("aria-expanded", open ? "true" : "false");
       more.addEventListener("click", function () { EV_OPEN[x.id] = !open; if (where === "games") keepScroll(renderGames); else keepScroll(renderLineup); });
       foot.appendChild(more);
@@ -199,7 +233,10 @@
   // each sport is off until you turn on one of its rules in Slate rules; All games always shows them
   var EV_RULES = {
     golf: [["majors", "Majors and big events", "The Masters, the PGA Championship, the U.S. Open, the Open, the Players, the Tour Championship, and the Ryder and Presidents Cups."],
-           ["pga", "Every PGA Tour event", "Every PGA Tour tournament, all four rounds."]],
+           ["pga", "Every PGA Tour event", "Every PGA Tour tournament, all four rounds."],
+           // 3.178.0, DJ: "a selection in slate rules. Turn on for users for now. Defaulted to off for new users like all slate
+           // rules" (normRules turns it on once for everyone who had saved rules before it)
+           ["tv", "Made-for-TV matches", "Skins games, team matches and other exhibitions, like the Skins Game on Prime Video."]],
     wgolf: [["majors", "Majors and big events", "The Chevron, the U.S. Women's Open, the Women's PGA, the Evian, the Women's Open, the CME Group Tour Championship and the Solheim Cup."],
             ["lpga", "Every LPGA event", "Every LPGA tournament, all four rounds."]],
     f1: [["race", "Race days", "The day of each Grand Prix."],
@@ -208,6 +245,7 @@
   var GOLF_BIG = /\bmasters\b|\bpga championship\b|\bu\.?s\.? (women's )?open\b|\bthe open\b|open championship|\bplayers championship\b|tour championship|ryder cup|presidents cup|chevron championship|evian championship|women's open|solheim cup/i;
   function evRuleOn(x) {
     var b = ((state.rules || {}).sports || {})[x.sport]; if (!b) return false;
+    if (x.tv) return !!b.tv;
     if (x.golf) return !!((b.majors && GOLF_BIG.test(x.name)) || b.pga || b.lpga);
     if (x.sport === "f1") return (x.sessions || []).some(function (s) {
       var today = s.day === x.day || s.kind === "live";
