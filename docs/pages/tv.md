@@ -29,6 +29,8 @@ Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css
 
 - 3.158.0 (DJ): why on every TV (`tvsWhyOf`: short tag on the tile `.tvs-why`, long line `.tvs-whyl` in the list); `tvsFill` returns `out.src` (pick / rule / auto with rank). "Put a game on a TV" (`tvsPicker`): games on at the time, filters All / Live now / each league (`TVS.af`), a button per TV. Picks are saved per quarter hour (`tvsPinKey`, key `<setup>|<ms>`, Live now = the current quarter hour) in `slate-tv-pins` (cleared next day); `tvsFill` applies every pick from that time or earlier, newest first, while the game is still on, so a 7 PM pick is there at Live now after 7. The Swap list writes the same keys. Old `|live` keys are ignored.
 
+- 3.173.0 (DJ): "Turn each TV to" shows each game as the slate's own card (`gameRow(g, "lineup")`, class `tvs-card`): live score, clock, one-liner, quick look. The row above it is the TV name, why, also-on channels, Swap and Watch.
+
 ## Open
 - Second release (DJ picked it): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.
 - Hidden channels are per phone. Saving them with the profile needs `260-persistence.js` (shared file).

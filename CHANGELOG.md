@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.173.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV, My TVs: each TV in "Turn each TV to" now shows the same game card as your slate: live score, time left, the one-liner and the tap-to-open quick look. Above each card are the TV's name, why the game is on it, Swap and Watch.
+
 ## 3.172.4 (Nov 26, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - News: every game card now shows the current score. A game in progress shows the live score in red with the time left (such as 4:32 - 3rd), and a finished game shows the final. This covers the featured day's matchups, On Deck, In the Books and Claude's own one-day sections, including games that are not on the slate. Before, a card kept showing its start time until the next write-up. Scores refresh every 20 seconds while News is open.

@@ -48,6 +48,7 @@
     ".tvs-slots::-webkit-scrollbar { display: none; }" +
     "@container (max-width: 240px) { .tvs-swn .pre { display: none; } }" +
     ".tvs-wall { touch-action: pan-y; }" +
+    ".tvs-card { margin: 0 0 12px; }" +
     ".tvs-lt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }" +
     ".tvs-why { max-width: 100%; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: clamp(8px, 6.5cqh, 12px); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }" +
     ".tvs-why.mine { background: var(--accent-fill); color: var(--on-accent); }" +
@@ -640,14 +641,12 @@
     row.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-noch", g ? "No channel listed" : ""));
     var tx = el("div", "tx"), lbl = n > 1 ? t.name + ", screen " + (j + 1) : t.name;
     if (g) {
-      tx.appendChild(el("b", null, pairText(g, function (s) { return short(g, s); }, homeFirst(g) || g.neutral ? " vs " : " at ")));
-      var st = tvsStatus(g), sub = el("span");
-      sub.appendChild(document.createTextNode(lbl + " · "));
-      sub.appendChild(el("span", st.live ? "live" : null, st.text));
+      // 3.173.0 (DJ): the TV's name and why on top; the game itself is the slate's own card below (score, time left, one-liner)
+      tx.appendChild(el("b", null, lbl));
       var wl0 = el("span", "tvs-whyl", tvsWhy(g, fill, setup));
       var more = tvsChan(g).more.filter(function (m) { return m !== ch; });
-      if (more.length) sub.appendChild(document.createTextNode(" · also " + more.slice(0, 2).join(", ")));
-      tx.appendChild(sub); tx.appendChild(wl0);
+      tx.appendChild(wl0);
+      if (more.length) tx.appendChild(el("span", null, "Also on " + more.slice(0, 2).join(", ")));
       if (note) tx.appendChild(el("span", "tvs-swl", tvsNoteText(note) + ", before this one ends"));
     } else { tx.appendChild(el("b", null, lbl)); tx.appendChild(el("span", null, "Nothing else on at this time")); }
     row.appendChild(tx);
@@ -660,6 +659,7 @@
     }
     if (ch) { var wl = watchLink(ch, "chwatch", "Watch"); if (wl) row.appendChild(wl); }
     box.appendChild(row);
+    if (g) { var card = gameRow(g, "lineup"); card.classList.add("tvs-card"); box.appendChild(card); }
     if (TVS.swap === key) {
       var al = el("div", "tvs-alt");
       alts.slice(0, 10).forEach(function (x) {
