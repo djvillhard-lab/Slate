@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.176.0 (Nov 26, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- On TV, My TVs: "Put a game on a TV" now looks like All games' ALL tab. Each league is a drop-down with its game count and how many are live, folded until you open it (it stays how you left it). Inside are the same game cards as All games: score, time left, the one-liner and the quick look. Under each card is "Put on" with a button for each of your TVs.
+- A Live button with the live count sits on top, like on All games, when it would narrow the list.
+
 ## 3.175.1 (Nov 26, 2026)
 TestFlight: 3.174.1, no new build (web only)
 - Morning email: the email and its confirm page now point to Settings > Alerts and email, where the morning email lives since Settings was reorganized.

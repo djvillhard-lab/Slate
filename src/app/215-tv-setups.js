@@ -14,8 +14,9 @@
   TV_TABS.splice(0, TV_TABS.length, "setups", "channels");
   if (state.tvFilter === "all") state.tvFilter = "setups";
   else if (state.tvFilter === "national" || state.tvFilter === "streaming") { TV.f = state.tvFilter; state.tvFilter = "channels"; }
-  var TVS = { rules: { pins: [], lg: [] }, list: [], cur: "", loaded: false, asked: false, slot: "", edit: null, sel: 0, once: null, swap: "", pins: {}, saveT: null };
+  var TVS = { rules: { pins: [], lg: [] }, list: [], cur: "", loaded: false, asked: false, slot: "", pkShut: {}, pkAll: {}, pkLive: false, edit: null, sel: 0, once: null, swap: "", pins: {}, saveT: null };
   try { var tvc = JSON.parse(localStorage.getItem("slate-tv-setups") || "null"); if (tvc && Array.isArray(tvc.list)) { TVS.list = tvc.list; TVS.cur = tvc.cur || ""; if (tvc.rules) TVS.rules = tvsRulesNorm(tvc.rules); } } catch (e) {}
+  try { TVS.pkShut = JSON.parse(localStorage.getItem("slate-tv-pkshut") || "{}") || {}; } catch (e) {}
   try { var tvp = JSON.parse(localStorage.getItem("slate-tv-pins") || "null"); if (tvp && tvp.d === todayInHome()) TVS.pins = tvp.p || {}; } catch (e) {}
   // 3.135.1 (DJ): pick how many TVs first, then a layout for that many. The main TV is always the first box.
   var TV_PRESETS = {
@@ -55,7 +56,8 @@
     "@container (max-width: 120px) { .tvs-why { display: none; } }" +
     ".tvs-row .tx > span.tvs-whyl { color: var(--ink); font-weight: 700; }" +
     ".tvs-af { margin-bottom: 4px; }" +
-    ".tvs-pk { padding: 10px 0; border-top: 1px solid var(--hair); }" +
+    ".tvs-pk { margin: 0 0 12px; } .tvs-pk .g { margin-bottom: 0; }" +
+    ".tvs-pk-b .lbl { align-self: center; font-size: 12px; font-weight: 700; color: var(--muted); margin-right: 2px; }" +
     ".tvs-pk-t { display: flex; align-items: center; gap: 12px; }" +
     ".tvs-pk-t .tx { flex: 1; min-width: 0; } .tvs-pk-t .tx b { display: block; font-size: 15px; font-weight: 800; } .tvs-pk-t .tx > span { display: block; font-size: 12px; color: var(--muted); } .tvs-pk-t .live { color: var(--live); }" +
     ".tvs-pk-b { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }" +
@@ -582,58 +584,77 @@
     h.appendChild(el("span", "count", slot.live ? "Live now" : "At " + slot.label)); wrap.appendChild(h);
     if (!list.length) { wrap.appendChild(el("p", "tvs-hint", "No other games on at this time.")); return; }
     wrap.appendChild(el("p", "tvs-hint", slot.live ? "Tap a TV to put the game on it now. It stays there until the game ends or you pick another." : "Tap a TV to save the game to it for " + slot.label + ". It'll be on that TV when " + slot.label + " comes."));
-    // the filters: All, Live now, then each league on at this time
-    var lgs = [], seenL = {}; list.forEach(function (g) { if (!seenL[g.league]) { seenL[g.league] = 1; lgs.push(g.league); } });
-    // 3.163.4 (DJ): Live now only shows when it would list fewer games than All (on Live now, All is mostly live already)
-    var nLive = list.filter(function (g) { return status(g).kind === "live"; }).length, anyLive = nLive > 0 && nLive < list.length;
-    var opts = [["all", "All"]].concat(anyLive ? [["live", "Live now"]] : []).concat(lgs.map(function (k) { return [k, info({ league: k }).tag]; }));
-    if (!opts.some(function (o) { return o[0] === TVS.af; })) TVS.af = "all";
-    var fr = tvsNoSwipe(el("div", "tvs-slots tvs-af")); fr.setAttribute("role", "group"); fr.setAttribute("aria-label", "Show games");
-    opts.forEach(function (o) {
-      var b = el("button"); b.type = "button"; b.setAttribute("aria-pressed", TVS.af === o[0] ? "true" : "false");
-      if (o[0] === "live") b.appendChild(el("i")); b.appendChild(document.createTextNode(o[1]));
-      b.addEventListener("click", function () { TVS.af = o[0]; TVS.afAll = false; keepScroll(renderTV); });
-      fr.appendChild(b);
-    });
-    wrap.appendChild(fr);
-    var shown = list.filter(function (g) { return TVS.af === "all" || (TVS.af === "live" ? status(g).kind === "live" : g.league === TVS.af); })
-      .sort(function (a, b) { var la = status(a).kind === "live" ? 0 : 1, lb = status(b).kind === "live" ? 0 : 1; return la - lb || tvsRank(b) - tvsRank(a) || byStart(a, b); });
-    var where = {}; fill.forEach(function (l, i) { l.forEach(function (g) { where[g.id] = i; }); });
-    var key = tvsPinKey(setup, slot);
-    (TVS.afAll ? shown : shown.slice(0, 8)).forEach(function (g) {
-      var r = el("div", "tvs-pk");
-      var top = el("div", "tvs-pk-t"), ch = tvsChan(g).main;
-      top.appendChild(ch ? el("span", "tvs-ch", NET_SHORT[ch] || ch) : el("span", "tvs-noch", "No channel"));
-      var tx = el("div", "tx"); tx.appendChild(el("b", null, pairText(g, function (s) { return short(g, s); }, homeFirst(g) || g.neutral ? " vs " : " at ")));
-      var st = tvsStatus(g), sub = el("span"); sub.appendChild(document.createTextNode(info(g).tag + " · ")); sub.appendChild(el("span", st.live ? "live" : null, st.text));
-      if (where[g.id] !== undefined) sub.appendChild(document.createTextNode(" · on " + setup.tvs[where[g.id]].name));
-      tx.appendChild(sub); top.appendChild(tx); r.appendChild(top);
-      var bs = el("div", "tvs-pk-b");
-      setup.tvs.forEach(function (t, i) {
-        var n = Math.max(1, t.split || 1), on = where[g.id] === i, okYT = n === 1 || tvsYT(g);
-        var b = el("button", null, t.name); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
-        if (!okYT) { b.disabled = true; b.title = "Split screen: YouTube TV channels only"; }
-        b.setAttribute("aria-label", (on ? "On " : "Put it on ") + t.name);
-        b.addEventListener("click", function () {
-          var P = TVS.pins[key] = TVS.pins[key] || {}, before = JSON.stringify(TVS.pins);
-          var mine = (P[t.id] || []).indexOf(g.id) !== -1;
-          // it leaves any other TV it was picked for at this time
-          Object.keys(P).forEach(function (tid) { P[tid] = (P[tid] || []).map(function (id) { return id === g.id ? null : id; }); });
-          if (mine) { tvsPinsSave(); keepScroll(renderTV); topUndo("Pick removed", function () { TVS.pins = JSON.parse(before); tvsPinsSave(); keepScroll(renderTV); }); return; }
-          var cur = P[t.id] = (P[t.id] || []).slice(), j = 0;
-          if (n > 1) { j = -1; for (var q = 0; q < n; q++) if (!cur[q]) { j = q; break; } if (j === -1) j = n - 1; }
-          while (cur.length < j) cur.push(null); cur[j] = g.id;
-          tvsPinsSave(); keepScroll(renderTV);
-          topUndo(short(g, "away") + " vs " + short(g, "home") + " on " + t.name + (slot.live ? "" : " at " + slot.label), function () { TVS.pins = JSON.parse(before); tvsPinsSave(); keepScroll(renderTV); });
-        });
-        bs.appendChild(b);
-      });
-      r.appendChild(bs); wrap.appendChild(r);
-    });
-    if (!TVS.afAll && shown.length > 8) {
-      var more = el("button", "rlink tvs-more", "Show all " + shown.length + " games"); more.type = "button";
-      more.addEventListener("click", function () { TVS.afAll = true; keepScroll(renderTV); }); wrap.appendChild(more);
+    // 3.176.0 (DJ): laid out like All games' ALL tab: a Live button, then each league as a drop-down with the
+    // same game cards (score, time left, one-liner, quick look). Under each card, a button for each of your TVs.
+    var nLive = list.filter(function (g) { return status(g).kind === "live"; }).length;
+    var mixed = nLive > 0 && nLive < list.length;   // 3.163.4: Live shows only when it narrows the list
+    if (!mixed) TVS.pkLive = false;
+    var lo = el("div", "lo-row gm-live");
+    if (mixed) {
+      var lb = el("button", "lo-btn" + (TVS.pkLive ? " on" : "")); lb.type = "button";
+      lb.setAttribute("aria-pressed", TVS.pkLive ? "true" : "false"); lb.setAttribute("aria-label", "Show only live games");
+      lb.appendChild(el("i", "lo-dot")); lb.appendChild(el("span", null, "Live")); lb.appendChild(el("b", null, String(nLive)));
+      lb.addEventListener("click", function () { TVS.pkLive = !TVS.pkLive; keepScroll(renderTV); });
+      lo.appendChild(lb); wrap.appendChild(lo);
     }
+    var shown = list.filter(function (g) { return !TVS.pkLive || status(g).kind === "live"; });
+    var where = {}; fill.forEach(function (l, i) { l.forEach(function (g) { where[g.id] = i; }); });
+    var key = tvsPinKey(setup, slot), groups = {};
+    shown.forEach(function (g) { (groups[g.league] = groups[g.league] || []).push(g); });
+    var tabOrd = (state.gamesOrder || []).length ? state.gamesOrder.concat(ORDER) : ORDER;
+    var order = tabOrd.filter(function (k, i) { return groups[k] && tabOrd.indexOf(k) === i; });
+    Object.keys(groups).forEach(function (k) { if (order.indexOf(k) === -1) order.push(k); });
+    var one = order.length === 1;
+    order.forEach(function (k) {
+      var gl = groups[k].sort(function (a, b) { var r = function (g) { var x = status(g).kind; return x === "live" ? 0 : x === "over" ? 2 : 1; }; return r(a) - r(b) || tvsRank(b) - tvsRank(a) || byStart(a, b); });
+      var shut = !one && (k in TVS.pkShut ? !!TVS.pkShut[k] : true);   // like All games: every league starts folded
+      var sec = el(one ? "div" : "button", "sec" + (one ? "" : " sec-tg") + (shut ? " shut" : ""));
+      if (!one) { sec.type = "button"; sec.setAttribute("aria-expanded", shut ? "false" : "true"); }
+      sec.appendChild(el("h2", null, info(gl[0]).name));
+      var nl = gl.filter(function (g) { return status(g).kind === "live"; }).length;
+      if (nl) { var lv = el("span", "ch-live sec-live"); lv.appendChild(el("i")); lv.appendChild(document.createTextNode(nl > 1 ? nl + " live" : "Live")); sec.appendChild(lv); }
+      sec.appendChild(el("span", "count", gl.length + (gl.length === 1 ? " game" : " games")));
+      if (!one) {
+        sec.appendChild(icon("more"));
+        sec.addEventListener("click", function () { TVS.pkShut[k] = shut ? 0 : 1; try { localStorage.setItem("slate-tv-pkshut", JSON.stringify(TVS.pkShut)); } catch (e) {} keepScroll(renderTV); });
+      }
+      wrap.appendChild(sec);
+      if (shut) return;
+      var box = el("div", "glist"), all = TVS.pkAll[k];
+      (all ? gl : gl.slice(0, 10)).forEach(function (g) { box.appendChild(tvsPickCard(setup, slot, key, g, where)); });
+      wrap.appendChild(box);
+      if (!all && gl.length > 10) {
+        var more = el("button", "rlink tvs-more", "Show all " + gl.length + " " + info(gl[0]).tag + " games"); more.type = "button";
+        more.addEventListener("click", function () { TVS.pkAll[k] = 1; keepScroll(renderTV); }); wrap.appendChild(more);
+      }
+    });
+  }
+  // one game in Put a game on a TV: the All games card, then "Put on" and a button for each TV
+  function tvsPickCard(setup, slot, key, g, where) {
+    var r = el("div", "tvs-pk");
+    r.appendChild(gameRow(g, "games"));
+    var bs = el("div", "tvs-pk-b"); bs.appendChild(el("span", "lbl", where[g.id] !== undefined ? "On" : "Put on"));
+    setup.tvs.forEach(function (t, i) {
+      var n = Math.max(1, t.split || 1), on = where[g.id] === i, okYT = n === 1 || tvsYT(g);
+      var b = el("button", null, t.name); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
+      if (!okYT) { b.disabled = true; b.title = "Split screen: YouTube TV channels only"; }
+      b.setAttribute("aria-label", (on ? "On " : "Put it on ") + t.name);
+      b.addEventListener("click", function () {
+        var P = TVS.pins[key] = TVS.pins[key] || {}, before = JSON.stringify(TVS.pins);
+        var mine = (P[t.id] || []).indexOf(g.id) !== -1;
+        // it leaves any other TV it was picked for at this time
+        Object.keys(P).forEach(function (tid) { P[tid] = (P[tid] || []).map(function (id) { return id === g.id ? null : id; }); });
+        if (mine) { tvsPinsSave(); keepScroll(renderTV); topUndo("Pick removed", function () { TVS.pins = JSON.parse(before); tvsPinsSave(); keepScroll(renderTV); }); return; }
+        var cur = P[t.id] = (P[t.id] || []).slice(), j = 0;
+        if (n > 1) { j = -1; for (var q = 0; q < n; q++) if (!cur[q]) { j = q; break; } if (j === -1) j = n - 1; }
+        while (cur.length < j) cur.push(null); cur[j] = g.id;
+        tvsPinsSave(); keepScroll(renderTV);
+        topUndo(short(g, "away") + " vs " + short(g, "home") + " on " + t.name + (slot.live ? "" : " at " + slot.label), function () { TVS.pins = JSON.parse(before); tvsPinsSave(); keepScroll(renderTV); });
+      });
+      bs.appendChild(b);
+    });
+    r.appendChild(bs);
+    return r;
   }
   function tvsRow(setup, slot, t, j, n, g, pool, shown, note, fill) {
     var box = el("div"), row = el("div", "tvs-row");

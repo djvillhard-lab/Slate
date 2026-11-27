@@ -31,6 +31,8 @@ Code: `src/app/210-tv.js` (its new styles are injected from the file as `#tv-css
 
 - 3.173.0 (DJ): "Turn each TV to" shows each game as the slate's own card (`gameRow(g, "lineup")`, class `tvs-card`): live score, clock, one-liner, quick look. The row above it is the TV name, why, also-on channels, Swap and Watch.
 
+- 3.176.0 (DJ): "Put a game on a TV" is laid out like All games ALL: a `lo-btn` Live toggle (only when it narrows the list), league `sec sec-tg` drop-downs in your All games tab order, folded by default (`TVS.pkShut`, `slate-tv-pkshut`), 10 cards then "Show all" (`TVS.pkAll`). Cards are `gameRow(g, "games")` with "Put on" TV buttons under them (`tvsPickCard`).
+
 ## Open
 - Second release (DJ picked it): learning from swaps (which leagues/teams land on which TV), and a red "Close game: put it on the main TV?" note.
 - Hidden channels are per phone. Saving them with the profile needs `260-persistence.js` (shared file).
