@@ -1,4 +1,16 @@
 # Teams, team pages and Standings
+
+## 3.174.0 (Nov 26): Standings moved to All games
+- DJ: "Standings shouldn't be in teams page. Need a new spot for that." He picked "A Standings view inside All games" on a
+  decision card (over its own hammer-row page, or only links from matchups and team pages).
+- The Teams page lost its My teams / Standings choice (`sdgSeg` and `state.teamsTab` are gone); it is just your teams.
+- All games: a "Standings" button in the Live row (after 2 columns, before Live; accent outline when on, never live red) sets
+  `state.agStand` (not saved). `renderGames` calls `sdgGames(body)` first when `sdgShowing()`: the lit button, then
+  `sdgRender` unchanged (league row, Playoff picture / Divisions, MLS bracket). The league follows the All games tab each time
+  that tab changes (`SDG.agLg`), and the standings' own league row still reaches leagues with no games that day. Golf and F1
+  tabs have no standings, so they show their events. The button also shows on a day with no games.
+- `openStandings(lg)` (team page link, matchup "Full standings") turns standings on and opens All games with Back.
+- The decisions below that say Standings lives inside Teams are replaced by this.
 Last updated: Nov 18, 2026, 3.102.0
 Code: `src/app/130-teams.js` (Teams page, team pages), `src/app/132-standings.js` (Standings tab; its styles are injected from the file as `#sdg-css`).
 

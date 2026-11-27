@@ -90,8 +90,8 @@ html.in-pane.pn-full #lineup-body .wal-list > .wal-item:only-child { grid-column
 /* Teams, full screen: the team list two across, standings groups (conferences, divisions) side by side */
 html.in-pane.pn-full #teams-body .rows.tb-res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; }
 html.in-pane.pn-full #teams-body .rows.tb-res > :not(.trow) { grid-column: 1 / -1; }
-html.in-pane.pn-full #teams-body:has(> .sdg-grp ~ .sdg-grp) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; align-items: start; }
-html.in-pane.pn-full #teams-body:has(> .sdg-grp ~ .sdg-grp) > :not(.sdg-grp) { grid-column: 1 / -1; }
+html.in-pane.pn-full #games-body:has(> .sdg-grp ~ .sdg-grp) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; align-items: start; }
+html.in-pane.pn-full #games-body:has(> .sdg-grp ~ .sdg-grp) > :not(.sdg-grp) { grid-column: 1 / -1; }
 /* Matchup, full screen: the game on the left with the line and Claude's button beside it; an open section's cards flow in two columns */
 html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 12px; }
 html.in-pane.pn-full #game-body:has(> .gv-oddsbar, > .gv-cl) > * { grid-column: 1 / -1; }

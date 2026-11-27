@@ -1,4 +1,5 @@
-  // Standings and playoff picture (3.102.0): a tab on the Teams page. Every number is ESPN's own standings feed;
+  // Standings and playoff picture (3.102.0): on All games since 3.174.0 (DJ: "Standings shouldn't be in teams page"); the
+  // Standings button in the row with Live flips the page from games to standings. It was a tab on the Teams page. Every number is ESPN's own standings feed;
   // nothing is worked out here except the order (ESPN's seed or rank) and where the playoff line falls.
   var SDG = { cache: {}, lg: "", div: {}, conf: {} };
   var SDG_LGS = ["nfl", "nba", "nhl", "mlb", "ncaaf", "ncaam", "ncaaw", "epl", "mls", "wnba", "laliga", "seriea", "bundesliga", "ligue1"];
@@ -6,8 +7,7 @@
   // how many teams per conference reach the playoffs (league rules, not a stat): [after seed, label]
   var SDG_LINES = { nfl: [[7, "Playoff line"]], nba: [[6, "Playoff line"], [10, "Play-in line"]], wnba: [[8, "Playoff line"]], nhl: [[8, "Playoff line"]], mlb: [[6, "Playoff line"]] };
   var SDG_CSS = "" +
-    ".sdg-top { margin: 4px 0 12px; }" +
-    ".sdg-lgs { margin-bottom: 4px; }" +
+    ".sdg-lgs { margin-bottom: 4px; } #games-body .lo-row .sdg-btn { margin-right: auto; } #games-body .lo-row .ag2-btn:has(+ .sdg-btn) { margin-right: 8px; } .lo-btn.sdg-btn svg { flex: none; } #games-body .lo-btn.sdg-btn.on { border-color: var(--accent) !important; color: var(--accent) !important; background: none !important; }" +
     ".sdg-grp { margin: 16px 0 0; }" +
     ".sdg-grp h3 { font-size: 15px; font-weight: 800; color: var(--head); margin: 0 0 6px; }" +
     ".sdg-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) repeat(var(--sdg-n, 3), minmax(38px, auto)); gap: 8px; align-items: center; width: 100%; min-height: 44px; padding: 4px 8px; border: 0; border-radius: 8px; background: none; color: var(--head); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; text-align: left; }" +
@@ -34,7 +34,7 @@
     c = SDG.cache[key] = { at: Date.now(), busy: true, data: c ? c.data : null };
     fetch(sdgUrl(lg, div)).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (d) {
       c.busy = false; c.at = Date.now(); if (d) c.data = sdgParse(d); else c.failed = !c.data;
-      if (state.view === "teams" && state.teamsTab === "standings") keepScroll(renderTeams);
+      if (sdgShowing()) keepScroll(renderGames);
     });
     return c;
   }
@@ -73,26 +73,34 @@
   }
   function openStandings(lg) {
     if (lg && SDG_LGS.indexOf(lg) !== -1) SDG.lg = lg;
-    state.teamsTab = "standings";
-    if (state.view === "teams") keepScroll(renderTeams); else openSub("teams");
+    state.agStand = true; SDG.agLg = state.league;
+    if (state.view === "games") keepScroll(renderGames); else openSub("games");
     if (isDuo) { var pr = $("pane-r"); if (pr) pr.scrollTop = 0; } else window.scrollTo(0, 0);
   }
-  // the My teams / Standings choice at the top of the Teams page
-  function sdgSeg(body) {
-    var seg = el("div", "seg segw2 sdg-top");
-    [["teams", "My teams"], ["standings", "Standings"]].forEach(function (o) {
-      var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", (state.teamsTab || "teams") === o[0] ? "true" : "false");
-      b.addEventListener("click", function () { if ((state.teamsTab || "teams") === o[0]) return; state.teamsTab = o[0]; renderTeams(); });
-      seg.appendChild(b);
-    });
-    body.appendChild(seg);
+  // is All games showing standings right now? (not on a golf or F1 tab, which have none)
+  function sdgShowing() { return state.view === "games" && !!state.agStand && !(typeof EV_SPORTS !== "undefined" && EV_SPORTS[state.league]); }
+  // the Standings button in All games' Live row: flips the page between games and standings
+  function sdgBtn() {
+    var on = !!state.agStand, b = el("button", "lo-btn sdg-btn" + (on ? " on" : "")); b.type = "button";
+    b.setAttribute("aria-pressed", on ? "true" : "false"); b.setAttribute("aria-label", on ? "Back to games" : "Show standings");
+    b.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 3.5h1.5M2 8h1.5M2 12.5h1.5M6 3.5h8M6 8h6M6 12.5h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    b.appendChild(el("span", null, "Standings"));
+    b.addEventListener("click", function () { state.agStand = !state.agStand; if (state.agStand) SDG.agLg = ""; keepScroll(renderGames); });
+    return b;
+  }
+  // All games in standings mode: the Standings button (lit) to go back, then the league's tables
+  function sdgGames(body) {
+    // follow the league picked on All games, when it has standings, each time that pick changes
+    if (SDG.agLg !== state.league) { SDG.agLg = state.league; if (SDG_LGS.indexOf(state.league) !== -1) SDG.lg = state.league; }
+    var lo = el("div", "lo-row gm-live"); lo.appendChild(sdgBtn()); body.appendChild(lo);
+    sdgRender(body);
   }
   function sdgRender(body) {
     var lg = SDG.lg && SDG_LGS.indexOf(SDG.lg) !== -1 ? SDG.lg : (SDG.lg = sdgDefaultLg());
     var tabs = el("div", "substrip sdg-lgs");
     SDG_LGS.forEach(function (k) {
       var b = el("button", "cf-tab", LEAGUES[k].tag); b.type = "button"; b.setAttribute("aria-pressed", k === lg ? "true" : "false"); b.setAttribute("aria-label", LEAGUES[k].name + " standings");
-      b.addEventListener("click", function () { SDG.lg = k; keepScroll(renderTeams); });
+      b.addEventListener("click", function () { SDG.lg = k; keepScroll(renderGames); });
       tabs.appendChild(b);
     });
     body.appendChild(tabs);
@@ -103,13 +111,13 @@
       var sg = el("div", "seg segw2");
       [[0, "Playoff picture"], [1, "Divisions"]].forEach(function (o) {
         var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", !!o[0] === div ? "true" : "false");
-        b.addEventListener("click", function () { SDG.div[lg] = !!o[0]; keepScroll(renderTeams); });
+        b.addEventListener("click", function () { SDG.div[lg] = !!o[0]; keepScroll(renderGames); });
         sg.appendChild(b);
       });
       body.appendChild(sg);
     }
     var c = sdgLoad(lg, div), groups = c.data;
-    if (!groups) { body.appendChild(el("p", "notice", c.failed ? "Standings didn't load. Check the connection and open this tab again." : "Loading standings…")); return; }
+    if (!groups) { body.appendChild(el("p", "notice", c.failed ? "Standings didn't load. Check the connection and tap Standings again." : "Loading standings…")); return; }
     if (!groups.length) { body.appendChild(el("p", "notice", "ESPN has no " + LEAGUES[lg].name + " standings right now.")); return; }
     var mine = myTeamList().filter(function (t) { return t.lg === lg; });
     var isMine = function (r) { return mine.some(function (t) { return teamMatch(r.name, t.name, lg) || teamMatch(r.short, t.name, lg); }); };
@@ -120,7 +128,7 @@
       var cs = el("div", "substrip");
       ord.forEach(function (g) {
         var b = el("button", "cf-tab", g.name.replace(/ Conference$/, "")); b.type = "button"; b.setAttribute("aria-pressed", g === pick ? "true" : "false");
-        b.addEventListener("click", function () { SDG.conf[lg] = g.name; keepScroll(renderTeams); });
+        b.addEventListener("click", function () { SDG.conf[lg] = g.name; keepScroll(renderGames); });
         cs.appendChild(b);
       });
       body.appendChild(cs);

@@ -235,10 +235,12 @@
     var body = $("games-body"); body.textContent = "";
     if (agIO) agIO.disconnect();
     $("search").hidden = !state.showSearch && !state.q;
+    // 3.174.0 (DJ): the Standings button flips All games to the standings (132-standings.js)
+    if (sdgShowing()) { sdgGames(body); return; }
     // a golf or F1 tab (3.116.0): that sport's events only
     if (EV_SPORTS[state.league]) { if (!evGamesSections(body, state.league)) body.appendChild(el("div", "notice", "No " + EV_SPORTS[state.league].name.toLowerCase() + " on this day. Pick another day above.")); return; }
     if (!games().length && state.league === "all" && evList(state.date).length) { evGamesSections(body); return; }
-    if (!games().length) { if (isDuo) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
+    if (!games().length) { var lo0 = el("div", "lo-row gm-live"); lo0.appendChild(sdgBtn()); body.appendChild(lo0); if (isDuo) body.appendChild(el("div", "notice", noticeText() || "No games found for this day.")); else emptyDay(body); return; }
     var list = gamesFiltered();
     // 3.132.0 (DJ: "option to show multiple game matchups at once (two columns, condensed matchup cards)"): a button
     // on the left of the Live row turns the page into two columns of small cards; remembered on this phone
@@ -249,7 +251,8 @@
     tb.appendChild(el("span", null, "2 columns"));
     tb.addEventListener("click", function () { agSetTwo(!agTwo()); keepScroll(renderGames); });
     if (list.length) lo.appendChild(tb);  // nothing to lay out on a day with no games here
-    if (list.length || state.date === todayInHome()) body.appendChild(lo);
+    lo.appendChild(sdgBtn());  // 3.174.0: always there, standings don't need games that day
+    body.appendChild(lo);
     if (state.date === todayInHome()) {
       var gl = !!state.gamesLive;  // starts off every time All games opens; tap Live to narrow for now
       state.gamesLive = gl;

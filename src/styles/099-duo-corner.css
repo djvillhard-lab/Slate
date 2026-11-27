@@ -25,7 +25,6 @@ html[data-native].side-col:not(.duo) #nw-body > .nx-strip + .nx-sec {           
 }
 
 /* pickers that run the full width: end them short of the clock instead */
-html[data-native].side-col:not(.duo) #teams-body > .sdg-top,                        /* Teams: My teams / Standings */
 html[data-native].side-col:not(.duo) #device-seg {                                  /* Settings > Look: iPhone Duo / iPhone */
   margin-right: var(--duo-cut) !important;
 }

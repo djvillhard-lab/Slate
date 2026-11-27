@@ -3,6 +3,8 @@ Last updated: Nov 25, 2026, 3.132.0
 Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/styles/040-components.css`.
 
 ## Done
+- Standings (3.174.0, DJ): a Standings button in the Live row flips the page to the league's standings; code in
+  `132-standings.js` (`sdgBtn`, `sdgGames`, `sdgShowing`), notes in docs/pages/teams.md.
 - Two columns, simpler small cards (3.151.1, DJ: "Trying to fit too much ... removing things on the card outside of the one
   liner"). A small card is the two teams with scores and ONE bottom line: live = the clock in red, upcoming = the start
   time, finished = the best-player line with an "F" at its end ("F/OT" after overtime; plain "Final" when there is no line).

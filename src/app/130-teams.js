@@ -205,7 +205,6 @@
   function renderTeams() {
     var body = $("teams-body"); if (!body) return; body.textContent = "";
     if (state.view !== "teams") return;
-    sdgSeg(body); if (state.teamsTab === "standings") { sdgRender(body); return; }  // Standings tab (132-standings.js)
     var mine = myTeamList();
     var playing = {}; games().forEach(function (g) { mine.forEach(function (t) { if (g.league === t.lg && (teamMatch(g.away, t.name, t.lg) || teamMatch(g.home, t.name, t.lg))) playing[tmKey(t)] = new Date(g.moved || g.start).getTime(); }); });
     // your own order when you've set one; otherwise teams playing today first

@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.174.0 (Nov 26, 2026)
+TestFlight: 3.163.3 (60), no new build (web only)
+- Standings moved off the Teams page to All games. A Standings button in the row with Live (next to 2 columns) flips the page from games to standings; tap it again to go back to the games. It opens on the league you're looking at, and its row of leagues still reaches every league, even on a day that league doesn't play.
+- The Teams page is just your teams again. "Standings" on a team page and "Full standings" on a matchup now open the standings on All games, and Back returns you where you were.
+
 ## 3.173.2 (Nov 26, 2026)
 TestFlight: 3.163.3 (60), no new build (web only)
 - Suggested for you is gone from under the slate for now, while DJ thinks it over. Its thumbs up and down row in Settings is hidden with it. Nothing is deleted, so it can come back as it was.

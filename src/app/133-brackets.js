@@ -1,4 +1,4 @@
-  // Playoff brackets (3.114.0): a Bracket view beside the table in Teams → Standings. MLS first (DJ, Nov 19, 2026).
+  // Playoff brackets (3.114.0): a Bracket view beside the table in Standings (All games). MLS first (DJ, Nov 19, 2026).
   // Every team, game and result is ESPN's own playoff schedule (the league scoreboard, month by month); seeds are
   // ESPN's standings rank. The only thing worked out here is where a series sits in the tree, which is the league's
   // fixed bracket (1/8 and 4/5 meet, 2/7 and 3/6 meet, no reseeding), and who has already won a series.
@@ -75,7 +75,7 @@
       evs = evs.filter(function (e) { return ((e.season || {}).year || 0) === yr; }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
       c.busy = false; c.at = Date.now(); c.failed = rs.every(function (j) { return !j; }) && !c.events; c.events = evs;
       c.live = evs.some(function (e) { return brkState(e) === "in"; });
-      if (state.view === "teams" && state.teamsTab === "standings" && SDG.lg === lg) keepScroll(renderTeams);
+      if (sdgShowing() && SDG.lg === lg) keepScroll(renderGames);
     });
     return c;
   }
@@ -141,7 +141,7 @@
     }
     if (s && s.live) b.appendChild(el("span", "brk-live"));
     b.setAttribute("aria-label", (names.length ? names.join(" vs ") : "To be decided") + (s ? ", " + cfg.rounds[s.rd] : ""));
-    if (s) b.addEventListener("click", function () { BRK.sel[lg] = BRK.sel[lg] === key ? "none" : key; keepScroll(renderTeams); });
+    if (s) b.addEventListener("click", function () { BRK.sel[lg] = BRK.sel[lg] === key ? "none" : key; keepScroll(renderGames); });
     else b.disabled = true;
     return b;
   }
@@ -199,7 +199,7 @@
     var sg = el("div", "seg segw2");
     [["table", "Table"], ["bracket", "Bracket"]].forEach(function (o) {
       var b = el("button", null, o[1]); b.type = "button"; b.setAttribute("aria-pressed", (o[0] === "bracket") === on ? "true" : "false");
-      b.addEventListener("click", function () { BRK.view[lg] = o[0]; keepScroll(renderTeams); });
+      b.addEventListener("click", function () { BRK.view[lg] = o[0]; keepScroll(renderGames); });
       sg.appendChild(b);
     });
     body.appendChild(sg);
