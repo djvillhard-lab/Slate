@@ -214,8 +214,8 @@ export default {
     // pages pass through, cached a minute at Cloudflare
     if (url.pathname === "/api/golf-tv") {
       const p = url.searchParams.get("p") || "";
-      if (!/^(pga|golf)\/(events|tournaments|leaderboards)(\/\d{1,7})?(\/[a-z_]{1,24})?$/.test(p)) return json({ error: "bad path" }, 400);
-      const r = await fetch("https://api.thescore.com/" + p, { headers: { accept: "application/json" }, cf: { cacheTtl: 60, cacheEverything: true } }).catch(() => null);
+      if (!/^(pga|golf|lpga|eur|liv|champions|tgl)\/(events|tournaments|leaderboards)(\/\d{1,7})?(\/[a-z_]{1,24})?$/.test(p)) return json({ error: "bad path" }, 400);
+      const r = await fetch("https://api.thescore.com/" + p + (url.searchParams.get("q") ? "?" + url.searchParams.get("q").replace(/[^a-z0-9_=&.,-]/gi, "") : ""), { headers: { accept: "application/json", "x-country-code": "US", "x-region-code": "US" }, cf: { cacheTtl: 60, cacheEverything: true } }).catch(() => null);
       if (!r || !r.ok) return json({ error: "no answer", status: r ? r.status : 0 }, 502);
       return new Response(await r.text(), { headers: { "content-type": "application/json", "cache-control": "public, max-age=60", "x-content-type-options": "nosniff" } });
     }
