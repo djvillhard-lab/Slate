@@ -9,13 +9,44 @@
     if (n.quiet.on) parts.push("quiet " + fmtHour(n.quiet.start) + "–" + fmtHour(n.quiet.end));
     return parts.length ? parts.join(" · ") : "On, nothing selected";
   }
+  // Alerts and email (3.175.0): the Settings row's line covers both the alerts and the morning email
+  function alertsSummary() {
+    var a = state.notifyLoaded ? notifySummary() : "Loading…";
+    var mp = (typeof meInfo === "object" && meInfo.p) || null;
+    return mp && mp.on ? a + " · email " + meClock(mp.time || "07:00") : a;
+  }
+  // the long lists fold away one level down; each folded row says what's picked
+  var NT_OPEN = {};
+  function ntFolds() {
+    var n = state.notify, who = function (o) { var r = []; if (o && o.lineup) r.push("my slate"); if (o && o.myTeams) r.push("my teams"); return r; };
+    var kinds = [["reminders", "starts"], ["close", "close finishes"], ["ot", "overtime"], ["finals", "finals"], ["goals", "goals"], ["live", "hourly scores"]]
+      .filter(function (k) { return who(n[k[0]]).length; }).map(function (k) { return k[1]; });
+    var sum = {
+      alerts: kinds.length ? kinds.join(", ").replace(/^./, function (c) { return c.toUpperCase(); }) + (n.upsets && n.upsets.on ? " · upset watch" : "") : n.upsets && n.upsets.on ? "Upset watch only" : "None",
+      follow: [n.follow && n.follow.start && "game starting", n.follow && n.follow.final && "their final line"].filter(Boolean).join(", ").replace(/^./, function (c) { return c.toUpperCase(); }) || "Off",
+      lock: who(n.liveAct).length ? who(n.liveAct).join(" & ").replace(/^./, function (c) { return c.toUpperCase(); }) : "Off",
+      quiet: n.quiet.on ? fmtHour(n.quiet.start) + " to " + fmtHour(n.quiet.end) + (n.days.length === 7 ? ", every day" : n.days.length ? ", " + n.days.length + " days a week" : ", no days") : "Off" + (n.days.length < 7 ? " · " + n.days.length + " days a week" : "")
+    };
+    Array.prototype.forEach.call(document.querySelectorAll("#view-notify [data-fold]"), function (b) {
+      var k = b.getAttribute("data-fold"), box = $("nt-f-" + k), s2 = $("nt-sum-" + k);
+      if (s2) s2.textContent = sum[k] || "";
+      if (box) box.hidden = !NT_OPEN[k]; b.setAttribute("aria-expanded", NT_OPEN[k] ? "true" : "false");
+      if (!b.dataset.on) { b.dataset.on = "1"; b.addEventListener("click", function () { NT_OPEN[k] = !NT_OPEN[k]; ntFolds(); }); }
+    });
+  }
+  // the morning email now lives on this page: load it when the page opens (it also loads with Settings)
+  (function () {
+    var v = $("view-notify"), seen = false; if (!v) return;
+    new MutationObserver(function () { if (v.hidden) { seen = false; NT_OPEN = {}; return; } if (!seen) { seen = true; if (typeof meLoad === "function") meLoad(); } }).observe(v, { attributes: true, attributeFilter: ["hidden"] });
+  })();
   function fillHours(sel, from, to) {
     if (sel.options.length) return;
     for (var h = from; h <= to; h++) { var o = document.createElement("option"); o.value = String(h); o.textContent = fmtHour(h); sel.appendChild(o); }
   }
   function renderNotify() {
     $("open-notify").hidden = !state.isOwner;
-    $("nt-summary").textContent = state.notifyLoaded ? notifySummary() : "Loading…";
+    $("nt-summary").textContent = alertsSummary();
+    ntFolds();
     fillHours($("nt-brief-hour"), 7, 22); fillHours($("nt-quiet-start"), 0, 23); fillHours($("nt-quiet-end"), 0, 23);
     Array.prototype.forEach.call(document.querySelectorAll("#view-notify .seg[data-pref]"), function (sg) {
       var v = !!getPref(sg.getAttribute("data-pref"));
@@ -36,12 +67,12 @@
       });
       dc.appendChild(b);
     });
-    $("nt-body").classList.toggle("off", !state.notify.enabled);
+    $("nt-body").classList.toggle("off", !state.notify.enabled); $("nt-body2").classList.toggle("off", !state.notify.enabled);
     $("nt-quiet-row").hidden = !state.notify.quiet.on;
     var fw = (state.players || []).map(function (x) { return x.name; }).filter(Boolean);
     $("nt-follow-who").textContent = fw.length ? "You follow " + (fw.length > 4 ? fw.slice(0, 4).join(", ") + " and " + (fw.length - 4) + " more" : fw.length > 1 ? fw.slice(0, -1).join(", ") + " and " + fw[fw.length - 1] : fw[0]) + ". Follow or stop following on a player's page (tap their picture)."
       : "Follow a player from their page (tap their picture anywhere in Slate) to get these.";
-    $("nt-spoiler").textContent = state.showScores ? "Score alerts include the score. Hide scores in Settings to get spoiler-free alerts." : "Spoiler-free: scores are hidden in Settings, so alerts only say when a game ends.";
+    $("nt-spoiler").textContent = state.showScores ? "Score alerts include the score. Hide scores in Settings > My slate to get spoiler-free alerts." : "Spoiler-free: scores are hidden in Settings > My slate, so alerts only say when a game ends.";
     $("nt-state").textContent = state.notify.enabled ? "Alerts arrive as notifications." : "You won't get any game notifications.";
     pushState();
   }

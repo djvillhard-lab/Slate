@@ -6,5 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Settings (five-row layout; Alerts and email) | body.html, shell.html, 220-notifications.js, 225-feedback.js, 230-settings.js, 232-welcome.js, 287-simple.js, styles/111-settings.css, docs/pages/settings.md | 2026-11-27 01:15 |
-| DJ | shared: 240-chrome.js | Notifications page title becomes Alerts and email | 2026-11-27 01:15 |

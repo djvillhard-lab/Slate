@@ -5,6 +5,16 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.175.0 (Nov 27, 2026)
+TestFlight: 3.174.1, no new build (web only)
+- Settings has five rows instead of nine: My slate, Alerts and email, Look and text, Account, and Help and about. Each row's second line says what it's set to.
+- My slate holds everything that decides your slate: Slate rules, Worth a look, The Athletic newsletters, and under "While you watch", Show scores and Quick reads.
+- Alerts and email (was Notifications) now has the morning email right under the morning brief. Game alerts, Players you follow, Live scores on the Lock Screen and Quiet hours fold away; each folded row says what's on, and a tap opens it.
+- Look and text: Look, Font, Text size and Simple mode first, then the phone setup (Phone, Navigation, the open screen's crease) at the bottom.
+- Help and about: Send feedback and Share the slate moved in here with the version, What's new and Reset.
+- Account: your admin tools (Try the new user setup, Invite someone, People) sit together under Admin, which only your account sees.
+- Fixed: the Three pages / Classic menu switch no longer wraps onto two lines, and the Quick reads choice no longer squeezes its words into a thin column.
+
 ## 3.174.2 (Nov 26, 2026)
 TestFlight: 3.174.1, no new build (web only)
 - Morning email: it stopped going out after Nov 19. Anyone with golf or F1 turned on in Slate rules (Drew and Dad) got nothing, because the email's copy of the slate code was missing a piece added that day. It's fixed and their emails start again tomorrow morning. A check now stops this kind of gap before it ships.

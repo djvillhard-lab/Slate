@@ -101,7 +101,7 @@
   // ---------- Settings is a main page of rows; each row opens a sub-page inside the same view (3.61.0) ----------
   // state.setPage: "" (the main page) or the data-pg of the block showing. Back returns to the main page (goBack asks
   // setPageBack first), and the header shows the sub-page's name (setTitle, used by renderTop).
-  var SET_PAGES = { email: "Morning email", slate: "Slate and games", look: "Look and text size", account: "Account and people", about: "About and updates" };
+  var SET_PAGES = { slate: "My slate", look: "Look and text", account: "Account", about: "Help and about" };  // 3.175.0: five rows (DJ chose "Five doors")
   var setPageY = 0;
   function setScrollTo(y) { if (isDuo) $("pane-r").scrollTop = y; else window.scrollTo(0, y); }
   function setPageOpen(pg) {
@@ -125,13 +125,13 @@
     // what each row is set to, in a few words
     var signed = !!slatePass(), me = "dj", nm = ""; try { me = localStorage.getItem("slate-user") || "dj"; nm = localStorage.getItem("slate-user-name") || ""; } catch (e) {}
     var set = function (id, t) { var x = $(id); if (x) x.textContent = t; };
-    var mp = (typeof meInfo === "object" && meInfo.p) || null;
-    set("sp-email", !signed ? "Log in to get your slate by email" : mp && mp.on ? "On, every day at " + meClock(mp.time || "07:00") : mp ? "Off" : "Your slate by email every morning");
-    set("sp-slate", "Scores " + (state.showScores ? "shown" : "hidden") + " · newsletters, Worth a look, quick reads");
+    if ($("nt-summary") && typeof alertsSummary === "function") set("nt-summary", alertsSummary());
+    var wr0 = typeof walRules === "function" ? walRules() : null, nl0 = (state.newsletters || []).length;
+    set("sp-slate", ["Slate rules", "scores " + (state.showScores ? "shown" : "hidden"), wr0 ? "Worth a look " + (wr0.on ? "on" : "off") : "", nl0 ? nl0 + " newsletter" + (nl0 > 1 ? "s" : "") : ""].filter(Boolean).join(" · "));
     var th = THEMES[state.look], sz = state.textSize === "auto" ? "Auto" : String(state.textSize || "m").toUpperCase();
-    set("sp-look", (deviceMode() === "duo" ? "iPhone Duo" : "iPhone") + " · " + (th ? th[0] : "Midnight") + " · " + fontName() + " · text " + sz);
-    set("sp-account", !signed ? "Not logged in on this phone" : "Logged in as " + (me === "dj" ? "DJ" : nm || me) + (isAdmin() ? " · invites and people" : ""));
-    set("sp-about", "Slate " + SLATE_VERSION + " · what's new, reset the app");
+    set("sp-look", (th ? th[0] : "Midnight") + " · " + fontName() + " · text " + sz + (typeof SM === "object" && SM && smOn() ? " · Simple mode" : ""));
+    set("sp-account", !signed ? "Not logged in on this phone" : "Logged in as " + (me === "dj" ? "DJ" : nm || me) + (isAdmin() ? " · people and invites" : ""));
+    set("sp-about", "Send feedback, share the slate · Slate " + SLATE_VERSION);
   }
   Array.prototype.forEach.call(document.querySelectorAll("#view-settings [data-open]"), function (b) { b.addEventListener("click", function () { setPageOpen(b.getAttribute("data-open")); }); });
   function renderSettings() {

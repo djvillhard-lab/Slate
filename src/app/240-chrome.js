@@ -67,7 +67,7 @@
     var shortDate = fmtDate(state.date, { weekday: "short" }) + ", " + fmtDate(state.date, { month: "short", day: "numeric" });
     // today reads "Today's Slate" until 5 PM, then "Tonight's Slate" (the page re-renders every minute, so it flips on its own)
     var slateTitle = state.date === today ? (new Date().getHours() < 17 ? "Today's Slate" : "Tonight's Slate") : named ? dl.charAt(0).toUpperCase() + dl.slice(1) + "'s Slate" : shortDate;
-    $("title-t").textContent = v === "news" ? "News" : v === "settings" ? setTitle() : v === "notify" ? "Notifications" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "feed" ? "Live feed" : v === "best" ? "Player rankings" : v === "moments" ? "Box Office" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
+    $("title-t").textContent = v === "news" ? "News" : v === "settings" ? setTitle() : v === "notify" ? "Alerts and email" : v === "tv" ? "On TV" : v === "games" ? "All games" : v === "rules" ? "Slate rules" : v === "game" ? "Matchup" : v === "feed" ? "Live feed" : v === "best" ? "Player rankings" : v === "moments" ? "Box Office" : v === "teams" ? "Teams" : v === "team" ? "Team" : v === "tabs" ? "Edit tabs" : slateTitle;
     $("l-title-t").textContent = slateTitle;
     var tl = $("title"); if (tl) tl.classList.add("has-brand");
     $("btn-rules").hidden = v !== "lineup"; $("btn-copy").hidden = v !== "lineup"; $("btn-find").hidden = !$("view-" + v);  // 3.119.0: Search on every page

@@ -105,7 +105,7 @@ export async function googleRoutes(req, env, url, h) {
       return { ok: true, kind: "link", p: g.p || "google", email: g.email };
     }
     const l = links[g.uid];
-    if (!l) return { error: "This " + name + " isn't connected to Slate yet. Open Slate, log in with your passcode, then go to Settings → Account and people → " + where + ".", code: 404 };
+    if (!l) return { error: "This " + name + " isn't connected to Slate yet. Open Slate, log in with your passcode, then go to Settings → Account → " + where + ".", code: 404 };
     if (l.id === "dj") return { error: "DJ's profile still logs in with its passcode.", code: 403 };
     const reg = ((await getDoc(env, "users/registry")) || {}).users || {}, u = Object.values(reg).find((v) => v && v.id === l.id);
     if (!u) return { error: "That Slate profile isn't active any more. Ask DJ.", code: 403 };

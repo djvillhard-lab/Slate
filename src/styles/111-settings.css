@@ -1,0 +1,18 @@
+/* Settings, five rows (3.175.0, DJ chose "Five doors"): main page My slate, Alerts and email, Look and text, Account, Help and about */
+/* rows that sit inside a sub-page (Slate rules on My slate; Send feedback and Share on Help and about) */
+#view-settings .set-acts.set-in { margin: 4px 0 10px; }
+/* Quick reads: the words get the full width, the Paragraph / Bullets choice sits under them */
+html #view-settings .pv-row { flex-direction: column; align-items: stretch; gap: 10px; }
+html #view-settings .pv-row #pvstyle-seg { width: 100% !important; display: grid; grid-template-columns: 1fr 1fr; }
+/* Navigation (Three pages / Classic menu) as wide as the card, like Phone; no wrapped labels */
+html #nav-seg { width: 100% !important; display: grid; grid-template-columns: 1fr 1fr; }
+html #nav-seg button, html #pvstyle-seg button { white-space: nowrap; }
+/* Phone, Navigation and the crease (setup, not looks) start a little lower, at the bottom of Look and text */
+#view-settings .set-grp { margin-top: 22px; }
+/* Alerts and email: long lists fold one level down */
+#view-notify .nt-fold { display: block; }
+#view-notify .nt-fold-in { margin-top: 10px; }
+#view-notify .nt-fold-in > .optrow { padding-left: 0 !important; padding-right: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+#view-notify .nt-fold-in > .hint:first-child { margin-top: 0; }
+#view-notify #nt-body2.off { opacity: .45; pointer-events: none; }
+html #nav-seg + .hint { margin-top: 10px; }

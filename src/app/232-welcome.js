@@ -635,12 +635,12 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     if (signed) {
       head("Welcome");
       row("Welcome walkthrough", "Pick teams and rebuild your own slate rules from a few questions.", "Start", function () { wlStart(false); });
-      if (isAdmin()) row("Try the new user setup", "See sign-up and the welcome exactly as a new person does, starting blank. Nothing is saved and your slate doesn't change.", "Try it", function () {
-        if (window.slatePreviewSignup) window.slatePreviewSignup(function (nm) { wlStart(true, true, nm); }); else wlStart(true, true, "");
-      });
     }
     if (signed && isAdmin()) {
-      head("People");
+      head("Admin");  // only DJ's account sees this part (3.175.0)
+      row("Try the new user setup", "See sign-up and the welcome exactly as a new person does, starting blank. Nothing is saved and your slate doesn't change.", "Try it", function () {
+        if (window.slatePreviewSignup) window.slatePreviewSignup(function (nm) { wlStart(true, true, nm); }); else wlStart(true, true, "");
+      });
       row("Invite someone", "One link to text: their account, their slate and the iPhone app.", "Invite", function () {
         inv.link = ""; inv.err = ""; invSheet(); invCall({ action: "list" }).then(function (j) { if (j.list) { inv.list = j.list; if ($("sheet-invite") && $("sheet-invite").classList.contains("open")) invSheet(); } if (j.people) { ppl.list = j.people; acctPeople(); } });
       });

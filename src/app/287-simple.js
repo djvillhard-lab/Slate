@@ -334,7 +334,7 @@
     var col = el("div", "sm-col"), top = el("div", "sm-top"); top.appendChild(el("h1", null, "Use the full app?")); col.appendChild(top);
     var body = el("div", "sm-body"); col.appendChild(body);
     body.appendChild(el("p", "sm-note", "The full app has more pages, smaller text and menus. Your teams and your slate stay the same."));
-    body.appendChild(el("p", "sm-note", "To come back here later: Settings, then Look and text size, then Simple mode."));
+    body.appendChild(el("p", "sm-note", "To come back here later: Settings, then Look and text, then Simple mode."));
     body.appendChild(smBtn("Yes, use the full app", function () { SM.on = false; smSave(); smReload(); }, "wide main"));
     body.appendChild(smBtn("No, stay here", function () { smGo("help"); }, "wide"));
     smBackBar(col, two, "Back", function () { smGo("help"); }); return col;
@@ -399,7 +399,7 @@
   render = function () { smRender0.apply(this, arguments); smIsland(); if (smOn() || $("sm")) smDraw(); };
   window.addEventListener("resize", function () { if (smOn()) smDraw(); });
 
-  // ---- the switch: Settings > Look and text size ----
+  // ---- the switch: Settings > Look and text ----
   (function () {
     var lk = document.querySelector('#view-settings .setpg[data-pg="look"]'); if (!lk) return;
     var h = el("div", "sec"); h.appendChild(el("h2", null, "Simple mode"));
@@ -408,5 +408,6 @@
     row.appendChild(tx);
     row.appendChild(switchEl(false, "Simple mode", function () { SM.on = true; SM.page = "home"; smSave(); smReload(); }));
     card.appendChild(row); card.appendChild(el("p", "hint", "Just your slate, the scores and the channel. To switch back, open Help in Simple mode and tap Use the full app."));
-    lk.insertBefore(card, lk.firstChild); lk.insertBefore(h, card);
+    var slot = $("sm-slot");  // 3.175.0: after Text size, the other way to make Slate easier to read
+    if (slot) { slot.appendChild(h); slot.appendChild(card); } else { lk.insertBefore(card, lk.firstChild); lk.insertBefore(h, card); }
   })();
