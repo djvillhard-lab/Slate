@@ -135,3 +135,4 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   to save logos in the background (iPhone build).
 - 3.163.3 (DJ): the Board's narrow island (the Duo's side screen, MiniSide) now gets g.al/g.hl; MiniSide gives a logo 18 pt.
 - 3.174.1 (DJ): MiniSide (narrow island, Duo side screen) score 18 pt (was 12), column 26 pt.
+- 3.178.6 (DJ): TonightTile (Board, large widget) and WatchTile dim the losing score only after the final, never while live.

@@ -71,7 +71,7 @@ struct WatchTile: View {
 
     private func pill(abbr: String, color: String, logo: String?, score: Int?, other: Int, left: Bool) -> some View {
         let c = Color(watchHex: color, fallback: WatchLook.raise)
-        let behind = score.map { $0 < other } ?? false
+        let behind = g.s == "post" && (score.map { $0 < other } ?? false)   // DJ (Nov 27): only after the final
         return HStack(spacing: 4) {
             if left { badge(logo) }
             if let score {

@@ -326,7 +326,7 @@ struct TonightTile: View {
             if let score {
                 Text("\(score)")
                     .font(SlateLook.num(dark ? 24 : 26))
-                    .opacity(live && behind ? 0.6 : 1)
+                    // DJ (Nov 27): never grayed while the game is on; the losing side dims only after the final (below)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
             } else {
