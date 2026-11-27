@@ -389,7 +389,9 @@
     var L = TVS.rules.lg;
     for (var i = 0; i < L.length; i++) if (L[i].k === g.league && tvsLgRank(g)) {
       var nm = (LEAGUES[g.league] || {}).name || g.league;
-      return { short: nm + " #" + (i + 1), long: "Your league order: " + nm + " is #" + (i + 1) + (L[i].prime ? " in prime time" : "") };
+      // 3.176.2 (DJ didn't follow "NBA #3"): plain words, no number on the TV
+      var ordn = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"][i] || (i + 1) + "th";
+      return { short: "Your league order", long: "Your league order: " + nm + " is " + ordn + " on your list in Rules" + (L[i].prime ? " (prime time)" : "") };
     }
     var w = (state.why && state.why[g.id]) || [], h = ruleHits(g).why.filter(function (x) { return x !== "Your team"; });
     var tag = (w[0] && w[0] !== "Added" ? w[0] : "") || h[0] || "";
