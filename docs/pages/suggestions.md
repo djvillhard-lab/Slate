@@ -64,3 +64,11 @@ DJ asked for more specific Worth a look rules for college and other leagues (onl
 - Applies to live games not on your slate (`liveSuggestions` via `walLgPass`). Games on your slate keep their tag regardless.
 - Open: "playoff contenders" is approximated by both winning records (no playoff-odds source). Rivalries only cover the
   RIVALS list in 180-worth-a-look.js; add pairs there if DJ names more.
+
+## Suggested for you hidden, Worth a look off by default (3.173.2, Nov 26, 2026)
+- DJ: "Remove suggestions [for slate games]. I need to think about that more." `SUGG_SLATE_ON = false` in
+  180-worth-a-look.js makes `suggestionBlock("slate")` return nothing; the Thumbs up and down row in Settings is hidden
+  with it (thumbs only live there). Suggested rules on the Slate rules page are untouched. Set it to true to bring it back.
+- Worth a look defaults to OFF. `walOnFor(r)`: a Settings choice made from 3.173.2 on is saved as `walRules.on2` and wins;
+  without it, profiles `dj` and `bro` (Drew) keep the old meaning (on unless `on === false`), everyone else (Dad = `dad`,
+  new people, `tester`) is off. Profile id comes from localStorage `slate-user` (empty = dj). No one's saved data was changed.

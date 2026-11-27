@@ -71,7 +71,14 @@
     var r = state.walRules || {}, by = {}, src = r.by && typeof r.by === "object" ? r.by : null;
     if (src) Object.keys(src).forEach(function (k) { if (Array.isArray(src[k])) by[k] = src[k].filter(function (o) { return walOptKeys(k).indexOf(o) !== -1; }); });
     else if (r.ranked) ["ncaaf", "ncaam", "ncaaw"].forEach(function (k) { by[k] = ["ranked"]; });  // before 3.134.0: one "College: ranked teams only" switch
-    return { on: r.on !== false, close: r.close !== false, upset: r.upset !== false, big: r.big !== false, nat: !!r.nat, by: by, leagues: Array.isArray(r.leagues) ? r.leagues : walDefaultLgs() };
+    return { on: walOnFor(r), close: r.close !== false, upset: r.upset !== false, big: r.big !== false, nat: !!r.nat, by: by, leagues: Array.isArray(r.leagues) ? r.leagues : walDefaultLgs() };
+  }
+  // On or off (3.135.0): off unless you turn it on, except DJ and Drew keep what they had (on unless they'd switched it off).
+  // Dad starts off. A choice made in Settings from 3.135.0 on is saved as on2 and wins for everyone.
+  function walOnFor(r) {
+    if (typeof r.on2 === "boolean") return r.on2;
+    var me = "dj"; try { me = localStorage.getItem("slate-user") || "dj"; } catch (e) {}
+    return (me === "dj" || me === "bro") ? r.on !== false : false;
   }
   // league by league, which games Worth a look can show (3.134.0). Pick any number; a game needs just one. None = every game.
   var WAL_POWER = ["SEC", "Big Ten", "Big 12", "ACC"];
@@ -340,8 +347,11 @@
     sec.appendChild(list);
     return sec;
   }
+  // Suggested for you under the slate is hidden while DJ thinks it over (DJ, Nov 26, 2026). The code stays; set to true to bring it back.
+  var SUGG_SLATE_ON = false;
   function suggestionBlock(where) {
     if (where === "live") return walBlock();
+    if (where === "slate" && !SUGG_SLATE_ON) return null;
     var gs = where === "slate" ? gameSuggestions() : [], rs = ruleSuggestions();
     if (!gs.length && !rs.length) return null;
     var w = el("div", "sugg" + (where === "live" ? " sugg-live" : ""));

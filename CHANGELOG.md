@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.173.2 (Nov 26, 2026)
+TestFlight: 3.163.3 (60), no new build (web only)
+- Suggested for you is gone from under the slate for now, while DJ thinks it over. Its thumbs up and down row in Settings is hidden with it. Nothing is deleted, so it can come back as it was.
+- Worth a look is now off unless you turn it on (Settings > Slate and games > Worth a look). It's off for Dad. DJ and Drew keep it exactly as they had it.
+
 ## 3.173.1 (Nov 26, 2026)
 TestFlight: 3.163.3 (60), no new build (web only)
 - Game cards, your bets: the result is now a small tag at the end of the bet's line (✓ Won, ✗ Lost, Push, or live: Covering, Up 3, Needs 4) instead of a second line of text. The count ("48 points") sits just before the tag when there's room and is left off when there isn't.

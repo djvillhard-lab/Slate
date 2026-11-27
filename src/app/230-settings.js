@@ -127,7 +127,7 @@
     var set = function (id, t) { var x = $(id); if (x) x.textContent = t; };
     var mp = (typeof meInfo === "object" && meInfo.p) || null;
     set("sp-email", !signed ? "Log in to get your slate by email" : mp && mp.on ? "On, every day at " + meClock(mp.time || "07:00") : mp ? "Off" : "Your slate by email every morning");
-    set("sp-slate", "Scores " + (state.showScores ? "shown" : "hidden") + " · newsletters, Worth a look, thumbs, quick reads");
+    set("sp-slate", "Scores " + (state.showScores ? "shown" : "hidden") + " · newsletters, Worth a look, quick reads");
     var th = THEMES[state.look], sz = state.textSize === "auto" ? "Auto" : String(state.textSize || "m").toUpperCase();
     set("sp-look", (deviceMode() === "duo" ? "iPhone Duo" : "iPhone") + " · " + (th ? th[0] : "Midnight") + " · " + fontName() + " · text " + sz);
     set("sp-account", !signed ? "Not logged in on this phone" : "Logged in as " + (me === "dj" ? "DJ" : nm || me) + (isAdmin() ? " · invites and people" : ""));
@@ -180,7 +180,7 @@
       $("wal-sum").textContent = !wr.on ? "Off" : !picks.length ? "On, but no rules picked" : "On: " + picks.join(" and ") + ", " + (wr.leagues.length ? wr.leagues.map(function (k) { return (LEAGUES[k] || {}).tag || k; }).join(", ") : "no leagues") + (nBy ? " (" + nBy + " narrowed down)" : "");
       ws.hidden = !state.walOpen; wh.setAttribute("aria-expanded", state.walOpen ? "true" : "false");
       if (!wh.dataset.on) { wh.dataset.on = "1"; wh.addEventListener("click", function () { state.walOpen = !state.walOpen; renderSettings(); }); }
-      var setRule = function (k, v) { var r = Object.assign({}, state.walRules || {}); r[k] = v; state.walRules = r; saveSettings(); render(); };
+      var setRule = function (k, v) { var r = Object.assign({}, state.walRules || {}); r[k] = v; if (k === "on") r.on2 = v; state.walRules = r; saveSettings(); render(); };
       var walRow = function (k, title, help, opts, parent) {
         var row = el("div", "optrow" + (parent ? " wal-parent" : "")), t = el("div"); t.appendChild(el("b", null, title)); if (help) t.appendChild(el("span", null, help)); row.appendChild(t);
         var seg = el("div", "seg seg2"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", title);
@@ -229,7 +229,8 @@
       ws.appendChild(kids);
     }
     // what your thumbs on Suggested for you and Worth a look have taught (185-thumbs.js)
-    var fs = $("fb-set"), fh = $("fb-head"); if (fs && fh) {
+    var fs = $("fb-set"), fh = $("fb-head"); if (fh && fh.parentNode) fh.parentNode.style.display = SUGG_SLATE_ON ? "" : "none";  // thumbs only live on Suggested for you, hidden for now (3.135.0)
+    if (fs && fh && SUGG_SLATE_ON) {
       $("fb-sum").textContent = fbSummary();
       fs.hidden = !state.fbOpen; fh.setAttribute("aria-expanded", state.fbOpen ? "true" : "false");
       if (!fh.dataset.on) { fh.dataset.on = "1"; fh.addEventListener("click", function () { state.fbOpen = !state.fbOpen; renderSettings(); }); }
