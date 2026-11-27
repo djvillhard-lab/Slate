@@ -42,3 +42,11 @@ Code: `src/app/283-three-pages.js`, `src/styles/101-three-pages.css`, the `"page
 - `n3Away` in 283-three-pages.js: one passive scroll listener; hides after 16px of travel down, shows on any move up over 1px (not the bounce at the page's bottom), at the top (under 24px), on a page change, and never hides while the hammer row or the league filter is open. It only toggles `.n3-away` on `#n3` and `nav.dock`; the CSS uses `translate` + opacity (so it stacks with each button's own `transform`). Nothing is rebuilt during a scroll (performance rule).
 - Covers the bar, day arrows, Today, the All games filter, the layout button and Back (Classic menu's button too, since it is in `nav.dock`). Not covered: the iPhone app's own native buttons on old builds, and Simple mode's bar (its own file).
 - News no longer gets the bottom-right filter button (`n3FiltOn` is All games only): the Front Page has its own pills.
+
+## Navigation tidy (3.180.0, DJ Nov 27, 2026: simplicity review, release 1 of 3)
+Review: https://claude.ai/artifact/LajCd8TxtmjXzmUDZzjTPh. DJ picked "Build all three, one at a time" (navigation tidy, one button kit, All games in two rows).
+- One set of day arrows: `n3Top` sets `html[data-n3day]` whenever the bottom pair (`#n3-dr`) is on, and the CSS hides the header's `#day-prev` / `#day-next`. The date label and the hidden date input stay. Classic menu and the unfolded Duo's left side (no bar) keep the header arrows.
+- The hammer stays lit on the pages under it (`N3_UNDER`: Box Office, On TV, Teams, Settings' main page). It gets `data-sub` there: no "more pages" chevron, and a tap goes to the slate as before (the row still only opens from the slate).
+- No gear on Alerts and email or Slate rules (`n3Gear`).
+- `099-duo-corner.css`: Show scores and Email me my slate left the clock list; since 3.175.0 they sit far below the clock. The first Settings row's arrow and the Notifications switch are still held left on the folded Duo on purpose (they are under the clock).
+- Not done, on purpose: the Live feed's focus button stays beside Back. DJ placed it there Nov 26, and in focus view the feed's own row is hidden, so it could not be turned off from there.

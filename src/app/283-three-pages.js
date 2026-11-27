@@ -8,6 +8,7 @@
   // The iPhone app draws its own menu button, so this layout only runs there on builds that can hand the bottom of the
   // screen to the page (SLATE_NATIVE.webNav); older builds stay on the Classic menu by themselves.
   var N3_PAGES = ["news", "lineup", "games"], N3_MORE = [["moments", "Box Office"], ["tv", "On TV"], ["teams", "Teams"]];  // 3.129.3 (DJ): Settings moved to a button beside Search
+  var N3_UNDER = ["moments", "tv", "teams", "settings"];
   var N3 = { row: false, filt: false, el: null, sig: "", fsig: "", told: null };
   function n3Pref() { try { return localStorage.getItem("slate-nav") === "classic" ? "classic" : "three"; } catch (e) { return "three"; } }
   function n3HostNative() { if (!PANE) return NATIVE; try { return window.parent.slateHostNative(); } catch (e) { return NATIVE; } }
@@ -187,8 +188,10 @@
       N3.el.hidden = !on;
       $("n3-bar").hidden = !bar;
       Array.prototype.forEach.call($("n3-bar").children, function (b) {
-        var p = b.getAttribute("data-p"), cur = p === state.view;
+        // 3.180.0: Box Office, On TV, Teams and Settings live under the hammer, so it stays lit there (data-sub: no "more pages" chevron, a tap goes to the slate)
+        var p = b.getAttribute("data-p"), sub = p === "lineup" && N3_UNDER.indexOf(state.view) !== -1, cur = p === state.view || sub;
         if (cur) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+        if (sub) b.setAttribute("data-sub", ""); else b.removeAttribute("data-sub");
         if (p === "lineup") { b.setAttribute("aria-expanded", N3.row ? "true" : "false"); b.setAttribute("aria-label", cur ? (N3.row ? "Close more pages" : "Slate. Tap for more pages") : "Slate"); }
       });
       $("n3-row").hidden = !N3.row;
@@ -250,11 +253,13 @@
   }
   // 3.129.3 (DJ): Settings is a permanent button beside Search at the top of every page (not on Settings itself)
   function n3Gear() {
-    var on = n3On() && state.view !== "settings";
+    var on = n3On() && state.view !== "settings" && state.view !== "notify" && state.view !== "rules";  // 3.180.0: not on the pages inside Settings either (Alerts and email, Slate rules)
     ["btn-settings", "l-btn-settings"].forEach(function (id) { var b = $(id), f = $(id.replace("settings", "find")); if (b && on && f && !f.hidden) { b.hidden = false; if (f.parentNode === b.parentNode) f.parentNode.insertBefore(b, f); } });
   }
   function n3Top() {
     n3Gear();
+    // 3.180.0 (simplicity review): one set of day arrows. Where the glass pair shows bottom right, the header's small pair is hidden (CSS)
+    document.documentElement.toggleAttribute("data-n3day", n3DayOn());
     if (!n3On() || !n3Dated()) return;
     var td = $("title-d"), sub = $("title-sub"), tl = $("title"), today = todayInHome(), day = n3DayOf();
     td.hidden = false; if (sub) sub.hidden = true; if (tl) tl.classList.remove("one-line");

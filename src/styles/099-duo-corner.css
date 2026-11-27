@@ -12,12 +12,10 @@ html[data-native].side-col:not(.duo) #team-body .tm-head .tm-top > .star {      
   margin-right: calc(var(--duo-cut) - 16px);
 }
 
-/* whole rows and cards at the top of a page */
+/* whole rows and cards at the top of a page (3.180.0: Show scores and Email me my slate left this list; since 3.175.0 they sit far below the clock) */
 html[data-native].side-col:not(.duo) .set-acts > .navrow.sa:first-child,            /* Settings: Slate rules row (its arrow) */
 html[data-native].side-col:not(.duo) #rules-body > .rsum:first-child,               /* Slate rules: the summary card */
 html[data-native].side-col:not(.duo) #view-notify > .optrow.master,                 /* Notifications: the On/Off switch */
-html[data-native].side-col:not(.duo) #me-set > .optrow:first-child,                 /* Settings > Morning email: the switch */
-html[data-native].side-col:not(.duo) .optrow:has(> #score-seg),                     /* Settings > Slate and games: Scores */
 html[data-native].side-col:not(.duo) #acct > .sec:first-child + .optrow,            /* Settings > Account: Log out */
 html[data-native].side-col:not(.duo) #ver-row,                                      /* Settings > About: Check for updates */
 html[data-native].side-col:not(.duo) #nw-body > .nx-strip + .nx-sec {               /* News: the leagues line beside Headlines */

@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.180.0 (Nov 27, 2026)
+TestFlight: 3.178.6 (62), no new build (web only)
+- Navigation tidy, the first of three releases from the simplicity review. One set of day arrows: on the slate, All games, News, On TV and Box Office the small arrows beside the date at the top are gone, because the glass pair at the bottom right already does the same job under your thumb. The date at the top stays. (The Classic menu and the left side of the unfolded Duo, which have no bottom arrows, keep the top ones.)
+- The bar always says where you are: on Box Office, On TV, Teams and Settings the hammer stays lit, since those pages live under it. Tapping it there goes to the slate, as before.
+- Settings: no gear button on Alerts and email or Slate rules (you're already in Settings). On the folded Duo, the Show scores switch and the Email me my slate switch sit at the right edge like the other switches; they were still being held clear of the clock from before Settings was rearranged, when they sat at the top of a page.
 ## 3.179.3 (Nov 27, 2026)
 TestFlight: 3.178.6 (62), no new build (web only)
 - Code review, the rest of the fixes nobody should notice. Speed: while Slate is open it checks for changes to your own settings every 15 seconds, and it used to get every setting back in full each time; now it gets them only when one has changed. The styles are sent with their comments and spare spaces stripped, like the code since 3.179.0 (about 30 KB less to download).

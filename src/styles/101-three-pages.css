@@ -31,10 +31,10 @@ html.wl-on .n3, html.panes:not(.in-pane) .n3 { display: none !important; }
 .n3-b[aria-expanded="true"] .n3-ic { display: none; }
 .n3-b[aria-expanded="true"] .n3-x { display: block; }
 /* 3.130.7 (DJ): a small chevron on top of the lit hammer says more pages sit above it; it nudges up twice when the slate opens */
-.n3-b[data-p="lineup"][aria-current="page"][aria-expanded="false"]::before { content: ""; position: absolute; top: 5px; left: 50%; width: 6px; height: 6px; margin-left: -4px;
+.n3-b[data-p="lineup"][aria-current="page"][aria-expanded="false"]:not([data-sub])::before { content: ""; position: absolute; top: 5px; left: 50%; width: 6px; height: 6px; margin-left: -4px;
   border-top: 2px solid currentColor; border-left: 2px solid currentColor; border-radius: 1px 0 0 0; transform: rotate(45deg); opacity: .75; pointer-events: none;
   animation: n3Nudge 1.1s ease-in-out .5s 2; }
-.n3-b[data-p="lineup"][aria-current="page"][aria-expanded="false"] .n3-ic { transform: translateY(2px); }
+.n3-b[data-p="lineup"][aria-current="page"][aria-expanded="false"]:not([data-sub]) .n3-ic { transform: translateY(2px); }
 @keyframes n3Nudge { 0%, 100% { transform: translateY(0) rotate(45deg); } 40% { transform: translateY(-3px) rotate(45deg); } }
 .n3-live { display: none; position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--live); }
 /* 3.140.4 (DJ, Nov 25): no red dot on the All games button in the bar; leagues in the filter keep theirs */
@@ -150,3 +150,6 @@ nav.dock.n3-away > * { pointer-events: none !important; }
 /* 3.144.3 (DJ, Nov 26: "the menu changes size when switching between view modes"): on the unfolded Duo the day arrows
    keep one width whether the page is full screen or one of two (they used to shrink with the page's width) */
 html.in-pane .n3-dr { width: 80px; }
+
+/* 3.180.0 (simplicity review): one set of day arrows. The header pair goes where the glass pair shows bottom right */
+html[data-n3day] #day-prev, html[data-n3day] #day-next { display: none !important; }
