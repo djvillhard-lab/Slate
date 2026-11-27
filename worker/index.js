@@ -251,7 +251,8 @@ export default {
         const np = (me.id === "dj" ? "" : "u/" + me.id + "/") + "prefs/notify", nd = (await getDoc(env, np)) || {};
         const lv = nd.liveAct = nd.liveAct && typeof nd.liveAct === "object" ? nd.liveAct : {};
         if (p.kind === "gone") { if (!/^[a-z0-9-]{3,60}$/.test(String(p.gameId || ""))) return json({ error: "bad game" }, 400); lv.games = lv.games && typeof lv.games === "object" ? lv.games : {}; lv.games[p.gameId] = 0; }
-        else if (lv.board && typeof lv.board === "object") lv.board.on = false;
+        // all day (DJ, Nov 27): hidden for today only (the minute job decides if it was a swipe); picked games: off
+        else if (lv.board && typeof lv.board === "object") { if (lv.board.auto) lv.board.gone = Date.now(); else lv.board.on = false; }
         nd.updatedAt = new Date().toISOString();
         await putDoc(env, np, nd);
         return json({ ok: true });

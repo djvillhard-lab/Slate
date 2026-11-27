@@ -442,6 +442,11 @@ async function runBoard(env, p, sent, la, games, sc, slate) {
   let cur = sent.board, tok = la.board && la.board.token ? la.board : null;
   // a token left from an earlier day's Board (all day runs every day): not this one
   if (auto && !cur && tok && now - (Date.parse(tok.at) || 0) > 8 * 3600000) { delete la.board; gone = true; tok = null; }
+  // all day (DJ, Nov 27): swiping it away hides it for the rest of today only; it's back tomorrow. iOS reports any end
+  // as "dismissed" (a swipe and the server ending it look the same), so only a report while this one was still running,
+  // and not right after the 7.5-hour swap, counts as a swipe. (Before this, any end switched it off for good.)
+  const gn = Number(b.gone) || 0;
+  if (auto && cur && !cur.end && gn > (cur.t || 0) + 60000 && !(sent.broll && Math.abs(gn - sent.broll) < 180000)) { cur.end = 1; cur.off = 1; cur.hid = 1; }
   // switched off, or nothing picked for today: take it down now
   if (!b.on || !list.length) {
     if (cur && !cur.off) {
@@ -487,7 +492,7 @@ async function runBoard(env, p, sent, la, games, sc, slate) {
   // all day, past 7.5 hours (iOS ends a live notification at 8): end this one now; the next minute starts a fresh one
   if (auto && tok && now - (cur.t || now) > 7.5 * 3600000) {
     await sendLive(env, tok, "end", { "content-state": state, "dismissal-date": Math.floor(now / 1000) }, 10);
-    delete la.board; gone = true; sent.board = null;
+    delete la.board; gone = true; sent.board = null; sent.broll = now;
     return gone;
   }
   if (!tok || cur.k === key) return gone;
@@ -926,7 +931,7 @@ export async function runAlerts(env) {
     if ((p.follow || {}).final) for (const [i, xs] of Object.entries(fol)) if ((sc[i] || {}).state === "post" && xs.some((x) => !(s0.plfinal || []).includes(`${i}:${x.id}`))) box[i] = await boxFor(i);
     const sent = { date: D, brief: !!s0.brief, plstart: [...(s0.plstart || [])], plfinal: [...(s0.plfinal || [])], reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
-      board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null, bfin: Object.assign({}, s0.bfin || {}), blive: Object.assign({}, s0.blive || {}) };
+      board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null, bfin: Object.assign({}, s0.bfin || {}), blive: Object.assign({}, s0.blive || {}), broll: Number(s0.broll) || 0 };
     const before = JSON.stringify(sent);
     let msgs = [];
     if (p.enabled !== false) {

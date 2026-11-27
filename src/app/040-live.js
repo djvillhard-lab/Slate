@@ -588,7 +588,7 @@
       });
       list.appendChild(r);
     });
-    $("board-sub").textContent = b.auto ? "Your slate's games, 4 at a time, roll through one live notification on your Lock Screen and in the Dynamic Island all day. It comes back every day until you turn it off."
+    $("board-sub").textContent = b.auto ? "Your slate's games, 4 at a time, roll through one live notification on your Lock Screen and in the Dynamic Island all day. Once it's on, it comes back by itself every day, 15 minutes before your first game. Swipe it away to hide it for the rest of that day; it's back the next day. Turn it off here to stop it."
       : "Pick up to 4 games from your slate (" + picked.length + " of 4). They show together in one live notification on your Lock Screen and in the Dynamic Island.";
     var ob = $("btn-board-on");
     var bon = boardIsOn();

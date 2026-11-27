@@ -92,7 +92,7 @@
     // a live notification swiped away on the phone: its switch goes off here too (the app has told the server already)
     liveGone: function (id) {
       if (!state.notifyLoaded) return;
-      if (id === "board") { var b = boardPrefs(); b.on = false; }
+      if (id === "board") { var b = boardPrefs(); if (b.auto) b.gone = Date.now(); else b.on = false; }   // all day: hidden for today only
       else perGame("live")[String(id)] = 0;
       render(); try { if ($("sheet-board").classList.contains("open")) renderBoard(); } catch (e) {}
     },

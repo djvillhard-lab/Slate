@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.179.2 (Nov 27, 2026)
+TestFlight: 3.178.6 (62), no new build (web only)
+- Live scoreboard, all day: it now really comes back every day. Before, any time it left your Lock Screen (you swiped it away, or it ended itself at the end of the night or for the 8-hour swap iPhone requires), it switched itself off for good, so it never came back the next day. Now swiping it away only hides it for the rest of that day. Turn it off in the Board sheet to stop it.
+
 ## 3.179.1 (Nov 27, 2026)
 TestFlight: 3.174.1 (61), no new build (web only)
 - Football one-liners: defensive and return touchdowns are short now, just the count: "PIT: 2 defensive TDs", "DEN: Pick-six", "Special-teams TD". No player names or yards.

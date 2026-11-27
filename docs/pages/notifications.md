@@ -136,3 +136,8 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
 - 3.163.3 (DJ): the Board's narrow island (the Duo's side screen, MiniSide) now gets g.al/g.hl; MiniSide gives a logo 18 pt.
 - 3.174.1 (DJ): MiniSide (narrow island, Duo side screen) score 18 pt (was 12), column 26 pt.
 - 3.178.6 (DJ): TonightTile (Board, large widget) and WatchTile dim the losing score only after the final, never while live.
+- 3.179.2 (DJ: it should come back every day, hideable): iOS reports any end as .dismissed, and board-gone set board.on
+  = false, so all day switched itself off at the first end. Now with board.auto, board-gone sets board.gone (time);
+  runBoard treats a gone while the current one was running (not within 3 min of the 7.5 h swap, sent.broll) as a
+  swipe: ended for today (cur.hid). Next day starts as usual. Picked games keep the old behavior (off).
+
