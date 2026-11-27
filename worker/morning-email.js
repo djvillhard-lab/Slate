@@ -570,7 +570,7 @@ export async function morningStatus(env, p) {
     catch (e) { out.build = { ms: Date.now() - t0, error: String(e && e.stack || e).slice(0, 600) }; }
     globalThis.fetch = f0; out.build.fetches = nf;
   }
-  return { ok: true, gmailReady: gmailReady(env), now: now.toISOString(), people: out };
+  return { ok: true, gmailReady: gmailReady(env), self: !!env.SELF, now: now.toISOString(), people: out };
 }
 
 // ---------- Settings: POST /api/morning-email// ---------- Settings: POST /api/morning-email {pass, action: "get" | "save" | "test" | "preview", ...} ----------
