@@ -73,6 +73,8 @@ Elsewhere: `worker/` (Cloudflare API, cron, alerts), `scripts/` (tick.py and the
 
 If build.py says index.html was edited by hand, it prints those edits. Move them into `src/` before rebuilding, or they're lost.
 
+The app's code goes into index.html with comments and spare spaces stripped (`scripts/rjsmin.py`; nothing is renamed). To read a page error or a `shots.py --profile` by line number, build with `python3 build.py --plain`, look, then run `python3 build.py` again before committing. Never commit a `--plain` build.
+
 ## Commit messages (DJ and Drew read the feed)
 DJ and his brother Drew each run their own Claude on this repo and follow each other's work in the commit feed on GitHub (`/commits/main`). Every commit that lands on main, including a squash or merge commit, must read well there:
 - **Author = the person who asked.** Commit with `--author="<Name> <<github-id>+<login>@users.noreply.github.com>"`, for the person you work for (see **People** below). GitHub then shows that person's account on the commit, with Claude as co-author. Only ever use this GitHub noreply address, never a real email, and never a token.

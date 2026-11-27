@@ -4,10 +4,15 @@
     python3 build.py           build index.html and version.json
     python3 build.py --check   exit 1 if index.html doesn't match src/ (nothing written)
     python3 build.py --force   rebuild even if index.html was edited by hand (e.g. after a merge conflict)
+    python3 build.py --plain   build with the app's code as written, for reading errors and profiles by line number.
+                               Never commit a --plain build: run python3 build.py again afterwards.
 
 src/shell.html is the page skeleton. Each {{path}} in it is replaced by that file from src/
 ({{app/*.js}} = every file in src/app/, in name order, all inside one shared function scope).
 {{CHANGES}} becomes CHANGELOG.md (shown in Settings > Release history) and {{BUILD}} the build time.
+
+The app's code ({{app/*.js}}) goes into the page with its comments and spare spaces taken out (scripts/rjsmin.py):
+about a quarter less to download. Nothing is renamed, so errors and profiles still show the real function names.
 
 A new build time (Central, YYYYMMDDHHMMSS) is stamped only when the page actually changed;
 open apps compare it with version.json and reload onto the new version by themselves.
@@ -39,6 +44,20 @@ def recent(log):  # the changelog's opening lines and its newest entries (the wh
     return "".join(parts[:RECENT + 1])
 
 
+PLAIN = False  # --plain: the app's code as written
+
+
+def shrink(js):  # comments and spare whitespace out; no renaming (scripts/rjsmin.py, a copy of rJSmin 1.3.0, Apache 2.0)
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import rjsmin
+    out = rjsmin.jsmin(js)
+    # the iPhone app's build reads the version from index.html with these exact spaces (ios/ci_scripts/ci_pre_xcodebuild.sh)
+    out, n = re.subn(r'var SLATE_VERSION="([\d.]+)"', r'var SLATE_VERSION = "\1"', out, count=1)
+    if n != 1:
+        sys.exit("build.py: SLATE_VERSION went missing while shrinking the code")
+    return out
+
+
 def assemble(build):
     shell = read(os.path.join(SRC, "shell.html"))
 
@@ -51,7 +70,8 @@ def assemble(build):
         paths = sorted(glob.glob(os.path.join(SRC, key))) if "*" in key else [os.path.join(SRC, key)]
         if not paths or not all(os.path.isfile(p) for p in paths):
             sys.exit("build.py: src/%s not found" % key)
-        return one("".join(read(p) for p in paths))
+        text = one("".join(read(p) for p in paths))
+        return shrink(text) if key == "app/*.js" and not PLAIN else text
 
     return re.sub(r"\{\{([A-Za-z0-9_./*-]+)\}\}", sub, shell)
 
@@ -92,7 +112,14 @@ def now_central():
 
 def main():
     args = set(sys.argv[1:])
-    old_build = json.loads(read(VER)).get("build", "") if os.path.exists(VER) else ""
+    global PLAIN
+    PLAIN = "--plain" in args
+    try:
+        old_build = json.loads(read(VER)).get("build", "") if os.path.exists(VER) else ""
+    except ValueError:  # merge-conflict marks in version.json: --force rebuilds it, anything else stops here
+        if "--force" not in args:
+            sys.exit("build.py: version.json isn't readable (merge-conflict marks?). Run python3 build.py --force")
+        old_build = ""
     current = read(OUT) if os.path.exists(OUT) else ""
     m = HEAD_RE.search(current)
     current_body = strip_head(current)
@@ -129,6 +156,8 @@ def main():
     with open(VER, "w", encoding="utf-8", newline="") as f:
         f.write(json.dumps({"build": build}))
     print("Slate %s: built index.html (%d KB), build %s" % (version, len(body.encode("utf-8")) // 1024, build))
+    if PLAIN:
+        print("A --plain build, for looking only. Don't commit it: run python3 build.py again when you're done.")
 
 
 if __name__ == "__main__":

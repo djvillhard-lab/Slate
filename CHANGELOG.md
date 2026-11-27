@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.179.0 (Nov 27, 2026)
+TestFlight: 3.178.6 (its build number is still being made), no new build (web only)
+- Code review, speed: the app is a smaller download. Its code used to be sent exactly as written, comments and all; the build now strips the comments and spare spaces first. The download drops from about 740 KB to about 600 KB (it was 850 KB this morning), so a new version loads faster, most of all on a weak signal. Nothing in the app looks or works differently.
+
 ## 3.178.6 (Nov 27, 2026)
 TestFlight: 3.178.6, new build
 - Live scoreboard on the Lock Screen and in the Dynamic Island: the losing team's score is no longer grayed out while the game is on. It dims only after the final. The same goes for the large Tonight's Slate widget and the Apple Watch list.

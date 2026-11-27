@@ -64,6 +64,7 @@ def main():
     if "--gate" in args: pw = ""
     if not pw: print("No SLATE_PASS: loading without a passcode (the default profile, read-only: every save is blocked).")
     prof = 0  # --profile SECONDS: record the page's CPU use for that long (after --tap) and print where the time went
+    # (line numbers are index.html's: build with python3 build.py --plain first to get real ones, then build normally again)
     tap = None  # --tap "sel": a real touch tap, after --click
     nls = None  # --newsletters "pulse,bounce": The Athletic newsletters shown under the slate, for this run only
     teams = None  # --teams "Notre Dame,Duke": favorite teams for this run only (read-only, never saved)

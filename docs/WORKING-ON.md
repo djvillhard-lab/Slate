@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Code review: shrink the app's code at build time | build.py, scripts/rjsmin.py (new), scripts/shots.py (profile note only), README.md and CLAUDE.md (build notes) | 2026-11-27 21:24 |
