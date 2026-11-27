@@ -8,7 +8,7 @@
 // The safety check: KEY_PRINT is a short fingerprint of the right value (it says nothing useful about the key itself).
 // A SLATE_KEY that doesn't match it (a typo, a stray space) is ignored and SUPABASE_SECRET keeps doing the job, so a
 // mistake while adding it can't log anyone out. POST /api/keycheck says which of the two is in use.
-const KEY_PRINT = "";
+const KEY_PRINT = "b2be4c641a6a24ab";  // read from /api/keycheck on Nov 27, 2026, while SUPABASE_SECRET was still the only key
 let good = null;  // null until checked; then whether SLATE_KEY is the right value
 
 async function print(v) {
