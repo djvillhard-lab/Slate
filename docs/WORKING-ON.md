@@ -7,3 +7,5 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
 | DJ | Navigation (three pages), Live feed compact button, Settings rows | src/app/283-three-pages.js, src/app/289-feed-compact.js, src/styles/101-three-pages.css, src/styles/108-feed-compact.css, src/styles/111-settings.css, src/styles/110-header-buttons.css, docs/pages/navigation.md | 2026-11-27 21:36 |
+| DJ | Live scoreboard: comes back every day after you hide it | worker/alerts.js (runBoard), worker/index.js (board-gone only), src/app/040-live.js (Board sheet), docs/pages/notifications.md | 2026-11-27 21:45 |
+| DJ | shared: 280-ios-bridge.js (liveGone only) | src/app/280-ios-bridge.js | 2026-11-27 21:45 |
