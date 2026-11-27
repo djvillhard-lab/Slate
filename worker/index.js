@@ -3,6 +3,11 @@
 //   → checks the passcode, marks the item "writing", starts a background workflow, answers at once.
 // The workflow asks Claude (with web search) for the summary and saves it to Supabase; the app sees it appear.
 // Secrets (Cloudflare → Workers → slate → Settings → Variables and Secrets): ANTHROPIC_API_KEY, SUPABASE_SECRET.
+// SLATE_KEY (optional, code review 3.179.3): the key everything that is NOT the database is made from (passcode and invite
+// hashes, the encryption of feedback, usage and email addresses, browser push signing, the worker's knock on itself).
+// Until it is set, SUPABASE_SECRET does those jobs as before. To be able to replace the database key one day, first save
+// SLATE_KEY with EXACTLY the value SUPABASE_SECRET has now; after that the database key can change without breaking any of
+// them. Any other value for SLATE_KEY locks out invited people and breaks saved feedback and browser notifications.
 import { WorkflowEntrypoint } from "cloudflare:workers";
 import { runAlerts, followNow, sendPush, sendApns, bcRequest, bcChannel, bcLoad, bcSave, bcTest } from "./alerts.js";
 import { runNewsletters, rss } from "./newsletters.js";
@@ -183,7 +188,7 @@ export default {
     // second. So the timed run only knocks, through the worker's binding to itself (SELF, wrangler.jsonc), and the work runs as a request.
     if (event.cron === "*/2 * * * *") {
       const run = env.SELF && env.SUPABASE_SECRET
-        ? env.SELF.fetch("https://slate.internal/api/morning-email/run", { method: "POST", headers: { "x-slate-run": env.SUPABASE_SECRET } }).then((r) => r.text())
+        ? env.SELF.fetch("https://slate.internal/api/morning-email/run", { method: "POST", headers: { "x-slate-run": (env.SLATE_KEY || env.SUPABASE_SECRET) } }).then((r) => r.text())
         : runMorningEmail(env);
       ctx.waitUntil(run.catch((e) => console.log("morning email error", String(e)))); return;
     }
@@ -202,7 +207,7 @@ export default {
     if (url.pathname === "/api/morning-email/lines" && req.method === "POST") { const out = await linesApi(env, req).catch((e) => ({ error: String(e && e.message || e).slice(0, 200) })); return json(out, out.error ? 403 : 200); }
     // the timed run's knock (scheduled() above): only from this worker, which knows the secret
     if (url.pathname === "/api/morning-email/run" && req.method === "POST") {
-      if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== env.SUPABASE_SECRET) return json({ error: "no" }, 403);
+      if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== (env.SLATE_KEY || env.SUPABASE_SECRET)) return json({ error: "no" }, 403);
       try { await runMorningEmail(env); return json({ ok: true }); } catch (e) { return json({ error: String(e && e.message || e).slice(0, 200) }, 500); }
     }
     // every passcode check below goes through the login limit (see guardWho)
@@ -389,9 +394,22 @@ export default {
       const paths = [...new Set((Array.isArray(p.paths) ? p.paths : []).map(String))].slice(0, 60)
         .filter((x) => x.length <= 200 && /^[A-Za-z0-9._\/-]+$/.test(x) && (own(x) || (me.admin && /^(news\/email-dj|stats\/usage)$/.test(x))));
       if (!paths.length) return json({ ok: true, rows: [] });
-      const r = await fetch(`${SB}/rest/v1/docs?select=path,data,updated_at&path=in.(${paths.map((x) => encodeURIComponent('"' + x + '"')).join(",")})`, { headers: { apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET } });
+      const inList = (xs) => xs.map((x) => encodeURIComponent('"' + x + '"')).join(","), sbh = { apikey: env.SUPABASE_SECRET, Authorization: "Bearer " + env.SUPABASE_SECRET };
+      // 3.179.3 (code review): the app's 15-second check says what it already has ({since: {path: updated_at | "none"}}); documents
+      // that haven't changed come back as a name in "same", not as the whole document again
+      const since = p.since && typeof p.since === "object" ? p.since : null;
+      let want = paths, same = [];
+      if (since && paths.some((x) => typeof since[x] === "string")) {
+        const h = await fetch(`${SB}/rest/v1/docs?select=path,updated_at&path=in.(${inList(paths)})`, { headers: sbh });
+        if (!h.ok) return json({ error: "Couldn't read " + h.status }, 502);
+        const at = {}; (await h.json()).forEach((x) => { at[x.path] = x.updated_at; });
+        same = paths.filter((x) => typeof since[x] === "string" && (at[x] || "none") === since[x]);
+        want = paths.filter((x) => !same.includes(x) && at[x]);   // changed and still there; a deleted one is simply absent from rows
+        if (!want.length) return json({ ok: true, rows: [], same });
+      }
+      const r = await fetch(`${SB}/rest/v1/docs?select=path,data,updated_at&path=in.(${inList(want)})`, { headers: sbh });
       if (!r.ok) return json({ error: "Couldn't read " + r.status }, 502);
-      return json({ ok: true, rows: await r.json() });
+      return json({ ok: true, rows: await r.json(), same });
     }
     if (url.pathname === "/api/whoami" && req.method === "POST") {
       let p; try { p = await req.json(); } catch { return json({ error: "bad request" }, 400); }

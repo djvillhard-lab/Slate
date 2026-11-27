@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.179.3 (Nov 27, 2026)
+TestFlight: 3.178.6 (62), no new build (web only)
+- Code review, the rest of the fixes nobody should notice. Speed: while Slate is open it checks for changes to your own settings every 15 seconds, and it used to get every setting back in full each time; now it gets them only when one has changed. The styles are sent with their comments and spare spaces stripped, like the code since 3.179.0 (about 30 KB less to download).
+- Code review, security: the soccer player pictures door (it needs no log-in) can no longer be used to fill the database with made-up team names. The morning email's Claude recaps now stop at the daily Claude budget like everything else. The leftover test options on the morning email's status check are gone.
+- The tap check from 3.96.1 is removed completely (DJ: "I want everything implemented"). It was logging touches and freezes on DJ's phone to chase the All games problem.
+- Code review, security: Slate's server can now take a second key (SLATE_KEY) for everything that isn't the database: passcodes, the scrambling of feedback and email addresses, browser notifications. Nothing changes until that key is added in Cloudflare; once it is, the database key can be replaced without breaking any of those.
+
 ## 3.179.2 (Nov 27, 2026)
 TestFlight: 3.178.6 (62), no new build (web only)
 - Live scoreboard, all day: it now really comes back every day. Before, any time it left your Lock Screen (you swiped it away, or it ended itself at the end of the night or for the 8-hour swap iPhone requires), it switched itself off for good, so it never came back the next day. Now swiping it away only hides it for the rest of that day. Turn it off in the Board sheet to stop it.

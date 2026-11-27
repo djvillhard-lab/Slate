@@ -62,7 +62,7 @@ const prefixOf = (id) => (id === "dj" ? "" : "u/" + id + "/");
 
 // ---------- the address, encrypted ----------
 async function aesKey(env) {
-  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-email|" + env.SUPABASE_SECRET));
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("slate-email|" + (env.SLATE_KEY || env.SUPABASE_SECRET)));
   return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 const b64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
@@ -334,6 +334,9 @@ const writingNow = (e) => e && e.writing && !e.writing.error && Date.now() - Dat
 // in the app writes). Returns how many are still being written.
 export async function startRecaps(env, who, date) {
   const d = await gather(env, who, date); if (d.wait || d.skip || !env.SUMMARY) return 0;
+  // 3.179.3 (code review): the email's recaps stop at Slate's daily Claude budget like every other write-up
+  const spent = Number(((((await getDocs(env, ["stats/usage"]))["stats/usage"] || {}).days || {})[local(new Date(), "America/Chicago").date] || {}).usd) || 0;
+  if (spent >= (Number(env.CLAUDE_DAY_USD) || 15)) return favFinals(d).filter((g) => writingNow(d.recaps[g.id])).length;
   const kit = slateKit({}), todo = favFinals(d).filter((g) => !((d.recaps[g.id] || {}).recap || {}).text && !writingNow(d.recaps[g.id])).slice(0, RECAPS_A_DAY);
   await pool(todo, 3, async (g) => {
     const sum = g.ev ? await kit.rkFetch(kit.bxSummaryUrl(g.league, g.ev)) : null;
@@ -378,7 +381,7 @@ export async function buildEmail(env, who, nowT) {
   const got = {}, need = today.filter((g) => !d.pvlines[g.id]);
   if (env.SELF && env.SUPABASE_SECRET && need.length > 10) {
     const chunks = []; for (let i = 0; i < need.length; i += 10) chunks.push(need.slice(i, i + 10));
-    await Promise.all(chunks.map((c) => env.SELF.fetch("https://slate.internal/api/morning-email/lines", { method: "POST", headers: { "content-type": "application/json", "x-slate-run": env.SUPABASE_SECRET },
+    await Promise.all(chunks.map((c) => env.SELF.fetch("https://slate.internal/api/morning-email/lines", { method: "POST", headers: { "content-type": "application/json", "x-slate-run": (env.SLATE_KEY || env.SUPABASE_SECRET) },
       body: JSON.stringify({ rules: d.sett.rules || null, mine: mineT, games: c }) }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       .then((j) => c.forEach((g, k) => { got[g.id] = (j && j.lines && j.lines[k]) || { line: "" }; }))));
   }
@@ -462,7 +465,7 @@ ${h}
 
 // one batch of a big slate's preview lines, in its own run (buildEmail above); only this worker can call it
 export async function linesApi(env, req) {
-  if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== env.SUPABASE_SECRET) return { error: "no" };
+  if (!env.SUPABASE_SECRET || req.headers.get("x-slate-run") !== (env.SLATE_KEY || env.SUPABASE_SECRET)) return { error: "no" };
   const p = await req.json().catch(() => ({})), games = Array.isArray(p.games) ? p.games.slice(0, 12) : [];
   const kit = slateKit({ rules: p.rules || null, mine: p.mine || {} });
   const lines = await pool(games, 6, async (g) => {
@@ -559,16 +562,6 @@ export async function morningStatus(env, p) {
     out[id] = { on: !!x.on, time: x.time, tz: x.tz, hasEmail: !!x.email, emailReadable: !!(x.email && await unseal(env, x.email)), pending: !!x.pending,
       last: x.last, sentAt: x.sentAt, err: x.err, note: x.note, stage: x.stage, fails: x.fails, failDay: x.failDay, prepDay: x.prepDay, sending: x.sending, testAt: x.testAt,
       today: lt.date, inSlateToday: !!(aset && (aset.people || []).some((q) => q && q.prefix === prefixOf(id))), slateTodayExists: !!aset };
-  }
-  // {run: true}: the timed job right now, here, reporting how it ended (it only sends emails that are due anyway)
-  if (p.run) { const t0 = Date.now(); try { await runMorningEmail(env); out.run = { ms: Date.now() - t0 }; } catch (e) { out.run = { ms: Date.now() - t0, error: String(e && e.stack || e).slice(0, 600) }; } }
-  // {build: "<id>"}: build that person's email now without sending it, to see how long it takes or where it fails
-  if (p.build && doc.people && doc.people[p.build]) {
-    const x = doc.people[p.build], t0 = Date.now(), f0 = globalThis.fetch; let nf = 0;
-    globalThis.fetch = function () { nf++; return f0.apply(this, arguments); };
-    try { const b = await buildEmail(env, Object.assign({ id: p.build }, x), now); out.build = { ms: Date.now() - t0, subject: b.subject, games: b.games, results: b.results, pending: b.pending, wait: b.wait, skip: b.skip, why: b.why, size: (b.html || "").length }; }
-    catch (e) { out.build = { ms: Date.now() - t0, error: String(e && e.stack || e).slice(0, 600) }; }
-    globalThis.fetch = f0; out.build.fetches = nf;
   }
   return { ok: true, gmailReady: gmailReady(env), self: !!env.SELF, now: now.toISOString(), people: out };
 }

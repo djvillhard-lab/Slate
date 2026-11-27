@@ -87,6 +87,9 @@ export async function photosRoute(req, url, ctx, h) {
     out[name] = v.url ? "/api/photos/img?u=" + encodeURIComponent(v.url) : "";
     if (debug) notes[name] = v;
   }
-  if (env && env.SUPABASE_SECRET && tkey && Object.keys(fresh).length) ctx.waitUntil(keep(env, tkey, fresh));
+  // 3.179.3 (code review): this door needs no log-in, so a team's record is only written once a real picture was found
+  // for it (or the record already exists). Made-up team names can no longer fill the database with empty records.
+  const real = Object.values(fresh).some((x) => x.url) || (store && Object.keys(store).length > 0);
+  if (env && env.SUPABASE_SECRET && tkey && tkey.length <= 60 && real && Object.keys(fresh).length) ctx.waitUntil(keep(env, tkey, fresh));
   return new Response(JSON.stringify(debug ? { photos: out, wait, notes } : { photos: out, wait }), { headers: { "content-type": "application/json", "cache-control": wait ? "no-store" : "public, max-age=3600" } });
 }

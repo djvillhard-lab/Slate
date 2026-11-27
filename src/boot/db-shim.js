@@ -274,20 +274,25 @@
   var SHARED = /^(slates|scores|previews|teams|standouts|live|box|moments|mfacts|newsdeep|newsbrief|events)\/|^news\/(athletic|newsletters)$|^code\/teamids$/;
   function isShared(path) { return SHARED.test(path); }
   var pq = null;
-  function fetchPrivate(path) {
+  // known (3.179.3, the 15-second check only): the updated_at this phone already has for the document, or "none". The
+  // server then answers {same: true} instead of sending an unchanged document again. A plain read of the same path in
+  // the same request always gets the whole document.
+  var SAME = { same: true };
+  function fetchPrivate(path, known) {
     if (!pass()) return Promise.resolve(null);  // looking around without a passcode: nothing personal to read
     if (!pq) {
-      pq = { paths: {}, p: null };
+      pq = { paths: {}, since: {}, p: null };
       var q = pq;
       q.p = new Promise(function (res) { setTimeout(res, 30); }).then(function () {
         pq = null;
-        return fetch("/api/docs", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: pass(), paths: Object.keys(q.paths) }) })
+        return fetch("/api/docs", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.keys(q.since).length ? { pass: pass(), paths: Object.keys(q.paths), since: q.since } : { pass: pass(), paths: Object.keys(q.paths) }) })
           .then(function (r) { if (!r.ok) { var e = new Error("read " + r.status); e.code = "unavailable"; throw e; } return r.json(); },
             function () { var e = new Error("offline"); e.code = "unavailable"; throw e; })
-          .then(function (j) { var m = {}; (j.rows || []).forEach(function (x) { m[x.path] = { data: x.data, updated_at: x.updated_at }; }); return m; });
+          .then(function (j) { var m = {}; (j.rows || []).forEach(function (x) { m[x.path] = { data: x.data, updated_at: x.updated_at }; }); (j.same || []).forEach(function (x) { m[x] = SAME; }); return m; });
       });
     }
-    pq.paths[path] = 1;
+    if (typeof known === "string" && !(pq.paths[path] === 1)) { pq.paths[path] = 2; pq.since[path] = known; }
+    else { pq.paths[path] = 1; delete pq.since[path]; }
     return pq.p.then(function (m) { return m[path] || null; });
   }
   function fetchRow(path) {
@@ -315,8 +320,8 @@
     Object.keys(subs).forEach(function (path) {
       if (isShared(path) || !(subs[path] || []).length) return;
       var was = cacheGet(path), wasAt = was ? (was.none ? "none" : was.updated_at) : null;
-      fetchPrivate(path).then(function (row) {
-        if ((row ? row.updated_at : "none") === wasAt) return;
+      fetchPrivate(path, wasAt).then(function (row) {
+        if (row === SAME || (row ? row.updated_at : "none") === wasAt) return;
         cachePut(path, row);
         (subs[path] || []).slice().forEach(function (s) { try { s.cb(snap(row)); } catch (e) { console.error(e); } });
       }, function () {});

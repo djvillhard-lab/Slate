@@ -19,7 +19,7 @@ const DAYS = 7, MAX_OPEN = 20, MAX_TRIES = 8;
 const ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";  // no 0/O, 1/I/L
 
 async function hmac(env, s) {
-  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("slate-signup:" + (env.SUPABASE_SECRET || "")), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("slate-signup:" + (env.SLATE_KEY || env.SUPABASE_SECRET || "")), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const b = await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(String(s)));
   return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }

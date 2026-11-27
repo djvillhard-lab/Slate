@@ -11,8 +11,8 @@ src/shell.html is the page skeleton. Each {{path}} in it is replaced by that fil
 ({{app/*.js}} = every file in src/app/, in name order, all inside one shared function scope).
 {{CHANGES}} becomes CHANGELOG.md (shown in Settings > Release history) and {{BUILD}} the build time.
 
-The app's code ({{app/*.js}}) goes into the page with its comments and spare spaces taken out (scripts/rjsmin.py):
-about a quarter less to download. Nothing is renamed, so errors and profiles still show the real function names.
+The app's code ({{app/*.js}}) and styles ({{styles/*.css}}) go into the page with their comments and spare spaces taken
+out (scripts/rjsmin.py, scripts/rcssmin.py): about a quarter less to download. Nothing is renamed, so errors and profiles still show the real function names.
 
 A new build time (Central, YYYYMMDDHHMMSS) is stamped only when the page actually changed;
 open apps compare it with version.json and reload onto the new version by themselves.
@@ -58,6 +58,12 @@ def shrink(js):  # comments and spare whitespace out; no renaming (scripts/rjsmi
     return out
 
 
+def shrink_css(css):  # the same for the styles: comments and spare whitespace out (scripts/rcssmin.py, rCSSmin 1.3.0, Apache 2.0)
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import rcssmin
+    return rcssmin.cssmin(css)
+
+
 def assemble(build):
     shell = read(os.path.join(SRC, "shell.html"))
 
@@ -71,6 +77,8 @@ def assemble(build):
         if not paths or not all(os.path.isfile(p) for p in paths):
             sys.exit("build.py: src/%s not found" % key)
         text = one("".join(read(p) for p in paths))
+        if key.startswith("styles/") and not PLAIN:
+            return shrink_css(text)
         return shrink(text) if key == "app/*.js" and not PLAIN else text
 
     return re.sub(r"\{\{([A-Za-z0-9_./*-]+)\}\}", sub, shell)
