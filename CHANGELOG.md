@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.183.2 (Nov 27, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Live soccer one-liners no longer say "Still goalless". Salt Lake vs Vancouver read "RSL: Still goalless; Lead the shots 4 to 4". A 0-0 final still says "Goalless, though X outshot Y", but only when one side had at least 3 more shots.
+
 ## 3.183.1 (Nov 27, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - News, Live Now: the team in front no longer has its score in green. Both scores look the same while a game is live, so a live score can't be mistaken for a final.

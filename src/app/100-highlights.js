@@ -270,7 +270,9 @@
         if (!(pos >= 58 && shB - shS >= 5) && a1 >= 8 && a1 - b1 >= 6) add("shots|" + hiS + "|" + Math.floor(a1 / 4), 26 + (a1 - b1), 0, nameOf(hiS) + (done ? " outshot " : " are outshooting ") + nameOf(loS) + " " + a1 + " to " + b1, tag(hiS));
         var hiT = (tsm[HID].shotsOnTarget || 0) >= (tsm[AID].shotsOnTarget || 0) ? HID : AID, loT = other(hiT), t1 = tsm[hiT].shotsOnTarget || 0, t2 = tsm[loT].shotsOnTarget || 0;
         if (t1 >= 5 && t2 <= 1) add("ot|" + loT + "|" + t2, 30 + t1 * 2, -1, nameOf(loT) + (done ? " managed " : " have managed ") + (t2 ? "one shot" : "no shots") + " on target to " + nameOf(hiT) + "'s " + t1, tag(loT));
-        if (!total && (done || period >= 2)) add("nil|" + hiS, 32, 0, done ? "Goalless, though " + nameOf(hiS) + " outshot " + nameOf(loS) + " " + a1 + " to " + b1 : "Still goalless; " + nameOf(hiS) + " lead the shots " + a1 + " to " + b1, tag(hiS));
+        // 3.183.2 (DJ: "Live soccer games shouldn't say still goalless for a team without a goal"): no "Still goalless" line while live
+        // (it was labeled as one team's line, and "lead the shots 4 to 4" when level); a final says it only when one side really outshot the other
+        if (!total && done && a1 - b1 >= 3) add("nil|" + hiS, 32, 0, "Goalless, though " + nameOf(hiS) + " outshot " + nameOf(loS) + " " + a1 + " to " + b1, tag(hiS));
       }
       // keepers: lots of saves, and a clean sheet if it holds
       (sum.rosters || []).forEach(function (ro) { var i = String((ro.team || {}).id); if (!teams[i]) return; (ro.roster || []).forEach(function (p) {
