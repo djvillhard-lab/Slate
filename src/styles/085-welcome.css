@@ -108,3 +108,15 @@ html.side-col:not(.duo) .sheet.inv { padding-right: calc(16px + var(--strip-w, 0
 .inv-acts > :only-child { grid-column: 1 / -1; }
 /* after Get the app (3.156.0): the Open Slate screen in Safari */
 .wl-app-go { width: 100%; height: 52px; justify-content: center; margin-top: 8px; }
+
+/* Welcome, "Getting around" (3.182.0): a still picture of the three-page bar with the row of other pages open above the hammer */
+.wl-nav { display: grid; justify-items: center; gap: 0; margin: 16px 0 14px; padding: 16px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--hair); }
+.wl-nav-row { display: grid; grid-template-columns: repeat(3, 76px); padding: 6px 8px; border-radius: 22px; background: var(--raise); border: 1px solid var(--accent); }
+.wl-nav-m { display: grid; justify-items: center; gap: 2px; padding: 6px 0; color: var(--ink); }
+.wl-nav-m svg { width: 24px; height: 24px; }
+.wl-nav-m b { font-size: 11px; font-weight: 800; font-stretch: 88%; white-space: nowrap; }
+.wl-nav-tick { width: 2px; height: 12px; background: var(--accent); }
+.wl-nav-bar { display: grid; grid-template-columns: repeat(3, 46px); gap: 20px; padding: 5px 14px; border-radius: 28px; background: var(--raise); border: 1px solid var(--line); }
+.wl-nav-b { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+.wl-nav-b svg { width: 24px; height: 24px; }
+.wl-nav-b.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--raise)); box-shadow: 0 0 0 2px var(--accent); }

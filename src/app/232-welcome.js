@@ -124,13 +124,17 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     state.rules = keep; computeSlate();
     return out;
   }
-  var WL_STEPS = ["intro", "teams", "leagues", "size", "tune", "notify", "done"];
+  var WL_STEPS = ["intro", "teams", "leagues", "size", "tune", "notify", "around", "done"];
+  // 3.182.0 (DJ: the pages behind the hammer "are not intuitive enough to know they are there"; he picked a welcome step): "around"
+  // shows the bar and the row above the hammer. Only with Three pages on; the Classic menu skips it
+  function wlAroundOn() { return typeof n3On === "function" && n3On(); }
   function wlGo(d) {
     var a = wl.a, s = WL_STEPS[wl.step];
     // leaving the teams step: their teams' leagues start switched on (until they change the leagues themselves)
     if (s === "teams" && d > 0 && !a.leaguesTouched) a.leagues = wlTeamLeagues();
     if (s === "notify" && d > 0 && a.notify.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(a.notify.addr || "").trim())) { toast("Type your email address, or turn Morning email off."); var f = document.querySelector("#wl .wl-email"); if (f) f.focus(); return; }
     wl.step = Math.max(0, Math.min(WL_STEPS.length - 1, wl.step + d)); wl.q = "";
+    if (WL_STEPS[wl.step] === "around" && !wlAroundOn()) wl.step += d > 0 ? 1 : -1;
     wlRender(); var b = document.querySelector("#wl .wl-body"); if (b) b.scrollTop = 0;
   }
   function wlOpt(title, line, on, fn) {
@@ -207,7 +211,7 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
     if (!o) { o = el("div", "wl"); o.id = "wl"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-label", "Welcome to Slate"); document.body.appendChild(o); }
     o.textContent = ""; clearInterval(wl.tick); wl.tick = null;
     var top = el("div", "wl-top"); top.appendChild(el("span", "wl-mark", "Slate"));
-    top.appendChild(el("span", "wl-n", s === "intro" ? "" : s === "done" ? "All set" : "Step " + wl.step + " of " + (WL_STEPS.length - 2)));
+    top.appendChild(el("span", "wl-n", s === "intro" ? "" : s === "done" ? "All set" : s === "around" ? "Getting around" : "Step " + wl.step + " of " + (WL_STEPS.length - 3)));
     o.appendChild(top);
     var body = el("div", "wl-body"); o.appendChild(body);
     var foot = el("div", "wl-foot"); o.appendChild(foot);
@@ -301,6 +305,25 @@ var mp = (typeof meInfo === "object" && meInfo.p) || {};
       pb.addEventListener("click", function () { if (wl.preview) { toast("In the preview this button does nothing. For a new person, the iPhone asks to allow notifications."); return; } pushTurnOn(); draw(); });
       ph.appendChild(txt); ph.appendChild(pb); body.appendChild(ph);
       pushState(); draw(); wl.tick = setInterval(draw, 700);
+      foot.appendChild(back); foot.appendChild(next);
+    } else if (s === "around") {
+      body.appendChild(el("h1", null, "Getting around"));
+      body.appendChild(el("p", "wl-p", "Three pages sit on the bar at the bottom of the screen: News, your slate and All games. Tap one, or swipe sideways."));
+      // a picture of the bar with the row of other pages open above the hammer (the real icons, cloned from the menu)
+      var ic = function (id) { var g = document.querySelector("#" + id + " svg"); return g ? g.cloneNode(true) : el("span"); };
+      var demo = el("div", "wl-nav"); demo.setAttribute("role", "img"); demo.setAttribute("aria-label", "The bar at the bottom: News, the hammer for your slate, All games. Above the hammer: Box Office, On TV and Teams.");
+      var mrow = el("div", "wl-nav-row");
+      [["nav-moments", "Box Office"], ["nav-tv", "On TV"], ["nav-teams", "Teams"]].forEach(function (m) { var c = el("span", "wl-nav-m"); c.appendChild(ic(m[0])); c.appendChild(el("b", null, m[1])); mrow.appendChild(c); });
+      var mbar = el("div", "wl-nav-bar");
+      ["nav-news", "nav-lineup", "nav-games"].forEach(function (id, i) { var c = el("span", "wl-nav-b" + (i === 1 ? " on" : "")); c.appendChild(ic(id)); mbar.appendChild(c); });
+      demo.appendChild(mrow); demo.appendChild(el("i", "wl-nav-tick")); demo.appendChild(mbar); body.appendChild(demo);
+      var ap = el("div", "wl-pts");
+      [["More pages are behind the hammer", "On your slate, tap the green hammer. Box Office (the day's best players), On TV (what's on each channel) and Teams open in a row above it."],
+       ["Change the day", "The date at the bottom right has an arrow on each side: yesterday and tomorrow."],
+       ["Settings and search", "The two round buttons at the top of every page."]].forEach(function (p, i) {
+        var r = el("div", "wl-pt"); r.appendChild(el("i", null, String(i + 1))); var t = el("div"); t.appendChild(el("b", null, p[0])); t.appendChild(el("span", null, p[1])); r.appendChild(t); ap.appendChild(r);
+      });
+      body.appendChild(ap);
       foot.appendChild(back); foot.appendChild(next);
     } else {
       var pv = wlPreview(a), isToday = state.date === todayInHome();

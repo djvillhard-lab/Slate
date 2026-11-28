@@ -100,3 +100,9 @@ app" > TestFlight public link > log in to the app with the new passcode (their s
   ID at developer.apple.com first (or Xcode Cloud's export fails), and this needs nothing from DJ.
 - If the app is too old to know `slatedj://`, Safari can't open it; after 2.5 seconds the page says to install or
   update from TestFlight, or log in with the passcode.
+
+## "Getting around" step (3.182.0, DJ Nov 27, 2026)
+- DJ: the pages behind the hammer "are not intuitive enough to know they are there", and picked "Welcome step only" over a peek of the row on the slate or an always-on "More" label (so don't add those without asking).
+- `WL_STEPS` has `around` between `notify` and `done`: a still picture of the bar with Box Office, On TV and Teams above the hammer (`.wl-nav`, the real menu icons cloned), then three lines: the hammer, the day arrows, Settings and search. Its top label is "Getting around", and the "Step n of 5" count leaves it out.
+- Only with Three pages on (`wlAroundOn`); `wlGo` steps over it on the Classic menu.
+- If the bar or the hammer row changes (283-three-pages.js), update this step's picture and words.
