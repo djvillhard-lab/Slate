@@ -166,3 +166,7 @@ html[data-n3day] #day-prev, html[data-n3day] #day-next { display: none !importan
 .n3-dr .n3-dra svg { width: 16px; height: 16px; }
 .n3 .n3-dt { bottom: 62px; }
 html[data-n3f] .n3 .n3-dt { bottom: 126px; }
+/* UPRIGHT-BIG (DJ, Nov 27: "Date picker button is too small on unfolded vertical", "Same with the menu"): on a wide single page
+   (the unfolded Duo held upright, 538pt across) the whole bottom cluster is drawn a quarter bigger: bar, hammer row, day arrows,
+   Today and the All games filter. Phones and the folded Duo are under 500pt. Unfolded and held sideways (landscape) keeps the normal size: the bar shares the right half with the day arrows there. */
+@media (min-width: 500px) and (orientation: portrait) { html[data-nav3] .n3 { zoom: 1.25; } }
