@@ -6,4 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Generate and Regenerate buttons, one design everywhere (Claude write-ups on matchup, quick look, Teams, News, Box Office) | src/app/080-claude.js, 140-game.js, 141-preview-deep.js, 130-teams.js, 120-box-office.js, 200-news.js, 201-news-custom.js, src/styles/112-button-kit.css | 2026-11-28 05:40 |
+| DJ | Generate and Regenerate buttons, one design everywhere (Claude write-ups on matchup, quick look, Teams, News, Box Office) | src/app/080-claude.js, 140-game.js, 130-teams.js, 120-box-office.js, 200-news.js, 201-news-custom.js, src/styles/112-button-kit.css | 2026-11-28 05:40 |
