@@ -525,7 +525,7 @@
       dd("top", "Top performers", boxStars(g, b));
       if (sp0 === "soccer") dd("tl", "Match summary", socTimeline(g, b, true));
       else dd("sc", "Scoring", scoringBlock(g));
-      dd("box", sp0 === "soccer" ? "Lineups and stats" : "Box score", bxPlayers(g, b, true, false));
+      if (sp0 !== "soccer") dd("box", "Box score", bxPlayers(g, b, true, false));  // 3.189.5 (DJ): soccer lineups and player stats live only on the full matchup page
     }
     box.appendChild(el("p", "pv-at", bxStamp(b)));
     return box;
