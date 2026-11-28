@@ -123,3 +123,4 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
 - Line: Claude recap headline if written, else from period scores (football) or goal order (soccer). Bet chips from the pregame line (who covered, over/under); replaces the line strip.
 - Football: Player of the game = winner's best by yds/10 + TD*6 - INT*4, plus next two. Soccer: goal scorers per side + possession, shots, on target bars.
 - Next (DJ, Nov 28): redesign the quick look before, during and after the game for every sport, one sport at a time with mockups, football first.
+- 3.193.0: football before (qlPre: line, one player to watch per team from ESPN season leaders, quick read clamped to 3 lines; pv-watch, injuries, headlines removed from the tray) and during (qlLive: situation from LIVE sit, last real play, top two by the Top performers score). Positions come from ESPN leaders (box score has none). DJ picked "A · Faces" + positions.

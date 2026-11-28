@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.193.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Quick look, football before and during the game: before kickoff it shows the line, then one player to watch from each team (headshot, position, team and season yards), then the first three lines of Claude's quick read. The longer players list, injuries and headlines stay on the full matchup page. During the game it shows who has the ball and where, the last play, and the two players having the best day so far, each with a position. Finished games' player cards now show positions too.
+
 ## 3.192.0 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Quick look: a finished football or soccer game's quick look is slimmer, and the Recap, Top performers and Match summary drop-downs are gone (the full matchup page still has all of it). It now shows one line on how the game was won, whether the spread was covered and the total went over or under, and a small snapshot. Football's snapshot is the Player of the game (headshot, name and his day) plus two more standouts. Soccer's is the goal scorers with their minutes under each team, plus possession, shots and shots on target. Other sports keep the old quick look until their design is picked.

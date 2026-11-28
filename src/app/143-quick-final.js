@@ -17,6 +17,7 @@
     ".ql-mini{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px}" +
     ".ql-mini>div{display:flex;align-items:center;gap:8px;min-width:0;padding:6px 8px;border-radius:8px;border:1px solid var(--hair);background:var(--bg)}" +
     ".ql-mini .pd-face{width:32px;height:32px}.ql-mini .pd-face img{width:40px}.ql-mini span{min-width:0}" +
+    ".ql-mini em{display:block;font-style:normal;font-size:10.5px;font-weight:800;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}" +
     ".ql-mini b{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ql-mini small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap}" +
     ".ql-gs{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}" +
     ".ql-gs p{margin:0;font-size:14px;line-height:1.5;font-weight:800;white-space:nowrap}.ql-gs p span{color:var(--muted);font-weight:700}.ql-gs .r{text-align:right}" +
@@ -90,9 +91,12 @@
     return w.childNodes.length ? w : null;
   }
   // football: the player of the game (the winner's best day by the same score Top performers uses), then the next two
-  function qlPotg(g, b, sum, win) {
-    if (!b.teams) return null;
-    var full = {}; ((sum.boxscore || {}).players || []).forEach(function (t) { (t.statistics || []).forEach(function (gr) { (gr.athletes || []).forEach(function (r) { var a = r.athlete || {}; if (a.id) full[String(a.id)] = a.displayName || ""; }); }); });
+  // football players' day from the box score: one entry per player, passing, rushing and receiving added up, best first
+  function qlFbList(g, b, sum) {
+    if (!b || !b.teams) return [];
+    var full = {}; ((sum && sum.boxscore || {}).players || []).forEach(function (t) { (t.statistics || []).forEach(function (gr) { (gr.athletes || []).forEach(function (r) { var a = r.athlete || {}; if (a.id) full[String(a.id)] = a.displayName || ""; }); }); });
+    // positions: ESPN's box score has none, its game leaders do (passing, rushing, receiving and defense)
+    var pos = {}; ((sum && sum.leaders) || []).forEach(function (t) { (t.leaders || []).forEach(function (c) { (c.leaders || []).forEach(function (l) { var a = l.athlete || {}; if (a.id && a.position && a.position.abbreviation) pos[String(a.id)] = a.position.abbreviation; }); }); });
     var all = {}, list = [];
     b.teams.forEach(function (t) {
       (t.groups || []).forEach(function (gr) {
@@ -103,26 +107,33 @@
           var v = {}; cols.forEach(function (c, i) { v[c] = r.s[i]; });
           var n = function (k) { var x = parseFloat(String(v[k] == null ? "" : v[k]).replace(/,/g, "")); return isNaN(x) ? 0 : x; };
           var key = t.side + "|" + (r.id || r.n), p = all[key];
-          if (!p) { p = all[key] = { sd: t.side, id: r.id, n: r.n, full: full[r.id] || r.n, py: 0, ptd: 0, int: 0, ry: 0, rtd: 0, cy: 0, ctd: 0, score: 0 }; list.push(p); }
+          if (!p) { p = all[key] = { sd: t.side, id: r.id, n: r.n, pos: r.p || pos[r.id] || "", full: full[r.id] || r.n, py: 0, ptd: 0, int: 0, ry: 0, rtd: 0, cy: 0, ctd: 0, score: 0 }; list.push(p); }
+          if (!p.pos && r.p) p.pos = r.p;
           if (gr.k === "passing") { p.py += n("YDS"); p.ptd += n("TD"); p.int += n("INT"); } else if (gr.k === "rushing") { p.ry += n("YDS"); p.rtd += n("TD"); } else { p.cy += n("YDS"); p.ctd += n("TD"); }
           p.score += n("YDS") / 10 + n("TD") * 6 - n("INT") * 4;
         });
       });
     });
-    if (!list.length) return null;
     list.sort(function (a, c) { return c.score - a.score; });
+    return list;
+  }
+  function qlHead(g, id) { var dir = BX_HEAD[g.league]; return dir && id ? "https://a.espncdn.com/i/headshots/" + dir + "/players/full/" + id + ".png" : ""; }
+  // a small player card: headshot in the team's color, "QB · OU" over the name (DJ, Nov 28: "include player positions"), one stat
+  function qlMini(g, p, stat) {
+    var c = el("div"); c.appendChild(pdFace({ name: p.full || p.n, head: p.head || qlHead(g, p.id) }, p.sd, g));
+    var s = el("span"); s.appendChild(el("em", null, [p.pos, abbr(g, p.sd)].filter(Boolean).join(" · ")));
+    s.appendChild(el("b", null, p.full || p.n)); s.appendChild(el("small", null, stat)); c.appendChild(s); return c;
+  }
+  // football: the player of the game (the winner's best day by the same score Top performers uses), then the next two
+  function qlPotg(g, b, sum, win) {
+    var list = qlFbList(g, b, sum); if (!list.length) return null;
     var star = list.filter(function (p) { return p.sd === win; })[0] || list[0], rest = list.filter(function (p) { return p !== star; }).slice(0, 2);
-    var tc = pdColors(g), dir = BX_HEAD[g.league];
-    var face = function (p) { return pdFace({ name: p.full, head: dir && p.id ? "https://a.espncdn.com/i/headshots/" + dir + "/players/full/" + p.id + ".png" : "" }, p.sd, g); };
+    var tc = pdColors(g);
     var box = el("div"), hero = el("div", "ql-hero"); hero.style.setProperty("--qc", hexOk(tc[star.sd]) ? tc[star.sd] : "var(--raise)");
-    hero.appendChild(face(star)); var tx = el("div");
-    tx.appendChild(el("span", "k", "⭐ Player of the game")); tx.appendChild(el("b", null, star.full)); tx.appendChild(el("p", null, qlFbLine(star)));
-    hero.appendChild(tx); box.appendChild(hero);
-    if (rest.length) {
-      var mini = el("div", "ql-mini");
-      rest.forEach(function (p) { var c = el("div"); c.appendChild(face(p)); var s = el("span"); s.appendChild(el("b", null, p.n)); s.appendChild(el("small", null, qlFbShort(p))); c.appendChild(s); mini.appendChild(c); });
-      box.appendChild(mini);
-    }
+    hero.appendChild(pdFace({ name: star.full, head: qlHead(g, star.id) }, star.sd, g)); var tx = el("div");
+    tx.appendChild(el("span", "k", "⭐ Player of the game")); tx.appendChild(el("b", null, star.full));
+    tx.appendChild(el("p", null, [star.pos].concat(qlFbLine(star) ? [qlFbLine(star)] : []).filter(Boolean).join(" · "))); hero.appendChild(tx); box.appendChild(hero);
+    if (rest.length) { var mini = el("div", "ql-mini"); rest.forEach(function (p) { mini.appendChild(qlMini(g, p, qlFbShort(p))); }); box.appendChild(mini); }
     return box;
   }
   function qlFbLine(p) {
@@ -180,3 +191,75 @@
     if (rows) box.appendChild(ms);
     return box.childNodes.length ? box : null;
   }
+
+  // ---------- football before and during the game (3.193.0) ----------
+  // DJ (Nov 28) picked "A · Faces" for the whole day: before kickoff, one player to watch from each team (headshot, position,
+  // season stat) between the line and Claude's quick read; during the game, who has the ball and where, the last play, and
+  // the two players having the best day so far. The longer lists (players to watch, injuries, headlines) stay on the full
+  // matchup page.
+  var QLW = {};   // game id -> { at, busy, data: { away, home } } season leaders from ESPN's game summary
+  function qlWatchData(g) {
+    var c = QLW[g.id];
+    if (c && (c.busy || Date.now() - c.at < 1800000)) return c.data;
+    c = QLW[g.id] = { at: Date.now(), busy: true, data: c ? c.data : null };
+    bxFindEvent(g).then(function (ev) { return ev ? rkFetch(bxSummaryUrl(g.league, ev)) : null; }).then(null, function () { return null; }).then(function (j) {
+      c.busy = false; c.at = Date.now();
+      if (j) { try { c.data = qlWatchParse(g, j); } catch (e) { c.data = null; } }
+      if (c.data && state.openId === g.id) { try { render(); } catch (e) {} }   // one redraw when it arrives, for the open quick look
+    });
+    return c.data;
+  }
+  // each team's player to watch: the biggest of its passing (counted at a third), rushing and receiving leaders
+  function qlWatchParse(g, j) {
+    var out = {}, W = { passingYards: [1 / 3, " pass yds"], rushingYards: [1, " rush yds"], receivingYards: [1, " rec yds"] };
+    (j.leaders || []).forEach(function (t) {
+      var sd = pdSide(g, j, t.team); if (!sd) return; var best = null;
+      (t.leaders || []).forEach(function (c) {
+        var w = W[c.name], l = (c.leaders || [])[0]; if (!w || !l) return;
+        var a = l.athlete || {}, m = /([\d,]+) YDS/.exec(String(l.displayValue || "")); if (!m || !a.displayName) return;
+        var y = Number(m[1].replace(/,/g, "")), sc = y * w[0];
+        if (!best || sc > best.sc) best = { sc: sc, sd: sd, id: String(a.id || ""), full: a.displayName, pos: ((a.position || {}).abbreviation) || "", head: ((a.headshot || {}).href) || "", stat: m[1] + w[1] };
+      });
+      if (best) out[sd] = best;
+    });
+    return out.away || out.home ? out : null;
+  }
+  function qlWatch(g) {
+    if (BX_SPORT[g.league] !== "football" || g.custom) return null;
+    var d = qlWatchData(g); if (!d) return null;
+    var w = el("div", "ql-mini ql-watch");
+    sideOrder(g).forEach(function (sd) { if (d[sd]) w.appendChild(qlMini(g, d[sd], d[sd].stat)); });
+    return w.childNodes.length ? w : null;
+  }
+  // before kickoff: slim the preview block down (the quick read keeps three lines) and put the two players in
+  function qlPre(g, pvb) {
+    if (BX_SPORT[g.league] !== "football" || !pvb) return;
+    pvb.querySelectorAll(":scope > .pv-watch, :scope > .pv-inj, :scope > .pv-hl").forEach(function (n) { n.remove(); });
+    pvb.querySelectorAll(":scope > .pv-sum").forEach(function (n) { n.classList.add("ql-clamp"); });
+    var w = qlWatch(g); if (w) pvb.appendChild(w);   // trayBlock puts it right under the line
+  }
+  // during the game
+  function qlLive(g, b) {
+    if (BX_SPORT[g.league] !== "football" || !b || b.state !== "in") return null;
+    var cur = bx.live[g.id], sum = cur && cur.sum, wrap = el("div", "qlf");
+    var sit = String((scoreRaw(g.id) || {}).sit || "").replace(/^(\S+ ball), /, "$1 · ");
+    if (sit) { var s = el("div", "ql-sit"); s.appendChild(el("i")); s.appendChild(el("b", null, sit)); wrap.appendChild(s); }
+    var dr = sum && sum.drives || {}, pl = ((dr.current || {}).plays || []).concat([]);
+    if (!pl.length && Array.isArray(dr.previous) && dr.previous.length) pl = (dr.previous[dr.previous.length - 1].plays || []);
+    var last = null; for (var i = pl.length - 1; i >= 0 && !last; i--) if (pl[i] && pl[i].text && !/^(End of|Start of|Timeout|Official timeout|Two-minute)/i.test(String(pl[i].text).trim())) last = pl[i];   // a real play, not "End of 1st quarter"
+    var tx = last ? String(last.text || "") : "";
+    try { tx = fdClean(tx); } catch (e) {}
+    tx = tx.replace(/^\s*(?:No Huddle-)?Shotgun\s+/i, "").replace(/#\d+\s*/g, "").trim();
+    if (tx) { var lp = el("p", "ql-lp"); lp.appendChild(el("b", null, "Last play: ")); lp.appendChild(document.createTextNode(tx)); wrap.appendChild(lp); }
+    var list = qlFbList(g, b, sum).slice(0, 2);
+    if (list.length) { var mini = el("div", "ql-mini"); list.forEach(function (p) { mini.appendChild(qlMini(g, p, qlFbShort(p))); }); wrap.appendChild(mini); }
+    return wrap.childNodes.length ? wrap : null;
+  }
+  (function () {
+    var st = document.createElement("style"); st.id = "ql-css2";
+    st.textContent = ".ql-watch{margin:8px 0}.pv-sum.ql-clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}" +
+      ".ql-sit{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--live) 12%,transparent);font-size:15px}" +
+      ".ql-sit i{width:8px;height:8px;border-radius:50%;background:var(--live);flex:none}.ql-sit b{font-weight:800}" +
+      ".ql-lp{margin:6px 0 0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ql-lp b{color:var(--head)}";
+    document.head.appendChild(st);
+  })();

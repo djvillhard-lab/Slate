@@ -483,7 +483,8 @@
     if (tb && k !== "live" && k !== "over") {
       var os = tb.querySelector(":scope > .odds-strip, :scope > .pv-odds");
       var hr = tb.querySelector(":scope > .pv-hrow"), sum = hr && hr.nextElementSibling, ctl = hr ? null : tb.querySelector(":scope > .cl-ctl");
-      [vl, os, hr, sum, ctl].filter(Boolean).reverse().forEach(function (n) { tb.insertBefore(n, tb.firstChild); });
+      var qw = tb.querySelector(":scope > .ql-watch");   // football's players to watch sit right under the line (3.193.0)
+      [vl, os, qw, hr, sum, ctl].filter(Boolean).reverse().forEach(function (n) { tb.insertBefore(n, tb.firstChild); });
     }
     return tb;
   }
@@ -496,6 +497,7 @@
       var bxc = bx.live[g.id];
       if (started && BX_SPORT[g.league] && window.SLATE_SELF && !(bxc && bxc.err)) { var wt = el("div", "pv"); wt.appendChild(el("p", "pv-none bx-wait", "Loading the box score…")); return wt; }
       var pvb = previewBlock(g, true);
+      if (!started) { try { qlPre(g, pvb); } catch (er) {} }   // football before kickoff: slimmer, with a player to watch per team
       // soccer before the start: no lineups or season stats in the quick look (DJ, Nov 28, 2026, 3.189.4: "only full page matchup", its Lineups section)
       var pvo = ((state.previews || {})[g.id] || {}).odds;
       // the line shows whether or not Claude has written a preview (the preview only carries it once it's written)
@@ -522,7 +524,7 @@
       var sp0 = BX_SPORT[g.league], qf = null;
       // 3.192.0 (DJ, Nov 28): a finished game in a sport DJ has picked a design for gets the slim quick look (143-quick-final.js):
       // one line, the betting result, and the sport's snapshot. It carries the line's result, so the pregame line strip goes.
-      if (b.state === "post") { try { qf = qlFinal(g, b); } catch (er) { qf = null; } }
+      try { qf = b.state === "post" ? qlFinal(g, b) : b.state === "in" ? qlLive(g, b) : null; } catch (er) { qf = null; }   // 3.193.0: football during the game too
       if (qf) { if (os) os.remove(); box.appendChild(qf); }
       else {
       // a finished game: Claude's short read, or the button to have Claude write it, right here
