@@ -22,6 +22,7 @@
     ".pd-pl{display:flex;align-items:center;gap:7px;min-width:0}.pd-pl.r{flex-direction:row-reverse;text-align:right}" +
     ".pd-face{position:relative;width:36px;height:36px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;background:var(--raise)}" +
     ".pd-face i{font-style:normal;font-size:12px;font-weight:800;color:#fff}.pd-face img{position:absolute;left:-4px;bottom:0;width:44px;height:auto;opacity:0}.pd-face.ok img{opacity:1}.pd-face.ok i{display:none}" +
+    ".pd-tpic{width:40px!important;height:40px!important;align-self:center}.pd-tpic .badge-logo{height:40px;margin-top:-20px}" +
     ".pd-pn{display:flex;flex-direction:column;min-width:0;line-height:1.15}.pd-pn b{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
     ".pd-pn .v{font-size:19px;font-weight:800;font-stretch:78%;margin:1px 0 0}.pd-row>.r .pd-pn .v{margin:1px 0 0}" +
     ".pd-row .form{display:inline-flex;gap:3px}.pd-row .form i{width:18px;height:18px;font-size:10px}" +
@@ -186,6 +187,10 @@
       try { nt = pwNote(g, w) || ""; } catch (e) {}
       var lead = /^Leads (?:the )?.+? in (.+)$/i.exec(nt), tags = lead ? [{ t: "👑 Most " + lead[1].replace(/ and /, " & "), c: "good" }] : nt ? [{ t: nt, c: "" }] : [];
       tpRowSafe(wc, g, sport, { n: w.name, team: w.team, line: ln, tags: tags }, jers);
+      // DJ (Nov 28): "Need either team logos or player headshots": ESPN's headshot when the player is one of its leaders, else the team logo
+      var row = wc.lastChild, sd = tpSide(g, w.team), hd = "";
+      if (d) ["away", "home"].forEach(function (s2) { d.leaders[s2].forEach(function (x) { if (!hd && pwKey(x.name) === k && x.head) hd = x.head; }); });
+      if (row && row.firstChild && sd) { var pic = hd ? pdFace({ name: w.name, head: hd }, sd, g) : pdBadge(g, sd); pic.classList.add("pd-tpic"); row.replaceChild(pic, row.firstChild); }
     });
     return wc;
   }
