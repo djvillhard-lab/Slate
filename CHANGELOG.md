@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.189.4 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Soccer quick look before kickoff: no more lineups or season stats there. They're only on the full matchup page, in its Lineups section.
+
 ## 3.189.3 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Matchup, Players to watch: each player shows his ESPN headshot when ESPN has one, otherwise his team's logo, in place of the blank jersey.

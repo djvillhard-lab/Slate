@@ -496,14 +496,7 @@
       var bxc = bx.live[g.id];
       if (started && BX_SPORT[g.league] && window.SLATE_SELF && !(bxc && bxc.err)) { var wt = el("div", "pv"); wt.appendChild(el("p", "pv-none bx-wait", "Loading the box score…")); return wt; }
       var pvb = previewBlock(g, true);
-      // soccer before the start: the lineups once they're announced, never season player stats on their own (DJ, 3.52.5)
-      if (BX_SPORT[g.league] === "soccer" && !started && b && b.teams && b.state === "pre") {  // 3.185.0: the likely lineup (a guess) shows until the real one is out
-        // the quick look keeps it short: the top 6 players and the No. 1 keeper by season numbers (the full matchup has them all)
-        var bShort = Object.assign({}, b, { teams: b.teams.map(function (t) { return Object.assign({}, t, { groups: (t.groups || []).map(function (gr) { return Object.assign({}, gr, { rows: gr.rows.slice(0, gr.k === "keepers" ? 1 : 6) }); }) }); }) });
-        var lub = el("div", "soc-pre"); lub.appendChild(bxPlayers(g, bShort, false, true));
-        var hasXI = b.teams.some(function (t) { return t.xi && t.xi.length; });
-        if (hasXI) pvb.insertBefore(lub, pvb.firstChild); else pvb.appendChild(lub);  // lineups lead once they're out; season stats follow the preview
-      }
+      // soccer before the start: no lineups or season stats in the quick look (DJ, Nov 28, 2026, 3.189.4: "only full page matchup", its Lineups section)
       var pvo = ((state.previews || {})[g.id] || {}).odds;
       // the line shows whether or not Claude has written a preview (the preview only carries it once it's written)
       if (!pvb.querySelector(".pv-odds")) { var os0 = oddsStrip(g, b); if (os0) pvb.insertBefore(os0, pvb.firstChild); }
