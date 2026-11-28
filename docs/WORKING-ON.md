@@ -8,3 +8,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 |---|---|---|---|
 | DJ | Matchup: soccer lineups as a list, live ratings, predicted lineups | src/app/090-box-data.js, src/app/092-soc-rating.js, src/app/110-box-score.js (soccer quick look before kickoff), src/app/140-game.js (a Lineups section before kickoff), src/styles/096-soc-lineups.css (new), src/shell.html (one line), docs/pages/soccer-lineups.md (new) | 2026-11-28 04:45 |
 | DJ | Matchup: Claude's quick read and long preview | worker/index.js (preview prompt), src/app/080-claude.js (140-game.js released to the lineups thread for now), docs/pages/game.md | 2026-11-28 04:55 |
+| DJ | All games: Standings button color when on | src/styles/113-all-games-line.css | 2026-11-28 04:56 |
