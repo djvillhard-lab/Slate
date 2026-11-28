@@ -4,6 +4,9 @@ Code: `src/app/200-news.js`, styles under "News (3.45.0)" at the end of `src/sty
 server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind `deep`). Mockups DJ approved:
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
+## Live Now section (3.183.0)
+DJ, Nov 27: "News should have a live section showing the biggest games happening then. Seeing it already previewing tomorrow made me think that I'd still want to know what's happening now." `nlLive()` / `nlLiveTile()` in 203-news-front.js: first thing on Home, a two-up wheel of up to 8 live games from the app's own games() and live scores (no Claude, no extra fetch). Order: favorites +6, on the slate +4, ranked +2/+4, national TV +2, league weight, close and late +3. Hidden when nothing is live or the app's day isn't today. The feature card sits right under it.
+
 ## Live scores on game cards (3.172.4)
 DJ, Nov 26: "News anytime showing scores should be updated. Whether live or completed, should show accurate score and time left." `nlScore(o)` in 203-news-front.js: each game card looks up ESPN's scoreboard by the card's event number (`o.ev`), not the slate's game, so off-slate games work and soccer's home-first flip can't swap a score. `nlSbPoll` re-reads the scoreboards of started, not-final games every 20 s while News is on screen. A finished game leaves On Deck.
 

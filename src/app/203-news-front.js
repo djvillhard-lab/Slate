@@ -232,6 +232,30 @@
     });
   }
   if (window.SLATE_SELF) { setInterval(nlSbPoll, 20000); document.addEventListener("visibilitychange", function () { if (!document.hidden) { nl.sbAt = {}; nlSbPoll(); } }); }
+  // the biggest games being played right now, biggest first: your teams, your slate, ranked teams, national TV, the
+  // league, and a close game late. Scores and clocks are the app's live ones (040-live.js), so they tick by themselves.
+  var NL_LVW = { nfl: 5, nba: 3, ncaaf: 3, ncaam: 2, nhl: 2, mlb: 2 }, NL_LAST = { nfl: 4, ncaaf: 4, nba: 4, wnba: 4, ncaam: 2, ncaaw: 4, nhl: 3, mlb: 7 }, NL_NAT = /^(ABC|CBS|NBC|FOX|ESPN|ESPN2|TNT|TBS|FS1|Prime Video|Peacock|NFL Network|NBA TV|truTV|USA Net|USA)$/i;
+  function nlLive() {
+    if (state.date !== todayInHome()) return [];
+    var out = []; games().forEach(function (g) {
+      if (status(g).kind !== "live") return; var sc = scoreOf(g); if (!sc || sc.state !== "in") return;
+      var ra = Number(g.awayRank) || 0, rh = Number(g.homeRank) || 0, d = Math.abs(sc.a - sc.h), hoops = /^(nba|wnba|ncaam|ncaaw)$/.test(g.league), fb = /^(nfl|ncaaf)$/.test(g.league);
+      var late = (Number(sc.p) || 0) >= (NL_LAST[g.league] || 2), close = d <= (fb ? 8 : hoops ? 6 : 1);
+      var w = (NL_LVW[g.league] || 2) + (ra && rh ? 4 : ra || rh ? 2 : 0) + (inLineup(g.id) ? 4 : 0) + (isFav(g.away, g.league) || isFav(g.home, g.league) ? 6 : 0) + ((g.tv || []).some(function (n) { return NL_NAT.test(n); }) ? 2 : 0) + (late && close ? 3 : 0);
+      out.push({ g: g, sc: sc, w: w });
+    });
+    return out.sort(function (a, b) { return b.w - a.w || String(a.g.start).localeCompare(String(b.g.start)); }).slice(0, 8);
+  }
+  function nlLiveTile(x) {
+    var g = x.g, sc = x.sc, c = el("button", "nx-card nf-lv"), top = el("div", "nf-lvt"); c.type = "button";
+    top.appendChild(el("b", null, sc.detail || "Live")); var lt = (LEAGUES[g.league] || {}).tag, tv = (g.tv || [])[0]; top.appendChild(el("span", null, [lt, tv].filter(Boolean).join(" · "))); c.appendChild(top);
+    ["away", "home"].forEach(function (sd) {
+      var a = sd === "away", r = el("div", "nf-lvr"), rk = Number(g[sd + "Rank"]) || 0, mine = a ? sc.a : sc.h, other = a ? sc.h : sc.a; if (mine > other) r.classList.add("up");
+      r.appendChild(badgeFor(abbr(g, sd), g[sd], nlHex(g[sd + "Color"]))); r.appendChild(el("span", null, (rk ? rk + " " : "") + abbr(g, sd))); r.appendChild(el("b", null, String(mine))); c.appendChild(r);
+    });
+    c.addEventListener("click", function () { var ow = nlOther(); if (ow && !document.documentElement.classList.contains("pn-fwd")) { ow.SlateApp.paneGo("game:" + g.id); return; } openMatchup(g); });
+    return c;
+  }
   function nlGameCard(o, kind) {
     var c = el("div", "nx-card nf-g nf-" + kind), hd = el("div", "nf-gh"), g = o.game;
     hd.style.setProperty("--a", nlHex(o.ac) || "var(--raise)"); hd.style.setProperty("--h", nlHex(o.hc) || "var(--raise)");
@@ -381,6 +405,9 @@
       // 3.161.0 (DJ: "Swiping along news cards shows them all in a horizontal wheel rather than opening a new page to
       // show them all"): every section on Home holds all of its cards side by side; a sideways swipe turns the wheel
       var pages = [], bi; for (bi = 0; bi < M.brk.length; bi += 3) pages.push(nlJustIn(M.brk.slice(bi, bi + 3)));
+      // 3.183.0 (DJ: "News should have a live section showing the biggest games happening then"): what is on right now, first
+      // on the page, from the app's own live scores (no wait for a write-up). Gone when nothing is live.
+      var lv = nlLive(), lvEnd = null; if (lv.length) { nlWheelSec(wrap, "live", "Live Now", "", lv.map(nlLiveTile), "sm", "", "🔴"); lvEnd = wrap.lastChild; }
       nlWheelSec(wrap, "brk", NL_T.brk, "as it happens", pages, "", "", NL_E.brk);
       // 3.163.0 (DJ: "I want news to be more creative... The format doesn't always need to be the same. It should redo it
       // each time it rewrites"): Claude designs the page each write-up (doc.page): the day's theme on top, one or two
@@ -418,8 +445,8 @@
         fh.appendChild(el("h2", null, (F.emoji ? F.emoji + " " : "") + F.title)); if (F.text) fh.appendChild(el("p", null, F.text)); fc.appendChild(fh);
         if (F.games.length) { fc.appendChild(el("h5", null, F.games.length === 1 ? "The matchup" : "The " + (["", "", "two", "three", "four", "five"][F.games.length] || "") + " matchups")); F.games.forEach(function (o) { fc.appendChild(nlGameCard(o, o.as != null && o.as !== "" ? "recap" : "preview")); }); }
         if (F.stories.length) { fc.appendChild(el("h5", null, "The stories")); var fl = el("div", "nf-fsl"); F.stories.forEach(function (x) { var a = nlLink(x, "nf-fs"); var si = x.img && !(fp && x.img === fp.img) ? nwImg(nwPic(x.img, 400), "nf-fsp") : null; if (si) a.appendChild(si); else if (x.t) a.appendChild(teamBadge(x.t)); var d = el("div"); d.appendChild(el("h4", null, x.title)); if (x.text) d.appendChild(el("p", null, x.text)); var sr = nlSrc(x); if (sr) d.appendChild(sr); a.appendChild(d); fl.appendChild(a); }); fc.appendChild(fl); }
-        wrap.insertBefore(fc, wrap.querySelector(".nl-h"));
-      } else if (P.theme && P.theme.title) { var th = el("div", "nf-th"); th.appendChild(el("span", null, fmtDate(todayInHome(), { weekday: "long", month: "long", day: "numeric" }))); th.appendChild(el("h2", null, P.theme.title)); if (P.theme.text) th.appendChild(el("p", null, P.theme.text)); wrap.insertBefore(th, wrap.querySelector(".nl-h")); }
+        wrap.insertBefore(fc, lvEnd ? lvEnd.nextSibling : wrap.querySelector(".nl-h"));
+      } else if (P.theme && P.theme.title) { var th = el("div", "nf-th"); th.appendChild(el("span", null, fmtDate(todayInHome(), { weekday: "long", month: "long", day: "numeric" }))); th.appendChild(el("h2", null, P.theme.title)); if (P.theme.text) th.appendChild(el("p", null, P.theme.text)); wrap.insertBefore(th, lvEnd ? lvEnd.nextSibling : wrap.querySelector(".nl-h")); }
       var special = function (sp) {
         if (!sp || !sp.items || !sp.items.length) return;
         if (sp.style === "games") { nlWheelSec(wrap, sp.id, sp.title, "", sp.items.map(function (o) { return nlGameCard(o, o.as != null && o.as !== "" ? "recap" : "preview"); }), "", sp.intro, sp.emoji); return; }

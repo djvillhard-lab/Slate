@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.183.0 (Nov 27, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- News: a new Live Now section at the very top shows the biggest games being played right now, each with its live score and the time left. Your teams come first, then games on your slate, ranked teams, national TV games and close games late. It holds up to 8 games, swipe sideways for more, and tap one to open its matchup. The section goes away when nothing is live, so in the evening News shows what is on now before it previews tomorrow.
+
 ## 3.182.4 (Nov 27, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - One-liners: the same fact no longer shows twice on a card. Columbus vs Miami read "Columbus outshot Miami 18 to 9" and then "Outshot Miami 18 to 9" again; now it shows once. A one-goal game also drops "won it in the 90th minute", since the goal's minute already says so.

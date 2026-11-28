@@ -390,3 +390,14 @@
 .nl-t.ph .top { padding: 8px 10px 0; }
 .nl-t.ph .in { padding: 6px 10px 10px; background: none; }
 .nl-t.ph h4 { color: var(--ink); } .nl-t.ph p { color: var(--muted); }
+
+/* ---------- 3.183.0 (DJ: a Live section, the biggest games on right now) ---------- */
+.nf-lv { display: grid; gap: 6px; align-content: start; width: 100%; min-height: 44px; padding: 10px; border: 0; border-top: 3px solid var(--live, #e5484d); color: inherit; font: inherit; text-align: left; }
+.nf-lvt { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; min-width: 0; }
+.nf-lvt b { font-size: 12px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: var(--live, #e5484d); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nf-lvt span { flex: none; font-size: 10.5px; font-weight: 700; color: var(--dim); white-space: nowrap; }
+.nf-lvr { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ink); }   /* neither side is grayed while the game is live (DJ, 3.133.2) */
+.nf-lvr > .badge { flex: none; }
+.nf-lvr span { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; font-stretch: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nf-lvr b { flex: none; font-size: 20px; font-weight: 800; font-stretch: 76%; line-height: 1; }
+.nf-lvr.up b { color: var(--accent); }
