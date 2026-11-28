@@ -343,7 +343,7 @@
       }
       if (sport === "bball" || sport === "football") c.forEach(function (x) { if (x.key.split("|")[0] === "cb") story.push({ tm: x.tm || "", sc: x.score, text: x.text }); });
       if (sport === "soccer") c.forEach(function (x) { var k = x.key.split("|")[0];
-        if (/^(late|lateq|pm|red|cb|cbd|smash)$/.test(k) || /^(dom|ot|shots)$/.test(k) && x.score >= 40) story.push({ tm: x.tm || "", sc: x.score, text: x.text }); });
+        if (/^(late|lateq|pm|red|cb|cbd|smash)$/.test(k) || /^(dom|ot|shots)$/.test(k) && x.score >= 40) story.push({ tm: x.tm || "", sc: x.score, text: x.text, k: k }); });
       if (sport === "hockey") c.forEach(function (x) { var k = x.key.split("|")[0], n0 = +(/(\d+) saves/.exec(x.text) || [])[1] || 0, sh2 = /(\d+) to (\d+)/.exec(x.text);
         if (/^(hkpp|hkpp0)$/.test(k) || k === "sv" && n0 >= 35 || k === "hksh" && sh2 && sh2[1] - sh2[2] >= 12) story.push({ tm: x.tm || "", sc: x.score + (k === "sv" ? 10 : 0), text: x.text }); });
       story.sort(function (a, b) { return b.sc - a.sc; });
@@ -351,7 +351,7 @@
       story.forEach(function (x) { var t0 = tid.filter(function (i) { return teams[i].abbr === x.tm; })[0]; if (!t0) return;
         [teams[t0].full, teams[t0].name, teams[t0].short, teams[t0].nick].filter(Boolean).sort(function (a, b) { return b.length - a.length; }).some(function (nm) {
           var m1 = new RegExp("^(The )?" + nm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "('s?)? ").exec(x.text); if (!m1 || m1[2]) return false;
-          x.text = x.text.slice(m1[0].length); x.text = x.text.charAt(0).toUpperCase() + x.text.slice(1); return true; }); });
+          x.orig = x.text; x.text = x.text.slice(m1[0].length); x.text = x.text.charAt(0).toUpperCase() + x.text.slice(1); return true; }); });
       story = story.filter(function (x) { return x.sc >= 36; }); if (story.length > 1 && story[1].tm && story[1].tm === story[0].tm && story.length > 2) story.splice(1, 1); story = story.slice(0, 2);
     }
     // a fact about both teams (lead changes) goes first as its own row; a team's fact joins that team's row
@@ -370,12 +370,13 @@
         // 3.179.1 (DJ: "Too much detail… makes it too long"): just the count and kind
         bigTx += "; " + teams[i].abbr + ": " + (L.length === 1 ? (/pick-six/.test(L[0].what) ? "Pick-six" : (allD ? "Defensive" : "Special-teams") + " TD") :
           L.length + (allD ? " defensive" : allS ? " special-teams" : " defense and special-teams") + " TDs"); }); }
-    var storyTx = function (skip) { return story.filter(function (x) { return x.tm && (!skip || x.text !== skip); }).map(function (x) { return "; " + x.tm + ": " + x.text + (x.pair ? "; " + x.pair.tm + ": " + x.pair.text : ""); }).join(""); };
+    var storyTx = function (skip) { return story.filter(function (x) { return x.tm && (!skip || x.text !== skip && x.orig !== skip); }).map(function (x) { return "; " + x.tm + ": " + x.text + (x.pair ? "; " + x.pair.tm + ": " + x.pair.text : ""); }).join(""); };
     var storyLead = function () { return story.filter(function (x) { return !x.tm; }).map(function (x) { return x.text + "; "; }).join(""); };
     var SCK = /^(scorers|solo|allsc|brace|goal|late|lateq|quick|cb|cbd|fest|hksc|g|hkpts|hka|top)$/;
     if (liveSc && liveSc.text) {
       var more = "", nx = null; if (liveSc.n === 1) { nx = c.filter(function (x) { return !SCK.test(x.key.split("|")[0]); }).sort(function (a, b) { return b.score - a.score; })[0];
         if (nx && nx.text) more = "; " + (/^(The|A|An) /.test(nx.text) ? nx.text.charAt(0).toLowerCase() + nx.text.slice(1) : nx.text); }
+      if (liveSc.n === 1) story = story.filter(function (x) { return !/^(late|lateq)$/.test(x.k || ""); });   // one goal: its minute already says it came late
       var add2 = done ? storyTx(nx && nx.text) : "";
       c.push({ key: "livesc|" + liveSc.n + (more ? "|" + nx.key : ""), score: 999, tone: 1, text: (done ? storyLead() : "") + liveSc.text + more + add2, facts: {}, tm: more || add2 ? "" : liveSc.tm });
     }
@@ -471,6 +472,9 @@
         t = t.replace(new RegExp("\\bgives " + R + " a "), "gives them a ");
         t = t.replace(/^\s+/, "");
         t = t.charAt(0).toUpperCase() + t.slice(1); }
+      // 3.182.4 (DJ: "Columbus crew one liner has a duplicate line"): the same fact never shows twice on a card
+      var norm = function (x) { return String(x).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); };
+      if (rows.some(function (r) { return r.text.split("; ").some(function (y) { return norm(y) === norm(t); }); })) return;
       var same = rows.filter(function (r) { return r.side === sd; })[0];   // one row per team, in the order the line names them
       if (same) same.text += "; " + t; else rows.push({ side: sd, text: t });
     });

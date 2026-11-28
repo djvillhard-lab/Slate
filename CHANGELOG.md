@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.182.4 (Nov 27, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- One-liners: the same fact no longer shows twice on a card. Columbus vs Miami read "Columbus outshot Miami 18 to 9" and then "Outshot Miami 18 to 9" again; now it shows once. A one-goal game also drops "won it in the 90th minute", since the goal's minute already says so.
+
 ## 3.182.3 (Nov 27, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed: a team's ranking on the score bar is now a small tag on the outside bottom corner of its logo, away from the record. It was a loose number between the logo and the record. On the row of live games the ranking is a little smaller and sits low beside the team's letters. The unfolded focus view shows the tag too.
