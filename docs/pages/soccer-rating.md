@@ -58,3 +58,4 @@ Slate's own match score for each soccer player (Web 3.130.0, DJ, Nov 22, 2026). 
 ## Open
 - Values are a first pass; DJ may want them tuned after watching a few matches.
 - Not shown for a team until its lineup is opened (no ratings on game cards or in Box Office).
+- 3.191.1 (DJ: no ratings at half-time, Man Utd v Brentford, Nov 28): ESPN's per-player `minutes` stays 0 until full time, so the 15-minute rule hid everyone live. `socRatingBox` now works out minutes from the match clock (`b.detail`: HT = 45, 62' = 62, 90'+3' = 93; final = 90) and the sub minutes in the timeline; `socRtFill` uses that when ESPN's minutes are 0.

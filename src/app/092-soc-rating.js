@@ -133,7 +133,9 @@
   function socRtFill(box, ctx) {
     var key = ctx.key, cur = socRt[key] || { st: {} }, rated = [];
     ctx.people.forEach(function (p) {
-      var role = p.role || socRoleOf((socRtPos[ctx.tid] || {})[p.id]), r = socRate(cur.st[p.id], role);
+      var st = cur.st[p.id];
+      if (st && !(Number(st.minutes) > 0) && p.mins > 0) { st = Object.assign({}, st); st.minutes = p.mins; }  // ESPN's minutes are 0 until full time
+      var role = p.role || socRoleOf((socRtPos[ctx.tid] || {})[p.id]), r = socRate(st, role);
       if (r) rated.push({ p: p, r: r });
     });
     rated.sort(function (a, b2) { return b2.r.raw - a.r.raw; });
@@ -207,6 +209,13 @@
     lines.forEach(function (ln, i) { ln.forEach(function (p, j) { if (p && p.id) people.push({ id: p.id, n: p.n, role: socRoleAt(lines, i, j) }); }); });
     (t.bench || []).forEach(function (p) { if (p.on && p.id) people.push({ id: p.id, n: p.n, sub: true }); });
     if (!people.length) return null;
+    // ESPN leaves "minutes" at 0 until the final whistle (seen Nov 28, 2026, Man Utd v Brentford at half-time), so while the match is
+    // on (or just over) each player's minutes come from the match clock and his substitution minute instead
+    var mnum = function (m) { var x = String(m || "").split("+"); return (parseInt(x[0], 10) || 0) + (parseInt(x[1], 10) || 0); };
+    var det = String(b.detail || ""), clock = b.state === "post" ? 90 : /^HT|half/i.test(det) ? 45 : mnum((/(\d+)'?(?:\s*\+\s*(\d+))?/.exec(det) || [])[1]) + (parseInt((/\+\s*(\d+)/.exec(det) || [])[1], 10) || 0);
+    var on = {}, off = {};
+    ((b && b.ev) || []).forEach(function (e) { if (e.k === "sub" && e.tid === t.id) { if (e.ai) on[e.ai] = mnum(e.m); if (e.bi) off[e.bi] = mnum(e.m); } });
+    people.forEach(function (p) { var a = p.sub ? (on[p.id] || clock) : 0, z = off[p.id] || clock; p.mins = Math.max(0, z - a); });
     socRtCtx[key] = { key: key, tid: t.id, people: people, live: b.state === "in" };
     var box = el("div", "soc-rt-box"); box.setAttribute("data-key", key);
     socRtLoad(g, t, b, people);
