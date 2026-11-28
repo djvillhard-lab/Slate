@@ -1,5 +1,5 @@
 # Events: golf and F1 (sports without two teams)
-Last updated: Nov 27, 2026, 3.178.2
+Last updated: Nov 28, 2026, 3.186.1
 Code: `src/app/165-events.js` (data + card + All games sections + slate block), hooks in `160-all-games.js` (tabs in
 `filterOpts`, a GOLF/F1 tab in `renderGames`, sections under the leagues on ALL) and `170-slate-page.js` (`evSlateBlock`
 under the games, above Finished). Styles `src/styles/098-events.css`.
@@ -45,6 +45,11 @@ under the games, above Finished). Styles `src/styles/098-events.css`.
   its event pages (`pga/events/<id>`) stop at 2019 events. FOX Sports has a live to-par board (eventId 2957), but its data API needs a site key,
   which Slate isn't allowed to use. Neither shows skins or money. A probe route `/api/golf-tv` was added, then removed again in this release.
 - So the card says "Started 9:00 AM" / "Starts …" (your time) and, once it's on, a "Live leaderboard" link (`board` in GOLF_TV) to FOX's page.
+
+## 3.186.1: remove an event from the slate (DJ: "No way to remove the golf match today from my slate")
+- Every event card on the slate (golf, F1, made-for-TV golf) has the games' x in its top row. Tap = the event's id goes in the day's
+  `lineup.removed` (same list as games, saved per day on every device), toast with Undo. `evSlateBlock` skips removed ids.
+- The Slate rules switch (Men's golf → Made-for-TV matches) hides them every day; checked that it does.
 
 ## Open (DJ's order: golf, F1, then UFC, tennis, NASCAR)
 - UFC: on hold (DJ, Nov 20). When it's a go: fight cards are head-to-head (`mma/ufc`, competitions = bouts with 2 competitors) and run every weekend.

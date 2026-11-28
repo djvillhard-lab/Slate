@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.186.1 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Golf and F1 cards on the slate have the x that games have: tap it to take that event off today's slate (with Undo). To stop made-for-TV golf matches showing at all, turn off Slate rules → Golf and racing → Men's golf → Made-for-TV matches.
+
 ## 3.186.0 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Notifications: a new "Lineups out" alert for your teams in soccer. When ESPN posts the starting lineups, about an hour before kickoff, you get one alert with both teams' starting eleven, keeper to strikers, home team first. Tap it to open the matchup, where the Lineups section has them with pictures and positions. It's on for your teams; switch it off under Notifications, Game alerts, Lineups out.

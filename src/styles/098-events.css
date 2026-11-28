@@ -39,3 +39,7 @@
 .ev-card.tv .ev-board .ev-r { grid-template-columns: minmax(0, 1fr); }
 .ev-card.tv .ev-pos, .ev-card.tv .ev-thru, .ev-card.tv .ev-val { display: none; }
 a.ev-more { display: inline-flex; align-items: center; text-decoration: none; }
+/* remove from the slate (3.186.1): the game cards' x, kept to a 44pt target next to the tag */
+.ev-top .ev-rm { flex: none; width: 44px; height: 44px; margin: -10px -12px -10px -4px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--muted); cursor: pointer; }
+.ev-top .ev-rm svg { width: 18px; height: 18px; }
+.ev-top .bug { margin-left: auto; }

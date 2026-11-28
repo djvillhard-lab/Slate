@@ -147,6 +147,14 @@
     var lg = el("span", "g-lg ev-lg"); lg.appendChild(el("span", "nt", x.tour)); top.appendChild(lg);
     var bug = el("span", "bug" + (x.kind === "live" ? " live" : ""), x.kind === "live" ? (x.golf ? (x.round ? (x.tv ? "Day " : "Round ") + x.round : "Live") : "Live") : x.kind === "over" ? "Final" : x.tv && x.startsToday ? timeText(x.start) : x.golf ? "Upcoming" : timeText(x.start));
     top.appendChild(bug);
+    // on the slate, an event can be taken off for the day like a game (3.186.1, DJ: "No way to remove the golf match today
+    // from my slate"); it goes in the day's removed list with the games, so it stays off on every device
+    if (where === "lineup") {
+      var rm = el("button", "rm ta-ic ev-rm"); rm.type = "button"; rm.appendChild(icon("x"));
+      rm.setAttribute("aria-label", "Remove " + x.name + " from the slate"); rm.title = "Remove from slate";
+      rm.addEventListener("click", function (e) { e.stopPropagation(); evRemove(x); });
+      top.appendChild(rm);
+    }
     card.appendChild(top);
     card.appendChild(el("div", "ev-name", x.name));
     // the tag already says the round (golf) or the next session's time (F1), so the line under the name doesn't repeat it
@@ -301,11 +309,19 @@
   }
 
   // ---------- the slate ----------
+  function evRemoved(id) { return (state.lineup.removed || []).indexOf(id) !== -1; }
+  function evRemove(x) {
+    if (!state.lineupLoaded) { toast("Loading your slate…"); return; }
+    var L = state.lineup, before = L.removed.slice();
+    if (!evRemoved(x.id)) L.removed.push(x.id);
+    toast("Removed from slate", function () { L.removed = before; render(); saveLineup(); });
+    render(); saveLineup();
+  }
   // only the events your Slate rules pick (all off to start); one folding section per sport, under the games
   function evSlateBlock() {
     var day = state.date, out = el("div", "ev-slate"), n = 0;
     EV_ORDER.forEach(function (k) {
-      var list = evList(day, k).filter(evRuleOn);
+      var list = evList(day, k).filter(function (x) { return evRuleOn(x) && !evRemoved(x.id); });
       if (liveOnly() && day === todayInHome()) list = list.filter(function (x) { return x.kind === "live"; });
       if (!list.length) return;
       n++;
