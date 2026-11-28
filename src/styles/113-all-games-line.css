@@ -1,0 +1,13 @@
+/* All games: one line of controls (3.184.0, DJ picked option A; code in src/app/284-all-games-row.js).
+   #ag-line wraps the filter words (#substrip) and #ag-acts, which holds the 2 columns, Standings and Live buttons. */
+.ag-line { display: flex; align-items: center; min-width: 0; }
+.ag-line > .substrip { flex: 1 1 auto; min-width: 0; }
+html .ag-line > .ag-acts { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 16px 0 0 !important; padding: 0 !important; }
+/* the words end where the buttons start: a short fade where they scroll under (XL text), no gutter for the folded Duo's side column on them any more */
+html .ag-line.has-acts > .substrip:not(#_) { padding-right: 14px !important; -webkit-mask-image: linear-gradient(to left, transparent 0, #000 14px) !important; mask-image: linear-gradient(to left, transparent 0, #000 14px) !important; }
+/* folded Duo: the buttons stop short of the side column, as the words did */
+html[data-native].side-col:not(.duo) #pane-r .ag-line > .ag-acts { margin-right: calc(16px + var(--strip-w, 0px) / var(--z, 1)) !important; }
+/* 2 columns and Standings are icon buttons here; Live keeps its word and count */
+html .ag-acts .ag2-btn span, html .ag-acts .sdg-btn span { display: none; }
+html .ag-acts .lo-btn:not(#_) { margin: 0 !important; }
+html .ag-acts .ag2-btn:not(#_), html .ag-acts .sdg-btn:not(#_) { padding: 0 9px !important; }

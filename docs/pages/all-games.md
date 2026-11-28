@@ -131,3 +131,12 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 
 ## 3.121.14 (Nov 22, 2026)
 - DJ: favorites (and slate games) are no longer pulled to the top of a league section; order is live, then by start time, then finished. The star and "Your team" tag mark them.
+
+## One line of controls (Web 3.184.0, Nov 27 2026)
+- DJ picked option A from the simplicity review's mockups (over B, a dropdown like the slate's): the filter words (All, Best, National TV, or the league's own) and the 2 columns, Standings and Live buttons sit on ONE line, where there were two.
+- "Best of each league" now reads "Best" (the full name is its screen-reader label, set in 240-chrome.js). 2 columns and Standings are icon buttons here; Live keeps its word and count.
+- How: `src/app/284-all-games-row.js` wraps `#substrip` in `#ag-line` and, after every `renderGames`/`renderTop`, moves the buttons that 160-all-games.js draws in the page's first `.lo-row.gm-live` into `#ag-acts` (the emptied row is hidden). Nothing in 160 changed, so the buttons work exactly as before, and they now stay in view with the header while the list scrolls. Looks in `src/styles/113-all-games-line.css`.
+- Not on the unfolded Duo's two-pane All games (`isDuo`), which keeps its own layout. Classic menu gets it too.
+- At XL text the words scroll sideways under a short fade beside the buttons.
+- Undo: remove the 284 file and the `113-all-games-line.css` line in `src/shell.html`.
+- Left as is: the Standings button turns red when on (132-standings.js); red is meant for live only, worth a look if DJ asks.

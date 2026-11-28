@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.184.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- All games: the buttons at the top are on one line instead of two, so the games start higher (option A from the mockups, the third release from the simplicity review). All, Best and National TV are on the left; 2 columns, Standings and Live are on the right of the same line. "Best of each league" is shortened to "Best", and 2 columns and Standings are icon buttons now. Every button still takes one tap, and they do what they did before. On a league's own tab the conference filters share the line the same way and scroll sideways when there are many.
+- Because that line is part of the page's top, the buttons stay in view while you scroll the games.
 ## 3.183.4 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Matchup, Claude's quick read: before a game it's now about the storylines (what's at stake, a manager under pressure, a player back or facing his old team, a rivalry, how the teams play) instead of a run of recent scores and dates. Form gets a few words ("winless in five"), and the recent results stay in Form and health. A preview written before this can be regenerated right away instead of waiting six hours.

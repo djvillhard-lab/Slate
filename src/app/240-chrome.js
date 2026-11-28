@@ -126,8 +126,8 @@
     var showConf = v === "games" && !!LEAGUES[state.league];
     if (v === "games" && state.league === "all") {
       if (["all", "best", "nat"].indexOf(state.conf) === -1) state.conf = "all";
-      [["all", "All"], ["best", "Best of each league"], ["nat", "National TV"]].forEach(function (o) {
-        var b = el("button", "cf-tab", o[1]); b.type = "button";
+      [["all", "All"], ["best", "Best", "Best of each league"], ["nat", "National TV"]].forEach(function (o) {  // 3.184.0: "Best", so the row fits beside the buttons (284-all-games-row.js)
+        var b = el("button", "cf-tab", o[1]); b.type = "button"; if (o[2]) b.setAttribute("aria-label", o[2]);
         b.setAttribute("aria-pressed", state.conf === o[0] ? "true" : "false");
         b.addEventListener("click", function () { state.conf = o[0]; render(); });
         ss.appendChild(b);
