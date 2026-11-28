@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.191.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Matchup, soccer before kickoff: once the lineups are out, the preview shows "Lineup changes" for each team against its starters in its last match (any competition): who comes into the XI, who drops to the bench, and who isn't in the squad. Today's United side, for example: Dalot and Dorgu in, Mazraoui and Mbeumo on the bench. All from ESPN, in the same rows as Top performers.
+- "Watch for" story tags get an emoji (👀).
+
 ## 3.190.1 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Slate cards: the soccer lineups note no longer looks like a button. It's now a plain line of text under the one-liners, "📋 Lineups are out", with no box around it. It still shows only between the lineups coming out and kickoff.

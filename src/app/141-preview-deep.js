@@ -23,6 +23,7 @@
     ".pd-face{position:relative;width:36px;height:36px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;background:var(--raise)}" +
     ".pd-face i{font-style:normal;font-size:12px;font-weight:800;color:#fff}.pd-face img{position:absolute;left:-4px;bottom:0;width:44px;height:auto;opacity:0}.pd-face.ok img{opacity:1}.pd-face.ok i{display:none}" +
     ".pd-tpic{width:40px!important;height:40px!important;align-self:center}.pd-tpic .badge-logo{height:40px;margin-top:-20px}" +
+    ".pd-lu>.pd-k{margin-bottom:2px}.pd-lu>.pd-k .badge{width:24px;height:24px}.pd-lu>.pd-k .badge .badge-logo{height:24px;margin-top:-12px}.pd-lu>.pv-at{margin:0 0 6px}" +
     ".pd-pn{display:flex;flex-direction:column;min-width:0;line-height:1.15}.pd-pn b{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
     ".pd-pn .v{font-size:19px;font-weight:800;font-stretch:78%;margin:1px 0 0}.pd-row>.r .pd-pn .v{margin:1px 0 0}" +
     ".pd-row .form{display:inline-flex;gap:3px}.pd-row .form i{width:18px;height:18px;font-size:10px}" +
@@ -63,11 +64,13 @@
   function pdLoad(g) {
     var c = PD.cache[g.id];
     var ov = status(g).kind === "over";   // a copy from before the final whistle is fetched again for the box score
-    if (c && (c.busy || (c.done && Date.now() - c.at < (ov && !(c.data && c.data.fin) ? 60000 : 1800000)))) return c;
+    // soccer in the 90 minutes before kickoff: every 2 minutes until the lineups are out (3.191.0)
+    var luWait = BX_SPORT[g.league] === "soccer" && status(g).kind !== "live" && !ov && new Date(g.start) - Date.now() < 5400000 && !(c && c.data && c.data.xi);
+    if (c && (c.busy || (c.done && Date.now() - c.at < (ov && !(c.data && c.data.fin) ? 60000 : luWait ? 120000 : 1800000)))) return c;
     c = PD.cache[g.id] = { at: Date.now(), busy: true, data: c ? c.data : null };
     bxFindEvent(g).then(function (ev) { return ev ? rkFetch(bxSummaryUrl(g.league, ev)) : null; }).then(null, function () { return null; }).then(function (j) {
       c.busy = false; c.done = true; c.at = Date.now();
-      if (j) { try { c.data = pdParse(g, j); } catch (e) { c.data = null; } }
+      if (j) { try { c.data = pdParse(g, j); c.raw = { header: j.header }; } catch (e) { c.data = null; } }
       if (state.view === "game" && state.gameId === g.id) { try { keepScroll(renderGame); } catch (e) {} }
     });
     return c;
@@ -112,7 +115,7 @@
       d.last[sd] = l5Season(t.events, gd).reverse().slice(0, 5).map(function (e) {
         var o = e.opponent || {}, mine = e.homeTeamId === tid ? e.homeTeamScore : e.awayTeamScore, theirs = e.homeTeamId === tid ? e.awayTeamScore : e.homeTeamScore;
         var sc = mine != null && theirs != null && mine !== "" ? mine + "-" + theirs : String(e.score || "");
-        return { res: e.gameResult || "", at: e.atVs === "@", opp: o.abbreviation || "", oppName: o.displayName || "", score: sc };
+        return { id: String(e.id || ""), comp: e.competitionName || e.leagueName || "", res: e.gameResult || "", at: e.atVs === "@", opp: o.abbreviation || "", oppName: o.displayName || "", score: sc };
       });
     });
     // after the game (3.189.0): the score, each period, the records, and the team stats from the box score
@@ -121,6 +124,7 @@
     d.score = { away: null, home: null }; d.lines = { away: [], home: [] }; d.rec = { away: "", home: "" }; d.stats = { away: {}, home: {} };
     (cp0.competitors || []).forEach(function (x) { var sd = x.homeAway; if (sd !== "away" && sd !== "home") return; d.score[sd] = x.score; d.lines[sd] = (x.linescores || []).map(function (l) { return l.displayValue != null ? l.displayValue : l.value; }); d.rec[sd] = ((x.record || [])[0] || {}).summary || ""; });
     ((j.boxscore || {}).teams || []).forEach(function (t) { var sd = pdSide(g, j, t.team); if (!sd) return; (t.statistics || []).forEach(function (x) { if (x && x.name) d.stats[sd][x.name] = { label: x.label, v: x.displayValue }; }); });
+    d.xi = pdXI(g, j);
     var ss = (j.seasonseries || [])[0];
     if (ss && Array.isArray(ss.events)) {
       var m = { away: 0, home: 0, draw: 0, n: 0, label: ss.shortSummary || ss.seriesLabel || "Season series" };
@@ -175,7 +179,7 @@
   // the emoji the slate and Live feed use for that kind of story
   var PD_EMOJI = [[/turning|swing|run\b|comeback|rally/i, "🔥"], [/standout|star|career|record|milestone|hat/i, "⭐"], [/finish|clutch|late|buzzer|winner/i, "⏱️"], [/defen|lockdown|clean sheet|shutout/i, "🔒"],
     [/stake|table|standing|playoff|race|seed/i, "🏆"], [/pressure|crisis|hot seat|coach|manager/i, "😬"], [/old club|old team|return|reunion|homecoming/i, "↩️"], [/tactic|style|scheme|matchup/i, "🧠"],
-    [/injur|absen|out\b|health/i, "🩹"], [/rival|derby/i, "⚔️"], [/form|streak|slump|skid/i, "📈"], [/stat|number|shoot|glass|turnover/i, "🎯"], [/collapse|gave it|mistake|error/i, "💥"], [/debut|rookie|young/i, "🌱"]];
+    [/injur|absen|out\b|health/i, "🩹"], [/rival|derby/i, "⚔️"], [/form|streak|slump|skid/i, "📈"], [/stat|number|shoot|glass|turnover/i, "🎯"], [/collapse|gave it|mistake|error/i, "💥"], [/debut|rookie|young/i, "🌱"], [/watch/i, "👀"]];
   function pdTagText(t) { var e = ""; PD_EMOJI.some(function (x) { if (x[0].test(t)) { e = x[1]; return true; } return false; }); return (e ? e + " " : "") + t; }
   // Players to watch, drawn exactly like Top performers. The line is ESPN's season numbers (PW.line, pwFill), the tag says
   // why (a team lead from pwNote), and the position comes from ESPN's leaders when the player is one of them
@@ -195,6 +199,58 @@
     return wc;
   }
   function tpRowSafe(box, g, sport, w, jers) { try { box.appendChild(tpRow(g, sport, w, jers)); } catch (e) { box.appendChild(pwRow(g, { name: w.n, team: w.team, line: w.line }, true)); } }
+  // ---------- soccer: what changed in the starting lineups (3.191.0) ----------
+  // DJ (Nov 28): "the soccer preview should have something related to the starting lineups. Maybe not showing them all but
+  // highlighting surprises or changes from last starting lineup." Once ESPN posts this game's XI, each team's XI is compared
+  // with its starters in its last match (any competition, ESPN's summary for that game): who came in, and who dropped out
+  // (on the bench, or not in the squad). The full lineups stay in the Lineups section.
+  function pdXI(g, j) {
+    var out = null;
+    (j.rosters || []).forEach(function (t) {
+      var sd = t.homeAway === "home" || t.homeAway === "away" ? t.homeAway : pdSide(g, j, t.team); if (!sd) return;
+      var r = (t.roster || []).map(function (p) { var a = p.athlete || {}; return { id: String(a.id || ""), n: a.displayName || "", jer: String(p.jersey || a.jersey || ""), p: ((p.position || {}).abbreviation || ""), st: !!p.starter }; }).filter(function (x) { return x.id; });
+      if (r.filter(function (x) { return x.st; }).length >= 11) { out = out || {}; out[sd] = { all: r, form: t.formation || "" }; }
+    });
+    return out;
+  }
+  var PD_LAST = {};   // event id -> { home/away starters by team id } from that match's summary
+  function pdLastXI(g, ev) {
+    var c = PD_LAST[ev]; if (c) return c.done ? c.data : null;
+    c = PD_LAST[ev] = { done: false, data: null };
+    rkFetch(bxSummaryUrl(g.league, ev)).then(null, function () { return null; }).then(function (j) {
+      c.done = true; var out = {};
+      ((j && j.rosters) || []).forEach(function (t) { var tid = String((t.team || {}).id || ""); out[tid] = (t.roster || []).filter(function (p) { return p.starter; }).map(function (p) { var a = p.athlete || {}; return { id: String(a.id || ""), n: a.displayName || "", jer: String(p.jersey || a.jersey || ""), p: ((p.position || {}).abbreviation || "") }; }); });
+      c.data = out;
+      if (state.view === "game" && state.gameId === g.id) { try { keepScroll(renderGame); } catch (e) {} }
+    });
+    return null;
+  }
+  function pdTeamId(g, sd) { var c = PD.cache[g.id], j = c && c.raw; return j ? String((((((j.header || {}).competitions || [])[0] || {}).competitors || []).filter(function (x) { return x.homeAway === sd; })[0] || {}).id || "") : ""; }
+  function pdLineup(g, d) {
+    var sk = status(g).kind; if (BX_SPORT[g.league] !== "soccer" || !d || !d.xi || sk === "live" || sk === "over") return null;
+    var box = null;
+    sideOrder(g).forEach(function (sd) {
+      var now = d.xi[sd], last = d.last[sd][0]; if (!now || !last || !last.id) return;
+      var prev = pdLastXI(g, last.id); if (!prev) return;
+      var tid = pdTeamId(g, sd), was = prev[tid]; if (!was || was.length < 11) return;
+      var startNow = now.all.filter(function (x) { return x.st; }), ids = {}, wasIds = {}, inSquad = {};
+      startNow.forEach(function (x) { ids[x.id] = 1; }); was.forEach(function (x) { wasIds[x.id] = 1; }); now.all.forEach(function (x) { inSquad[x.id] = 1; });
+      var ins = startNow.filter(function (x) { return !wasIds[x.id]; }), outs = was.filter(function (x) { return !ids[x.id]; });
+      if (!box) { box = el("div"); box.appendChild(el("h3", "pd-h", "Lineup changes")); }
+      var wc = gvCard(null, "gv-watch pd-lu"), hd = el("div", "pd-k");
+      hd.appendChild(pdBadge(g, sd));
+      var what = ins.length ? ins.length + (ins.length === 1 ? " change" : " changes") : "Same XI";
+      hd.appendChild(el("h4", null, what + " from the " + last.score + (last.at ? " at " : " vs ") + (last.oppName || last.opp)));
+      wc.appendChild(hd);
+      if (last.comp) wc.appendChild(el("p", "pv-at", last.comp.replace(/^\d{4}(-\d{2,4})? /, "") + (now.form ? " · Today: " + now.form : "")));
+      var jers = {};
+      ins.forEach(function (x) { jers[x.id] = x.jer; tpRowSafe(wc, g, "soccer", { n: x.n, id: x.id, p: x.p, team: abbr(g, sd), line: "Starts today", tags: [{ t: "🆕 Into the XI", c: "good" }] }, jers); });
+      outs.forEach(function (x) { jers[x.id] = x.jer; var bench = inSquad[x.id]; tpRowSafe(wc, g, "soccer", { n: x.n, id: x.id, p: x.p, team: abbr(g, sd), line: bench ? "On the bench" : "Not in the squad", tags: [{ t: bench ? "🪑 Benched" : "❌ Out of the squad", c: "bad" }] }, jers); });
+      box.appendChild(wc);
+    });
+    if (box) { var nt = el("p", "pv-at", "Compared with each team's starters in its last match. From ESPN."); nt.style.marginTop = "4px"; box.appendChild(nt); }
+    return box;
+  }
   // the storyline leads the whole block (DJ, Nov 28: "Add the storyline to the very top")
   function pdLead(label, text) { var q = el("div", "pd-lead"); q.appendChild(el("span", null, label)); q.appendChild(el("b", null, text)); return q; }
   function pdParts(g, list, tc) {
@@ -218,6 +274,7 @@
     if (!full && d && !d.last.away.length && !d.last.home.length && !d.leaders.away.length && !d.leaders.home.length) return null;
     if (full && dp.question) wrap.appendChild(pdLead("The big question", dp.question));
     var card = gvCard(null, "pd"); card.appendChild(pdTape(g, pv || {}, d, dp)); wrap.appendChild(card);
+    var lu = pdLineup(g, d); if (lu) wrap.appendChild(lu);   // soccer: changes from the last starting XI, once the lineups are out
     if (full) {
       wrap.appendChild(el("h3", "pd-h", "The preview"));
       wrap.appendChild(pdParts(g, dp.parts, tc));
