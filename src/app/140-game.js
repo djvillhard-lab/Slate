@@ -102,8 +102,10 @@
       var rcx = pv && recapOf(pv);
       section("recap", sport === "soccer" ? "Recap, lineups and summary" : "Recap and players", "Final", function (box) {
         // Claude's summary first, then the game's top performers, then the full box score
-        previewSections(g, pv, box, "recap", true);
-        var tp = live ? boxStars(g, b) : null; if (tp) box.appendChild(tp);
+        // 3.189.0: the post-game layout (141-preview-deep.js) once the score is shown and ESPN's box score is in
+        var tp = live ? boxStars(g, b) : null, rcN = el("div"); previewSections(g, pv, rcN, "recap", true);
+        var pg = boxShown(g) ? pgBlock(g, pv, tp, rcN.firstChild ? rcN : null) : null;
+        if (pg) box.appendChild(pg); else { while (rcN.firstChild) box.appendChild(rcN.firstChild); if (tp) box.appendChild(tp); }
         var scbF = live && boxShown(g) ? scoringBlock(g, true) : null; if (scbF) { var scfc = gvCard(null, "gv-box"); scfc.appendChild(scbF); box.appendChild(scfc); }  // the scoring timeline
         if (sport) boxFill(box);
         pvExtras(box);
@@ -324,7 +326,7 @@
     } else { dd.appendChild(el("h3", "gv-h", "The deep dive")); if (!rc) dd.appendChild(el("p", "pv-none", "Regenerate the preview to add the longer read.")); }
     if (!pdFull && (long.length || !rc)) body.appendChild(dd);
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }) : [];
-    var wl = pwList(g, pv, stars);
+    var wl = stars.length || !(pdFull && pdB) ? pwList(g, pv, stars) : [];   // 3.189.0: Players to watch lives inside the new preview
     if (wl.length) {
       var wc = gvCard(stars.length ? "Top performers" : "Players to watch", "gv-watch");
       wl.forEach(function (w) { wc.appendChild(pwRow(g, w, stars.length > 0)); });

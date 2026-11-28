@@ -5,6 +5,15 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.189.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Matchup, after the game: a new layout to match the preview. A scoreboard with both logos, the final and the score by period, five team stats side by side as bars in team colors (each sport its own: shooting, rebounds and turnovers in basketball, possession and shots in soccer, yards and third downs in football), then Claude's headline, the top performers, how the game was won in up to four parts, and what it means. Claude writes the words; every number comes from ESPN.
+- With no Claude recap yet, the same page shows the data-only version: the scoreboard, the team stats and the top performers.
+- The storyline (the big question before a game, the story after it) now sits at the very top. Story tags use the app's pill tags with an emoji, Top performers uses the same rows as everywhere else, and Players to watch moved inside the new preview.
+- Leader rows in the preview show each player's headshot and name with one key number (a quarterback's passing yards, not his whole line).
+- Claude's words are about stories and what to watch for, easier to read; numbers only when they're extraordinary, since the graphics carry the stats.
+- A preview or recap written before this can be regenerated right away to get the new layout.
+
 ## 3.188.0 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Soccer, likely lineups: each player's position is now short (GK, CB, LB, CAM, ST and so on), followed by his season so far: appearances, goals and assists, or saves and goals against for the keeper, e.g. "#19 · LAM · 11 apps · 4 G · 0 A".

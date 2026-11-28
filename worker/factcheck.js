@@ -13,7 +13,7 @@ const NUMW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eig
 const num = (w) => (/^\d+$/.test(w) ? +w : NUMW[String(w).toLowerCase()] || 0);
 const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 // words people read; ids, names, urls and stat lines are left alone
-const TEXT_KEYS = /^(summary|bullets|long|text|take|hunch|story|why|note|series|line_note|question|decides)$/;
+const TEXT_KEYS = /^(summary|bullets|long|text|take|hunch|story|why|note|series|line_note|question|decides|headline|means)$/;
 const ITEM_KEYS = /^(watch|sides|timeline|hits|latest|top|games|parts)$/;
 
 function parse(json) { try { return JSON.parse(json || "{}") || {}; } catch (e) { return {}; } }
