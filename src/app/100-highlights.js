@@ -414,7 +414,7 @@
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
   // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
   // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
-  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.148.0") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.148.0"); } } catch (e) {} })();
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.183.3") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.183.3"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
@@ -715,7 +715,13 @@
       if (sport !== "soccer" && w.length >= 2 && !w.some(isNaN) && w[0] + w[1] >= 3 && !pvAllHome(T[i], w[0], w[1]) && !c.some(function (x) { return x.k === "perf|" + i || x.k === "bad|" + i || x.k === "good|" + i; }))
         add("split|" + i, 12 + Math.abs(w[0] / (w[0] + w[1]) - 0.5) * 6, T[i].name + " are " + r0 + " " + (i === H ? "at home" : "on the road")); });
     // ESPN's preview headline: a solid fallback
-    var hd = String(((sum.article || {}).headline) || "").trim(); if (hd && hd.length <= 120 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 44, hd);   // 3.144.1: ESPN's preview headline is the storyline (rivalry, holiday, what's at stake)
+    var hd = String(((sum.article || {}).headline) || "").trim();
+    // 3.183.3 (DJ: "One liner for ND says they're ranked 3 while the matchup shows 4"): ESPN's headline carries its own ranking
+    // (here the playoff committee's); its "No. N Team" is rewritten to the card's ranking, or dropped when the card shows none
+    ids.forEach(function (i) { var w = String(T[i].full || "").split(" "), nms = [w.slice(0, -1).join(" "), w.slice(0, -2).join(" "), T[i].full, w[0]].filter(function (x) { return x && x.length >= 3; });
+      nms.sort(function (a, b) { return b.length - a.length; }).some(function (nm0) { var re = new RegExp("\\bNo\\. \\d+ (?=" + nm0.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b)"); if (!re.test(hd)) return false;
+        hd = hd.replace(re, T[i].rank ? "No. " + T[i].rank + " " : ""); return true; }); });
+    if (hd && hd.length <= 120 && !pvBlandHead(hd, ids.reduce(function (a, i) { var w = String(T[i].full || "").split(" "); return a.concat([T[i].name, T[i].full, T[i].abbr, w.length > 1 ? w[w.length - 1] : "", w.length > 2 ? w.slice(-2).join(" ") : "", w.length > 1 ? w.slice(0, -1).join(" ") : ""]); }, []))) add("art", 44, hd);   // 3.144.1: ESPN's preview headline is the storyline (rivalry, holiday, what's at stake)
     // a playoff game (3.92.0): the regular-season table, division race and season series no longer decide anything
     if (post) c = c.filter(function (x) { return !/^(div|divlast|topclash|relclash|leader|gap|unbs|winless|unb0|ser|top|chase|drop|close)(\||$)/.test(x.k); });
     if (!c.length) {  // nothing stands out (or the game has started and ESPN dropped the pre-game notes): records, plainly
