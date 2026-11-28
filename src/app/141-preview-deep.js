@@ -237,7 +237,7 @@
       var nt = el("p", "pv-at", "Newest first. From ESPN."); nt.style.marginTop = "4px"; wrap.appendChild(nt);
     }
     if (dp.decides) { wrap.appendChild(el("h3", "pd-h", "What decides it")); wrap.appendChild(el("p", "pd-dec", dp.decides)); }
-    if (full) { var st = clStamp(pvAt(pv)); if (st) wrap.appendChild(st); }
+    if (full) { var st = gameStamp(g, pvAt(pv), false, true); if (st) wrap.appendChild(st); }
     return wrap;
   }
 
@@ -305,6 +305,6 @@
     if (full) { wrap.appendChild(el("h3", "pd-h", "How it was won")); wrap.appendChild(pdParts(g, dp.parts, tc)); }
     else if (rcNode) wrap.appendChild(rcNode);   // a recap written before 3.189.0 (its paragraph, as before), Claude's button, or the tap to show it
     if (full && dp.decides) { wrap.appendChild(el("h3", "pd-h", "What it means")); wrap.appendChild(el("p", "pd-dec", dp.decides)); }
-    if (full) { var st = clStamp(pvAt(pv, rc)); if (st) wrap.appendChild(st); }
+    if (full) { var st = gameStamp(g, pvAt(pv, rc), true, true); if (st) wrap.appendChild(st); }
     return wrap;
   }

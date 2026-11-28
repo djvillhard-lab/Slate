@@ -94,10 +94,9 @@
       var ob = el("button", "nc-btn"); ob.type = "button"; ob.appendChild(el("span", null, "Open")); ob.addEventListener("click", ncOpen); act.appendChild(ob);
     } else {
       if (st.has) { var op = el("button", "nc-btn main"); op.type = "button"; op.appendChild(el("span", null, "Open your page")); op.addEventListener("click", ncOpen); act.appendChild(op); }
-      var go = el("button", "nc-btn" + (st.has ? "" : " main")); go.type = "button"; go.disabled = !any;
-      go.appendChild(icon("sparkle")); go.appendChild(el("span", null, st.has ? "Regenerate" : "Generate"));
-      go.setAttribute("aria-label", (st.has ? "Regenerate" : "Generate") + " your custom news page with Claude");
-      go.addEventListener("click", nwGenerate); act.appendChild(go);
+      // 3.190.0: the app's one Generate block and one Regenerate capsule (080-claude.js)
+      if (st.has) act.appendChild(clReBtn(nwGenerate, "Regenerate your custom news page with Claude", !any));
+      else { var gw = el("div", "cl-ctl nc-go"); gw.appendChild(clGoBtn("Generate your page", nwGenerate, !any)); act.appendChild(gw); }
     }
     card.appendChild(act);
     if (st.err && !st.busy) card.appendChild(el("p", "nc-sub cl-err", nwErr(st.err, st.wat)));

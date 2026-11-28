@@ -17,7 +17,8 @@
     });
     row.appendChild(teams); row.appendChild(statusSide(g, "lineup")); hd.appendChild(row);
     var meta = [];
-    sideOrder(g).forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x) meta.push(abbr(g, sd) + " " + x); });
+    // 3.190.0 (DJ: "Doesn't make sense to show team league rankings twice"): soccer's table place is already beside each name (060-cards.js), so it isn't repeated here
+    sideOrder(g).forEach(function (sd) { var x = g[sd + "Standing"] || g[sd + "Conf"]; if (x && BX_SPORT[g.league] === "soccer" && !g.post && /^\d+(st|nd|rd|th)\b/.test(String(g[sd + "Standing"] || "")) && x === g[sd + "Standing"]) return; if (x) meta.push(abbr(g, sd) + " " + x); });
     if (meta.length) hd.appendChild(el("p", "gv-meta", meta.join(" · ")));
     var lc = venueLine(g); if (lc) hd.appendChild(lc);
     if (!g.custom && !isPastDay()) {
@@ -41,7 +42,7 @@
     var mybk = mybChip(g); if (mybk) { var mpo = ostrip && ostrip.querySelector(".pv-odds"); if (mpo) mpo.appendChild(mybk); else { var mrw = el("div", "myb-chip-row"); mrw.appendChild(mybk); body.appendChild(mrw); } }  // small "+ Add bet" (3.89.4)
     var mybc = mybCard(g); if (mybc) body.appendChild(mybc);  // Your bets, under the line (3.86.0)
     // Claude's write (or regenerate) button sits right under the location and the betting line, in every sport (DJ, 3.52.5)
-    var gcTop = gameClaudeCtl(g); if (gcTop) { gcTop.classList.add("gv-cl"); body.appendChild(gcTop); }
+    var gcTop = gameClaudeCtl(g, true); if (gcTop) { gcTop.classList.add("gv-cl"); body.appendChild(gcTop); }
     var live = boxLive(b), season = !live && b && b.state === "pre" && b.season;
     state.gvSec = state.gvSec || {};
     var open = state.gvSec[g.id] || (state.gvSec[g.id] = { recap: kind === "over", box: kind === "live", team: false, pv: !started });
@@ -289,12 +290,12 @@
     var rc = part === "pre" ? null : recapOf(pv), rcOpen = rc && recapShown(g);
     if (rc) {
       var rq = gvCard(rc.quick ? "Box score recap" : "Recap", "gv-recap");
-      if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); if (!rc.quick) { var rs = clStamp(pvAt(pv, rc)); if (rs) rq.appendChild(rs); } }
+      if (rcOpen) { rq.appendChild(readNode(rc.text, rc.bullets, "gv-sum", rc.quick)); if (!rc.quick) { var rs = gameStamp(g, pvAt(pv, rc), true, true); if (rs) rq.appendChild(rs); } }
       else rq.appendChild(recapGate(g));
       body.appendChild(rq);
     } else if (pv.summary) {
       var q = gvCard("The quick read"); q.appendChild(readNode(pv.summary, pv.bullets, "gv-sum"));
-      var qs = clStamp(pvAt(pv)); if (qs) q.appendChild(qs);
+      var qs = gameStamp(g, pvAt(pv), false, true); if (qs) q.appendChild(qs);
       body.appendChild(q);
     }
     if (part === "recap") {

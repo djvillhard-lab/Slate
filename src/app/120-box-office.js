@@ -792,8 +792,7 @@
         if (busy) { var spn = el("span", "cl-busy"); spn.appendChild(el("i", "cl-dot")); spn.appendChild(el("span", null, "Claude is picking the over and underachievers… about a minute")); box.appendChild(spn); }
         else {
           if (w && w.error) box.appendChild(el("p", "pv-none cl-err", clErr(w.error)));
-          var gb = el("button", "cl-go"); gb.type = "button"; gb.appendChild(icon("sparkle")); gb.appendChild(el("span", "cl-l", "Write Claude's over & underachievers")); gb.appendChild(el("span", "cl-t", "about a minute"));
-          var lgK = mm.lg; gb.addEventListener("click", function () { mmAsk(day, lgK); }); box.appendChild(gb);
+          var lgK = mm.lg; box.appendChild(clGoBtn("Generate over & underachievers", function () { mmAsk(day, lgK); }));
         }
         body.appendChild(box);
       }

@@ -350,8 +350,9 @@
     var cc = gvCard("Claude's take", "tm-claude");
     // 3.113.15 (DJ: Man United's take was still last Friday's): a take expires 24 hours after it's written. It isn't rewritten
     // by itself (Claude costs money, so only a tap writes one); the old text is hidden and the button offers a fresh one
+    var tAsk = skey && window.SLATE_SELF ? { k: "t:" + skey, go: function () { claudeAsk("team", null, { key: skey, facts: tf() }); } } : null;
     var tmOld = !!(doc && doc.summary && (!doc.at || Date.now() - Date.parse(doc.at) > TM_TAKE_TTL));
-    if (tmOld) cc.appendChild(el("p", "pv-none", "Claude's take" + (doc.at ? " from " + new Date(doc.at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "") + " is more than a day old, so it's hidden. Write a fresh one for the latest news."));
+    if (tmOld) cc.appendChild(el("p", "pv-none", "Claude's take" + (doc.at ? " from " + new Date(doc.at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "") + " is more than a day old, so it's hidden. Generate a fresh one for the latest news."));
     else if (doc && doc.summary) {
       cc.appendChild(readNode(doc.summary, doc.bullets, "gv-sum"));
       var tl = Array.isArray(doc.long) ? doc.long.filter(Boolean) : [];
@@ -363,7 +364,7 @@
         cc.appendChild(dh);
         if (lrOpen) tl.forEach(function (para) { cc.appendChild(el("p", "gv-p", para)); });
       }
-      var tst = clStamp(doc.at); if (tst) cc.appendChild(tst);
+      var tst = clFootFor(doc.at, doc, tAsk); if (tst) cc.appendChild(tst);
     } else cc.appendChild(el("p", "pv-none", "No Claude summary for this team yet."));
     if (skey && window.SLATE_SELF) {
       var tf = function () {
@@ -377,7 +378,7 @@
         if (d && d.news) o.espnNews = d.news.slice(0, 5).map(function (a) { return a.headline; });
         return o;
       };
-      cc.appendChild(claudeCtl("team", doc, !!(doc && doc.summary) && !tmOld, { k: "t:" + skey, go: function () { claudeAsk("team", null, { key: skey, facts: tf() }); } }, tmOld ? "Write a fresh take" : "Write Claude's take"));
+      clAdd(cc, claudeCtl("team", doc, !!(doc && doc.summary) && !tmOld, tAsk, "Generate take"));
     }
     body.appendChild(cc);
     if (!d) {
