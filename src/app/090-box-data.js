@@ -373,7 +373,8 @@
     var left = Date.parse(g.start) - Date.now();
     if (!out && left < 90 * 60000 && left > -15 * 60000) bxNeed(g);
     if (!out) return null;
-    var tg = el("span", "g-lu", "📋 Lineups"); tg.setAttribute("aria-label", "Starting lineups are out"); return tg;
+    // 3.190.1 (DJ: "sort of looks like a button"): a plain line of text like the card's other notes, no box around it
+    var tg = el("p", "g-lu"); tg.appendChild(el("b", null, "📋 Lineups")); tg.appendChild(document.createTextNode(" are out")); return tg;
   }
   // ---- the likely lineup before the real one is out (3.185.0, DJ: "for upcoming games, add a potential starting lineup guess
   // for each team"). Not a prediction model: it is the team's starting XI from its last match in any competition, from ESPN,
