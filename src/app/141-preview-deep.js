@@ -154,7 +154,9 @@
     var cb = el("div", "pd-cb"); so.forEach(function (sd) { var i = el("i"); i.style.background = tc[sd]; cb.appendChild(i); }); box.appendChild(cb);
     var row = function (label, l, r) { var rw = el("div", "pd-row"), a = el("div"), c = el("div", "c", label), b = el("div", "r"); if (l) a.appendChild(l); if (r) b.appendChild(r); rw.appendChild(a); rw.appendChild(c); rw.appendChild(b); box.appendChild(rw); };
     var form = function (sd) { var f = d && d.last[sd].length ? d.last[sd].map(function (x) { return x.res; }).join("") : (pv.last5 || {})[sd]; return f ? formDots(f) : null; };   // newest first, like the results tiles
-    if (form(so[0]) || form(so[1])) row("Form", form(so[0]), form(so[1]));
+    // DJ (Nov 28): the Recent results tiles sit right under this card, so the Form dots only show when ESPN gave no tiles
+    var tiles = d && (d.last.away.length || d.last.home.length);
+    if (!tiles && (form(so[0]) || form(so[1]))) row("Form", form(so[0]), form(so[1]));
     if (d) {
       var cats = d.leaders[so[0]].filter(function (x) { return d.leaders[so[1]].some(function (y) { return y.key === x.key; }); }).slice(0, 3);
       cats.forEach(function (x) {
@@ -187,10 +189,9 @@
     var sport = BX_SPORT[g.league] || "", wc = gvCard("Players to watch", "gv-watch"), jers = {};
     try { jers = tpJerseys(g); } catch (e) {}
     wl.forEach(function (w) {
-      var k = pwKey(w.name), ln = PW.line[g.id + "|" + k] || (/\d/.test(w.line || "") ? w.line : ""), nt = "";
-      try { nt = pwNote(g, w) || ""; } catch (e) {}
-      var lead = /^Leads (?:the )?.+? in (.+)$/i.exec(nt), tags = lead ? [{ t: "👑 Most " + lead[1].replace(/ and /, " & "), c: "good" }] : nt ? [{ t: nt, c: "" }] : [];
-      tpRowSafe(wc, g, sport, { n: w.name, team: w.team, line: ln, tags: tags }, jers);
+      var k = pwKey(w.name), ln = PW.line[g.id + "|" + k] || (/\d/.test(w.line || "") ? w.line : "");
+      // DJ (Nov 28): "Don't like the tags here": no pill tags on these rows; the season line says why to watch them
+      tpRowSafe(wc, g, sport, { n: w.name, team: w.team, line: ln, tags: [] }, jers);
       // DJ (Nov 28): "Need either team logos or player headshots": ESPN's headshot when the player is one of its leaders, else the team logo
       var row = wc.lastChild, sd = tpSide(g, w.team), hd = "";
       if (d) ["away", "home"].forEach(function (s2) { d.leaders[s2].forEach(function (x) { if (!hd && pwKey(x.name) === k && x.head) hd = x.head; }); });
@@ -274,15 +275,7 @@
     if (!full && d && !d.last.away.length && !d.last.home.length && !d.leaders.away.length && !d.leaders.home.length) return null;
     if (full && dp.question) wrap.appendChild(pdLead("The big question", dp.question));
     var card = gvCard(null, "pd"); card.appendChild(pdTape(g, pv || {}, d, dp)); wrap.appendChild(card);
-    var lu = pdLineup(g, d); if (lu) wrap.appendChild(lu);   // soccer: changes from the last starting XI, once the lineups are out
-    if (full) {
-      wrap.appendChild(el("h3", "pd-h", "The preview"));
-      wrap.appendChild(pdParts(g, dp.parts, tc));
-      // DJ (Nov 28): "Remove players to watch and work it into the new preview", then "just doesn't match up with other
-      // designs": the Top performers card and rows (tpRow: team-color edge, jersey, name, position chip, team, line, pill tag)
-      var wl = pwList(g, pv, []);
-      if (wl.length) wrap.appendChild(pdWatch(g, wl, d));
-    }
+    // DJ (Nov 28): "the form graphic should move up": Recent results right under the tale of the tape
     if (d && (d.last.away.length || d.last.home.length)) {
       wrap.appendChild(el("h3", "pd-h", "Recent results"));
       sideOrder(g).forEach(function (sd) {
@@ -292,6 +285,15 @@
         rs.appendChild(tl); wrap.appendChild(rs);
       });
       var nt = el("p", "pv-at", "Newest first. From ESPN."); nt.style.marginTop = "4px"; wrap.appendChild(nt);
+    }
+    var lu = pdLineup(g, d); if (lu) wrap.appendChild(lu);   // soccer: changes from the last starting XI, once the lineups are out
+    if (full) {
+      wrap.appendChild(el("h3", "pd-h", "The preview"));
+      wrap.appendChild(pdParts(g, dp.parts, tc));
+      // DJ (Nov 28): "Remove players to watch and work it into the new preview", then "just doesn't match up with other
+      // designs": the Top performers card and rows (tpRow: team-color edge, jersey, name, position chip, team, line, pill tag)
+      var wl = pwList(g, pv, []);
+      if (wl.length) wrap.appendChild(pdWatch(g, wl, d));
     }
     if (dp.decides) { wrap.appendChild(el("h3", "pd-h", "What decides it")); wrap.appendChild(el("p", "pd-dec", dp.decides)); }
     if (full) { var st = gameStamp(g, pvAt(pv), false, true); if (st) wrap.appendChild(st); }

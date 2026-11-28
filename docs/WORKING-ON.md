@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Matchup preview (players to watch, recent results) | src/app/141-preview-deep.js | 2026-11-28T16:53Z |

@@ -113,3 +113,7 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
 - 3.189.2 (DJ: Players to watch "just doesn't match up with other designs"): `pdWatch` draws it with `tpRow`, the Top performers card and rows; a team lead from `pwNote` becomes a "👑 Most …" pill.
 - 3.189.3 (DJ: "Need either team logos or player headshots"): Players to watch swaps the jersey for the headshot from ESPN's leaders (`pdFace`) or the team logo (`pdBadge`).
 - 3.191.0 (DJ: "highlighting surprises or changes from last starting lineup"): soccer pre-game "Lineup changes" in pdBlock (`pdXI`, `pdLastXI`, `pdLineup`): this game's ESPN starters vs the starters in each team's newest lastFiveGames match (fetched once per event). In / benched / not in squad, as tpRow rows with pill tags. ESPN's summary is fetched every 2 minutes in the 90 minutes before kickoff until the XI appears.
+
+## 3.191.3 (Nov 28)
+- Recent results tiles moved right under the tale of the tape; the Form dots row shows only when ESPN gave no tiles (DJ: duplicate).
+- Players to watch rows have no tags (DJ disliked "👑 Most ..." and the cut-off team-leader note); photo, name and season line only.
