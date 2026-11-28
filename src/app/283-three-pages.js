@@ -111,7 +111,10 @@
     var rn = el("button", "n3-dra"); rn.type = "button"; rn.setAttribute("aria-label", "Next day"); rn.appendChild(n3Svg("M9 5l7 7-7 7"));
     rp.addEventListener("click", function () { n3SetDay(shiftDate(n3DayOf(), -1)); });
     rn.addEventListener("click", function () { n3SetDay(shiftDate(n3DayOf(), 1)); });
-    dr.appendChild(rp); dr.appendChild(rn); root.appendChild(dr);
+    dr.appendChild(rp); dr.appendChild(rn);
+    // 3.181.3 (DJ: "The day arrows need to be more obvious that they are for the date picker"): the day you are on sits between them (Fri over 27)
+    var dn = el("span", "n3-dn"); dn.id = "n3-dn"; dn.setAttribute("aria-hidden", "true"); dn.appendChild(el("i")); dn.appendChild(el("b")); dr.appendChild(dn);
+    root.appendChild(dr);
     var dt = el("button", "n3-dt"); dt.type = "button"; dt.id = "n3-dt"; dt.hidden = true; dt.appendChild(el("b", null, "Today"));
     dt.addEventListener("click", function () { n3SetDay(todayInHome()); });
     root.appendChild(dt);
@@ -201,7 +204,8 @@
         [$("n3-lay"), $("n3-lay2")].forEach(function (b, i) { b.hidden = !lay || (i === 1 && bar); b.setAttribute("data-lay", lay); b.setAttribute("aria-label", layLab); });
       }
       $("n3-fb").hidden = !filt; $("n3-fb").setAttribute("aria-expanded", N3.filt ? "true" : "false");
-      $("n3-dr").hidden = !dayb || N3.row; $("n3-dt").hidden = !offDay || N3.row || N3.filt; $("n3-dd").hidden = !offDay || N3.row || N3.filt; $("n3-dd").textContent = offDay;
+      $("n3-dr").hidden = !dayb || N3.row; $("n3-dt").hidden = !offDay || N3.row || N3.filt; $("n3-dd").hidden = true;  // 3.181.3: the date is inside the arrows now, so the separate label is off
+      if (dNow) { $("n3-dn").firstChild.textContent = fmtDate(dNow, { weekday: "short" }); $("n3-dn").lastChild.textContent = fmtDate(dNow, { day: "numeric" }); $("n3-dr").setAttribute("aria-label", "Change day. Showing " + fmtDate(dNow, { weekday: "long" }) + ", " + fmtDate(dNow, { month: "long", day: "numeric" })); }
       var tg = $("n3-fb").querySelector(".n3-tag"); tg.textContent = lgTag; tg.hidden = !lgTag || N3.filt;
       $("n3-fb").classList.toggle("nws-new", filt && state.view === "news" && nlTabs().some(function (o) { return o[3]; }));
       $("n3-fb").setAttribute("aria-label", state.view === "news" ? "News sections" : "Filter by league");

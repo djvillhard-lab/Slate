@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.181.3 (Nov 27, 2026)
+TestFlight: 3.178.6 (62), no new build (web only)
+- The day arrows at the bottom right now show the day they change: the weekday and date sit between the two arrows ("Fri" over "27"), so it reads as a date picker instead of two bare arrows. Tapping either side still goes back or forward one day. Off today, the Today button sits right above it; the separate date label that used to sit between them is gone, since the arrows show the date themselves.
+
 ## 3.181.2 (Nov 27, 2026)
 TestFlight: 3.178.6 (62), no new build (web only)
 - Code review, speed: lighter live updates. While Slate is open it keeps a live line to the database, and that line used to deliver every change to every shared page (scores, previews, standouts, the News wire), whole, whether or not you were looking at that page: about 570 KB in 15 minutes on a busy afternoon. Now it only hears about the pages that are open. Nothing looks different; it just uses less data and battery.

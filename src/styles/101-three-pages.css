@@ -153,3 +153,16 @@ html.in-pane .n3-dr { width: 80px; }
 
 /* 3.180.0 (simplicity review): one set of day arrows. The header pair goes where the glass pair shows bottom right */
 html[data-n3day] #day-prev, html[data-n3day] #day-next { display: none !important; }
+
+/* 3.181.3 (DJ: the day arrows must say they are for the date): the day sits between the arrows, Fri over 27, like a date stepper.
+   The arrows move to the capsule's ends and lose the line between them; each half is still the whole tap area. The separate date
+   label (.n3-dd) is off, so Today sits right above the arrows. */
+.n3-dr .n3-dn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 1px; pointer-events: none; color: var(--ink); line-height: 1; }
+.n3-dr .n3-dn i { font-style: normal; font-size: 10px; font-weight: 700; color: var(--muted); }
+.n3-dr .n3-dn b { font-size: 17px; font-weight: 800; font-stretch: 70%; font-variant-numeric: tabular-nums; }
+.n3-dr .n3-dra + .n3-dra { border-left: 0; }
+.n3-dr .n3-dra:first-child { justify-items: start; padding-left: 8px; }
+.n3-dr .n3-dra:last-of-type { justify-items: end; padding-right: 8px; }
+.n3-dr .n3-dra svg { width: 16px; height: 16px; }
+.n3 .n3-dt { bottom: 62px; }
+html[data-n3f] .n3 .n3-dt { bottom: 126px; }

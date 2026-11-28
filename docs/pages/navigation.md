@@ -50,3 +50,7 @@ Review: https://claude.ai/artifact/LajCd8TxtmjXzmUDZzjTPh. DJ picked "Build all 
 - No gear on Alerts and email or Slate rules (`n3Gear`).
 - `099-duo-corner.css`: Show scores and Email me my slate left the clock list; since 3.175.0 they sit far below the clock. The first Settings row's arrow and the Notifications switch are still held left on the folded Duo on purpose (they are under the clock).
 - Not done, on purpose: the Live feed's focus button stays beside Back. DJ placed it there Nov 26, and in focus view the feed's own row is hidden, so it could not be turned off from there.
+
+## The day arrows show the date (3.181.3, DJ Nov 27, 2026)
+- DJ: "The day arrows need to be more obvious that they are for the date picker." The capsule is now a date stepper: `#n3-dn` (weekday over the day number, `pointer-events: none`) sits between the arrows; the arrows moved to the capsule's ends and the line between them is gone. Each half is still the whole tap area, and the capsule keeps its 88-point width (no room for more beside the bar on a regular iPhone).
+- The separate date label `#n3-dd` is always hidden now (the stepper shows the date), so Today (`#n3-dt`) sits right above the arrows (bottom 62px; 126px with the All games filter button).
