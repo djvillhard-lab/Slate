@@ -57,7 +57,7 @@
       var tm = c.team || {}, id = String(tm.id || "");
       var t = { side: c.homeAway === "home" ? "home" : "away", id: id, abbr: tm.abbreviation || "", name: tm.displayName || "", stats: [], groups: [] };
       var ij = (sum.injuries || []).filter(function (x) { return String((x.team || {}).id) === id; })[0];
-      t.inj = ((ij && ij.injuries) || []).map(function (i) { var d = i.details || {}; return { n: bxName(i.athlete), why: String(d.type || d.detail || "").toLowerCase(), s: String(i.status || "").toLowerCase() }; }).filter(function (i) { return i.n; });
+      t.inj = ((ij && ij.injuries) || []).map(function (i) { var d = i.details || {}; return { n: bxName(i.athlete), f: String((i.athlete || {}).displayName || ""), why: String(d.type || d.detail || "").toLowerCase(), s: String(i.status || "").toLowerCase() }; }).filter(function (i) { return i.n; });
       var bt = (box.teams || []).filter(function (x) { return String((x.team || {}).id) === id; })[0], seen = {};
       ((bt && bt.statistics) || []).forEach(function (x) {
         var k = x.name || x.label || "";
@@ -73,7 +73,7 @@
         if (roster.some(function (p) { return p.starter; })) {
           t.form = (ro && ro.formation) || "";
           t.xi = roster.filter(function (p) { return p.starter; }).map(function (p) { return { full: String((p.athlete || {}).displayName || ""), n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, off: socSubbed(p.subbedOut) }; });
-          t.bench = roster.filter(function (p) { return !p.starter; }).map(function (p) { return { n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), on: socSubbed(p.subbedIn) }; });
+          t.bench = roster.filter(function (p) { return !p.starter; }).map(function (p) { return { full: String((p.athlete || {}).displayName || ""), p: (p.position || {}).abbreviation || "", n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), on: socSubbed(p.subbedIn) }; });
         }
         ((ro && ro.roster) || []).forEach(function (p) {
           if (!p.starter && !socSubbed(p.subbedIn)) return;
@@ -223,8 +223,9 @@
     im.src = big;  // the middle size (350px), so a face cut out of it is still sharp
     box.appendChild(im); dot.insertBefore(box, dot.firstChild);
   }
-  function socPhotoLoad(t, pitch) {
-    var names = (t.xi || []).map(function (p) { return p.full; }).filter(function (n) { return n && !(n in (socPhotos[t.name] || {})); });
+  function socPhotoLoad(t, box) {
+    var sel = '.soc-lu[data-team="' + String(t.id || "") + '"]';
+    var names = Array.prototype.map.call(box.querySelectorAll("[data-full]"), function (r) { return r.getAttribute("data-full"); }).filter(function (n) { return n && !(n in (socPhotos[t.name] || {})); });
     if (!t.name || !names.length || (socPhotoAsk[t.name] || 0) > Date.now()) return;
     socPhotoAsk[t.name] = Date.now() + 30000;
     fetch("/api/photos?team=" + encodeURIComponent(t.name) + "&p=" + encodeURIComponent(names.join("|"))).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
@@ -232,21 +233,94 @@
       var m = socPhotos[t.name] = socPhotos[t.name] || {}; Object.keys(j.photos).forEach(function (k) { m[k] = j.photos[k]; });
       socPhotoKeep(t.name);
       if (!j.wait) socPhotoAsk[t.name] = Date.now() + 3600000;
-      // the free picture source only answers about 10 players every few minutes: keep asking for the rest while this pitch is on screen
-      else { socPhotoAsk[t.name] = Date.now() + 60000; setTimeout(function () { var live = document.querySelector('.soc-pitch[data-team="' + String(t.id || "") + '"]'); if (live) socPhotoLoad(t, live); }, 70000); }
-      if (!pitch.isConnected) pitch = document.querySelector('.soc-pitch[data-team="' + String(t.id || "") + '"]');  // redrawn since: fill the one showing now
-      if (!pitch) return;
-      Array.prototype.forEach.call(pitch.querySelectorAll(".soc-p[data-full]"), function (pin) { var src = m[pin.getAttribute("data-full")]; if (src) socPhotoPut(pin, src); });
+      // the free picture source only answers about 10 players every few minutes: keep asking for the rest while the list is on screen
+      else { socPhotoAsk[t.name] = Date.now() + 60000; setTimeout(function () { var live = document.querySelector(sel); if (live) socPhotoLoad(t, live); }, 70000); }
+      Array.prototype.forEach.call(document.querySelectorAll(sel), function (w) {  // every copy on screen (the quick look and the matchup can both show it)
+        Array.prototype.forEach.call(w.querySelectorAll("[data-full]"), function (r) { var src = m[r.getAttribute("data-full")]; if (src) socPhotoPut(r, src); });
+      });
     }).catch(function () {});
   }
   function socTeamColor(g, t) { var sd = t.side || "away", c = badgeColor(g, sd); return c || "var(--raise)"; }
   function socInk(c) { var m = /^#?([0-9a-f]{6})$/i.exec(String(c || "").trim()); if (!m) return "#fff"; var n = parseInt(m[1], 16), r = n >> 16, g2 = n >> 8 & 255, b2 = n & 255; return (0.299 * r + 0.587 * g2 + 0.114 * b2) > 170 ? "#111820" : "#fff"; }
+  // ---- the lineup as a list (3.185.0, DJ, Nov 28, 2026: "scrap the field and formation graphic and just show starting
+  // lineups in a list with player positions shown", keep the Slate ratings and make them live, headshots when there are any) ----
+  // ESPN's position letters → plain words. The side comes from the letters (CD-L is the left centre back).
+  var SOC_POS = { G: "Goalkeeper", GK: "Goalkeeper", LB: "Left back", RB: "Right back", CB: "Centre back", CD: "Centre back", SW: "Sweeper", D: "Defender",
+    LWB: "Left wing-back", RWB: "Right wing-back", WB: "Wing-back", DM: "Holding midfielder", CM: "Central midfielder", M: "Midfielder", LM: "Left midfielder", RM: "Right midfielder",
+    AM: "Attacking midfielder", LW: "Left winger", RW: "Right winger", W: "Winger", LF: "Left forward", RF: "Right forward", CF: "Striker", F: "Striker", S: "Striker", ST: "Striker" };
+  var SOC_JOB_POS = { GK: "Goalkeeper", CB: "Defender", FB: "Defender", MID: "Midfielder", ATT: "Midfielder", ST: "Forward" };
+  function socPosName(p, job) {
+    var m = /^([A-Z]+)(?:-([LR]))?$/.exec(String(p || "").toUpperCase()), base = m && SOC_POS[m[1]];
+    if (!base) return SOC_JOB_POS[job] || "";
+    if (m[2] && !/^(Left|Right)/.test(base)) base = (m[2] === "L" ? "Left " : "Right ") + base.charAt(0).toLowerCase() + base.slice(1);
+    return base;
+  }
+  // the starting XI as lines: the keeper, then each line from the back to the strikers, left to right
+  function socLines(t) {
+    var xi = t.xi || [], lines = [], i = 0;
+    var gk = xi.filter(function (p) { return SOC_DEPTH(p.p) === 0; }), out = xi.filter(function (p) { return SOC_DEPTH(p.p) !== 0; });
+    out.sort(function (a, b2) { return SOC_DEPTH(a.p) - SOC_DEPTH(b2.p) || a.fp - b2.fp; });
+    var shape = String(t.form || "").split("-").map(Number).filter(function (n) { return n > 0; });
+    var spots = SOC_SPOTS[String(t.form || "").replace(/\D/g, "")], byFp = {};
+    xi.forEach(function (p) { if (p.fp) byFp[p.fp] = p; });
+    if (spots && Object.keys(byFp).length === 11) {
+      // ESPN's formationPlace is Opta's numbered spot in the formation, so each player sits in his real line
+      spots.split("|").forEach(function (r) { lines.push(r.split(",").map(function (n) { return byFp[n]; }).filter(Boolean)); });
+      lines.unshift(gk.length ? gk : [byFp[1]].filter(Boolean));
+      return lines;
+    }
+    if (shape.reduce(function (a, n) { return a + n; }, 0) !== out.length) { var byD = {}; out.forEach(function (p) { var d = SOC_DEPTH(p.p); (byD[d] = byD[d] || []).push(p); }); Object.keys(byD).sort().forEach(function (d) { lines.push(byD[d]); }); }
+    else shape.forEach(function (n) { lines.push(out.slice(i, i + n)); i += n; });
+    lines = lines.map(function (ln) { return ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }); });
+    lines.unshift(gk);
+    return lines;
+  }
+  // one player's row: picture (or his number), name, position, what he did, and room on the right for his rating
+  function socRow(g, t, p, pos, mk, col, gk) {
+    var r = el("div", "soc-row"), dot = el("span", "soc-n" + (gk ? " gk" : ""));
+    if (!gk) { dot.style.background = col; dot.style.color = socInk(col); }
+    r.style.setProperty("--tc", col);
+    dot.appendChild(el("b", null, p.num || "")); r.appendChild(dot);
+    var who = el("span", "soc-who"); who.appendChild(el("b", null, p.full || p.n || ""));
+    var sub = el("span", "soc-pos", (p.num ? "#" + p.num + " · " : "") + pos);
+    mk = mk || {};
+    var tags = el("span", "soc-mk");
+    for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
+    for (var k2 = 0; k2 < (mk.a || 0); k2++) tags.appendChild(el("i", "soc-ast", "A"));
+    if (mk.yc) tags.appendChild(el("i", "soc-card y")); if (mk.rc) tags.appendChild(el("i", "soc-card r"));
+    if (mk.on) tags.appendChild(el("i", "soc-off", "↑" + mk.on + "'"));
+    if (mk.off) tags.appendChild(el("i", "soc-off", "↓" + mk.off + "'"));
+    if (tags.childNodes.length) sub.appendChild(tags);
+    who.appendChild(sub); if (mk.note) who.appendChild(el("span", "soc-out", mk.note));
+    r.appendChild(who);
+    r.appendChild(el("span", "soc-sc"));
+    if (p.id) r.setAttribute("data-id", p.id);
+    if (p.full) { r.setAttribute("data-full", p.full); var ph = socPhotoFor(t, p); if (ph) socPhotoPut(r, ph); }
+    return r;
+  }
+  // the list itself: Goalkeeper, Defenders, Midfielders, Forwards, each left to right
+  function socList(g, t, lines, markOf) {
+    var list = el("div", "soc-list"), col = socTeamColor(g, t), last = lines.length - 1;
+    var HEAD = ["Goalkeeper", "Defenders", "Midfielders", "Forwards"], cur = -1;
+    lines.forEach(function (ln, i) {
+      // the heading follows ESPN's own position letters (a "2" behind the striker listed as strikers goes under Forwards), never going back up the list
+      ln.forEach(function (p, j) {
+        if (!p) return;
+        var d = SOC_DEPTH(p.p), grp = i === 0 ? 0 : !p.p ? (i === 1 ? 1 : i === last ? 3 : 2) : d <= 1 ? 1 : d >= 5 ? 3 : 2;
+        if (grp > cur) { cur = grp; list.appendChild(el("p", "soc-grp", HEAD[grp])); }
+        list.appendChild(socRow(g, t, p, socPosName(p.p, socRoleAt(lines, i, j)), markOf(p), col, i === 0));
+      });
+    });
+    return list;
+  }
   function socLineup(g, t, b) {
-    if (!t || !t.xi || !t.xi.length) return null;
+    if (!t) return null;
+    if (!t.xi || !t.xi.length) return b && b.state === "pre" ? socGuess(g, t) : null;
     var wrap = el("div", "soc-lu"), hd = el("div", "soc-lu-h");
     hd.appendChild(el("b", null, b && b.state === "pre" ? "Starting lineup" : "Lineup"));
+    if (t.form) hd.appendChild(el("span", "soc-form", t.form));
     wrap.appendChild(hd);
-    // marks from the timeline: goals, cards, subbed off
+    // marks from the timeline: goals, cards, subbed off and on
     var marks = {}, mk0 = function (k) { return marks[k] = marks[k] || { g: 0, a: 0, yc: 0, rc: 0, off: "", on: "" }; };
     ((b && b.ev) || []).forEach(function (e) {
       if (e.tid !== t.id) return; var A = e.ai || e.a, B = e.bi || e.b;
@@ -255,72 +329,82 @@
       else if (e.k === "sub") { mk0(A).on = e.m; if (B) mk0(B).off = e.m; }
     });
     var markOf = function (p) { return marks[p.id] || marks[p.n] || {}; };
-    var gk = t.xi.filter(function (p) { return SOC_DEPTH(p.p) === 0; }), out = t.xi.filter(function (p) { return SOC_DEPTH(p.p) !== 0; });
-    out.sort(function (a, b2) { return SOC_DEPTH(a.p) - SOC_DEPTH(b2.p) || a.fp - b2.fp; });
-    var shape = String(t.form || "").split("-").map(Number).filter(function (n) { return n > 0; }), lines = [], i = 0;
-    var spots = SOC_SPOTS[String(t.form || "").replace(/\D/g, "")], byFp = {};
-    t.xi.forEach(function (p) { if (p.fp) byFp[p.fp] = p; });
-    if (spots && Object.keys(byFp).length === 11) {
-      // ESPN's formationPlace is Opta's numbered spot in the formation, so each player goes exactly where the team lines up
-      spots.split("|").forEach(function (r) { lines.push(r.split(",").map(function (n) { return byFp[n]; }).filter(Boolean)); });
-      lines.unshift(gk.length ? gk : [byFp[1]].filter(Boolean));
-    } else {
-    if (shape.reduce(function (a, n) { return a + n; }, 0) !== out.length) { shape = []; var byD = {}; out.forEach(function (p) { var d = SOC_DEPTH(p.p); (byD[d] = byD[d] || []).push(p); }); Object.keys(byD).sort().forEach(function (d) { lines.push(byD[d]); }); }
-    else shape.forEach(function (n) { lines.push(out.slice(i, i + n)); i += n; });
-    lines.unshift(gk);
+    var lines = socLines(t);
+    var rtb = socRatingBox(g, t, b, lines);
+    if (rtb) wrap.appendChild(rtb);
+    var list = socList(g, t, lines, markOf);
+    wrap.appendChild(list);
+    // substitutes who came on get a row of their own (with a rating once he's played 15 minutes); the rest stay one line
+    var bench = t.bench || [], on = bench.filter(function (p) { return p.on; }), rest = bench.filter(function (p) { return !p.on; }), col = socTeamColor(g, t);
+    if (on.length) {
+      list.appendChild(el("p", "soc-grp", "Substitutes"));
+      on.forEach(function (p) { var mk = markOf(p); list.appendChild(socRow(g, t, p, socPosName((socRtPos[t.id] || {})[p.id] || p.p, ""), mk, col, false)); });
     }
-    // The floodlit pitch (3.123.0, DJ's pick): a night game seen from behind the team's own goal, so players further
-    // up the pitch stand smaller. D is how far back the camera sits, L how much of the pitch shows (in metres).
-    var pitch = el("div", "soc-pitch"), col = socTeamColor(g, t), D = 130, L = 61, far = D / (D + L);
-    var P = function (x, y) { var sc = D / (D + y); return [50 + (x - 34) / 68 * 112 * sc, 97 - 78 * (1 - sc) / (1 - far), sc]; };
-    var pt = function (x, y) { var q = P(x, y); return q[0].toFixed(2) + "," + (q[1] * 1.35).toFixed(2); };
-    var ln0 = function (pts) { return '<polyline class="soc-ch" points="' + pts.map(function (q) { return pt(q[0], q[1]); }).join(" ") + '"/>'; };
-    var arc = function (cx, cy, r, a0, a1) { var q = []; for (var a = a0; a <= a1 + 1e-6; a += (a1 - a0) / 24) q.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); return ln0(q); };
-    var svg = "";
-    for (var k0 = 0; k0 < 8; k0++) svg += '<polygon class="soc-gr' + (k0 % 2) + '" points="' + pt(-4, k0 * L / 8) + " " + pt(72, k0 * L / 8) + " " + pt(72, (k0 + 1) * L / 8) + " " + pt(-4, (k0 + 1) * L / 8) + '"/>';
-    svg += ln0([[0, L], [0, 0], [68, 0], [68, L]]) + ln0([[0, 52.5], [68, 52.5]]) + ln0([[13.84, 0], [13.84, 16.5], [54.16, 16.5], [54.16, 0]]) + ln0([[24.84, 0], [24.84, 5.5], [43.16, 5.5], [43.16, 0]]);
-    svg += arc(34, 11, 9.15, 0.645, Math.PI - 0.645) + arc(34, 52.5, 9.15, 0, Math.PI * 2);
-    var art = document.createElementNS("http://www.w3.org/2000/svg", "svg"); art.setAttribute("viewBox", "0 0 100 135"); art.setAttribute("preserveAspectRatio", "none"); art.setAttribute("aria-hidden", "true");
-    art.innerHTML = svg; pitch.appendChild(art);
-    pitch.appendChild(el("i", "soc-fade")); pitch.appendChild(el("i", "soc-lamp l")); pitch.appendChild(el("i", "soc-lamp r"));
-    var cap = el("div", "soc-cap"); cap.appendChild(el("b", null, (typeof short === "function" && t.side ? short(g, t.side) : "") || t.name || t.abbr || "")); if (t.form) cap.appendChild(el("span", "soc-form", t.form));
-    pitch.appendChild(cap);
-    var useSpots = !!(spots && Object.keys(byFp).length === 11), pins = [];
-    lines.forEach(function (ln, i) {  // keeper nearest, attack furthest away
-      var row = useSpots ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }), w = row.length;
-      var up = i === 0 ? 0.02 : 0.25 + 0.77 * Math.pow((i - 1) / Math.max(1, lines.length - 2), 1.12);  // the far lines sit a little further apart on the field, because the view squeezes them together
-      row.forEach(function (p, j) { pins.push({ p: p, i: i, w: w, up: up, x: w === 1 ? 50 : w === 2 ? (j ? 66 : 34) : w === 3 ? 20 + 30 * j : 10 + 80 * j / (w - 1) }); });
-    });
-    pins.sort(function (a, b2) { return b2.up - a.up; }).forEach(function (o) {  // far players first, so nearer ones draw over them
-      var p = o.p, q = P(o.x / 100 * 68, 3 + o.up * 52), sc = (0.68 + 0.32 * (q[2] - far) / (1 - far)) * (lines.length > 5 ? 0.84 : 1);  // five lines of outfield players stand closer together, so they draw smaller
-      var c = el("div", "soc-p" + (p.off ? " off" : "") + (o.w > 4 ? " tight" : "")), dot = el("span", "soc-n", p.num || "");
-      c.style.left = q[0].toFixed(2) + "%"; c.style.top = q[1].toFixed(2) + "%"; c.style.transform = "translate(-50%, -100%) scale(" + sc.toFixed(3) + ")";
-      if (o.i === 0) dot.classList.add("gk"); else { dot.style.background = col; dot.style.color = socInk(col); c.style.setProperty("--tc", col); c.style.setProperty("--tk", socInk(col)); }
-      var num = el("b", null, p.num || ""); dot.textContent = ""; dot.appendChild(num);
-      c.appendChild(dot);
-      if (p.id) c.setAttribute("data-id", p.id);
-      if (p.full) { c.setAttribute("data-full", p.full); var ph = socPhotoFor(t, p); if (ph) socPhotoPut(c, ph); }
-      var mk = markOf(p), tags = el("span", "soc-tags");
-      for (var k = 0; k < (mk.g || 0); k++) tags.appendChild(el("i", "soc-ball", "⚽"));
-      for (var k2 = 0; k2 < (mk.a || 0); k2++) tags.appendChild(el("i", "soc-ast", "A"));
-      if (mk.yc) tags.appendChild(el("i", "soc-card y")); if (mk.rc) tags.appendChild(el("i", "soc-card r"));
-      if (mk.off) tags.appendChild(el("i", "soc-off", "↓" + mk.off + "'"));  // the minute he came off sits by his number, so the name is never cut short
-      if (tags.childNodes.length) c.appendChild(tags);
-      c.appendChild(el("span", "soc-nm", p.n));
-      pitch.appendChild(c);
-    });
-    pitch.setAttribute("data-team", String(t.id || ""));
-    wrap.appendChild(pitch);
-    socPhotoLoad(t, pitch);
-    if ((t.bench || []).length) {
-      var bn = el("p", "soc-bench"), on = t.bench.filter(function (p) { return p.on; }), rest = t.bench.filter(function (p) { return !p.on; });
-      bn.appendChild(el("b", null, "Bench "));
-      on.concat(rest).forEach(function (p, j) { var sp = el("span", p.on ? "on" : null, p.n + (p.on && markOf(p).on ? " ↑" + markOf(p).on + "'" : p.on ? " ↑" : "")); if (j) bn.appendChild(document.createTextNode(" · ")); bn.appendChild(sp); });
-      wrap.appendChild(bn);
+    if (rest.length) {
+      var bn = el("p", "soc-bench"); bn.appendChild(el("b", null, on.length ? "Unused " : "Bench "));
+      bn.appendChild(document.createTextNode(rest.map(function (p) { return p.n; }).join(" · "))); wrap.appendChild(bn);
     }
-    // the Slate rating (092-soc-rating.js): on each circle and in a list under the bench, once the match is on
-    var rtb = socRatingBox(g, t, b, lines.map(function (ln) { return useSpots ? ln : ln.slice().sort(function (a, b2) { return SOC_SIDE(a.p) - SOC_SIDE(b2.p); }); }));
-    if (rtb) { wrap.appendChild(rtb); socRtFill(rtb, socRtCtx[rtb.getAttribute("data-key")]); }
+    wrap.setAttribute("data-team", String(t.id || ""));
+    if (rtb) socRtFill(rtb, socRtCtx[rtb.getAttribute("data-key")]);
+    socPhotoLoad(t, wrap);
+    return wrap;
+  }
+  // Before kickoff, just the two lineups (real or likely) with the team tabs, no season stats: for a "Lineups" section on the matchup page
+  function socLineupsBlock(g, b) {
+    if (BX_SPORT[g.league] !== "soccer" || !b || b.state !== "pre" || !b.teams || b.teams.length !== 2) return null;
+    return bxPlayers(g, Object.assign({}, b, { teams: b.teams.map(function (t) { return Object.assign({}, t, { groups: [] }); }) }), false, true);
+  }
+  // ---- the likely lineup before the real one is out (3.185.0, DJ: "for upcoming games, add a potential starting lineup guess
+  // for each team"). Not a prediction model: it is the team's starting XI from its last match in any competition, from ESPN,
+  // with players ESPN lists as out for this game, or sent off last time, marked. Clearly labeled as a guess. ----
+  var socGuessed = {};
+  function socGuessLoad(t) {
+    var c = socGuessed[t.id]; if (c && (c.busy || Date.now() - c.at < 6 * 3600000)) return c;
+    c = socGuessed[t.id] = { busy: true, at: Date.now(), d: c && c.d };
+    rkFetch("https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/" + t.id + "/schedule").then(function (s) {
+      var evs = ((s && s.events) || []).filter(function (e) { var st = ((((e.competitions || [])[0] || {}).status || {}).type || {}).state; return st === "post"; });
+      evs.sort(function (a, b2) { return String(b2.date).localeCompare(String(a.date)); });
+      var e = evs[0]; if (!e) return null;
+      return rkFetch("https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary?event=" + e.id).then(function (sum) {
+        var ro = ((sum && sum.rosters) || []).filter(function (x) { return String((x.team || {}).id) === String(t.id); })[0];
+        var roster = (ro && ro.roster) || []; if (!roster.some(function (p) { return p.starter; })) return null;
+        var opp = (((e.competitions || [])[0] || {}).competitors || []).filter(function (k) { return String((k.team || {}).id) !== String(t.id); })[0];
+        var ln = function (a) { a = a || {}; return a.lastName || String(a.shortName || a.displayName || "").replace(/^[A-Z]\.\s*/, ""); };
+        var rc = function (p) { return (p.stats || []).some(function (x) { return x.name === "redCards" && Number(x.value) > 0; }); };
+        return { form: (ro && ro.formation) || "", date: e.date, opp: ((opp || {}).team || {}).shortDisplayName || ((opp || {}).team || {}).displayName || "",
+          comp: ((e.league || {}).abbreviation || (e.league || {}).name || ""),
+          xi: roster.filter(function (p) { return p.starter; }).map(function (p) { return { full: String((p.athlete || {}).displayName || ""), n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, red: rc(p) }; }) };
+      });
+    }).then(function (d) {
+      c.busy = false; c.d = d || null; c.at = Date.now();
+      var go = function () {
+        if (typeof agBusy === "function" && agBusy()) { setTimeout(go, 400); return; }  // never redraw under a finger
+        Array.prototype.forEach.call(document.querySelectorAll('.soc-lu.guess[data-team="' + String(t.id) + '"]'), function (w) { if (w._g) w.replaceWith(socGuess(w._g, w._t)); });
+      };
+      go();
+    }, function () { c.busy = false; c.at = Date.now() - 5.5 * 3600000; });  // try again in half an hour
+    return c;
+  }
+  function socGuess(g, t) {
+    if (!t || !t.id) return null;
+    var c = socGuessLoad(t), d = c && c.d;
+    var wrap = el("div", "soc-lu guess"), hd = el("div", "soc-lu-h");
+    wrap._g = g; wrap._t = t; wrap.setAttribute("data-team", String(t.id));
+    hd.appendChild(el("b", null, "Likely lineup")); hd.appendChild(el("span", "soc-guess-tag", "Guess"));
+    if (d && d.form) hd.appendChild(el("span", "soc-form", d.form));
+    wrap.appendChild(hd);
+    if (!d) { wrap.appendChild(el("p", "soc-guess-note", c && c.busy ? "Looking up their last lineup…" : "The lineup comes out about an hour before kickoff.")); return wrap; }
+    var when = ""; try { when = new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }); } catch (e) {}
+    wrap.appendChild(el("p", "soc-guess-note", "Not announced yet. This is the team that started their last match" + (d.opp ? " (vs " + d.opp + (when ? ", " + when : "") + ")" : "") + ". The real lineup comes out about an hour before kickoff."));
+    var inj = {}; (t.inj || []).forEach(function (i) { inj[String(i.f || i.n || "").toLowerCase()] = i; });
+    var gt = { xi: d.xi, form: d.form, name: t.name, id: t.id };
+    var markOf = function (p) {
+      if (p.red) return { note: "Red card last match" };
+      var i = inj[String(p.full || "").toLowerCase()];
+      return i ? { note: /out/.test(i.s) ? "Out" + (i.why ? ": " + i.why : "") : "Doubtful" + (i.why ? ": " + i.why : "") } : {};
+    };
+    wrap.appendChild(socList(g, gt, socLines(gt), markOf));
+    socPhotoLoad(gt, wrap);
     return wrap;
   }
   // the match in a few bullet points: goals with the running score, penalties, red cards, half-time and full-time,

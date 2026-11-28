@@ -126,6 +126,10 @@
       section("pv", "Preview", hasPre ? "Quick read, deep dive, players" : "Not written yet", function (box) {
         previewSections(g, pv, box); pvExtras(box);
       });
+      // soccer before kickoff (3.185.0): both lineups, the real ones once announced, before that each team's likely lineup (a guess)
+      if (sport === "soccer" && b && b.state === "pre" && (b.teams || []).length === 2) section("lu", "Lineups", b.teams.some(function (t) { return t.xi && t.xi.length; }) ? "Starting lineups" : "Likely lineups, a guess", function (box) {
+        var luB = socLineupsBlock(g, b); if (!luB) return; var luc = gvCard(null, "gv-box"); luc.appendChild(luB); box.appendChild(luc);
+      });
       // season player stats before the start, except soccer (DJ, 3.52.7): soccer's arrive with the box score once the game is on
       if (sport) { if (sport !== "soccer") section("box", "Player stats", "This season", boxFill); teamSec(); }
     }

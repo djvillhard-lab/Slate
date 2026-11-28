@@ -494,7 +494,7 @@
       if (started && BX_SPORT[g.league] && window.SLATE_SELF && !(bxc && bxc.err)) { var wt = el("div", "pv"); wt.appendChild(el("p", "pv-none bx-wait", "Loading the box score…")); return wt; }
       var pvb = previewBlock(g, true);
       // soccer before the start: the lineups once they're announced, never season player stats on their own (DJ, 3.52.5)
-      if (BX_SPORT[g.league] === "soccer" && !started && b && b.teams && b.teams.some(function (t) { return t.xi && t.xi.length; })) {
+      if (BX_SPORT[g.league] === "soccer" && !started && b && b.teams && b.state === "pre") {  // 3.185.0: the likely lineup (a guess) shows until the real one is out
         // the quick look keeps it short: the top 6 players and the No. 1 keeper by season numbers (the full matchup has them all)
         var bShort = Object.assign({}, b, { teams: b.teams.map(function (t) { return Object.assign({}, t, { groups: (t.groups || []).map(function (gr) { return Object.assign({}, gr, { rows: gr.rows.slice(0, gr.k === "keepers" ? 1 : 6) }); }) }); }) });
         var lub = el("div", "soc-pre"); lub.appendChild(bxPlayers(g, bShort, false, true));

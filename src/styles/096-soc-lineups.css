@@ -1,0 +1,35 @@
+/* ---- Soccer lineups as a list (3.185.0, DJ, Nov 28, 2026): replaces the floodlit pitch. 090-box-data.js socLineup / socGuess,
+   ratings on each row from 092-soc-rating.js. Rows on hairlines, team color only on the number circle. ---- */
+.soc-lu-h { justify-content: flex-start; gap: 8px; align-items: baseline; }
+.soc-lu-h b { font-size: 15px; color: var(--head); }
+.soc-lu-h .soc-form { font-size: 15px; font-weight: 800; font-stretch: 66%; letter-spacing: .02em; color: var(--muted); opacity: 1; }
+.soc-guess-tag { padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); font-size: 11px; font-weight: 800; font-stretch: 85%; color: var(--muted); }
+.soc-guess-note { margin: 0 2px 8px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.soc-list { margin: 0; }
+.soc-grp { margin: 12px 2px 2px; font-size: 12px; font-weight: 800; font-stretch: 85%; color: var(--dim); }
+.soc-list > .soc-grp:first-child { margin-top: 4px; }
+.soc-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 56px; padding: 6px 2px; border-top: 1px solid var(--hair); }
+.soc-row.rt { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.soc-row .soc-n { width: 44px; height: 44px; font-size: 18px; box-shadow: 0 0 0 2px var(--tc, var(--line)); }
+.soc-row .soc-n.gk { background: var(--raise); color: var(--ink); }
+.soc-row.pic .soc-n { background: var(--raise) !important; }
+.soc-row.pic .soc-ph { opacity: 1; }
+.soc-row.pic .soc-n > b { position: absolute; right: -6px; bottom: -4px; min-width: 18px; height: 16px; padding: 0 3px; border-radius: 4px; display: grid; place-items: center; font-size: 12px; background: var(--card); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.soc-who { min-width: 0; display: grid; gap: 2px; }
+.soc-who > b { font-size: 16px; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soc-pos { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; }
+.soc-mk { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.soc-mk .soc-off { color: var(--muted); font-size: 12px; }
+.soc-mk .soc-ast { background: var(--ink); color: var(--card); }
+.soc-out { display: block; font-size: 12px; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soc-sc { min-width: 36px; text-align: right; font-size: 22px; font-weight: 800; font-stretch: 66%; font-variant-numeric: tabular-nums; color: var(--ink); }
+.soc-sc:empty { min-width: 0; }
+.soc-sc.top { color: var(--accent); }
+.soc-row.new .soc-sc { animation: soc-sc-new .9s ease-out; }
+@keyframes soc-sc-new { 0% { opacity: .2; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .soc-row.new .soc-sc { animation: none; } }
+.soc-list .soc-rt-det { margin: 0 2px 8px 58px; padding: 2px 0 6px; }
+.soc-rt-box { margin: 0 0 4px; }
+.soc-rt-t { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.soc-rt-live { font-size: 12px; font-weight: 800; font-stretch: 85%; color: var(--live); white-space: nowrap; }
+.soc-lu .soc-bench { margin-top: 10px; }

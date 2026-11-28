@@ -95,13 +95,15 @@
   function socRoleOf(pos) { pos = String(pos || "").toUpperCase(); return pos === "G" || pos === "GK" ? "GK" : /^(CD|CB|SW)/.test(pos) ? "CB" : /^(RB|LB|WB|RWB|LWB)/.test(pos) ? "FB" : /^D/.test(pos) ? "CB" : /^(F|CF|ST|S$)/.test(pos) ? "ST" : /^(AM|LW|RW|W|LF|RF)/.test(pos) ? "ATT" : "MID"; }
 
   // ---- fetching the match stats and drawing the ratings ----
-  // One ESPN request per player who played (about 14 a team), only for the team being looked at; a live game is asked
-  // again at most every 90 seconds, a finished one once. Substitutes' jobs come from the club's ESPN squad list (G/D/M/F).
+  // One ESPN request per player who played (about 14 a team), only for the team being looked at; a finished match once.
+  // Live (3.185.0, DJ: "I want the ratings to be live as the game is going"): asked again every minute while the lineup is
+  // on screen, and the scores in the list change in place. Substitutes' jobs come from the club's ESPN squad list (G/D/M/F).
+  var SOC_RT_EVERY = 60000;
   var socRt = {}, socRtPos = {}, socRtCtx = {}, socRtOpen = {};
   function socRtLoad(g, t, b, people) {
     var key = g.id + "|" + t.id, cur = socRt[key] = socRt[key] || { at: 0, st: {}, busy: false, done: false };
     var ev = (bx.live[g.id] || {}).ev, base = bxBase(g.league), lgSlug = base.split("/")[1] || "all";
-    if (!ev || cur.busy || (cur.done && b.state === "post") || Date.now() - cur.at < 90000) return;
+    if (!ev || cur.busy || (cur.done && b.state === "post") || Date.now() - cur.at < SOC_RT_EVERY - 2000) return;
     cur.busy = true; cur.at = Date.now();
     var jobs = people.map(function (p) {
       return rkFetch("https://sports.core.api.espn.com/v2/sports/soccer/leagues/" + lgSlug + "/events/" + ev + "/competitions/" + ev + "/competitors/" + t.id + "/roster/" + p.id + "/statistics/0").then(function (d) {
@@ -119,8 +121,15 @@
         var box = document.querySelector('.soc-rt-box[data-key="' + key + '"]'); if (box && socRtCtx[key]) socRtFill(box, socRtCtx[key]);
       };
       go();
+      // live: ask again in a minute if this team's lineup is still on screen (a redraw of the box in between asks sooner, never twice)
+      if (b.state === "in" && !cur.timer) cur.timer = setTimeout(function () {
+        cur.timer = 0;
+        var box = document.querySelector('.soc-rt-box[data-key="' + key + '"]'), d = bx.live[g.id] && bx.live[g.id].data, ctx = socRtCtx[key];
+        if (box && ctx) socRtLoad(g, t, { state: (d && d.state) || b.state }, ctx.people);
+      }, SOC_RT_EVERY);
     }, function () { cur.busy = false; });
   }
+  // the ratings strip above the lineup (title, Live, How it works) and each player's score on his row of the list
   function socRtFill(box, ctx) {
     var key = ctx.key, cur = socRt[key] || { st: {} }, rated = [];
     ctx.people.forEach(function (p) {
@@ -128,24 +137,20 @@
       if (r) rated.push({ p: p, r: r });
     });
     rated.sort(function (a, b2) { return b2.r.raw - a.r.raw; });
-    var pitch = box.parentNode && box.parentNode.querySelector(".soc-pitch");
-    if (pitch) rated.forEach(function (x, i) {
-      var pin = pitch.querySelector('.soc-p[data-id="' + x.p.id + '"]'); if (!pin) return;
-      var old = pin.querySelector(".soc-rt"); if (old) old.remove();
-      var dot = pin.querySelector(".soc-n"); if (dot) dot.appendChild(el("em", "soc-rt" + (i === 0 ? " top" : ""), x.r.score.toFixed(1)));
-    });
     box.textContent = "";
-    var hd = el("div", "soc-rt-h"); hd.appendChild(el("b", null, "Slate ratings"));
+    var hd = el("div", "soc-rt-h"), ttl = el("span", "soc-rt-t"); ttl.appendChild(el("b", null, "Slate ratings"));
+    if (ctx.live) ttl.appendChild(el("span", "soc-rt-live", "Live · every minute"));
+    hd.appendChild(ttl);
     var how = el("button", "soc-rt-how", "How it works"); how.type = "button"; hd.appendChild(how); box.appendChild(hd);
     // How it works (DJ, Nov 22, 2026: "Ensure users can see how the ratings are calculated in the app"): the rules in plain
     // words, then every point value for one job at a time, straight from the SOC_RATE table so it can never drift from the math.
     var note = el("div", "soc-rt-note");
-    note.appendChild(el("p", null, "Slate's own score, not an official rating. It is worked out from ESPN's match stats for each player."));
+    note.appendChild(el("p", null, "Slate's own score, not an official rating. It is worked out from ESPN's match stats for each player" + (ctx.live ? ", and updates every minute while the match is on." : ".")));
     [["Start", "Every player starts at 6.0."],
      ["Add and take", "Each thing he did adds or takes points, times how often he did it. What it's worth depends on his job: a tackle counts more for a centre back, a chance created more for a winger, a save only for the keeper."],
      ["His job", "A starter's job comes from where he lines up in the formation. A substitute's comes from his listed position."],
      ["Top end", "Above " + SOC_RATE_SOFT.toFixed(1) + ", each extra point counts " + SOC_RATE_SOFT_KEEP + ", so only a rare game gets near 10. No score goes under 3.0 or over 10.0."],
-     ["Who gets one", "Anyone who played " + SOC_RATE_MIN_MINUTES + " minutes or more. Tap a player below to see his own sums."]
+     ["Who gets one", "Anyone who played " + SOC_RATE_MIN_MINUTES + " minutes or more. Tap a player to see his own sums."]
     ].forEach(function (r) { var ln = el("p", "soc-rt-rule"); ln.appendChild(el("b", null, r[0])); ln.appendChild(el("span", null, r[1])); note.appendChild(ln); });
     note.appendChild(el("p", "soc-rt-sub", "Points for each thing, by job"));
     var jobs = el("div", "soc-rt-jobs"), tbl = el("div", "soc-rt-tbl"); jobs.setAttribute("role", "group"); jobs.setAttribute("aria-label", "Job on the field");
@@ -169,34 +174,40 @@
     note.hidden = !socRtOpen.how; box.appendChild(note);
     how.setAttribute("aria-expanded", socRtOpen.how ? "true" : "false");
     how.addEventListener("click", function (e) { e.stopPropagation(); socRtOpen.how = !socRtOpen.how; note.hidden = !socRtOpen.how; how.setAttribute("aria-expanded", socRtOpen.how ? "true" : "false"); });
-    if (!rated.length) { box.appendChild(el("p", "soc-rt-wait", cur.busy || !cur.at ? "Working out the ratings…" : "ESPN has no player stats for this match yet.")); return; }
+    if (!rated.length) box.appendChild(el("p", "soc-rt-wait", cur.busy || !cur.at ? "Working out the ratings…" : ctx.live ? "Ratings show once a player has played " + SOC_RATE_MIN_MINUTES + " minutes." : "ESPN has no player stats for this match yet."));
+    // each score goes on the player's own row; tapping the row opens his sums under it
+    var wrap = box.parentNode; if (!wrap) return;
     var pts = function (v) { return (v > 0 ? "+" : "−") + Math.abs(v).toFixed(2); };
     var cnt = function (q) { var n = Math.round(q.n * 10) / 10; return q.k === "cs" || q.k === "yc" || q.k === "rc" ? q.label : n + " " + (n === 1 ? q.one : q.label.toLowerCase()); };
-    rated.forEach(function (x, i) {
-      var id = key + "|" + x.p.id, row = el("button", "soc-rt-row"); row.type = "button";
-      row.appendChild(el("span", "soc-rt-sc" + (i === 0 ? " top" : ""), x.r.score.toFixed(1)));
-      var who = el("span", "soc-rt-who"); who.appendChild(el("b", null, x.p.n));
-      who.appendChild(el("span", null, SOC_ROLE_NAME[x.r.role] + " · " + Math.round(x.r.minutes) + "'" + (x.p.sub ? " · sub" : "")));
-      who.appendChild(el("span", "soc-rt-top", x.r.parts.slice(0, 3).map(function (q) { return cnt(q); }).join(" · ")));
-      row.appendChild(who); row.appendChild(icon("more"));
+    var byId = {}; rated.forEach(function (x, i) { byId[x.p.id] = { x: x, top: i === 0 }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll(".soc-row[data-id]"), function (row) {
+      var hit = byId[row.getAttribute("data-id")], sc = row.querySelector(".soc-sc"), nx = row.nextElementSibling;
+      if (nx && nx.classList.contains("soc-rt-det")) nx.remove();
+      if (!sc) return;
+      if (!hit) { sc.textContent = ""; sc.className = "soc-sc"; row.classList.remove("rt"); row.removeAttribute("role"); row.removeAttribute("tabindex"); row.onclick = row.onkeydown = null; return; }
+      var x = hit.x, id = key + "|" + x.p.id;
+      if (sc.textContent && sc.textContent !== x.r.score.toFixed(1) && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) { row.classList.remove("new"); void row.offsetWidth; row.classList.add("new"); }  // a score that just changed blinks once
+      sc.textContent = x.r.score.toFixed(1); sc.className = "soc-sc" + (hit.top ? " top" : "");
+      row.classList.add("rt"); row.setAttribute("role", "button"); row.setAttribute("tabindex", "0");
       var det = el("div", "soc-rt-det"); det.hidden = !socRtOpen[id];
-      det.appendChild(el("p", "soc-rt-line base", "Starts at 6.0"));
+      det.appendChild(el("p", "soc-rt-line base", SOC_ROLE_NAME[x.r.role] + " · " + Math.round(x.r.minutes) + "' played · starts at 6.0"));
       x.r.parts.forEach(function (q) { var ln = el("p", "soc-rt-line"); ln.appendChild(el("span", null, cnt(q))); ln.appendChild(el("b", q.pts < 0 ? "neg" : null, pts(q.pts))); det.appendChild(ln); });
       if (x.r.squeeze) { var sqz = el("p", "soc-rt-line"); sqz.appendChild(el("span", null, "Above " + SOC_RATE_SOFT.toFixed(1) + ", each extra point counts " + SOC_RATE_SOFT_KEEP)); sqz.appendChild(el("b", "neg", pts(x.r.squeeze))); det.appendChild(sqz); }
       var tot = el("p", "soc-rt-line total"); tot.appendChild(el("span", null, "Slate rating")); tot.appendChild(el("b", null, x.r.score.toFixed(1))); det.appendChild(tot);
       row.setAttribute("aria-expanded", socRtOpen[id] ? "true" : "false");
-      row.addEventListener("click", function (e) { e.stopPropagation(); socRtOpen[id] = !socRtOpen[id]; det.hidden = !socRtOpen[id]; row.setAttribute("aria-expanded", socRtOpen[id] ? "true" : "false"); });
-      box.appendChild(row); box.appendChild(det);
+      row.parentNode.insertBefore(det, row.nextSibling);
+      var flip = function (e) { e.stopPropagation(); socRtOpen[id] = !socRtOpen[id]; det.hidden = !socRtOpen[id]; row.setAttribute("aria-expanded", socRtOpen[id] ? "true" : "false"); };
+      row.onclick = flip; row.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(e); } };
     });
   }
-  // called by socLineup once the match has started: the box under the bench, and the score on each player's circle
+  // called by socLineup once the match has started: the ratings strip above the list (the scores go on each row)
   function socRatingBox(g, t, b, lines) {
     if (!b || (b.state !== "in" && b.state !== "post") || !t.id) return null;
     var key = g.id + "|" + t.id, people = [];
     lines.forEach(function (ln, i) { ln.forEach(function (p, j) { if (p && p.id) people.push({ id: p.id, n: p.n, role: socRoleAt(lines, i, j) }); }); });
     (t.bench || []).forEach(function (p) { if (p.on && p.id) people.push({ id: p.id, n: p.n, sub: true }); });
     if (!people.length) return null;
-    socRtCtx[key] = { key: key, tid: t.id, people: people };
+    socRtCtx[key] = { key: key, tid: t.id, people: people, live: b.state === "in" };
     var box = el("div", "soc-rt-box"); box.setAttribute("data-key", key);
     socRtLoad(g, t, b, people);
     return box;

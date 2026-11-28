@@ -10,7 +10,7 @@ Slate's own match score for each soccer player (Web 3.130.0, DJ, Nov 22, 2026). 
 - Six jobs. A starter's job comes from where he lines up in the formation (`socRoleAt`): GK keeper; CB centre back; FB full back or wing-back; MID central or holding midfielder; ATT winger or attacking midfielder; ST striker. A substitute's job comes from the club's ESPN squad list (G, D, M, F become GK, CB, MID, ST).
 - Clean sheet counts only with 60+ minutes and no goals conceded while he was on. Goals conceded are the ones while he was on the pitch (ESPN's own count). "Goals prevented" is ESPN's shot-quality number for keepers and can be negative.
 - Stats come from ESPN's per-player match stats: `sports.core.api.espn.com/v2/sports/soccer/leagues/<league>/events/<id>/competitions/<id>/competitors/<team>/roster/<player>/statistics/0`, one request per player, asked from the phone only for the team being looked at (live: at most every 90 seconds).
-- Code: `src/app/092-soc-rating.js` (the table is `SOC_RATE`; change a value there and update this page). Drawn by `socRatingBox`/`socRtFill`, called from `socLineup`.
+- Code: `src/app/092-soc-rating.js` (the table is `SOC_RATE`; change a value there and update this page). Drawn by `socRatingBox`/`socRtFill`, called from `socLineup`. Since 3.185.0 the scores sit on each row of the lineup list (no pitch) and refresh every minute during a match.
 - Checked on 8 finished matches (Premier League, La Liga, MLS; 213 players): typical scores sit around 6.1 to 7.2 by position, standout games reach 9 to 10.
 
 ## Points for each thing, by position
