@@ -128,13 +128,16 @@
       // after the final, ESPN keeps correcting the box score for a while (a late TD credited, a stat moved):
       // check again every 2 minutes for the first hour after we first saw it final, then leave it
       if (cur.data.state === "post") { cur.postAt = cur.postAt || cur.at; if (Date.now() - cur.postAt > 60 * 60000 || Date.now() - cur.at < 2 * 60000) return; }
-      if (cur.data.state === "pre" && kind === "upcoming" && Date.now() - cur.at < 20 * 60000) return;  // odds and injuries move: refresh a pre-game box every 20 minutes
+      if (cur.data.state === "pre" && kind === "upcoming" && Date.now() - cur.at < (BX_SPORT[g.league] === "soccer" && Date.parse(g.start) - Date.now() < 90 * 60000 && !(cur.data.teams || []).some(function (t) { return t.xi && t.xi.length; }) ? 4 : 20) * 60000) return;  // 3.188.0: a soccer game near kickoff looks for its lineups every 4 minutes  // odds and injuries move: refresh a pre-game box every 20 minutes
       if (Date.now() - cur.at < (state.openId === g.id || (state.view === "game" && state.gameId === g.id) ? 9000 : 25000)) return;
     } else if (cur && cur.err && Date.now() - cur.at < 60000) return;
     bxFetch(g);
   }
   function bxRedraw(g) {
     var cur = bx.live[g.id], hl = !!(cur && cur.hlNew), bt = inLineup(g.id) && betTouch(g); if (hl) cur.hlNew = false;
+    // 3.188.0: a soccer game's lineups just came out: its slate card gets the "📋 Lineups" tag (socLuTag in 090-box-data.js)
+    var lu = !!(cur && cur.data && cur.data.state === "pre" && (cur.data.teams || []).some(function (t) { return t.xi && t.xi.length; }));
+    if (lu && !cur.luSeen) { cur.luSeen = true; bt = bt || inLineup(g.id); }
     if ((hl || bt) && inLineup(g.id) && (state.view === "lineup" || isDuo)) keepScroll(renderLineup);
     if (hl) agRedraw();
     if (state.view === "game" && state.gameId === g.id) keepScroll(renderGame);

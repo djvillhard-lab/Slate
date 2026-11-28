@@ -139,3 +139,4 @@ The Live feed's play tags too (DJ, Nov 16, 2026): one emoji in front of each tag
 ⏱️ two-minute drill or clutch, 💪 and-one, 🔥 heating up or on fire, 🧊 ice cold), never in the play text. `fdTagText` in `146-live-feed-hoops.js`.
 The football Live feed's fun line (DJ, Nov 26, 2026) leads with one emoji per kind of play too (`FD_SAY` in `145-live-feed.js`).
 Hot tags on News are red (`--live`) with their 🔥, DJ's approved exception to "red = live" (Nov 16, 2026).
+Slate cards: "📋 Lineups" on a soccer game whose lineups are out, until kickoff (DJ, Nov 28, 2026; `socLuTag` in `090-box-data.js`).

@@ -160,7 +160,7 @@
         if (pk) row.appendChild(pk);
       }
     }
-    else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); var nn = pvNewsNode(g); if (nn) row.appendChild(nn); }   // 3.89.1: Claude's news note on its own line
+    else if (mode === "lineup" && !g.custom && st.kind === "upcoming") { var pn = pvNode(g); if (pn) row.appendChild(pn); var nn = pvNewsNode(g); if (nn) row.appendChild(nn); var lut = socLuTag(g); if (lut) row.appendChild(lut); }   // 3.188.0: 📋 Lineups once a soccer lineup is out   // 3.89.1: Claude's news note on its own line
     else if (mode === "games" && !g.custom) { var agl = agLine(g, st.kind, row); if (agl) row.appendChild(agl); if (st.kind === "upcoming") {
         // 3.90.5: the stats line on one line here too, the longest version that fits, without an "MSU:" in front (as on the slate)
         if (agl && agl.classList.contains("hl-pre") && PV[g.id] && PV[g.id].text) { agl.classList.add("hl-one"); } var agn = pvNewsNode(g); if (agn) row.appendChild(agn); } }   // 3.90.0: 📰 News lines on All games too  // All games: the same one-liners (3.39.0)

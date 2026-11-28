@@ -255,6 +255,16 @@
     if (m[2] && !/^(Left|Right)/.test(base)) base = (m[2] === "L" ? "Left " : "Right ") + base.charAt(0).toLowerCase() + base.slice(1);
     return base;
   }
+  // the short form for the likely lineup (DJ, Nov 28, 2026: "use position abbreviations"): CD-L → CB, AM-R → RAM, CF → ST
+  var SOC_AB = { G: "GK", GK: "GK", CD: "CB", CB: "CB", SW: "SW", D: "DF", LB: "LB", RB: "RB", LWB: "LWB", RWB: "RWB", WB: "WB", DM: "DM", CM: "CM", M: "MF",
+    LM: "LM", RM: "RM", AM: "CAM", LW: "LW", RW: "RW", W: "W", LF: "LF", RF: "RF", CF: "ST", F: "ST", S: "ST", ST: "ST" };
+  var SOC_JOB_AB = { GK: "GK", CB: "CB", FB: "FB", MID: "CM", ATT: "AM", ST: "ST" };
+  function socPosAb(p, job) {
+    var m = /^([A-Z]+)(?:-([LR]))?$/.exec(String(p || "").toUpperCase()), ab = m && SOC_AB[m[1]];
+    if (!ab) return SOC_JOB_AB[job] || "";
+    if (m[1] === "AM" && m[2]) ab = m[2] + "AM";
+    return ab;
+  }
   // the starting XI as lines: the keeper, then each line from the back to the strikers, left to right
   function socLines(t) {
     var xi = t.xi || [], lines = [], i = 0;
@@ -299,7 +309,7 @@
     return r;
   }
   // the list itself: Goalkeeper, Defenders, Midfielders, Forwards, each left to right
-  function socList(g, t, lines, markOf) {
+  function socList(g, t, lines, markOf, posOf) {
     var list = el("div", "soc-list"), col = socTeamColor(g, t), last = lines.length - 1;
     var HEAD = ["Goalkeeper", "Defenders", "Midfielders", "Forwards"], cur = -1;
     lines.forEach(function (ln, i) {
@@ -308,7 +318,7 @@
         if (!p) return;
         var d = SOC_DEPTH(p.p), grp = i === 0 ? 0 : !p.p ? (i === 1 ? 1 : i === last ? 3 : 2) : d <= 1 ? 1 : d >= 5 ? 3 : 2;
         if (grp > cur) { cur = grp; list.appendChild(el("p", "soc-grp", HEAD[grp])); }
-        list.appendChild(socRow(g, t, p, socPosName(p.p, socRoleAt(lines, i, j)), markOf(p), col, i === 0));
+        list.appendChild(socRow(g, t, p, posOf ? posOf(p, socRoleAt(lines, i, j)) : socPosName(p.p, socRoleAt(lines, i, j)), markOf(p), col, i === 0));
       });
     });
     return list;
@@ -354,13 +364,32 @@
     if (BX_SPORT[g.league] !== "soccer" || !b || b.state !== "pre" || !b.teams || b.teams.length !== 2) return null;
     return bxPlayers(g, Object.assign({}, b, { teams: b.teams.map(function (t) { return Object.assign({}, t, { groups: [] }); }) }), false, true);
   }
+  // "📋 Lineups" on a slate card (3.188.0, DJ: "the tag should just be lineups with an emoji and go away when the game starts"):
+  // a soccer game whose starting lineups ESPN has posted, until kickoff. Only games within 90 minutes of kickoff are checked
+  // (bxNeed, the pre-game box every 4 minutes then), so cards further out cost nothing.
+  function socLuTag(g) {
+    if (!g || g.custom || BX_SPORT[g.league] !== "soccer" || status(g).kind !== "upcoming") return null;
+    var b = boxFor(g), out = !!(b && b.state === "pre" && (b.teams || []).some(function (t) { return t.xi && t.xi.length; }));
+    var left = Date.parse(g.start) - Date.now();
+    if (!out && left < 90 * 60000 && left > -15 * 60000) bxNeed(g);
+    if (!out) return null;
+    var tg = el("span", "g-lu", "📋 Lineups"); tg.setAttribute("aria-label", "Starting lineups are out"); return tg;
+  }
   // ---- the likely lineup before the real one is out (3.185.0, DJ: "for upcoming games, add a potential starting lineup guess
   // for each team"). Not a prediction model: it is the team's starting XI from its last match in any competition, from ESPN,
   // with players ESPN lists as out for this game, or sent off last time, marked. Clearly labeled as a guess. ----
   var socGuessed = {};
-  function socGuessLoad(t) {
+  function socGuessLoad(g, t) {
     var c = socGuessed[t.id]; if (c && (c.busy || Date.now() - c.at < 6 * 3600000)) return c;
     c = socGuessed[t.id] = { busy: true, at: Date.now(), d: c && c.d };
+    // each player's season numbers from the club's ESPN squad list (the same source as the season stats), for his row
+    var seas = seasonFetch(g.league, t.id).then(function (r) {
+      var m = {}; ((r && r.results) || []).forEach(function (grp) { (grp.leaders || []).forEach(function (a) {
+        var v = {}; ((a.statistics || [])[0] || { stats: [] }).stats.forEach(function (x) { v[x.name] = Number(x.value) || 0; });
+        m[String((a.athlete || {}).id || "")] = v;
+      }); });
+      return m;
+    }, function () { return {}; });
     rkFetch("https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/" + t.id + "/schedule").then(function (s) {
       var evs = ((s && s.events) || []).filter(function (e) { var st = ((((e.competitions || [])[0] || {}).status || {}).type || {}).state; return st === "post"; });
       evs.sort(function (a, b2) { return String(b2.date).localeCompare(String(a.date)); });
@@ -375,7 +404,7 @@
           comp: ((e.league || {}).abbreviation || (e.league || {}).name || ""),
           xi: roster.filter(function (p) { return p.starter; }).map(function (p) { return { full: String((p.athlete || {}).displayName || ""), n: ln(p.athlete), id: String((p.athlete || {}).id || ""), num: String(p.jersey || ""), p: (p.position || {}).abbreviation || "", fp: Number(p.formationPlace) || 0, red: rc(p) }; }) };
       });
-    }).then(function (d) {
+    }).then(function (d) { return seas.then(function (st) { if (d) d.season = st || {}; return d; }); }).then(function (d) {
       c.busy = false; c.d = d || null; c.at = Date.now();
       var go = function () {
         if (typeof agBusy === "function" && agBusy()) { setTimeout(go, 400); return; }  // never redraw under a finger
@@ -387,7 +416,7 @@
   }
   function socGuess(g, t) {
     if (!t || !t.id) return null;
-    var c = socGuessLoad(t), d = c && c.d;
+    var c = socGuessLoad(g, t), d = c && c.d;
     var wrap = el("div", "soc-lu guess"), hd = el("div", "soc-lu-h");
     wrap._g = g; wrap._t = t; wrap.setAttribute("data-team", String(t.id));
     hd.appendChild(el("b", null, "Likely lineup")); hd.appendChild(el("span", "soc-guess-tag", "Guess"));
@@ -403,7 +432,17 @@
       var i = inj[String(p.full || "").toLowerCase()];
       return i ? { note: /out/.test(i.s) ? "Out" + (i.why ? ": " + i.why : "") : "Doubtful" + (i.why ? ": " + i.why : "") } : {};
     };
-    wrap.appendChild(socList(g, gt, socLines(gt), markOf));
+    // the row's second line: short position, then his season so far (keepers: saves and goals against instead of goals and assists)
+    var posOf = function (p, job) {
+      var ab = socPosAb(p.p, job), v = (d.season || {})[p.id], bits = [ab];
+      if (v && v.appearances) {
+        bits.push(v.appearances + " app" + (v.appearances === 1 ? "" : "s"));
+        if (ab === "GK") { bits.push((v.saves || 0) + " SV"); bits.push((v.goalsConceded || 0) + " GA"); }
+        else { bits.push((v.totalGoals || 0) + " G"); bits.push((v.goalAssists || 0) + " A"); }
+      }
+      return bits.join(" · ");
+    };
+    wrap.appendChild(socList(g, gt, socLines(gt), markOf, posOf));
     socPhotoLoad(gt, wrap);
     return wrap;
   }

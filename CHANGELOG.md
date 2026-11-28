@@ -5,6 +5,11 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.188.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Soccer, likely lineups: each player's position is now short (GK, CB, LB, CAM, ST and so on), followed by his season so far: appearances, goals and assists, or saves and goals against for the keeper, e.g. "#19 · LAM · 11 apps · 4 G · 0 A".
+- Slate cards: a soccer game gets a small "📋 Lineups" tag once its starting lineups are out (about an hour before kickoff), and the tag goes away when the game starts. Games within 90 minutes of kickoff are checked every 4 minutes.
+
 ## 3.187.1 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Slate and All games: the small Feed button no longer sits on top of an open game's buttons. It hides while the card is open, as before, because the open card has its own Live feed row. It came back by mistake with the button cleanup in 3.181.0.
