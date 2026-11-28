@@ -139,4 +139,4 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - Not on the unfolded Duo's two-pane All games (`isDuo`), which keeps its own layout. Classic menu gets it too.
 - At XL text the words scroll sideways under a short fade beside the buttons.
 - Undo: remove the 284 file and the `113-all-games-line.css` line in `src/shell.html`.
-- Left as is: the Standings button turns red when on (132-standings.js); red is meant for live only, worth a look if DJ asks.
+- 3.184.1: rules scoped to `#games-body` no longer reach the moved buttons. The Standings button's accent "on" look (132-standings.js) is repeated in 113 for `.ag-acts`; do the same for any new button state.

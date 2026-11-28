@@ -11,3 +11,5 @@ html[data-native].side-col:not(.duo) #pane-r .ag-line > .ag-acts { margin-right:
 html .ag-acts .ag2-btn span, html .ag-acts .sdg-btn span { display: none; }
 html .ag-acts .lo-btn:not(#_) { margin: 0 !important; }
 html .ag-acts .ag2-btn:not(#_), html .ag-acts .sdg-btn:not(#_) { padding: 0 9px !important; }
+/* Standings on = accent outline, as it was inside #games-body (132-standings.js scopes its rule there); red stays for Live only (3.184.1) */
+html .ag-acts .lo-btn.sdg-btn.on:not(#_):not(#_) { border-color: var(--accent) !important; color: var(--accent) !important; background: none !important; }
