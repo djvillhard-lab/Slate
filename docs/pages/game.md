@@ -117,3 +117,9 @@ Code: `src/app/146-game-graphics.js` (styles inside, `GFX_CSS`), two `section("g
 ## 3.191.3 (Nov 28)
 - Recent results tiles moved right under the tale of the tape; the Form dots row shows only when ESPN gave no tiles (DJ: duplicate).
 - Players to watch rows have no tags (DJ disliked "👑 Most ..." and the cut-off team-leader note); photo, name and season line only.
+
+## 3.192.0 (Nov 28): quick look for finished games
+- 143-quick-final.js (qlFinal), hooked in trayBlock0 (110-box-score.js). Football and soccer only (QL_SPORTS); other sports keep the old drop-downs until DJ picks a design.
+- Line: Claude recap headline if written, else from period scores (football) or goal order (soccer). Bet chips from the pregame line (who covered, over/under); replaces the line strip.
+- Football: Player of the game = winner's best by yds/10 + TD*6 - INT*4, plus next two. Soccer: goal scorers per side + possession, shots, on target bars.
+- Next (DJ, Nov 28): redesign the quick look before, during and after the game for every sport, one sport at a time with mockups, football first.

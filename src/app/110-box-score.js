@@ -519,13 +519,19 @@
         h.addEventListener("click", function (e) { e.stopPropagation(); var o2 = !state.trayDD[key]; if (o2) state.trayDD[key] = 1; else delete state.trayDD[key]; try { localStorage.setItem("slate-traydd", JSON.stringify(state.trayDD)); } catch (er) {} w.classList.toggle("open", o2); body.hidden = !o2; h.setAttribute("aria-expanded", o2 ? "true" : "false"); });
         w.appendChild(h); w.appendChild(body); box.appendChild(w);
       };
-      var sp0 = BX_SPORT[g.league];
+      var sp0 = BX_SPORT[g.league], qf = null;
+      // 3.192.0 (DJ, Nov 28): a finished game in a sport DJ has picked a design for gets the slim quick look (143-quick-final.js):
+      // one line, the betting result, and the sport's snapshot. It carries the line's result, so the pregame line strip goes.
+      if (b.state === "post") { try { qf = qlFinal(g, b); } catch (er) { qf = null; } }
+      if (qf) { if (os) os.remove(); box.appendChild(qf); }
+      else {
       // a finished game: Claude's short read, or the button to have Claude write it, right here
       if (b.state === "post") { var rcw = el("div", "tray-rc"); try { previewSections(g, (state.previews || {})[g.id], rcw, "recap"); } catch (er) {} if (rcw.childNodes.length) dd("recap", "Recap", rcw); }
       dd("top", "Top performers", boxStars(g, b));
       if (sp0 === "soccer") dd("tl", "Match summary", socTimeline(g, b, true));
       else dd("sc", "Scoring", scoringBlock(g));
       if (sp0 !== "soccer") dd("box", "Box score", bxPlayers(g, b, true, false));  // 3.189.5 (DJ): soccer lineups and player stats live only on the full matchup page
+      }
     }
     box.appendChild(el("p", "pv-at", bxStamp(b)));
     return box;

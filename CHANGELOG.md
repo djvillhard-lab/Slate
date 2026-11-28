@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.192.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Quick look: a finished football or soccer game's quick look is slimmer, and the Recap, Top performers and Match summary drop-downs are gone (the full matchup page still has all of it). It now shows one line on how the game was won, whether the spread was covered and the total went over or under, and a small snapshot. Football's snapshot is the Player of the game (headshot, name and his day) plus two more standouts. Soccer's is the goal scorers with their minutes under each team, plus possession, shots and shots on target. Other sports keep the old quick look until their design is picked.
+
 ## 3.191.4 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - One-liners: player stats are shorter, with no filler words. "Umari Hatcher has 1,257 receiving yds and 9 TD" now reads "Umari Hatcher 1,257 rec yds, 9 TD". "Bear Bachmeier has 14 TD passes and 8 INT" reads "Bear Bachmeier 14 pass TD, 8 INT", and "Seth Trimble had 16 pts and 5 reb (7-10 FG)" reads "Seth Trimble 16 pts, 5 reb (7-10 FG)". "Averages 14.1 points" reads "14.1 ppg".
