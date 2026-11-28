@@ -1995,4 +1995,9 @@ html.pn-right #view-feed.fd-isl #feed-body .fd-strip.fd-filt { margin-right: cal
 
 /* 3.182.2 Live feed: a team's ranking beside its badge on the score bar, and in front of its letters on the game switcher */
 .fd-rk { font-style: normal; font-size: 12px; font-weight: 800; font-stretch: 80%; color: var(--ink); font-variant-numeric: tabular-nums; }
-.fd-cr > .fd-rk { font-size: 11px; color: var(--muted); margin-right: -2px; }
+.fd-cr > .fd-rk { font-size: 10px; color: var(--muted); margin-right: -2px; align-self: flex-end; padding-bottom: 1px; }
+/* 3.182.3 (DJ): on the score bar the ranking is a small tag on the bottom corner of the logo */
+.fd-lg { position: relative; flex: none; display: inline-flex; }
+.fd-lg > .fd-rk { position: absolute; right: -7px; bottom: -6px; min-width: 15px; height: 15px; padding: 0 3px; box-sizing: border-box; display: grid; place-items: center; border-radius: 4px; background: var(--card); border: 1px solid var(--hair); font-size: 10px; line-height: 1; color: var(--ink); }
+/* the tag sits on the logo's outside corner, away from the record: bottom left for the left team, bottom right for the right team */
+.fd-tm:not(.fd-tm-home) > .fd-lg > .fd-rk { right: auto; left: -7px; }

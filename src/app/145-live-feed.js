@@ -193,7 +193,11 @@
   // 3.182.2 (DJ: "Don't have team rankings/seeds on live feeds"): the team's ranking (the same number the slate and All games show, from ESPN)
   // sits beside its badge on the score bar and in front of its letters on the game switcher. No ranking = nothing added.
   function fdRk(g, sd) { var r = Number(g && g[sd + "Rank"]); return r > 0 && r < 100 ? r : 0; }
-  function fdRkAdd(nm, g, sd) { var r = fdRk(g, sd); if (!r) return; nm.insertBefore(el("em", "fd-rk", String(r)), nm.firstChild); nm.setAttribute("aria-label", "Number " + r + " " + (nm.getAttribute("aria-label") || "")); }
+  // 3.182.3 (DJ: "Need it to be smaller and bottom corner of the logo"): on the score bar the ranking is a small tag on the logo's bottom corner
+  // (the logo is wrapped in .fd-lg to hold it), no longer a loose number beside the record.
+  function fdRkAdd(nm, g, sd) { var r = fdRk(g, sd), tm = nm.parentNode, bd = tm && tm.firstChild; if (!r || !bd || bd === nm) return;
+    var lg = el("span", "fd-lg"); tm.insertBefore(lg, bd); lg.appendChild(bd); var tg = el("em", "fd-rk", String(r)); tg.setAttribute("aria-hidden", "true"); lg.appendChild(tg);
+    nm.setAttribute("aria-label", "Number " + r + " " + (nm.getAttribute("aria-label") || "")); }
   var FZ = { id: null, snap: {}, latest: {}, on: false, dirty: false };
   function fdFzStart(g) {
     var id = String((g && g.id) || "");

@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.182.3 (Nov 27, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed: a team's ranking on the score bar is now a small tag on the outside bottom corner of its logo, away from the record. It was a loose number between the logo and the record. On the row of live games the ranking is a little smaller and sits low beside the team's letters. The unfolded focus view shows the tag too.
+
 ## 3.182.2 (Nov 27, 2026)
 TestFlight: 3.133.2 (58), no new build (web only)
 - Live feed: a ranked team now shows its ranking, the same number the slate and All games show. It sits beside the team's logo on the score bar at the top (next to the record) and in front of the team's letters on the row of live games you switch between. All sports; a team with no ranking shows nothing extra.
