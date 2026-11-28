@@ -143,6 +143,7 @@ async function budgetAlert(env, capUsd) {
 // Claude cost cuts (3.85.0, security and cost review). How long one write-up is handed to everyone who asks, in
 // minutes: a second tap within this time gets the same write-up instead of a new (paid) one. News and tap-in
 // breakdowns keep 3 minutes (the News page's own rules).
+const PREVIEW_V = 2; // the preview instructions' version (2: the quick read is about storylines, not a list of recent results, Web 3.183.4)
 const RECAP_V = 2;  // the recap instructions' version (2: standout performances lead, 3.100.6)
 const SHARE_MIN = { preview: 360, team: 720, recap: 720, moments: 360 };
 // How each kind is written: the newer web search (it filters results before Claude reads them, so far fewer input
@@ -338,7 +339,8 @@ export default {
       // (a person's own News page is the exception: Regenerate with different picks must write a new page)
       // 3.100.6: a recap written before the current recap instructions can be rewritten once (Regenerate), instead of waiting 12 hours
       const oldRecap = p.kind === "recap" && entry && entry.recap && entry.recap.v !== RECAP_V;
-      if (last && !oldRecap && !(p.kind === "news" && p.key === "page") && nowMs - Date.parse(last) < (SHARE_MIN[p.kind] || 3) * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
+      const oldPreview = p.kind === "preview" && entry && entry.summary && (entry.pv || 1) !== PREVIEW_V;
+      if (last && !oldRecap && !oldPreview && !(p.kind === "news" && p.key === "page") && nowMs - Date.parse(last) < (SHARE_MIN[p.kind] || 3) * 60000) return json({ ok: true, at: last, shared: true, done: true }, 202);
       await mergeDoc(env, t.path, t.patch({ writing: { at, kind: p.kind } }));
       // a big News pick: thin the headlines until the facts fit, so Claude gets whole JSON instead of a cut-off end (3.113.12)
       let size = null;
@@ -599,8 +601,8 @@ If the game has "post": true, it is a playoff or postseason game (its round is i
 Look for what makes the game matter: standings stakes, rivalries, recent meetings, a player facing his old team, streaks, injuries, coaching angles.
 ${RULES}
 Answer with only this JSON inside <json></json> tags:
-{"summary": "4-6 sentences, 70-110 words: lead with why this game matters, then context (standings, recent meetings, form, key absences), close with what decides it",
- "bullets": ["3-5 short one-line points, about 8-16 words each, covering the same ground"],
+{"summary": "one paragraph, 4-6 sentences, 70-110 words, about the storylines: lead with why this game matters, then the two or three stories around it (what is at stake in the table or the race, a manager or coach under pressure, a player back from injury or facing an old team, a rivalry, a style clash, a trend in how a team plays), close with what decides it. The app shows each team's recent results separately, so do not walk through recent games one by one: at most one past result in the whole paragraph, and only when it is the story itself (a heavy defeat that put a coach under pressure); describe form in a few words (winless in five, three straight clean sheets) instead of listing scores and dates",
+ "bullets": ["3-5 short one-line points, about 8-16 words each, covering the same storylines; no list of recent scores"],
  "long": ["3-5 paragraphs, 250-400 words in all: how each team is playing, key matchups, storylines and history, the players who decide it, what it means"],
  "watch": [{"name": "...", "team": "ABBR", "line": "short season stat line", "note": "optional few words; a team lead names the exact stat (\"leads Denver in rebounds and assists\"), never \"both categories\""}],
  "series": "one short line on the season series, or empty",
@@ -827,7 +829,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
         } else if (p.kind === "recap") {
           await mergeDoc(this.env, t.path, t.patch({ recap: { v: RECAP_V, fc, text: String(ans.text || ""), bullets: strs(ans.bullets, 4), stars: (ans.stars || []).slice(0, 4), endedAt: now, at: now }, headlines: athletic(ans.headlines), writing: null, updatedAt: now }));
         } else {
-          await mergeDoc(this.env, t.path, t.patch({ fc, summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 5), watch: (ans.watch || []).slice(0, 4), series: String(ans.series || ""), headlines: athletic(ans.headlines), newsAt: now, updatedAt: now, writing: null, by: "request" }));
+          await mergeDoc(this.env, t.path, t.patch({ fc, summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 5), pv: PREVIEW_V, watch: (ans.watch || []).slice(0, 4), series: String(ans.series || ""), headlines: athletic(ans.headlines), newsAt: now, updatedAt: now, writing: null, by: "request" }));
         }
         return true;
       });
