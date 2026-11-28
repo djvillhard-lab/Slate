@@ -10,11 +10,11 @@ TestFlight: 3.182.1 (63), no new build (web only)
 - One-liners: the same fact no longer shows twice on a card. Columbus vs Miami read "Columbus outshot Miami 18 to 9" and then "Outshot Miami 18 to 9" again; now it shows once. A one-goal game also drops "won it in the 90th minute", since the goal's minute already says so.
 
 ## 3.182.3 (Nov 27, 2026)
-TestFlight: 3.133.2 (58), no new build (web only)
+TestFlight: 3.182.1 (63), no new build (web only)
 - Live feed: a team's ranking on the score bar is now a small tag on the outside bottom corner of its logo, away from the record. It was a loose number between the logo and the record. On the row of live games the ranking is a little smaller and sits low beside the team's letters. The unfolded focus view shows the tag too.
 
 ## 3.182.2 (Nov 27, 2026)
-TestFlight: 3.133.2 (58), no new build (web only)
+TestFlight: 3.182.1 (63), no new build (web only)
 - Live feed: a ranked team now shows its ranking, the same number the slate and All games show. It sits beside the team's logo on the score bar at the top (next to the record) and in front of the team's letters on the row of live games you switch between. All sports; a team with no ranking shows nothing extra.
 
 ## 3.182.1 (Nov 27, 2026)
