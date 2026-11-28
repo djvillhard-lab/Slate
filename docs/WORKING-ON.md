@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Welcome walkthrough: a step showing the pages behind the hammer | src/app/232-welcome.js, src/styles/085-welcome.css, docs/pages/welcome.md | 2026-11-28 01:26 |
