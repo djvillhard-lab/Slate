@@ -6,3 +6,4 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
+| DJ | Fix Feed button overlap on game cards | src/styles/050-ux-review.css, docs/pages/slate.md | 2026-11-28 18:35 |
