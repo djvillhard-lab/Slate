@@ -28,7 +28,11 @@ struct SlateWebView: UIViewRepresentable {
         web.scrollView.contentInsetAdjustmentBehavior = .never  // the page handles the notch and home bar itself (viewport-fit=cover)
         web.allowsBackForwardNavigationGestures = false          // left/right swipes belong to the page (days, leagues)
         web.allowsLinkPreview = false
-        if #available(iOS 16.4, *) { web.isInspectable = true }  // Safari > Develop can inspect the app's page
+        // Safari > Develop can inspect the app's page only in a build run from Xcode. TestFlight and App Store builds
+        // are closed: anyone with the phone and a cable could otherwise read the passcode out of the page (code review, Nov 27, 2026).
+        #if DEBUG
+        if #available(iOS 16.4, *) { web.isInspectable = true }
+        #endif
         web.navigationDelegate = context.coordinator
         web.uiDelegate = context.coordinator
         model.webView = web
@@ -44,6 +48,10 @@ struct SlateWebView: UIViewRepresentable {
         init(model: WebModel) { self.model = model }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            // only Slate's own page (and its two panes) may talk to the app: a frame from anywhere else is ignored
+            // (code review, Nov 27, 2026). Messages carry the passcode and can open links and start sign-ins.
+            let from = message.frameInfo.securityOrigin
+            guard from.protocol.lowercased() == "https", from.host.lowercased() == (WebModel.home.host ?? "").lowercased() else { return }
             model.handle(message.body)
         }
 

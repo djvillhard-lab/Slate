@@ -1983,7 +1983,6 @@ html.pn-right #view-feed.fd-isl #feed-body .fd-strip.fd-filt { margin-right: cal
   .bxp-few .bxp-r { display: flex; }
   .bxp-few .bx-chip { display: inline-block; }
 }
-}
 
 /* 3.177.0 (DJ: the flair "creates too many lines of text on each play ... compact them slightly"): a play's players sit side by side when
    there is room (the unfolded Duo, a wide iPhone) and stack when there isn't; the banner is a little shorter; the flair line sits closer. */

@@ -5,6 +5,13 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.182.1 (Nov 27, 2026)
+TestFlight: 3.182.1, new build (DJ said yes to it on the card, Nov 27)
+- iPhone app, security (code review): your passcode now lives in the iPhone's Keychain, the locked box iOS keeps for secrets, instead of the app's settings file, which could be read from a backup of the phone. The first launch of this build moves it across; you stay logged in.
+- iPhone app, security: the app's page can no longer be opened up from a Mac with a cable (Safari's Develop menu) in TestFlight builds. That was handy for debugging but it also let anyone holding the unlocked phone read the passcode.
+- iPhone app, security: the app only listens to Slate's own page. A frame from anywhere else can't ask it to do anything.
+- Security: links in the write-ups everyone sees (previews, recaps, team pages, News) are only kept when they go to ESPN or The Athletic (DJ: "Only lock down the links"). A link to anywhere else is left out. Now and then a team page will show one read fewer.
+- Live feed: a play's players sit side by side when there is room (the unfolded Duo, a wide phone), as 3.177.0 meant them to. One stray character in the styles had been hiding that rule since it was written (DJ: "Fix it").
 ## 3.182.0 (Nov 27, 2026)
 TestFlight: 3.178.6 (62), no new build (web only)
 - Welcome walkthrough: a new "Getting around" step before the last one. It shows a picture of the bar at the bottom with Box Office, On TV and Teams open above the hammer, and says in three lines how to get to them (tap the green hammer on your slate), how to change the day (the date at the bottom right, an arrow each side) and where Settings and search are. New people see it by itself; anyone else can see it from Settings > Account > Welcome walkthrough. People on the Classic menu don't get this step.

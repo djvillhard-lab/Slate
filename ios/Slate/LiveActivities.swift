@@ -1,4 +1,5 @@
 import ActivityKit
+import Security
 import UIKit
 
 // Live notifications (Live Activities): Slate's server starts one by push when a game on your slate goes live,
@@ -23,12 +24,35 @@ final class LiveActivities {
     }
 
     // The page sends the passcode on each load; kept so tokens can be posted while the page isn't running.
+    // It lives in the iPhone's Keychain (code review, Nov 27, 2026). Builds up to 62 kept it in the app's settings file,
+    // which is readable in a backup of the phone; the first launch of this build moves it across and removes the old copy.
+    private var passCache: String?
     var pass: String {
-        get { UserDefaults.standard.string(forKey: "slate-pass") ?? "" }
+        get {
+            if let c = passCache { return c }
+            let defaults = UserDefaults.standard
+            var v = ""
+            if let old = defaults.string(forKey: "slate-pass") {
+                // an older build's copy: into the Keychain, then gone from the settings file (kept if the Keychain refused it)
+                v = old
+                if old.isEmpty || PassStore.write(old) { defaults.removeObject(forKey: "slate-pass"); defaults.set(true, forKey: "slate-pass-kc") }
+            } else if defaults.bool(forKey: "slate-pass-kc") {
+                v = PassStore.read() ?? ""
+            } else {
+                // a fresh install: the Keychain outlives a deleted app, so a passcode left by an earlier install is dropped
+                PassStore.write("")
+                defaults.set(true, forKey: "slate-pass-kc")
+            }
+            if !v.isEmpty { passCache = v }  // an empty answer can also mean "phone not unlocked since it restarted": ask again next time
+            return v
+        }
         set {
             let changed = newValue != pass
-            UserDefaults.standard.set(newValue, forKey: "slate-pass")
-            if changed { lastStartToken = ""; lastBoardStartToken = "" }
+            if changed {
+                passCache = newValue
+                PassStore.write(newValue)
+                lastStartToken = ""; lastBoardStartToken = ""
+            }
             start()
         }
     }
@@ -234,3 +258,33 @@ final class LiveActivities {
 
 // the page's list of board games, read with the same keys the server sends
 private struct SlateBoardGameList: Decodable { var games: [SlateBoardGame] }
+
+// The passcode's place in the Keychain. Readable after the phone's first unlock (tokens are posted while the phone is
+// locked), on this phone only: it is not copied to other devices or restored onto a new one.
+enum PassStore {
+    private static var base: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: "com.djvillhard.slate.pass",
+         kSecAttrAccount as String: "slate-pass"]
+    }
+
+    static func read() -> String? {
+        var q = base
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var out: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess, let d = out as? Data else { return nil }
+        return String(data: d, encoding: .utf8)
+    }
+
+    // an empty passcode removes the entry
+    @discardableResult
+    static func write(_ value: String) -> Bool {
+        SecItemDelete(base as CFDictionary)
+        if value.isEmpty { return true }
+        var q = base
+        q[kSecValueData as String] = Data(value.utf8)
+        q[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        return SecItemAdd(q as CFDictionary, nil) == errSecSuccess
+    }
+}

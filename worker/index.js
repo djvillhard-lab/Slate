@@ -683,7 +683,16 @@ async function askClaude(env, text, big, searches, lean) {
   }
 }
 
-const athletic = (list) => (Array.isArray(list) ? list : []).filter((h) => h && h.title && /^https:\/\/(www\.)?(nytimes\.com\/athletic|theathletic\.com)/.test(h.url || "")).slice(0, 4).map((h) => ({ title: String(h.title).slice(0, 200), source: "The Athletic", url: h.url }));
+// Links in write-ups everyone sees (code review, Nov 27, 2026; DJ picked "Only lock down the links"): a write-up is built
+// from facts the tapping phone sends, so a link in it could be anything. Only ESPN and The Athletic get saved; a link
+// to anywhere else is dropped (a "read" without a good link is left out, a headline keeps its words and loses its link).
+const okLink = (u) => {
+  let x; try { x = new URL(String(u || "")); } catch { return false; }
+  if (x.protocol !== "https:" || x.username || x.password || x.port) return false;
+  const h = x.hostname.toLowerCase();
+  return /(^|\.)espn\.com$/.test(h) || /(^|\.)theathletic\.com$/.test(h) || (/^(www\.)?nytimes\.com$/.test(h) && x.pathname.startsWith("/athletic"));
+};
+const athletic = (list) => (Array.isArray(list) ? list : []).filter((h) => h && h.title && okLink(h.url) && /^https:\/\/(www\.)?(nytimes\.com\/athletic|theathletic\.com)/.test(h.url || "")).slice(0, 4).map((h) => ({ title: String(h.title).slice(0, 200), source: "The Athletic", url: h.url }));
 const strs = (a, n) => (Array.isArray(a) ? a : []).map((x) => String(x || "").trim()).filter(Boolean).slice(0, n);
 
 export class SummaryWorkflow extends WorkflowEntrypoint {
@@ -712,7 +721,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
         // and ends in an ellipsis, never mid-word ("3 T", "65+ yar").
         const H = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
         const S = (v, n) => { const t = String(v == null ? "" : v).trim(); if (t.length <= n) return t; const c = t.slice(0, n - 1), i = c.lastIndexOf(" "); return (i > n * 0.4 ? c.slice(0, i) : c).replace(/[\s,;:.\-]+$/, "") + "\u2026"; };
-        const rd = (r) => r && r.title && /^https:\/\//.test(r.url || "") ? { title: S(r.title, 200), url: H(r.url, 600), source: S(r.source, 40) } : null;
+        const rd = (r) => r && r.title && okLink(r.url) ? { title: S(r.title, 200), url: H(r.url, 600), source: S(r.source, 40) } : null;
         const hits = (a, n, len) => (Array.isArray(a) ? a : []).filter((h) => h && h.text).slice(0, n).map((h) => ({ tag: S(h.tag, 48), team: H(h.team, 60), text: S(h.text, len || 260) }));
         const num = (x) => x && x.value && x.text ? { value: S(x.value, 28), text: S(x.text, 300), team: H(x.team, 60) } : null;
         if (p.kind === "news" && p.key === "page") {
@@ -729,7 +738,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           let f = {}; try { f = JSON.parse(p.facts || "{}"); } catch (e) {}
           const hl = {}; (Array.isArray(f.headlines) ? f.headlines : []).forEach((h) => { if (h && h.n != null) hl[String(h.n)] = h; });
           const KINDS = ["breaking", "news", "number", "fun"];
-          const item = (x) => { const h = hl[String(x.n)] || {}; return { kind: KINDS.includes(x.kind) ? x.kind : "news", tag: S(x.tag, 28), lg: H(x.lg || h.lg, 12), team: H(x.team, 60), title: S(x.title, 120), text: S(x.text, 340), value: S(x.value, 12), url: /^https:\/\//.test(h.url || "") ? H(h.url, 600) : "", src: H(h.source, 40), at: Number(h.ts) > 0 ? new Date(Number(h.ts)).toISOString() : now, w: now }; };
+          const item = (x) => { const h = hl[String(x.n)] || {}; return { kind: KINDS.includes(x.kind) ? x.kind : "news", tag: S(x.tag, 28), lg: H(x.lg || h.lg, 12), team: H(x.team, 60), title: S(x.title, 120), text: S(x.text, 340), value: S(x.value, 12), url: okLink(h.url) ? H(h.url, 600) : "", src: H(h.source, 40), at: Number(h.ts) > 0 ? new Date(Number(h.ts)).toISOString() : now, w: now }; };
           const items = (Array.isArray(ans.items) ? ans.items : []).filter((x) => x && x.title && (x.text || x.value)).slice(0, 18).map(item);
           const deep = (x) => Object.assign(item(Object.assign({}, x, { kind: "news", value: "" })), { text: S(x.text, 620), why: S(x.why, 240), next: S(x.next, 220) });   // 3.143.0: a breakdown, not a headline
           const lead = ans.lead && ans.lead.title ? deep(ans.lead) : null;
@@ -795,17 +804,17 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
           if (fc.length) out.fc = fc;
           if (type === "g") Object.assign(out, { verdict: S(ans.verdict, 40), watch: hits(ans.watch, 3), sides: pairs(ans.sides, 2, "team"), timeline: pairs(ans.timeline, 4, "when"), hunch: S(ans.hunch, 300) });
           else if (type === "t") Object.assign(out, { mood: S(ans.mood, 32), latest: hits(ans.latest, 4), said: ans.said && ans.said.text ? { text: S(ans.said.text, 300), who: S(ans.said.who, 120) } : null, timeline: pairs(ans.timeline, 4, "when"), next: S(ans.next, 200) });
-          else Object.assign(out, { lead: ans.lead && ans.lead.title ? { title: S(ans.lead.title, 140), text: S(ans.lead.text, 400), team: H(ans.lead.team, 60), url: /^https:\/\//.test(ans.lead.url || "") ? H(ans.lead.url, 600) : "" } : null,
+          else Object.assign(out, { lead: ans.lead && ans.lead.title ? { title: S(ans.lead.title, 140), text: S(ans.lead.text, 400), team: H(ans.lead.team, 60), url: okLink(ans.lead.url) ? H(ans.lead.url, 600) : "" } : null,
             latest: (Array.isArray(ans.latest) ? ans.latest : []).filter((h) => h && h.text).slice(0, 6).map((h) => ({ tag: S(h.tag, 48), team: H(h.team, 60), fresh: h.fresh === true, text: S(h.text, 260) })),
             perf: (Array.isArray(ans.perf) ? ans.perf : []).filter((h) => h && h.text).slice(0, 5).map((h) => ({ player: H(h.player, 60), team: H(h.team, 60), tag: S(h.tag, 48), text: S(h.text, 260) })),
             injuries: (Array.isArray(ans.injuries) ? ans.injuries : []).filter((x) => x && (x.text || typeof x === "string")).slice(0, 5).map((x) => typeof x === "string" ? { text: S(x, 240) } : { player: H(x.player, 60), team: H(x.team, 60), status: S(x.status, 24), text: S(x.text, 240) }),
             hot: pairs(ans.hot, 3, "team"), cold: pairs(ans.cold, 3, "team") });
           await putDoc(this.env, t.path, out);
         } else if (p.kind === "news") {
-          const reads = (Array.isArray(ans.reads) ? ans.reads : []).filter((r) => r && r.title && /^https:\/\//.test(r.url || "")).slice(0, 4).map((r) => ({ title: String(r.title).slice(0, 200), url: String(r.url).slice(0, 600), source: String(r.source || "").slice(0, 40), why: String(r.why || "").slice(0, 160) }));
+          const reads = (Array.isArray(ans.reads) ? ans.reads : []).filter((r) => r && r.title && okLink(r.url)).slice(0, 4).map((r) => ({ title: String(r.title).slice(0, 200), url: String(r.url).slice(0, 600), source: String(r.source || "").slice(0, 40), why: String(r.why || "").slice(0, 160) }));
           const watch = (Array.isArray(ans.watch) ? ans.watch : []).slice(0, 12).map((w) => ({ game: String((w || {}).game || "").slice(0, 80), why: String((w || {}).why || "").slice(0, 200) })).filter((w) => w.game);
           const games = (Array.isArray(ans.games) ? ans.games : []).filter((g) => g && g.story).slice(0, 4).map((g) => {
-            const r = g.read && /^https:\/\//.test(g.read.url || "") ? { title: String(g.read.title || "").slice(0, 200), url: String(g.read.url).slice(0, 600), source: String(g.read.source || "").slice(0, 40) } : null;
+            const r = g.read && okLink(g.read.url) ? { title: String(g.read.title || "").slice(0, 200), url: String(g.read.url).slice(0, 600), source: String(g.read.source || "").slice(0, 40) } : null;
             return { id: String(g.id || "").slice(0, 60), game: String(g.game || "").slice(0, 100), story: String(g.story).slice(0, 1200), read: r };
           });
           await putDoc(this.env, t.path, { key: p.key, date: p.date, games, around: strs(ans.around, 6), quick: strs(ans.quick, 7), long: strs(ans.long, 6), watch, reads, at: now, by: p.user || "dj", writing: null });
