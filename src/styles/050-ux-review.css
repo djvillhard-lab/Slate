@@ -498,3 +498,6 @@ header.top .toprow { border-bottom: 1px solid var(--line); }
 .hl.hl-rows { display: block; -webkit-line-clamp: none; overflow: visible; }
 .hl.hl-rows .hl-row { display: block; }
 .hl.hl-rows .hl-row + .hl-row { margin-top: 2px; }
+/* 3.194.2 (DJ: matchup line separate from the team lines): italic, set off by a thin line */
+.hl.hl-rows .hl-row.hl-mu { font-style: italic; color: var(--head); padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--hair); }
+.hl.hl-rows .hl-row.hl-mu + .hl-row { margin-top: 0; }

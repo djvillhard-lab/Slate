@@ -431,7 +431,8 @@
     var rows = hlRows(g, text, side);
     if (rows.length === 1 && rows[0].side) p.dataset.side = rows[0].side;  // 3.71.0: which team the line is about, for its team color
     rows.forEach(function (r, i) {
-      var box = rows.length > 1 ? el("span", "hl-row") : p;
+      // 3.194.2 (DJ: "separate the matchup one liner from the team one-liners… feels crowded"): the line about both teams is set apart
+      var box = rows.length > 1 ? el("span", "hl-row" + (r.side ? "" : " hl-mu")) : p;
       if (rows.length > 1 && r.side) box.dataset.side = r.side;
       if (r.side) box.appendChild(el("b", "hl-tm", String(abbr(g, r.side) || short(g, r.side)).toUpperCase() + ": "));   // 3.139.1 (DJ: "One liners should show team names as abbreviations")
       box.appendChild(document.createTextNode(r.text));
