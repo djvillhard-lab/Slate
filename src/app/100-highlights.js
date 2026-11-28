@@ -414,7 +414,7 @@
   // a finished game's line is kept on this phone, so reopening Slate doesn't refetch every final's game data
   // 3.134.6 (DJ: "Please reset all the one liners so I can test the new ones"): once per phone, the one-liners saved on it (finals'
   // lines and preview lines) are dropped, so every line is worked out again with the current rules. Change the stamp to reset again
-  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.183.3") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.183.3"); } } catch (e) {} })();
+  (function () { try { if (localStorage.getItem("slate-lines-reset") !== "3.195.0") { localStorage.removeItem("slate-hlc"); localStorage.removeItem("slate-pv"); localStorage.setItem("slate-lines-reset", "3.195.0"); } } catch (e) {} })();
   var HLC = (function () { try { var m = JSON.parse(localStorage.getItem("slate-hlc") || "{}") || {}, cut = Date.now() - 3 * 864e5; Object.keys(m).forEach(function (k) { if (!(m[k].at > cut) || !("tm" in m[k]) || /^[^:]{3,40}: \d+ (passing|rushing|receiving) yds/.test(m[k].t || "")) delete m[k]; }); return m; } catch (e) { return {}; } })();
   function hlcPut(id, text, tm) { if (HLC[id] && HLC[id].t === text && HLC[id].tm === tm) return; HLC[id] = { t: text, tm: tm || "", at: Date.now() }; try { localStorage.setItem("slate-hlc", JSON.stringify(HLC)); } catch (e) {} }
   // a line about one team gets that team's abbreviation in front ("TEX: Manning threw 3 interceptions"),
@@ -614,7 +614,12 @@
     // 3.101.4: only a real point spread. Without one ESPN's "details" can be the moneyline ("HOU -137"), which read as a 137-point favorite
     if (m && !(pk.spread != null && pk.spread !== "" && Math.abs(Math.abs(parseFloat(pk.spread)) - Math.abs(parseFloat(m[2]))) < 0.01 && Math.abs(parseFloat(m[2])) <= 45)) m = null;
     if (m && byAbbr[m[1]] && (sport === "football" || sport === "bball")) { var sp = Math.abs(parseFloat(m[2])), fav = byAbbr[m[1]];
-      if (sp <= 2.5) add("tight", 42, T[fav].name + " are only " + sp + "-point favorites"); else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " are " + sp + "-point favorites"); }
+      // 3.195.0 (DJ: "a matchup one-liner or 'headline' for each matchup… All should provide value"): the spread is the matchup's
+      // headline (it names both teams, so it gets its own italic row): a tight one, a big one, or anything in between
+      var dog0 = T[fav === A ? H : A].name, the0 = /^(nfl|nba|wnba|nhl|mlb)$/.test(lg) ? "the " : "";
+      if (sp <= 2.5) add("tight", 42, T[fav].name + " favored by just " + sp + " over " + the0 + dog0);
+      else if (sp >= (sport === "football" ? 14 : 12)) add("big", 30 + sp / 2, T[fav].name + " favored by " + sp + " over " + the0 + dog0);
+      else add("line", 30, T[fav].name + " favored by " + sp + " over " + the0 + dog0); }
     if (m && byAbbr[m[1]] && byAbbr[m[1]] !== H && parseFloat(m[2]) <= -1 && sport !== "football" && sport !== "bball") {}
     // 3.144.1 (DJ: "I expect more with the one liners"): how the betting line has moved since it opened (DraftKings, in ESPN's pick center)
     var psp = (pk && pk.pointSpread) || {}, oH = parseFloat(((psp.home || {}).open || {}).line), cH = parseFloat(((psp.home || {}).close || {}).line);
@@ -635,7 +640,8 @@
     var tto = (pk && pk.total && pk.total.over) || {}, tO = parseFloat(String(((tto.open || {}).line) || "").replace(/^[ou]/, "")), tC = parseFloat(String(((tto.close || {}).line) || "").replace(/^[ou]/, ""));
     if (!isNaN(tO) && !isNaN(tC) && Math.abs(tC - tO) >= (sport === "football" ? 3 : sport === "bball" ? 4 : 99)) add("tot", 32, "The over/under has " + (tC > tO ? "climbed" : "dropped") + " from " + tO + " to " + tC);
     var pr = sum.predictor; if (pr && pr.homeTeam && pr.awayTeam) { var ph = parseFloat(pr.homeTeam.gameProjection), pa = parseFloat(pr.awayTeam.gameProjection);
-      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.min(99, Math.round(Math.max(ph, pa))); if (pp >= 85) add("pred", 26 + (pp - 85), "ESPN gives " + T[pf].name + (/^(8\d|11|18)$/.test(String(pp)) ? " an " : " a ") + pp + "% chance"); } } }
+      if (!isNaN(ph) && !isNaN(pa)) { if (Math.abs(ph - pa) <= 8) add("coin", 40, "ESPN's predictor calls it a coin flip"); else { var pf = ph > pa ? H : A, pp = Math.min(99, Math.round(Math.max(ph, pa))); var pdx = "ESPN's predictor: " + T[pf].name + " " + pp + "%, " + T[oth(pf)].name + " " + (100 - pp) + "%";
+        add("pred", pp >= 85 ? 26 + (pp - 85) : 28, pdx); } } }   // 3.195.0: names both teams, so it's the matchup headline when there's no line
     // the table: leaders, top-of-table and relegation clashes
     var pos = {}, grp = (((sum.standings || {}).groups || [])[0] || {}), ent = ((grp.standings || {}).entries || []);
     if (sport === "soccer" && ent.length >= 10) { var PT = [], GPn = 0; ent.forEach(function (e, n) { var id = String(e.id || ""), sv = {}; (e.stats || []).forEach(function (x) { sv[x.abbreviation] = x.displayValue; });
@@ -689,9 +695,6 @@
     // a strong home or road record that the perfect-record line above doesn't cover
     ids.forEach(function (i) { var w = String(T[i].rec[i === H ? "home" : "road"] || "").split("-"), W = +w[0], Lw = +w[1];
       if (sport !== "soccer" && w.length >= 2 && Lw > 0 && W + Lw >= 6 && !pvAllHome(T[i], W, Lw) && W / (W + Lw) >= 0.7) add("good|" + i, 30, T[i].name + " are " + W + "-" + Lw + " " + (i === H ? "at home" : "on the road")); });
-    // ESPN's predictor leaning one way without being lopsided
-    if (pr && pr.homeTeam && pr.awayTeam) { var ph2 = parseFloat(pr.homeTeam.gameProjection), pa2 = parseFloat(pr.awayTeam.gameProjection);
-      if (!isNaN(ph2) && !isNaN(pa2) && Math.abs(ph2 - pa2) > 8 && Math.max(ph2, pa2) < 85) { var pf2 = ph2 > pa2 ? H : A, pp2 = Math.min(99, Math.round(Math.max(ph2, pa2))); add("pred", 22, "ESPN gives " + T[pf2].name + (/^(8\d|11|18)$/.test(String(pp2)) ? " an " : " a ") + pp2 + "% chance"); } }
     // the better team's top scorer (basketball)
     if (sport === "bball") { var bt = (parseFloat(String(T[A].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[A].rec.total).split("-")[1]) || 0) >= (parseFloat(String(T[H].rec.total).split("-")[0]) || 0) - (parseFloat(String(T[H].rec.total).split("-")[1]) || 0) ? A : H;
       (sum.leaders || []).forEach(function (L) { if (String((L.team || {}).id || "") !== bt) return; (L.leaders || []).forEach(function (cat) { if (!/^points$/i.test(cat.name || cat.displayName || "")) return;
@@ -750,6 +753,7 @@
     // spread or the over/under moving), then each team's best fact, plus its second best when it's strong and short
     var STREAK = /^(form|bothhot|won|lost|unb|form5|slump)$/, k0 = function (x) { return x.k.split("|")[0]; };
     var mu = c.filter(function (x) { return !idIn(x.k) && x.sc >= 28; })[0], streaky = mu && /^(form|bothhot)$/.test(mu.k);
+    pvCompute.mu = mu ? mu.tx : "";
     var used = mu ? [mu] : [], order = sport === "soccer" ? [H, A] : [A, H], parts = mu ? [mu.k === "close" ? mu.tx : mu.tx] : [];
     order.forEach(function (i) {
       var mine = c.filter(function (x) { return idIn(x.k) === i && x.k !== "art" && used.indexOf(x) < 0 && !(streaky && STREAK.test(k0(x))) && !(mu && /^(tight|big)$/.test(mu.k) && /^(pred|coin)$/.test(k0(x))); });
