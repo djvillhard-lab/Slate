@@ -35,3 +35,7 @@ html .gv-toggle:not(#_) { color: var(--ink) !important; }
 
 /* picked: lit glass, no accent outline (the Live feed's game chips) */
 html .fd-chip.on:not(#_):not(#_) { border-color: var(--lg-edge) !important; background: var(--lg-lit) !important; box-shadow: var(--lg-hi) !important; }
+/* 3.184.2: the kit's display above must not bring back a button another rule hides. The corner Feed button is hidden
+   while a card is open (050-ux-review.css; the open card has its own Live feed row), and [hidden] always wins. */
+html .g.panel.has-feed:has(> .tray) > .g-feed:not(#_):not(#_),
+html :is(.g-feed, .myb-chip, .gv-act, .csp-c, .tvs-pill, .tvs-sw, .chwatch, .rlink)[hidden]:not(#_):not(#_) { display: none !important; }

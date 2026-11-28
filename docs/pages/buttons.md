@@ -21,3 +21,5 @@ Remove the `{{styles/112-button-kit.css}}` line from `src/shell.html` and rebuil
 - On TV's styles are injected by `215-tv-setups.js` after the page's CSS, so kit rules for `.tvs-*` carry `html` and `:not(#_)` to win.
 - `.tvs-acts` is two things in that file (the top row's Rules/Edit and the edit page's action row); the kit only aligns the one inside `.tvs-top`.
 - Toolbar rows stay 32 tall (`.lo-row` is tuned to fit the folded Duo at XL), so 32 became the one height instead of 36.
+
+- 3.187.1: the kit sets `display` with `!important`, which un-hid the corner Feed button on an open card (DJ's screenshot, Nov 27). The kit now ends with a rule that keeps hidden things hidden; when adding a selector to the kit, check whether anything hides it with `display: none` and add it there.
