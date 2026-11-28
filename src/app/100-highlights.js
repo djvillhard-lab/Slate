@@ -485,6 +485,13 @@
     rows.forEach(function (r) { if (!r.side) return; var cs = r.text.split("; "); if (cs.length < 2) return;
       var tm = cs.filter(function (x) { return !PSTAT.test(x); }), pl = cs.filter(function (x) { return PSTAT.test(x); });
       if (tm.length && pl.length) { tm[0] = tm[0].charAt(0).toUpperCase() + tm[0].slice(1); r.text = tm.concat(pl).join("; "); } });
+    // 3.191.4 (DJ: "make the player stat one liners shorter without filler words"): "Umari Hatcher has 1,257 receiving yds and 9 TD"
+    // reads "Umari Hatcher 1,257 rec yds, 9 TD"; "had 24 pts and 5 reb (8-15 FG)" reads "24 pts, 5 reb (8-15 FG)"; "averages 14.1 points" "14.1 ppg"
+    var pcomp = function (x) { var m = /^([A-Z][^;]*?) (?:had|has) (\d[^;]*)$/.exec(x) || /^([A-Z][^;]*?) averages ([\d.]+ points)$/.exec(x); if (!m) return x;
+      var st = m[2].replace(/ points$/, " ppg").replace(/\bpassing yds\b/g, "pass yds").replace(/\brushing yds\b/g, "rush yds").replace(/\breceiving yds\b/g, "rec yds")
+        .replace(/\b(\d+) TD passes\b/g, "$1 pass TD").replace(/\ba TD\b/g, "1 TD").replace(/,? and /g, ", ");
+      return m[1] + " " + st; };
+    rows.forEach(function (r) { r.text = r.text.split("; ").map(pcomp).join("; "); });
     rows = rows.filter(function (r) { return !r.side; }).concat(rows.filter(function (r) { return r.side; }));
     return rows.length ? rows : [{ side: tmSide || null, text: String(text || "") }];
   }

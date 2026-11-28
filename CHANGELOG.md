@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.191.4 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- One-liners: player stats are shorter, with no filler words. "Umari Hatcher has 1,257 receiving yds and 9 TD" now reads "Umari Hatcher 1,257 rec yds, 9 TD". "Bear Bachmeier has 14 TD passes and 8 INT" reads "Bear Bachmeier 14 pass TD, 8 INT", and "Seth Trimble had 16 pts and 5 reb (7-10 FG)" reads "Seth Trimble 16 pts, 5 reb (7-10 FG)". "Averages 14.1 points" reads "14.1 ppg".
+
 ## 3.191.3 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Matchup: Recent results now sit right under the team comparison at the top, and the separate Form dots there are gone, since they showed the same thing. Players to watch rows no longer have tags (like "👑 Most rushing yards"); each row keeps the player's photo, name and season numbers.
