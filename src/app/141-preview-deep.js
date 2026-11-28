@@ -176,6 +176,20 @@
     [/stake|table|standing|playoff|race|seed/i, "🏆"], [/pressure|crisis|hot seat|coach|manager/i, "😬"], [/old club|old team|return|reunion|homecoming/i, "↩️"], [/tactic|style|scheme|matchup/i, "🧠"],
     [/injur|absen|out\b|health/i, "🩹"], [/rival|derby/i, "⚔️"], [/form|streak|slump|skid/i, "📈"], [/stat|number|shoot|glass|turnover/i, "🎯"], [/collapse|gave it|mistake|error/i, "💥"], [/debut|rookie|young/i, "🌱"]];
   function pdTagText(t) { var e = ""; PD_EMOJI.some(function (x) { if (x[0].test(t)) { e = x[1]; return true; } return false; }); return (e ? e + " " : "") + t; }
+  // Players to watch, drawn exactly like Top performers. The line is ESPN's season numbers (PW.line, pwFill), the tag says
+  // why (a team lead from pwNote), and the position comes from ESPN's leaders when the player is one of them
+  function pdWatch(g, wl, d) {
+    var sport = BX_SPORT[g.league] || "", wc = gvCard("Players to watch", "gv-watch"), jers = {};
+    try { jers = tpJerseys(g); } catch (e) {}
+    wl.forEach(function (w) {
+      var k = pwKey(w.name), ln = PW.line[g.id + "|" + k] || (/\d/.test(w.line || "") ? w.line : ""), nt = "";
+      try { nt = pwNote(g, w) || ""; } catch (e) {}
+      var lead = /^Leads (?:the )?.+? in (.+)$/i.exec(nt), tags = lead ? [{ t: "👑 Most " + lead[1].replace(/ and /, " & "), c: "good" }] : nt ? [{ t: nt, c: "" }] : [];
+      tpRowSafe(wc, g, sport, { n: w.name, team: w.team, line: ln, tags: tags }, jers);
+    });
+    return wc;
+  }
+  function tpRowSafe(box, g, sport, w, jers) { try { box.appendChild(tpRow(g, sport, w, jers)); } catch (e) { box.appendChild(pwRow(g, { name: w.n, team: w.team, line: w.line }, true)); } }
   // the storyline leads the whole block (DJ, Nov 28: "Add the storyline to the very top")
   function pdLead(label, text) { var q = el("div", "pd-lead"); q.appendChild(el("span", null, label)); q.appendChild(el("b", null, text)); return q; }
   function pdParts(g, list, tc) {
@@ -202,9 +216,10 @@
     if (full) {
       wrap.appendChild(el("h3", "pd-h", "The preview"));
       wrap.appendChild(pdParts(g, dp.parts, tc));
-      // DJ (Nov 28): "Remove players to watch and work it into the new preview": the same rows as before, inside it
+      // DJ (Nov 28): "Remove players to watch and work it into the new preview", then "just doesn't match up with other
+      // designs": the Top performers card and rows (tpRow: team-color edge, jersey, name, position chip, team, line, pill tag)
       var wl = pwList(g, pv, []);
-      if (wl.length) { wrap.appendChild(el("h3", "pd-h", "Players to watch")); var wc = gvCard(null, "gv-watch pd-pw"); wl.forEach(function (w) { wc.appendChild(pwRow(g, w, false)); }); wrap.appendChild(wc); }
+      if (wl.length) wrap.appendChild(pdWatch(g, wl, d));
     }
     if (d && (d.last.away.length || d.last.home.length)) {
       wrap.appendChild(el("h3", "pd-h", "Recent results"));

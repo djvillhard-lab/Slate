@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.189.2 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Matchup, the new preview: Players to watch now looks exactly like Top performers (team-color edge, jersey, name, team, the season line, and a pill tag such as "👑 Most goals" when the player leads his team).
+
 ## 3.189.1 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Unfolded Duo held upright: the menu bar at the bottom and the date button beside it are a quarter bigger, since there is room for them there. The row of pages above the hammer, Today and the All games filter button grow with them. The folded Duo, the unfolded Duo held sideways and the iPhone are unchanged.
