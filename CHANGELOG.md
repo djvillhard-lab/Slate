@@ -5,6 +5,12 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.187.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Matchup, the long preview: a new layout in place of the paragraphs. A tale of the tape with both logos, table spot and record, form, each team's season leaders and the last meetings, then the big question, a full preview told in four storylines with team colors and logos, both teams' recent results as score tiles, and what decides it. Claude writes the words; every number, result and logo comes from ESPN. Works in every sport.
+- Games with no preview written yet show a simple version from ESPN's data: the tale of the tape and the recent results.
+- After a game, the preview folds under "Before the game".
+- Claude's fact check no longer drops a true "winless in five" because the team won earlier in the season.
 ## 3.186.1 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Golf and F1 cards on the slate have the x that games have: tap it to take that event off today's slate (with Undo). To stop made-for-TV golf matches showing at all, turn off Slate rules → Golf and racing → Men's golf → Made-for-TV matches.

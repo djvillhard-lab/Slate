@@ -143,7 +143,7 @@ async function budgetAlert(env, capUsd) {
 // Claude cost cuts (3.85.0, security and cost review). How long one write-up is handed to everyone who asks, in
 // minutes: a second tap within this time gets the same write-up instead of a new (paid) one. News and tap-in
 // breakdowns keep 3 minutes (the News page's own rules).
-const PREVIEW_V = 2; // the preview instructions' version (2: the quick read is about storylines, not a list of recent results, Web 3.183.4)
+const PREVIEW_V = 3; // the preview instructions' version (2: the quick read is about storylines, not a list of recent results, Web 3.183.4; 3: the long read comes in parts, 3.187.0)
 const RECAP_V = 2;  // the recap instructions' version (2: standout performances lead, 3.100.6)
 const SHARE_MIN = { preview: 360, team: 720, recap: 720, moments: 360 };
 // How each kind is written: the newer web search (it filters results before Claude reads them, so far fewer input
@@ -603,11 +603,22 @@ ${RULES}
 Answer with only this JSON inside <json></json> tags:
 {"summary": "one paragraph, 4-6 sentences, 70-110 words, about the storylines: lead with why this game matters, then the two or three stories around it (what is at stake in the table or the race, a manager or coach under pressure, a player back from injury or facing an old team, a rivalry, a style clash, a trend in how a team plays), close with what decides it. The app shows each team's recent results separately, so do not walk through recent games one by one: at most one past result in the whole paragraph, and only when it is the story itself (a heavy defeat that put a coach under pressure); describe form in a few words (winless in five, three straight clean sheets) instead of listing scores and dates",
  "bullets": ["3-5 short one-line points, about 8-16 words each, covering the same storylines; no list of recent scores"],
- "long": ["3-5 paragraphs, 250-400 words in all: how each team is playing, key matchups, storylines and history, the players who decide it, what it means"],
+ "deep": {"question": "the one question this game answers, as a headline, 8-16 words, ending with a question mark; name the team each part is about (United's defense, not a defense or they), so it can only be read one way",
+  "parts": [{"tag": "one or two words naming the kind of story: Stakes, Pressure, Rivalry, Old club, Injury, Return, Tactics, Coaching, Milestone, Form, Debut or similar", "side": "home or away for a story mainly about one team, empty for both", "title": "the storyline as a headline, 4-8 words", "text": "3-4 sentences, 50-85 words: the story itself, with the specific names and numbers that make it real"}],
+  "decides": "one or two sentences, 20-40 words: what decides it"},
  "watch": [{"name": "...", "team": "ABBR", "line": "short season stat line", "note": "optional few words; a team lead names the exact stat (\"leads Denver in rebounds and assists\"), never \"both categories\""}],
  "series": "one short line on the season series, or empty",
  "headlines": [{"title": "...", "source": "The Athletic", "url": "..."}]}
-Watch: 2-4 players, never one who is out. Each "line" is real numbers from the ESPN facts or your searches, the ones that fit why the player is worth watching (3-point percentage for a shooter, rebounds for a big man), never a role or position such as "Boston guard"; if you can't find numbers for a player, pick another. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
+Deep: this is the long read on the matchup page, shown beside graphics the app draws from ESPN (each team's recent results, form, season leaders, past meetings), so it must not walk through recent results either: tell the stories. parts: 4, each a different storyline and together a full preview of the game (what is at stake, each team's situation, the people and the tactics that decide it), with at least one about each team; when the facts and searches only support fewer real storylines (a small game with little written about it), give fewer, or [] with an empty question when there is nothing beyond the basic facts: never pad with filler, the app then shows its data-only version. Watch: 2-4 players, never one who is out. Each "line" is real numbers from the ESPN facts or your searches, the ones that fit why the player is worth watching (3-point percentage for a shooter, rebounds for a big man), never a role or position such as "Boston guard"; if you can't find numbers for a player, pick another. Headlines: only The Athletic stories about this game or these two teams your searches found, newest first, at most 4; [] if none.`;
+}
+
+// 3.187.0 (DJ: "more creative... graphics, colors and other layouts"): the matchup page's long preview, in parts the app lays out
+function deepOf(d) {
+  if (!d || typeof d !== "object") return null;
+  const S = (x, n) => String(x || "").slice(0, n), parts = (Array.isArray(d.parts) ? d.parts : []).filter((x) => x && x.title && x.text).slice(0, 5)
+    .map((x) => ({ tag: S(x.tag, 24), side: x.side === "home" || x.side === "away" ? x.side : "", title: S(x.title, 90), text: S(x.text, 700) }));
+  if (!parts.length) return null;
+  return { question: S(d.question, 160), parts, decides: S(d.decides, 400) };
 }
 
 // web search answers can carry <cite index='…'>…</cite> markers: keep the words, drop the tags, everywhere in the answer
@@ -829,7 +840,7 @@ export class SummaryWorkflow extends WorkflowEntrypoint {
         } else if (p.kind === "recap") {
           await mergeDoc(this.env, t.path, t.patch({ recap: { v: RECAP_V, fc, text: String(ans.text || ""), bullets: strs(ans.bullets, 4), stars: (ans.stars || []).slice(0, 4), endedAt: now, at: now }, headlines: athletic(ans.headlines), writing: null, updatedAt: now }));
         } else {
-          await mergeDoc(this.env, t.path, t.patch({ fc, summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 5), pv: PREVIEW_V, watch: (ans.watch || []).slice(0, 4), series: String(ans.series || ""), headlines: athletic(ans.headlines), newsAt: now, updatedAt: now, writing: null, by: "request" }));
+          await mergeDoc(this.env, t.path, t.patch({ fc, summary: String(ans.summary || ""), bullets: strs(ans.bullets, 5), long: strs(ans.long, 5), deep: deepOf(ans.deep), pv: PREVIEW_V, watch: (ans.watch || []).slice(0, 4), series: String(ans.series || ""), headlines: athletic(ans.headlines), newsAt: now, updatedAt: now, writing: null, by: "request" }));
         }
         return true;
       });

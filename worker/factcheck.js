@@ -13,8 +13,8 @@ const NUMW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eig
 const num = (w) => (/^\d+$/.test(w) ? +w : NUMW[String(w).toLowerCase()] || 0);
 const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 // words people read; ids, names, urls and stat lines are left alone
-const TEXT_KEYS = /^(summary|bullets|long|text|take|hunch|story|why|note|series|line_note)$/;
-const ITEM_KEYS = /^(watch|sides|timeline|hits|latest|top|games)$/;
+const TEXT_KEYS = /^(summary|bullets|long|text|take|hunch|story|why|note|series|line_note|question|decides)$/;
+const ITEM_KEYS = /^(watch|sides|timeline|hits|latest|top|games|parts)$/;
 
 function parse(json) { try { return JSON.parse(json || "{}") || {}; } catch (e) { return {}; } }
 
@@ -142,7 +142,11 @@ function streakCheck(s, one, kind) {
           if (cur && (cur === "W") !== isWin && k >= 1 && !/\b(had|before|earlier|previous)\b/i.test(s)) return "streak: " + one.full + "'s last game was a " + (cur === "W" ? "win" : "loss"); } }
     }
     if (kind !== "recap" && /\b(unbeaten|undefeated|perfect start|yet to lose)\b/i.test(s) && one.rec.l > 0 && !/\b(no longer|first loss|lost|ended|snapped)\b/i.test(s)) return "record: " + one.full + " has lost (" + one.rec.raw + ")";
-    if (kind !== "recap" && /\b(winless|yet to win|still looking for (a|its|their) first win)\b/i.test(s) && one.rec.w > 0 && !/\b(no longer|first win|ended)\b/i.test(s)) return "record: " + one.full + " has won (" + one.rec.raw + ")";
+    // 3.187.0: "winless in five" / "winless in their last five" is a run, not the season: check it against the dated results
+    const wl = /\bwin(?:less|-less)\s+in\s+(?:their |its |the )?(?:last |past )?(\w+)\b/i.exec(s);
+    if (kind !== "recap" && wl && num(wl[1]) >= 2) { const n = num(wl[1]), rs = one.results;
+      if (rs.length >= n && rs.slice(0, n).some((r) => r.res === "W")) return "streak: " + one.full + " won one of its last " + n; }
+    else if (kind !== "recap" && /\b(winless|yet to win|still looking for (a|its|their) first win)\b/i.test(s) && one.rec.w > 0 && !/\b(no longer|first win|ended)\b/i.test(s)) return "record: " + one.full + " has won (" + one.rec.raw + ")";
   }
   return "";
 }

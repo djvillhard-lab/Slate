@@ -271,7 +271,9 @@
       var rc0 = pv && recapOf(pv);
       if (!rc0 && noCl) return;  // the matchup page has Claude's button at the top
       if (!rc0) { var np0 = gvCard(null); var c0 = gameClaudeCtl(g); if (c0) np0.appendChild(c0); body.appendChild(np0); return; }
-    } else if (!pv || !(pv.summary || (part !== "pre" && pv.recap && pv.recap.text))) { var np = gvCard(null); np.appendChild(el("p", "pv-none", part === "pre" ? "No pregame preview was written for this game." : "No preview yet. Claude's button at the top writes one.")); body.appendChild(np); return; }
+    } else if (!pv || !(pv.summary || (part !== "pre" && pv.recap && pv.recap.text))) {
+      var sk = status(g).kind; if (part !== "pre" && sk !== "live" && sk !== "over") { var pd0 = pdBlock(g, pv); if (pd0) body.appendChild(pd0); }   // 3.187.0: the data-only version before anyone writes one
+      var np = gvCard(null); np.appendChild(el("p", "pv-none", part === "pre" ? "No pregame preview was written for this game." : "No preview yet. Claude's button at the top writes one.")); body.appendChild(np); return; }
     // the betting line sits at the top of the matchup page, so it isn't repeated here
     var o = {};
     if (o.spread || o.total || (o.ml && o.ml.away != null)) {
@@ -298,7 +300,20 @@
       if (st0.length) { var wc0 = gvCard("Top performers", "gv-watch"); st0.forEach(function (w) { var r = el("div", "pw"); r.appendChild(el("span", "pw-n", w.name)); if (w.team) r.appendChild(el("span", "pw-t", w.team)); if (w.line) r.appendChild(el("span", "pw-l", w.line)); wc0.appendChild(r); }); body.appendChild(wc0); }
       return;
     }
-    var long = Array.isArray(pv.long) ? pv.long.filter(Boolean) : [];
+    // 3.187.0: a preview written in parts gets the long preview layout (141-preview-deep.js); before the game it's open,
+    // after it (a recap exists) it folds under "Before the game" like the old paragraphs
+    var pdFull = !!(pv.deep && pv.deep.parts && pv.deep.parts.length), pdB = rc && !pdFull ? null : pdBlock(g, pv), pdOpen = !rc;
+    if (pdB && rc) { try { pdOpen = localStorage.getItem("slate-longread") === "1"; } catch (e) {} }
+    if (pdB) {
+      if (rc) {
+        var pdc = gvCard(null), pdt = el("button", "gv-tg" + (pdOpen ? "" : " shut")); pdt.type = "button"; pdt.setAttribute("aria-expanded", pdOpen ? "true" : "false");
+        pdt.appendChild(el("span", "gv-h", "Before the game")); pdt.appendChild(el("em", null, pdOpen ? "Hide" : "The preview")); pdt.appendChild(icon("more"));
+        pdt.addEventListener("click", function () { try { localStorage.setItem("slate-longread", pdOpen ? "0" : "1"); } catch (e) {} keepScroll(render); });
+        pdc.appendChild(pdt); body.appendChild(pdc);
+      }
+      if (pdOpen) body.appendChild(pdB);
+    }
+    var long = pdFull ? [] : Array.isArray(pv.long) ? pv.long.filter(Boolean) : [];
     var dd = gvCard(null), ddOpen = false; try { ddOpen = localStorage.getItem("slate-longread") === "1"; } catch (e) {}
     if (long.length) {
       var dt = el("button", "gv-tg" + (ddOpen ? "" : " shut")); dt.type = "button"; dt.setAttribute("aria-expanded", ddOpen ? "true" : "false");
@@ -307,7 +322,7 @@
       dd.appendChild(dt);
       if (ddOpen) long.forEach(function (para) { dd.appendChild(el("p", "gv-p", para)); });
     } else { dd.appendChild(el("h3", "gv-h", "The deep dive")); if (!rc) dd.appendChild(el("p", "pv-none", "Regenerate the preview to add the longer read.")); }
-    if (long.length || !rc) body.appendChild(dd);
+    if (!pdFull && (long.length || !rc)) body.appendChild(dd);
     var stars = rcOpen && Array.isArray(rc.stars) ? rc.stars.filter(function (w) { return w && w.name; }) : [];
     var wl = pwList(g, pv, stars);
     if (wl.length) {
@@ -315,9 +330,9 @@
       wl.forEach(function (w) { wc.appendChild(pwRow(g, w, stars.length > 0)); });
       body.appendChild(wc);
     }
-    if ((pv.last5 && (pv.last5.away || pv.last5.home)) || pv.series || pv.injuries) {
+    if ((pv.last5 && (pv.last5.away || pv.last5.home) && !(pdB && pdOpen)) || pv.series || pv.injuries) {
       var fc = gvCard("Form and health");
-      if (pv.last5) sideOrder(g).forEach(function (sd) {
+      if (pv.last5 && !(pdB && pdOpen)) sideOrder(g).forEach(function (sd) {
         if (!pv.last5[sd]) return;
         var r = el("div", "gv-form"); r.appendChild(el("b", null, short(g, sd))); r.appendChild(el("span", "gv-dim", "Last 5")); r.appendChild(formDots(pv.last5[sd])); fc.appendChild(r);
       });
