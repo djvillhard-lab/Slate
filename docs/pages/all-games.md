@@ -140,3 +140,9 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 - At XL text the words scroll sideways under a short fade beside the buttons.
 - Undo: remove the 284 file and the `113-all-games-line.css` line in `src/shell.html`.
 - 3.184.1: rules scoped to `#games-body` no longer reach the moved buttons. The Standings button's accent "on" look (132-standings.js) is repeated in 113 for `.ag-acts`; do the same for any new button state.
+
+## Football possession on game cards (3.194.0, Nov 28 2026)
+- DJ: "For football on my slate and all games, need a football icon to know which team has the ball." Cards never had one before (only the Live feed, Lock Screen and Dynamic Island did).
+- `livePos()` in `040-live.js` stores `pos` ("away"/"home") on each live score from ESPN's `situation.possession`; empty at halftime, "End of" quarter breaks and finals.
+- `gameRow` in `150-game-row.js` puts the Live feed's drawn ball (`.fd-ball.g-ball`) inside the `.sc` score of that side; size in `styles/114-possession.css`. Every `gameRow` card gets it (slate, All games, Worth a look, On TV setups). The matchup page header (`140-game.js`) does not yet.
+- Only from the phone's own ESPN fetch (LIVE); the server's saved scores don't carry possession, so the ball shows once the page has polled ESPN.

@@ -6,4 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Game cards: football possession icon | src/app/150-game-row.js, src/app/040-live.js, src/styles/114-possession.css | 2026-11-28 17:55 |

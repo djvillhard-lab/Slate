@@ -1,0 +1,2 @@
+/* 3.194.0: the football in front of the score of the team with the ball, on live football game cards (slate, All games) */
+.tm .sc .g-ball { width: 15px; height: 10px; vertical-align: middle; margin-right: 5px; position: relative; top: -2px; }

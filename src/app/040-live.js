@@ -42,6 +42,14 @@
     u.classList.toggle("late", !!t && late);
   }
   setInterval(freshness, 15000);
+  // football: which side has the ball ("away"/"home"), for the football on the game cards (3.194.0). Not at halftime or between
+  // quarters' breaks when ESPN still names a team, and not once the game is over
+  function livePos(c, A, H, st) {
+    var x = c.situation; if (!x || !x.possession) return "";
+    if (st.state !== "in" || /half|end of/i.test(String(st.shortDetail || st.detail || ""))) return "";
+    var p = String(x.possession);
+    return String((A.team || {}).id) === p ? "away" : String((H.team || {}).id) === p ? "home" : "";
+  }
   // the game's stat leaders from the scoreboard (points, goals, yards), for "someone's having a night" suggestions
   // football: who has the ball and where ("UCLA ball, 3rd & 4 at ILL 35"), from ESPN's scoreboard
   function liveSit(c) {
@@ -215,10 +223,10 @@
             if (st.state === "pre") { if (!LIVE_PRE[g.id]) changed = true; LIVE_PRE[g.id] = Date.now(); if (Math.abs(new Date(e.date) - new Date(g.moved || g.start)) >= 60000) { if (LIVE_START[g.id] !== es) { LIVE_START[g.id] = es; changed = true; } } else if (LIVE_START[g.id]) { delete LIVE_START[g.id]; changed = true; } break; }
             if (LIVE_PRE[g.id]) { delete LIVE_PRE[g.id]; changed = true; }
             if (st.state !== "in" && st.state !== "post") break;
-            var v = { a: Number(A.score), h: Number(H.score), state: st.state, detail: st.shortDetail || st.detail || "", live: true, p: Number((c.status || e.status || {}).period) || 0, ck: Number((c.status || e.status || {}).clock) || 0, ld: liveLeaders(c), sit: liveSit(c) };
+            var v = { a: Number(A.score), h: Number(H.score), state: st.state, detail: st.shortDetail || st.detail || "", live: true, p: Number((c.status || e.status || {}).period) || 0, ck: Number((c.status || e.status || {}).clock) || 0, ld: liveLeaders(c), sit: liveSit(c), pos: livePos(c, A, H, st) };
             var old = LIVE[g.id];
             if (v.state === "post" && (!old || old.state !== "post")) REC_AT[g.league + "|" + etDate(new Date(e.date).getTime())] = Date.now() - 25 * 60000;   // records once ESPN has counted it
-            if (!old || old.a !== v.a || old.h !== v.h || old.state !== v.state || old.detail !== v.detail || old.sit !== v.sit) { LIVE[g.id] = v; changed = true; }
+            if (!old || old.a !== v.a || old.h !== v.h || old.state !== v.state || old.detail !== v.detail || old.sit !== v.sit || old.pos !== v.pos) { LIVE[g.id] = v; changed = true; }
             break;
           }
         });

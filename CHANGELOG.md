@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.194.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Live football games on the slate and All games now show a small football in front of the score of the team that has the ball, the same football as the Live feed. It moves with every change of possession and goes away at halftime, between quarters and at the final.
+
 ## 3.193.1 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Quick look: the betting line is back on football games while they're on. 3.193.0 dropped it by mistake when it added the down and distance and the hot players.

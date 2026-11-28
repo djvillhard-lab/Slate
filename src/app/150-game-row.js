@@ -25,7 +25,16 @@
     if (g.custom) {
       var cr = el("span", "tm"); var cb = badgeFor("+", "custom"); cb.style.background = "var(--raise)"; cb.style.color = "var(--ink)"; cb.style.setProperty("--ring", "transparent"); cr.appendChild(cb);
       var cw = el("span", "nmw"); cw.appendChild(el("span", "nm", g.home)); cr.appendChild(cw); cr.appendChild(el("span")); main.appendChild(cr);
-    } else { sideOrder(g).forEach(function (s2) { main.appendChild(teamLine(g, s2)); }); }
+    } else {
+      // 3.194.0 (DJ: "need a football icon to know which team has the ball"): a live football game puts the football in front of
+      // the score of the team with the ball, the same drawn ball as the Live feed (livePos in 040-live.js; none at the half)
+      var lv = state.showScores && BX_SPORT[g.league] === "football" ? scoreOf(g) : null, hasBall = lv && lv.state === "in" ? lv.pos : "";
+      sideOrder(g).forEach(function (s2) {
+        var tl = teamLine(g, s2), tsc = hasBall === s2 ? tl.querySelector(".sc") : null;
+        if (tsc) { var gb = el("i", "fd-ball g-ball"); gb.setAttribute("aria-label", "has the ball"); gb.setAttribute("role", "img"); tsc.insertBefore(gb, tsc.firstChild); }
+        main.appendChild(tl);
+      });
+    }
     var trayMode = mode === "lineup" || (mode === "games" && !g.custom);
     if (trayMode) {
       var wide = !isDuo || mode === "games";
