@@ -5,6 +5,10 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.182.2 (Nov 27, 2026)
+TestFlight: 3.133.2 (58), no new build (web only)
+- Live feed: a ranked team now shows its ranking, the same number the slate and All games show. It sits beside the team's logo on the score bar at the top (next to the record) and in front of the team's letters on the row of live games you switch between. All sports; a team with no ranking shows nothing extra.
+
 ## 3.182.1 (Nov 27, 2026)
 TestFlight: 3.182.1, new build (DJ said yes to it on the card, Nov 27)
 - iPhone app, security (code review): your passcode now lives in the iPhone's Keychain, the locked box iOS keeps for secrets, instead of the app's settings file, which could be read from a backup of the phone. The first launch of this build moves it across; you stay logged in.

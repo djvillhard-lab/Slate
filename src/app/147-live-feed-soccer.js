@@ -119,7 +119,7 @@
         var mw = fdWatch(g, over); if (mw) mid.appendChild(mw);
         bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + pos(sd)); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
-      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
+      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm); fdRkAdd(nm, g, sd);
       var aS = Number(scoreOf.away), hS = Number(scoreOf.home);
       var scn = el("b", "fd-sc" + (over && (sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), pre ? "–" : String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
       if (sd === SL) { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }

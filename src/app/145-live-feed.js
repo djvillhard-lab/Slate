@@ -190,6 +190,10 @@
   // 3.177.0 (DJ: "I don't think I want player stats to continue to update on past live feed plays"): a player's stat line stays live only on
   // his newest play. On every older play it keeps what it read when that play was his newest (ESPN's own box numbers, saved per game on this
   // phone). A play from before the feed was first opened has no saved line, so it shows none rather than a later total.
+  // 3.182.2 (DJ: "Don't have team rankings/seeds on live feeds"): the team's ranking (the same number the slate and All games show, from ESPN)
+  // sits beside its badge on the score bar and in front of its letters on the game switcher. No ranking = nothing added.
+  function fdRk(g, sd) { var r = Number(g && g[sd + "Rank"]); return r > 0 && r < 100 ? r : 0; }
+  function fdRkAdd(nm, g, sd) { var r = fdRk(g, sd); if (!r) return; nm.insertBefore(el("em", "fd-rk", String(r)), nm.firstChild); nm.setAttribute("aria-label", "Number " + r + " " + (nm.getAttribute("aria-label") || "")); }
   var FZ = { id: null, snap: {}, latest: {}, on: false, dirty: false };
   function fdFzStart(g) {
     var id = String((g && g.id) || "");
@@ -724,7 +728,7 @@
       if (fdDelay(x.id)) { var dsum = on && FD.id === x.id ? FD.sum : (FD.last || {})[x.id], dfs = dsum ? fdSumScore(x.id, dsum) : null, dst = dsum ? ((((dsum.header || {}).competitions || [])[0] || {}).status || {}).type || {} : {};
         v = dfs ? { a: dfs.a, h: dfs.h, detail: dst.shortDetail || dst.detail || "Live" } : { detail: "Delayed" }; }  // 3.69.0: no score ahead of the delay
       var show = boxShown(x) && v.a != null && !isNaN(v.a);
-      sideOrder(x).forEach(function (sd) { var r = el("span", "fd-cr"); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });  // soccer: home first (3.130.5)
+      sideOrder(x).forEach(function (sd) { var r = el("span", "fd-cr"); if (fdRk(x, sd)) r.appendChild(el("em", "fd-rk", String(fdRk(x, sd)))); r.appendChild(el("b", null, abbr(x, sd))); if (show) r.appendChild(el("span", null, String(sd === "away" ? v.a : v.h))); b.appendChild(r); });  // soccer: home first (3.130.5)
       var qd = String(v.detail || "").replace(/^(\d{1,2}:\d{2}(?:\.\d)?)\s*-\s*(.+)$/, "$2 $1");  /* 3.77.4 (DJ): the quarter reads first, "4th 8:39", same as the score bar */
       b.appendChild(fdIsHT(v.detail, x.league) ? fdHT("i") : el("i", null, qd || "Live"));
       var xo = sideOrder(x); b.setAttribute("aria-label", x[xo[0]] + sep(x) + x[xo[1]] + (show ? ", " + (xo[0] === "home" ? v.h + " to " + v.a : v.a + " to " + v.h) : "") + ", " + (v.detail || "live"));
@@ -889,7 +893,7 @@ function renderFeed(fromPoll) {
         if (ht) mid.appendChild(fdHT("b")); else { var ck = el("span", "fd-ck"); /* 3.75.2 (DJ): the quarter sits on the clock's line, not under it */ if (!over) ck.appendChild(el("i", null, per > 4 ? "OT" : per ? ordN(per) : "")); /* 3.77.2 (DJ): the quarter reads first, "4th 9:51" */ ck.appendChild(el("b", null, over ? "Final" : st.state === "pre" ? timeText(g.start) : ((comp.status || {}).displayClock || ""))); mid.appendChild(ck); } var mw = fdWatch(g, over); if (mw) mid.appendChild(mw); bug.appendChild(mid); return; }
       var tm = el("div", "fd-tm fd-tm-" + sd); tm.appendChild(badgeFor(abbr(g, sd), g[sd], g[sd + "Color"], g[sd + "Alt"]));
       // compact: the badge, then the record with the ball beside whoever has it (the full name is in the badge's label)
-      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm);
+      var nm = el("b", null, recOf[sd] || ""); nm.setAttribute("aria-label", short(g, sd) + (recOf[sd] ? ", " + recOf[sd] : "")); tm.appendChild(nm); fdRkAdd(nm, g, sd);
       var scn = el("b", "fd-sc" + (over && (sd === "away" ? aS < hS : hS < aS) ? " trail" : ""), String(scoreOf[sd] != null ? scoreOf[sd] : "–"));
       if (sd === "away") { bug.appendChild(tm); bug.appendChild(scn); } else { bug.appendChild(scn); bug.appendChild(tm); }
     });

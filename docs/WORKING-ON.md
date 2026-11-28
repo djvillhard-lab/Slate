@@ -6,5 +6,3 @@ remove it in the same push that ships the work. A line older than 24 hours is ab
 
 | Who asked | Page or area | Files | Started (UTC) |
 |---|---|---|---|
-| DJ | Live feed (team rankings) | src/app/145-live-feed.js to 149-live-feed-baseball.js, docs/pages/live-feed.md | 2026-11-28 02:58 |
-| DJ | shared: styles/040-components.css (Live feed rank number only) | src/styles/040-components.css | 2026-11-28 02:58 |

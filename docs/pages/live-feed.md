@@ -293,3 +293,9 @@ Also 3.81.3: `fdList` no longer pins the on-screen game first once a filter was 
 - DJ: "Remove the flare lines completely". Read as the fun sayings (`FD_SAY`). `FD_SAY_ON = false` in `145-live-feed.js` drops them at render;
   the lines, the picker and `fdSayEl` stay so they can come back. Banners, tags and the facts line (`fd-story`) are unchanged.
   Do not add sayings to other sports. If DJ meant the facts line too, that is `sty.lines` in the same render line.
+
+## 3.182.2 (Nov 27): rankings on the feed
+- DJ: "Don't have team rankings/seeds on live feeds". `fdRk` / `fdRkAdd` in `145-live-feed.js`: `g.awayRank` / `g.homeRank` (ESPN's top 25, set by
+  the score jobs) as `em.fd-rk` inside the record label on every sport's score bar and before the letters on the switcher chips.
+- Open: seeds. The game data has no seed field yet (no tournaments in November). When brackets start, the score jobs need to carry ESPN's seed
+  and `fdRk` can read it. The focus view hides the record label (`.fd-tm > b`), so the ranking is hidden there too; that view's thread owns it.

@@ -1992,3 +1992,7 @@ html.pn-right #view-feed.fd-isl #feed-body .fd-strip.fd-filt { margin-right: cal
 .fd-ban-n { font-size: 24px; }
 .fd-play > .fd-story { margin: 3px 0 1px; }
 .fd-tr { margin: 4px 0 3px; }
+
+/* 3.182.2 Live feed: a team's ranking beside its badge on the score bar, and in front of its letters on the game switcher */
+.fd-rk { font-style: normal; font-size: 12px; font-weight: 800; font-stretch: 80%; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fd-cr > .fd-rk { font-size: 11px; color: var(--muted); margin-right: -2px; }
