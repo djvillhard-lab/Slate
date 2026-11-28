@@ -42,11 +42,11 @@
     u.classList.toggle("late", !!t && late);
   }
   setInterval(freshness, 15000);
-  // football: which side has the ball ("away"/"home"), for the football on the game cards (3.194.0). Not at halftime or between
-  // quarters' breaks when ESPN still names a team, and not once the game is over
+  // football: which side has the ball ("away"/"home"), for the football on the game cards (3.194.0). Hidden at halftime (and the
+  // "End of 2nd" just before it) and once the game is over; between the 1st/2nd and 3rd/4th quarters it stays (DJ, 3.194.1)
   function livePos(c, A, H, st) {
     var x = c.situation; if (!x || !x.possession) return "";
-    if (st.state !== "in" || /half|end of/i.test(String(st.shortDetail || st.detail || ""))) return "";
+    if (st.state !== "in" || /half|end of (2nd|4th)/i.test(String(st.shortDetail || st.detail || ""))) return "";
     var p = String(x.possession);
     return String((A.team || {}).id) === p ? "away" : String((H.team || {}).id) === p ? "home" : "";
   }

@@ -143,6 +143,6 @@ Code: `src/app/160-all-games.js`, the card in `150-game-row.js`, styles in `src/
 
 ## Football possession on game cards (3.194.0, Nov 28 2026)
 - DJ: "For football on my slate and all games, need a football icon to know which team has the ball." Cards never had one before (only the Live feed, Lock Screen and Dynamic Island did).
-- `livePos()` in `040-live.js` stores `pos` ("away"/"home") on each live score from ESPN's `situation.possession`; empty at halftime, "End of" quarter breaks and finals.
+- `livePos()` in `040-live.js` stores `pos` ("away"/"home") on each live score from ESPN's `situation.possession`; empty at halftime ("End of 2nd" too) and finals; it stays between the 1st/2nd and 3rd/4th quarters (DJ, 3.194.1).
 - `gameRow` in `150-game-row.js` puts the Live feed's drawn ball (`.fd-ball.g-ball`) inside the `.sc` score of that side; size in `styles/114-possession.css`. Every `gameRow` card gets it (slate, All games, Worth a look, On TV setups). The matchup page header (`140-game.js`) does not yet.
 - Only from the phone's own ESPN fetch (LIVE); the server's saved scores don't carry possession, so the ball shows once the page has polled ESPN.
