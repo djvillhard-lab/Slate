@@ -525,7 +525,7 @@
       // 3.192.0 (DJ, Nov 28): a finished game in a sport DJ has picked a design for gets the slim quick look (143-quick-final.js):
       // one line, the betting result, and the sport's snapshot. It carries the line's result, so the pregame line strip goes.
       try { qf = b.state === "post" ? qlFinal(g, b) : b.state === "in" ? qlLive(g, b) : null; } catch (er) { qf = null; }   // 3.193.0: football during the game too
-      if (qf) { if (os) os.remove(); box.appendChild(qf); }
+      if (qf) { if (os && b.state === "post") os.remove(); box.appendChild(qf); }   // 3.193.1 (DJ: "Odds have gone away"): live games keep the line
       else {
       // a finished game: Claude's short read, or the button to have Claude write it, right here
       if (b.state === "post") { var rcw = el("div", "tray-rc"); try { previewSections(g, (state.previews || {})[g.id], rcw, "recap"); } catch (er) {} if (rcw.childNodes.length) dd("recap", "Recap", rcw); }
