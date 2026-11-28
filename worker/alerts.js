@@ -17,7 +17,7 @@ const PATHS = {
 };
 const DEFAULTS = { enabled: true, brief: { on: true, hour: 9, myTeams: true, lineup: true, topGames: true }, reminders: { lineup: true, myTeams: true },
   finals: { myTeams: true, lineup: false }, live: { myTeams: false }, upsets: { on: false },
-  close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, follow: { start: true, final: true }, lead: 0,
+  close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, lineups: { myTeams: true }, follow: { start: true, final: true }, lead: 0,
   liveAct: { on: true, lineup: true, myTeams: false }, quiet: { on: true, start: 23, end: 8 }, days: [0, 1, 2, 3, 4, 5, 6], spoilerFree: false };
 const LEAGUE_NAME = { nfl: "NFL", ncaaf: "College Football", nba: "NBA", wnba: "WNBA", ncaam: "Men's College Hoops", ncaaw: "Women's College Hoops", nhl: "NHL", mlb: "MLB", mls: "MLS",
   epl: "Premier League", ucl: "Champions League", uel: "Europa League", laliga: "LaLiga", seriea: "Serie A", bundesliga: "Bundesliga", ligue1: "Ligue 1", facup: "FA Cup", intl: "International" };
@@ -602,8 +602,27 @@ function playerLine(sum, pid, lg) {
   if (!found) return "";
   return parts.length ? parts.join(sport === "bball" || sport === "hockey" ? ", " : " · ") : null;
 }
-function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now, fol, box) {
-  fol = fol || {}; box = box || {};
+// Soccer: "Lineups are out" (3.186.0, DJ, Nov 28, 2026: "create a notification for starting lineups for your favorite teams when they
+// are announced"). ESPN's game summary carries both starting XIs about an hour before kickoff; one alert per game, with each XI
+// from the keeper to the strikers (surnames, a semicolon between lines).
+const LU_DEPTH = (p) => { p = String(p || "").toUpperCase(); return p === "G" || p === "GK" ? 0 : /^(CD|CB|RB|LB|D|WB|RWB|LWB|SW)/.test(p) ? 1 : /^DM/.test(p) ? 2 : /^AM/.test(p) ? 4 : /^(F|CF|ST|S|LW|RW|W|LF|RF)/.test(p) ? 5 : 3; };
+export function lineupText(sum, g) {
+  const rs = (sum && sum.rosters) || [], out = [];
+  const side = (r) => { const id = String((r.team || {}).id || ""), c = ((((sum.header || {}).competitions || [])[0] || {}).competitors || []).find((k) => String((k.team || {}).id) === id); return c ? c.homeAway : ""; };
+  const sorted = rs.slice().sort((a, b) => (side(a) === "home" ? 0 : 1) - (side(b) === "home" ? 0 : 1));  // soccer: home team first
+  for (const r of sorted) {
+    const xi = (r.roster || []).filter((x) => x.starter);
+    if (xi.length < 11) continue;
+    const by = {};
+    for (const x of xi) { const d = LU_DEPTH((x.position || {}).abbreviation); const a = x.athlete || {}; (by[d] = by[d] || []).push({ n: a.lastName || String(a.shortName || a.displayName || "").replace(/^[A-Z]\.\s*/, ""), f: Number(x.formationPlace) || 0 }); }
+    const lines = Object.keys(by).sort((a, b) => a - b).map((d) => by[d].map((q) => q.n).join(", "));
+    const sd = side(r), nm = (g && sd && (g[sd + "Short"] || g[sd])) || (r.team || {}).shortDisplayName || (r.team || {}).displayName || "";
+    out.push(`${nm}${r.formation ? ` (${r.formation})` : ""}: ${lines.join("; ")}`);
+  }
+  return out;
+}
+function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now, fol, box, lus) {
+  fol = fol || {}; box = box || {}; lus = lus || {};
   const spoil = !!p.spoilerFree, out = [];
   const startOf = (i) => { const s = sc[i] || {}; return new Date(s.state === "pre" && s.start ? s.start : (byid[i] || {}).start); };
   const fin = new Set([...((p.finals || {}).lineup ? slate : []), ...((p.finals || {}).myTeams ? mine : [])]);
@@ -703,6 +722,13 @@ function dueAlerts(p, sent, games, byid, sc, slate, mine, customs, now, fol, box
         out.push(["plfinal", key, "Final", (line === null ? `${x.name} didn't play` : `${x.name}: ${line}`) + (fin ? `\n${fin}` : "")]);
       }
     }
+  }
+  sent.lineups = sent.lineups || [];
+  for (const i of Object.keys(lus)) {
+    const g = byid[i]; if (!g || sent.lineups.includes(i)) continue;
+    const xs = lineupText(lus[i], g); if (!xs.length) continue;
+    const t = startOf(i);
+    out.push(["lineups", i, "Lineups", `Lineups are out: ${matchup(g)}${isNaN(t) ? "" : `, ${clock(t)}`}\n${xs.join("\n")}`]);
   }
   const b = p.brief || {}, hr = ctParts(now, TZ).hour, bh = Number(b.hour ?? 9);
   if (b.on && !sent.brief && hr >= bh && hr <= bh + 2) {
@@ -930,7 +956,14 @@ export async function runAlerts(env) {
     const lt = ctParts(now, TZ);
     const fol = followedIn(p, games), box = {};
     if ((p.follow || {}).final) for (const [i, xs] of Object.entries(fol)) if ((sc[i] || {}).state === "post" && xs.some((x) => !(s0.plfinal || []).includes(`${i}:${x.id}`))) box[i] = await boxFor(i);
-    const sent = { date: D, brief: !!s0.brief, plstart: [...(s0.plstart || [])], plfinal: [...(s0.plfinal || [])], reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
+    // favorite soccer teams' lineups (3.186.0): from 80 minutes before kickoff until 10 minutes after, until both XIs (or one) are out
+    const lus = {};
+    if ((p.lineups || {}).myTeams) for (const i of w.mine || []) {
+      const g = byid[i], s = sc[i] || {}; if (!g || SPORT[g.league] !== "soccer" || (s0.lineups || []).includes(i) || s.state === "post") continue;
+      const t = Date.parse(s.state === "pre" && s.start ? s.start : g.start); if (isNaN(t) || now < t - 80 * 60000 || now > t + 10 * 60000) continue;
+      const sum = await boxFor(i); if (sum) lus[i] = sum;
+    }
+    const sent = { date: D, brief: !!s0.brief, lineups: [...(s0.lineups || [])], plstart: [...(s0.plstart || [])], plfinal: [...(s0.plfinal || [])], reminders: [...(s0.reminders || [])], finals: [...(s0.finals || [])], live: Object.assign({}, s0.live || {}), liveAt: Object.assign({}, s0.liveAt || {}), upsets: [...(s0.upsets || [])],
       close: [...(s0.close || [])], ot: [...(s0.ot || [])], goals: [...(s0.goals || [])], la: JSON.parse(JSON.stringify(s0.la || {})),
       board: s0.board ? JSON.parse(JSON.stringify(s0.board)) : null, bfin: Object.assign({}, s0.bfin || {}), blive: Object.assign({}, s0.blive || {}), broll: Number(s0.broll) || 0 };
     const before = JSON.stringify(sent);
@@ -941,7 +974,7 @@ export async function runAlerts(env) {
       // switched on for a game off the slate: it gets the slate's alerts
       const ag = ((p.alerts || {}).games) || {}, offGames = new Set(Object.keys(ag).filter((i) => ag[i] === 0));
       const slateA = [...new Set([...(w.slate || []), ...Object.keys(ag).filter((i) => ag[i] === 1 && byid[i])])];
-      for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, slateA, w.mine || [], w.customs || [], now, fol, box)) {
+      for (const [kind, key, title, body] of dueAlerts(p, sent, list, byid, sc, slateA, w.mine || [], w.customs || [], now, fol, box, lus)) {
         if (kind === "brief") sent.brief = true;
         else if (kind === "live") { sent.live[key] = body; sent.liveAt[key] = now.toISOString(); }
         else if (kind !== "ot") sent[kind].push(key);

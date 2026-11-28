@@ -19,7 +19,7 @@
   var NT_OPEN = {};
   function ntFolds() {
     var n = state.notify, who = function (o) { var r = []; if (o && o.lineup) r.push("my slate"); if (o && o.myTeams) r.push("my teams"); return r; };
-    var kinds = [["reminders", "starts"], ["close", "close finishes"], ["ot", "overtime"], ["finals", "finals"], ["goals", "goals"], ["live", "hourly scores"]]
+    var kinds = [["reminders", "starts"], ["close", "close finishes"], ["ot", "overtime"], ["finals", "finals"], ["goals", "goals"], ["lineups", "soccer lineups"], ["live", "hourly scores"]]
       .filter(function (k) { return who(n[k[0]]).length; }).map(function (k) { return k[1]; });
     var sum = {
       alerts: kinds.length ? kinds.join(", ").replace(/^./, function (c) { return c.toUpperCase(); }) + (n.upsets && n.upsets.on ? " · upset watch" : "") : n.upsets && n.upsets.on ? "Upset watch only" : "None",

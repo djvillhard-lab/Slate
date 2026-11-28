@@ -1,7 +1,7 @@
   "use strict";
   // Slate's version, shown in Settings. Every change DJ asks for bumps it: fixes and tweaks 2.0.1, new features 2.1.0.
   // It must match the newest entry in CHANGELOG.md (build.py checks), and the iPhone app's builds read it from index.html.
-  var SLATE_VERSION = "3.185.0";
+  var SLATE_VERSION = "3.186.0";
 
   var HOME_TZ = "America/Chicago";
   var DEFAULT_TEAMS = ["St. Louis Blues", "St. Louis Cardinals", "Manchester United", "St. Louis City SC"];
@@ -112,7 +112,7 @@
   }
   var NOTIFY_DEFAULTS = { enabled: true, brief: { on: true, hour: 9, myTeams: true, lineup: true, topGames: true }, reminders: { lineup: true, myTeams: true },
     finals: { myTeams: true, lineup: false }, live: { myTeams: false }, upsets: { on: false }, quiet: { on: true, start: 23, end: 8 }, days: [0, 1, 2, 3, 4, 5, 6],
-    close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, follow: { start: true, final: true }, lead: 0, liveAct: { on: true, lineup: true, myTeams: false, games: {}, board: { on: false, ids: [], at: 0 } }, alerts: { games: {} } };
+    close: { lineup: true, myTeams: true }, ot: { lineup: true, myTeams: true }, goals: { myTeams: false }, lineups: { myTeams: true }, follow: { start: true, final: true }, lead: 0, liveAct: { on: true, lineup: true, myTeams: false, games: {}, board: { on: false, ids: [], at: 0 } }, alerts: { games: {} } };
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function mergeDefaults(d, src) { var out = clone(d); if (src && typeof src === "object") Object.keys(d).forEach(function (k) { if (!(k in src)) return; if (d[k] && typeof d[k] === "object" && !Array.isArray(d[k])) { Object.keys(d[k]).forEach(function (j) { if (src[k] && j in src[k] && typeof src[k][j] === typeof d[k][j]) out[k][j] = src[k][j]; }); } else if (Array.isArray(d[k]) ? Array.isArray(src[k]) : typeof src[k] === typeof d[k]) out[k] = clone(src[k]); }); return out; }
   function getPref(path) { return path.split(".").reduce(function (o, k) { return o == null ? undefined : o[k]; }, state.notify); }

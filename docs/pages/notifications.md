@@ -141,3 +141,8 @@ Code: `worker/alerts.js` (minute cron: alerts, live notifications, scoreboard), 
   runBoard treats a gone while the current one was running (not within 3 min of the 7.5 h swap, sent.broll) as a
   swipe: ended for today (cur.hid). Next day starts as usual. Picked games keep the old behavior (off).
 
+
+## Lineups out (3.186.0, Nov 28, 2026)
+- DJ: "create a notification for starting lineups for your favorite teams when they are announced". New alert kind `lineups` (`lineups: { myTeams: true }` in `DEFAULTS` / `NOTIFY_DEFAULTS`, on by default; "Lineups out" row on Notifications, my teams only, soccer only).
+- `worker/alerts.js`: each minute, for a person's team games in soccer from 80 min before kickoff to 10 min after, the worker reads ESPN's game summary (`boxFor`) and, once a team has 11 starters, sends one alert per game (`sent.lineups`): "Lineups are out: Man Utd vs Brentford on Peacock, 9:00 AM" then each XI, home team first, keeper to strikers (`lineupText`, exported so it can be tested with node). The matchup page's Lineups section shows the same lineup (docs/pages/soccer-lineups.md).
+- Open: no "Lineups out" tag on the game card yet (the card has no lineup data without opening the game).

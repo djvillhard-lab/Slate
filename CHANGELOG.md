@@ -5,11 +5,16 @@ Version 3 starts with the real iPhone app (the weekend of Nov 14–15, 2026): it
 From 2.0.0 on, every change gets a new number: fixes and tweaks bump the last number (2.0.1), new features the middle one (2.1.0).
 From 3.0.0 on, each release also says which iPhone app build in TestFlight goes with it, shown there as "3.0 (build)". Releases that only change the web app keep the build before them: the app loads the new page by itself.
 
+## 3.186.0 (Nov 28, 2026)
+TestFlight: 3.182.1 (63), no new build (web only)
+- Notifications: a new "Lineups out" alert for your teams in soccer. When ESPN posts the starting lineups, about an hour before kickoff, you get one alert with both teams' starting eleven, keeper to strikers, home team first. Tap it to open the matchup, where the Lineups section has them with pictures and positions. It's on for your teams; switch it off under Notifications, Game alerts, Lineups out.
+
 ## 3.185.0 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - Soccer lineups: the floodlit pitch is gone. Each team's lineup is now a plain list under Goalkeeper, Defenders, Midfielders and Forwards, with every player's picture (or his number until a picture is found), his full name, shirt number and position in words ("Left centre back", "Right attacking midfielder"), plus his goals, assists, cards and the minute he came off. Substitutes who came on get rows of their own; the unused bench is one line.
 - Slate ratings sit on each player's row, on the right, and tapping the row opens his sums. During a match they update every minute while the lineup is on screen ("Live · every minute" in red at the top), and a score that just changed fades in.
 - Before kickoff: the matchup page has a new Lineups section. Until a team announces its lineup (about an hour before kickoff), it shows a "Likely lineup", marked Guess: the team that started their last match in any competition, with which match that was. A player sent off in that match, or listed by ESPN as out or doubtful, has a note under his name. The real lineup replaces the guess as soon as ESPN has it. The quick look shows the same before kickoff.
+
 ## 3.184.1 (Nov 28, 2026)
 TestFlight: 3.182.1 (63), no new build (web only)
 - All games: the Standings button is green when it's on again. It turned red in 3.184.0 when the buttons moved up a line, and red is only for live.
