@@ -5,6 +5,7 @@ server prompts and saving in `worker/index.js` (kind `news` key `page`, and kind
 https://claude.ai/artifact/AhuwhXUWpb47z1e13SGP7C
 
 ## Live Now section (3.183.0)
+3.183.1 (DJ: "Don't highlight winning teams scores in live games. Makes it seem like the game is over"): no leader styling on a live game anywhere on News; only a final may mark a winner.
 DJ, Nov 27: "News should have a live section showing the biggest games happening then. Seeing it already previewing tomorrow made me think that I'd still want to know what's happening now." `nlLive()` / `nlLiveTile()` in 203-news-front.js: first thing on Home, a two-up wheel of up to 8 live games from the app's own games() and live scores (no Claude, no extra fetch). Order: favorites +6, on the slate +4, ranked +2/+4, national TV +2, league weight, close and late +3. Hidden when nothing is live or the app's day isn't today. The feature card sits right under it.
 
 ## Live scores on game cards (3.172.4)

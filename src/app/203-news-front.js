@@ -250,7 +250,7 @@
     var g = x.g, sc = x.sc, c = el("button", "nx-card nf-lv"), top = el("div", "nf-lvt"); c.type = "button";
     top.appendChild(el("b", null, sc.detail || "Live")); var lt = (LEAGUES[g.league] || {}).tag, tv = (g.tv || [])[0]; top.appendChild(el("span", null, [lt, tv].filter(Boolean).join(" · "))); c.appendChild(top);
     ["away", "home"].forEach(function (sd) {
-      var a = sd === "away", r = el("div", "nf-lvr"), rk = Number(g[sd + "Rank"]) || 0, mine = a ? sc.a : sc.h, other = a ? sc.h : sc.a; if (mine > other) r.classList.add("up");
+      var a = sd === "away", r = el("div", "nf-lvr"), rk = Number(g[sd + "Rank"]) || 0, mine = a ? sc.a : sc.h;   // 3.183.1 (DJ): the side in front is not marked while the game is live; it read as a final
       r.appendChild(badgeFor(abbr(g, sd), g[sd], nlHex(g[sd + "Color"]))); r.appendChild(el("span", null, (rk ? rk + " " : "") + abbr(g, sd))); r.appendChild(el("b", null, String(mine))); c.appendChild(r);
     });
     c.addEventListener("click", function () { var ow = nlOther(); if (ow && !document.documentElement.classList.contains("pn-fwd")) { ow.SlateApp.paneGo("game:" + g.id); return; } openMatchup(g); });

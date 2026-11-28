@@ -400,4 +400,3 @@
 .nf-lvr > .badge { flex: none; }
 .nf-lvr span { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; font-stretch: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nf-lvr b { flex: none; font-size: 20px; font-weight: 800; font-stretch: 76%; line-height: 1; }
-.nf-lvr.up b { color: var(--accent); }
